@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import compileall
+import shutil
 import subprocess
 import sys
 import traceback
@@ -274,7 +275,43 @@ def check_alembic() -> None:
         ],
         cwd=BACKEND_ROOT,
     )
+def check_frontend() -> None:
+    package_json = FRONTEND_ROOT / "package.json"
 
+    if not package_json.exists():
+        raise ProjectCheckError(
+            "frontend/package.json не найден"
+        )
+
+    npm_command = (
+        shutil.which("npm.cmd")
+        or shutil.which("npm")
+    )
+
+    if npm_command is None:
+        raise ProjectCheckError(
+            "npm не найден в PATH"
+        )
+
+    run_command(
+        [
+            npm_command,
+            "run",
+            "lint",
+        ],
+        cwd=FRONTEND_ROOT,
+    )
+
+    run_command(
+        [
+            npm_command,
+            "run",
+            "build",
+        ],
+        cwd=FRONTEND_ROOT,
+    )
+
+    print("Frontend успешно проверен")
 
 def check_docker_compose() -> None:
     compose_file = PROJECT_ROOT / "compose.yaml"
@@ -348,7 +385,11 @@ def main() -> int:
             check_alembic,
         ),
         (
-            "8. Проверка Docker Compose",
+            "8. Проверка frontend",
+            check_frontend,
+        ),
+        (
+            "9. Проверка Docker Compose",
             check_docker_compose,
         ),
     ]
