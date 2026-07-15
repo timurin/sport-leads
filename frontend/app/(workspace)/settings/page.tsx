@@ -1,15 +1,172 @@
+import {
+  Boxes,
+  Building2,
+  Factory,
+  FolderCog,
+  MapPin,
+  Package,
+  Ruler,
+  Settings2,
+  Users,
+  Warehouse,
+} from "lucide-react";
+import Link from "next/link";
+
+import { PageHeader } from "@/components/ui/page-header";
+
+const settingsGroups = [
+  {
+    title: "Справочники",
+    description:
+      "Основные данные для работы всех модулей ERP",
+    icon: FolderCog,
+    items: [
+      {
+        title: "Материалы",
+        description: "Ткани, фурнитура и расходные материалы",
+        href: "/settings/catalogs/materials",
+        icon: Boxes,
+      },
+      {
+        title: "Города",
+        description: "География клиентов, заказов и доставки",
+        href: "/settings/catalogs/cities",
+        icon: MapPin,
+      },
+      {
+        title: "Склады",
+        description: "Места хранения материалов и продукции",
+        href: "/settings/catalogs/warehouses",
+        icon: Warehouse,
+      },
+      {
+        title: "Контрагенты",
+        description: "Клиенты, поставщики и партнёры",
+        href: "/settings/catalogs/contractors",
+        icon: Building2,
+      },
+    ],
+  },
+  {
+    title: "Организации",
+    description:
+      "Юридическая и организационная структура компании",
+    icon: Building2,
+    items: [
+      {
+        title: "Организации",
+        description: "ООО, ИП и другие юридические лица",
+        href: "/settings/organizations",
+        icon: Factory,
+      },
+      {
+        title: "Сотрудники",
+        description: "Сотрудники, должности и контакты",
+        href: "/settings/organizations/employees",
+        icon: Users,
+      },
+      {
+        title: "Подразделения",
+        description: "Отделы, участки и рабочие группы",
+        href: "/settings/organizations/departments",
+        icon: Building2,
+      },
+    ],
+  },
+  {
+    title: "Продукция",
+    description:
+      "Номенклатура и параметры выпускаемой продукции",
+    icon: Package,
+    items: [
+      {
+        title: "Продукция",
+        description: "Полный каталог выпускаемых изделий",
+        href: "/settings/products",
+        icon: Package,
+      },
+      {
+        title: "Виды продукции",
+        description: "Футбольная форма, волейбол, корпоративная одежда",
+        href: "/settings/products/types",
+        icon: Settings2,
+      },
+      {
+        title: "Единицы измерения",
+        description: "Штуки, комплекты, метры и килограммы",
+        href: "/settings/products/units",
+        icon: Ruler,
+      },
+    ],
+  },
+];
+
 export default function SettingsPage() {
   return (
-    <div className="p-6">
-      <div className="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
-        <h1 className="text-3xl font-semibold text-slate-950">
-          Настройки
-        </h1>
+    <div>
+      <PageHeader
+        title="Настройки"
+        description="Справочники и системные данные корпоративной ERP"
+      />
 
-        <p className="mt-3 text-slate-600">
-          Справочники, организации, сотрудники,
-          продукция, пользователи и интеграции.
-        </p>
+      <div className="space-y-8 p-6">
+        {settingsGroups.map((group) => {
+          const GroupIcon = group.icon;
+
+          return (
+            <section key={group.title}>
+              <div className="mb-4 flex items-center gap-3">
+                <div className="rounded-xl bg-blue-50 p-2.5 text-blue-600">
+                  <GroupIcon size={21} />
+                </div>
+
+                <div>
+                  <h2 className="text-lg font-semibold text-slate-950">
+                    {group.title}
+                  </h2>
+
+                  <p className="text-sm text-slate-500">
+                    {group.description}
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                {group.items.map((item) => {
+                  const Icon = item.icon;
+
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      className="group rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-md"
+                    >
+                      <div className="flex items-start gap-4">
+                        <div className="rounded-xl bg-slate-100 p-3 text-slate-600 transition group-hover:bg-blue-50 group-hover:text-blue-600">
+                          <Icon size={22} />
+                        </div>
+
+                        <div>
+                          <h3 className="font-semibold text-slate-900">
+                            {item.title}
+                          </h3>
+
+                          <p className="mt-1 text-sm leading-5 text-slate-500">
+                            {item.description}
+                          </p>
+
+                          <div className="mt-4 text-sm font-medium text-blue-600">
+                            Открыть →
+                          </div>
+                        </div>
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+            </section>
+          );
+        })}
       </div>
     </div>
   );
