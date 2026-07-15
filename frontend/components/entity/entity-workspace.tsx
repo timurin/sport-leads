@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  PanelRightClose,
   PanelRightOpen,
 } from "lucide-react";
 import {
@@ -26,17 +25,30 @@ type EntityWorkspaceProps = {
   records: EntityRecord[];
 };
 
+type InspectorMode =
+  | "view"
+  | "edit"
+  | "create";
+
 export function EntityWorkspace({
   definition,
-  records,
+  records: initialRecords,
 }: EntityWorkspaceProps) {
+  const [records, setRecords] =
+    useState<EntityRecord[]>(
+      initialRecords,
+    );
+
   const [selectedId, setSelectedId] =
     useState<EntityId | null>(
-      records[0]?.id ?? null,
+      initialRecords[0]?.id ?? null,
     );
 
   const [inspectorOpen, setInspectorOpen] =
     useState(true);
+
+  const [inspectorMode, setInspectorMode] =
+    useState<InspectorMode>("view");
 
   const selectedRecord = useMemo(
     () =>
@@ -51,7 +63,68 @@ export function EntityWorkspace({
     record: EntityRecord,
   ) {
     setSelectedId(record.id);
+    setInspectorMode("view");
     setInspectorOpen(true);
+  }
+
+  function handleCreate() {
+    setSelectedId(null);
+    setInspectorMode("create");
+    setInspectorOpen(true);
+  }
+
+  function handleEdit() {
+    if (!selectedRecord) {
+      return;
+    }
+
+    setInspectorMode("edit");
+    setInspectorOpen(true);
+  }
+
+  function handleSave(
+    savedRecord: EntityRecord,
+  ) {
+    setRecords((currentRecords) => {
+      const existingIndex =
+        currentRecords.findIndex(
+          (record) =>
+            record.id === savedRecord.id,
+        );
+
+      if (existingIndex === -1) {
+        return [
+          savedRecord,
+          ...currentRecords,
+        ];
+      }
+
+      return currentRecords.map(
+        (record) =>
+          record.id === savedRecord.id
+            ? savedRecord
+            : record,
+      );
+    });
+
+    setSelectedId(savedRecord.id);
+    setInspectorMode("view");
+    setInspectorOpen(true);
+  }
+
+  function handleCloseInspector() {
+    setInspectorOpen(false);
+    setInspectorMode("view");
+  }
+
+  function handleCancelEdit() {
+    if (selectedRecord) {
+      setInspectorMode("view");
+      return;
+    }
+
+    setInspectorOpen(false);
+    setInspectorMode("view");
   }
 
   return (
@@ -65,6 +138,7 @@ export function EntityWorkspace({
         searchPlaceholder={`Поиск: ${definition.titlePlural.toLowerCase()}`}
         createLabel={`Добавить ${definition.title.toLowerCase()}`}
         view={definition.defaultView}
+        onCreate={handleCreate}
       />
 
       <div className="relative flex min-h-0 flex-1 overflow-hidden">
@@ -82,9 +156,15 @@ export function EntityWorkspace({
             <EntityInspector
               definition={definition}
               record={selectedRecord}
-              onClose={() => {
-                setInspectorOpen(false);
-              }}
+              mode={inspectorMode}
+              onEdit={handleEdit}
+              onSave={handleSave}
+              onCancelEdit={
+                handleCancelEdit
+              }
+              onClose={
+                handleCloseInspector
+              }
             />
           </section>
         ) : (
@@ -99,19 +179,6 @@ export function EntityWorkspace({
             <PanelRightOpen size={19} />
           </button>
         )}
-
-        {inspectorOpen ? (
-          <button
-            type="button"
-            onClick={() => {
-              setInspectorOpen(false);
-            }}
-            className="absolute right-[528px] top-3 z-20 rounded-lg border border-slate-200 bg-white p-1.5 text-slate-400 shadow-sm hover:text-slate-700"
-            title="Скрыть карточку"
-          >
-            <PanelRightClose size={17} />
-          </button>
-        ) : null}
       </div>
     </div>
   );

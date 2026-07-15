@@ -1,4 +1,5 @@
 "use client";
+import { EntityForm } from "@/components/entity/entity-form";
 
 import {
   BriefcaseBusiness,
@@ -26,7 +27,13 @@ import type {
 type EntityInspectorProps = {
   definition: EntityDefinition;
   record: EntityRecord | null;
+  mode?: "view" | "edit" | "create";
   onClose?: () => void;
+  onEdit?: () => void;
+  onSave?: (
+    record: EntityRecord,
+  ) => void;
+  onCancelEdit?: () => void;
 };
 
 function FieldValue({
@@ -51,13 +58,72 @@ function FieldValue({
 export function EntityInspector({
   definition,
   record,
+  mode = "view",
   onClose,
+  onEdit,
+  onSave,
+  onCancelEdit,
 }: EntityInspectorProps) {
   const [activeTab, setActiveTab] =
     useState(
       definition.inspectorTabs[0]?.id ??
         "main",
     );
+
+  if (
+  mode === "create" ||
+  mode === "edit"
+) {
+  return (
+    <aside className="flex h-full min-h-[600px] w-full flex-col border-l border-slate-200 bg-white">
+      <header className="flex items-center justify-between border-b border-slate-200 px-6 py-5">
+        <div>
+          <h2 className="text-xl font-semibold text-slate-950">
+            {mode === "create"
+              ? `Новый ${definition.title.toLowerCase()}`
+              : `Редактирование: ${record?.title ?? ""}`}
+          </h2>
+
+          <p className="mt-1 text-sm text-slate-500">
+            Заполните поля и сохраните изменения
+          </p>
+        </div>
+
+        {onClose ? (
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+          >
+            <X size={19} />
+          </button>
+        ) : null}
+      </header>
+
+      <div className="min-h-0 flex-1">
+     <EntityForm
+  key={
+    mode === "edit"
+      ? `edit-${record?.id ?? "unknown"}`
+      : `create-${definition.id}`
+  }
+  definition={definition}
+  record={
+    mode === "edit"
+      ? record
+      : null
+  }
+  onSave={(savedRecord) => {
+    onSave?.(savedRecord);
+  }}
+  onCancel={() => {
+    onCancelEdit?.();
+  }}
+/>
+      </div>
+    </aside>
+  );
+}
 
   if (!record) {
     return (
@@ -129,9 +195,12 @@ export function EntityInspector({
         </div>
 
         <div className="mt-5 flex flex-wrap gap-2">
-          <Button variant="primary">
-            Редактировать
-          </Button>
+         <Button
+  variant="primary"
+  onClick={onEdit}
+>
+  Редактировать
+</Button>
 
           <Button>
             <Phone size={16} />

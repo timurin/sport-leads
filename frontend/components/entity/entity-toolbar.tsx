@@ -16,6 +16,7 @@ type EntityToolbarProps = {
   onViewChange?: (
     view: "table" | "kanban",
   ) => void;
+  onCreate?: () => void;
 };
 
 export function EntityToolbar({
@@ -23,6 +24,7 @@ export function EntityToolbar({
   createLabel = "Добавить",
   view = "table",
   onViewChange,
+    onCreate,
 }: EntityToolbarProps) {
   return (
     <div className="flex flex-wrap items-center gap-2 border-b border-slate-200 bg-white px-6 py-3">
@@ -79,10 +81,13 @@ export function EntityToolbar({
         </button>
       </div>
 
-      <Button variant="primary">
-        <Plus size={17} />
-        {createLabel}
-      </Button>
+    <Button
+      variant="primary"
+      onClick={onCreate}
+    >
+      <Plus size={17} />
+      {createLabel}
+    </Button>
     </div>
   );
 }
