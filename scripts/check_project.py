@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import compileall
+import subprocess
 import sys
 import traceback
 from collections import Counter
@@ -9,29 +10,56 @@ from typing import Callable
 
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
-APP_DIRECTORY = PROJECT_ROOT / "app"
 
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
+APP_DIR = PROJECT_ROOT / "app"
+ALEMBIC_DIR = PROJECT_ROOT / "alembic"
 
 class ProjectCheckError(RuntimeError):
-    """
-    Ошибка автоматической проверки проекта.
-    """
+    pass
 
 
 def print_header(title: str) -> None:
     print()
-    print("=" * 70)
+    print("=" * 72)
     print(title)
-    print("=" * 70)
+    print("=" * 72)
+
+
+def run_command(
+    command: list[str],
+    *,
+    cwd: Path = PROJECT_ROOT,
+) -> subprocess.CompletedProcess[str]:
+    result = subprocess.run(
+        command,
+        cwd=cwd,
+        text=True,
+        capture_output=True,
+        encoding="utf-8",
+        errors="replace",
+    )
+
+    if result.stdout.strip():
+        print(result.stdout.rstrip())
+
+    if result.returncode != 0:
+        if result.stderr.strip():
+            print(result.stderr.rstrip())
+
+        raise ProjectCheckError(
+            f"Команда завершилась с кодом "
+            f"{result.returncode}: {' '.join(command)}"
+        )
+
+    return result
 
 
 def check_python_compilation() -> None:
-    """
-    Компилирует все Python-файлы приложения.
-    """
-
     success = compileall.compile_dir(
-        APP_DIRECTORY,
+        APP_DIR,
         quiet=1,
         force=True,
     )
@@ -41,12 +69,22 @@ def check_python_compilation() -> None:
             "Обнаружены ошибки синтаксиса Python"
         )
 
+    if ALEMBIC_DIR.exists():
+        success = compileall.compile_dir(
+            ALEMBIC_DIR,
+            quiet=1,
+            force=True,
+        )
+
+        if not success:
+            raise ProjectCheckError(
+                "Обнаружены ошибки синтаксиса Alembic"
+            )
+
+    print("Python-файлы успешно скомпилированы")
+
 
 def check_application_import() -> None:
-    """
-    Проверяет загрузку FastAPI-приложения.
-    """
-
     from app.main import app
 
     if not app.title:
@@ -54,15 +92,11 @@ def check_application_import() -> None:
             "FastAPI-приложение не имеет title"
         )
 
-    print(f"FastAPI: {app.title}")
+    print(f"Приложение: {app.title}")
     print(f"Версия: {app.version}")
 
 
 def check_openapi() -> None:
-    """
-    Проверяет генерацию OpenAPI и дубли operationId.
-    """
-
     from app.main import app
 
     schema = app.openapi()
@@ -95,17 +129,18 @@ def check_openapi() -> None:
     }
 
     if duplicates:
-        duplicate_lines = [
+        lines = [
             f"{operation_id}: {count}"
-            for operation_id, count in duplicates.items()
+            for operation_id, count
+            in sorted(duplicates.items())
         ]
 
         raise ProjectCheckError(
             "Найдены дубли operationId:\n"
-            + "\n".join(duplicate_lines)
+            + "\n".join(lines)
         )
 
-    print(f"Маршрутов OpenAPI: {len(paths)}")
+    print(f"Маршрутов: {len(paths)}")
     print(
         f"Уникальных operationId: "
         f"{len(operation_ids)}"
@@ -113,28 +148,24 @@ def check_openapi() -> None:
 
 
 def check_sqlalchemy_models() -> None:
-    """
-    Проверяет регистрацию основных моделей SQLAlchemy.
-    """
-
     from app.database.base import Base
-    from app.models.import_run import ImportRun
-    from app.models.source import Source
-    from app.models.sport_event import SportEvent
+    from app.models import (
+        ImportRun,
+        Source,
+        SportEvent,
+    )
 
     expected_tables = {
+        ImportRun.__tablename__,
         Source.__tablename__,
         SportEvent.__tablename__,
-        ImportRun.__tablename__,
     }
 
-    registered_tables = set(
+    actual_tables = set(
         Base.metadata.tables.keys()
     )
 
-    missing_tables = (
-        expected_tables - registered_tables
-    )
+    missing_tables = expected_tables - actual_tables
 
     if missing_tables:
         raise ProjectCheckError(
@@ -143,16 +174,12 @@ def check_sqlalchemy_models() -> None:
         )
 
     print(
-        "Зарегистрированные таблицы: "
-        + ", ".join(sorted(registered_tables))
+        "Таблицы SQLAlchemy: "
+        + ", ".join(sorted(actual_tables))
     )
 
 
 def check_collector_factory() -> None:
-    """
-    Проверяет фабрику коллекторов.
-    """
-
     from app.collectors.factory import (
         CollectorFactory,
     )
@@ -164,27 +191,25 @@ def check_collector_factory() -> None:
 
     if "mock" not in supported_types:
         raise ProjectCheckError(
-            "Тип mock отсутствует в CollectorFactory"
+            "Тип mock не зарегистрирован"
         )
 
-    collector = CollectorFactory.create(" MOCK ")
+    collector = CollectorFactory.create(
+        " MOCK "
+    )
 
     if not isinstance(collector, MockCollector):
         raise ProjectCheckError(
-            "CollectorFactory вернула неверный класс"
+            "Фабрика вернула неверный коллектор"
         )
 
     print(
-        "Поддерживаемые типы источников: "
+        "Типы источников: "
         + ", ".join(supported_types)
     )
 
 
-def check_mock_collection() -> None:
-    """
-    Проверяет получение тестовых мероприятий.
-    """
-
+def check_mock_collector() -> None:
     from app.collectors.factory import (
         CollectorFactory,
     )
@@ -192,7 +217,7 @@ def check_mock_collection() -> None:
 
     source = Source(
         id=1,
-        name="Автоматическая проверка",
+        name="Project check",
         url="https://example.com/check",
         source_type="mock",
         sport="Все",
@@ -202,16 +227,14 @@ def check_mock_collection() -> None:
         is_active=True,
     )
 
-    collector = CollectorFactory.create(
+    result = CollectorFactory.create(
         source.source_type
-    )
-
-    result = collector.collect(source)
+    ).collect(source)
 
     if result.items_found != 2:
         raise ProjectCheckError(
-            "MockCollector должен вернуть 2 записи, "
-            f"получено: {result.items_found}"
+            "MockCollector должен вернуть 2 записи. "
+            f"Получено: {result.items_found}"
         )
 
     required_fields = {
@@ -224,7 +247,7 @@ def check_mock_collection() -> None:
         "source_url",
     }
 
-    for index, item in enumerate(
+    for number, item in enumerate(
         result.items,
         start=1,
     ):
@@ -234,7 +257,7 @@ def check_mock_collection() -> None:
 
         if missing_fields:
             raise ProjectCheckError(
-                f"В записи {index} отсутствуют поля: "
+                f"Запись {number} не содержит поля: "
                 + ", ".join(sorted(missing_fields))
             )
 
@@ -242,6 +265,39 @@ def check_mock_collection() -> None:
         f"MockCollector вернул записей: "
         f"{result.items_found}"
     )
+
+
+def check_alembic() -> None:
+    run_command(
+        [
+            sys.executable,
+            "-m",
+            "alembic",
+            "check",
+        ]
+    )
+
+
+def check_docker_compose() -> None:
+    compose_file = PROJECT_ROOT / "compose.yaml"
+
+    if not compose_file.exists():
+        raise ProjectCheckError(
+            "Файл compose.yaml не найден"
+        )
+
+    run_command(
+        [
+            "docker",
+            "compose",
+            "-f",
+            str(compose_file),
+            "config",
+            "--quiet",
+        ]
+    )
+
+    print("compose.yaml корректен")
 
 
 def run_check(
@@ -266,11 +322,11 @@ def main() -> int:
         tuple[str, Callable[[], None]]
     ] = [
         (
-            "1. Компиляция Python-файлов",
+            "1. Компиляция Python",
             check_python_compilation,
         ),
         (
-            "2. Импорт FastAPI-приложения",
+            "2. Импорт FastAPI",
             check_application_import,
         ),
         (
@@ -287,7 +343,15 @@ def main() -> int:
         ),
         (
             "6. Проверка MockCollector",
-            check_mock_collection,
+            check_mock_collector,
+        ),
+        (
+            "7. Проверка Alembic",
+            check_alembic,
+        ),
+        (
+            "8. Проверка Docker Compose",
+            check_docker_compose,
         ),
     ]
 
@@ -296,11 +360,11 @@ def main() -> int:
         for name, check in checks
     ]
 
-    print_header("ИТОГ")
-
     passed = sum(results)
     total = len(results)
     failed = total - passed
+
+    print_header("ИТОГ")
 
     print(f"Успешно: {passed}")
     print(f"Ошибок: {failed}")
