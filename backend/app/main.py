@@ -6,6 +6,7 @@ from app.api.ekp_import import router as ekp_import_router
 from app.api.sources import router as sources_router
 from app.api.filters import router as filters_router
 from app.api.imports import router as imports_router
+from app.api.materials import router as materials_router
 app = FastAPI(
     title="Sport Leads API",
     description="API для сбора и обработки спортивных мероприятий",
@@ -18,6 +19,7 @@ app.include_router(ekp_import_router)
 app.include_router(filters_router)
 app.include_router(sources_router)
 app.include_router(imports_router)
+app.include_router(materials_router)
 @app.get("/")
 def root() -> dict[str, str]:
     return {

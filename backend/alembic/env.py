@@ -21,6 +21,8 @@ from app.models.sport_event import SportEvent
 
 from app.models.source import Source
 
+from app import models
+
 # access to the values within the .ini file in use.
 config = context.config
 config.set_main_option(
