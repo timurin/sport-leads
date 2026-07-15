@@ -11,11 +11,15 @@ from typing import Callable
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
-if str(PROJECT_ROOT) not in sys.path:
-    sys.path.insert(0, str(PROJECT_ROOT))
+BACKEND_ROOT = PROJECT_ROOT / "backend"
+FRONTEND_ROOT = PROJECT_ROOT / "frontend"
 
-APP_DIR = PROJECT_ROOT / "app"
-ALEMBIC_DIR = PROJECT_ROOT / "alembic"
+if str(BACKEND_ROOT) not in sys.path:
+    sys.path.insert(0, str(BACKEND_ROOT))
+
+APP_DIR = BACKEND_ROOT / "app"
+ALEMBIC_DIR = BACKEND_ROOT / "alembic"
+TESTS_DIR = BACKEND_ROOT / "tests"
 
 class ProjectCheckError(RuntimeError):
     pass
@@ -58,30 +62,23 @@ def run_command(
 
 
 def check_python_compilation() -> None:
-    success = compileall.compile_dir(
+    for directory in (
         APP_DIR,
-        quiet=1,
-        force=True,
-    )
-
-    if not success:
-        raise ProjectCheckError(
-            "Обнаружены ошибки синтаксиса Python"
-        )
-
-    if ALEMBIC_DIR.exists():
+        ALEMBIC_DIR,
+        TESTS_DIR,
+    ):
         success = compileall.compile_dir(
-            ALEMBIC_DIR,
+            directory,
             quiet=1,
             force=True,
         )
 
         if not success:
             raise ProjectCheckError(
-                "Обнаружены ошибки синтаксиса Alembic"
+                f"Ошибка компиляции: {directory}"
             )
 
-    print("Python-файлы успешно скомпилированы")
+    print("Python успешно скомпилирован")
 
 
 def check_application_import() -> None:
@@ -274,7 +271,8 @@ def check_alembic() -> None:
             "-m",
             "alembic",
             "check",
-        ]
+        ],
+        cwd=BACKEND_ROOT,
     )
 
 
