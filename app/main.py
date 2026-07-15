@@ -1,16 +1,31 @@
-# This is a sample Python script.
+﻿from fastapi import FastAPI
 
-# Press Shift+F10 to execute it or replace it with your code.
-# Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
+from app.api.sport_events import router as sport_events_router
+from app.api.collector import router as collector_router
+from app.api.ekp_import import router as ekp_import_router
+from app.api.sources import router as sources_router
+from app.api.filters import router as filters_router
+app = FastAPI(
+    title="Sport Leads API",
+    description="API для сбора и обработки спортивных мероприятий",
+    version="0.1.0",
+)
+
+app.include_router(sport_events_router)
+app.include_router(collector_router)
+app.include_router(ekp_import_router)
+app.include_router(filters_router)
+app.include_router(sources_router)
+@app.get("/")
+def root() -> dict[str, str]:
+    return {
+        "status": "ok",
+        "project": "Sport Leads",
+    }
 
 
-def print_hi(name):
-    # Use a breakpoint in the code line below to debug your script.
-    print(f'Hi, {name}')  # Press Ctrl+F8 to toggle the breakpoint.
-
-
-# Press the green button in the gutter to run the script.
-if __name__ == '__main__':
-    print_hi('PyCharm')
-
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
+@app.get("/health")
+def health() -> dict[str, str]:
+    return {
+        "status": "healthy",
+    }
