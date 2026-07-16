@@ -1,14 +1,13 @@
 import { KanbanPage } from "@/components/kanban/kanban-page";
-import { leadColumns, leads, salesCurrency, salesManagers } from "@/lib/demo-data/sales";
+import { leadColumns, leads, salesManagers } from "@/lib/demo-data/sales";
 
 export default function LeadsPage() {
-  const won = leads.filter((lead) => lead.status === "won").length;
   return <KanbanPage title="Лиды" description="Первичные обращения и потенциальные клиенты спортивного бизнеса" actionLabel="Добавить лид" columns={leadColumns}
     metrics={[
-      { label: "Всего лидов", value: String(leads.length) },
-      { label: "Новые", value: String(leads.filter((lead) => lead.status === "new").length) },
-      { label: "Потенциальные продажи", value: salesCurrency(leads.reduce((sum, lead) => sum + lead.estimatedAmount, 0)) },
-      { label: "Конверсия в успешные", value: `${Math.round((won / leads.length) * 100)}%` },
+      { label: "Всего лидов", kind: "count" },
+      { label: "Новые", kind: "count", statuses: ["new"] },
+      { label: "Потенциальные продажи", kind: "sum", valueKey: "amount", format: "currency" },
+      { label: "Конверсия в успешные", kind: "ratio", numerator: { statuses: ["won"] }, denominator: {} },
     ]}
     filters={[
       { id: "responsible", label: "Ответственный", options: salesManagers.map((manager) => manager.name) },

@@ -4,10 +4,10 @@ import { salesManagers, salesTasks, taskColumns } from "@/lib/demo-data/sales";
 export default function TasksPage() {
   return <KanbanPage title="Задачи" description="Работа менеджеров и контроль следующих действий" actionLabel="Добавить задачу" columns={taskColumns}
     metrics={[
-      { label: "Всего задач", value: String(salesTasks.length) },
-      { label: "На сегодня", value: String(salesTasks.filter((task) => task.status === "today").length) },
-      { label: "В работе", value: String(salesTasks.filter((task) => task.status === "progress").length) },
-      { label: "Просрочено", value: String(salesTasks.filter((task) => task.status === "overdue").length) },
+      { label: "Всего задач", kind: "count" },
+      { label: "На сегодня", kind: "count", statuses: ["today"] },
+      { label: "В работе", kind: "count", statuses: ["progress"] },
+      { label: "Просрочено", kind: "count", statuses: ["overdue"] },
     ]}
     filters={[
       { id: "responsible", label: "Исполнитель", options: salesManagers.map((manager) => manager.name) },

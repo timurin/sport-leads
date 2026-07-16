@@ -99,13 +99,18 @@ const currency = (value: number) => `${new Intl.NumberFormat("ru-RU").format(val
 const priorityLabels: Record<Priority, string> = { low: "Низкий", medium: "Средний", high: "Высокий" };
 const priorityTones: Record<Priority, "slate" | "amber" | "red"> = { low: "slate", medium: "amber", high: "red" };
 
-const makeColumns = <T extends { status: string }>(
-  definitions: ReadonlyArray<{ id: T["status"]; title: string; accentClass: string }>,
+const makeColumns = <TStatus extends string, T extends { status: TStatus }>(
+  definitions: ReadonlyArray<{ id: TStatus; title: string; accentClass: string }>,
   records: T[],
-  render: (record: T) => KanbanColumnData["cards"][number],
-): KanbanColumnData[] => definitions.map((definition) => ({
+  render: (record: T) => Omit<KanbanColumnData<TStatus>["cards"][number], "status">,
+): KanbanColumnData<TStatus>[] => definitions.map((definition) => ({
   ...definition,
-  cards: records.filter((record) => record.status === definition.id).map(render),
+  cards: records
+    .filter((record) => record.status === definition.id)
+    .map((record) => ({
+      ...render(record),
+      status: record.status,
+    })),
 }));
 
 export const leadColumns = makeColumns([
@@ -120,6 +125,7 @@ export const leadColumns = makeColumns([
   badge: { label: priorityLabels[lead.priority], tone: priorityTones[lead.priority] }, responsible: lead.responsible.name, nextAction: lead.nextContact,
   details: [{ label: "Спорт", value: lead.sport }, { label: "Источник", value: lead.source }],
   filters: { responsible: lead.responsible.name, priority: priorityLabels[lead.priority], sport: lead.sport, source: lead.source },
+  metricValues: { amount: lead.estimatedAmount },
 }));
 
 export const dealColumns = makeColumns([
@@ -133,6 +139,7 @@ export const dealColumns = makeColumns([
 ] as const, deals, (deal) => ({
   id: deal.id, title: deal.title, subtitle: deal.clientName, amount: currency(deal.amount), badge: { label: `${deal.probability}%`, tone: deal.probability >= 75 ? "emerald" : deal.probability >= 45 ? "amber" : "slate" },
   responsible: deal.responsible.name, nextAction: `${deal.expectedClose} · ${deal.nextTask}`, details: [{ label: "Спорт", value: deal.sport }], filters: { responsible: deal.responsible.name, sport: deal.sport },
+  metricValues: { amount: deal.amount, weightedAmount: deal.amount * deal.probability / 100 },
 }));
 
 const paymentLabels = { unpaid: "Не оплачен", partial: "Частично", paid: "Оплачен", refunded: "Возврат" } as const;
@@ -147,6 +154,7 @@ export const orderColumns = makeColumns([
 ] as const, orders, (order) => ({
   id: order.id, title: `Заказ ${order.number}`, subtitle: order.clientName, amount: currency(order.amount), badge: { label: paymentLabels[order.paymentStatus], tone: order.paymentStatus === "paid" ? "emerald" : order.paymentStatus === "partial" ? "amber" : "slate" },
   responsible: order.manager.name, nextAction: order.readyDate, details: [{ label: order.productType, value: `${order.quantity} изделий` }], filters: { responsible: order.manager.name, product: order.productType, payment: paymentLabels[order.paymentStatus] },
+  metricValues: { amount: order.amount },
 }));
 
 export const taskColumns = makeColumns([
