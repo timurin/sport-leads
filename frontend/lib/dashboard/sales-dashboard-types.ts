@@ -1,5 +1,6 @@
 import type {
   DealStatus,
+  LeadResult,
   LeadStatus,
   OrderStatus,
   SalesSource,
@@ -53,8 +54,11 @@ type DashboardEntity = {
 
 export type DashboardLead = DashboardEntity & {
   status: LeadStatus;
+  result?: LeadResult;
   amount: number;
   qualifiedAt?: string;
+  completedAt?: string;
+  rejectionReason?: string;
 };
 
 export type DashboardDeal = DashboardEntity & {
@@ -123,6 +127,8 @@ export type SourceSummary = {
   leads: number;
   deals: number;
   orders: number;
+  converted: number;
+  rejected: number;
   conversion: number;
   amount: number;
 };
@@ -145,6 +151,7 @@ export type DashboardSnapshot = {
   funnel: FunnelStage[];
   dynamics: DynamicsPoint[];
   sources: SourceSummary[];
+  rejectionReasons: Array<{ reason: string; count: number }>;
   dealStatuses: Array<{ status: DealStatus; count: number; amount: number }>;
   orders: { new: number; active: number; ready: number; completed: number; overdue: number; amount: number };
   tasks: { today: number; overdue: number; upcoming: number; completed: number; byResponsible: Array<{ name: string; count: number }> };

@@ -25,6 +25,7 @@ export function getSalesDashboardDemoData(): SalesDashboardData {
     leads: leads.map((lead, index) => {
       const createdDaysAgo = (index * 5 + 1) % 58;
       const isQualified = ["qualification", "proposal", "won"].includes(lead.status);
+      const result = lead.status === "won" ? "converted" as const : lead.status === "unqualified" ? "rejected" as const : undefined;
       return {
         id: lead.id,
         status: lead.status,
@@ -35,6 +36,8 @@ export function getSalesDashboardDemoData(): SalesDashboardData {
         amount: lead.estimatedAmount,
         createdAt: isoDaysAgo(createdDaysAgo, 9 + (index % 6)),
         updatedAt: isoDaysAgo(Math.max(0, createdDaysAgo - 2), 14),
+        ...(result ? { result, completedAt: isoDaysAgo(Math.max(0, createdDaysAgo - 4), 16) } : {}),
+        ...(result === "rejected" ? { rejectionReason: index % 2 ? "Другое" : "Нет бюджета" } : {}),
         ...(isQualified ? { qualifiedAt: isoDaysAgo(Math.max(0, createdDaysAgo - 3), 12) } : {}),
       };
     }),

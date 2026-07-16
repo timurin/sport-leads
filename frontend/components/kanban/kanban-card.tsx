@@ -17,18 +17,21 @@ const badgeClasses: Record<KanbanBadgeTone, string> = {
 
 type KanbanCardProps = {
   card: KanbanCardData;
+  onSelect?: (cardId: string) => void;
 };
 
 type KanbanCardContentProps = {
   card: KanbanCardData;
   dragging?: boolean;
   dragHandle?: React.ReactNode;
+  onSelect?: () => void;
 };
 
 export function KanbanCardContent({
   card,
   dragging = false,
   dragHandle,
+  onSelect,
 }: KanbanCardContentProps) {
   return (
     <article className={[
@@ -75,11 +78,20 @@ export function KanbanCardContent({
           ) : null}
         </div>
       ) : null}
+      {card.actionLabel && onSelect ? (
+        <button
+          type="button"
+          onClick={onSelect}
+          className="mt-3 w-full rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-700 hover:bg-blue-100"
+        >
+          {card.actionLabel}
+        </button>
+      ) : null}
     </article>
   );
 }
 
-export function KanbanCard({ card }: KanbanCardProps) {
+export function KanbanCard({ card, onSelect }: KanbanCardProps) {
   const {
     attributes,
     listeners,
@@ -87,7 +99,7 @@ export function KanbanCard({ card }: KanbanCardProps) {
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: card.id });
+  } = useSortable({ id: card.id, disabled: card.draggable === false });
 
   return (
     <div
@@ -100,7 +112,8 @@ export function KanbanCard({ card }: KanbanCardProps) {
     >
       <KanbanCardContent
         card={card}
-        dragHandle={(
+        onSelect={onSelect ? () => onSelect(card.id) : undefined}
+        dragHandle={card.draggable === false ? undefined : (
           <button
             type="button"
             className="mt-0.5 shrink-0 cursor-grab touch-none rounded p-0.5 text-slate-300 hover:bg-slate-100 hover:text-slate-600 active:cursor-grabbing"

@@ -11,9 +11,10 @@ import type { KanbanColumnData } from "@/components/kanban/kanban-types";
 
 type KanbanColumnProps = {
   column: KanbanColumnData;
+  onCardSelect?: (cardId: string) => void;
 };
 
-export function KanbanColumn({ column }: KanbanColumnProps) {
+export function KanbanColumn({ column, onCardSelect }: KanbanColumnProps) {
   const { setNodeRef, isOver } = useDroppable({ id: column.id });
   const metricValue = column.cards.reduce(
     (total, card) => total + (card.metricValues?.amount ?? 0),
@@ -45,7 +46,7 @@ export function KanbanColumn({ column }: KanbanColumnProps) {
           strategy={verticalListSortingStrategy}
         >
           {column.cards.length ? column.cards.map((card) => (
-            <KanbanCard key={card.id} card={card} />
+            <KanbanCard key={card.id} card={card} onSelect={onCardSelect} />
           )) : (
             <div className="flex min-h-32 items-center justify-center rounded-lg border border-dashed border-slate-300 bg-white/60 px-5 text-center text-xs leading-5 text-slate-400">
               В этой колонке пока нет записей

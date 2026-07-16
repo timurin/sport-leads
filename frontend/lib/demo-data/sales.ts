@@ -113,21 +113,6 @@ const makeColumns = <TStatus extends string, T extends { status: TStatus }>(
     })),
 }));
 
-export const leadColumns = makeColumns([
-  { id: "new", title: "Новый", accentClass: "bg-blue-500" },
-  { id: "contact", title: "Первичный контакт", accentClass: "bg-cyan-500" },
-  { id: "qualification", title: "Квалификация", accentClass: "bg-violet-500" },
-  { id: "proposal", title: "Предложение", accentClass: "bg-amber-500" },
-  { id: "won", title: "Успешный", accentClass: "bg-emerald-500" },
-  { id: "unqualified", title: "Нецелевой", accentClass: "bg-slate-400" },
-] as const, leads, (lead) => ({
-  id: lead.id, title: lead.clientName, subtitle: `${lead.contact} · ${lead.city}`, amount: currency(lead.estimatedAmount),
-  badge: { label: priorityLabels[lead.priority], tone: priorityTones[lead.priority] }, responsible: lead.responsible.name, nextAction: lead.nextContact,
-  details: [{ label: "Спорт", value: lead.sport }, { label: "Источник", value: lead.source }],
-  filters: { responsible: lead.responsible.name, priority: priorityLabels[lead.priority], sport: lead.sport, source: lead.source },
-  metricValues: { amount: lead.estimatedAmount },
-}));
-
 export const dealColumns = makeColumns([
   { id: "preparing", title: "Подготовка предложения", accentClass: "bg-blue-500" },
   { id: "sent", title: "Предложение отправлено", accentClass: "bg-cyan-500" },

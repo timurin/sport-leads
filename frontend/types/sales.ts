@@ -3,9 +3,13 @@ export const leadStatuses = [
   "contact",
   "qualification",
   "proposal",
+  "waiting",
+  "completed",
   "won",
   "unqualified",
 ] as const;
+
+export const leadResults = ["converted", "rejected"] as const;
 
 export const dealStatuses = [
   "preparing",
@@ -48,6 +52,7 @@ export const salesSources = [
 ] as const;
 
 export type LeadStatus = (typeof leadStatuses)[number];
+export type LeadResult = (typeof leadResults)[number];
 export type DealStatus = (typeof dealStatuses)[number];
 export type OrderStatus = (typeof orderStatuses)[number];
 export type SalesTaskStatus = (typeof taskStatuses)[number];
@@ -73,6 +78,17 @@ export type Lead = {
   responsible: UserSummary;
   nextContact: string;
   priority: Priority;
+  result?: LeadResult;
+  completedAt?: string;
+  completedBy?: UserSummary;
+  convertedOrderId?: string;
+  convertedOrderNumber?: string;
+  rejectionReason?: string;
+  rejectionComment?: string;
+  productCategory?: string;
+  quantity?: number;
+  needDescription?: string;
+  desiredDate?: string;
 };
 
 export type Deal = {

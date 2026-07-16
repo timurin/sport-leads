@@ -77,15 +77,26 @@ function metricValues(filtered: FilteredData, now: Date) {
   const activeDealAmount = sum(activeDeals.map((deal) => deal.amount));
   const orderAmount = sum(filtered.orders.map((order) => order.amount));
   const completedOrders = filtered.orders.filter((order) => order.status === "completed").length;
+  const completedLeads = filtered.leads.filter((lead) => lead.result && lead.completedAt);
+  const convertedLeads = completedLeads.filter((lead) => lead.result === "converted");
+  const rejectedLeads = completedLeads.filter((lead) => lead.result === "rejected");
+  const completionHours = completedLeads.map((lead) => (
+    (new Date(lead.completedAt!).getTime() - new Date(lead.createdAt).getTime()) / 3_600_000
+  )).filter((value) => value >= 0);
   return {
+    totalLeads: filtered.leads.length,
+    completedLeads: completedLeads.length,
+    convertedLeads: convertedLeads.length,
+    rejectedLeads: rejectedLeads.length,
+    incomingConversion: conversion(convertedLeads.length, filtered.leads.length),
+    completedConversion: conversion(convertedLeads.length, completedLeads.length),
+    averageCompletionHours: completionHours.length ? sum(completionHours) / completionHours.length : 0,
     newLeads: filtered.leads.filter((lead) => lead.status === "new").length,
     qualifiedLeads,
     activeDeals: activeDeals.length,
     activeDealAmount,
     orders: filtered.orders.length,
     orderAmount,
-    leadToDeal: conversion(filtered.deals.length, filtered.leads.length),
-    dealToOrder: conversion(filtered.orders.length, filtered.deals.length),
     clients: filtered.clients.length,
     overdueTasks: filtered.tasks.filter((task) => task.status !== "done" && new Date(task.dueAt) < now).length,
     averageOrder: filtered.orders.length ? orderAmount / filtered.orders.length : 0,
@@ -96,14 +107,19 @@ function metricValues(filtered: FilteredData, now: Date) {
 
 function buildKpis(current: ReturnType<typeof metricValues>, previous: ReturnType<typeof metricValues>): Kpi[] {
   const definitions = [
+    ["totalLeads", "Всего создано лидов", number.format(current.totalLeads), "Входящие лиды за период"],
+    ["completedLeads", "Завершено лидов", number.format(current.completedLeads), "Оба результата завершения"],
+    ["convertedLeads", "Успешно конвертировано", number.format(current.convertedLeads), "Создан заказ покупателя"],
+    ["rejectedLeads", "Отказов", number.format(current.rejectedLeads), "С зафиксированной причиной"],
+    ["incomingConversion", "Конверсия всех лидов", `${current.incomingConversion}%`, "Конвертировано / создано"],
+    ["completedConversion", "Конверсия завершённых", `${current.completedConversion}%`, "Конвертировано / завершено"],
+    ["averageCompletionHours", "Среднее время завершения", `${number.format(Math.round(current.averageCompletionHours))} ч`, "От создания до результата"],
     ["newLeads", "Новые лиды", number.format(current.newLeads), "Созданы за период"],
     ["qualifiedLeads", "Квалифицированные лиды", number.format(current.qualifiedLeads), "Готовы к продаже"],
     ["activeDeals", "Активные сделки", number.format(current.activeDeals), "Без проигранных и оплаченных"],
     ["activeDealAmount", "Сумма активных сделок", currency.format(current.activeDealAmount), "Потенциал в работе"],
     ["orders", "Заказы", number.format(current.orders), "Созданы за период"],
     ["orderAmount", "Сумма заказов", currency.format(current.orderAmount), "Выручка по заказам"],
-    ["leadToDeal", "Конверсия лид → сделка", `${current.leadToDeal}%`, "От всех лидов"],
-    ["dealToOrder", "Конверсия сделка → заказ", `${current.dealToOrder}%`, "От всех сделок"],
     ["clients", "Новые клиенты", number.format(current.clients), "Добавлены за период"],
     ["overdueTasks", "Просроченные задачи", number.format(current.overdueTasks), "Требуют внимания"],
     ["averageOrder", "Средний чек", currency.format(current.averageOrder), "По заказам периода"],
@@ -161,7 +177,9 @@ function sourceSummaries(filtered: FilteredData): SourceSummary[] {
     const leads = filtered.leads.filter((item) => item.source === source).length;
     const deals = filtered.deals.filter((item) => item.source === source).length;
     const sourceOrders = filtered.orders.filter((item) => item.source === source);
-    return { source, leads, deals, orders: sourceOrders.length, conversion: conversion(sourceOrders.length, leads), amount: sum(sourceOrders.map((item) => item.amount)) };
+    const converted = filtered.leads.filter((item) => item.source === source && item.result === "converted").length;
+    const rejected = filtered.leads.filter((item) => item.source === source && item.result === "rejected").length;
+    return { source, leads, deals, orders: sourceOrders.length, converted, rejected, conversion: conversion(converted, leads), amount: sum(sourceOrders.map((item) => item.amount)) };
   });
 }
 
@@ -202,6 +220,11 @@ export function createSalesDashboardSnapshot(data: SalesDashboardData, filters: 
   ].sort((a, b) => b.occurredAt.localeCompare(a.occurredAt)).slice(0, 8);
 
   const today = new Date(data.now).toDateString();
+  const rejectionReasonCounts = new Map<string, number>();
+  current.leads.filter((lead) => lead.result === "rejected").forEach((lead) => {
+    const reason = lead.rejectionReason ?? "Не указана";
+    rejectionReasonCounts.set(reason, (rejectionReasonCounts.get(reason) ?? 0) + 1);
+  });
   return {
     range,
     previousRange,
@@ -212,6 +235,7 @@ export function createSalesDashboardSnapshot(data: SalesDashboardData, filters: 
     funnel: stages.map((stage, index) => ({ ...stage, transition: index === 0 ? 100 : conversion(stage.count, stages[index - 1].count) })),
     dynamics: dynamics(current, range),
     sources: sourceSummaries(current),
+    rejectionReasons: [...rejectionReasonCounts].map(([reason, count]) => ({ reason, count })).sort((a, b) => b.count - a.count),
     dealStatuses: [...new Set(data.deals.map((deal) => deal.status))].map((status) => ({ status, count: current.deals.filter((deal) => deal.status === status).length, amount: sum(current.deals.filter((deal) => deal.status === status).map((deal) => deal.amount)) })),
     orders: {
       new: current.orders.filter((item) => item.status === "new").length,
