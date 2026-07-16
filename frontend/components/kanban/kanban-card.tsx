@@ -35,7 +35,7 @@ export function KanbanCardContent({
 }: KanbanCardContentProps) {
   return (
     <article className={[
-      "rounded-xl border bg-white p-4 shadow-sm transition",
+      "rounded-xl border bg-white p-4 text-slate-900 shadow-sm transition",
       dragging
         ? "rotate-2 border-blue-400 shadow-2xl"
         : "border-slate-200 hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-md",
@@ -59,8 +59,8 @@ export function KanbanCardContent({
         <dl className="mt-3 space-y-1.5 text-xs">
           {card.details.map((detail) => (
             <div key={`${detail.label}-${detail.value}`} className="flex items-center justify-between gap-3">
-              <dt className="text-slate-400">{detail.label}</dt>
-              <dd className="truncate text-right font-medium text-slate-600">{detail.value}</dd>
+              <dt className="text-slate-500">{detail.label}</dt>
+              <dd className="truncate text-right font-medium text-slate-900">{detail.value}</dd>
             </div>
           ))}
         </dl>
@@ -69,7 +69,7 @@ export function KanbanCardContent({
       {card.amount ? <div className="mt-3 text-base font-semibold text-slate-950">{card.amount}</div> : null}
 
       {card.responsible || card.nextAction ? (
-        <div className="mt-3 space-y-2 border-t border-slate-100 pt-3 text-xs text-slate-500">
+        <div className="mt-3 space-y-2 border-t border-slate-100 pt-3 text-xs text-slate-600">
           {card.responsible ? (
             <div className="flex items-center gap-2"><CircleUserRound size={14} />{card.responsible}</div>
           ) : null}

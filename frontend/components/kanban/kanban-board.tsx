@@ -13,7 +13,7 @@ import {
   useSensors,
 } from "@dnd-kit/core";
 import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
-import { useMemo, useRef, useState } from "react";
+import { useId, useMemo, useRef, useState } from "react";
 
 import {
   KanbanCardContent,
@@ -54,6 +54,7 @@ export function KanbanBoard<TStatus extends string>({
     () => cloneKanbanColumns(initialColumns),
   );
   const [activeCardId, setActiveCardId] = useState<string | null>(null);
+  const dndContextId = useId();
   const dragStartColumns = useRef<KanbanColumnData<TStatus>[] | null>(null);
   const columnsRef = useRef(columns);
   const lastAppliedMove = useRef<KanbanMove<TStatus> | null>(null);
@@ -242,6 +243,7 @@ export function KanbanBoard<TStatus extends string>({
 
   return (
     <DndContext
+      id={dndContextId}
       sensors={sensors}
       collisionDetection={closestCorners}
       onDragStart={handleDragStart}
