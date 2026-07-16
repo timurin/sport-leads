@@ -54,7 +54,7 @@ export const appSections: AppSection[] = [
       {
         id: "sales-dashboard",
         title: "Дашборд",
-        href: "/sales",
+        href: "/sales/dashboard",
       },
       {
         id: "orders",

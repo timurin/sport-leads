@@ -38,6 +38,14 @@ export const taskStatuses = [
 
 export const priorities = ["low", "medium", "high"] as const;
 export const clientStatuses = ["new", "active", "paused"] as const;
+export const salesSources = [
+  "website",
+  "referral",
+  "vk",
+  "phone",
+  "email",
+  "manual",
+] as const;
 
 export type LeadStatus = (typeof leadStatuses)[number];
 export type DealStatus = (typeof dealStatuses)[number];
@@ -45,6 +53,7 @@ export type OrderStatus = (typeof orderStatuses)[number];
 export type SalesTaskStatus = (typeof taskStatuses)[number];
 export type Priority = (typeof priorities)[number];
 export type ClientStatus = (typeof clientStatuses)[number];
+export type SalesSource = (typeof salesSources)[number];
 
 export type UserSummary = {
   id: string;
