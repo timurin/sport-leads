@@ -98,7 +98,7 @@ export function KanbanBoard<TStatus extends string>({
 
     columnsRef.current = nextColumns;
     lastAppliedMove.current = move;
-    setColumns((renderedColumns) => moveKanbanCard(renderedColumns, move));
+    setColumns(nextColumns);
     return true;
   }
 
