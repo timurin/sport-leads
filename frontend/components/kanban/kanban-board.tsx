@@ -9,503 +9,233 @@ import {
   type DragEndEvent,
   type DragOverEvent,
   type DragStartEvent,
-  useDroppable,
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
-import {
-  SortableContext,
-  arrayMove,
-  sortableKeyboardCoordinates,
-  useSortable,
-  verticalListSortingStrategy,
-} from "@dnd-kit/sortable";
-import {
-  CSS,
-} from "@dnd-kit/utilities";
-import {
-  CalendarDays,
-  CircleUserRound,
-  GripVertical,
-  MoreHorizontal,
-} from "lucide-react";
-import {
-  useMemo,
-  useState,
-} from "react";
+import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
+import { useMemo, useRef, useState } from "react";
 
-export type KanbanCardData = {
-  id: string;
-  title: string;
-  subtitle?: string;
-  responsible?: string;
-  amount?: string;
-  deadline?: string;
-  tag?: string;
+import {
+  KanbanCardContent,
+} from "@/components/kanban/kanban-card";
+import { KanbanColumn } from "@/components/kanban/kanban-column";
+import {
+  cloneKanbanColumns,
+  filterKanbanColumns,
+  findKanbanCard,
+  findKanbanColumnId,
+  haveSameKanbanLayout,
+  moveKanbanCard,
+} from "@/components/kanban/kanban-state";
+import type {
+  KanbanColumnData,
+  KanbanMove,
+  KanbanMoveHandler,
+} from "@/components/kanban/kanban-types";
+
+type KanbanBoardProps<TStatus extends string> = {
+  columns: KanbanColumnData<TStatus>[];
+  query: string;
+  selectedFilters: Readonly<Record<string, string>>;
+  onColumnsChange?: (columns: KanbanColumnData<TStatus>[]) => void;
+  onMove?: KanbanMoveHandler<TStatus>;
 };
 
-export type KanbanColumnData = {
-  id: string;
-  title: string;
-  accentClass: string;
-  cards: KanbanCardData[];
-};
-
-type KanbanBoardProps = {
-  columns: KanbanColumnData[];
-  onChange?: (
-    columns: KanbanColumnData[],
-  ) => void;
-};
-
-type SortableCardProps = {
-  card: KanbanCardData;
-};
-
-function CardContent({
-  card,
-  dragging = false,
-}: {
-  card: KanbanCardData;
-  dragging?: boolean;
-}) {
-  return (
-    <article
-      className={[
-        "rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition",
-        dragging
-          ? "rotate-2 border-blue-400 shadow-2xl"
-          : "hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-md",
-      ].join(" ")}
-    >
-      <div className="flex items-start gap-2">
-        <div className="mt-0.5 text-slate-300">
-          <GripVertical size={17} />
-        </div>
-
-        <div className="min-w-0 flex-1">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              {card.tag ? (
-                <div className="mb-2 inline-flex rounded-full bg-blue-50 px-2 py-1 text-[11px] font-medium text-blue-700">
-                  {card.tag}
-                </div>
-              ) : null}
-
-              <h3 className="text-sm font-semibold leading-5 text-slate-900">
-                {card.title}
-              </h3>
-            </div>
-
-            <button
-              type="button"
-              className="shrink-0 text-slate-400 hover:text-slate-700"
-              onPointerDown={(event) => {
-                event.stopPropagation();
-              }}
-            >
-              <MoreHorizontal size={18} />
-            </button>
-          </div>
-
-          {card.subtitle ? (
-            <p className="mt-2 text-sm leading-5 text-slate-500">
-              {card.subtitle}
-            </p>
-          ) : null}
-
-          {card.amount ? (
-            <div className="mt-4 text-base font-semibold text-slate-900">
-              {card.amount}
-            </div>
-          ) : null}
-
-          <div className="mt-4 space-y-2 border-t border-slate-100 pt-3">
-            {card.responsible ? (
-              <div className="flex items-center gap-2 text-xs text-slate-500">
-                <CircleUserRound size={15} />
-                {card.responsible}
-              </div>
-            ) : null}
-
-            {card.deadline ? (
-              <div className="flex items-center gap-2 text-xs text-slate-500">
-                <CalendarDays size={15} />
-                {card.deadline}
-              </div>
-            ) : null}
-          </div>
-        </div>
-      </div>
-    </article>
-  );
-}
-
-function SortableCard({
-  card,
-}: SortableCardProps) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({
-    id: card.id,
-  });
-
-  const style = {
-    transform: CSS.Transform.toString(
-      transform,
-    ),
-    transition,
-    opacity: isDragging ? 0.35 : 1,
-  };
-
-  return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      {...attributes}
-      {...listeners}
-      className="cursor-grab touch-none active:cursor-grabbing"
-    >
-      <CardContent card={card} />
-    </div>
-  );
-}
-
-function KanbanColumn({
-  column,
-}: {
-  column: KanbanColumnData;
-}) {
-  const {
-    setNodeRef,
-    isOver,
-  } = useDroppable({
-    id: column.id,
-  });
-
-  return (
-    <section className="w-[310px] shrink-0">
-      <header className="mb-3 rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span
-              className={[
-                "h-2.5 w-2.5 rounded-full",
-                column.accentClass,
-              ].join(" ")}
-            />
-
-            <h2 className="text-sm font-semibold text-slate-900">
-              {column.title}
-            </h2>
-          </div>
-
-          <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-500">
-            {column.cards.length}
-          </span>
-        </div>
-      </header>
-
-      <div
-        ref={setNodeRef}
-        className={[
-          "min-h-[520px] space-y-3 rounded-xl border-2 p-3 transition-colors",
-          isOver
-            ? "border-blue-400 bg-blue-50/70"
-            : "border-transparent bg-slate-200/60",
-        ].join(" ")}
-      >
-        <SortableContext
-          items={column.cards.map(
-            (card) => card.id,
-          )}
-          strategy={verticalListSortingStrategy}
-        >
-          {column.cards.map((card) => (
-            <SortableCard
-              key={card.id}
-              card={card}
-            />
-          ))}
-        </SortableContext>
-
-        <button
-          type="button"
-          className="w-full rounded-lg border border-dashed border-slate-300 py-3 text-sm font-medium text-slate-500 hover:border-blue-400 hover:bg-white hover:text-blue-600"
-        >
-          + Добавить
-        </button>
-      </div>
-    </section>
-  );
-}
-
-function findColumnId(
-  columns: KanbanColumnData[],
-  itemId: string,
-): string | null {
-  const directColumn = columns.find(
-    (column) => column.id === itemId,
-  );
-
-  if (directColumn) {
-    return directColumn.id;
-  }
-
-  const parentColumn = columns.find(
-    (column) =>
-      column.cards.some(
-        (card) => card.id === itemId,
-      ),
-  );
-
-  return parentColumn?.id ?? null;
-}
-
-function findCard(
-  columns: KanbanColumnData[],
-  cardId: string,
-): KanbanCardData | null {
-  for (const column of columns) {
-    const card = column.cards.find(
-      (item) => item.id === cardId,
-    );
-
-    if (card) {
-      return card;
-    }
-  }
-
-  return null;
-}
-
-export function KanbanBoard({
+export function KanbanBoard<TStatus extends string>({
   columns: initialColumns,
-  onChange,
-}: KanbanBoardProps) {
-  const [columns, setColumns] =
-    useState<KanbanColumnData[]>(
-      initialColumns,
-    );
-
-  const [activeCardId, setActiveCardId] =
-    useState<string | null>(null);
-
+  query,
+  selectedFilters,
+  onColumnsChange,
+  onMove,
+}: KanbanBoardProps<TStatus>) {
+  const [columns, setColumns] = useState(
+    () => cloneKanbanColumns(initialColumns),
+  );
+  const [activeCardId, setActiveCardId] = useState<string | null>(null);
+  const dragStartColumns = useRef<KanbanColumnData<TStatus>[] | null>(null);
+  const columnsRef = useRef(columns);
+  const lastAppliedMove = useRef<KanbanMove<TStatus> | null>(null);
+  const movedAcrossColumns = useRef(false);
   const sensors = useSensors(
     useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 6,
-      },
+      activationConstraint: { distance: 6 },
     }),
     useSensor(KeyboardSensor, {
-      coordinateGetter:
-        sortableKeyboardCoordinates,
+      coordinateGetter: sortableKeyboardCoordinates,
     }),
   );
-
-  const activeCard = useMemo(
-    () =>
-      activeCardId
-        ? findCard(columns, activeCardId)
-        : null,
-    [activeCardId, columns],
+  const visibleColumns = useMemo(
+    () => filterKanbanColumns(columns, query, selectedFilters),
+    [columns, query, selectedFilters],
+  );
+  const activeCard = activeCardId
+    ? findKanbanCard(columns, activeCardId)
+    : null;
+  const cardsCount = visibleColumns.reduce(
+    (total, column) => total + column.cards.length,
+    0,
   );
 
-  function updateColumns(
-    nextColumns: KanbanColumnData[],
-  ) {
-    setColumns(nextColumns);
-    onChange?.(nextColumns);
+  function getMoveKey(move: KanbanMove<TStatus>) {
+    return `${move.cardId}\u0000${move.targetColumnId}\u0000${move.targetIndex}`;
   }
 
-  function handleDragStart(
-    event: DragStartEvent,
-  ) {
-    setActiveCardId(
-      String(event.active.id),
-    );
+  function applyLocalMove(move: KanbanMove<TStatus>) {
+    const previousMove = lastAppliedMove.current;
+
+    if (previousMove && getMoveKey(previousMove) === getMoveKey(move)) {
+      return false;
+    }
+
+    const currentColumns = columnsRef.current;
+    const nextColumns = moveKanbanCard(currentColumns, move);
+
+    if (nextColumns === currentColumns) {
+      return false;
+    }
+
+    columnsRef.current = nextColumns;
+    lastAppliedMove.current = move;
+    setColumns((renderedColumns) => moveKanbanCard(renderedColumns, move));
+    return true;
   }
 
-  function handleDragOver(
-    event: DragOverEvent,
-  ) {
-    const activeId = String(
-      event.active.id,
+  function getMove(
+    currentColumns: KanbanColumnData<TStatus>[],
+    activeId: string,
+    overId: string,
+  ): KanbanMove<TStatus> | null {
+    const currentVisibleColumns = filterKanbanColumns(
+      currentColumns,
+      query,
+      selectedFilters,
+    );
+    const targetColumnId = findKanbanColumnId(currentVisibleColumns, overId);
+
+    if (!targetColumnId) {
+      return null;
+    }
+
+    const targetColumn = currentVisibleColumns.find(
+      (column) => column.id === targetColumnId,
     );
 
-    const overId = event.over
-      ? String(event.over.id)
-      : null;
+    if (!targetColumn) {
+      return null;
+    }
+
+    const overCardIndex = targetColumn.cards.findIndex(
+      (card) => card.id === overId,
+    );
+
+    return {
+      cardId: activeId,
+      targetColumnId,
+      targetIndex: overCardIndex === -1
+        ? targetColumn.cards.length
+        : overCardIndex,
+      visibleTargetCardIds: targetColumn.cards.map((card) => card.id),
+    };
+  }
+
+  function handleDragStart(event: DragStartEvent) {
+    dragStartColumns.current = cloneKanbanColumns(columnsRef.current);
+    lastAppliedMove.current = null;
+    movedAcrossColumns.current = false;
+    setActiveCardId(String(event.active.id));
+  }
+
+  function handleDragOver(event: DragOverEvent) {
+    const overId = event.over ? String(event.over.id) : null;
 
     if (!overId) {
       return;
     }
 
-    const activeColumnId = findColumnId(
-      columns,
-      activeId,
+    const activeId = String(event.active.id);
+    const currentColumns = columnsRef.current;
+    const currentVisibleColumns = filterKanbanColumns(
+      currentColumns,
+      query,
+      selectedFilters,
     );
+    const sourceColumnId = findKanbanColumnId(currentColumns, activeId);
+    const targetColumnId = findKanbanColumnId(currentVisibleColumns, overId);
 
-    const overColumnId = findColumnId(
-      columns,
-      overId,
-    );
-
-    if (
-      !activeColumnId ||
-      !overColumnId ||
-      activeColumnId === overColumnId
-    ) {
+    if (!sourceColumnId || !targetColumnId || sourceColumnId === targetColumnId) {
       return;
     }
 
-    const activeColumnIndex =
-      columns.findIndex(
-        (column) =>
-          column.id === activeColumnId,
-      );
+    const move = getMove(currentColumns, activeId, overId);
 
-    const overColumnIndex =
-      columns.findIndex(
-        (column) =>
-          column.id === overColumnId,
-      );
-
-    const activeColumn =
-      columns[activeColumnIndex];
-
-    const overColumn =
-      columns[overColumnIndex];
-
-    const activeCardIndex =
-      activeColumn.cards.findIndex(
-        (card) => card.id === activeId,
-      );
-
-    if (activeCardIndex === -1) {
-      return;
+    if (move && applyLocalMove(move)) {
+      movedAcrossColumns.current = true;
     }
-
-    const movedCard =
-      activeColumn.cards[activeCardIndex];
-
-    const overCardIndex =
-      overColumn.cards.findIndex(
-        (card) => card.id === overId,
-      );
-
-    const insertIndex =
-      overCardIndex >= 0
-        ? overCardIndex
-        : overColumn.cards.length;
-
-    const nextColumns = columns.map(
-      (column) => ({
-        ...column,
-        cards: [...column.cards],
-      }),
-    );
-
-    nextColumns[
-      activeColumnIndex
-    ].cards.splice(activeCardIndex, 1);
-
-    nextColumns[
-      overColumnIndex
-    ].cards.splice(
-      insertIndex,
-      0,
-      movedCard,
-    );
-
-    updateColumns(nextColumns);
   }
 
-  function handleDragEnd(
-    event: DragEndEvent,
-  ) {
-    const activeId = String(
-      event.active.id,
-    );
-
-    const overId = event.over
-      ? String(event.over.id)
-      : null;
-
+  function handleDragEnd(event: DragEndEvent) {
+    const overId = event.over ? String(event.over.id) : null;
+    const activeId = String(event.active.id);
+    const initialColumns = dragStartColumns.current;
     setActiveCardId(null);
 
-    if (!overId || activeId === overId) {
+    if (!overId) {
+      if (initialColumns) {
+        columnsRef.current = initialColumns;
+        setColumns(() => initialColumns);
+      }
+
+      dragStartColumns.current = null;
+      lastAppliedMove.current = null;
+      movedAcrossColumns.current = false;
       return;
     }
 
-    const activeColumnId = findColumnId(
-      columns,
-      activeId,
-    );
+    let completedMove = lastAppliedMove.current;
 
-    const overColumnId = findColumnId(
-      columns,
-      overId,
-    );
+    if (!movedAcrossColumns.current && activeId !== overId) {
+      const move = getMove(columnsRef.current, activeId, overId);
 
-    if (
-      !activeColumnId ||
-      !overColumnId ||
-      activeColumnId !== overColumnId
-    ) {
-      return;
+      if (move && applyLocalMove(move)) {
+        completedMove = move;
+      }
     }
 
-    const columnIndex =
-      columns.findIndex(
-        (column) =>
-          column.id === activeColumnId,
-      );
+    const finalColumns = columnsRef.current;
 
-    const column = columns[columnIndex];
+    if (initialColumns && !haveSameKanbanLayout(initialColumns, finalColumns)) {
+      onColumnsChange?.(finalColumns);
 
-    const oldIndex =
-      column.cards.findIndex(
-        (card) => card.id === activeId,
-      );
-
-    const newIndex =
-      column.cards.findIndex(
-        (card) => card.id === overId,
-      );
-
-    if (
-      oldIndex === -1 ||
-      newIndex === -1 ||
-      oldIndex === newIndex
-    ) {
-      return;
+      if (completedMove) {
+        onMove?.(completedMove);
+      }
     }
 
-    const nextColumns = columns.map(
-      (item) => ({
-        ...item,
-        cards: [...item.cards],
-      }),
-    );
-
-    nextColumns[columnIndex].cards =
-      arrayMove(
-        nextColumns[columnIndex].cards,
-        oldIndex,
-        newIndex,
-      );
-
-    updateColumns(nextColumns);
+    dragStartColumns.current = null;
+    lastAppliedMove.current = null;
+    movedAcrossColumns.current = false;
   }
 
   function handleDragCancel() {
+    const previousColumns = dragStartColumns.current;
     setActiveCardId(null);
+    dragStartColumns.current = null;
+    lastAppliedMove.current = null;
+    movedAcrossColumns.current = false;
+
+    if (previousColumns) {
+      columnsRef.current = previousColumns;
+      setColumns(() => previousColumns);
+    }
+  }
+
+  if (!cardsCount) {
+    return (
+      <div className="rounded-xl border border-dashed border-slate-300 bg-white px-6 py-16 text-center">
+        <h2 className="font-semibold text-slate-800">Ничего не найдено</h2>
+        <p className="mt-1 text-sm text-slate-500">Измените запрос или сбросьте выбранные фильтры.</p>
+      </div>
+    );
   }
 
   return (
@@ -517,13 +247,10 @@ export function KanbanBoard({
       onDragEnd={handleDragEnd}
       onDragCancel={handleDragCancel}
     >
-      <div className="min-w-0 overflow-x-auto pb-5">
-        <div className="flex min-w-max gap-4">
-          {columns.map((column) => (
-            <KanbanColumn
-              key={column.id}
-              column={column}
-            />
+      <div className="overflow-x-auto pb-3" aria-label="Канбан-доска">
+        <div className="flex min-w-max items-start gap-4">
+          {visibleColumns.map((column) => (
+            <KanbanColumn key={column.id} column={column} />
           ))}
         </div>
       </div>
@@ -531,13 +258,15 @@ export function KanbanBoard({
       <DragOverlay>
         {activeCard ? (
           <div className="w-[286px] cursor-grabbing">
-            <CardContent
-              card={activeCard}
-              dragging
-            />
+            <KanbanCardContent card={activeCard} dragging />
           </div>
         ) : null}
       </DragOverlay>
     </DndContext>
   );
 }
+
+export type {
+  KanbanCardData,
+  KanbanColumnData,
+} from "@/components/kanban/kanban-types";

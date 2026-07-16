@@ -1,12 +1,6 @@
-import { EntityWorkspace } from "@/components/entity/entity-workspace";
-import { clientRecords } from "@/lib/demo-data/clients";
-import { clientsDefinition } from "@/lib/entity/definitions/clients";
+import { ClientsTable } from "@/components/tables/clients-table";
+import { clients } from "@/lib/demo-data/sales";
 
 export default function ClientsPage() {
-  return (
-    <EntityWorkspace
-      definition={clientsDefinition}
-      records={clientRecords}
-    />
-  );
+  return <ClientsTable clients={clients} />;
 }
