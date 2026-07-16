@@ -148,7 +148,14 @@ def check_openapi() -> None:
 def check_sqlalchemy_models() -> None:
     from app.database.base import Base
     from app.models import (
+        Client,
         ImportRun,
+        Lead,
+        LeadEvent,
+        LeadRejectionReason,
+        LeadTask,
+        SalesOrder,
+        SalesUser,
         Source,
         SportEvent,
     )
@@ -157,6 +164,13 @@ def check_sqlalchemy_models() -> None:
         ImportRun.__tablename__,
         Source.__tablename__,
         SportEvent.__tablename__,
+        SalesUser.__tablename__,
+        Client.__tablename__,
+        Lead.__tablename__,
+        LeadRejectionReason.__tablename__,
+        SalesOrder.__tablename__,
+        LeadEvent.__tablename__,
+        LeadTask.__tablename__,
     }
 
     actual_tables = set(
