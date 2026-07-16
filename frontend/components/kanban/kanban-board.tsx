@@ -24,6 +24,7 @@ import {
   filterKanbanColumns,
   findKanbanCard,
   findKanbanColumnId,
+  haveSameKanbanLayout,
   moveKanbanCard,
 } from "@/components/kanban/kanban-state";
 import type {
@@ -52,6 +53,9 @@ export function KanbanBoard<TStatus extends string>({
   );
   const [activeCardId, setActiveCardId] = useState<string | null>(null);
   const dragStartColumns = useRef<KanbanColumnData<TStatus>[] | null>(null);
+  const columnsRef = useRef(columns);
+  const lastAppliedMove = useRef<KanbanMove<TStatus> | null>(null);
+  const movedAcrossColumns = useRef(false);
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: { distance: 6 },
@@ -72,24 +76,47 @@ export function KanbanBoard<TStatus extends string>({
     0,
   );
 
-  function commitMove(move: KanbanMove<TStatus>) {
-    const nextColumns = moveKanbanCard(columns, move);
-    setColumns(nextColumns);
-    onColumnsChange?.(nextColumns);
-    onMove?.(move);
+  function getMoveKey(move: KanbanMove<TStatus>) {
+    return `${move.cardId}\u0000${move.targetColumnId}\u0000${move.targetIndex}`;
+  }
+
+  function applyLocalMove(move: KanbanMove<TStatus>) {
+    const previousMove = lastAppliedMove.current;
+
+    if (previousMove && getMoveKey(previousMove) === getMoveKey(move)) {
+      return false;
+    }
+
+    const currentColumns = columnsRef.current;
+    const nextColumns = moveKanbanCard(currentColumns, move);
+
+    if (nextColumns === currentColumns) {
+      return false;
+    }
+
+    columnsRef.current = nextColumns;
+    lastAppliedMove.current = move;
+    setColumns((renderedColumns) => moveKanbanCard(renderedColumns, move));
+    return true;
   }
 
   function getMove(
+    currentColumns: KanbanColumnData<TStatus>[],
     activeId: string,
     overId: string,
   ): KanbanMove<TStatus> | null {
-    const targetColumnId = findKanbanColumnId(visibleColumns, overId);
+    const currentVisibleColumns = filterKanbanColumns(
+      currentColumns,
+      query,
+      selectedFilters,
+    );
+    const targetColumnId = findKanbanColumnId(currentVisibleColumns, overId);
 
     if (!targetColumnId) {
       return null;
     }
 
-    const targetColumn = visibleColumns.find(
+    const targetColumn = currentVisibleColumns.find(
       (column) => column.id === targetColumnId,
     );
 
@@ -112,7 +139,9 @@ export function KanbanBoard<TStatus extends string>({
   }
 
   function handleDragStart(event: DragStartEvent) {
-    dragStartColumns.current = cloneKanbanColumns(columns);
+    dragStartColumns.current = cloneKanbanColumns(columnsRef.current);
+    lastAppliedMove.current = null;
+    movedAcrossColumns.current = false;
     setActiveCardId(String(event.active.id));
   }
 
@@ -124,45 +153,79 @@ export function KanbanBoard<TStatus extends string>({
     }
 
     const activeId = String(event.active.id);
-    const sourceColumnId = findKanbanColumnId(columns, activeId);
-    const targetColumnId = findKanbanColumnId(visibleColumns, overId);
+    const currentColumns = columnsRef.current;
+    const currentVisibleColumns = filterKanbanColumns(
+      currentColumns,
+      query,
+      selectedFilters,
+    );
+    const sourceColumnId = findKanbanColumnId(currentColumns, activeId);
+    const targetColumnId = findKanbanColumnId(currentVisibleColumns, overId);
 
     if (!sourceColumnId || !targetColumnId || sourceColumnId === targetColumnId) {
       return;
     }
 
-    const move = getMove(activeId, overId);
+    const move = getMove(currentColumns, activeId, overId);
 
-    if (move) {
-      commitMove(move);
+    if (move && applyLocalMove(move)) {
+      movedAcrossColumns.current = true;
     }
   }
 
   function handleDragEnd(event: DragEndEvent) {
     const overId = event.over ? String(event.over.id) : null;
     const activeId = String(event.active.id);
+    const initialColumns = dragStartColumns.current;
     setActiveCardId(null);
-    dragStartColumns.current = null;
 
-    if (!overId || activeId === overId) {
+    if (!overId) {
+      if (initialColumns) {
+        columnsRef.current = initialColumns;
+        setColumns(() => initialColumns);
+      }
+
+      dragStartColumns.current = null;
+      lastAppliedMove.current = null;
+      movedAcrossColumns.current = false;
       return;
     }
 
-    const move = getMove(activeId, overId);
+    let completedMove = lastAppliedMove.current;
 
-    if (move) {
-      commitMove(move);
+    if (!movedAcrossColumns.current && activeId !== overId) {
+      const move = getMove(columnsRef.current, activeId, overId);
+
+      if (move && applyLocalMove(move)) {
+        completedMove = move;
+      }
     }
+
+    const finalColumns = columnsRef.current;
+
+    if (initialColumns && !haveSameKanbanLayout(initialColumns, finalColumns)) {
+      onColumnsChange?.(finalColumns);
+
+      if (completedMove) {
+        onMove?.(completedMove);
+      }
+    }
+
+    dragStartColumns.current = null;
+    lastAppliedMove.current = null;
+    movedAcrossColumns.current = false;
   }
 
   function handleDragCancel() {
     const previousColumns = dragStartColumns.current;
     setActiveCardId(null);
     dragStartColumns.current = null;
+    lastAppliedMove.current = null;
+    movedAcrossColumns.current = false;
 
     if (previousColumns) {
-      setColumns(previousColumns);
-      onColumnsChange?.(previousColumns);
+      columnsRef.current = previousColumns;
+      setColumns(() => previousColumns);
     }
   }
 

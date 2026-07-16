@@ -46,37 +46,41 @@ export function cloneKanbanColumns<TStatus extends string>(
 }
 
 export function moveKanbanCard<TStatus extends string>(
-  columns: readonly KanbanColumnData<TStatus>[],
+  columns: KanbanColumnData<TStatus>[],
   move: KanbanMove<TStatus>,
 ): KanbanColumnData<TStatus>[] {
   const sourceColumnId = findKanbanColumnId(columns, move.cardId);
+  const sourceColumn = columns.find(
+    (column) => column.id === sourceColumnId,
+  );
   const targetColumn = columns.find(
     (column) => column.id === move.targetColumnId,
   );
 
-  if (!sourceColumnId || !targetColumn) {
-    return cloneKanbanColumns(columns);
+  if (!sourceColumnId || !sourceColumn || !targetColumn) {
+    return columns;
   }
 
-  const nextColumns = cloneKanbanColumns(columns);
-  const source = nextColumns.find((column) => column.id === sourceColumnId);
-  const target = nextColumns.find(
-    (column) => column.id === move.targetColumnId,
-  );
-
-  if (!source || !target) {
-    return nextColumns;
-  }
-
-  const sourceIndex = source.cards.findIndex(
+  const sourceIndex = sourceColumn.cards.findIndex(
     (card) => card.id === move.cardId,
   );
 
   if (sourceIndex === -1) {
-    return nextColumns;
+    return columns;
   }
 
-  const [sourceCard] = source.cards.splice(sourceIndex, 1);
+  const sourceCard = sourceColumn.cards[sourceIndex];
+  const sameColumn = sourceColumnId === move.targetColumnId;
+  const currentVisibleIndex = move.visibleTargetCardIds.indexOf(move.cardId);
+
+  if (sameColumn && currentVisibleIndex === move.targetIndex) {
+    return columns;
+  }
+
+  const sourceCards = sourceColumn.cards.filter(
+    (card) => card.id !== move.cardId,
+  );
+  const targetCards = sameColumn ? sourceCards : targetColumn.cards;
   const movedCard: KanbanCardData<TStatus> = {
     ...sourceCard,
     status: move.targetColumnId,
@@ -84,24 +88,68 @@ export function moveKanbanCard<TStatus extends string>(
   const visibleTargetIds = move.visibleTargetCardIds.filter(
     (cardId) => cardId !== move.cardId,
   );
-  const nextVisibleCardId = visibleTargetIds[move.targetIndex];
-  const previousVisibleCardId = visibleTargetIds[move.targetIndex - 1];
-  let insertionIndex = target.cards.length;
+  const targetIndex = Math.max(
+    0,
+    Math.min(move.targetIndex, visibleTargetIds.length),
+  );
+  const nextVisibleCardId = visibleTargetIds[targetIndex];
+  const previousVisibleCardId = visibleTargetIds[targetIndex - 1];
+  let insertionIndex = targetCards.length;
 
   if (nextVisibleCardId) {
-    const anchorIndex = target.cards.findIndex(
+    const anchorIndex = targetCards.findIndex(
       (card) => card.id === nextVisibleCardId,
     );
-    insertionIndex = anchorIndex === -1 ? target.cards.length : anchorIndex;
+    insertionIndex = anchorIndex === -1 ? targetCards.length : anchorIndex;
   } else if (previousVisibleCardId) {
-    const anchorIndex = target.cards.findIndex(
+    const anchorIndex = targetCards.findIndex(
       (card) => card.id === previousVisibleCardId,
     );
-    insertionIndex = anchorIndex === -1 ? target.cards.length : anchorIndex + 1;
+    insertionIndex = anchorIndex === -1 ? targetCards.length : anchorIndex + 1;
   }
 
-  target.cards.splice(insertionIndex, 0, movedCard);
-  return nextColumns;
+  const nextTargetCards = [...targetCards];
+  nextTargetCards.splice(insertionIndex, 0, movedCard);
+
+  if (
+    sameColumn
+    && nextTargetCards.every(
+      (card, index) => (
+        card.id === sourceColumn.cards[index]?.id
+        && card.status === sourceColumn.cards[index]?.status
+      ),
+    )
+  ) {
+    return columns;
+  }
+
+  return columns.map((column) => {
+    if (column.id === move.targetColumnId) {
+      return { ...column, cards: nextTargetCards };
+    }
+
+    if (!sameColumn && column.id === sourceColumnId) {
+      return { ...column, cards: sourceCards };
+    }
+
+    return column;
+  });
+}
+
+export function haveSameKanbanLayout<TStatus extends string>(
+  first: readonly KanbanColumnData<TStatus>[],
+  second: readonly KanbanColumnData<TStatus>[],
+): boolean {
+  return first.length === second.length && first.every((column, columnIndex) => {
+    const otherColumn = second[columnIndex];
+
+    return column.id === otherColumn?.id
+      && column.cards.length === otherColumn.cards.length
+      && column.cards.every((card, cardIndex) => (
+        card.id === otherColumn.cards[cardIndex]?.id
+        && card.status === otherColumn.cards[cardIndex]?.status
+      ));
+  });
 }
 
 export function filterKanbanColumns<TStatus extends string>(
