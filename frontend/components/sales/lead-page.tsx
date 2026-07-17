@@ -485,12 +485,22 @@ export function LeadPage({ lead: initialLead }: { lead: LeadDetails }) {
                   compact
                   customer={lead.customer}
                   leadId={lead.id}
-                  contactPersistence={lead.contactPersistence}
+                  contactPersistence={lead.dataOrigin === "api" ? "api" : "local"}
                   onCustomerChange={updateCustomer}
                 />
               </div>
               <div id="lead-reference-panel-commercial" className="min-w-0 rounded-[var(--portal-radius-lg)] border border-portal-border bg-portal-surface shadow-[var(--portal-shadow-card)]">
-                <LeadCommercialDetails embedded compact commercial={lead.commercial} source={lead.source} estimatedAmount={lead.estimatedAmount} probability={lead.probability} onChange={updateCommercial} />
+                <LeadCommercialDetails
+                  embedded
+                  compact
+                  commercial={lead.commercial}
+                  source={lead.source}
+                  estimatedAmount={lead.estimatedAmount}
+                  probability={lead.probability}
+                  leadId={lead.id}
+                  persistence={lead.dataOrigin === "api" ? "api" : "local"}
+                  onChange={updateCommercial}
+                />
               </div>
             </ResponsiveGrid>
 

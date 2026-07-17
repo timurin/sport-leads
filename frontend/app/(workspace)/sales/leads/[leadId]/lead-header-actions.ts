@@ -24,13 +24,13 @@ export async function updateLeadStatus(
   }
 
   try {
-    const ok = await updateApiLead(leadId, {
+    const result = await updateApiLead(leadId, {
       status: status as "new" | "contact" | "qualification" | "proposal" | "waiting",
     });
 
-    return ok
+    return result.ok
       ? { ok: true, message: "Статус обновлён." }
-      : { ok: false, message: "Backend отклонил изменение статуса." };
+      : { ok: false, message: result.message };
   } catch {
     return { ok: false, message: "Не удалось связаться с backend." };
   }
