@@ -154,7 +154,7 @@
 * `[~]` карточка лида;
 * `[ ]` загрузка лидов из backend;
 * `[ ]` создание лида через API;
-* `[ ]` редактирование лида через API;
+* `[~]` редактирование лида через API — итерация `v0.6.1-lead-commercial-frontend`: форма числовой detail-страницы загружает и сохраняет через существующий PATCH постоянное коммерческое ядро (source, sport, category, description, quantity, amount, desired date, city) без demo fallback; подтверждения: `frontend/app/(workspace)/sales/leads/[leadId]/lead-commercial-actions.ts`, `frontend/lib/sales/lead-commercial-api.test.mjs` (3 теста), `backend/tests/test_lead_conversion.py` (integration PATCH), полный backend pytest (25 тестов), frontend tests (27 тестов), project check 9/9; ограничение: профиль клиента и расширенные коммерческие поля остаются локальными;
 * `[ ]` удаление или архивирование;
 * `[ ]` сохранение позиции в Kanban;
 * `[ ]` история изменения статусов;

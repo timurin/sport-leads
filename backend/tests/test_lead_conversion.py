@@ -1,3 +1,4 @@
+from datetime import date
 from decimal import Decimal
 
 import pytest
@@ -97,6 +98,56 @@ def add_lead(session_factory: sessionmaker[Session]) -> int:
         db.add(LeadTask(lead_id=lead.id, title="Позвонить клиенту"))
         db.commit()
         return lead.id
+
+
+def test_lead_commercial_fields_patch_persists_and_clears_values(
+    client: TestClient,
+    session_factory: sessionmaker[Session],
+) -> None:
+    lead_id = add_lead(session_factory)
+    response = client.patch(
+        f"/leads/{lead_id}",
+        json={
+            "source": "referral",
+            "sport": "Волейбол",
+            "product_category": "Игровая форма",
+            "need_description": "Комплекты для двух команд",
+            "estimated_quantity": 36,
+            "estimated_amount": "315000.50",
+            "desired_date": "2026-09-15",
+            "city": "Самара",
+        },
+    )
+    assert response.status_code == 200
+    assert response.json()["estimated_amount"] == "315000.50"
+    assert response.json()["desired_date"] == "2026-09-15"
+
+    with session_factory() as db:
+        lead = db.get(Lead, lead_id)
+        assert lead is not None
+        assert lead.source == "referral"
+        assert lead.sport == "Волейбол"
+        assert lead.product_category == "Игровая форма"
+        assert lead.need_description == "Комплекты для двух команд"
+        assert lead.estimated_quantity == 36
+        assert lead.estimated_amount == Decimal("315000.50")
+        assert lead.desired_date == date(2026, 9, 15)
+        assert lead.city == "Самара"
+
+    cleared = client.patch(
+        f"/leads/{lead_id}",
+        json={
+            "need_description": None,
+            "estimated_quantity": None,
+            "estimated_amount": None,
+            "desired_date": None,
+        },
+    )
+    assert cleared.status_code == 200
+    assert cleared.json()["need_description"] is None
+    assert cleared.json()["estimated_quantity"] is None
+    assert cleared.json()["estimated_amount"] is None
+    assert cleared.json()["desired_date"] is None
 
 
 def test_conversion_creates_one_linked_order_and_is_not_repeatable(

@@ -1,6 +1,7 @@
 import "server-only";
 
 import { leads } from "@/lib/demo-data/sales";
+import { fromApiLeadCommercial, type ApiLeadCommercialFields } from "@/lib/sales/lead-commercial-api";
 import { fromApiLeadContact, type ApiLeadContact } from "@/lib/sales/lead-contact-api";
 import type { LeadActivity, LeadCommercialDetailsData, LeadCustomer, LeadMessage, LeadStatus, LeadTask } from "@/types/sales";
 
@@ -29,20 +30,17 @@ export type LeadDetails = {
   tasks: LeadTask[];
   messages: LeadMessage[];
   taskReferenceAt: string;
-  contactPersistence: "api" | "local";
+  dataOrigin: "api" | "demo";
 };
 
-type ApiLead = {
+export type ApiLead = ApiLeadCommercialFields & {
   id: number;
   status: LeadStatus;
   company_name: string | null;
   contact_name: string;
   phone: string | null;
   email: string | null;
-  city: string | null;
-  source: string | null;
   responsible_id: number | null;
-  estimated_amount: number | string | null;
   created_at: string;
   updated_at: string;
   contacts: ApiLeadContact[];
@@ -178,7 +176,7 @@ function fromDemoLead(lead: (typeof leads)[number]): LeadDetails {
     })) ?? [],
     messages,
     taskReferenceAt: new Date(Date.UTC(2026, 6, 16, 12, sequence)).toISOString(),
-    contactPersistence: "local",
+    dataOrigin: "demo",
     customer: lead.customer
       ? { ...lead.customer, contacts: lead.customer.contacts.map((contact) => ({ ...contact })) }
       : {
@@ -196,6 +194,7 @@ function fromDemoLead(lead: (typeof leads)[number]): LeadDetails {
 }
 
 function fromApiLead(lead: ApiLead): LeadDetails {
+  const persistedCommercial = fromApiLeadCommercial(lead);
   return {
     id: String(lead.id),
     title: lead.company_name ?? lead.contact_name,
@@ -208,19 +207,17 @@ function fromApiLead(lead: ApiLead): LeadDetails {
         id: String(lead.responsible_id),
         name: `Сотрудник #${lead.responsible_id}`,
       },
-    source: lead.source,
+    source: persistedCommercial.source,
     createdAt: lead.created_at,
     lastActivityAt: lead.updated_at,
-    estimatedAmount: lead.estimated_amount === null ? null : Number(lead.estimated_amount),
+    estimatedAmount: persistedCommercial.estimatedAmount,
     probability: null,
-    commercial: {
-      deliveryCity: lead.city ?? undefined,
-    },
+    commercial: persistedCommercial.commercial,
     activities: [],
     tasks: [],
     messages: [],
     taskReferenceAt: lead.updated_at,
-    contactPersistence: "api",
+    dataOrigin: "api",
     customer: {
       type: lead.company_name ? "company" : "person",
       organizationName: lead.company_name ?? undefined,
@@ -232,9 +229,21 @@ function fromApiLead(lead: ApiLead): LeadDetails {
 
 export type LeadApiUpdate = {
   status?: "new" | "contact" | "qualification" | "proposal" | "waiting";
+  source?: string | null;
+  sport?: string | null;
+  product_category?: string | null;
+  need_description?: string | null;
+  estimated_quantity?: number | null;
+  estimated_amount?: number | null;
+  desired_date?: string | null;
+  city?: string | null;
 };
 
-export async function updateApiLead(leadId: string, update: LeadApiUpdate): Promise<boolean> {
+export type LeadApiUpdateResult =
+  | { ok: true; lead: ApiLead }
+  | { ok: false; status: number; message: string };
+
+export async function updateApiLead(leadId: string, update: LeadApiUpdate): Promise<LeadApiUpdateResult> {
   const apiUrl = process.env.SPORT_LEADS_API_URL ?? "http://127.0.0.1:8000";
   const response = await fetch(`${apiUrl.replace(/\/$/, "")}/leads/${leadId}`, {
     method: "PATCH",
@@ -243,7 +252,21 @@ export async function updateApiLead(leadId: string, update: LeadApiUpdate): Prom
     cache: "no-store",
   });
 
-  return response.ok;
+  if (!response.ok) {
+    let message = `Backend отклонил изменение (${response.status}).`;
+    try {
+      const body = await response.json() as { detail?: string | Array<{ msg?: string }> };
+      if (typeof body.detail === "string") {
+        message = body.detail;
+      } else if (Array.isArray(body.detail)) {
+        message = body.detail.map((item) => item.msg).filter(Boolean).join(" ") || message;
+      }
+    } catch {
+      // Use the stable status-based message for empty or non-JSON responses.
+    }
+    return { ok: false, status: response.status, message };
+  }
+  return { ok: true, lead: await response.json() as ApiLead };
 }
 
 export async function getLeadDetails(leadId: string): Promise<LeadDetails | null> {

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 
+import { saveLeadCommercialDetails } from "@/app/(workspace)/sales/leads/[leadId]/lead-commercial-actions";
 import { Button } from "@/components/ui/button";
 import {
   formatCommercialDate,
@@ -194,6 +195,8 @@ export function LeadCommercialDetails({
   source,
   estimatedAmount,
   probability,
+  leadId,
+  persistence,
   onChange,
   embedded = false,
   compact = false,
@@ -202,6 +205,8 @@ export function LeadCommercialDetails({
   source: string | null;
   estimatedAmount: number | null;
   probability: number | null;
+  leadId: string;
+  persistence: "api" | "local";
   onChange: (change: LeadCommercialChange) => void;
   embedded?: boolean;
   compact?: boolean;
@@ -210,27 +215,32 @@ export function LeadCommercialDetails({
   const [draft, setDraft] = useState(() => createDraft(commercial, source, estimatedAmount, probability));
   const [errors, setErrors] = useState<CommercialErrors>({});
   const [notice, setNotice] = useState("");
+  const [saveError, setSaveError] = useState("");
+  const [saving, setSaving] = useState(false);
 
   function updateDraft(field: keyof CommercialDraft, value: string) {
     setDraft((current) => ({ ...current, [field]: value }));
     setErrors((current) => ({ ...current, [field]: undefined }));
     setNotice("");
+    setSaveError("");
   }
 
   function startEditing() {
     setDraft(createDraft(commercial, source, estimatedAmount, probability));
     setErrors({});
     setNotice("");
+    setSaveError("");
     setEditing(true);
   }
 
   function cancelEditing() {
     setDraft(createDraft(commercial, source, estimatedAmount, probability));
     setErrors({});
+    setSaveError("");
     setEditing(false);
   }
 
-  function save(event: React.FormEvent<HTMLFormElement>) {
+  async function save(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const estimatedQuantity = parsePositiveInteger(draft.estimatedQuantity);
     const kitQuantity = parsePositiveInteger(draft.kitQuantity);
@@ -253,7 +263,7 @@ export function LeadCommercialDetails({
       return;
     }
 
-    onChange({
+    let change: LeadCommercialChange = {
       source: draft.source.trim() || null,
       estimatedAmount: nextEstimatedAmount.value ?? null,
       probability: nextProbability.value ?? null,
@@ -279,9 +289,39 @@ export function LeadCommercialDetails({
         utmDescription: optionalText(draft.utmDescription),
         priority: draft.priority ? draft.priority as Priority : undefined,
       },
-    });
+    };
+
+    if (persistence === "api") {
+      setSaving(true);
+      setSaveError("");
+      const result = await saveLeadCommercialDetails(leadId, {
+        source: change.source,
+        sport: change.commercial.sport,
+        productCategory: change.commercial.productCategory,
+        needDescription: change.commercial.needDescription,
+        estimatedQuantity: change.commercial.estimatedQuantity,
+        estimatedAmount: change.estimatedAmount,
+        desiredReadyDate: change.commercial.desiredReadyDate,
+        deliveryCity: change.commercial.deliveryCity,
+      });
+      setSaving(false);
+      if (!result.ok) {
+        setSaveError(result.message);
+        return;
+      }
+      change = {
+        ...change,
+        source: result.persisted.source,
+        estimatedAmount: result.persisted.estimatedAmount,
+        commercial: { ...change.commercial, ...result.persisted.commercial },
+      };
+    }
+
+    onChange(change);
     setEditing(false);
-    setNotice("Коммерческие параметры сохранены только локально.");
+    setNotice(persistence === "api"
+      ? "Основные коммерческие параметры сохранены в backend. Расширенные поля пока локальны."
+      : "Demo-режим: коммерческие параметры сохранены только локально.");
   }
 
   const hasData = Boolean(
@@ -347,9 +387,14 @@ export function LeadCommercialDetails({
             <div className="sm:col-span-2"><TextField id="commercial-utm" label="Метка или UTM-описание" value={draft.utmDescription} onChange={(value) => updateDraft("utmDescription", value)} /></div>
           </FormSection>
 
+          {persistence === "api" ? (
+            <p className="text-xs text-slate-500">Backend сохраняет вид спорта, категорию, описание, количество, сумму, дату готовности, источник и город. Остальные поля остаются в текущей сессии.</p>
+          ) : null}
+          {saveError ? <p className="text-sm text-red-700" role="alert">{saveError}</p> : null}
+
           <div className="flex flex-col-reverse gap-2 border-t border-slate-200 pt-4 sm:flex-row sm:justify-end">
-            <Button type="button" onClick={cancelEditing}>Отмена</Button>
-            <Button type="submit" variant="primary">Сохранить</Button>
+            <Button type="button" onClick={cancelEditing} disabled={saving}>Отмена</Button>
+            <Button type="submit" variant="primary" disabled={saving}>{saving ? "Сохранение…" : "Сохранить"}</Button>
           </div>
         </form>
       ) : hasData ? (
