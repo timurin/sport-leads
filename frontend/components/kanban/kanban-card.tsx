@@ -3,6 +3,7 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { CalendarDays, CircleUserRound, GripVertical } from "lucide-react";
+import Link from "next/link";
 
 import type { KanbanCardData, KanbanBadgeTone } from "@/components/kanban/kanban-types";
 
@@ -17,22 +18,25 @@ const badgeClasses: Record<KanbanBadgeTone, string> = {
 
 type KanbanCardProps = {
   card: KanbanCardData;
+  onSelect?: (cardId: string) => void;
 };
 
 type KanbanCardContentProps = {
   card: KanbanCardData;
   dragging?: boolean;
   dragHandle?: React.ReactNode;
+  onSelect?: () => void;
 };
 
 export function KanbanCardContent({
   card,
   dragging = false,
   dragHandle,
+  onSelect,
 }: KanbanCardContentProps) {
   return (
     <article className={[
-      "rounded-xl border bg-white p-4 shadow-sm transition",
+      "rounded-xl border bg-white p-4 text-slate-900 shadow-sm transition",
       dragging
         ? "rotate-2 border-blue-400 shadow-2xl"
         : "border-slate-200 hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-md",
@@ -41,8 +45,17 @@ export function KanbanCardContent({
         <div className="flex min-w-0 flex-1 items-start gap-2">
           {dragHandle}
           <div className="min-w-0">
-          <h3 className="text-sm font-semibold leading-5 text-slate-900">{card.title}</h3>
-          {card.subtitle ? <p className="mt-1 text-xs leading-5 text-slate-500">{card.subtitle}</p> : null}
+            <h3 className="text-sm font-semibold leading-5 text-slate-900">
+              {card.href && !dragging ? (
+                <Link
+                  href={card.href}
+                  className="rounded-sm hover:text-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                >
+                  {card.title}
+                </Link>
+              ) : card.title}
+            </h3>
+            {card.subtitle ? <p className="mt-1 text-xs leading-5 text-slate-500">{card.subtitle}</p> : null}
           </div>
         </div>
         {card.badge ? (
@@ -56,8 +69,8 @@ export function KanbanCardContent({
         <dl className="mt-3 space-y-1.5 text-xs">
           {card.details.map((detail) => (
             <div key={`${detail.label}-${detail.value}`} className="flex items-center justify-between gap-3">
-              <dt className="text-slate-400">{detail.label}</dt>
-              <dd className="truncate text-right font-medium text-slate-600">{detail.value}</dd>
+              <dt className="text-slate-500">{detail.label}</dt>
+              <dd className="truncate text-right font-medium text-slate-900">{detail.value}</dd>
             </div>
           ))}
         </dl>
@@ -66,7 +79,7 @@ export function KanbanCardContent({
       {card.amount ? <div className="mt-3 text-base font-semibold text-slate-950">{card.amount}</div> : null}
 
       {card.responsible || card.nextAction ? (
-        <div className="mt-3 space-y-2 border-t border-slate-100 pt-3 text-xs text-slate-500">
+        <div className="mt-3 space-y-2 border-t border-slate-100 pt-3 text-xs text-slate-600">
           {card.responsible ? (
             <div className="flex items-center gap-2"><CircleUserRound size={14} />{card.responsible}</div>
           ) : null}
@@ -75,11 +88,20 @@ export function KanbanCardContent({
           ) : null}
         </div>
       ) : null}
+      {card.actionLabel && onSelect ? (
+        <button
+          type="button"
+          onClick={onSelect}
+          className="mt-3 w-full rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-700 hover:bg-blue-100"
+        >
+          {card.actionLabel}
+        </button>
+      ) : null}
     </article>
   );
 }
 
-export function KanbanCard({ card }: KanbanCardProps) {
+export function KanbanCard({ card, onSelect }: KanbanCardProps) {
   const {
     attributes,
     listeners,
@@ -87,7 +109,7 @@ export function KanbanCard({ card }: KanbanCardProps) {
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: card.id });
+  } = useSortable({ id: card.id, disabled: card.draggable === false });
 
   return (
     <div
@@ -100,7 +122,8 @@ export function KanbanCard({ card }: KanbanCardProps) {
     >
       <KanbanCardContent
         card={card}
-        dragHandle={(
+        onSelect={onSelect ? () => onSelect(card.id) : undefined}
+        dragHandle={card.draggable === false ? undefined : (
           <button
             type="button"
             className="mt-0.5 shrink-0 cursor-grab touch-none rounded p-0.5 text-slate-300 hover:bg-slate-100 hover:text-slate-600 active:cursor-grabbing"

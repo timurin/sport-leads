@@ -13,7 +13,7 @@ import {
   useSensors,
 } from "@dnd-kit/core";
 import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
-import { useMemo, useRef, useState } from "react";
+import { useId, useMemo, useRef, useState } from "react";
 
 import {
   KanbanCardContent,
@@ -39,6 +39,7 @@ type KanbanBoardProps<TStatus extends string> = {
   selectedFilters: Readonly<Record<string, string>>;
   onColumnsChange?: (columns: KanbanColumnData<TStatus>[]) => void;
   onMove?: KanbanMoveHandler<TStatus>;
+  onCardSelect?: (cardId: string) => void;
 };
 
 export function KanbanBoard<TStatus extends string>({
@@ -47,11 +48,13 @@ export function KanbanBoard<TStatus extends string>({
   selectedFilters,
   onColumnsChange,
   onMove,
+  onCardSelect,
 }: KanbanBoardProps<TStatus>) {
   const [columns, setColumns] = useState(
     () => cloneKanbanColumns(initialColumns),
   );
   const [activeCardId, setActiveCardId] = useState<string | null>(null);
+  const dndContextId = useId();
   const dragStartColumns = useRef<KanbanColumnData<TStatus>[] | null>(null);
   const columnsRef = useRef(columns);
   const lastAppliedMove = useRef<KanbanMove<TStatus> | null>(null);
@@ -96,7 +99,7 @@ export function KanbanBoard<TStatus extends string>({
 
     columnsRef.current = nextColumns;
     lastAppliedMove.current = move;
-    setColumns((renderedColumns) => moveKanbanCard(renderedColumns, move));
+    setColumns(nextColumns);
     return true;
   }
 
@@ -240,6 +243,7 @@ export function KanbanBoard<TStatus extends string>({
 
   return (
     <DndContext
+      id={dndContextId}
       sensors={sensors}
       collisionDetection={closestCorners}
       onDragStart={handleDragStart}
@@ -250,7 +254,7 @@ export function KanbanBoard<TStatus extends string>({
       <div className="overflow-x-auto pb-3" aria-label="Канбан-доска">
         <div className="flex min-w-max items-start gap-4">
           {visibleColumns.map((column) => (
-            <KanbanColumn key={column.id} column={column} />
+            <KanbanColumn key={column.id} column={column} onCardSelect={onCardSelect} />
           ))}
         </div>
       </div>

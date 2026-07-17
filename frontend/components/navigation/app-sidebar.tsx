@@ -34,13 +34,13 @@ export function AppSidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="flex h-screen w-[92px] shrink-0 flex-col border-r border-slate-800 bg-slate-950 text-white">
+    <aside className="flex h-full w-16 shrink-0 flex-col border-r border-slate-800 bg-slate-950 text-white md:w-[var(--portal-sidebar-width)]">
       <Link
         href="/dashboard"
-        className="flex h-[72px] items-center justify-center border-b border-slate-800"
+        className="flex h-16 items-center justify-center border-b border-slate-800 md:h-[72px]"
         aria-label="MOSMADE ERP"
       >
-        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-600 shadow-lg shadow-blue-950">
+        <div className="flex size-10 items-center justify-center rounded-xl bg-blue-600 shadow-lg shadow-blue-950 md:size-11">
           <Boxes size={23} />
         </div>
       </Link>
@@ -63,7 +63,7 @@ export function AppSidebar() {
               href={section.href}
               title={section.title}
               className={[
-                "group flex min-h-[66px] flex-col items-center justify-center rounded-xl px-1 py-2 text-center transition",
+                "group flex min-h-14 flex-col items-center justify-center rounded-xl px-1 py-2 text-center transition md:min-h-[66px]",
                 active
                   ? "bg-blue-600 text-white shadow-lg shadow-blue-950/40"
                   : "text-slate-400 hover:bg-slate-900 hover:text-white",
@@ -71,7 +71,7 @@ export function AppSidebar() {
             >
               <Icon size={20} />
 
-              <span className="mt-1.5 max-w-full truncate text-[10px] leading-3">
+              <span className="mt-1.5 hidden max-w-full truncate text-[10px] leading-3 md:block">
                 {section.title}
               </span>
             </Link>
