@@ -3,6 +3,7 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { CalendarDays, CircleUserRound, GripVertical } from "lucide-react";
+import Link from "next/link";
 
 import type { KanbanCardData, KanbanBadgeTone } from "@/components/kanban/kanban-types";
 
@@ -44,8 +45,17 @@ export function KanbanCardContent({
         <div className="flex min-w-0 flex-1 items-start gap-2">
           {dragHandle}
           <div className="min-w-0">
-          <h3 className="text-sm font-semibold leading-5 text-slate-900">{card.title}</h3>
-          {card.subtitle ? <p className="mt-1 text-xs leading-5 text-slate-500">{card.subtitle}</p> : null}
+            <h3 className="text-sm font-semibold leading-5 text-slate-900">
+              {card.href && !dragging ? (
+                <Link
+                  href={card.href}
+                  className="rounded-sm hover:text-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                >
+                  {card.title}
+                </Link>
+              ) : card.title}
+            </h3>
+            {card.subtitle ? <p className="mt-1 text-xs leading-5 text-slate-500">{card.subtitle}</p> : null}
           </div>
         </div>
         {card.badge ? (

@@ -9,6 +9,7 @@ export type KanbanCardData<TStatus extends string = string> = {
   id: string;
   status: TStatus;
   title: string;
+  href?: string;
   subtitle?: string;
   amount?: string;
   badge?: {

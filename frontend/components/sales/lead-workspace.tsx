@@ -163,6 +163,7 @@ export function LeadWorkspace() {
           id: lead.id,
           status: definition.id,
           title: lead.clientName,
+          href: `/sales/leads/${lead.id}`,
           subtitle: `${lead.contact} · ${lead.city}`,
           amount: `${new Intl.NumberFormat("ru-RU").format(lead.estimatedAmount)} ₽`,
           badge: lead.result === "converted"

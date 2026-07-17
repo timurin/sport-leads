@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 
+import { AppTopbar } from "@/components/layout/app-topbar";
 import { AppSidebar } from "@/components/navigation/app-sidebar";
-import { TopNavigation } from "@/components/navigation/top-navigation";
 import { WorkspaceTabs } from "@/components/navigation/workspace-tabs";
 
 type AppShellProps = {
@@ -12,14 +12,14 @@ export function AppShell({
   children,
 }: AppShellProps) {
   return (
-    <div className="flex h-screen overflow-hidden bg-slate-100">
+    <div data-app-shell className="flex h-dvh overflow-hidden bg-portal-page">
       <AppSidebar />
 
-      <div className="flex min-w-0 flex-1 flex-col">
-        <TopNavigation />
+      <div data-app-shell-content className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+        <AppTopbar />
         <WorkspaceTabs />
 
-        <main className="min-h-0 flex-1 overflow-y-auto">
+        <main data-app-shell-main className="min-h-0 flex-1 overflow-y-auto">
           {children}
         </main>
       </div>

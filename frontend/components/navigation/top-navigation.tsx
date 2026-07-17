@@ -58,8 +58,8 @@ export function TopNavigation() {
 
   return (
     <header className="relative z-40 overflow-visible border-b border-slate-200 bg-white">
-      <div className="flex h-[72px] items-center gap-5 px-6">
-        <div className="min-w-[150px]">
+      <div className="flex h-16 items-center gap-3 px-3 sm:px-4 md:h-[72px] lg:gap-5 lg:px-6">
+        <div className="hidden min-w-[150px] lg:block">
           <div className="text-xl font-semibold tracking-tight text-slate-950">
             {section.title}
           </div>
@@ -67,7 +67,7 @@ export function TopNavigation() {
 
         <div
           ref={navigationRef}
-          className="flex h-full min-w-0 flex-1 items-center"
+          className="hidden h-full min-w-0 flex-1 items-center md:flex"
         >
           <nav className="flex h-full items-center gap-1 overflow-visible">
             {section.topNavigation.map((item) => {
@@ -206,11 +206,12 @@ export function TopNavigation() {
 
           <button
             type="button"
-            className="flex h-10 items-center gap-2 rounded-lg bg-blue-600 px-4 text-sm font-medium text-white transition hover:bg-blue-700"
+            className="flex h-10 items-center gap-2 rounded-lg bg-blue-600 px-3 text-sm font-medium text-white transition hover:bg-blue-700 sm:px-4"
+            aria-label="Создать"
           >
             <Plus size={17} />
-            Создать
-            <ChevronDown size={14} />
+            <span className="hidden sm:inline">Создать</span>
+            <ChevronDown size={14} className="hidden sm:block" />
           </button>
         </div>
       </div>

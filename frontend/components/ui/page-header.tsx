@@ -1,35 +1,23 @@
 import type { ReactNode } from "react";
 
+import { EntityHeader } from "@/components/ui/entity-header";
+
 type PageHeaderProps = {
   title: string;
   description?: string;
   actions?: ReactNode;
+  size?: "compact" | "default" | "spacious";
 };
 
 export function PageHeader({
   title,
   description,
   actions,
+  size = "default",
 }: PageHeaderProps) {
   return (
-    <div className="flex flex-col gap-4 border-b border-slate-200 bg-white px-6 py-5 lg:flex-row lg:items-center lg:justify-between">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight text-slate-950">
-          {title}
-        </h1>
-
-        {description ? (
-          <p className="mt-1 text-sm text-slate-500">
-            {description}
-          </p>
-        ) : null}
-      </div>
-
-      {actions ? (
-        <div className="flex items-center gap-2">
-          {actions}
-        </div>
-      ) : null}
+    <div className="border-b border-portal-border bg-portal-surface px-4 py-4 sm:px-6 sm:py-5">
+      <EntityHeader title={title} description={description} actions={actions} size={size} />
     </div>
   );
 }
