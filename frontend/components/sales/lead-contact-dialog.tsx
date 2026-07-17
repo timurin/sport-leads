@@ -29,6 +29,11 @@ export type ContactDraft = {
   isPrimary: boolean;
 };
 
+export type ContactDialogResult = {
+  ok: boolean;
+  message: string;
+};
+
 const fieldClass = "mt-1 h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100";
 
 function closeOnEscape(onClose: () => void) {
@@ -41,12 +46,14 @@ function closeOnEscape(onClose: () => void) {
 
 export function LeadContactDialog({
   contact,
+  persistent,
   onClose,
   onSave,
 }: {
   contact: LeadContact | null;
+  persistent: boolean;
   onClose: () => void;
-  onSave: (draft: ContactDraft) => void;
+  onSave: (draft: ContactDraft) => ContactDialogResult | Promise<ContactDialogResult>;
 }) {
   const [draft, setDraft] = useState<ContactDraft>(() => ({
     name: contact?.name ?? "",
@@ -58,6 +65,8 @@ export function LeadContactDialog({
     isPrimary: contact?.isPrimary ?? false,
   }));
   const [errors, setErrors] = useState<ContactFieldErrors>({});
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
 
   useEffect(() => {
     const handler = closeOnEscape(onClose);
@@ -72,13 +81,19 @@ export function LeadContactDialog({
     }
   }
 
-  function submit(event: React.FormEvent<HTMLFormElement>) {
+  async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const nextErrors = validateContactFields(draft);
     setErrors(nextErrors);
 
     if (Object.keys(nextErrors).length === 0) {
-      onSave(draft);
+      setSaving(true);
+      setSaveError("");
+      const result = await onSave(draft);
+      if (!result.ok) {
+        setSaveError(result.message);
+      }
+      setSaving(false);
     }
   }
 
@@ -96,11 +111,14 @@ export function LeadContactDialog({
             <h2 id="lead-contact-dialog-title" className="text-lg font-semibold text-slate-950">
               {contact ? "Редактировать контакт" : "Добавить контакт"}
             </h2>
-            <p className="mt-1 text-sm text-slate-500">Изменения сохраняются только локально.</p>
+            <p className="mt-1 text-sm text-slate-500">
+              {persistent ? "Изменения сохраняются в карточке лида." : "Demo-режим: изменения сохраняются только локально."}
+            </p>
           </div>
           <button
             type="button"
             onClick={onClose}
+            disabled={saving}
             className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
             aria-label="Закрыть окно контакта"
           >
@@ -185,9 +203,14 @@ export function LeadContactDialog({
             </span>
           </label>
 
+          {persistent ? (
+            <p className="text-xs text-slate-500 sm:col-span-2">Поле «Мессенджер» пока хранится только в текущей сессии.</p>
+          ) : null}
+          {saveError ? <p className="text-sm text-red-700 sm:col-span-2" role="alert">{saveError}</p> : null}
+
           <div className="flex flex-col-reverse gap-2 border-t border-slate-200 pt-4 sm:col-span-2 sm:flex-row sm:justify-end">
-            <Button type="button" onClick={onClose}>Отмена</Button>
-            <Button type="submit" variant="primary">{contact ? "Сохранить" : "Добавить"}</Button>
+            <Button type="button" onClick={onClose} disabled={saving}>Отмена</Button>
+            <Button type="submit" variant="primary" disabled={saving}>{saving ? "Сохранение…" : contact ? "Сохранить" : "Добавить"}</Button>
           </div>
         </form>
       </section>
@@ -197,18 +220,32 @@ export function LeadContactDialog({
 
 export function LeadContactDeleteDialog({
   contact,
+  persistent,
   onCancel,
   onConfirm,
 }: {
   contact: LeadContact;
+  persistent: boolean;
   onCancel: () => void;
-  onConfirm: () => void;
+  onConfirm: () => ContactDialogResult | Promise<ContactDialogResult>;
 }) {
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
   useEffect(() => {
     const handler = closeOnEscape(onCancel);
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
   }, [onCancel]);
+
+  async function confirm() {
+    setDeleting(true);
+    setDeleteError("");
+    const result = await onConfirm();
+    if (!result.ok) {
+      setDeleteError(result.message);
+    }
+    setDeleting(false);
+  }
 
   return (
     <div className="fixed inset-0 z-[220] flex items-center justify-center bg-slate-950/40 p-4" role="presentation" onMouseDown={onCancel}>
@@ -221,11 +258,14 @@ export function LeadContactDeleteDialog({
       >
         <h2 id="delete-contact-title" className="text-lg font-semibold text-slate-950">Удалить контакт?</h2>
         <p className="mt-2 text-sm leading-6 text-slate-600">
-          Контакт «{contact.name}» будет удалён только из локального состояния страницы.
+          {persistent
+            ? `Контакт «${contact.name}» будет удалён из карточки лида.`
+            : `Контакт «${contact.name}» будет удалён только из локального состояния страницы.`}
         </p>
+        {deleteError ? <p className="mt-3 text-sm text-red-700" role="alert">{deleteError}</p> : null}
         <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-          <Button type="button" onClick={onCancel}>Отмена</Button>
-          <Button type="button" variant="primary" onClick={onConfirm} autoFocus>Удалить</Button>
+          <Button type="button" onClick={onCancel} disabled={deleting}>Отмена</Button>
+          <Button type="button" variant="primary" onClick={confirm} disabled={deleting} autoFocus>{deleting ? "Удаление…" : "Удалить"}</Button>
         </div>
       </section>
     </div>

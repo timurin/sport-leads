@@ -1,6 +1,7 @@
 import "server-only";
 
 import { leads } from "@/lib/demo-data/sales";
+import { fromApiLeadContact, type ApiLeadContact } from "@/lib/sales/lead-contact-api";
 import type { LeadActivity, LeadCommercialDetailsData, LeadCustomer, LeadMessage, LeadStatus, LeadTask } from "@/types/sales";
 
 export type LeadSource = string;
@@ -28,6 +29,7 @@ export type LeadDetails = {
   tasks: LeadTask[];
   messages: LeadMessage[];
   taskReferenceAt: string;
+  contactPersistence: "api" | "local";
 };
 
 type ApiLead = {
@@ -43,6 +45,7 @@ type ApiLead = {
   estimated_amount: number | string | null;
   created_at: string;
   updated_at: string;
+  contacts: ApiLeadContact[];
 };
 
 const statusLabels: Record<LeadStatus, string> = {
@@ -175,6 +178,7 @@ function fromDemoLead(lead: (typeof leads)[number]): LeadDetails {
     })) ?? [],
     messages,
     taskReferenceAt: new Date(Date.UTC(2026, 6, 16, 12, sequence)).toISOString(),
+    contactPersistence: "local",
     customer: lead.customer
       ? { ...lead.customer, contacts: lead.customer.contacts.map((contact) => ({ ...contact })) }
       : {
@@ -216,18 +220,12 @@ function fromApiLead(lead: ApiLead): LeadDetails {
     tasks: [],
     messages: [],
     taskReferenceAt: lead.updated_at,
+    contactPersistence: "api",
     customer: {
       type: lead.company_name ? "company" : "person",
       organizationName: lead.company_name ?? undefined,
       city: lead.city ?? undefined,
-      contacts: [{
-        id: `lead-${lead.id}-contact-1`,
-        name: lead.contact_name,
-        phone: lead.phone ?? undefined,
-        email: lead.email ?? undefined,
-        preferredChannel: "unspecified",
-        isPrimary: true,
-      }],
+      contacts: lead.contacts.map(fromApiLeadContact),
     },
   };
 }

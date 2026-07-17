@@ -480,7 +480,14 @@ export function LeadPage({ lead: initialLead }: { lead: LeadDetails }) {
 
             <ResponsiveGrid minItemWidth="large" gap="default" className="lead-reference-grid">
               <div id="lead-reference-panel-customer" className="min-w-0 rounded-[var(--portal-radius-lg)] border border-portal-border bg-portal-surface shadow-[var(--portal-shadow-card)]">
-                <LeadCustomerDetails embedded compact customer={lead.customer} onCustomerChange={updateCustomer} />
+                <LeadCustomerDetails
+                  embedded
+                  compact
+                  customer={lead.customer}
+                  leadId={lead.id}
+                  contactPersistence={lead.contactPersistence}
+                  onCustomerChange={updateCustomer}
+                />
               </div>
               <div id="lead-reference-panel-commercial" className="min-w-0 rounded-[var(--portal-radius-lg)] border border-portal-border bg-portal-surface shadow-[var(--portal-shadow-card)]">
                 <LeadCommercialDetails embedded compact commercial={lead.commercial} source={lead.source} estimatedAmount={lead.estimatedAmount} probability={lead.probability} onChange={updateCommercial} />

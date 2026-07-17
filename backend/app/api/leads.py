@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
@@ -7,11 +7,23 @@ from app.database.session import get_db
 from app.models.sales import Lead, LeadEvent, LeadEventType, LeadResult, LeadStatus
 from app.schemas.sales import (
     LeadConversionRead,
+    LeadContactCreate,
+    LeadContactRead,
+    LeadContactUpdate,
     LeadConvertRequest,
     LeadEventRead,
     LeadRead,
     LeadRejectRequest,
     LeadUpdate,
+)
+from app.services.lead_contacts import (
+    LeadContactNotFoundError,
+    LeadNotFoundError as ContactLeadNotFoundError,
+    PrimaryLeadContactDeletionError,
+    create_lead_contact,
+    delete_lead_contact,
+    set_primary_lead_contact,
+    update_lead_contact,
 )
 from app.services.lead_conversion import (
     LeadAlreadyCompletedError,
@@ -23,6 +35,12 @@ from app.services.lead_conversion import (
 
 
 router = APIRouter(prefix="/leads", tags=["Sales leads"])
+
+
+def _contact_http_error(error: Exception) -> HTTPException:
+    if isinstance(error, (ContactLeadNotFoundError, LeadContactNotFoundError)):
+        return HTTPException(status_code=404, detail=str(error))
+    return HTTPException(status_code=409, detail=str(error))
 
 
 @router.get("", response_model=list[LeadRead])
@@ -74,6 +92,87 @@ def update_lead(lead_id: int, payload: LeadUpdate, db: Session = Depends(get_db)
     db.commit()
     db.refresh(lead)
     return lead
+
+
+@router.post(
+    "/{lead_id}/contacts",
+    response_model=LeadContactRead,
+    status_code=status.HTTP_201_CREATED,
+)
+def create_contact_endpoint(
+    lead_id: int,
+    payload: LeadContactCreate,
+    db: Session = Depends(get_db),
+) -> LeadContactRead:
+    try:
+        contact = create_lead_contact(db, lead_id, payload)
+        db.commit()
+    except (ContactLeadNotFoundError, LeadContactNotFoundError) as error:
+        db.rollback()
+        raise _contact_http_error(error) from error
+    db.refresh(contact)
+    return LeadContactRead.model_validate(contact)
+
+
+@router.patch(
+    "/{lead_id}/contacts/{contact_id}",
+    response_model=LeadContactRead,
+)
+def update_contact_endpoint(
+    lead_id: int,
+    contact_id: int,
+    payload: LeadContactUpdate,
+    db: Session = Depends(get_db),
+) -> LeadContactRead:
+    try:
+        contact = update_lead_contact(db, lead_id, contact_id, payload)
+        db.commit()
+    except (ContactLeadNotFoundError, LeadContactNotFoundError) as error:
+        db.rollback()
+        raise _contact_http_error(error) from error
+    db.refresh(contact)
+    return LeadContactRead.model_validate(contact)
+
+
+@router.post(
+    "/{lead_id}/contacts/{contact_id}/set-primary",
+    response_model=LeadContactRead,
+)
+def set_primary_contact_endpoint(
+    lead_id: int,
+    contact_id: int,
+    db: Session = Depends(get_db),
+) -> LeadContactRead:
+    try:
+        contact = set_primary_lead_contact(db, lead_id, contact_id)
+        db.commit()
+    except (ContactLeadNotFoundError, LeadContactNotFoundError) as error:
+        db.rollback()
+        raise _contact_http_error(error) from error
+    db.refresh(contact)
+    return LeadContactRead.model_validate(contact)
+
+
+@router.delete(
+    "/{lead_id}/contacts/{contact_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+def delete_contact_endpoint(
+    lead_id: int,
+    contact_id: int,
+    db: Session = Depends(get_db),
+) -> Response:
+    try:
+        delete_lead_contact(db, lead_id, contact_id)
+        db.commit()
+    except (
+        ContactLeadNotFoundError,
+        LeadContactNotFoundError,
+        PrimaryLeadContactDeletionError,
+    ) as error:
+        db.rollback()
+        raise _contact_http_error(error) from error
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.post("/{lead_id}/convert", response_model=LeadConversionRead, status_code=201)

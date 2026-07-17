@@ -5,6 +5,7 @@ from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator, mo
 
 from app.models.sales import (
     LeadEventType,
+    LeadContactChannel,
     LeadResult,
     LeadStatus,
     SalesOrderStatus,
@@ -13,6 +14,54 @@ from app.models.sales import (
 
 class SalesSchema(BaseModel):
     model_config = ConfigDict(from_attributes=True)
+
+
+class LeadContactCreate(BaseModel):
+    name: str = Field(min_length=1, max_length=255)
+    position: str | None = Field(default=None, max_length=255)
+    phone: str | None = Field(default=None, max_length=50)
+    email: EmailStr | None = None
+    preferred_channel: LeadContactChannel = LeadContactChannel.UNSPECIFIED
+    is_primary: bool = False
+
+    @field_validator("name")
+    @classmethod
+    def strip_contact_name(cls, value: str) -> str:
+        value = value.strip()
+        if not value:
+            raise ValueError("Contact name cannot be blank")
+        return value
+
+
+class LeadContactUpdate(BaseModel):
+    name: str | None = Field(default=None, min_length=1, max_length=255)
+    position: str | None = Field(default=None, max_length=255)
+    phone: str | None = Field(default=None, max_length=50)
+    email: EmailStr | None = None
+    preferred_channel: LeadContactChannel | None = None
+
+    @field_validator("name")
+    @classmethod
+    def strip_optional_contact_name(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        value = value.strip()
+        if not value:
+            raise ValueError("Contact name cannot be blank")
+        return value
+
+
+class LeadContactRead(SalesSchema):
+    id: int
+    lead_id: int
+    name: str
+    position: str | None
+    phone: str | None
+    email: str | None
+    preferred_channel: LeadContactChannel
+    is_primary: bool
+    created_at: datetime
+    updated_at: datetime
 
 
 class LeadUpdate(BaseModel):
@@ -62,6 +111,7 @@ class LeadRead(SalesSchema):
     rejection_comment: str | None
     created_at: datetime
     updated_at: datetime
+    contacts: list[LeadContactRead] = Field(default_factory=list)
 
 
 class LeadRejectionReasonCreate(BaseModel):

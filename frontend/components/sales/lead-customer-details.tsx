@@ -8,7 +8,12 @@ import {
   LeadContactDialog,
   communicationChannelOptions,
   type ContactDraft,
+  type ContactDialogResult,
 } from "@/components/sales/lead-contact-dialog";
+import {
+  deleteLeadContact,
+  saveLeadContact,
+} from "@/app/(workspace)/sales/leads/[leadId]/lead-contact-actions";
 import { Button } from "@/components/ui/button";
 import {
   getWebsiteHref,
@@ -130,11 +135,15 @@ function TextField({
 
 export function LeadCustomerDetails({
   customer,
+  leadId,
+  contactPersistence,
   onCustomerChange,
   embedded = false,
   compact = false,
 }: {
   customer: LeadCustomer;
+  leadId: string;
+  contactPersistence: "api" | "local";
   onCustomerChange: (customer: LeadCustomer) => void;
   embedded?: boolean;
   compact?: boolean;
@@ -144,6 +153,7 @@ export function LeadCustomerDetails({
   const [errors, setErrors] = useState<CustomerErrors>({});
   const [dialog, setDialog] = useState<DialogState>(null);
   const [notice, setNotice] = useState("");
+  const [savingCustomer, setSavingCustomer] = useState(false);
   const dialogTriggerRef = useRef<HTMLElement | null>(null);
   const primaryContact = customer.contacts.find((contact) => contact.isPrimary) ?? null;
 
@@ -167,7 +177,20 @@ export function LeadCustomerDetails({
     setEditing(false);
   }
 
-  function saveCustomer(event: React.FormEvent<HTMLFormElement>) {
+  function mergePersistedContacts(
+    persisted: LeadContact[],
+    savedContactId?: string,
+    savedMessenger?: string,
+  ) {
+    return persisted.map((contact) => ({
+      ...contact,
+      messenger: contact.id === savedContactId
+        ? optionalText(savedMessenger ?? "")
+        : customer.contacts.find((current) => current.id === contact.id)?.messenger,
+    }));
+  }
+
+  async function saveCustomer(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const fieldErrors = validateCustomerFields(draft);
     const contactErrors = validateContactFields({
@@ -202,7 +225,7 @@ export function LeadCustomerDetails({
         : { ...contact, isPrimary: false })
       : [nextPrimary, ...customer.contacts.map((contact) => ({ ...contact, isPrimary: false }))];
 
-    onCustomerChange({
+    const nextCustomer: LeadCustomer = {
       type: draft.type || undefined,
       organizationName: optionalText(draft.organizationName),
       website: optionalText(draft.website),
@@ -212,9 +235,32 @@ export function LeadCustomerDetails({
       taxId: optionalText(draft.taxId),
       comment: optionalText(draft.comment),
       contacts,
-    });
+    };
+
+    if (contactPersistence === "api") {
+      setSavingCustomer(true);
+      setNotice("");
+      const result = await saveLeadContact(leadId, primary?.id ?? null, {
+        name: nextPrimary.name,
+        position: nextPrimary.position,
+        phone: nextPrimary.phone,
+        email: nextPrimary.email,
+        preferredChannel: nextPrimary.preferredChannel,
+        isPrimary: true,
+      });
+      setSavingCustomer(false);
+      if (!result.ok) {
+        setNotice(result.message);
+        return;
+      }
+      nextCustomer.contacts = mergePersistedContacts(result.contacts, result.savedContactId, nextPrimary.messenger);
+    }
+
+    onCustomerChange(nextCustomer);
     setEditing(false);
-    setNotice("Изменения сохранены только локально.");
+    setNotice(contactPersistence === "api"
+      ? "Основной контакт сохранён в backend. Остальные данные клиента пока локальны."
+      : "Demo-режим: изменения сохранены только локально.");
   }
 
   function openDialog(nextDialog: Exclude<DialogState, null>, trigger: HTMLElement) {
@@ -228,7 +274,7 @@ export function LeadCustomerDetails({
     window.requestAnimationFrame(() => dialogTriggerRef.current?.focus());
   }
 
-  function saveContact(contactDraft: ContactDraft) {
+  async function saveContact(contactDraft: ContactDraft): Promise<ContactDialogResult> {
     const editingContact = dialog?.kind === "contact" ? dialog.contact : null;
     const makePrimary = contactDraft.isPrimary || customer.contacts.length === 0;
     const contact: LeadContact = {
@@ -253,9 +299,33 @@ export function LeadCustomerDetails({
         contact,
       ];
 
+    if (contactPersistence === "api") {
+      const result = await saveLeadContact(leadId, editingContact?.id ?? null, {
+        name: contact.name,
+        position: contact.position,
+        phone: contact.phone,
+        email: contact.email,
+        preferredChannel: contact.preferredChannel,
+        isPrimary: makePrimary,
+      });
+      if (!result.ok) {
+        setNotice(result.message);
+        return result;
+      }
+      onCustomerChange({
+        ...customer,
+        contacts: mergePersistedContacts(result.contacts, result.savedContactId, contact.messenger),
+      });
+      setNotice(result.message);
+      closeDialog();
+      return result;
+    }
+
     onCustomerChange({ ...customer, contacts });
-    setNotice(editingContact ? "Контакт обновлён только локально." : "Контакт добавлен только локально.");
+    const message = editingContact ? "Контакт обновлён только локально." : "Контакт добавлен только локально.";
+    setNotice(`Demo-режим: ${message}`);
     closeDialog();
+    return { ok: true, message };
   }
 
   function requestDelete(contact: LeadContact, trigger: HTMLElement) {
@@ -266,17 +336,31 @@ export function LeadCustomerDetails({
     openDialog({ kind: "delete", contact }, trigger);
   }
 
-  function confirmDelete() {
+  async function confirmDelete(): Promise<ContactDialogResult> {
     if (dialog?.kind !== "delete") {
-      return;
+      return { ok: false, message: "Контакт для удаления не выбран." };
     }
     const contactId = dialog.contact.id;
+    if (contactPersistence === "api") {
+      const result = await deleteLeadContact(leadId, contactId);
+      if (!result.ok) {
+        setNotice(result.message);
+        return result;
+      }
+      onCustomerChange({ ...customer, contacts: mergePersistedContacts(result.contacts) });
+      setNotice(result.message);
+      closeDialog();
+      return result;
+    }
+
     onCustomerChange({
       ...customer,
       contacts: customer.contacts.filter((contact) => contact.id !== contactId),
     });
-    setNotice("Контакт удалён только из локального состояния.");
+    const message = "Контакт удалён только из локального состояния.";
+    setNotice(`Demo-режим: ${message}`);
     closeDialog();
+    return { ok: true, message };
   }
 
   const hasCustomerData = Boolean(
@@ -359,8 +443,8 @@ export function LeadCustomerDetails({
           </label>
 
           <div className="mt-5 flex flex-col-reverse gap-2 border-t border-slate-200 pt-4 sm:flex-row sm:justify-end">
-            <Button type="button" onClick={cancelEditing}>Отмена</Button>
-            <Button type="submit" variant="primary">Сохранить</Button>
+            <Button type="button" onClick={cancelEditing} disabled={savingCustomer}>Отмена</Button>
+            <Button type="submit" variant="primary" disabled={savingCustomer}>{savingCustomer ? "Сохранение…" : "Сохранить"}</Button>
           </div>
         </form>
       ) : hasCustomerData ? (
@@ -453,10 +537,10 @@ export function LeadCustomerDetails({
       {notice ? <p className="mt-4 text-sm text-slate-600" role="status" aria-live="polite">{notice}</p> : null}
 
       {dialog?.kind === "contact" ? (
-        <LeadContactDialog contact={dialog.contact} onClose={closeDialog} onSave={saveContact} />
+        <LeadContactDialog contact={dialog.contact} persistent={contactPersistence === "api"} onClose={closeDialog} onSave={saveContact} />
       ) : null}
       {dialog?.kind === "delete" ? (
-        <LeadContactDeleteDialog contact={dialog.contact} onCancel={closeDialog} onConfirm={confirmDelete} />
+        <LeadContactDeleteDialog contact={dialog.contact} persistent={contactPersistence === "api"} onCancel={closeDialog} onConfirm={confirmDelete} />
       ) : null}
     </section>
   );

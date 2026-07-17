@@ -11,14 +11,16 @@ from sqlalchemy import (
     DateTime,
     Enum as SqlEnum,
     ForeignKey,
+    Index,
     Integer,
     Numeric,
     String,
     Text,
     UniqueConstraint,
     func,
+    text,
 )
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database.base import Base
 
@@ -62,6 +64,15 @@ class LeadTaskStatus(str, Enum):
     OPEN = "open"
     COMPLETED = "completed"
     CANCELLED = "cancelled"
+
+
+class LeadContactChannel(str, Enum):
+    PHONE = "phone"
+    EMAIL = "email"
+    TELEGRAM = "telegram"
+    WHATSAPP = "whatsapp"
+    VK = "vk"
+    UNSPECIFIED = "unspecified"
 
 
 def enum_type(enum_class: type[Enum], name: str) -> SqlEnum:
@@ -184,6 +195,46 @@ class Lead(Base):
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now()
     )
+    contacts: Mapped[list[LeadContact]] = relationship(
+        back_populates="lead",
+        cascade="all, delete-orphan",
+        order_by=lambda: (LeadContact.is_primary.desc(), LeadContact.id),
+    )
+
+
+class LeadContact(Base):
+    __tablename__ = "lead_contacts"
+    __table_args__ = (
+        Index(
+            "uq_lead_contacts_primary_per_lead",
+            "lead_id",
+            unique=True,
+            postgresql_where=text("is_primary"),
+            sqlite_where=text("is_primary"),
+        ),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    lead_id: Mapped[int] = mapped_column(
+        ForeignKey("leads.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    name: Mapped[str] = mapped_column(String(255), nullable=False)
+    position: Mapped[str | None] = mapped_column(String(255))
+    phone: Mapped[str | None] = mapped_column(String(50), index=True)
+    email: Mapped[str | None] = mapped_column(String(255), index=True)
+    preferred_channel: Mapped[LeadContactChannel] = mapped_column(
+        enum_type(LeadContactChannel, "lead_contact_channel"),
+        nullable=False,
+        default=LeadContactChannel.UNSPECIFIED,
+    )
+    is_primary: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now()
+    )
+    lead: Mapped[Lead] = relationship(back_populates="contacts")
 
 
 class SalesOrder(Base):

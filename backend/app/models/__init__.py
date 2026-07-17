@@ -5,6 +5,8 @@ from app.models.material import Material
 from app.models.sales import (
     Client,
     Lead,
+    LeadContact,
+    LeadContactChannel,
     LeadEvent,
     LeadEventType,
     LeadRejectionReason,
@@ -26,6 +28,8 @@ __all__ = [
     "Material",
     "Client",
     "Lead",
+    "LeadContact",
+    "LeadContactChannel",
     "LeadEvent",
     "LeadEventType",
     "LeadRejectionReason",

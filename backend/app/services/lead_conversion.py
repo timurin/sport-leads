@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from app.models.sales import (
     Client,
     Lead,
+    LeadContact,
     LeadEvent,
     LeadEventType,
     LeadRejectionReason,
@@ -51,8 +52,22 @@ def _find_or_create_client(
     lead: Lead,
     payload: LeadConvertRequest,
 ) -> Client:
-    email = str(payload.email) if payload.email is not None else lead.email
-    phone = payload.phone if payload.phone is not None else lead.phone
+    primary_contact = db.scalar(
+        select(LeadContact).where(
+            LeadContact.lead_id == lead.id,
+            LeadContact.is_primary.is_(True),
+        )
+    )
+    email = (
+        str(payload.email)
+        if payload.email is not None
+        else primary_contact.email if primary_contact is not None else lead.email
+    )
+    phone = (
+        payload.phone
+        if payload.phone is not None
+        else primary_contact.phone if primary_contact is not None else lead.phone
+    )
     client = None
     matches = []
     if email:
@@ -66,7 +81,10 @@ def _find_or_create_client(
 
     client = Client(
         company_name=payload.company_name if payload.company_name is not None else lead.company_name,
-        contact_name=payload.contact_name or lead.contact_name,
+        contact_name=(
+            payload.contact_name
+            or (primary_contact.name if primary_contact is not None else lead.contact_name)
+        ),
         phone=phone,
         email=email,
         city=payload.city if payload.city is not None else lead.city,
