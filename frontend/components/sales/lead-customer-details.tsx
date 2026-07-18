@@ -16,6 +16,7 @@ import {
 } from "@/app/(workspace)/sales/leads/[leadId]/lead-contact-actions";
 import { saveLeadCustomerProfile } from "@/app/(workspace)/sales/leads/[leadId]/lead-customer-actions";
 import { Button } from "@/components/ui/button";
+import { CityAutocomplete } from "@/components/ui/city-autocomplete";
 import {
   getWebsiteHref,
   optionalText,
@@ -429,7 +430,7 @@ export function LeadCustomerDetails({
             <TextField id="customer-organization" label="Название организации" value={draft.organizationName} onChange={(value) => updateDraft("organizationName", value)} />
             <TextField id="customer-tax-id" label="ИНН" value={draft.taxId} error={errors.taxId} onChange={(value) => updateDraft("taxId", value)} />
             <TextField id="customer-website" label="Сайт" value={draft.website} onChange={(value) => updateDraft("website", value)} />
-            <TextField id="customer-city" label="Город" value={draft.city} onChange={(value) => updateDraft("city", value)} />
+            <CityAutocomplete id="customer-city" label="Город" value={draft.city} onChange={(value) => updateDraft("city", value)} inputClassName={fieldClass} />
             <TextField id="customer-region" label="Регион" value={draft.region} onChange={(value) => updateDraft("region", value)} />
             <div className="sm:col-span-2">
               <TextField id="customer-address" label="Адрес" value={draft.address} onChange={(value) => updateDraft("address", value)} />

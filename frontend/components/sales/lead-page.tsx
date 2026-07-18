@@ -10,6 +10,13 @@ import {
 import { useRef, useState } from "react";
 
 import { LeadActivityTimeline } from "@/components/sales/lead-activity-timeline";
+import {
+  LeadCompletionDialog,
+  leadRejectionReasons,
+  type LeadCompletionMode,
+  type LeadOrderDraft,
+  type RejectionReasonOption,
+} from "@/components/sales/lead-completion-dialog";
 import { LeadHeader } from "@/components/sales/lead-header";
 import { LeadCommercialDetails } from "@/components/sales/lead-commercial-details";
 import { LeadCommunicationPanel, type LeadMessageDraft } from "@/components/sales/lead-communication-panel";
@@ -22,9 +29,12 @@ import { mockCurrentUser, salesManagers } from "@/lib/demo-data/sales";
 import { getNotePermissions, isInternalNote } from "@/lib/sales/lead-activity";
 import { formatCurrency } from "@/lib/sales/lead-commercial";
 import type { LeadDetails } from "@/lib/sales/lead-details";
+import { convertLead, rejectLead } from "@/app/(workspace)/sales/leads/[leadId]/lead-header-actions";
+import type { LeadFinalActionId } from "@/lib/sales/lead-final-actions";
+import type { LeadStageConfig } from "@/lib/sales/lead-stages";
 import { formatAttachmentSize, leadMessageChannelLabels } from "@/lib/sales/lead-message";
 import { formatTaskDate, getNearestLeadTask, rescheduleTaskDueAt, type LeadTaskFilter } from "@/lib/sales/lead-task";
-import type { LeadActivity, LeadMessage, LeadTask } from "@/types/sales";
+import type { Lead, LeadActivity, LeadMessage, LeadTask, Priority } from "@/types/sales";
 
 const dateFormatter = new Intl.DateTimeFormat("ru-RU", {
   dateStyle: "medium",
@@ -113,11 +123,18 @@ function createLocalMessageId() {
   return `lead-message-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 }
 
-export function LeadPage({ lead: initialLead }: { lead: LeadDetails }) {
+export function LeadPage({
+  lead: initialLead,
+  stages,
+}: {
+  lead: LeadDetails;
+  stages: LeadStageConfig[];
+}) {
   const [lead, setLead] = useState<LeadDetails>(() => cloneLead(initialLead));
   const [workspaceTab, setWorkspaceTab] = useState<WorkspaceTab>("communication");
   const [referenceTab, setReferenceTab] = useState<ReferenceTab>("customer");
   const [taskDialog, setTaskDialog] = useState<TaskDialogState>(null);
+  const [completionMode, setCompletionMode] = useState<LeadCompletionMode | null>(null);
   const [taskFilter, setTaskFilter] = useState<LeadTaskFilter>("open");
   const taskDialogTriggerRef = useRef<HTMLElement | null>(null);
 
@@ -461,14 +478,88 @@ export function LeadPage({ lead: initialLead }: { lead: LeadDetails }) {
   const preferredChannel = primaryContact?.preferredChannel && primaryContact.preferredChannel !== "unspecified"
     ? leadMessageChannelLabels[primaryContact.preferredChannel]
     : "Не указано";
+  const completionLead: Lead = {
+    id: lead.id,
+    status: lead.status === "completed" ? "completed" : "new",
+    stageId: lead.stageId,
+    clientName: lead.customer.organizationName ?? lead.title,
+    contact: lead.contactName,
+    city: lead.customer.city ?? lead.commercial.deliveryCity ?? "Не указан",
+    sport: lead.commercial.sport ?? "Не указан",
+    estimatedAmount: lead.estimatedAmount ?? 0,
+    source: lead.source ?? "Не указан",
+    responsible: lead.responsible
+      ? { ...lead.responsible, initials: lead.responsible.name.slice(0, 2).toUpperCase() }
+      : { id: "unassigned", name: "Не назначен", initials: "—" },
+    nextContact: nearestTask ? formatTaskDate(nearestTask.dueAt) : "Не запланирован",
+    priority: (lead.commercial.priority ?? "medium") as Priority,
+    result: lead.result,
+    completedAt: lead.completedAt ? formatDate(lead.completedAt) : undefined,
+    completedBy: lead.completedBy
+      ? { ...lead.completedBy, initials: lead.completedBy.name.slice(0, 2).toUpperCase() }
+      : undefined,
+    convertedOrderId: lead.convertedOrderId,
+    convertedOrderNumber: lead.convertedOrderNumber,
+    rejectionReason: lead.rejectionReason,
+    rejectionComment: lead.rejectionComment,
+    productCategory: lead.commercial.productCategory,
+    quantity: lead.commercial.estimatedQuantity,
+    needDescription: lead.commercial.needDescription,
+    desiredDate: lead.commercial.desiredReadyDate,
+  };
+
+  function openFinalAction(action: LeadFinalActionId) {
+    setCompletionMode(action === "convert" ? "convert" : "reject");
+  }
+
+  async function convertDetailLead(leadId: string, draft: LeadOrderDraft) {
+    const result = await convertLead(leadId, draft);
+    if (!result.ok) {
+      return result;
+    }
+    setLead((current) => ({
+      ...current,
+      status: "completed",
+      stageId: undefined,
+      statusLabel: "Завершён",
+      result: "converted",
+      completedAt: new Date().toISOString(),
+      completedBy: current.responsible ?? undefined,
+      convertedOrderId: result.orderId,
+      convertedOrderNumber: result.orderNumber,
+    }));
+    return result;
+  }
+
+  async function rejectDetailLead(leadId: string, reason: RejectionReasonOption, comment: string) {
+    const result = await rejectLead(leadId, reason, comment);
+    if (!result.ok) {
+      return result;
+    }
+    setLead((current) => ({
+      ...current,
+      status: "completed",
+      stageId: undefined,
+      statusLabel: "Завершён",
+      result: "rejected",
+      completedAt: new Date().toISOString(),
+      completedBy: current.responsible ?? undefined,
+      rejectionReason: reason.name,
+      rejectionComment: comment || undefined,
+    }));
+    return result;
+  }
 
   return (
     <div data-lead-workspace className="w-full min-w-0 bg-portal-page text-portal-text">
       <LeadHeader
+        key={`${lead.id}-${lead.status}-${lead.stageId ?? "final"}`}
         lead={lead}
+        initialStages={stages}
         lastActivityAtLabel={formatDate(lead.lastActivityAt)}
         onAddTask={(trigger) => openTaskDialog({ kind: "edit", task: null }, trigger)}
         onWrite={() => openWorkspaceSection("communication")}
+        onFinalAction={openFinalAction}
       />
 
       <PageContent size="compact" width="full" className="lead-page-container">
@@ -579,6 +670,17 @@ export function LeadPage({ lead: initialLead }: { lead: LeadDetails }) {
       ) : null}
       {taskDialog?.kind === "delete" ? (
         <LeadTaskDeleteDialog task={taskDialog.task} onClose={closeTaskDialog} onConfirm={() => deleteTask(taskDialog.task.id)} />
+      ) : null}
+      {completionMode ? (
+        <LeadCompletionDialog
+          key={`${lead.id}-${completionMode}`}
+          lead={completionLead}
+          reasons={leadRejectionReasons}
+          initialMode={completionMode}
+          onClose={() => setCompletionMode(null)}
+          onConvert={convertDetailLead}
+          onReject={rejectDetailLead}
+        />
       ) : null}
     </div>
   );

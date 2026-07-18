@@ -139,6 +139,26 @@ class LeadRejectionReason(Base):
     )
 
 
+class LeadStage(Base):
+    __tablename__ = "lead_stages"
+    __table_args__ = (
+        CheckConstraint("sort_order >= 0", name="ck_lead_stages_sort_order_nonnegative"),
+    )
+
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    title: Mapped[str] = mapped_column(String(100), nullable=False)
+    accent_class: Mapped[str] = mapped_column(String(32), nullable=False)
+    is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True, index=True)
+    sort_order: Mapped[int] = mapped_column(Integer, nullable=False, unique=True)
+    is_system: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now()
+    )
+
+
 class Lead(Base):
     __tablename__ = "leads"
     __table_args__ = (
@@ -157,8 +177,8 @@ class Lead(Base):
     )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    status: Mapped[LeadStatus] = mapped_column(
-        enum_type(LeadStatus, "lead_status"), nullable=False, default=LeadStatus.NEW, index=True
+    status: Mapped[str] = mapped_column(
+        String(64), nullable=False, default=LeadStatus.NEW.value, index=True
     )
     result: Mapped[LeadResult | None] = mapped_column(
         enum_type(LeadResult, "lead_result"), index=True
@@ -180,12 +200,28 @@ class Lead(Base):
     responsible_id: Mapped[int | None] = mapped_column(
         ForeignKey("sales_users.id", ondelete="SET NULL"), index=True
     )
+    direction: Mapped[str | None] = mapped_column(String(150))
     sport: Mapped[str | None] = mapped_column(String(150))
     product_category: Mapped[str | None] = mapped_column(String(150))
+    product_type: Mapped[str | None] = mapped_column(String(150))
     need_description: Mapped[str | None] = mapped_column(Text)
     estimated_quantity: Mapped[int | None] = mapped_column(Integer)
+    kit_quantity: Mapped[int | None] = mapped_column(Integer)
+    size_comment: Mapped[str | None] = mapped_column(Text)
+    preliminary_budget: Mapped[Decimal | None] = mapped_column(Numeric(14, 2))
     estimated_amount: Mapped[Decimal | None] = mapped_column(Numeric(14, 2))
+    discount_percent: Mapped[Decimal | None] = mapped_column(Numeric(5, 2))
+    probability: Mapped[Decimal | None] = mapped_column(Numeric(5, 2))
+    planned_order_date: Mapped[date | None] = mapped_column(Date)
     desired_date: Mapped[date | None] = mapped_column(Date)
+    event_date: Mapped[date | None] = mapped_column(Date)
+    delivery_city: Mapped[str | None] = mapped_column(String(150))
+    delivery_address: Mapped[str | None] = mapped_column(String(500))
+    delivery_method: Mapped[str | None] = mapped_column(String(150))
+    delivery_comment: Mapped[str | None] = mapped_column(Text)
+    campaign: Mapped[str | None] = mapped_column(String(255))
+    utm_description: Mapped[str | None] = mapped_column(Text)
+    priority: Mapped[str | None] = mapped_column(String(20))
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     completed_by_id: Mapped[int | None] = mapped_column(
         ForeignKey("sales_users.id", ondelete="SET NULL")

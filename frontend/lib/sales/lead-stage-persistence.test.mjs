@@ -19,9 +19,9 @@ test("persists changed stages for numeric API leads only", () => {
     getLeadStagePersistenceDecision("42", "new", "new", "api").reason,
     "unchanged",
   );
-  assert.equal(
-    getLeadStagePersistenceDecision("42", "new", "custom-1", "api").reason,
-    "unsupported-stage",
+  assert.deepEqual(
+    getLeadStagePersistenceDecision("42", "new", "custom-1", "api"),
+    { shouldPersist: true, reason: "api-lead" },
   );
 });
 

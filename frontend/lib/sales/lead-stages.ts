@@ -19,15 +19,15 @@ export type LeadStageConfig = {
   accentClass: LeadStageAccent;
   isActive: boolean;
   sortOrder: number;
-  isSystem: false;
+  isSystem: boolean;
 };
 
 export const DEFAULT_LEAD_STAGES: readonly LeadStageConfig[] = [
-  { id: "new", title: "Новый", accentClass: "bg-blue-500", isActive: true, sortOrder: 0, isSystem: false },
-  { id: "contact", title: "Первичный контакт", accentClass: "bg-cyan-500", isActive: true, sortOrder: 1, isSystem: false },
-  { id: "qualification", title: "Квалификация", accentClass: "bg-violet-500", isActive: true, sortOrder: 2, isSystem: false },
-  { id: "proposal", title: "Предложение", accentClass: "bg-amber-500", isActive: true, sortOrder: 3, isSystem: false },
-  { id: "waiting", title: "Ожидание решения", accentClass: "bg-orange-500", isActive: true, sortOrder: 4, isSystem: false },
+  { id: "new", title: "Новый", accentClass: "bg-blue-500", isActive: true, sortOrder: 0, isSystem: true },
+  { id: "contact", title: "Первичный контакт", accentClass: "bg-cyan-500", isActive: true, sortOrder: 1, isSystem: true },
+  { id: "qualification", title: "Квалификация", accentClass: "bg-violet-500", isActive: true, sortOrder: 2, isSystem: true },
+  { id: "proposal", title: "Предложение", accentClass: "bg-amber-500", isActive: true, sortOrder: 3, isSystem: true },
+  { id: "waiting", title: "Ожидание решения", accentClass: "bg-orange-500", isActive: true, sortOrder: 4, isSystem: true },
 ];
 
 const RESERVED_STAGE_IDS = new Set(["converted", "rejected"]);
@@ -46,6 +46,26 @@ export function sortLeadStages(stages: readonly LeadStageConfig[]): LeadStageCon
 
 export function getActiveLeadStages(stages: readonly LeadStageConfig[]): LeadStageConfig[] {
   return sortLeadStages(stages).filter((stage) => stage.isActive);
+}
+
+export function parseStoredLeadStages(rawValue: string | null): LeadStageConfig[] {
+  if (!rawValue) {
+    return getDefaultLeadStages();
+  }
+  try {
+    const parsed: unknown = JSON.parse(rawValue);
+    return validateLeadStages(parsed) ? sortLeadStages(parsed) : getDefaultLeadStages();
+  } catch {
+    return getDefaultLeadStages();
+  }
+}
+
+export function loadLeadStages(storage: Pick<Storage, "getItem">): LeadStageConfig[] {
+  try {
+    return parseStoredLeadStages(storage.getItem(LEAD_STAGE_STORAGE_KEY));
+  } catch {
+    return getDefaultLeadStages();
+  }
 }
 
 export function validateLeadStages(value: unknown): value is LeadStageConfig[] {
@@ -74,7 +94,7 @@ export function validateLeadStages(value: unknown): value is LeadStageConfig[] {
       || typeof stage.isActive !== "boolean"
       || !Number.isInteger(stage.sortOrder)
       || Number(stage.sortOrder) < 0
-      || stage.isSystem !== false
+      || typeof stage.isSystem !== "boolean"
     ) {
       return false;
     }
@@ -84,30 +104,6 @@ export function validateLeadStages(value: unknown): value is LeadStageConfig[] {
   }
 
   return activeStages > 0 && DEFAULT_LEAD_STAGES.every((stage) => ids.has(stage.id));
-}
-
-export function parseStoredLeadStages(rawValue: string | null): LeadStageConfig[] {
-  if (!rawValue) {
-    return getDefaultLeadStages();
-  }
-
-  try {
-    const parsed: unknown = JSON.parse(rawValue);
-
-    return validateLeadStages(parsed)
-      ? sortLeadStages(parsed.map((stage) => ({ ...stage, title: stage.title.trim() })))
-      : getDefaultLeadStages();
-  } catch {
-    return getDefaultLeadStages();
-  }
-}
-
-export function loadLeadStages(storage: Pick<Storage, "getItem">): LeadStageConfig[] {
-  try {
-    return parseStoredLeadStages(storage.getItem(LEAD_STAGE_STORAGE_KEY));
-  } catch {
-    return getDefaultLeadStages();
-  }
 }
 
 export function createLeadStageId(stages: readonly LeadStageConfig[]): string {

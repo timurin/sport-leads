@@ -1,15 +1,7 @@
 export type LeadStagePersistenceDecision = {
   shouldPersist: boolean;
-  reason: "api-lead" | "unchanged" | "non-api-lead" | "unsupported-stage";
+  reason: "api-lead" | "unchanged" | "non-api-lead";
 };
-
-const API_LEAD_STAGES = new Set([
-  "new",
-  "contact",
-  "qualification",
-  "proposal",
-  "waiting",
-]);
 
 export function getLeadStagePersistenceDecision(
   leadId: string,
@@ -23,10 +15,6 @@ export function getLeadStagePersistenceDecision(
 
   if (dataOrigin !== "api" || !/^\d+$/.test(leadId)) {
     return { shouldPersist: false, reason: "non-api-lead" };
-  }
-
-  if (!API_LEAD_STAGES.has(nextStage)) {
-    return { shouldPersist: false, reason: "unsupported-stage" };
   }
 
   return { shouldPersist: true, reason: "api-lead" };

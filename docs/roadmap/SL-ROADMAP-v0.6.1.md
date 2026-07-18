@@ -40,23 +40,23 @@
 - `[x]` единая backend-модель `Lead`, Pydantic-схемы и API списка, чтения и частичного обновления;
 - `[x]` числовая карточка лида загружает backend-данные без скрытой demo-подмены;
 - `[x]` контакты хранятся в `LeadContact`; CRUD и атомарная смена primary подключены к числовой карточке;
-- `[x]` коммерческое ядро лида хранится в `Lead` через `Numeric`/`Decimal` и сохраняется существующим PATCH;
+- `[x]` коммерческое ядро и расширенные поля карточки лида хранятся в `Lead` через `Numeric`/`Decimal` для денежных и процентных значений и сохраняются существующим PATCH;
 - `[x]` core-профиль клиента хранится в `Lead` и сохраняется числовой карточкой;
 - `[~]` список `/sales/leads` загружает `GET /leads?limit=500` без скрытого fallback; ручной smoke с реальной PostgreSQL-записью ещё не зафиксирован;
 - `[~]` явный идемпотентный dev-seed создаёт пять числовых лидов, контакты и коммерческие данные, но не является runtime-функцией и не запускается автоматически;
-- `[~]` изменение статуса и перемещение Kanban работают только в состоянии frontend;
-- `[~]` стадии Kanban настраиваются в `localStorage`, общего backend persistence нет;
+- `[x]` изменение рабочей стадии и перемещение числового API-лида в Kanban сохраняются через backend, включая пользовательские стадии;
+- `[x]` конфигурация стадий хранится в `lead_stages`; создание, переименование, порядок, активность и атомарный перенос лидов подтверждены backend/frontend тестами;
 - `[~]` convert/reject и завершение успешно/отказ подтверждены backend API, но действия списка остаются локальными;
 - `[x]` backend выполняет транзакционную конвертацию `Lead → Client + SalesOrder` и защищает от повторной конвертации;
 - `[~]` минимальный `SalesOrder` создаётся при конвертации; модели `Deal` нет;
 - `[~]` frontend-аналитика лидов функциональна, но строится на demo-данных;
-- `[~]` `lead-1`/`lead-2`, расширенные коммерческие поля, задачи, заметки, timeline, сообщения и коммуникации остаются demo/in-memory;
-- `[ ]` создание и архивирование лида через рабочий frontend/API сценарий;
-- `[ ]` постоянные настраиваемые стадии, Kanban persistence и полная история изменения статуса;
-- `[ ]` frontend-сценарий постоянной конвертации/отказа из списка без повторного ввода;
-- `[ ]` поиск и дедупликация лидов по телефону/email.
+- `[~]` `lead-1`/`lead-2`, задачи, заметки, timeline, сообщения и коммуникации остаются demo/in-memory;
+- `[~]` создание и архивирование лида через рабочий frontend/API сценарий — итерация `v0.6.1-lead-creation` завершила создание через `POST /leads` и frontend-форму; архивирование и восстановление остаются отдельной подзадачей;
+- `[~]` постоянные настраиваемые стадии, Kanban persistence и синхронизация detail-карточки подтверждены итерациями `v0.6.1-lead-custom-stage-persistence` и `v0.6.1-lead-detail-custom-stages`; `lead_status_changed` записывается, но полный аудит конфигурации ещё не реализован;
+- `[x]` постоянная конвертация/отказ доступны из списка и непосредственно из detail-шкалы через единый completion dialog и существующие backend-действия;
+- `[~]` поиск и дедупликация лидов по телефону/email — итерация `v0.6.1-lead-duplicate-candidates`: добавлен read-only backend endpoint `GET /leads/duplicate-candidates`, который ищет кандидатов по email и нормализованному телефону в `Lead` и `LeadContact`; подтверждения: `backend/app/services/lead_duplicates.py`, `backend/app/api/leads.py`, `backend/tests/test_lead_duplicates.py`; проверки: backend pytest 36 и project check 9/9 с `PYTHONUTF8=1`; ограничение: создание лида пока не блокируется, UI-предупреждение и сценарий слияния дублей не реализованы.
 
-Подтверждения: `backend/app/models/sales.py`, `backend/app/schemas/sales.py`, `backend/app/api/leads.py`, `backend/app/services/lead_contacts.py`, `backend/app/services/lead_conversion.py`, `backend/tests/test_lead_contacts.py`, `backend/tests/test_lead_conversion.py`, `frontend/app/(workspace)/sales/leads`, `frontend/components/sales`, `frontend/lib/sales`, `frontend/lib/demo-data/sales.ts`.
+Подтверждения: `backend/app/models/sales.py`, `backend/app/schemas/sales.py`, `backend/app/api/leads.py`, `backend/alembic/versions/f2a7c4d8e901_add_lead_card_commercial_fields.py`, `backend/app/services/lead_contacts.py`, `backend/app/services/lead_conversion.py`, `backend/tests/test_lead_contacts.py`, `backend/tests/test_lead_conversion.py`, `frontend/app/(workspace)/sales/leads`, `frontend/components/sales`, `frontend/lib/sales`, `frontend/lib/demo-data/sales.ts`.
 
 ## 2. Сделки и заказы покупателей
 
@@ -151,3 +151,105 @@ Codex должен остановиться и попросить владель
 - `[~]` комментарии, задачи и сообщения числового лида пока остаются локальными и не входят в эту итерацию.
 
 Подтверждения: `frontend/lib/sales/lead-history.ts`, `frontend/lib/sales/lead-history.test.mjs`, `frontend/lib/sales/lead-details.ts`, `backend/tests/test_lead_conversion.py`, существующие `backend/app/models/sales.py` и `backend/app/api/leads.py`.
+## Итерация v0.6.1-sales-orders-backend-list
+
+- `[x]` список заказов использует существующий `GET /orders?limit=500` и не подменяет API-ошибки demo-данными;
+- `[x]` `SalesOrder` после конвертации загружается после reload с номером, клиентом, статусом, суммой, ответственным и ссылкой на исходный lead;
+- `[x]` сохранён текущий Kanban-дизайн списка, добавлены mapping/frontend и backend reload-тесты;
+- `[x]` backend pytest, frontend tests, typecheck, lint, build, check_project, Alembic check и diff check прошли; миграция не потребовалась;
+- `[~]` создание и редактирование заказов через UI остаются отдельным незавершённым сценарием.
+
+Подтверждения: `backend/app/api/orders.py`, `backend/app/schemas/sales.py`, `backend/tests/test_lead_conversion.py`, `frontend/lib/sales/order-list-api.ts`, `frontend/lib/sales/order-list-api.test.mjs`, `frontend/app/(workspace)/sales/orders/page.tsx`.
+## Итерация v0.6.1-navigation-remove-deals
+
+- `[x]` активная CRM-навигация разделена на отдельные ссылки `Лиды` → `/sales/leads` и `Заказы покупателей` → `/sales/orders`;
+- `[x]` пункт и ссылка `Сделки` удалены только из активной навигационной конфигурации, demo-страница `/sales/deals` не удалялась;
+- `[x]` добавлен regression-тест навигации; TypeScript, ESLint, production build и `git diff --check` прошли.
+
+Подтверждения: `frontend/lib/navigation.ts`, `frontend/lib/navigation.test.mjs`, `docs/tasks/v0.6.1-navigation-remove-deals.md`.
+
+## Итерация v0.6.1-lead-creation
+
+- `[x]` `POST /leads` использует существующие `Lead`, `LeadContact` и `LeadEvent`, всегда создаёт стадию `new`, один основной контакт и событие `lead_created` в общей транзакции;
+- `[x]` отдельная `LeadCreate` не принимает result/completed/archive-состояния, проверяет обязательное имя, email, размеры и неотрицательные денежные значения; активный ответственный проверяется service-слоем;
+- `[x]` список лидов открывает рабочую форму создания через Server Action, повторно проверяет недоверенный ввод и добавляет карточку только после ответа backend без successful fallback;
+- `[x]` backend pytest — 32, frontend tests — 41, TypeScript, ESLint, production build, project check 9/9, OpenAPI, Alembic current/upgrade/check и HTTP-smoke — успешно; миграция не потребовалась;
+- `[~]` интерактивный browser-smoke не выполнен: встроенная browser-среда не предоставила доступный backend; архивирование, восстановление и фильтрация архива остаются следующей отдельной подзадачей.
+
+Подтверждения: `backend/app/schemas/sales.py`, `backend/app/services/lead_creation.py`, `backend/app/api/leads.py`, `backend/tests/test_lead_creation.py`, `frontend/app/(workspace)/sales/leads/lead-create-actions.ts`, `frontend/components/sales/lead-create-dialog.tsx`, `frontend/components/sales/lead-workspace.tsx`, `frontend/lib/sales/lead-create-api.ts`, `frontend/lib/sales/lead-creation.ts`, `frontend/lib/sales/lead-creation.test.mjs`.
+
+## Итерация v0.6.1-lead-city-autocomplete
+
+- `[x]` создан переиспользуемый `CityAutocomplete` для текущих и будущих форм без обязательного справочника и без изменения модели данных;
+- `[x]` компонент подключён к созданию лида, профилю клиента и городу доставки коммерческой формы;
+- `[x]` поиск начинается с двух символов, приоритет отдаётся совпадениям по началу названия, доступны мышь, ArrowUp/ArrowDown, Enter и Escape;
+- `[x]` отсутствие совпадения не блокирует форму: введённый город остаётся обычной строкой и проходит существующий backend-контракт;
+- `[x]` backend pytest — 32, frontend tests — 43, TypeScript, ESLint, production build, project check 9/9 и diff check прошли;
+- `[~]` интерактивный browser-smoke недоступен; persistence пользовательских стадий, синхронизация карточки, финальные действия и расширенная drag-область остаются следующими частями патча.
+
+## Итерация v0.6.1-lead-custom-stage-persistence
+
+- `[x]` добавлена таблица `lead_stages` со стабильным строковым ID, названием, цветом, активностью, порядком и признаком системной стадии;
+- `[x]` `Lead.status` расширен до строкового ID и остаётся единственным источником текущей рабочей стадии или финального `completed`;
+- `[x]` `GET/PUT /lead-stages` и service-слой атомарно сохраняют конфигурацию и переводят лиды из отключаемых/удаляемых стадий;
+- `[x]` Kanban загружает стадии вместе со списком на сервере и сохраняет custom-стадии через прежний `PATCH /leads/{lead_id}` без local successful fallback;
+- `[x]` backend pytest — 34, frontend tests — 45, TypeScript, ESLint, production build, OpenAPI, Alembic upgrade/downgrade/upgrade/check и project check 9/9 прошли;
+- `[~]` browser-smoke недоступен; подключение detail-карточки подтверждено следующей итерацией ниже.
+
+Подтверждения: `backend/app/models/sales.py`, `backend/app/services/lead_stages.py`, `backend/app/api/lead_stages.py`, `backend/alembic/versions/e4b8a2c91d7f_add_persistent_lead_stages.py`, `backend/tests/test_lead_stages.py`, `frontend/lib/sales/lead-stage-api.ts`, `frontend/app/(workspace)/sales/leads/lead-stage-actions.ts`, `frontend/components/sales/lead-workspace.tsx`, `frontend/components/sales/lead-stage-settings-dialog.tsx`.
+
+## Итерация v0.6.1-lead-detail-custom-stages
+
+- `[x]` числовая detail-страница загружает `GET /lead-stages` параллельно с данными лида и показывает ошибку backend без local fallback;
+- `[x]` custom status не преобразуется в `new`: стабильный ID сохраняется в `LeadDetails.stageId` и восстанавливается после reload;
+- `[x]` dropdown и шкала карточки используют тот же активный список стадий и тот же `PATCH /leads/{lead_id}`, что и Kanban;
+- `[x]` фиксированный allowlist пяти стадий удалён; demo-лиды остаются отдельным явно локальным контуром;
+- `[x]` backend pytest — 34, frontend tests — 47, TypeScript, ESLint, production build и project check 9/9 прошли;
+- `[~]` browser-smoke недоступен; финальные действия карточки и расширенная drag-область не входят в итерацию.
+
+Подтверждения: `frontend/app/(workspace)/sales/leads/[leadId]/page.tsx`, `frontend/components/sales/lead-page.tsx`, `frontend/components/sales/lead-header.tsx`, `frontend/lib/sales/lead-details.ts`, `frontend/lib/sales/lead-detail-stage.ts`, `frontend/lib/sales/lead-detail-stage.test.mjs`.
+
+## Итерация v0.6.1-lead-detail-final-actions
+
+- `[x]` два финальных действия добавлены после активных рабочих стадий и хранятся отдельно от редактируемой конфигурации `LeadStage`;
+- `[x]` «Оформить заказ» и «Закрыть с отказом» открывают существующий диалог сразу в нужном режиме и не используют обычный PATCH стадии;
+- `[x]` подтверждённый backend-результат переводит detail-карточку в `completed`, показывает заказ со ссылкой либо сохранённую причину отказа; ошибка остаётся видимой в диалоге;
+- `[x]` backend pytest — 34, frontend tests — 48, TypeScript, ESLint, production build и project check 9/9 прошли;
+- `[~]` browser-smoke недоступен; расширение drag-области Kanban остаётся последним пунктом патча.
+
+Подтверждения: `frontend/components/sales/lead-header.tsx`, `frontend/components/sales/lead-page.tsx`, `frontend/components/sales/lead-completion-dialog.tsx`, `frontend/app/(workspace)/sales/leads/[leadId]/lead-header-actions.ts`, `frontend/lib/sales/lead-details.ts`, `frontend/lib/sales/lead-final-actions.ts`, `frontend/lib/sales/lead-final-actions.test.mjs`.
+
+## Итерация v0.6.1-kanban-full-card-drag
+
+- `[x]` pointer drag активируется со всей свободной поверхности общей Kanban-карточки с прежним порогом 6 px;
+- `[x]` кнопка завершения и служебные интерактивные потомки исключены из activator; заголовочная ссылка сохраняет обычный click и поддерживает drag после порога 6 px;
+- `[x]` click по свободной области открывает `card.href`, но состоявшийся drag подавляет последующий click;
+- `[x]` reusable-логика находится в общем `components/kanban`, без привязки к лидам;
+- `[x]` backend pytest — 34, frontend tests — 50, TypeScript, ESLint, production build и project check 9/9 прошли;
+- `[~]` browser-smoke недоступен; программно проверяемый объём UX-патча завершён.
+
+Подтверждения: `frontend/components/kanban/kanban-board.tsx`, `frontend/components/kanban/kanban-card.tsx`, `frontend/components/kanban/kanban-interaction.ts`, `frontend/components/kanban/kanban-interaction.test.mjs`.
+
+Подтверждения: `frontend/components/ui/city-autocomplete.tsx`, `frontend/lib/city-suggestions.ts`, `frontend/lib/sales/city-suggestions.test.mjs`, `frontend/components/sales/lead-create-dialog.tsx`, `frontend/components/sales/lead-customer-details.tsx`, `frontend/components/sales/lead-commercial-details.tsx`, `docs/tasks/patch-0.6-lead-ux-custom-stages.md`.
+
+## Итерация v0.6.1-lead-duplicate-candidates
+
+- `[x]` backend повторно использует существующие `Lead` и `LeadContact` как источники контактов, без новой таблицы, миграции или дублирующей CRM-модели;
+- `[x]` `GET /leads/duplicate-candidates` возвращает `LeadRead` кандидатов по email и телефону, поддерживает `exclude_lead_id` и требует хотя бы один критерий поиска;
+- `[x]` email сравнивается без учёта регистра, телефон нормализуется до цифр с приведением российского префикса `8` к `7`;
+- `[x]` focused backend tests подтверждают совпадения по полям лида и контактам, отсутствие критериев и исключение текущего лида;
+- `[x]` backend pytest — 36 и project check 9/9 с `PYTHONUTF8=1` прошли; миграция не потребовалась;
+- `[~]` это read-only слой поиска кандидатов: создание лида не блокируется, frontend-предупреждение и слияние дублей остаются следующими подзадачами.
+
+Подтверждения: `backend/app/services/lead_duplicates.py`, `backend/app/api/leads.py`, `backend/tests/test_lead_duplicates.py`.
+
+## Итерация v0.6.1-lead-card-save-fix
+
+- `[x]` существующий `PATCH /leads/{lead_id}` теперь принимает и возвращает полный набор редактируемых коммерческих полей карточки: направление, тип изделия, количество комплектов, размеры, предварительный бюджет, скидку, вероятность, плановую дату заказа, дату мероприятия, доставку, campaign, UTM и priority;
+- `[x]` город доставки отделён от города клиента: `delivery_city` больше не перезаписывает `Lead.city`, а миграция заполняет новое поле из старого `city` только для совместимости существующих записей;
+- `[x]` frontend Server Action отправляет полный snake_case payload, передаёт очистку через явные `null` и после успешного сохранения обновляет state только из ответа backend;
+- `[x]` `responsible_id` поддержан в PATCH с backend-валидацией active `SalesUser`; UI числового лида больше не применяет demo-менеджеров как локально сохранённый backend-результат;
+- `[x]` backend pytest — 37, frontend tests — 50, TypeScript, ESLint, production build, Alembic upgrade/check, project check 9/9 и `git diff --check` прошли;
+- `[~]` полноценный frontend-список backend-пользователей для выбора ответственного не реализован; demo-лиды, задачи, заметки, сообщения и локальная timeline остаются вне этой итерации.
+
+Подтверждения: `backend/app/models/sales.py`, `backend/app/schemas/sales.py`, `backend/app/api/leads.py`, `backend/alembic/versions/f2a7c4d8e901_add_lead_card_commercial_fields.py`, `backend/tests/test_lead_conversion.py`, `frontend/app/(workspace)/sales/leads/[leadId]/lead-commercial-actions.ts`, `frontend/app/(workspace)/sales/leads/[leadId]/lead-header-actions.ts`, `frontend/components/sales/lead-commercial-details.tsx`, `frontend/components/sales/lead-header.tsx`, `frontend/lib/sales/lead-commercial-api.ts`, `frontend/lib/sales/lead-commercial-api.test.mjs`, `frontend/lib/sales/lead-details.ts`, `docs/tasks/patch-0.6-lead-card-save-fix.md`.

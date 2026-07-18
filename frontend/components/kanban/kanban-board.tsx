@@ -9,16 +9,18 @@ import {
   type DragEndEvent,
   type DragOverEvent,
   type DragStartEvent,
+  type PointerSensorOptions,
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
 import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
-import { useId, useMemo, useRef, useState } from "react";
+import { useId, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 
 import {
   KanbanCardContent,
 } from "@/components/kanban/kanban-card";
 import { KanbanColumn } from "@/components/kanban/kanban-column";
+import { canStartKanbanDrag } from "@/components/kanban/kanban-interaction";
 import {
   cloneKanbanColumns,
   filterKanbanColumns,
@@ -42,6 +44,23 @@ type KanbanBoardProps<TStatus extends string> = {
   onCardSelect?: (cardId: string) => void;
 };
 
+class KanbanPointerSensor extends PointerSensor {
+  static activators = [{
+    eventName: "onPointerDown" as const,
+    handler: (
+      { nativeEvent: event }: ReactPointerEvent,
+      { onActivation }: PointerSensorOptions,
+    ) => {
+      if (!event.isPrimary || event.button !== 0 || !canStartKanbanDrag(event.target)) {
+        return false;
+      }
+
+      onActivation?.({ event });
+      return true;
+    },
+  }];
+}
+
 export function KanbanBoard<TStatus extends string>({
   columns: initialColumns,
   query,
@@ -60,7 +79,7 @@ export function KanbanBoard<TStatus extends string>({
   const lastAppliedMove = useRef<KanbanMove<TStatus> | null>(null);
   const movedAcrossColumns = useRef(false);
   const sensors = useSensors(
-    useSensor(PointerSensor, {
+    useSensor(KanbanPointerSensor, {
       activationConstraint: { distance: 6 },
     }),
     useSensor(KeyboardSensor, {

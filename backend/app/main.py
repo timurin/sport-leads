@@ -8,6 +8,7 @@ from app.api.filters import router as filters_router
 from app.api.imports import router as imports_router
 from app.api.materials import router as materials_router
 from app.api.leads import router as leads_router
+from app.api.lead_stages import router as lead_stages_router
 from app.api.lead_rejection_reasons import router as lead_rejection_reasons_router
 from app.api.orders import router as orders_router
 app = FastAPI(
@@ -24,6 +25,7 @@ app.include_router(sources_router)
 app.include_router(imports_router)
 app.include_router(materials_router)
 app.include_router(leads_router)
+app.include_router(lead_stages_router)
 app.include_router(lead_rejection_reasons_router)
 app.include_router(orders_router)
 

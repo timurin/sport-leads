@@ -51,6 +51,7 @@ test("maps an active API lead to the workspace lead model", () => {
   assert.deepEqual(fromApiLeadListItem(baseLead), {
     id: "42",
     status: "qualification",
+    stageId: "qualification",
     clientName: "ООО Спорт Лига",
     contact: "Анна Смирнова",
     city: "Казань",
@@ -72,6 +73,12 @@ test("maps an active API lead to the workspace lead model", () => {
     needDescription: "Форма для команды",
     desiredDate: "2026-09-15",
   });
+});
+
+test("keeps a custom backend stage as the workspace stage id", () => {
+  const lead = fromApiLeadListItem({ ...baseLead, status: "custom-7" });
+  assert.equal(lead.stageId, "custom-7");
+  assert.equal(lead.status, "new");
 });
 
 test("maps completed converted and rejected API leads", () => {

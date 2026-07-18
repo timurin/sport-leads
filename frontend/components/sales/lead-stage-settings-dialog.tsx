@@ -19,8 +19,8 @@ type Props = {
   stages: readonly LeadStageConfig[];
   leadCounts: Readonly<Record<string, number>>;
   onClose: () => void;
-  onSave: (stages: LeadStageConfig[], transfers: Readonly<Record<string, string>>) => void;
-  onReset: (transfers: Readonly<Record<string, string>>) => void;
+  onSave: (stages: LeadStageConfig[], transfers: Readonly<Record<string, string>>) => Promise<string | null>;
+  onReset: (transfers: Readonly<Record<string, string>>) => Promise<string | null>;
 };
 
 const fieldClass = "h-9 rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-900 placeholder:text-slate-400 outline-none focus:border-blue-400";
@@ -35,6 +35,7 @@ export function LeadStageSettingsDialog({
   const [draftStages, setDraftStages] = useState<LeadStageConfig[]>(() => sortLeadStages(stages));
   const [transfers, setTransfers] = useState<Record<string, string>>({});
   const [error, setError] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
 
   function updateStage(stageId: string, changes: Partial<LeadStageConfig>) {
     setDraftStages((current) => current.map((stage) => (
@@ -103,7 +104,7 @@ export function LeadStageSettingsDialog({
     setError("");
   }
 
-  function save() {
+  async function save() {
     const normalized = sortLeadStages(draftStages).map((stage, sortOrder) => ({
       ...stage,
       title: stage.title.trim(),
@@ -128,10 +129,15 @@ export function LeadStageSettingsDialog({
       }
     }
 
-    onSave(normalized, transfers);
+    setIsSaving(true);
+    const saveError = await onSave(normalized, transfers);
+    setIsSaving(false);
+    if (saveError) {
+      setError(saveError);
+    }
   }
 
-  function reset() {
+  async function reset() {
     const defaultIds = new Set(getDefaultLeadStages().map((stage) => stage.id));
     const affectedStageIds = draftStages
       .filter((stage) => !defaultIds.has(stage.id) && leadCounts[stage.id])
@@ -142,7 +148,12 @@ export function LeadStageSettingsDialog({
       : "Восстановить стандартные названия, порядок, цвета и активность стадий?";
 
     if (window.confirm(warning)) {
-      onReset(resetTransfers);
+      setIsSaving(true);
+      const resetError = await onReset(resetTransfers);
+      setIsSaving(false);
+      if (resetError) {
+        setError(resetError);
+      }
     }
   }
 
@@ -168,7 +179,7 @@ export function LeadStageSettingsDialog({
               Настройка стадий
             </h2>
             <p className="mt-1 text-sm text-slate-600">
-              Настройки сохраняются только в текущем браузере.
+              Настройки сохраняются в backend и применяются ко всем лидам.
             </p>
           </div>
           <button
@@ -273,12 +284,14 @@ export function LeadStageSettingsDialog({
 
         <div className="mt-5 flex flex-wrap justify-between gap-3">
           <div className="flex flex-wrap gap-2">
-            <Button type="button" onClick={addStage}><Plus size={16} />Добавить стадию</Button>
-            <Button type="button" onClick={reset}><RotateCcw size={16} />По умолчанию</Button>
+            <Button type="button" onClick={addStage} disabled={isSaving}><Plus size={16} />Добавить стадию</Button>
+            <Button type="button" onClick={reset} disabled={isSaving}><RotateCcw size={16} />По умолчанию</Button>
           </div>
           <div className="flex gap-2">
-            <Button type="button" onClick={onClose}>Отмена</Button>
-            <Button type="button" variant="primary" onClick={save}>Сохранить</Button>
+            <Button type="button" onClick={onClose} disabled={isSaving}>Отмена</Button>
+            <Button type="button" variant="primary" onClick={save} disabled={isSaving}>
+              {isSaving ? "Сохранение…" : "Сохранить"}
+            </Button>
           </div>
         </div>
       </section>

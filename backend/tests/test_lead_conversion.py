@@ -11,6 +11,7 @@ from app.database.base import Base
 from app.database.session import get_db
 from app.main import app
 from app.models.sales import (
+    Client,
     Lead,
     LeadRejectionReason,
     LeadResult,
@@ -109,45 +110,129 @@ def test_lead_commercial_fields_patch_persists_and_clears_values(
         f"/leads/{lead_id}",
         json={
             "source": "referral",
+            "direction": "Спортивная форма",
             "sport": "Волейбол",
             "product_category": "Игровая форма",
+            "product_type": "Игровой комплект",
             "need_description": "Комплекты для двух команд",
             "estimated_quantity": 36,
+            "kit_quantity": 3,
+            "size_comment": "XS-XL",
+            "preliminary_budget": "300000.00",
             "estimated_amount": "315000.50",
+            "discount_percent": "7.50",
+            "probability": "70",
+            "planned_order_date": "2026-09-01",
             "desired_date": "2026-09-15",
-            "city": "Самара",
+            "event_date": "2026-09-30",
+            "delivery_city": "Самара",
+            "delivery_address": "ул. Спортивная, 1",
+            "delivery_method": "Курьер",
+            "delivery_comment": "После 18:00",
+            "campaign": "fall-teamwear",
+            "utm_description": "utm_source=vk&utm_campaign=fall",
+            "priority": "high",
         },
     )
     assert response.status_code == 200
-    assert response.json()["estimated_amount"] == "315000.50"
-    assert response.json()["desired_date"] == "2026-09-15"
+    body = response.json()
+    assert body["estimated_amount"] == "315000.50"
+    assert body["preliminary_budget"] == "300000.00"
+    assert body["discount_percent"] == "7.50"
+    assert body["probability"] == "70.00"
+    assert body["desired_date"] == "2026-09-15"
+    assert body["delivery_city"] == "Самара"
+    assert body["city"] == "Казань"
+
+    reloaded = client.get(f"/leads/{lead_id}")
+    assert reloaded.status_code == 200
+    assert reloaded.json()["delivery_address"] == "ул. Спортивная, 1"
+    assert reloaded.json()["priority"] == "high"
+    assert reloaded.json()["city"] == "Казань"
 
     with session_factory() as db:
         lead = db.get(Lead, lead_id)
         assert lead is not None
         assert lead.source == "referral"
+        assert lead.direction == "Спортивная форма"
         assert lead.sport == "Волейбол"
         assert lead.product_category == "Игровая форма"
+        assert lead.product_type == "Игровой комплект"
         assert lead.need_description == "Комплекты для двух команд"
         assert lead.estimated_quantity == 36
+        assert lead.kit_quantity == 3
+        assert lead.size_comment == "XS-XL"
+        assert lead.preliminary_budget == Decimal("300000.00")
         assert lead.estimated_amount == Decimal("315000.50")
+        assert lead.discount_percent == Decimal("7.50")
+        assert lead.probability == Decimal("70.00")
+        assert lead.planned_order_date == date(2026, 9, 1)
         assert lead.desired_date == date(2026, 9, 15)
-        assert lead.city == "Самара"
+        assert lead.event_date == date(2026, 9, 30)
+        assert lead.delivery_city == "Самара"
+        assert lead.city == "Казань"
+        assert lead.delivery_address == "ул. Спортивная, 1"
+        assert lead.delivery_method == "Курьер"
+        assert lead.delivery_comment == "После 18:00"
+        assert lead.campaign == "fall-teamwear"
+        assert lead.utm_description == "utm_source=vk&utm_campaign=fall"
+        assert lead.priority == "high"
 
     cleared = client.patch(
         f"/leads/{lead_id}",
         json={
+            "direction": None,
+            "sport": None,
+            "product_category": None,
+            "product_type": None,
             "need_description": None,
             "estimated_quantity": None,
+            "kit_quantity": None,
+            "size_comment": None,
+            "preliminary_budget": None,
             "estimated_amount": None,
+            "discount_percent": None,
+            "probability": None,
+            "planned_order_date": None,
             "desired_date": None,
+            "event_date": None,
+            "delivery_city": None,
+            "delivery_address": None,
+            "delivery_method": None,
+            "delivery_comment": None,
+            "campaign": None,
+            "utm_description": None,
+            "priority": None,
         },
     )
     assert cleared.status_code == 200
+    assert cleared.json()["direction"] is None
+    assert cleared.json()["sport"] is None
+    assert cleared.json()["product_category"] is None
+    assert cleared.json()["product_type"] is None
     assert cleared.json()["need_description"] is None
     assert cleared.json()["estimated_quantity"] is None
+    assert cleared.json()["kit_quantity"] is None
+    assert cleared.json()["size_comment"] is None
+    assert cleared.json()["preliminary_budget"] is None
     assert cleared.json()["estimated_amount"] is None
+    assert cleared.json()["discount_percent"] is None
+    assert cleared.json()["probability"] is None
+    assert cleared.json()["planned_order_date"] is None
     assert cleared.json()["desired_date"] is None
+    assert cleared.json()["event_date"] is None
+    assert cleared.json()["delivery_city"] is None
+    assert cleared.json()["delivery_address"] is None
+    assert cleared.json()["delivery_method"] is None
+    assert cleared.json()["delivery_comment"] is None
+    assert cleared.json()["campaign"] is None
+    assert cleared.json()["utm_description"] is None
+    assert cleared.json()["priority"] is None
+
+    cleared_reload = client.get(f"/leads/{lead_id}")
+    assert cleared_reload.status_code == 200
+    assert cleared_reload.json()["delivery_city"] is None
+    assert cleared_reload.json()["city"] == "Казань"
 
 
 def test_lead_customer_profile_patch_persists_and_clears_values(
@@ -213,6 +298,26 @@ def test_lead_customer_profile_patch_validates_tax_id(
     lead_id = add_lead(session_factory)
     response = client.patch(f"/leads/{lead_id}", json={"tax_id": "123"})
     assert response.status_code == 422
+
+
+def test_lead_responsible_patch_persists_clears_and_validates(
+    client: TestClient,
+    session_factory: sessionmaker[Session],
+) -> None:
+    lead_id = add_lead(session_factory)
+
+    cleared = client.patch(f"/leads/{lead_id}", json={"responsible_id": None})
+    assert cleared.status_code == 200
+    assert cleared.json()["responsible_id"] is None
+    assert client.get(f"/leads/{lead_id}").json()["responsible_id"] is None
+
+    assigned = client.patch(f"/leads/{lead_id}", json={"responsible_id": 1})
+    assert assigned.status_code == 200
+    assert assigned.json()["responsible_id"] == 1
+    assert client.get(f"/leads/{lead_id}").json()["responsible_id"] == 1
+
+    missing = client.patch(f"/leads/{lead_id}", json={"responsible_id": 999})
+    assert missing.status_code == 404
 
 
 def test_conversion_creates_one_linked_order_and_is_not_repeatable(
@@ -312,6 +417,27 @@ def test_order_exposes_source_lead_and_combined_history(
         "lead_converted",
         "order_created",
     }
+
+
+def test_orders_list_exposes_converted_order_for_reload(
+    client: TestClient,
+    session_factory: sessionmaker[Session],
+) -> None:
+    lead_id = add_lead(session_factory)
+    conversion = client.post(f"/leads/{lead_id}/convert", json={"completed_by_id": 1})
+    assert conversion.status_code == 201
+    order = conversion.json()["order"]
+
+    response = client.get("/orders")
+    assert response.status_code == 200
+    listed = next(item for item in response.json() if item["id"] == order["id"])
+    assert listed["number"] == order["number"]
+    assert listed["lead_id"] == lead_id
+    with session_factory() as db:
+        client_row = db.get(Client, order["client_id"])
+        assert client_row is not None
+        assert listed["client_name"] == (client_row.company_name or client_row.contact_name)
+    assert listed["responsible_name"] == "Test user"
 
 
 def test_lead_history_exposes_status_conversion_and_rejection_events(

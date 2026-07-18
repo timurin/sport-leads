@@ -31,7 +31,7 @@ export async function saveLeadCommercialDetails(
       ? {
         ok: true,
         persisted: fromApiLeadCommercial(result.lead),
-        message: "Основные коммерческие параметры сохранены.",
+        message: "Коммерческие параметры сохранены.",
       }
       : { ok: false, message: result.message };
   } catch {

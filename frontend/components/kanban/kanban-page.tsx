@@ -24,6 +24,7 @@ type KanbanPageProps<TStatus extends string> = {
   columns: KanbanColumnData<TStatus>[];
   metrics: KanbanMetricDefinition<TStatus>[];
   filters: KanbanFilter[];
+  loadError?: string;
 };
 
 type MetricSelection<TStatus extends string> = {
@@ -74,6 +75,7 @@ export function KanbanPage<TStatus extends string>({
   columns,
   metrics,
   filters,
+  loadError,
 }: KanbanPageProps<TStatus>) {
   const [query, setQuery] = useState("");
   const [selectedFilters, setSelectedFilters] = useState<Record<string, string>>({});
@@ -160,12 +162,16 @@ export function KanbanPage<TStatus extends string>({
       </div>
 
       <div className="p-4 lg:p-6">
-        <KanbanBoard
-          columns={columns}
-          query={query}
-          selectedFilters={selectedFilters}
-          onColumnsChange={setMetricColumns}
-        />
+        {loadError ? (
+          <div className="rounded-xl border border-red-200 bg-red-50 px-6 py-10 text-center text-sm text-red-700" role="alert">{loadError}</div>
+        ) : (
+          <KanbanBoard
+            columns={columns}
+            query={query}
+            selectedFilters={selectedFilters}
+            onColumnsChange={setMetricColumns}
+          />
+        )}
       </div>
       <DemoActionDialog
         open={dialogOpen}

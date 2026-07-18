@@ -1,15 +1,17 @@
 "use client";
 
 import { FilterX, Search, Settings2 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 
 import { KanbanBoard } from "@/components/kanban/kanban-board";
 import type { KanbanColumnData } from "@/components/kanban/kanban-types";
 import {
   LeadCompletionDialog,
+  leadRejectionReasons,
   type LeadOrderDraft,
   type RejectionReasonOption,
 } from "@/components/sales/lead-completion-dialog";
+import { LeadCreateDialog } from "@/components/sales/lead-create-dialog";
 import { LeadStageSettingsDialog } from "@/components/sales/lead-stage-settings-dialog";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page-header";
@@ -18,16 +20,16 @@ import {
   rejectLead as rejectApiLeadAction,
   updateLeadStatus,
 } from "@/app/(workspace)/sales/leads/[leadId]/lead-header-actions";
+import { createLead as createApiLeadAction } from "@/app/(workspace)/sales/leads/lead-create-actions";
+import { saveLeadStageConfiguration } from "@/app/(workspace)/sales/leads/lead-stage-actions";
 import { salesManagers } from "@/lib/demo-data/sales";
 import {
   getLeadStagePersistenceDecision,
   resolveLeadStageAfterPersistence,
 } from "@/lib/sales/lead-stage-persistence";
 import {
-  LEAD_STAGE_STORAGE_KEY,
   getActiveLeadStages,
   getDefaultLeadStages,
-  loadLeadStages,
   sortLeadStages,
   type LeadStageConfig,
 } from "@/lib/sales/lead-stages";
@@ -35,32 +37,6 @@ import type { Lead } from "@/types/sales";
 
 type LeadView = "active" | "converted" | "rejected" | "all";
 type WorkspaceLead = Lead & { stageId: string };
-
-const reasons: RejectionReasonOption[] = [
-  ["unreachable", "Не выходит на связь", "Клиент", false],
-  ["changed_mind", "Передумал", "Клиент", false],
-  ["no_budget", "Нет бюджета", "Клиент", false],
-  ["postponed", "Отложил заказ", "Клиент", false],
-  ["competitor", "Выбрал конкурента", "Клиент", true],
-  ["high_price", "Высокая цена", "Цена и условия", false],
-  ["bad_timing", "Не устроили сроки", "Цена и условия", false],
-  ["bad_payment_terms", "Не устроили условия оплаты", "Цена и условия", false],
-  ["bad_delivery", "Не устроила доставка", "Цена и условия", false],
-  ["unsupported_product", "Не производим нужный товар", "Производство", false],
-  ["small_run", "Недостаточный тираж", "Производство", false],
-  ["impossible_deadline", "Невозможный срок", "Производство", false],
-  ["technical_limit", "Нет технической возможности", "Производство", false],
-  ["duplicate", "Дубликат", "Качество лида", false],
-  ["spam", "Спам", "Качество лида", false],
-  ["mistaken_request", "Ошибочное обращение", "Качество лида", false],
-  ["not_target", "Нецелевой клиент", "Качество лида", false],
-  ["other", "Другое", "Качество лида", true],
-].map(([id, name, category, requiresComment]) => ({
-  id,
-  name,
-  category,
-  requiresComment,
-})) as RejectionReasonOption[];
 
 const systemDefinitions = [
   { id: "converted", title: "Успешно завершён", accentClass: "bg-emerald-500" },
@@ -96,9 +72,9 @@ function normalizeLead(lead: Lead, index: number): WorkspaceLead {
     };
   }
 
-  const stageId = lead.status === "proposal" && index % 2
+  const stageId = lead.stageId ?? (lead.status === "proposal" && index % 2
     ? "waiting"
-    : defaultStageIds.has(lead.status) ? lead.status : "new";
+    : defaultStageIds.has(lead.status) ? lead.status : "new");
 
   return { ...lead, stageId };
 }
@@ -116,34 +92,26 @@ function boardStatus(lead: WorkspaceLead): string {
 
 export function LeadWorkspace({
   initialLeads,
+  initialStages,
   dataOrigin,
   loadError,
 }: {
   initialLeads: Lead[];
+  initialStages: LeadStageConfig[];
   dataOrigin: "api" | "demo";
   loadError?: string;
 }) {
   const [leads, setLeads] = useState<WorkspaceLead[]>(() => initialLeads.map(normalizeLead));
-  const [stages, setStages] = useState<LeadStageConfig[]>(getDefaultLeadStages);
+  const [stages, setStages] = useState<LeadStageConfig[]>(() => sortLeadStages(initialStages));
   const [view, setView] = useState<LeadView>("active");
   const [query, setQuery] = useState("");
   const [responsible, setResponsible] = useState("");
   const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [createOpen, setCreateOpen] = useState(false);
   const [revision, setRevision] = useState(0);
   const [moveError, setMoveError] = useState<string | null>(null);
   const [completionError, setCompletionError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const timeoutId = window.setTimeout(() => {
-      const storedStages = loadLeadStages(window.localStorage);
-
-      setStages(storedStages);
-      setRevision((value) => value + 1);
-    }, 0);
-
-    return () => window.clearTimeout(timeoutId);
-  }, []);
 
   const selectedLead = leads.find((lead) => lead.id === selectedLeadId) ?? null;
   const completed = leads.filter((lead) => lead.status === "completed");
@@ -223,7 +191,7 @@ export function LeadWorkspace({
     const result = await convertApiLeadAction(leadId, draft);
     if (!result.ok) {
       setCompletionError(result.message);
-      return;
+      return result;
     }
 
     setLeads((current) => current.map((lead) => (
@@ -245,6 +213,7 @@ export function LeadWorkspace({
         : lead
     )));
     setRevision((value) => value + 1);
+    return result;
   }
 
   async function rejectLead(leadId: string, reason: RejectionReasonOption, comment: string) {
@@ -272,31 +241,51 @@ export function LeadWorkspace({
     return result;
   }
 
-  function saveStages(
-    nextStages: LeadStageConfig[],
-    transfers: Readonly<Record<string, string>>,
-  ) {
-    const orderedStages = sortLeadStages(nextStages);
-
-    setLeads((current) => current.map((lead) => (
-      transfers[lead.stageId] ? { ...lead, stageId: transfers[lead.stageId] } : lead
-    )));
-    setStages(orderedStages);
-    window.localStorage.setItem(LEAD_STAGE_STORAGE_KEY, JSON.stringify(orderedStages));
-    setRevision((value) => value + 1);
-    setSettingsOpen(false);
+  async function createLead(draft: Parameters<typeof createApiLeadAction>[0]) {
+    const result = await createApiLeadAction(draft);
+    if (result.ok) {
+      setLeads((current) => [normalizeLead(result.lead, current.length), ...current]);
+      setView("active");
+      setRevision((value) => value + 1);
+    }
+    return result;
   }
 
-  function resetStages(transfers: Readonly<Record<string, string>>) {
-    const defaults = getDefaultLeadStages();
+  async function saveStages(
+    nextStages: LeadStageConfig[],
+    transfers: Readonly<Record<string, string>>,
+  ): Promise<string | null> {
+    const orderedStages = sortLeadStages(nextStages);
+    const result = await saveLeadStageConfiguration(orderedStages, transfers);
+    if (!result.ok) {
+      return result.message;
+    }
 
     setLeads((current) => current.map((lead) => (
       transfers[lead.stageId] ? { ...lead, stageId: transfers[lead.stageId] } : lead
     )));
-    setStages(defaults);
-    window.localStorage.removeItem(LEAD_STAGE_STORAGE_KEY);
+    setStages(result.stages);
     setRevision((value) => value + 1);
     setSettingsOpen(false);
+    return null;
+  }
+
+  async function resetStages(
+    transfers: Readonly<Record<string, string>>,
+  ): Promise<string | null> {
+    const defaults = getDefaultLeadStages();
+    const result = await saveLeadStageConfiguration(defaults, transfers);
+    if (!result.ok) {
+      return result.message;
+    }
+
+    setLeads((current) => current.map((lead) => (
+      transfers[lead.stageId] ? { ...lead, stageId: transfers[lead.stageId] } : lead
+    )));
+    setStages(result.stages);
+    setRevision((value) => value + 1);
+    setSettingsOpen(false);
+    return null;
   }
 
   const metricItems: Array<[string, string | number]> = [
@@ -314,6 +303,7 @@ export function LeadWorkspace({
       <PageHeader
         title="Лиды"
         description="Первичные обращения: от рабочей стадии до заказа покупателя или зафиксированного отказа"
+        actions={<Button variant="primary" onClick={() => setCreateOpen(true)}>+ Создать лид</Button>}
       />
 
       {loadError ? (
@@ -473,11 +463,12 @@ export function LeadWorkspace({
       <LeadCompletionDialog
         key={selectedLead?.id ?? "closed"}
         lead={selectedLead}
-        reasons={reasons}
+        reasons={leadRejectionReasons}
         onClose={() => setSelectedLeadId(null)}
         onConvert={convertLead}
         onReject={rejectLead}
       />
+      {createOpen ? <LeadCreateDialog onClose={() => setCreateOpen(false)} onCreate={createLead} /> : null}
       {settingsOpen ? (
         <LeadStageSettingsDialog
           stages={stages}

@@ -3,7 +3,7 @@ import type { Lead, LeadResult, LeadStatus, Priority, UserSummary } from "@/type
 
 export type ApiLeadListItem = {
   id: number;
-  status: LeadStatus;
+  status: string;
   result: LeadResult | null;
   company_name: string | null;
   contact_name: string;
@@ -66,11 +66,12 @@ function displayDate(value: string | null) {
 
 export function fromApiLeadListItem(lead: ApiLeadListItem): Lead {
   const contact = primaryContact(lead);
-  const status = statusMap[lead.status] ?? "new";
+  const status = statusMap[lead.status as LeadStatus] ?? "new";
   const estimatedAmount = lead.estimated_amount === null ? 0 : Number(lead.estimated_amount);
   return {
     id: String(lead.id),
     status,
+    stageId: lead.status === "completed" ? undefined : lead.status,
     result: lead.result ?? undefined,
     clientName: lead.company_name ?? contact?.name ?? lead.contact_name,
     contact: contact?.name ?? lead.contact_name,

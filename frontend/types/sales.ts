@@ -296,6 +296,7 @@ export type LeadTask = {
 export type Lead = {
   id: string;
   status: LeadStatus;
+  stageId?: string;
   clientName: string;
   contact: string;
   city: string;

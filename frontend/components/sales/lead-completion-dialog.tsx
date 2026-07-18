@@ -24,15 +24,44 @@ export type LeadOrderDraft = {
   desiredDate: string;
 };
 
+export const leadRejectionReasons: RejectionReasonOption[] = [
+  ["unreachable", "Не выходит на связь", "Клиент", false],
+  ["changed_mind", "Передумал", "Клиент", false],
+  ["no_budget", "Нет бюджета", "Клиент", false],
+  ["postponed", "Отложил заказ", "Клиент", false],
+  ["competitor", "Выбрал конкурента", "Клиент", true],
+  ["high_price", "Высокая цена", "Цена и условия", false],
+  ["bad_timing", "Не устроили сроки", "Цена и условия", false],
+  ["bad_payment_terms", "Не устроили условия оплаты", "Цена и условия", false],
+  ["bad_delivery", "Не устроила доставка", "Цена и условия", false],
+  ["unsupported_product", "Не производим нужный товар", "Производство", false],
+  ["small_run", "Недостаточный тираж", "Производство", false],
+  ["impossible_deadline", "Невозможный срок", "Производство", false],
+  ["technical_limit", "Нет технической возможности", "Производство", false],
+  ["duplicate", "Дубликат", "Качество лида", false],
+  ["spam", "Спам", "Качество лида", false],
+  ["mistaken_request", "Ошибочное обращение", "Качество лида", false],
+  ["not_target", "Нецелевой клиент", "Качество лида", false],
+  ["other", "Другое", "Качество лида", true],
+].map(([id, name, category, requiresComment]) => ({
+  id,
+  name,
+  category,
+  requiresComment,
+})) as RejectionReasonOption[];
+
+export type LeadCompletionMode = "details" | "choice" | "convert" | "reject";
+
+type CompletionResult = { ok: boolean; message: string };
+
 type Props = {
   lead: Lead | null;
   reasons: RejectionReasonOption[];
+  initialMode?: LeadCompletionMode;
   onClose: () => void;
-  onConvert: (leadId: string, draft: LeadOrderDraft) => void;
-  onReject: (leadId: string, reason: RejectionReasonOption, comment: string) => void | Promise<{ ok: boolean; message: string }>;
+  onConvert: (leadId: string, draft: LeadOrderDraft) => void | Promise<void | CompletionResult>;
+  onReject: (leadId: string, reason: RejectionReasonOption, comment: string) => void | Promise<void | CompletionResult>;
 };
-
-type Mode = "details" | "choice" | "convert" | "reject";
 
 const fieldClass = "mt-1 h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-900 placeholder:text-slate-400 outline-none focus:border-blue-400";
 const textareaClass = "mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 outline-none focus:border-blue-400";
@@ -40,14 +69,16 @@ const textareaClass = "mt-1 w-full rounded-lg border border-slate-200 bg-white p
 export function LeadCompletionDialog({
   lead,
   reasons,
+  initialMode = "details",
   onClose,
   onConvert,
   onReject,
 }: Props) {
-  const [mode, setMode] = useState<Mode>("details");
+  const [mode, setMode] = useState<LeadCompletionMode>(initialMode);
   const [reasonId, setReasonId] = useState("");
   const [comment, setComment] = useState("");
   const [error, setError] = useState("");
+  const [isPending, setIsPending] = useState(false);
   const reason = useMemo(
     () => reasons.find((item) => item.id === reasonId),
     [reasonId, reasons],
@@ -78,7 +109,9 @@ export function LeadCompletionDialog({
     event.preventDefault();
     const data = new FormData(event.currentTarget);
 
-    onConvert(lead!.id, {
+    setError("");
+    setIsPending(true);
+    void Promise.resolve(onConvert(lead!.id, {
       title: String(data.get("title")),
       description: String(data.get("description")),
       productCategory: String(data.get("productCategory")),
@@ -86,7 +119,11 @@ export function LeadCompletionDialog({
       quantity: Number(data.get("quantity")),
       amount: Number(data.get("amount")),
       desiredDate: String(data.get("desiredDate")),
-    });
+    })).then((result) => {
+      if (result && !result.ok) {
+        setError(result.message);
+      }
+    }).finally(() => setIsPending(false));
   }
 
   function submitRejection(event: FormEvent<HTMLFormElement>) {
@@ -102,11 +139,12 @@ export function LeadCompletionDialog({
       return;
     }
 
+    setIsPending(true);
     void Promise.resolve(onReject(lead!.id, reason, comment.trim())).then((result) => {
       if (result && !result.ok) {
         setError(result.message);
       }
-    });
+    }).finally(() => setIsPending(false));
   }
 
   return (
@@ -240,9 +278,10 @@ export function LeadCompletionDialog({
                 className={fieldClass}
               />
             </label>
+            {error ? <p className="text-sm text-red-700 sm:col-span-2" role="alert">{error}</p> : null}
             <div className="flex items-end justify-end gap-2 sm:col-span-2">
               <Button type="button" onClick={() => setMode("choice")}>Назад</Button>
-              <Button type="submit" variant="primary">Создать заказ</Button>
+              <Button type="submit" variant="primary" disabled={isPending}>Создать заказ</Button>
             </div>
           </form>
         ) : mode === "reject" ? (
@@ -282,7 +321,7 @@ export function LeadCompletionDialog({
             {error ? <p className="text-sm text-red-700" role="alert">{error}</p> : null}
             <div className="flex justify-end gap-2">
               <Button type="button" onClick={() => setMode("choice")}>Назад</Button>
-              <Button type="submit" className="border-red-200 text-red-700">Подтвердить отказ</Button>
+              <Button type="submit" disabled={isPending} className="border-red-200 text-red-700">Подтвердить отказ</Button>
             </div>
           </form>
         ) : (

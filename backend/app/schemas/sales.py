@@ -65,13 +65,12 @@ class LeadContactRead(SalesSchema):
     updated_at: datetime
 
 
-class LeadUpdate(BaseModel):
-    status: LeadStatus | None = None
+class LeadCreate(BaseModel):
+    contact_name: str = Field(min_length=1, max_length=255)
     customer_type: LeadCustomerType | None = None
     company_name: str | None = Field(default=None, max_length=255)
     tax_id: str | None = Field(default=None, max_length=12, pattern=r"^(\d{10}|\d{12})$")
     website: str | None = Field(default=None, max_length=255)
-    contact_name: str | None = Field(default=None, min_length=1, max_length=255)
     phone: str | None = Field(default=None, max_length=50)
     email: EmailStr | None = None
     city: str | None = Field(default=None, max_length=150)
@@ -87,16 +86,63 @@ class LeadUpdate(BaseModel):
     estimated_amount: Decimal | None = Field(default=None, ge=0)
     desired_date: date | None = None
 
+    @field_validator("contact_name")
+    @classmethod
+    def strip_lead_contact_name(cls, value: str) -> str:
+        value = value.strip()
+        if not value:
+            raise ValueError("Contact name cannot be blank")
+        return value
+
+
+class LeadUpdate(BaseModel):
+    status: str | None = Field(default=None, min_length=1, max_length=64, pattern=r"^[a-z][a-z0-9-]*$")
+    customer_type: LeadCustomerType | None = None
+    company_name: str | None = Field(default=None, max_length=255)
+    tax_id: str | None = Field(default=None, max_length=12, pattern=r"^(\d{10}|\d{12})$")
+    website: str | None = Field(default=None, max_length=255)
+    contact_name: str | None = Field(default=None, min_length=1, max_length=255)
+    phone: str | None = Field(default=None, max_length=50)
+    email: EmailStr | None = None
+    city: str | None = Field(default=None, max_length=150)
+    region: str | None = Field(default=None, max_length=150)
+    address: str | None = Field(default=None, max_length=500)
+    customer_comment: str | None = None
+    source: str | None = Field(default=None, max_length=150)
+    responsible_id: int | None = None
+    direction: str | None = Field(default=None, max_length=150)
+    sport: str | None = Field(default=None, max_length=150)
+    product_category: str | None = Field(default=None, max_length=150)
+    product_type: str | None = Field(default=None, max_length=150)
+    need_description: str | None = None
+    estimated_quantity: int | None = Field(default=None, ge=1)
+    kit_quantity: int | None = Field(default=None, ge=1)
+    size_comment: str | None = None
+    preliminary_budget: Decimal | None = Field(default=None, ge=0)
+    estimated_amount: Decimal | None = Field(default=None, ge=0)
+    discount_percent: Decimal | None = Field(default=None, ge=0, le=100)
+    probability: Decimal | None = Field(default=None, ge=0, le=100)
+    planned_order_date: date | None = None
+    desired_date: date | None = None
+    event_date: date | None = None
+    delivery_city: str | None = Field(default=None, max_length=150)
+    delivery_address: str | None = Field(default=None, max_length=500)
+    delivery_method: str | None = Field(default=None, max_length=150)
+    delivery_comment: str | None = None
+    campaign: str | None = Field(default=None, max_length=255)
+    utm_description: str | None = None
+    priority: str | None = Field(default=None, max_length=20, pattern=r"^(low|medium|high|urgent)$")
+
     @model_validator(mode="after")
     def completed_requires_operation(self) -> "LeadUpdate":
-        if self.status == LeadStatus.COMPLETED:
+        if self.status == LeadStatus.COMPLETED.value:
             raise ValueError("Use convert or reject to complete a lead")
         return self
 
 
 class LeadRead(SalesSchema):
     id: int
-    status: LeadStatus
+    status: str
     result: LeadResult | None
     customer_type: LeadCustomerType | None
     company_name: str | None
@@ -111,12 +157,28 @@ class LeadRead(SalesSchema):
     customer_comment: str | None
     source: str | None
     responsible_id: int | None
+    direction: str | None
     sport: str | None
     product_category: str | None
+    product_type: str | None
     need_description: str | None
     estimated_quantity: int | None
+    kit_quantity: int | None
+    size_comment: str | None
+    preliminary_budget: Decimal | None
     estimated_amount: Decimal | None
+    discount_percent: Decimal | None
+    probability: Decimal | None
+    planned_order_date: date | None
     desired_date: date | None
+    event_date: date | None
+    delivery_city: str | None
+    delivery_address: str | None
+    delivery_method: str | None
+    delivery_comment: str | None
+    campaign: str | None
+    utm_description: str | None
+    priority: str | None
     completed_at: datetime | None
     completed_by_id: int | None
     converted_order_id: int | None
@@ -125,6 +187,50 @@ class LeadRead(SalesSchema):
     created_at: datetime
     updated_at: datetime
     contacts: list[LeadContactRead] = Field(default_factory=list)
+
+
+class LeadStageWrite(BaseModel):
+    id: str = Field(min_length=1, max_length=64, pattern=r"^[a-z][a-z0-9-]*$")
+    title: str = Field(min_length=1, max_length=100)
+    accent_class: str = Field(min_length=1, max_length=32)
+    is_active: bool
+    sort_order: int = Field(ge=0)
+
+    @field_validator("title")
+    @classmethod
+    def strip_stage_title(cls, value: str) -> str:
+        value = value.strip()
+        if not value:
+            raise ValueError("Stage title cannot be blank")
+        return value
+
+
+class LeadStageRead(SalesSchema):
+    id: str
+    title: str
+    accent_class: str
+    is_active: bool
+    sort_order: int
+    is_system: bool
+    created_at: datetime
+    updated_at: datetime
+
+
+class LeadStageConfigurationUpdate(BaseModel):
+    stages: list[LeadStageWrite] = Field(min_length=1)
+    transfers: dict[str, str] = Field(default_factory=dict)
+
+    @model_validator(mode="after")
+    def validate_unique_stage_configuration(self) -> "LeadStageConfigurationUpdate":
+        ids = [stage.id for stage in self.stages]
+        orders = [stage.sort_order for stage in self.stages]
+        if len(ids) != len(set(ids)):
+            raise ValueError("Stage identifiers must be unique")
+        if len(orders) != len(set(orders)):
+            raise ValueError("Stage sort orders must be unique")
+        if not any(stage.is_active for stage in self.stages):
+            raise ValueError("At least one active stage is required")
+        return self
 
 
 class LeadRejectionReasonCreate(BaseModel):
@@ -209,6 +315,8 @@ class SalesOrderRead(SalesSchema):
     source: str | None
     created_at: datetime
     updated_at: datetime
+    client_name: str | None = None
+    responsible_name: str | None = None
 
 
 class LeadConversionRead(BaseModel):

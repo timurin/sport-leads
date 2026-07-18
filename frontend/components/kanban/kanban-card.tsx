@@ -4,7 +4,10 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { CalendarDays, CircleUserRound, GripVertical } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useEffect, useRef } from "react";
 
+import { shouldOpenKanbanCard } from "@/components/kanban/kanban-interaction";
 import type { KanbanCardData, KanbanBadgeTone } from "@/components/kanban/kanban-types";
 
 const badgeClasses: Record<KanbanBadgeTone, string> = {
@@ -49,6 +52,7 @@ export function KanbanCardContent({
               {card.href && !dragging ? (
                 <Link
                   href={card.href}
+                  data-kanban-card-link
                   className="rounded-sm hover:text-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                 >
                   {card.title}
@@ -102,6 +106,8 @@ export function KanbanCardContent({
 }
 
 export function KanbanCard({ card, onSelect }: KanbanCardProps) {
+  const router = useRouter();
+  const wasDraggingRef = useRef(false);
   const {
     attributes,
     listeners,
@@ -111,28 +117,55 @@ export function KanbanCard({ card, onSelect }: KanbanCardProps) {
     isDragging,
   } = useSortable({ id: card.id, disabled: card.draggable === false });
 
+  useEffect(() => {
+    if (isDragging) {
+      wasDraggingRef.current = true;
+      return;
+    }
+
+    if (wasDraggingRef.current) {
+      const timeoutId = window.setTimeout(() => {
+        wasDraggingRef.current = false;
+      }, 0);
+      return () => window.clearTimeout(timeoutId);
+    }
+  }, [isDragging]);
+
   return (
     <div
       ref={setNodeRef}
+      {...attributes}
+      {...listeners}
+      onClick={(event) => {
+        const wasDragging = wasDraggingRef.current;
+        if (wasDragging) {
+          wasDraggingRef.current = false;
+          event.preventDefault();
+          event.stopPropagation();
+          return;
+        }
+
+        if (shouldOpenKanbanCard(event.target, false, card.href)) {
+          router.push(card.href!);
+        }
+      }}
       style={{
         transform: CSS.Transform.toString(transform),
         transition,
         opacity: isDragging ? 0.35 : 1,
       }}
+      className={card.draggable === false ? undefined : "cursor-grab touch-none active:cursor-grabbing"}
     >
       <KanbanCardContent
         card={card}
         onSelect={onSelect ? () => onSelect(card.id) : undefined}
         dragHandle={card.draggable === false ? undefined : (
-          <button
-            type="button"
-            className="mt-0.5 shrink-0 cursor-grab touch-none rounded p-0.5 text-slate-300 hover:bg-slate-100 hover:text-slate-600 active:cursor-grabbing"
-            aria-label={`Перетащить карточку «${card.title}»`}
-            {...attributes}
-            {...listeners}
+          <span
+            className="mt-0.5 shrink-0 rounded p-0.5 text-slate-300"
+            aria-hidden="true"
           >
             <GripVertical size={17} />
-          </button>
+          </span>
         )}
       />
     </div>

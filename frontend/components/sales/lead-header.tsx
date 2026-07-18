@@ -3,23 +3,21 @@
 import { Check, ChevronDown, Clipboard, Ellipsis, MessageSquare, UserRound } from "lucide-react";
 import { useEffect, useRef, useState, useTransition } from "react";
 
-import { updateLeadStatus } from "@/app/(workspace)/sales/leads/[leadId]/lead-header-actions";
+import { updateLeadResponsible, updateLeadStatus } from "@/app/(workspace)/sales/leads/[leadId]/lead-header-actions";
 import { PageActions, PageContent } from "@/components/layout/page-layout";
 import { LeadBackButton } from "@/components/sales/lead-back-button";
 import { Button } from "@/components/ui/button";
 import { salesManagers } from "@/lib/demo-data/sales";
 import type { LeadDetails, LeadResponsible } from "@/lib/sales/lead-details";
+import { leadFinalActions, type LeadFinalActionId } from "@/lib/sales/lead-final-actions";
 import {
   getActiveLeadStages,
-  getDefaultLeadStages,
   loadLeadStages,
   type LeadStageAccent,
   type LeadStageConfig,
 } from "@/lib/sales/lead-stages";
 
 type OpenMenu = "status" | "responsible" | "more" | null;
-
-const apiStageIds = new Set(["new", "contact", "qualification", "proposal", "waiting"]);
 
 const statusClasses: Record<LeadStageAccent, string> = {
   "bg-blue-500": "bg-blue-50 text-blue-700 ring-blue-200",
@@ -43,19 +41,25 @@ function initials(name: string) {
 
 type LeadHeaderProps = {
   lead: LeadDetails;
+  initialStages: LeadStageConfig[];
   lastActivityAtLabel: string;
   onAddTask: (trigger: HTMLElement) => void;
   onWrite: () => void;
+  onFinalAction: (action: LeadFinalActionId) => void;
 };
 
 export function LeadHeader({
   lead,
+  initialStages,
   lastActivityAtLabel,
   onAddTask,
   onWrite,
+  onFinalAction,
 }: LeadHeaderProps) {
-  const [stages, setStages] = useState<LeadStageConfig[]>(getDefaultLeadStages);
-  const [statusId, setStatusId] = useState<string>(lead.status);
+  const [stages, setStages] = useState<LeadStageConfig[]>(() => (
+    initialStages.map((stage) => ({ ...stage }))
+  ));
+  const [statusId, setStatusId] = useState<string>(lead.stageId ?? lead.status);
   const [responsible, setResponsible] = useState<LeadResponsible | null>(lead.responsible);
   const [openMenu, setOpenMenu] = useState<OpenMenu>(null);
   const [notice, setNotice] = useState("");
@@ -65,12 +69,15 @@ export function LeadHeader({
   const isClosed = ["completed", "won", "unqualified"].includes(statusId);
 
   useEffect(() => {
+    if (!isDemoLead) {
+      return;
+    }
     const timeoutId = window.setTimeout(() => {
       setStages(loadLeadStages(window.localStorage));
     }, 0);
 
     return () => window.clearTimeout(timeoutId);
-  }, []);
+  }, [isDemoLead]);
 
   useEffect(() => {
     if (!openMenu) {
@@ -132,8 +139,25 @@ export function LeadHeader({
 
   function chooseResponsible(manager: (typeof salesManagers)[number]) {
     setOpenMenu(null);
-    setResponsible(manager);
-    setNotice("Ответственный изменён локально до перезагрузки страницы.");
+    setNotice("");
+
+    if (isDemoLead) {
+      setResponsible(manager);
+      setNotice("Ответственный изменён локально до перезагрузки страницы.");
+      return;
+    }
+    if (!/^\d+$/.test(manager.id)) {
+      setNotice("Ответственный не изменён: текущий список менеджеров demo и не содержит backend id.");
+      return;
+    }
+
+    startTransition(async () => {
+      const result = await updateLeadResponsible(lead.id, manager.id);
+      if (result.ok) {
+        setResponsible(manager);
+      }
+      setNotice(result.message);
+    });
   }
 
   async function copyLink() {
@@ -218,19 +242,17 @@ export function LeadHeader({
               {openMenu === "status" ? (
                 <div className="absolute left-0 z-30 mt-2 w-64 max-w-[calc(100vw-2rem)] rounded-[var(--portal-radius-lg)] border border-portal-border bg-portal-surface p-2 text-left shadow-[var(--portal-shadow-overlay)] sm:left-auto sm:right-0" role="menu">
                   {activeStages.map((stage) => {
-                    const unavailable = !isDemoLead && !apiStageIds.has(stage.id);
                     return (
                       <button
                         key={stage.id}
                         type="button"
                         role="menuitem"
-                        disabled={unavailable || stage.id === statusId}
+                        disabled={stage.id === statusId}
                         onClick={() => chooseStatus(stage)}
                         className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
                       >
                         <span className={`size-2.5 rounded-full ${stage.accentClass}`} />
                         <span className="flex-1">{stage.title}</span>
-                        {unavailable ? <span className="text-[10px] text-slate-400">локально</span> : null}
                       </button>
                     );
                   })}
@@ -252,14 +274,16 @@ export function LeadHeader({
               {openMenu === "responsible" ? (
                 <div className="absolute left-0 z-30 mt-2 w-64 max-w-[calc(100vw-2rem)] rounded-[var(--portal-radius-lg)] border border-portal-border bg-portal-surface p-2 text-left shadow-[var(--portal-shadow-overlay)] sm:left-auto sm:right-0" role="menu">
                   <p className="px-3 pb-2 text-xs leading-5 text-slate-500">
-                    Демо-список · выбор сохраняется локально
+                    {isDemoLead
+                      ? "Демо-список · выбор сохраняется локально"
+                      : "Demo-список без backend id · API-лид не изменяется локально"}
                   </p>
                   {salesManagers.map((manager) => (
                     <button
                       key={manager.id}
                       type="button"
                       role="menuitem"
-                      disabled={manager.id === responsible?.id}
+                      disabled={manager.id === responsible?.id || (!isDemoLead && !/^\d+$/.test(manager.id))}
                       onClick={() => chooseResponsible(manager)}
                       className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
                     >
@@ -281,12 +305,11 @@ export function LeadHeader({
           {activeStages.map((stage, index) => {
             const isCurrent = stage.id === statusId;
             const isDone = currentStageIndex >= 0 && index < currentStageIndex;
-            const unavailable = !isDemoLead && !apiStageIds.has(stage.id);
             return (
               <button
                 key={stage.id}
                 type="button"
-                disabled={isClosed || isPending || unavailable || isCurrent}
+                disabled={isClosed || isPending || isCurrent}
                 onClick={() => chooseStatus(stage)}
                 aria-current={isCurrent ? "step" : undefined}
                 className={`lead-stage-step relative flex h-9 min-w-32 flex-1 items-center justify-center gap-2 px-4 text-xs font-semibold transition focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${isCurrent ? "bg-portal-primary text-white" : isDone ? "bg-blue-50 text-blue-800" : "bg-portal-surface-secondary text-portal-muted hover:bg-slate-200"} disabled:cursor-default`}
@@ -298,6 +321,20 @@ export function LeadHeader({
               </button>
             );
           })}
+          {leadFinalActions.map((action, index) => (
+            <button
+              key={action.id}
+              type="button"
+              disabled={isClosed || isPending}
+              onClick={() => onFinalAction(action.id)}
+              className={`lead-stage-step relative flex h-9 min-w-40 flex-1 items-center justify-center gap-2 px-4 text-xs font-semibold transition focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 disabled:cursor-default ${action.id === "convert" ? "bg-emerald-50 text-emerald-800 hover:bg-emerald-100" : "bg-red-50 text-red-800 hover:bg-red-100"}`}
+            >
+              <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-white text-[10px] text-slate-600">
+                {activeStages.length + index + 1}
+              </span>
+              <span className="whitespace-nowrap">{action.title}</span>
+            </button>
+          ))}
         </div>
       </PageContent>
     </header>

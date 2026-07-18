@@ -4,6 +4,7 @@ import { useState } from "react";
 
 import { saveLeadCommercialDetails } from "@/app/(workspace)/sales/leads/[leadId]/lead-commercial-actions";
 import { Button } from "@/components/ui/button";
+import { CityAutocomplete } from "@/components/ui/city-autocomplete";
 import {
   formatCommercialDate,
   formatCurrency,
@@ -296,13 +297,28 @@ export function LeadCommercialDetails({
       setSaveError("");
       const result = await saveLeadCommercialDetails(leadId, {
         source: change.source,
+        direction: change.commercial.direction,
         sport: change.commercial.sport,
         productCategory: change.commercial.productCategory,
+        productType: change.commercial.productType,
         needDescription: change.commercial.needDescription,
         estimatedQuantity: change.commercial.estimatedQuantity,
+        kitQuantity: change.commercial.kitQuantity,
+        sizeComment: change.commercial.sizeComment,
+        preliminaryBudget: change.commercial.preliminaryBudget ?? null,
         estimatedAmount: change.estimatedAmount,
+        discountPercent: change.commercial.discountPercent ?? null,
+        probability: change.probability,
+        plannedOrderDate: change.commercial.plannedOrderDate,
         desiredReadyDate: change.commercial.desiredReadyDate,
+        eventDate: change.commercial.eventDate,
         deliveryCity: change.commercial.deliveryCity,
+        deliveryAddress: change.commercial.deliveryAddress,
+        deliveryMethod: change.commercial.deliveryMethod,
+        deliveryComment: change.commercial.deliveryComment,
+        campaign: change.commercial.campaign,
+        utmDescription: change.commercial.utmDescription,
+        priority: change.commercial.priority,
       });
       setSaving(false);
       if (!result.ok) {
@@ -313,14 +329,15 @@ export function LeadCommercialDetails({
         ...change,
         source: result.persisted.source,
         estimatedAmount: result.persisted.estimatedAmount,
-        commercial: { ...change.commercial, ...result.persisted.commercial },
+        probability: result.persisted.probability,
+        commercial: { ...result.persisted.commercial },
       };
     }
 
     onChange(change);
     setEditing(false);
     setNotice(persistence === "api"
-      ? "Основные коммерческие параметры сохранены в backend. Расширенные поля пока локальны."
+      ? "Коммерческие параметры сохранены в backend."
       : "Demo-режим: коммерческие параметры сохранены только локально.");
   }
 
@@ -374,7 +391,7 @@ export function LeadCommercialDetails({
           </FormSection>
 
           <FormSection title="Доставка">
-            <TextField id="commercial-delivery-city" label="Город доставки" value={draft.deliveryCity} onChange={(value) => updateDraft("deliveryCity", value)} />
+            <CityAutocomplete id="commercial-delivery-city" label="Город доставки" value={draft.deliveryCity} onChange={(value) => updateDraft("deliveryCity", value)} className="min-w-0" inputClassName={fieldClass} />
             <TextField id="commercial-delivery-address" label="Адрес доставки" value={draft.deliveryAddress} onChange={(value) => updateDraft("deliveryAddress", value)} />
             <SelectField id="commercial-delivery-method" label="Способ доставки" value={draft.deliveryMethod} options={deliveryMethods} onChange={(value) => updateDraft("deliveryMethod", value)} />
             <div className="sm:col-span-2"><TextField id="commercial-delivery-comment" label="Комментарий по доставке" value={draft.deliveryComment} onChange={(value) => updateDraft("deliveryComment", value)} /></div>

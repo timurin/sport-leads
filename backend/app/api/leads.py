@@ -1,21 +1,24 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
+from pydantic import EmailStr
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.database.session import get_db
-from app.models.sales import Lead, LeadEvent, LeadEventType, LeadResult, LeadStatus
+from app.models.sales import Lead, LeadEvent, LeadEventType, LeadResult, LeadStatus, SalesUser
 from app.schemas.sales import (
     LeadConversionRead,
     LeadContactCreate,
     LeadContactRead,
     LeadContactUpdate,
+    LeadCreate,
     LeadConvertRequest,
     LeadEventRead,
     LeadRead,
     LeadRejectRequest,
     LeadUpdate,
 )
+from app.services.lead_creation import LeadResponsibleNotFoundError, create_lead
 from app.services.lead_contacts import (
     LeadContactNotFoundError,
     LeadNotFoundError as ContactLeadNotFoundError,
@@ -32,6 +35,12 @@ from app.services.lead_conversion import (
     convert_lead,
     reject_lead,
 )
+from app.services.lead_duplicates import LeadDuplicateCriteriaError, find_duplicate_leads
+from app.services.lead_stages import (
+    LeadStageConflictError,
+    LeadStageNotFoundError,
+    change_lead_stage,
+)
 
 
 router = APIRouter(prefix="/leads", tags=["Sales leads"])
@@ -41,6 +50,21 @@ def _contact_http_error(error: Exception) -> HTTPException:
     if isinstance(error, (ContactLeadNotFoundError, LeadContactNotFoundError)):
         return HTTPException(status_code=404, detail=str(error))
     return HTTPException(status_code=409, detail=str(error))
+
+
+@router.post("", response_model=LeadRead, status_code=status.HTTP_201_CREATED)
+def create_lead_endpoint(payload: LeadCreate, db: Session = Depends(get_db)) -> LeadRead:
+    try:
+        lead = create_lead(db, payload)
+        db.commit()
+    except LeadResponsibleNotFoundError as error:
+        db.rollback()
+        raise HTTPException(status_code=404, detail=str(error)) from error
+    except IntegrityError as error:
+        db.rollback()
+        raise HTTPException(status_code=409, detail="Lead could not be created") from error
+    db.refresh(lead)
+    return LeadRead.model_validate(lead)
 
 
 @router.get("", response_model=list[LeadRead])
@@ -55,11 +79,31 @@ def list_leads(
     if result is not None:
         statement = statement.where(Lead.result == result)
     if active is True:
-        statement = statement.where(Lead.status != LeadStatus.COMPLETED)
+        statement = statement.where(Lead.status != LeadStatus.COMPLETED.value)
     elif active is False:
-        statement = statement.where(Lead.status == LeadStatus.COMPLETED)
+        statement = statement.where(Lead.status == LeadStatus.COMPLETED.value)
     statement = statement.order_by(Lead.created_at.desc(), Lead.id.desc()).offset(offset).limit(limit)
     return list(db.scalars(statement).all())
+
+
+@router.get("/duplicate-candidates", response_model=list[LeadRead])
+def find_duplicate_lead_candidates(
+    phone: str | None = Query(default=None, max_length=50),
+    email: EmailStr | None = None,
+    exclude_lead_id: int | None = Query(default=None, ge=1),
+    limit: int = Query(default=20, ge=1, le=50),
+    db: Session = Depends(get_db),
+) -> list[Lead]:
+    try:
+        return find_duplicate_leads(
+            db,
+            phone=phone,
+            email=str(email) if email is not None else None,
+            exclude_lead_id=exclude_lead_id,
+            limit=limit,
+        )
+    except LeadDuplicateCriteriaError as error:
+        raise HTTPException(status_code=422, detail=str(error)) from error
 
 
 @router.get("/{lead_id}", response_model=LeadRead)
@@ -75,20 +119,26 @@ def update_lead(lead_id: int, payload: LeadUpdate, db: Session = Depends(get_db)
     lead = db.get(Lead, lead_id)
     if lead is None:
         raise HTTPException(status_code=404, detail="Lead not found")
-    if lead.status == LeadStatus.COMPLETED:
+    if lead.status == LeadStatus.COMPLETED.value:
         raise HTTPException(status_code=409, detail="Completed leads cannot be changed")
     changes = payload.model_dump(exclude_unset=True)
-    previous_status = lead.status
+    requested_stage = changes.pop("status", None)
+    requested_responsible_id = changes.get("responsible_id")
+    if requested_responsible_id is not None:
+        responsible = db.get(SalesUser, requested_responsible_id)
+        if responsible is None or not responsible.is_active:
+            raise HTTPException(status_code=404, detail="Active responsible user not found")
     for field_name, value in changes.items():
         setattr(lead, field_name, value)
-    if "status" in changes and lead.status != previous_status:
-        db.add(
-            LeadEvent(
-                lead_id=lead.id,
-                event_type=LeadEventType.LEAD_STATUS_CHANGED,
-                message=f"Status changed from {previous_status.value} to {lead.status.value}",
-            )
-        )
+    if requested_stage is not None:
+        try:
+            change_lead_stage(db, lead, requested_stage)
+        except LeadStageNotFoundError as error:
+            db.rollback()
+            raise HTTPException(status_code=404, detail=str(error)) from error
+        except LeadStageConflictError as error:
+            db.rollback()
+            raise HTTPException(status_code=409, detail=str(error)) from error
     db.commit()
     db.refresh(lead)
     return lead

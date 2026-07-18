@@ -9,29 +9,40 @@ export type LeadHeaderActionResult = {
   message: string;
 };
 
-const apiStatuses = new Set([
-  "new",
-  "contact",
-  "qualification",
-  "proposal",
-  "waiting",
-]);
-
 export async function updateLeadStatus(
   leadId: string,
   status: string,
 ): Promise<LeadHeaderActionResult> {
-  if (!/^\d+$/.test(leadId) || !apiStatuses.has(status)) {
+  if (!/^\d+$/.test(leadId) || !/^[a-z][a-z0-9-]{0,63}$/.test(status) || status === "completed") {
     return { ok: false, message: "Не удалось изменить статус лида." };
   }
 
   try {
-    const result = await updateApiLead(leadId, {
-      status: status as "new" | "contact" | "qualification" | "proposal" | "waiting",
-    });
+    const result = await updateApiLead(leadId, { status });
 
     return result.ok
       ? { ok: true, message: "Статус обновлён." }
+      : { ok: false, message: result.message };
+  } catch {
+    return { ok: false, message: "Не удалось связаться с backend." };
+  }
+}
+
+export async function updateLeadResponsible(
+  leadId: string,
+  responsibleId: string | null,
+): Promise<LeadHeaderActionResult> {
+  if (!/^\d+$/.test(leadId) || (responsibleId !== null && !/^\d+$/.test(responsibleId))) {
+    return { ok: false, message: "Не удалось изменить ответственного." };
+  }
+
+  try {
+    const result = await updateApiLead(leadId, {
+      responsible_id: responsibleId === null ? null : Number(responsibleId),
+    });
+
+    return result.ok
+      ? { ok: true, message: "Ответственный обновлён." }
       : { ok: false, message: result.message };
   } catch {
     return { ok: false, message: "Не удалось связаться с backend." };

@@ -30,12 +30,12 @@ def test_sales_dev_seed_is_idempotent_and_populates_backend_leads() -> None:
     factory = make_session_factory()
     try:
         with factory() as db:
-            assert seed_dev_leads(db) == 5
+            assert seed_dev_leads(db) == 10
         with factory() as db:
-            assert seed_dev_leads(db) == 5
+            assert seed_dev_leads(db) == 10
 
         with factory() as db:
-            assert db.scalar(select(func.count()).select_from(Lead)) == 5
+            assert db.scalar(select(func.count()).select_from(Lead)) == 10
             assert db.scalar(select(func.count()).select_from(SalesUser)) == 2
             assert db.scalar(select(func.count()).select_from(LeadContact)) == 3
 

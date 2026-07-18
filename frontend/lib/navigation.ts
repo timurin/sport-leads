@@ -57,28 +57,14 @@ export const appSections: AppSection[] = [
         href: "/sales/dashboard",
       },
       {
+        id: "leads",
+        title: "Лиды",
+        href: "/sales/leads",
+      },
+      {
         id: "orders",
-        title: "Заказы",
-        children: [
-          {
-            id: "all-orders",
-            title: "Все заказы",
-            href: "/sales/orders",
-            description: "Общий канбан заказов",
-          },
-          {
-            id: "leads",
-            title: "Лиды",
-            href: "/sales/leads",
-            description: "Первичные обращения и потенциальные клиенты",
-          },
-          {
-            id: "deals",
-            title: "Сделки",
-            href: "/sales/deals",
-            description: "Сделки и этапы воронки продаж",
-          },
-        ],
+        title: "Заказы покупателей",
+        href: "/sales/orders",
       },
       {
         id: "clients",
