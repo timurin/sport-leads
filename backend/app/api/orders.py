@@ -46,13 +46,14 @@ def serialize_order(
         "responsible_name": responsible.name if responsible else None,
         "organization_name": organization.name if organization else None,
         "items": [
-            {
-                column.name: getattr(item, column.name)
-                for column in SalesOrderItem.__table__.columns
-            }
+            {column.name: getattr(item, column.name) for column in SalesOrderItem.__table__.columns}
             for item in order.items
         ],
     }
+
+
+def serialize_item(item: SalesOrderItem) -> dict[str, object]:
+    return {column.name: getattr(item, column.name) for column in SalesOrderItem.__table__.columns}
 
 
 @router.get("", response_model=list[SalesOrderRead])
@@ -107,16 +108,17 @@ def update_order_organization(
 
 
 @router.get("/{order_id}/items", response_model=list[SalesOrderItemRead])
-def list_order_items(order_id: int, db: Session = Depends(get_db)) -> list[SalesOrderItem]:
+def list_order_items(order_id: int, db: Session = Depends(get_db)) -> list[dict[str, object]]:
     if db.get(SalesOrder, order_id) is None:
         raise HTTPException(status_code=404, detail="Order not found")
-    return list(
+    items = list(
         db.scalars(
             select(SalesOrderItem)
             .where(SalesOrderItem.order_id == order_id)
             .order_by(SalesOrderItem.position, SalesOrderItem.id)
         ).all()
     )
+    return [serialize_item(item) for item in items]
 
 
 @router.post("/{order_id}/items", response_model=SalesOrderItemRead, status_code=201)
@@ -124,14 +126,14 @@ def create_order_item(
     order_id: int,
     payload: SalesOrderItemCreate,
     db: Session = Depends(get_db),
-) -> SalesOrderItem:
+) -> dict[str, object]:
     try:
         item = create_sales_order_item(db, order_id, payload)
         db.commit()
     except SalesOrderItemError as error:
         db.rollback()
         raise HTTPException(status_code=404, detail=str(error)) from error
-    return item
+    return serialize_item(item)
 
 
 @router.patch("/{order_id}/items/{item_id}", response_model=SalesOrderItemRead)
@@ -140,14 +142,14 @@ def update_order_item(
     item_id: int,
     payload: SalesOrderItemUpdate,
     db: Session = Depends(get_db),
-) -> SalesOrderItem:
+) -> dict[str, object]:
     try:
         item = update_sales_order_item(db, order_id, item_id, payload)
         db.commit()
     except SalesOrderItemError as error:
         db.rollback()
         raise HTTPException(status_code=404, detail=str(error)) from error
-    return item
+    return serialize_item(item)
 
 
 @router.delete("/{order_id}/items/{item_id}", status_code=204)

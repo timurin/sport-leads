@@ -569,18 +569,17 @@ def test_order_items_are_crud_persistent_and_recalculate_order_total(
 ) -> None:
     lead_id = add_lead(session_factory)
     order_id = client.post(f"/leads/{lead_id}/convert", json={"completed_by_id": 1}).json()["order"]["id"]
-
     created = client.post(
         f"/orders/{order_id}/items",
-        json={"name": "Футболка", "unit": "шт", "quantity": "2", "unit_price": "1500"},
+        json={"snapshot_name": "Футболка", "unit": "шт", "quantity": "2", "unit_price": "1500"},
     )
     assert created.status_code == 201
-    assert created.json()["line_total"] == "3000.00"
+    assert created.json()["line_amount"] == "3000.00"
     item_id = created.json()["id"]
 
     second = client.post(
         f"/orders/{order_id}/items",
-        json={"name": "Шорты", "unit": "шт", "quantity": "2", "unit_price": "750"},
+        json={"snapshot_name": "Шорты", "unit": "шт", "quantity": "2", "unit_price": "750"},
     )
     assert second.status_code == 201
     assert client.get(f"/orders/{order_id}/items").json()[0]["position"] == 1
@@ -591,7 +590,7 @@ def test_order_items_are_crud_persistent_and_recalculate_order_total(
         json={"quantity": "3", "unit_price": "1600"},
     )
     assert updated.status_code == 200
-    assert updated.json()["line_total"] == "4800.00"
+    assert updated.json()["line_amount"] == "4800.00"
     assert client.get(f"/orders/{order_id}").json()["amount"] == "6300.00"
 
     deleted = client.delete(f"/orders/{order_id}/items/{item_id}")

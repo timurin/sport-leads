@@ -187,11 +187,20 @@ Evidence: `backend/app/models/sales.py`, `backend/app/services/lead_conversion.p
 - `[x]` добавлены `GET/POST/PATCH/DELETE /orders/{order_id}/items`; изменение позиций пересчитывает итоговую сумму заказа через Decimal/Numeric;
 - `[x]` карточка заказа показывает позиции и позволяет добавить, изменить и удалить строку через server actions с последующим reload из backend;
 - `[x]` миграция `c8d9e0f1a234`, backend regression tests, frontend mapping, TypeScript, lint, build и project check пройдены;
-- `[~]` ссылка на существующий `Material` необязательна; отдельный Product-каталог и производственные документы остаются за пределами итерации.
+- `[x]` отдельным patch `v0.7.3-remove-material-from-order-items` удалена связь `SalesOrderItem → Material`; отдельный Product/Nomenclature-каталог и производственные документы остаются за пределами итерации.
 
 Evidence: `backend/app/models/sales.py`, `backend/app/services/sales_order_items.py`, `backend/app/api/orders.py`, `backend/alembic/versions/c8d9e0f1a234_add_sales_order_items.py`, `backend/tests/test_lead_conversion.py`, `frontend/components/sales/sales-order-items.tsx`, `frontend/app/(workspace)/sales/orders/[orderId]/order-item-actions.ts`.
 
 ## Итерация v0.6.1-navigation-remove-deals
+
+## Patch v0.7.3-remove-material-from-order-items
+
+- `[x]` удалена необязательная связь `SalesOrderItem → Material` из модели, schemas, API и frontend;
+- `[x]` позиции используют только `snapshot_name`, `unit`, `quantity`, `unit_price`, `line_amount`; CRUD и пересчёт суммы сохранены;
+- `[x]` добавлена обратимая миграция `d9e0f1a2b345` поверх применённой `c8d9e0f1a234`;
+- `[~]` размеры, персонализация, скидки и НДС остаются следующими отдельными пунктами.
+
+Evidence: `backend/app/models/sales.py`, `backend/app/schemas/sales.py`, `backend/app/api/orders.py`, `backend/app/services/sales_order_items.py`, `backend/alembic/versions/d9e0f1a2b345_remove_material_from_sales_order_items.py`, `backend/tests/test_lead_conversion.py`, `frontend/components/sales/sales-order-items.tsx`.
 
 - `[x]` активная CRM-навигация разделена на отдельные ссылки `Лиды` → `/sales/leads` и `Заказы покупателей` → `/sales/orders`;
 - `[x]` пункт и ссылка `Сделки` удалены только из активной навигационной конфигурации, demo-страница `/sales/deals` не удалялась;

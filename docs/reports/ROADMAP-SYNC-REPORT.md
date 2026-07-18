@@ -17,9 +17,9 @@
 
 ## Найденные документы
 
-- актуальный roadmap: `docs/roadmap/SL-ROADMAP-v0.6.1.md`;
-- исторический roadmap: `docs/roadmap/SL-ROADMAP-v0.3.0.md`;
-- актуальная структура: `docs/architecture/SL-ERP-CHECK-v0.3.0.md`;
+- канонический roadmap: `docs/roadmap/roadmap.md`;
+- архивные roadmap: `docs/archive/roadmap/SL-ROADMAP-v0.6.1.md`, `docs/archive/roadmap/SL-ROADMAP-v0.3.0.md`;
+- каноническая структура: `docs/architecture/project-structure.md` и `docs/architecture/erp-check.md`;
 - последняя функциональная контрольная точка: `docs/releases/v0.5.0.md`;
 - исторический checkpoint: `docs/checkpoints/v0.3.0-demo.md`.
 
@@ -38,9 +38,9 @@
 
 - `AGENTS.md`;
 - `docs/README.md`;
-- `docs/roadmap/SL-ROADMAP-v0.6.1.md`;
-- `docs/roadmap/SL-ROADMAP-v0.3.0.md`;
-- `docs/architecture/SL-ERP-CHECK-v0.3.0.md`;
+- `docs/roadmap/roadmap.md`;
+- `docs/architecture/project-structure.md`;
+- `docs/architecture/erp-check.md`;
 - `docs/reports/ROADMAP-SYNC-REPORT.md`.
 
 Бизнес-код, API, модели и миграции этой задачей не изменялись.

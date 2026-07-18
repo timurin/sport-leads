@@ -2,12 +2,21 @@
 
 ## Архитектура
 
-- [Актуальная структура платформы — SL-ERP-CHECK-v0.3.0](architecture/SL-ERP-CHECK-v0.3.0.md)
+- [Каноническая структура платформы — SL-PROJECT-STRUCTURE-v1](architecture/project-structure.md)
+- [Канонический ERP-check — SL-ERP-CHECK-v1](architecture/erp-check.md)
+- [Архитектурные решения — ADR](architecture/decisions/)
 
 ## План развития
 
-- [Актуальный roadmap — SL-ROADMAP-v0.6.1](roadmap/SL-ROADMAP-v0.6.1.md)
-- [Исторический roadmap — SL-ROADMAP-v0.3.0](roadmap/SL-ROADMAP-v0.3.0.md)
+- [Канонический roadmap — SL-ROADMAP-v1](roadmap/roadmap.md)
+
+Исторические roadmap и ERP-check сохранены в `docs/archive/`.
+
+## Процесс
+
+- [Development workflow](process/development-workflow.md)
+- [Стиль задач Codex](process/codex-task-style.md)
+- [Release checklist](process/release-checklist.md)
 
 ## Контрольные точки
 

@@ -325,28 +325,25 @@ class SalesOrderRead(SalesSchema):
 class SalesOrderItemRead(SalesSchema):
     id: int
     order_id: int
-    material_id: int | None
     position: int
-    name: str
+    snapshot_name: str
     unit: str
     quantity: Decimal
     unit_price: Decimal
-    line_total: Decimal
+    line_amount: Decimal
     created_at: datetime
     updated_at: datetime
 
 
 class SalesOrderItemCreate(BaseModel):
-    material_id: int | None = None
-    name: str = Field(min_length=1, max_length=255)
+    snapshot_name: str = Field(min_length=1, max_length=255)
     unit: str = Field(default="шт", min_length=1, max_length=30)
     quantity: Decimal = Field(gt=0, max_digits=14, decimal_places=3)
     unit_price: Decimal = Field(ge=0, max_digits=14, decimal_places=2)
 
 
 class SalesOrderItemUpdate(BaseModel):
-    material_id: int | None = None
-    name: str | None = Field(default=None, min_length=1, max_length=255)
+    snapshot_name: str | None = Field(default=None, min_length=1, max_length=255)
     unit: str | None = Field(default=None, min_length=1, max_length=30)
     quantity: Decimal | None = Field(default=None, gt=0, max_digits=14, decimal_places=3)
     unit_price: Decimal | None = Field(default=None, ge=0, max_digits=14, decimal_places=2)

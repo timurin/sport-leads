@@ -21,7 +21,7 @@ async function callItems(orderId: string, path: string, method: string, body?: R
 
 export async function createOrderItem(orderId: string, formData: FormData) {
   return callItems(orderId, "", "POST", {
-    name: String(formData.get("name") ?? ""),
+    snapshot_name: String(formData.get("snapshot_name") ?? ""),
     unit: String(formData.get("unit") ?? "шт"),
     quantity: String(formData.get("quantity") ?? "0"),
     unit_price: String(formData.get("unit_price") ?? "0"),
@@ -30,7 +30,7 @@ export async function createOrderItem(orderId: string, formData: FormData) {
 
 export async function updateOrderItem(orderId: string, itemId: number, formData: FormData) {
   return callItems(orderId, `/${itemId}`, "PATCH", {
-    name: String(formData.get("name") ?? ""),
+    snapshot_name: String(formData.get("snapshot_name") ?? ""),
     unit: String(formData.get("unit") ?? "шт"),
     quantity: String(formData.get("quantity") ?? "0"),
     unit_price: String(formData.get("unit_price") ?? "0"),

@@ -358,22 +358,19 @@ class SalesOrderItem(Base):
     __table_args__ = (
         CheckConstraint("quantity > 0", name="ck_sales_order_items_quantity_positive"),
         CheckConstraint("unit_price >= 0", name="ck_sales_order_items_unit_price_nonnegative"),
-        CheckConstraint("line_total >= 0", name="ck_sales_order_items_line_total_nonnegative"),
+        CheckConstraint("line_amount >= 0", name="ck_sales_order_items_line_amount_nonnegative"),
     )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     order_id: Mapped[int] = mapped_column(
         ForeignKey("sales_orders.id", ondelete="CASCADE"), nullable=False, index=True
     )
-    material_id: Mapped[int | None] = mapped_column(
-        ForeignKey("materials.id", ondelete="SET NULL"), index=True
-    )
     position: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
-    name: Mapped[str] = mapped_column(String(255), nullable=False)
+    snapshot_name: Mapped[str] = mapped_column(String(255), nullable=False)
     unit: Mapped[str] = mapped_column(String(30), nullable=False, default="шт")
     quantity: Mapped[Decimal] = mapped_column(Numeric(14, 3), nullable=False)
     unit_price: Mapped[Decimal] = mapped_column(Numeric(14, 2), nullable=False)
-    line_total: Mapped[Decimal] = mapped_column(Numeric(14, 2), nullable=False)
+    line_amount: Mapped[Decimal] = mapped_column(Numeric(14, 2), nullable=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )

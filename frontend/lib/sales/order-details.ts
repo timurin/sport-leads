@@ -27,13 +27,12 @@ export type ApiSalesOrderDetails = {
 export type ApiSalesOrderItem = {
   id: number;
   order_id: number;
-  material_id: number | null;
   position: number;
-  name: string;
+  snapshot_name: string;
   unit: string;
   quantity: number | string;
   unit_price: number | string;
-  line_total: number | string;
+  line_amount: number | string;
   created_at: string;
   updated_at: string;
 };
@@ -91,11 +90,11 @@ export type SalesOrderDetails = {
 
 export type SalesOrderItem = {
   id: number;
-  name: string;
+  snapshotName: string;
   unit: string;
   quantity: string;
   unitPrice: string;
-  lineTotal: string;
+  lineAmount: string;
 };
 
 export type SalesOrderHistoryItem = {
@@ -147,11 +146,11 @@ export function fromApiSalesOrder(order: ApiSalesOrderDetails): SalesOrderDetail
     quantity: order.quantity === null ? "Не указано" : `${order.quantity} ед.`,
     items: (order.items ?? []).map((item) => ({
       id: item.id,
-      name: item.name,
+      snapshotName: item.snapshot_name,
       unit: item.unit,
       quantity: String(item.quantity),
       unitPrice: currencyFormatter.format(Number(item.unit_price)),
-      lineTotal: currencyFormatter.format(Number(item.line_total)),
+      lineAmount: currencyFormatter.format(Number(item.line_amount)),
     })),
   };
 }
