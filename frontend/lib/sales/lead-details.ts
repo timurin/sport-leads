@@ -3,6 +3,7 @@ import "server-only";
 import { leads } from "@/lib/demo-data/sales";
 import { fromApiLeadCommercial, type ApiLeadCommercialFields } from "@/lib/sales/lead-commercial-api";
 import { fromApiLeadContact, type ApiLeadContact } from "@/lib/sales/lead-contact-api";
+import { fromApiLeadCustomer, type ApiLeadCustomerFields } from "@/lib/sales/lead-customer-api";
 import type { LeadActivity, LeadCommercialDetailsData, LeadCustomer, LeadMessage, LeadStatus, LeadTask } from "@/types/sales";
 
 export type LeadSource = string;
@@ -33,10 +34,9 @@ export type LeadDetails = {
   dataOrigin: "api" | "demo";
 };
 
-export type ApiLead = ApiLeadCommercialFields & {
+export type ApiLead = ApiLeadCommercialFields & ApiLeadCustomerFields & {
   id: number;
   status: LeadStatus;
-  company_name: string | null;
   contact_name: string;
   phone: string | null;
   email: string | null;
@@ -219,9 +219,7 @@ function fromApiLead(lead: ApiLead): LeadDetails {
     taskReferenceAt: lead.updated_at,
     dataOrigin: "api",
     customer: {
-      type: lead.company_name ? "company" : "person",
-      organizationName: lead.company_name ?? undefined,
-      city: lead.city ?? undefined,
+      ...fromApiLeadCustomer(lead),
       contacts: lead.contacts.map(fromApiLeadContact),
     },
   };
@@ -237,6 +235,13 @@ export type LeadApiUpdate = {
   estimated_amount?: number | null;
   desired_date?: string | null;
   city?: string | null;
+  customer_type?: "person" | "sole_proprietor" | "company" | null;
+  company_name?: string | null;
+  tax_id?: string | null;
+  website?: string | null;
+  region?: string | null;
+  address?: string | null;
+  customer_comment?: string | null;
 };
 
 export type LeadApiUpdateResult =

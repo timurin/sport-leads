@@ -150,6 +150,71 @@ def test_lead_commercial_fields_patch_persists_and_clears_values(
     assert cleared.json()["desired_date"] is None
 
 
+def test_lead_customer_profile_patch_persists_and_clears_values(
+    client: TestClient,
+    session_factory: sessionmaker[Session],
+) -> None:
+    lead_id = add_lead(session_factory)
+    response = client.patch(
+        f"/leads/{lead_id}",
+        json={
+            "customer_type": "company",
+            "company_name": "ООО Спорт Лига",
+            "tax_id": "1655000000",
+            "website": "sport.example",
+            "city": "Нижний Новгород",
+            "region": "Нижегородская область",
+            "address": "ул. Центральная, 1",
+            "customer_comment": "Работают только по договору.",
+        },
+    )
+    assert response.status_code == 200
+    body = response.json()
+    assert body["customer_type"] == "company"
+    assert body["tax_id"] == "1655000000"
+    assert body["region"] == "Нижегородская область"
+
+    with session_factory() as db:
+        lead = db.get(Lead, lead_id)
+        assert lead is not None
+        assert lead.customer_type == "company"
+        assert lead.company_name == "ООО Спорт Лига"
+        assert lead.tax_id == "1655000000"
+        assert lead.website == "sport.example"
+        assert lead.city == "Нижний Новгород"
+        assert lead.region == "Нижегородская область"
+        assert lead.address == "ул. Центральная, 1"
+        assert lead.customer_comment == "Работают только по договору."
+
+    cleared = client.patch(
+        f"/leads/{lead_id}",
+        json={
+            "customer_type": None,
+            "tax_id": None,
+            "website": None,
+            "region": None,
+            "address": None,
+            "customer_comment": None,
+        },
+    )
+    assert cleared.status_code == 200
+    assert cleared.json()["customer_type"] is None
+    assert cleared.json()["tax_id"] is None
+    assert cleared.json()["website"] is None
+    assert cleared.json()["region"] is None
+    assert cleared.json()["address"] is None
+    assert cleared.json()["customer_comment"] is None
+
+
+def test_lead_customer_profile_patch_validates_tax_id(
+    client: TestClient,
+    session_factory: sessionmaker[Session],
+) -> None:
+    lead_id = add_lead(session_factory)
+    response = client.patch(f"/leads/{lead_id}", json={"tax_id": "123"})
+    assert response.status_code == 422
+
+
 def test_conversion_creates_one_linked_order_and_is_not_repeatable(
     client: TestClient,
     session_factory: sessionmaker[Session],

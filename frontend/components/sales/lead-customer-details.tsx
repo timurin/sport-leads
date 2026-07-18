@@ -14,6 +14,7 @@ import {
   deleteLeadContact,
   saveLeadContact,
 } from "@/app/(workspace)/sales/leads/[leadId]/lead-contact-actions";
+import { saveLeadCustomerProfile } from "@/app/(workspace)/sales/leads/[leadId]/lead-customer-actions";
 import { Button } from "@/components/ui/button";
 import {
   getWebsiteHref,
@@ -240,6 +241,21 @@ export function LeadCustomerDetails({
     if (contactPersistence === "api") {
       setSavingCustomer(true);
       setNotice("");
+      const profileResult = await saveLeadCustomerProfile(leadId, {
+        type: nextCustomer.type,
+        organizationName: nextCustomer.organizationName,
+        taxId: nextCustomer.taxId,
+        website: nextCustomer.website,
+        city: nextCustomer.city,
+        region: nextCustomer.region,
+        address: nextCustomer.address,
+        comment: nextCustomer.comment,
+      });
+      if (!profileResult.ok) {
+        setSavingCustomer(false);
+        setNotice(profileResult.message);
+        return;
+      }
       const result = await saveLeadContact(leadId, primary?.id ?? null, {
         name: nextPrimary.name,
         position: nextPrimary.position,
@@ -253,13 +269,21 @@ export function LeadCustomerDetails({
         setNotice(result.message);
         return;
       }
+      nextCustomer.type = profileResult.customer.type;
+      nextCustomer.organizationName = profileResult.customer.organizationName;
+      nextCustomer.taxId = profileResult.customer.taxId;
+      nextCustomer.website = profileResult.customer.website;
+      nextCustomer.city = profileResult.customer.city;
+      nextCustomer.region = profileResult.customer.region;
+      nextCustomer.address = profileResult.customer.address;
+      nextCustomer.comment = profileResult.customer.comment;
       nextCustomer.contacts = mergePersistedContacts(result.contacts, result.savedContactId, nextPrimary.messenger);
     }
 
     onCustomerChange(nextCustomer);
     setEditing(false);
     setNotice(contactPersistence === "api"
-      ? "Основной контакт сохранён в backend. Остальные данные клиента пока локальны."
+      ? "Профиль клиента и основной контакт сохранены в backend."
       : "Demo-режим: изменения сохранены только локально.");
   }
 

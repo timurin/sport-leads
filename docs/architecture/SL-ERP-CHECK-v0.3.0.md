@@ -76,6 +76,7 @@
 - `[x]` миграция sales-таблиц, ограничений и справочника причин отказа;
 - `[x]` API списка, чтения и частичного обновления лида;
 - `[x]` числовая detail-страница загружает и сохраняет поддерживаемое моделью коммерческое ядро через PATCH без demo fallback;
+- `[x]` числовая detail-страница загружает и сохраняет core-профиль клиента через PATCH без demo fallback;
 - `[x]` API создания, изменения, удаления дополнительного и атомарной смены основного контакта;
 - `[x]` API конвертации, отказа, истории и чтения созданного заказа;
 - `[x]` транзакционная конвертация Lead → Client + SalesOrder;
@@ -86,7 +87,7 @@
 ### Частично реализовано
 
 - `[~]` `lead-1` и `lead-2` вместе с контактами и расширенными коммерческими данными загружаются из явно выбранного demo-источника;
-- `[~]` профиль клиента, расширенные коммерческие параметры, заметки, timeline и задачи живут в состоянии страницы;
+- `[~]` core-профиль клиента числовой карточки хранится в `Lead`; расширенные коммерческие параметры, заметки, timeline и задачи живут в состоянии страницы;
 - `[~]` стадии Kanban настраиваются через `localStorage`, но перемещения лидов не имеют общего backend persistence;
 - `[~]` формы контактов числовой detail-страницы используют `LeadContact` API через Server Actions без fallback; demo-маршруты и messenger остаются локальными;
 - `[~]` коммерческая форма числовой detail-страницы сохраняет source, sport, category, description, quantity, amount, desired date и city; остальные поля формы явно локальны;
@@ -97,7 +98,7 @@
 
 ### Осталось
 
-- `[ ]` полный профиль клиента, адреса, реквизиты и связи;
+- `[ ]` полноценная модель клиента, реквизиты beyond INN, история и связи;
 - `[ ]` модель `Deal`, API сделок и persistence Kanban;
 - `[ ]` подключение detail-страницы и списков к единому backend API без скрытой demo-подмены;
 - `[ ]` CRUD лидов/клиентов/контактов и архивирование;
@@ -105,7 +106,7 @@
 - `[ ]` постоянные комментарии, файлы, задачи и активности;
 - `[ ]` авторизация и права менеджеров.
 
-**Подтверждения:** `backend/app/models/sales.py`, `backend/app/schemas/sales.py`, `backend/app/api/leads.py`, `backend/app/api/orders.py`, `backend/app/services/lead_contacts.py`, `backend/app/services/lead_conversion.py`, `backend/alembic/versions/9c47a12e6b02_add_lead_conversion.py`, `backend/alembic/versions/b6c4e2f91a07_add_lead_contacts.py`, `backend/tests/test_lead_contacts.py`, `backend/tests/test_lead_conversion.py`, `docs/architecture/lead-contacts.md`, `docs/architecture/lead-commercial-persistence.md`, `frontend/app/(workspace)/sales/leads/[leadId]/lead-contact-actions.ts`, `frontend/app/(workspace)/sales/leads/[leadId]/lead-commercial-actions.ts`, `frontend/components/sales/lead-customer-details.tsx`, `frontend/components/sales/lead-commercial-details.tsx`, `frontend/lib/sales/lead-contact-api.test.mjs`, `frontend/lib/sales/lead-commercial-api.test.mjs`, `frontend/lib/demo-data/sales.ts`.
+**Подтверждения:** `backend/app/models/sales.py`, `backend/app/schemas/sales.py`, `backend/app/api/leads.py`, `backend/app/api/orders.py`, `backend/app/services/lead_contacts.py`, `backend/app/services/lead_conversion.py`, `backend/alembic/versions/9c47a12e6b02_add_lead_conversion.py`, `backend/alembic/versions/b6c4e2f91a07_add_lead_contacts.py`, `backend/alembic/versions/c12f0f2d0f4b_add_lead_customer_profile.py`, `backend/tests/test_lead_contacts.py`, `backend/tests/test_lead_conversion.py`, `docs/architecture/lead-contacts.md`, `docs/architecture/lead-commercial-persistence.md`, `frontend/app/(workspace)/sales/leads/[leadId]/lead-contact-actions.ts`, `frontend/app/(workspace)/sales/leads/[leadId]/lead-commercial-actions.ts`, `frontend/app/(workspace)/sales/leads/[leadId]/lead-customer-actions.ts`, `frontend/components/sales/lead-customer-details.tsx`, `frontend/components/sales/lead-commercial-details.tsx`, `frontend/lib/sales/lead-contact-api.test.mjs`, `frontend/lib/sales/lead-commercial-api.test.mjs`, `frontend/lib/sales/lead-customer-api.test.mjs`, `frontend/lib/demo-data/sales.ts`.
 **Критерий готовности:** менеджер создаёт и редактирует лид, клиента, контакты и сделку через API; Kanban и формы сохраняются в PostgreSQL после перезагрузки, а конвертация не требует повторного ввода.
 
 ## 3. Заказы покупателей
@@ -482,7 +483,7 @@
 
 `demo UI → backend CRM → persistence → реальные бизнес-процессы`
 
-Backend уже содержит часть sales-моделей, API и постоянные `LeadContact`; числовая detail-страница читает и изменяет контакты и поддерживаемое коммерческое ядро через backend без fallback. Frontend CRM всё ещё использует смешанную модель: `lead-1`/`lead-2`, профиль клиента, messenger, расширенные коммерческие поля, задачи, заметки, timeline и сообщения остаются demo/local. Ближайшая архитектурная задача — подключить основные данные клиента существующей карточки к backend без скрытой demo-подмены.
+Backend уже содержит часть sales-моделей, API, постоянные `LeadContact`, коммерческое ядро и core-профиль клиента в `Lead`; числовая detail-страница читает и изменяет эти данные через backend без fallback. Frontend CRM всё ещё использует смешанную модель: `lead-1`/`lead-2`, messenger, расширенные коммерческие поля, задачи, заметки, timeline и сообщения остаются demo/local. Ближайшая архитектурная задача — подключить список/Kanban или следующий основной сценарий лида к backend без скрытой demo-подмены.
 
 ## Подтверждение checkpoint v0.5.0
 
@@ -529,4 +530,15 @@ Backend уже содержит часть sales-моделей, API и пост
 - `[x]` ошибка backend оставляет форму открытой и не создаёт локальный successful fallback;
 - `[x]` integration test проверяет фактическое хранение `Decimal`, даты и очистку; frontend tests проверяют mapping, payload и валидацию;
 - `[x]` backend pytest — 25, frontend tests — 27, typecheck, lint, production build и project check 9/9 прошли;
-- `[~]` расширенные поля формы, профиль клиента, demo-лиды, список и Kanban остаются local/demo.
+- `[~]` расширенные поля формы, demo-лиды, список и Kanban остаются local/demo.
+
+## Итерация v0.6.1-lead-customer-profile-persistence
+
+- `[x]` `Lead` расширен nullable-полями core-профиля клиента: `customer_type`, `tax_id`, `website`, `region`, `address`, `customer_comment`; `company_name` и `city` остаются существующими источниками истины;
+- `[x]` добавлена обратимая миграция `c12f0f2d0f4b_add_lead_customer_profile.py`;
+- `[x]` `LeadRead` и `LeadUpdate` возвращают и принимают профиль клиента через существующий `PATCH /leads/{lead_id}`;
+- `[x]` числовая detail-страница читает профиль клиента из `LeadRead` и сохраняет его через Server Action без client-side API URL;
+- `[x]` пустые nullable-поля очищаются явным `null`, а ошибка backend оставляет форму открытой и не создаёт локальный successful fallback;
+- `[x]` backend integration tests проверяют сохранение, очистку и валидацию INN; frontend tests проверяют mapping, payload и server-boundary validation;
+- `[x]` backend pytest — 27, frontend tests — 30, typecheck, lint, production build, Alembic current/upgrade/downgrade/upgrade/check и project check 9/9 с `PYTHONUTF8=1` прошли;
+- `[~]` demo-лиды `lead-1`/`lead-2`, messenger, список/Kanban, расширенные коммерческие поля, задачи, заметки и timeline остаются local/demo.

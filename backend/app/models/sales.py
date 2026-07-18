@@ -39,6 +39,12 @@ class LeadResult(str, Enum):
     REJECTED = "rejected"
 
 
+class LeadCustomerType(str, Enum):
+    PERSON = "person"
+    SOLE_PROPRIETOR = "sole_proprietor"
+    COMPANY = "company"
+
+
 class SalesOrderStatus(str, Enum):
     NEW = "new"
     CONFIRMED = "confirmed"
@@ -157,11 +163,19 @@ class Lead(Base):
     result: Mapped[LeadResult | None] = mapped_column(
         enum_type(LeadResult, "lead_result"), index=True
     )
+    customer_type: Mapped[LeadCustomerType | None] = mapped_column(
+        enum_type(LeadCustomerType, "lead_customer_type")
+    )
     company_name: Mapped[str | None] = mapped_column(String(255))
+    tax_id: Mapped[str | None] = mapped_column(String(12))
+    website: Mapped[str | None] = mapped_column(String(255))
     contact_name: Mapped[str] = mapped_column(String(255), nullable=False)
     phone: Mapped[str | None] = mapped_column(String(50))
     email: Mapped[str | None] = mapped_column(String(255))
     city: Mapped[str | None] = mapped_column(String(150))
+    region: Mapped[str | None] = mapped_column(String(150))
+    address: Mapped[str | None] = mapped_column(String(500))
+    customer_comment: Mapped[str | None] = mapped_column(Text)
     source: Mapped[str | None] = mapped_column(String(150), index=True)
     responsible_id: Mapped[int | None] = mapped_column(
         ForeignKey("sales_users.id", ondelete="SET NULL"), index=True

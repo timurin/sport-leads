@@ -6,6 +6,7 @@ from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator, mo
 from app.models.sales import (
     LeadEventType,
     LeadContactChannel,
+    LeadCustomerType,
     LeadResult,
     LeadStatus,
     SalesOrderStatus,
@@ -66,11 +67,17 @@ class LeadContactRead(SalesSchema):
 
 class LeadUpdate(BaseModel):
     status: LeadStatus | None = None
+    customer_type: LeadCustomerType | None = None
     company_name: str | None = Field(default=None, max_length=255)
+    tax_id: str | None = Field(default=None, max_length=12, pattern=r"^(\d{10}|\d{12})$")
+    website: str | None = Field(default=None, max_length=255)
     contact_name: str | None = Field(default=None, min_length=1, max_length=255)
     phone: str | None = Field(default=None, max_length=50)
     email: EmailStr | None = None
     city: str | None = Field(default=None, max_length=150)
+    region: str | None = Field(default=None, max_length=150)
+    address: str | None = Field(default=None, max_length=500)
+    customer_comment: str | None = None
     source: str | None = Field(default=None, max_length=150)
     responsible_id: int | None = None
     sport: str | None = Field(default=None, max_length=150)
@@ -91,11 +98,17 @@ class LeadRead(SalesSchema):
     id: int
     status: LeadStatus
     result: LeadResult | None
+    customer_type: LeadCustomerType | None
     company_name: str | None
+    tax_id: str | None
+    website: str | None
     contact_name: str
     phone: str | None
     email: str | None
     city: str | None
+    region: str | None
+    address: str | None
+    customer_comment: str | None
     source: str | None
     responsible_id: int | None
     sport: str | None
