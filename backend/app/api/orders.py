@@ -25,6 +25,7 @@ from app.services.sales_order_organization import (
 )
 from app.services.sales_order_items import (
     SalesOrderItemError,
+    calculate_sales_order_item_totals,
     create_sales_order_item,
     delete_sales_order_item,
     update_sales_order_item,
@@ -45,15 +46,18 @@ def serialize_order(
         "client_name": client.company_name or client.contact_name,
         "responsible_name": responsible.name if responsible else None,
         "organization_name": organization.name if organization else None,
-        "items": [
-            {column.name: getattr(item, column.name) for column in SalesOrderItem.__table__.columns}
-            for item in order.items
-        ],
+        "items": [serialize_item(item) for item in order.items],
     }
 
 
 def serialize_item(item: SalesOrderItem) -> dict[str, object]:
-    return {column.name: getattr(item, column.name) for column in SalesOrderItem.__table__.columns}
+    gross_amount, _, _ = calculate_sales_order_item_totals(
+        item.quantity, item.unit_price, item.discount_percent
+    )
+    return {
+        **{column.name: getattr(item, column.name) for column in SalesOrderItem.__table__.columns},
+        "gross_amount": gross_amount,
+    }
 
 
 @router.get("", response_model=list[SalesOrderRead])

@@ -35,6 +35,9 @@ export type ApiSalesOrderItem = {
   unit: string;
   quantity: number | string;
   unit_price: number | string;
+  gross_amount: number | string;
+  discount_percent: number | string | null;
+  discount_amount: number | string;
   line_amount: number | string;
   created_at: string;
   updated_at: string;
@@ -100,6 +103,9 @@ export type SalesOrderItem = {
   unit: string;
   quantity: string;
   unitPrice: string;
+  grossAmount: string;
+  discountPercent: string;
+  discountAmount: string;
   lineAmount: string;
 };
 
@@ -159,6 +165,9 @@ export function fromApiSalesOrder(order: ApiSalesOrderDetails): SalesOrderDetail
       unit: item.unit,
       quantity: String(item.quantity),
       unitPrice: currencyFormatter.format(Number(item.unit_price)),
+      grossAmount: currencyFormatter.format(Number(item.gross_amount)),
+      discountPercent: item.discount_percent === null ? "" : String(item.discount_percent),
+      discountAmount: currencyFormatter.format(Number(item.discount_amount)),
       lineAmount: currencyFormatter.format(Number(item.line_amount)),
     })),
   };

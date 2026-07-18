@@ -5,7 +5,7 @@
 
 ## Решение
 
-`SalesOrderItem` хранит snapshot-наименование, размеры, персонализацию, цвет, единицу, количество, цену и рассчитанную сумму строки. `Material` не является номенклатурой заказа. Связь с будущим `Nomenclature` вводится отдельным этапом после определения каталога продукции.
+`SalesOrderItem` хранит snapshot-наименование, размеры, персонализацию, цвет, единицу, количество и исходную цену. Nullable процент скидки допускается от 0 до 100; сумма скидки и итог строки вычисляются service-слоем через Decimal/Numeric. `Material` не является номенклатурой заказа. Связь с будущим `Nomenclature` вводится отдельным этапом после определения каталога продукции.
 
 ## Последствия
 
@@ -13,6 +13,6 @@
 
 ## Ограничения
 
-Скидки, НДС и связь с номенклатурой ещё не реализованы.
+Реализована только процентная скидка строки без НДС и общей скидки заказа. `discount_amount` не является полем ручного ввода; связь с номенклатурой ещё не реализована.
 
-**Связанные модули:** `backend/app/models/sales.py`, `backend/app/services/sales_order_items.py`, `frontend/components/sales/sales-order-items.tsx`, migrations `d9e0f1a2b345`, `e0f1a2b3c456`, `f1a2b3c4d567`.
+**Связанные модули:** `backend/app/models/sales.py`, `backend/app/services/sales_order_items.py`, `frontend/components/sales/sales-order-items.tsx`, migrations `d9e0f1a2b345`, `e0f1a2b3c456`, `f1a2b3c4d567`, `a2b3c4d5e678`.

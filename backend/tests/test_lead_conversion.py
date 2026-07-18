@@ -611,6 +611,46 @@ def test_order_items_are_crud_persistent_and_recalculate_order_total(
     assert client.get(f"/orders/{order_id}").json()["amount"] == "1500.00"
     with session_factory() as db:
         assert db.scalar(select(func.count()).select_from(SalesOrderItem)) == 1
+
+
+def test_order_item_discount_percent_recalculates_totals_and_validates_range(
+    client: TestClient,
+    session_factory: sessionmaker[Session],
+) -> None:
+    lead_id = add_lead(session_factory)
+    order_id = client.post(f"/leads/{lead_id}/convert", json={"completed_by_id": 1}).json()["order"]["id"]
+    base = {"snapshot_name": "Базовая позиция", "unit": "шт", "quantity": "2", "unit_price": "1500"}
+
+    without_discount = client.post(f"/orders/{order_id}/items", json=base)
+    assert without_discount.status_code == 201
+    assert without_discount.json()["discount_percent"] is None
+    assert without_discount.json()["discount_amount"] == "0.00"
+    assert without_discount.json()["line_amount"] == "3000.00"
+
+    discounted = client.post(
+        f"/orders/{order_id}/items",
+        json={**base, "snapshot_name": "Скидочная позиция", "quantity": "1", "unit_price": "1000", "discount_percent": "10"},
+    )
+    assert discounted.status_code == 201
+    item_id = discounted.json()["id"]
+    assert discounted.json()["gross_amount"] == "1000.00"
+    assert discounted.json()["discount_amount"] == "100.00"
+    assert discounted.json()["line_amount"] == "900.00"
+    assert client.get(f"/orders/{order_id}").json()["amount"] == "3900.00"
+
+    zero = client.patch(f"/orders/{order_id}/items/{item_id}", json={"discount_percent": "0"})
+    assert zero.status_code == 200
+    assert zero.json()["discount_amount"] == "0.00"
+    assert zero.json()["line_amount"] == "1000.00"
+
+    full = client.patch(f"/orders/{order_id}/items/{item_id}", json={"discount_percent": "100"})
+    assert full.status_code == 200
+    assert full.json()["discount_amount"] == "1000.00"
+    assert full.json()["line_amount"] == "0.00"
+    assert client.get(f"/orders/{order_id}").json()["amount"] == "3000.00"
+
+    assert client.post(f"/orders/{order_id}/items", json={**base, "discount_percent": "100.01"}).status_code == 422
+    assert client.post(f"/orders/{order_id}/items", json={**base, "discount_percent": "-1"}).status_code == 422
 def test_lead_history_exposes_status_conversion_and_rejection_events(
     client: TestClient,
     session_factory: sessionmaker[Session],

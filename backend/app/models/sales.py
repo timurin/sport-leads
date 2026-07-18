@@ -358,6 +358,11 @@ class SalesOrderItem(Base):
     __table_args__ = (
         CheckConstraint("quantity > 0", name="ck_sales_order_items_quantity_positive"),
         CheckConstraint("unit_price >= 0", name="ck_sales_order_items_unit_price_nonnegative"),
+        CheckConstraint(
+            "discount_percent IS NULL OR (discount_percent >= 0 AND discount_percent <= 100)",
+            name="ck_sales_order_items_discount_percent_range",
+        ),
+        CheckConstraint("discount_amount >= 0", name="ck_sales_order_items_discount_amount_nonnegative"),
         CheckConstraint("line_amount >= 0", name="ck_sales_order_items_line_amount_nonnegative"),
     )
 
@@ -373,6 +378,8 @@ class SalesOrderItem(Base):
     unit: Mapped[str] = mapped_column(String(30), nullable=False, default="шт")
     quantity: Mapped[Decimal] = mapped_column(Numeric(14, 3), nullable=False)
     unit_price: Mapped[Decimal] = mapped_column(Numeric(14, 2), nullable=False)
+    discount_percent: Mapped[Decimal | None] = mapped_column(Numeric(5, 2), nullable=True)
+    discount_amount: Mapped[Decimal] = mapped_column(Numeric(14, 2), nullable=False)
     line_amount: Mapped[Decimal] = mapped_column(Numeric(14, 2), nullable=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()

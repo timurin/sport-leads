@@ -44,6 +44,8 @@
 
 `[x]` итерация `v0.7.5-sales-order-item-color`: цвет сохраняется как nullable snapshot-поле через CRUD/API/UI; миграция `f1a2b3c4d567`, полный pytest, frontend tests, TypeScript, lint, production build, project check 9/9 и Alembic upgrade/downgrade/check пройдены.
 
+`[x]` итерация `v0.7.6-sales-order-item-discount-percent`: добавлены nullable `discount_percent` (0–100), вычисляемые `discount_amount` и `line_amount`, API/Server Actions/UI и миграция `a2b3c4d5e678`; подтверждены null/0/100%, обратная совместимость, полный pytest, frontend tests, TypeScript, lint, production build, project check и Alembic upgrade/downgrade/check.
+
 В этап 2 не входят материалы, производственные спецификации и фактическое производство. Связь с будущей номенклатурой будет добавлена отдельной задачей.
 
 ### Этап 3. Номенклатура, модели, лекала и техкарты — `[ ]`

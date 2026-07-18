@@ -21,10 +21,12 @@
 - `[~]` `Deal`, архивирование, полные активности, авторизация и права не завершены;
 - `[x]` `Organization` и связь `SalesOrder.organization_id`;
 - `[x]` `SalesOrder` list/detail, status workflow и history;
-- `[x]` `SalesOrderItem` CRUD, snapshot-наименование, размеры (`size_range`), персонализация (`personalization`), цвет (`color`) и пересчёт суммы заказа через `Decimal/Numeric`; полный pytest, frontend tests, TypeScript, lint, production build, project check 9/9 и Alembic проходят;
+- `[x]` `SalesOrderItem` CRUD, snapshot-наименование, размеры (`size_range`), персонализация (`personalization`), цвет (`color`), процентная скидка (`discount_percent`), вычисляемая сумма скидки (`discount_amount`) и пересчёт `line_amount`/суммы заказа через `Decimal/Numeric`; полный pytest, frontend tests, TypeScript, lint, production build, project check 9/9 и Alembic проходят;
 - `[!]` прежняя связь `SalesOrderItem → Material` была архитектурной ошибкой и удалена отдельным patch; `Material` не является номенклатурой заказа.
 
 **Evidence:** `backend/app/models/sales.py`, `backend/app/api/leads.py`, `backend/app/api/orders.py`, `backend/app/api/organizations.py`, `backend/app/services/lead_conversion.py`, `backend/app/services/sales_order_items.py`, `backend/app/schemas/sales.py`, `backend/alembic/versions/e0f1a2b3c456_add_order_item_dimensions_and_personalization.py`, `backend/alembic/versions/f1a2b3c4d567_add_order_item_color.py`, `backend/tests/test_lead_conversion.py`, `frontend/components/sales/sales-order-items.tsx`, `frontend/app/(workspace)/sales/orders/[orderId]/order-item-actions.ts`, `frontend/lib/sales/order-details.ts`, `frontend/lib/sales/order-details.test.mjs`.
+
+**v0.7.6 evidence:** `backend/alembic/versions/a2b3c4d5e678_add_order_item_discount_percent.py`, `backend/tests/test_lead_conversion.py`, `frontend/lib/sales/order-details.ts`, `frontend/lib/sales/order-details.test.mjs`.
 
 ## Номенклатура и продукция
 

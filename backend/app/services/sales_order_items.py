@@ -20,8 +20,18 @@ def _get_order(db: Session, order_id: int) -> SalesOrder:
     return order
 
 
-def _line_amount(quantity: Decimal, unit_price: Decimal) -> Decimal:
-    return (quantity * unit_price).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+def _money(value: Decimal) -> Decimal:
+    return value.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+
+
+def calculate_sales_order_item_totals(
+    quantity: Decimal,
+    unit_price: Decimal,
+    discount_percent: Decimal | None,
+) -> tuple[Decimal, Decimal, Decimal]:
+    gross_amount = _money(quantity * unit_price)
+    discount_amount = _money(gross_amount * (discount_percent or Decimal("0")) / Decimal("100"))
+    return gross_amount, discount_amount, _money(gross_amount - discount_amount)
 
 
 def _recalculate_order(order: SalesOrder) -> None:
@@ -45,7 +55,13 @@ def create_sales_order_item(
         unit=payload.unit.strip(),
         quantity=payload.quantity,
         unit_price=payload.unit_price,
-        line_amount=_line_amount(payload.quantity, payload.unit_price),
+        discount_percent=payload.discount_percent,
+        discount_amount=calculate_sales_order_item_totals(
+            payload.quantity, payload.unit_price, payload.discount_percent
+        )[1],
+        line_amount=calculate_sales_order_item_totals(
+            payload.quantity, payload.unit_price, payload.discount_percent
+        )[2],
     )
     db.add(item)
     db.flush()
@@ -77,11 +93,14 @@ def update_sales_order_item(
         "unit",
         "quantity",
         "unit_price",
+        "discount_percent",
     ):
         if field_name in changes:
             value = changes[field_name]
             setattr(item, field_name, value.strip() if isinstance(value, str) and value else value)
-    item.line_amount = _line_amount(item.quantity, item.unit_price)
+    _, item.discount_amount, item.line_amount = calculate_sales_order_item_totals(
+        item.quantity, item.unit_price, item.discount_percent
+    )
     db.flush()
     _recalculate_order(order)
     return item

@@ -333,6 +333,9 @@ class SalesOrderItemRead(SalesSchema):
     unit: str
     quantity: Decimal
     unit_price: Decimal
+    gross_amount: Decimal
+    discount_percent: Decimal | None
+    discount_amount: Decimal
     line_amount: Decimal
     created_at: datetime
     updated_at: datetime
@@ -346,6 +349,7 @@ class SalesOrderItemCreate(BaseModel):
     unit: str = Field(default="шт", min_length=1, max_length=30)
     quantity: Decimal = Field(gt=0, max_digits=14, decimal_places=3)
     unit_price: Decimal = Field(ge=0, max_digits=14, decimal_places=2)
+    discount_percent: Decimal | None = Field(default=None, ge=0, le=100, max_digits=5, decimal_places=2)
 
 
 class SalesOrderItemUpdate(BaseModel):
@@ -356,6 +360,7 @@ class SalesOrderItemUpdate(BaseModel):
     unit: str | None = Field(default=None, min_length=1, max_length=30)
     quantity: Decimal | None = Field(default=None, gt=0, max_digits=14, decimal_places=3)
     unit_price: Decimal | None = Field(default=None, ge=0, max_digits=14, decimal_places=2)
+    discount_percent: Decimal | None = Field(default=None, ge=0, le=100, max_digits=5, decimal_places=2)
 
 
 class OrganizationRead(SalesSchema):

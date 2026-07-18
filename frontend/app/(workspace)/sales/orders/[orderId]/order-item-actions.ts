@@ -32,6 +32,7 @@ export async function createOrderItem(orderId: string, formData: FormData) {
     unit: String(formData.get("unit") ?? "шт"),
     quantity: String(formData.get("quantity") ?? "0"),
     unit_price: String(formData.get("unit_price") ?? "0"),
+    discount_percent: optionalText(formData.get("discount_percent")),
   });
 }
 
@@ -44,6 +45,7 @@ export async function updateOrderItem(orderId: string, itemId: number, formData:
     unit: String(formData.get("unit") ?? "шт"),
     quantity: String(formData.get("quantity") ?? "0"),
     unit_price: String(formData.get("unit_price") ?? "0"),
+    discount_percent: optionalText(formData.get("discount_percent")),
   });
 }
 

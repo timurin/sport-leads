@@ -38,7 +38,8 @@ export function SalesOrderItems({ orderId, items }: { orderId: string; items: Sa
             <input name="color" defaultValue={item.color} placeholder="Цвет" className="rounded border px-2 py-1" />
             <input name="quantity" defaultValue={item.quantity} required type="number" min="0.001" step="0.001" className="w-24 rounded border px-2 py-1" />
             <input name="unit_price" defaultValue={item.unitPrice.replace(/[^0-9,.-]/g, "").replace(",", ".")} required type="number" min="0" step="0.01" className="w-28 rounded border px-2 py-1" />
-            <span className="font-semibold">{item.lineAmount}</span>
+            <input name="discount_percent" defaultValue={item.discountPercent} type="number" min="0" max="100" step="0.01" placeholder="Скидка %" className="w-24 rounded border px-2 py-1" />
+            <div className="text-xs text-portal-muted"><div>Исходная: {item.grossAmount}</div><div>Скидка: {item.discountAmount}</div><div className="font-semibold text-portal-text">Итого: {item.lineAmount}</div></div>
             <div className="flex gap-2"><button type="submit" disabled={isPending} className="text-xs font-semibold text-blue-700">Сохранить</button><button type="button" disabled={isPending} onClick={() => submitDelete(item.id)} className="text-xs font-semibold text-red-700">Удалить</button></div>
           </form>)}
         </div>
@@ -50,6 +51,7 @@ export function SalesOrderItems({ orderId, items }: { orderId: string; items: Sa
         <input name="color" placeholder="Цвет" className="rounded border px-3 py-2 text-sm" />
         <input name="quantity" required type="number" min="0.001" step="0.001" placeholder="Количество" className="rounded border px-3 py-2 text-sm" />
         <input name="unit_price" required type="number" min="0" step="0.01" placeholder="Цена" className="rounded border px-3 py-2 text-sm" />
+        <input name="discount_percent" type="number" min="0" max="100" step="0.01" placeholder="Скидка %" className="rounded border px-3 py-2 text-sm" />
         <button type="submit" disabled={isPending} className="rounded bg-blue-700 px-3 py-2 text-sm font-semibold text-white disabled:opacity-50">Добавить позицию</button>
       </form>
       {message ? <p className="mt-2 text-sm text-portal-muted" role="status">{message}</p> : null}
