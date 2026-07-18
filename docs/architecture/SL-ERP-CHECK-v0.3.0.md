@@ -595,3 +595,12 @@ Backend уже содержит часть sales-моделей, API, посто
 - `[~]` полный backend workflow CRM и история активности остаются частичными.
 
 Подтверждения: `frontend/app/(workspace)/sales/leads/[leadId]/lead-header-actions.ts`, `frontend/lib/sales/lead-details.ts`, `frontend/lib/sales/lead-rejection.ts`, `frontend/lib/sales/lead-rejection.test.mjs`, `frontend/components/sales/lead-completion-dialog.tsx`, `backend/app/api/leads.py`, `backend/app/api/lead_rejection_reasons.py`.
+## Итерация v0.6.1-lead-history-reload
+
+- `[x]` frontend data layer повторно использует backend-модель `LeadEvent` и существующий `GET /leads/{lead_id}/history`;
+- `[x]` status change, conversion, rejection и order creation преобразуются в единую `LeadActivity` timeline и восстанавливаются после reload из PostgreSQL;
+- `[x]` отсутствует local-only successful fallback для API-истории, а demo IDs явно обслуживаются прежним demo-контуром;
+- `[x]` подтверждены endpoint/mapping тесты и полный набор обязательных проверок, миграция не потребовалась;
+- `[~]` persistence комментариев, задач и сообщений для числовых лидов остаётся отдельным незавершённым контуром.
+
+Подтверждения: `backend/app/models/sales.py`, `backend/app/api/leads.py`, `backend/tests/test_lead_conversion.py`, `frontend/lib/sales/lead-history.ts`, `frontend/lib/sales/lead-details.ts`.

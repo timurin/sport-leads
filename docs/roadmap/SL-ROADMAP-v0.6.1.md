@@ -142,3 +142,12 @@ Codex должен остановиться и попросить владель
 ## Критерий завершения текущего этапа
 
 Менеджер создаёт лид, редактирует его основные данные и контакты, меняет статус в Kanban, завершает лид успешно или отказом и после перезагрузки видит состояние из PostgreSQL; конвертация создаёт постоянный коммерческий результат без повторного ввода, а dashboard использует фактические данные.
+## Итерация v0.6.1-lead-history-reload
+
+- `[x]` числовая detail-страница использует существующие `LeadEvent` и `GET /leads/{lead_id}/history`, без дублирующего контура или миграции;
+- `[x]` переходы стадии, конвертация, отказ и создание заказа отображаются в единой timeline после загрузки из PostgreSQL;
+- `[x]` ошибка history не подменяется demo/local данными, demo-лиды остаются отдельным локальным контуром;
+- `[x]` добавлены frontend mapping-тест и backend endpoint-тест для status/convert/reject истории; backend pytest, frontend tests, typecheck, lint, build, check_project, Alembic check и diff check прошли;
+- `[~]` комментарии, задачи и сообщения числового лида пока остаются локальными и не входят в эту итерацию.
+
+Подтверждения: `frontend/lib/sales/lead-history.ts`, `frontend/lib/sales/lead-history.test.mjs`, `frontend/lib/sales/lead-details.ts`, `backend/tests/test_lead_conversion.py`, существующие `backend/app/models/sales.py` и `backend/app/api/leads.py`.

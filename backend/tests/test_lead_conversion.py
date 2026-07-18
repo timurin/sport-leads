@@ -312,3 +312,28 @@ def test_order_exposes_source_lead_and_combined_history(
         "lead_converted",
         "order_created",
     }
+
+
+def test_lead_history_exposes_status_conversion_and_rejection_events(
+    client: TestClient,
+    session_factory: sessionmaker[Session],
+) -> None:
+    status_lead_id = add_lead(session_factory)
+    assert client.patch(f"/leads/{status_lead_id}", json={"status": "contact"}).status_code == 200
+
+    converted_lead_id = add_lead(session_factory)
+    assert client.post(f"/leads/{converted_lead_id}/convert", json={"completed_by_id": 1}).status_code == 201
+
+    rejected_lead_id = add_lead(session_factory)
+    assert client.post(
+        f"/leads/{rejected_lead_id}/reject",
+        json={"rejection_reason_id": 1, "completed_by_id": 1},
+    ).status_code == 200
+
+    status_history = client.get(f"/leads/{status_lead_id}/history")
+    converted_history = client.get(f"/leads/{converted_lead_id}/history")
+    rejected_history = client.get(f"/leads/{rejected_lead_id}/history")
+    assert status_history.status_code == converted_history.status_code == rejected_history.status_code == 200
+    assert [item["event_type"] for item in status_history.json()] == ["lead_status_changed"]
+    assert {item["event_type"] for item in converted_history.json()} == {"lead_converted", "order_created"}
+    assert [item["event_type"] for item in rejected_history.json()] == ["lead_rejected"]

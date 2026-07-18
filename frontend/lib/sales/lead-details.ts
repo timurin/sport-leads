@@ -5,6 +5,7 @@ import { fromApiLeadCommercial, type ApiLeadCommercialFields } from "@/lib/sales
 import { fromApiLeadContact, type ApiLeadContact } from "@/lib/sales/lead-contact-api";
 import { fromApiLeadCustomer, type ApiLeadCustomerFields } from "@/lib/sales/lead-customer-api";
 import { findBackendReasonId, type ApiLeadRejectionReason } from "@/lib/sales/lead-rejection";
+import { fromApiLeadEvent, type ApiLeadEvent } from "@/lib/sales/lead-history";
 import type { LeadActivity, LeadCommercialDetailsData, LeadCustomer, LeadMessage, LeadStatus, LeadTask } from "@/types/sales";
 
 export type LeadSource = string;
@@ -194,7 +195,7 @@ function fromDemoLead(lead: (typeof leads)[number]): LeadDetails {
   };
 }
 
-function fromApiLead(lead: ApiLead): LeadDetails {
+function fromApiLead(lead: ApiLead, activities: LeadActivity[]): LeadDetails {
   const persistedCommercial = fromApiLeadCommercial(lead);
   return {
     id: String(lead.id),
@@ -210,14 +211,14 @@ function fromApiLead(lead: ApiLead): LeadDetails {
       },
     source: persistedCommercial.source,
     createdAt: lead.created_at,
-    lastActivityAt: lead.updated_at,
+    lastActivityAt: activities.at(-1)?.occurredAt ?? lead.updated_at,
     estimatedAmount: persistedCommercial.estimatedAmount,
     probability: null,
     commercial: persistedCommercial.commercial,
-    activities: [],
+    activities,
     tasks: [],
     messages: [],
-    taskReferenceAt: lead.updated_at,
+    taskReferenceAt: activities.at(-1)?.occurredAt ?? lead.updated_at,
     dataOrigin: "api",
     customer: {
       ...fromApiLeadCustomer(lead),
@@ -410,5 +411,13 @@ export async function getLeadDetails(leadId: string): Promise<LeadDetails | null
     throw new Error(`Lead API request failed with status ${response.status}`);
   }
 
-  return fromApiLead(await response.json() as ApiLead);
+  const apiLead = await response.json() as ApiLead;
+  const historyResponse = await fetch(`${apiUrl.replace(/\/$/, "")}/leads/${leadId}/history`, {
+    cache: "no-store",
+  });
+  if (!historyResponse.ok) {
+    throw new Error(`Lead history API request failed with status ${historyResponse.status}`);
+  }
+  const history = await historyResponse.json() as ApiLeadEvent[];
+  return fromApiLead(apiLead, history.map(fromApiLeadEvent));
 }
