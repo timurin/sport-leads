@@ -29,7 +29,7 @@ type Props = {
   reasons: RejectionReasonOption[];
   onClose: () => void;
   onConvert: (leadId: string, draft: LeadOrderDraft) => void;
-  onReject: (leadId: string, reason: RejectionReasonOption, comment: string) => void;
+  onReject: (leadId: string, reason: RejectionReasonOption, comment: string) => void | Promise<{ ok: boolean; message: string }>;
 };
 
 type Mode = "details" | "choice" | "convert" | "reject";
@@ -102,7 +102,11 @@ export function LeadCompletionDialog({
       return;
     }
 
-    onReject(lead!.id, reason, comment.trim());
+    void Promise.resolve(onReject(lead!.id, reason, comment.trim())).then((result) => {
+      if (result && !result.ok) {
+        setError(result.message);
+      }
+    });
   }
 
   return (

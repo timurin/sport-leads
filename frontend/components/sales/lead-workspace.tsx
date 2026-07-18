@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page-header";
 import {
   convertLead as convertApiLeadAction,
+  rejectLead as rejectApiLeadAction,
   updateLeadStatus,
 } from "@/app/(workspace)/sales/leads/[leadId]/lead-header-actions";
 import { salesManagers } from "@/lib/demo-data/sales";
@@ -246,7 +247,14 @@ export function LeadWorkspace({
     setRevision((value) => value + 1);
   }
 
-  function rejectLead(leadId: string, reason: RejectionReasonOption, comment: string) {
+  async function rejectLead(leadId: string, reason: RejectionReasonOption, comment: string) {
+    setCompletionError(null);
+    const result = await rejectApiLeadAction(leadId, reason, comment);
+    if (!result.ok) {
+      setCompletionError(result.message);
+      return result;
+    }
+
     setLeads((current) => current.map((lead) => (
       lead.id === leadId
         ? {
@@ -261,6 +269,7 @@ export function LeadWorkspace({
         : lead
     )));
     setRevision((value) => value + 1);
+    return result;
   }
 
   function saveStages(

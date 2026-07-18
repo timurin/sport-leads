@@ -1,7 +1,7 @@
 "use server";
 
-import { convertApiLead, updateApiLead } from "@/lib/sales/lead-details";
-import type { LeadOrderDraft } from "@/components/sales/lead-completion-dialog";
+import { convertApiLead, rejectApiLead, updateApiLead } from "@/lib/sales/lead-details";
+import type { LeadOrderDraft, RejectionReasonOption } from "@/components/sales/lead-completion-dialog";
 import { toLeadConversionPayload } from "@/lib/sales/lead-conversion";
 
 export type LeadHeaderActionResult = {
@@ -59,5 +59,24 @@ export async function convertLead(
       : { ok: false, message: result.message };
   } catch {
     return { ok: false, message: "Не удалось связаться с backend. Конвертация отменена." };
+  }
+}
+
+export async function rejectLead(
+  leadId: string,
+  reason: RejectionReasonOption,
+  comment: string,
+): Promise<LeadHeaderActionResult> {
+  if (!/^\d+$/.test(leadId)) {
+    return { ok: false, message: "Отказ доступен только для числового API-лида." };
+  }
+
+  try {
+    const result = await rejectApiLead(leadId, reason.id, comment);
+    return result.ok
+      ? { ok: true, message: "Отказ лида сохранён." }
+      : { ok: false, message: result.message };
+  } catch {
+    return { ok: false, message: "Не удалось связаться с backend. Отказ отменён." };
   }
 }

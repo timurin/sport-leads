@@ -128,6 +128,17 @@ Codex должен остановиться и попросить владель
 
 Подтверждения: `frontend/app/(workspace)/sales/leads/[leadId]/lead-header-actions.ts`, `frontend/lib/sales/lead-details.ts`, `frontend/lib/sales/lead-conversion.ts`, `frontend/lib/sales/lead-conversion.test.mjs`, `frontend/components/sales/lead-workspace.tsx`, существующий `POST /leads/{lead_id}/convert` в `backend/app/api/leads.py`.
 
+## Итерация v0.6.1-lead-reject-list-persistence
+
+- `[x]` reason code из диалога сопоставляется с активной backend-причиной через `GET /lead-rejection-reasons?is_active=true`;
+- `[x]` числовой API-лид отправляет отказ через существующий `POST /leads/{lead_id}/reject` с найденным `rejection_reason_id` и комментарием;
+- `[x]` локальный статус меняется только после успешного ответа backend;
+- `[x]` при ошибке backend диалог остаётся открытым с сохранёнными reason code и комментарием, а успешный fallback не создаётся;
+- `[x]` добавлен focused frontend test сопоставления reason code с backend id;
+- `[~]` полный combined-сценарий convert/reject и постоянная история переходов остаются незавершёнными.
+
+Подтверждения: `frontend/app/(workspace)/sales/leads/[leadId]/lead-header-actions.ts`, `frontend/lib/sales/lead-details.ts`, `frontend/lib/sales/lead-rejection.ts`, `frontend/lib/sales/lead-rejection.test.mjs`, `frontend/components/sales/lead-completion-dialog.tsx`, `frontend/components/sales/lead-workspace.tsx`, существующие endpoints в `backend/app/api/leads.py` и `backend/app/api/lead_rejection_reasons.py`.
+
 ## Критерий завершения текущего этапа
 
 Менеджер создаёт лид, редактирует его основные данные и контакты, меняет статус в Kanban, завершает лид успешно или отказом и после перезагрузки видит состояние из PostgreSQL; конвертация создаёт постоянный коммерческий результат без повторного ввода, а dashboard использует фактические данные.

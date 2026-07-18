@@ -4,6 +4,7 @@ import { leads } from "@/lib/demo-data/sales";
 import { fromApiLeadCommercial, type ApiLeadCommercialFields } from "@/lib/sales/lead-commercial-api";
 import { fromApiLeadContact, type ApiLeadContact } from "@/lib/sales/lead-contact-api";
 import { fromApiLeadCustomer, type ApiLeadCustomerFields } from "@/lib/sales/lead-customer-api";
+import { findBackendReasonId, type ApiLeadRejectionReason } from "@/lib/sales/lead-rejection";
 import type { LeadActivity, LeadCommercialDetailsData, LeadCustomer, LeadMessage, LeadStatus, LeadTask } from "@/types/sales";
 
 export type LeadSource = string;
@@ -327,6 +328,63 @@ export async function convertApiLead(
   }
 
   return { ok: true, conversion: await response.json() as LeadApiConversion };
+}
+
+export type LeadApiRejectionResult =
+  | { ok: true; lead: ApiLead }
+  | { ok: false; status: number; message: string };
+
+export async function rejectApiLead(
+  leadId: string,
+  reasonCode: string,
+  comment: string,
+): Promise<LeadApiRejectionResult> {
+  const apiUrl = process.env.SPORT_LEADS_API_URL ?? "http://127.0.0.1:8000";
+  const baseUrl = apiUrl.replace(/\/$/, "");
+  const reasonsResponse = await fetch(`${baseUrl}/lead-rejection-reasons?is_active=true`, {
+    cache: "no-store",
+  });
+
+  if (!reasonsResponse.ok) {
+    return {
+      ok: false,
+      status: reasonsResponse.status,
+      message: `Backend отклонил загрузку причин отказа (${reasonsResponse.status}).`,
+    };
+  }
+
+  const reasons = await reasonsResponse.json() as ApiLeadRejectionReason[];
+  const reasonId = findBackendReasonId(reasonCode, reasons);
+  if (reasonId === null) {
+    return { ok: false, status: 422, message: "Выбранная причина отказа недоступна в backend." };
+  }
+
+  const response = await fetch(`${baseUrl}/leads/${leadId}/reject`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      rejection_reason_id: reasonId,
+      comment: comment || null,
+    }),
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    let message = `Backend отклонил отказ лида (${response.status}).`;
+    try {
+      const body = await response.json() as { detail?: string | Array<{ msg?: string }> };
+      if (typeof body.detail === "string") {
+        message = body.detail;
+      } else if (Array.isArray(body.detail)) {
+        message = body.detail.map((item) => item.msg).filter(Boolean).join(" ") || message;
+      }
+    } catch {
+      // Use the stable status-based message for empty or non-JSON responses.
+    }
+    return { ok: false, status: response.status, message };
+  }
+
+  return { ok: true, lead: await response.json() as ApiLead };
 }
 
 export async function getLeadDetails(leadId: string): Promise<LeadDetails | null> {

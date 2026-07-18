@@ -584,3 +584,14 @@ Backend уже содержит часть sales-моделей, API, посто
 - `[~]` reject из списка и единый полный convert/reject workflow ещё не подключены.
 
 Подтверждения: `frontend/app/(workspace)/sales/leads/[leadId]/lead-header-actions.ts`, `frontend/lib/sales/lead-details.ts`, `frontend/lib/sales/lead-conversion.ts`, `frontend/lib/sales/lead-conversion.test.mjs`, `frontend/components/sales/lead-workspace.tsx`, `backend/app/api/leads.py`.
+
+## Итерация v0.6.1-lead-reject-list-persistence
+
+- `[x]` frontend reason code разрешается в активный backend reason id через существующий read API справочника причин;
+- `[x]` reject числового лида использует существующий `POST /leads/{lead_id}/reject`;
+- `[x]` подтверждённый ответ обновляет карточку списка, а ошибка сохраняет диалог и введённые значения;
+- `[x]` demo-лиды не участвуют в persistence-контуре, новый endpoint не создавался;
+- `[x]` mapping reason code → id покрыт focused frontend test;
+- `[~]` полный backend workflow CRM и история активности остаются частичными.
+
+Подтверждения: `frontend/app/(workspace)/sales/leads/[leadId]/lead-header-actions.ts`, `frontend/lib/sales/lead-details.ts`, `frontend/lib/sales/lead-rejection.ts`, `frontend/lib/sales/lead-rejection.test.mjs`, `frontend/components/sales/lead-completion-dialog.tsx`, `backend/app/api/leads.py`, `backend/app/api/lead_rejection_reasons.py`.
