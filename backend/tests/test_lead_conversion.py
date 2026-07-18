@@ -485,6 +485,11 @@ def test_order_status_patch_persists_after_reload(
     assert reloaded.status_code == 200
     assert reloaded.json()["status"] == "production"
 
+    history = client.get(f"/orders/{order_id}/history")
+    assert history.status_code == 200
+    assert history.json()[-1]["event_type"] == "order_status_changed"
+    assert history.json()[-1]["message"] == "Order status changed: new → production"
+
 
 def test_order_status_patch_validates_status_and_missing_order(client: TestClient) -> None:
     invalid_status = client.patch("/orders/999999/status", json={"status": "unknown"})
@@ -492,6 +497,22 @@ def test_order_status_patch_validates_status_and_missing_order(client: TestClien
 
     missing_order = client.patch("/orders/999999/status", json={"status": "production"})
     assert missing_order.status_code == 404
+
+
+def test_order_status_patch_rejects_backward_and_terminal_transitions(
+    client: TestClient,
+    session_factory: sessionmaker[Session],
+) -> None:
+    lead_id = add_lead(session_factory)
+    order_id = client.post(f"/leads/{lead_id}/convert", json={"completed_by_id": 1}).json()["order"]["id"]
+
+    assert client.patch(f"/orders/{order_id}/status", json={"status": "production"}).status_code == 200
+    backward = client.patch(f"/orders/{order_id}/status", json={"status": "confirmed"})
+    assert backward.status_code == 409
+
+    assert client.patch(f"/orders/{order_id}/status", json={"status": "completed"}).status_code == 200
+    terminal = client.patch(f"/orders/{order_id}/status", json={"status": "cancelled"})
+    assert terminal.status_code == 409
 def test_lead_history_exposes_status_conversion_and_rejection_events(
     client: TestClient,
     session_factory: sessionmaker[Session],

@@ -2,7 +2,7 @@ import { ArrowLeft, ExternalLink } from "lucide-react";
 import Link from "next/link";
 
 import { PageContent, ResponsiveGrid } from "@/components/layout/page-layout";
-import type { SalesOrderDetails } from "@/lib/sales/order-details";
+import type { SalesOrderDetails, SalesOrderHistoryItem } from "@/lib/sales/order-details";
 
 function Detail({ label, value }: { label: string; value: string }) {
   return (
@@ -13,7 +13,7 @@ function Detail({ label, value }: { label: string; value: string }) {
   );
 }
 
-export function SalesOrderPage({ order }: { order: SalesOrderDetails }) {
+export function SalesOrderPage({ order, history }: { order: SalesOrderDetails; history: SalesOrderHistoryItem[] }) {
   return (
     <PageContent size="spacious">
       <Link href="/sales/orders" className="inline-flex items-center gap-2 text-sm font-medium text-blue-700 hover:text-blue-900">
@@ -56,6 +56,23 @@ export function SalesOrderPage({ order }: { order: SalesOrderDetails }) {
       <section className="mt-4 rounded-[var(--portal-radius-md)] border border-portal-border bg-portal-surface p-4">
         <h2 className="text-base font-semibold text-portal-text">Описание</h2>
         <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-portal-muted">{order.description}</p>
+      </section>
+
+      <section className="mt-4 rounded-[var(--portal-radius-md)] border border-portal-border bg-portal-surface p-4">
+        <h2 className="text-base font-semibold text-portal-text">История заказа</h2>
+        {history.length === 0 ? (
+          <p className="mt-2 text-sm text-portal-muted">История пока пуста.</p>
+        ) : (
+          <ol className="mt-3 space-y-3">
+            {history.map((item) => (
+              <li key={item.id} className="border-l-2 border-blue-200 pl-3">
+                <p className="text-sm font-semibold text-portal-text">{item.title}</p>
+                <p className="mt-1 text-sm text-portal-muted">{item.message}</p>
+                <time className="mt-1 block text-xs text-portal-muted" dateTime={item.occurredAt}>{item.occurredAt}</time>
+              </li>
+            ))}
+          </ol>
+        )}
       </section>
     </PageContent>
   );

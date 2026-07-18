@@ -16,7 +16,7 @@
 
 ## Инструкции Codex
 
-- [Корневые правила и model escalation](../AGENTS.md)
+- [Корневые правила Codex](../AGENTS.md)
 
 ## Development seed
 

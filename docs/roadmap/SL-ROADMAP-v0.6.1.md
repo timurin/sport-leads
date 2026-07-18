@@ -96,17 +96,9 @@
 - Сохранять разделение API, schemas, services, repositories, database models, frontend data layer и UI.
 - После каждой итерации обновлять этот roadmap и `SL-ERP-CHECK-v0.3.0` только по факту.
 
-## Когда просить переключение модели
-
-Codex должен остановиться и попросить владельца вручную выбрать более сильную модель до реализации архитектуры, безопасности, RBAC, сложных миграций, изоляции организаций, финансов, склада, себестоимости или изменений нескольких бизнес-модулей.
-
-Для CRUD, документации, UI, тестов и реализации уже утвержденной архитектуры используется экономичная модель.
-
-После двух неудачных обоснованных попыток исправления одной ошибки Codex прекращает догадки и просит переключить модель.
-
 ## Следующая рекомендуемая итерация
 
-После завершения и ручной проверки текущей `v0.6.1-lead-list-backend-load` — сохранить изменение статуса/перемещение лида в Kanban через существующий backend-контур, не меняя дизайн и не переходя к следующему этапу. Перед реализацией проверить, является ли это расширением утверждённой архитектуры или требует model escalation.
+После завершения и ручной проверки текущей `v0.6.1-lead-list-backend-load` — сохранить изменение статуса/перемещение лида в Kanban через существующий backend-контур, не меняя дизайн и не переходя к следующему этапу. При отсутствии архитектурного решения остановить спорную часть и зафиксировать блокер для владельца.
 
 ## Итерация v0.6.1-lead-kanban-stage-persistence
 
@@ -167,9 +159,18 @@ Codex должен остановиться и попросить владель
 - `[x]` добавлен маршрут `/sales/orders/[orderId]` с read-only header и основными полями заказа, ссылкой на исходный лид, состояниями loading/not-found/API error и возвратом к списку;
 - `[x]` Kanban-список открывает карточку заказа, а не карточку исходного лида; frontend не использует demo fallback;
 - `[x]` добавлены backend-проверки существующего заказа, 404, связей и nullable-полей, а также frontend mapping- и URL-тесты;
-- `[~]` это foundation v0.7.0: товарные позиции, редактирование, оплаты, производство, склад и сложный workflow статусов не реализованы; миграция не требовалась.
+- `[~]` это foundation v0.7.0: товарные позиции, редактирование, оплаты, производство и склад не реализованы; workflow статусов продолжен отдельной итерацией `v0.7.1-sales-order-status-workflow-history`.
 
 Подтверждения: `backend/app/api/orders.py`, `backend/tests/test_lead_conversion.py`, `frontend/app/(workspace)/sales/orders/[orderId]/page.tsx`, `frontend/app/(workspace)/sales/orders/[orderId]/loading.tsx`, `frontend/app/(workspace)/sales/orders/[orderId]/not-found.tsx`, `frontend/app/(workspace)/sales/orders/[orderId]/error.tsx`, `frontend/components/sales/sales-order-page.tsx`, `frontend/lib/sales/order-details.ts`, `frontend/lib/sales/order-details.test.mjs`, `frontend/lib/sales/order-list-api.ts`, `frontend/lib/sales/order-list-api.test.mjs`.
+
+## Итерация v0.7.1-sales-order-status-workflow-history
+
+- `[x]` `SalesOrder.status` принимает только последовательные переходы вперёд (с пропуском промежуточных стадий), отмену незавершённого заказа или повторное сохранение текущего значения; возврат назад и изменения финальных статусов отклоняются через `409`;
+- `[x]` успешная смена статуса создаёт `LeadEvent` типа `order_status_changed`, а существующий `GET /orders/{order_id}/history` возвращает историю конвертации, создания и смены статуса после reload;
+- `[x]` read-only карточка заказа загружает историю из backend и показывает её без demo fallback; добавлены backend и frontend focused-тесты;
+- `[~]` товарные позиции, редактирование заказа, оплаты, документы, производство и склад остаются за пределами этой итерации.
+
+Подтверждения: `backend/app/models/sales.py`, `backend/app/services/sales_order_status.py`, `backend/app/api/orders.py`, `backend/alembic/versions/a91d6e3f4b20_add_order_status_changed_event.py`, `backend/tests/test_lead_conversion.py`, `frontend/lib/sales/order-details.ts`, `frontend/lib/sales/order-details.test.mjs`, `frontend/app/(workspace)/sales/orders/[orderId]/page.tsx`, `frontend/components/sales/sales-order-page.tsx`.
 ## Итерация v0.6.1-navigation-remove-deals
 
 - `[x]` активная CRM-навигация разделена на отдельные ссылки `Лиды` → `/sales/leads` и `Заказы покупателей` → `/sales/orders`;

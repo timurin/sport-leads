@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { fromApiSalesOrder } from "./order-details.ts";
+import { fromApiSalesOrder, fromApiSalesOrderEvent } from "./order-details.ts";
 
 test("maps persisted order details and preserves nullable fields", () => {
   const order = fromApiSalesOrder({
@@ -17,4 +17,15 @@ test("maps persisted order details and preserves nullable fields", () => {
   assert.equal(order.amount, "Не указана");
   assert.equal(order.description, "Описание пока не добавлено.");
   assert.equal(order.status, "Новый");
+});
+
+test("maps persisted order status history events", () => {
+  const event = fromApiSalesOrderEvent({
+    id: 7, event_type: "order_status_changed", actor_id: null,
+    message: "Order status changed: new → production", created_at: "2026-07-18T10:05:00Z",
+  });
+
+  assert.equal(event.id, "order-event-7");
+  assert.equal(event.title, "Статус заказа изменён");
+  assert.equal(event.message, "Order status changed: new → production");
 });

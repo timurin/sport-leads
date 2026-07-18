@@ -244,7 +244,7 @@
 ### Карточка заказа
 
 * `[x]` номер и дата — итерация `v0.7.0-sales-order-foundation`: read-only header на основе `GET /orders/{order_id}`, подтверждён `backend/tests/test_lead_conversion.py` и `frontend/lib/sales/order-details.test.mjs`;
-* `[ ]` организация;
+* `[!]` организация — следующая задача `v0.7.x-sales-order-organization-foundation` определена аудитом 2026-07-18; постоянной backend-модели и связи `SalesOrder` с организацией нет, поэтому реализация заблокирована до решения владельца. Подтверждения: `backend/app/models/sales.py`, `frontend/lib/demo-data/catalogs.ts`;
 * `[x]` клиент — итерация `v0.7.0-sales-order-foundation`: detail API возвращает имя клиента, карточка показывает его без demo fallback;
 * `[ ]` контактное лицо;
 * `[x]` ответственный менеджер — итерация `v0.7.0-sales-order-foundation`: detail API возвращает имя `SalesUser`, nullable значение отображается явно;
@@ -253,7 +253,7 @@
 * `[ ]` способ доставки;
 * `[ ]` адрес доставки;
 * `[ ]` условия оплаты;
-* `[x]` статус заказа — итерация `v0.7.0-sales-order-kanban-status-persistence`: Kanban сохраняет `SalesOrder.status` через `PATCH /orders/{order_id}/status`; backend-ошибка откатывает карточку, а reload возвращает сохранённый статус. Подтверждения: `backend/app/services/sales_order_status.py`, `backend/tests/test_lead_conversion.py`, `frontend/app/(workspace)/sales/orders/order-status-actions.ts`, `frontend/components/kanban/kanban-page.tsx`; тесты: backend pytest 41, frontend tests 51, TypeScript, lint, build, project check;
+* `[x]` статус заказа — итерации `v0.7.0-sales-order-kanban-status-persistence` и `v0.7.1-sales-order-status-workflow-history`: Kanban сохраняет `SalesOrder.status`, backend проверяет переходы и пишет статусную историю в `LeadEvent`; reload восстанавливает статус и историю. Подтверждения: `backend/app/services/sales_order_status.py`, `backend/app/api/orders.py`, `backend/alembic/versions/a91d6e3f4b20_add_order_status_changed_event.py`, `backend/tests/test_lead_conversion.py`, `frontend/lib/sales/order-details.ts`, `frontend/components/sales/sales-order-page.tsx`; тесты: backend pytest 42, frontend tests 52, TypeScript, lint, build, project check 9/9;
 * `[ ]` статус оплаты;
 * `[ ]` комментарии;
 * `[ ]` файлы.

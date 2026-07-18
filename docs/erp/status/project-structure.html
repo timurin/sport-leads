@@ -13,7 +13,7 @@
   <main>
     <header>
       <h1>SPORT-LEAD — Структура проекта и ERP Checklist</h1>
-      <p class="meta">Актуализировано: 2026-07-18 · ветка: <strong>feature/v0.6.1-lead-persistence</strong> · итерация: v0.7.0 sales order Kanban status persistence.</p>
+      <p class="meta">Актуализировано: 2026-07-18 · ветка: <strong>feature/v0.6.1-lead-persistence</strong> · следующая задача: v0.7.x sales order organization foundation.</p>
       <p>FastAPI и SQLAlchemy формируют backend-контур, Next.js — рабочий интерфейс, Alembic — миграции. Источник истины — проверенный код и тесты.</p>
     </header>
     <section><h2>Дерево модулей</h2><div class="tree">backend/app/      API · schemas · services · models
@@ -26,11 +26,11 @@ docs/             roadmap · architecture · reports · ERP status</div></sectio
     <section><h2>ERP-модули</h2><div class="grid">
       <div class="card"><span class="status done">MVP готово</span><h3>CRM / лиды</h3><p>Lead, контакты, стадии, создание, конвертация, отказ и история имеют backend-контур.</p></div>
       <div class="card"><span class="status done">Готово</span><h3>Заказы / список и Kanban</h3><p>Список получает `GET /orders` без demo fallback; перенос карточки сохраняет статус через `PATCH /orders/{id}/status`.</p></div>
-      <div class="card"><span class="status partial">В работе</span><h3>Заказы / карточка</h3><p>Read-only карточка читает `GET /orders/{id}`, показывает клиента, ответственного, сумму и исходный лид.</p></div>
+      <div class="card"><span class="status partial">В работе</span><h3>Заказы / карточка</h3><p>Read-only карточка читает `GET /orders/{id}`, показывает клиента, ответственного, сумму, исходный лид и backend-историю статусов. Следующий пункт — постоянная организация; пока в settings есть только demo-контур.</p></div>
       <div class="card"><span class="status todo">Не начато</span><h3>Производство, склад, закупки</h3><p>Нет сквозного контура заказ → производство → склад.</p></div>
     </div></section>
     <section><h2>Подтверждённые функции</h2><ul><li>Транзакционная конвертация Lead → Client + SalesOrder.</li><li>Список и карточка заказа используют сохранённые backend-данные.</li><li>Перенос заказа между Kanban-колонками сохраняет SalesOrder.status и откатывается при ошибке backend.</li><li>Карточка содержит loading, not found и API error состояния.</li><li>Денежная сумма заказа хранится через Numeric/Decimal.</li></ul></section>
-    <section><h2>Ограничения и ближайший пункт</h2><ul><li>Нет workflow-правил переходов, истории статусов, изменения заказа, товарных позиций, скидок, НДС, платежей, производства и складских операций.</li><li>Dashboard заказов остаётся частично demo-контуром.</li><li>Следующая рекомендуемая итерация: отдельная задача на правила жизненного цикла и audit history статусов либо на позиции заказа.</li></ul><p class="meta">Легенда: <span class="status done">Готово / MVP готово</span> <span class="status partial">Частично / В работе</span> <span class="status todo">Не начато</span></p></section>
+    <section><h2>Ограничения и ближайший пункт</h2><ul><li>Нет постоянной модели организации и связи заказа с организацией; текущая задача заблокирована до архитектурного решения владельца.</li><li>Правила базовых переходов и история статусов реализованы; нет изменения заказа, товарных позиций, скидок, НДС, платежей, производства и складских операций.</li><li>Dashboard заказов остаётся частично demo-контуром.</li><li>Следующая рекомендуемая итерация: foundation постоянной организации заказа после решения владельца.</li></ul><p class="meta">Легенда: <span class="status done">Готово / MVP готово</span> <span class="status partial">Частично / В работе</span> <span class="status todo">Не начато</span></p></section>
   </main>
 </body>
 </html>

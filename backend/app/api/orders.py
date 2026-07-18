@@ -11,6 +11,7 @@ from app.schemas.sales import (
     SalesOrderStatusUpdate,
 )
 from app.services.sales_order_status import (
+    InvalidSalesOrderStatusTransition,
     SalesOrderNotFoundError,
     update_sales_order_status,
 )
@@ -75,6 +76,8 @@ def update_order_status(
         update_sales_order_status(db, order_id, payload.status)
     except SalesOrderNotFoundError as error:
         raise HTTPException(status_code=404, detail=str(error)) from error
+    except InvalidSalesOrderStatusTransition as error:
+        raise HTTPException(status_code=409, detail=str(error)) from error
 
     db.commit()
     return get_order(order_id, db)

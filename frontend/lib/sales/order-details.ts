@@ -21,6 +21,14 @@ export type ApiSalesOrderDetails = {
   updated_at: string;
 };
 
+export type ApiSalesOrderEvent = {
+  id: number;
+  event_type: "lead_converted" | "order_created" | "order_status_changed";
+  actor_id: number | null;
+  message: string | null;
+  created_at: string;
+};
+
 const statusLabels: Record<OrderStatus, string> = {
   new: "Новый",
   confirmed: "Подтверждён",
@@ -61,6 +69,28 @@ export type SalesOrderDetails = {
   sport: string;
   quantity: string;
 };
+
+export type SalesOrderHistoryItem = {
+  id: string;
+  title: string;
+  message: string;
+  occurredAt: string;
+};
+
+const historyTitles: Record<ApiSalesOrderEvent["event_type"], string> = {
+  lead_converted: "Лид конвертирован",
+  order_created: "Заказ создан",
+  order_status_changed: "Статус заказа изменён",
+};
+
+export function fromApiSalesOrderEvent(event: ApiSalesOrderEvent): SalesOrderHistoryItem {
+  return {
+    id: `order-event-${event.id}`,
+    title: historyTitles[event.event_type],
+    message: event.message ?? "Изменение сохранено в истории заказа.",
+    occurredAt: event.created_at,
+  };
+}
 
 function formatDate(value: string | null): string {
   if (!value) return "Не указана";
@@ -103,4 +133,21 @@ export async function getOrderDetails(orderId: string): Promise<OrderDetailsResu
     return { kind: "error", message: `Не удалось загрузить заказ из backend (${response.status}).` };
   }
   return { kind: "found", order: fromApiSalesOrder(await response.json() as ApiSalesOrderDetails) };
+}
+
+export type OrderHistoryResult =
+  | { kind: "found"; history: SalesOrderHistoryItem[] }
+  | { kind: "not-found" }
+  | { kind: "error"; message: string };
+
+export async function getOrderHistory(orderId: string): Promise<OrderHistoryResult> {
+  if (!/^\d+$/.test(orderId)) return { kind: "not-found" };
+  const apiUrl = process.env.SPORT_LEADS_API_URL ?? "http://127.0.0.1:8000";
+  const response = await fetch(`${apiUrl.replace(/\/$/, "")}/orders/${orderId}/history`, { cache: "no-store" });
+  if (response.status === 404) return { kind: "not-found" };
+  if (!response.ok) {
+    return { kind: "error", message: `Не удалось загрузить историю заказа из backend (${response.status}).` };
+  }
+  const events = await response.json() as ApiSalesOrderEvent[];
+  return { kind: "found", history: events.map(fromApiSalesOrderEvent) };
 }

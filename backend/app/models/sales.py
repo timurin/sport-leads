@@ -61,6 +61,7 @@ class LeadEventType(str, Enum):
     LEAD_CONVERTED = "lead_converted"
     LEAD_REJECTED = "lead_rejected"
     ORDER_CREATED = "order_created"
+    ORDER_STATUS_CHANGED = "order_status_changed"
     COMMENT_ADDED = "comment_added"
     TASK_CREATED = "task_created"
     TASK_COMPLETED = "task_completed"

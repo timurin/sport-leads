@@ -51,7 +51,7 @@
 - `[~]` логирование присутствует в отдельных backend-сервисах, но не образует централизованный observability-контур;
 - `[~]` обработка ошибок реализована на уровне API и отдельных сервисов, но не унифицирована для всей платформы;
 - `[~]` документация существует, но индекс и архитектурные документы развиваются постепенно;
-- `[x]` итерация `v0.6.1-roadmap-sync` создала актуальный roadmap, индекс и правила model escalation; подтверждения: `AGENTS.md`, `docs/roadmap/SL-ROADMAP-v0.6.1.md`, `docs/README.md`, `docs/reports/ROADMAP-SYNC-REPORT.md`; проверки: project check 9/9, backend pytest 28, frontend tests 32, TypeScript, lint, build, Compose и `git diff --check`; ограничение — release/checkpoint `v0.6.1` ещё не создан;
+- `[x]` итерация `v0.6.1-roadmap-sync` создала актуальный roadmap и индекс; подтверждения: `AGENTS.md`, `docs/roadmap/SL-ROADMAP-v0.6.1.md`, `docs/README.md`, `docs/reports/ROADMAP-SYNC-REPORT.md`; проверки: project check 9/9, backend pytest 28, frontend tests 32, TypeScript, lint, build, Compose и `git diff --check`; ограничение — release/checkpoint `v0.6.1` ещё не создан;
 - `[~]` PostgreSQL-конфигурация и миграции проверяются, но production-эксплуатация не подтверждена.
 
 ### Осталось
@@ -134,12 +134,12 @@
 ### Частично реализовано
 
 - `[~]` заказ хранит заголовок, описание, категорию, спорт, количество, сумму, срок и источник;
-- `[~]` dashboard использует demo-данные; список и read-only карточка заказов используют backend API.
-- `[~]` базовая смена `SalesOrder.status` сохраняется из Kanban через `PATCH /orders/{order_id}/status` (итерация `v0.7.0-sales-order-kanban-status-persistence`); правила допустимых переходов, audit history и полный жизненный цикл не реализованы.
+- `[~]` dashboard использует demo-данные; список и read-only карточка заказов используют backend API. Следующий фундамент `SalesOrder → Organization` заблокирован до архитектурного решения владельца: постоянная организация пока отсутствует, а settings использует demo-data.
+- `[x]` смена `SalesOrder.status` сохраняется из Kanban через `PATCH /orders/{order_id}/status`, проверяет переходы и записывает `order_status_changed` в общую историю заказа (итерация `v0.7.1-sales-order-status-workflow-history`); полный жизненный цикл ещё не реализован.
 
 ### Осталось
 
-- `[~]` read-only карточка готова, но API и UI изменения заказа отсутствуют;
+- `[~]` read-only карточка готова, status workflow и история подключены, но прочие API и UI изменения заказа отсутствуют;
 - `[ ]` товарные позиции, размеры, персонализация, цены, скидки и НДС;
 - `[ ]` план и факт оплат;
 - `[ ]` файлы, версии и печатные формы;
@@ -566,7 +566,7 @@ Backend уже содержит часть sales-моделей, API, посто
 
 - `[x]` локальная линия разработки определена как `v0.6.1` по ветке, task-документу и реализованным итерациям после `v0.5.0`;
 - `[x]` создан единый актуальный `SL-ROADMAP-v0.6.1`, а `SL-ROADMAP-v0.3.0` сохранён как исторический;
-- `[x]` корневой `AGENTS.md` содержит компактное правило ручного model escalation;
+- `[x]` корневой `AGENTS.md` содержит правила выбора модели владельцем и фиксации архитектурных блокеров;
 - `[x]` индекс документации связывает актуальный roadmap, структуру, checkpoint/release, инструкции и исторический roadmap;
 - `[x]` project check 9/9, backend pytest 28, frontend tests 32, TypeScript, lint, production build, Compose и проверка diff прошли;
 - `[~]` отдельного release-документа, checkpoint и тега `v0.6.1` пока нет.
@@ -628,6 +628,16 @@ Backend уже содержит часть sales-моделей, API, посто
 - `[~]` мутации заказа, позиции, финансы, производство, склад и расширенный workflow остаются вне foundation; миграция не создавалась.
 
 Подтверждения: `backend/app/api/orders.py`, `backend/app/schemas/sales.py`, `backend/tests/test_lead_conversion.py`, `frontend/lib/sales/order-details.ts`, `frontend/lib/sales/order-details.test.mjs`, `frontend/lib/sales/order-list-api.ts`, `frontend/lib/sales/order-list-api.test.mjs`, `frontend/components/sales/sales-order-page.tsx`, `frontend/app/(workspace)/sales/orders/[orderId]`.
+
+## Итерация v0.7.1-sales-order-status-workflow-history
+
+- `[x]` service-слой разрешает только переходы вперёд, отмену незавершённого заказа и повторное сохранение текущего статуса; возврат назад и изменение финальных статусов возвращают `409`;
+- `[x]` статусные изменения сохраняются как `LeadEvent(order_status_changed)` в существующей таблице `lead_events`, без второй модели истории;
+- `[x]` добавлена обратимая миграция `a91d6e3f4b20`, расширяющая `event_type` до 20 символов; downgrade нормализует новые события;
+- `[x]` `/orders/{order_id}/history` и detail UI показывают backend-историю после reload, проверки: backend pytest 42, frontend tests 52, typecheck, lint, build и project check 9/9;
+- `[~]` сложные переходы, роли, платежи, позиции заказа и полный коммерческий workflow ещё не реализованы.
+
+Подтверждения: `backend/app/services/sales_order_status.py`, `backend/app/api/orders.py`, `backend/alembic/versions/a91d6e3f4b20_add_order_status_changed_event.py`, `backend/tests/test_lead_conversion.py`, `frontend/lib/sales/order-details.ts`, `frontend/components/sales/sales-order-page.tsx`.
 ## Итерация v0.6.1-navigation-remove-deals
 
 - `[x]` навигация CRM больше не предлагает отдельную сущность `Сделка`;
