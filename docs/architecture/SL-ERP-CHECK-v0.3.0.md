@@ -134,7 +134,7 @@
 ### Частично реализовано
 
 - `[~]` заказ хранит заголовок, описание, категорию, спорт, количество, сумму, срок и источник;
-- `[~]` dashboard использует demo-данные; список и read-only карточка заказов используют backend API. Следующий фундамент `SalesOrder → Organization` заблокирован до архитектурного решения владельца: постоянная организация пока отсутствует, а settings использует demo-data.
+- `[~]` dashboard использует demo-данные; список и read-only карточка заказов используют backend API. Связь `SalesOrder → Organization` постоянная, но settings UI организаций пока использует demo-data.
 - `[x]` смена `SalesOrder.status` сохраняется из Kanban через `PATCH /orders/{order_id}/status`, проверяет переходы и записывает `order_status_changed` в общую историю заказа (итерация `v0.7.1-sales-order-status-workflow-history`); полный жизненный цикл ещё не реализован.
 
 ### Осталось
@@ -638,6 +638,16 @@ Backend уже содержит часть sales-моделей, API, посто
 - `[~]` сложные переходы, роли, платежи, позиции заказа и полный коммерческий workflow ещё не реализованы.
 
 Подтверждения: `backend/app/services/sales_order_status.py`, `backend/app/api/orders.py`, `backend/alembic/versions/a91d6e3f4b20_add_order_status_changed_event.py`, `backend/tests/test_lead_conversion.py`, `frontend/lib/sales/order-details.ts`, `frontend/components/sales/sales-order-page.tsx`.
+## Итерация v0.7.2-sales-order-organization-foundation
+
+- `[x]` persistent `Organization` хранит название и базовые реквизиты, а `SalesOrder.organization_id` использует nullable FK с `SET NULL` для обратной совместимости;
+- `[x]` service конвертации лида создаёт или переиспользует организацию по ИНН/названию и связывает её с новым заказом;
+- `[x]` `GET /organizations`, `GET /orders`, `GET /orders/{id}` и `PATCH /orders/{id}/organization` используют Pydantic-контракты и не возвращают ORM напрямую;
+- `[x]` миграция `b7c8d9e0f123` прошла downgrade/upgrade/check; backend pytest 44, frontend tests 52, typecheck, lint, build и project check 9/9 прошли;
+- `[~]` административный CRUD UI организаций и автоматическое заполнение связи для исторических заказов остаются отдельными задачами.
+
+Evidence: `backend/app/models/sales.py`, `backend/app/services/lead_conversion.py`, `backend/app/services/sales_order_organization.py`, `backend/app/api/organizations.py`, `backend/app/api/orders.py`, `backend/alembic/versions/b7c8d9e0f123_add_organizations_to_sales_orders.py`, `frontend/components/sales/sales-order-page.tsx`.
+
 ## Итерация v0.6.1-navigation-remove-deals
 
 - `[x]` навигация CRM больше не предлагает отдельную сущность `Сделка`;

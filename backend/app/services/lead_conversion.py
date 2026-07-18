@@ -15,6 +15,7 @@ from app.models.sales import (
     LeadStatus,
     LeadTask,
     LeadTaskStatus,
+    Organization,
     SalesOrder,
 )
 from app.schemas.sales import LeadConvertRequest, LeadRejectRequest
@@ -99,6 +100,30 @@ def _find_or_create_client(
     return client
 
 
+def _find_or_create_organization(
+    db: Session,
+    lead: Lead,
+    client: Client,
+) -> Organization | None:
+    name = lead.company_name or client.company_name
+    if not name:
+        return None
+    organization = None
+    if lead.tax_id:
+        organization = db.scalar(
+            select(Organization).where(Organization.tax_id == lead.tax_id)
+        )
+    if organization is None:
+        organization = db.scalar(
+            select(Organization).where(Organization.name == name).limit(1)
+        )
+    if organization is None:
+        organization = Organization(name=name, tax_id=lead.tax_id, is_active=True)
+        db.add(organization)
+        db.flush()
+    return organization
+
+
 def convert_lead(
     db: Session,
     lead_id: int,
@@ -106,10 +131,12 @@ def convert_lead(
 ) -> tuple[Lead, SalesOrder]:
     lead = _locked_active_lead(db, lead_id)
     client = _find_or_create_client(db, lead, payload)
+    organization = _find_or_create_organization(db, lead, client)
     order = SalesOrder(
         number=f"PENDING-{uuid4().hex}",
         lead_id=lead.id,
         client_id=client.id,
+        organization_id=organization.id if organization is not None else None,
         responsible_id=(
             payload.responsible_id
             if payload.responsible_id is not None

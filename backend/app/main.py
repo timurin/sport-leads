@@ -11,6 +11,7 @@ from app.api.leads import router as leads_router
 from app.api.lead_stages import router as lead_stages_router
 from app.api.lead_rejection_reasons import router as lead_rejection_reasons_router
 from app.api.orders import router as orders_router
+from app.api.organizations import router as organizations_router
 app = FastAPI(
     title="Sport Leads API",
     description="API для сбора и обработки спортивных мероприятий",
@@ -28,6 +29,7 @@ app.include_router(leads_router)
 app.include_router(lead_stages_router)
 app.include_router(lead_rejection_reasons_router)
 app.include_router(orders_router)
+app.include_router(organizations_router)
 
 
 @app.get("/")

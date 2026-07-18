@@ -4,6 +4,7 @@ from app.models.sport_event import SportEvent
 from app.models.material import Material
 from app.models.sales import (
     Client,
+    Organization,
     Lead,
     LeadContact,
     LeadContactChannel,
@@ -29,6 +30,7 @@ __all__ = [
     "ImportStatus",
     "Material",
     "Client",
+    "Organization",
     "Lead",
     "LeadContact",
     "LeadContactChannel",

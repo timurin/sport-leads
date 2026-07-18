@@ -12,6 +12,7 @@ from app.database.session import get_db
 from app.main import app
 from app.models.sales import (
     Client,
+    Organization,
     Lead,
     LeadRejectionReason,
     LeadResult,
@@ -461,6 +462,52 @@ def test_order_detail_exposes_conversion_links_and_nullable_fields(
     assert order["desired_date"] is None
     assert order["created_at"]
     assert order["updated_at"]
+
+
+def test_order_conversion_creates_and_exposes_organization(
+    client: TestClient,
+    session_factory: sessionmaker[Session],
+) -> None:
+    lead_id = add_lead(session_factory)
+    conversion = client.post(f"/leads/{lead_id}/convert", json={"completed_by_id": 1})
+    assert conversion.status_code == 201
+    order_id = conversion.json()["order"]["id"]
+
+    detail = client.get(f"/orders/{order_id}")
+    assert detail.status_code == 200
+    assert detail.json()["organization_id"] is not None
+    assert detail.json()["organization_name"] == "СК Олимп"
+
+    organizations = client.get("/organizations")
+    assert organizations.status_code == 200
+    organization = next(item for item in organizations.json() if item["id"] == detail.json()["organization_id"])
+    assert organization["name"] == "СК Олимп"
+
+    with session_factory() as db:
+        assert db.scalar(select(func.count()).select_from(Organization)) == 1
+
+
+def test_order_organization_patch_accepts_active_organization_and_rejects_missing_one(
+    client: TestClient,
+    session_factory: sessionmaker[Session],
+) -> None:
+    lead_id = add_lead(session_factory)
+    order_id = client.post(f"/leads/{lead_id}/convert", json={"completed_by_id": 1}).json()["order"]["id"]
+    with session_factory() as db:
+        organization = db.scalar(select(Organization))
+        assert organization is not None
+        organization_id = organization.id
+
+    cleared = client.patch(f"/orders/{order_id}/organization", json={"organization_id": None})
+    assert cleared.status_code == 200
+    assert cleared.json()["organization_id"] is None
+
+    restored = client.patch(f"/orders/{order_id}/organization", json={"organization_id": organization_id})
+    assert restored.status_code == 200
+    assert restored.json()["organization_id"] == organization_id
+
+    missing = client.patch(f"/orders/{order_id}/organization", json={"organization_id": 999999})
+    assert missing.status_code == 404
 
 
 def test_order_detail_returns_404_for_missing_order(client: TestClient) -> None:

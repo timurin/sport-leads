@@ -5,6 +5,8 @@ export type ApiSalesOrderDetails = {
   number: string;
   lead_id: number;
   client_id: number;
+  organization_id: number | null;
+  organization_name: string | null;
   status: OrderStatus;
   responsible_id: number | null;
   responsible_name: string | null;
@@ -58,6 +60,7 @@ export type SalesOrderDetails = {
   title: string;
   status: string;
   clientName: string;
+  organizationName: string;
   responsibleName: string;
   amount: string;
   createdAt: string;
@@ -106,6 +109,7 @@ export function fromApiSalesOrder(order: ApiSalesOrderDetails): SalesOrderDetail
     title: order.title || "Заказ без наименования",
     status: statusLabels[order.status],
     clientName: order.client_name ?? `Клиент #${order.client_id}`,
+    organizationName: order.organization_name ?? "Организация не назначена",
     responsibleName: order.responsible_name ?? (order.responsible_id === null ? "Не назначен" : `Сотрудник #${order.responsible_id}`),
     amount: Number.isFinite(Number(order.amount)) ? amount : "Не указана",
     createdAt: formatDate(order.created_at),

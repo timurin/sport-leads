@@ -6,6 +6,8 @@ export type ApiSalesOrder = {
   number: string;
   lead_id: number;
   client_id: number;
+  organization_id: number | null;
+  organization_name: string | null;
   status: OrderStatus;
   responsible_id: number | null;
   responsible_name: string | null;
@@ -46,6 +48,7 @@ export function fromApiSalesOrders(orders: ApiSalesOrder[]): KanbanColumnData<Or
     title: `Заказ ${order.number}`,
     href: `/sales/orders/${order.id}`,
     subtitle: order.client_name ?? `Клиент #${order.client_id}`,
+    organization: order.organization_name ?? "Организация не назначена",
     amount: formatAmount(order.amount),
     badge: { label: statusPresentation[order.status].label, tone: order.status === "completed" ? "emerald" as const : order.status === "cancelled" ? "slate" as const : "blue" as const },
     responsible: order.responsible_name ?? (order.responsible_id === null ? "Не назначен" : `Сотрудник #${order.responsible_id}`),

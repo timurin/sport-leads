@@ -244,7 +244,7 @@
 ### Карточка заказа
 
 * `[x]` номер и дата — итерация `v0.7.0-sales-order-foundation`: read-only header на основе `GET /orders/{order_id}`, подтверждён `backend/tests/test_lead_conversion.py` и `frontend/lib/sales/order-details.test.mjs`;
-* `[!]` организация — следующая задача `v0.7.x-sales-order-organization-foundation` определена аудитом 2026-07-18; постоянной backend-модели и связи `SalesOrder` с организацией нет, поэтому реализация заблокирована до решения владельца. Подтверждения: `backend/app/models/sales.py`, `frontend/lib/demo-data/catalogs.ts`;
+* `[x]` организация — итерация `v0.7.2-sales-order-organization-foundation`: добавлены persistent `Organization`, nullable связь `SalesOrder.organization_id`, создание/переиспользование организации при конвертации, `GET /organizations`, `PATCH /orders/{order_id}/organization` и отображение в карточке; ограничения: настройки организаций пока demo-only, старые заказы без организации требуют назначения;
 * `[x]` клиент — итерация `v0.7.0-sales-order-foundation`: detail API возвращает имя клиента, карточка показывает его без demo fallback;
 * `[ ]` контактное лицо;
 * `[x]` ответственный менеджер — итерация `v0.7.0-sales-order-foundation`: detail API возвращает имя `SalesUser`, nullable значение отображается явно;

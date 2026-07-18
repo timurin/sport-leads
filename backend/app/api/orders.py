@@ -3,17 +3,22 @@ from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
 from app.database.session import get_db
-from app.models.sales import Client, Lead, LeadEvent, SalesOrder, SalesUser
+from app.models.sales import Client, Lead, LeadEvent, Organization, SalesOrder, SalesUser
 from app.schemas.sales import (
     LeadEventRead,
     LeadRead,
     SalesOrderRead,
+    SalesOrderOrganizationUpdate,
     SalesOrderStatusUpdate,
 )
 from app.services.sales_order_status import (
     InvalidSalesOrderStatusTransition,
     SalesOrderNotFoundError,
     update_sales_order_status,
+)
+from app.services.sales_order_organization import (
+    SalesOrderOrganizationError,
+    update_sales_order_organization,
 )
 
 
@@ -24,11 +29,13 @@ def serialize_order(
     order: SalesOrder,
     client: Client,
     responsible: SalesUser | None,
+    organization: Organization | None,
 ) -> dict[str, object]:
     return {
         **{column.name: getattr(order, column.name) for column in SalesOrder.__table__.columns},
         "client_name": client.company_name or client.contact_name,
         "responsible_name": responsible.name if responsible else None,
+        "organization_name": organization.name if organization else None,
     }
 
 
@@ -39,31 +46,48 @@ def list_orders(
     db: Session = Depends(get_db),
 ) -> list[dict[str, object]]:
     rows = db.execute(
-        select(SalesOrder, Client, SalesUser)
+        select(SalesOrder, Client, SalesUser, Organization)
         .join(Client, Client.id == SalesOrder.client_id)
         .outerjoin(SalesUser, SalesUser.id == SalesOrder.responsible_id)
+        .outerjoin(Organization, Organization.id == SalesOrder.organization_id)
         .order_by(SalesOrder.created_at.desc(), SalesOrder.id.desc())
         .offset(offset)
         .limit(limit)
     ).all()
     return [
-        serialize_order(order, client, responsible)
-        for order, client, responsible in rows
+        serialize_order(order, client, responsible, organization)
+        for order, client, responsible, organization in rows
     ]
 
 
 @router.get("/{order_id}", response_model=SalesOrderRead)
 def get_order(order_id: int, db: Session = Depends(get_db)) -> dict[str, object]:
     row = db.execute(
-        select(SalesOrder, Client, SalesUser)
+        select(SalesOrder, Client, SalesUser, Organization)
         .join(Client, Client.id == SalesOrder.client_id)
         .outerjoin(SalesUser, SalesUser.id == SalesOrder.responsible_id)
+        .outerjoin(Organization, Organization.id == SalesOrder.organization_id)
         .where(SalesOrder.id == order_id)
     ).one_or_none()
     if row is None:
         raise HTTPException(status_code=404, detail="Order not found")
-    order, client, responsible = row
-    return serialize_order(order, client, responsible)
+    order, client, responsible, organization = row
+    return serialize_order(order, client, responsible, organization)
+
+
+@router.patch("/{order_id}/organization", response_model=SalesOrderRead)
+def update_order_organization(
+    order_id: int,
+    payload: SalesOrderOrganizationUpdate,
+    db: Session = Depends(get_db),
+) -> dict[str, object]:
+    try:
+        update_sales_order_organization(db, order_id, payload.organization_id)
+    except SalesOrderOrganizationError as error:
+        status_code = 404 if str(error) in {"Order not found", "Active organization not found"} else 400
+        raise HTTPException(status_code=status_code, detail=str(error)) from error
+    db.commit()
+    return get_order(order_id, db)
 
 
 @router.patch("/{order_id}/status", response_model=SalesOrderRead)

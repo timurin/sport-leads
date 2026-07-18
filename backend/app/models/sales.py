@@ -140,6 +140,26 @@ class LeadRejectionReason(Base):
     )
 
 
+class Organization(Base):
+    __tablename__ = "organizations"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    name: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
+    legal_form: Mapped[str | None] = mapped_column(String(50))
+    tax_id: Mapped[str | None] = mapped_column(String(12), unique=True, index=True)
+    kpp: Mapped[str | None] = mapped_column(String(9))
+    tax_system: Mapped[str | None] = mapped_column(String(100))
+    director: Mapped[str | None] = mapped_column(String(255))
+    legal_address: Mapped[str | None] = mapped_column(String(500))
+    is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True, index=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now()
+    )
+
+
 class LeadStage(Base):
     __tablename__ = "lead_stages"
     __table_args__ = (
@@ -299,6 +319,9 @@ class SalesOrder(Base):
     )
     client_id: Mapped[int] = mapped_column(
         ForeignKey("clients.id", ondelete="RESTRICT"), nullable=False, index=True
+    )
+    organization_id: Mapped[int | None] = mapped_column(
+        ForeignKey("organizations.id", ondelete="SET NULL"), index=True
     )
     status: Mapped[SalesOrderStatus] = mapped_column(
         enum_type(SalesOrderStatus, "sales_order_status"),

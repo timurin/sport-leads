@@ -171,6 +171,16 @@
 - `[~]` товарные позиции, редактирование заказа, оплаты, документы, производство и склад остаются за пределами этой итерации.
 
 Подтверждения: `backend/app/models/sales.py`, `backend/app/services/sales_order_status.py`, `backend/app/api/orders.py`, `backend/alembic/versions/a91d6e3f4b20_add_order_status_changed_event.py`, `backend/tests/test_lead_conversion.py`, `frontend/lib/sales/order-details.ts`, `frontend/lib/sales/order-details.test.mjs`, `frontend/app/(workspace)/sales/orders/[orderId]/page.tsx`, `frontend/components/sales/sales-order-page.tsx`.
+## Итерация v0.7.2-sales-order-organization-foundation
+
+- `[x]` persistent `Organization` with basic requisites and active flag added; `SalesOrder.organization_id` uses a nullable FK for compatibility with earlier orders;
+- `[x]` lead conversion creates or reuses an organization by name/INN, and `GET /orders`, `GET /orders/{id}` plus the order card expose its name;
+- `[x]` `GET /organizations` and `PATCH /orders/{order_id}/organization` validate existence and activity; the link can be explicitly cleared;
+- `[x]` reversible migration `b7c8d9e0f123`, backend/frontend tests and project-check table coverage added;
+- `[~]` organization settings remain demo-only, and historical orders without an organization require explicit assignment.
+
+Evidence: `backend/app/models/sales.py`, `backend/app/services/lead_conversion.py`, `backend/app/services/sales_order_organization.py`, `backend/app/api/organizations.py`, `backend/app/api/orders.py`, `backend/alembic/versions/b7c8d9e0f123_add_organizations_to_sales_orders.py`, `backend/tests/test_lead_conversion.py`, `frontend/lib/sales/order-details.ts`, `frontend/lib/sales/order-list-api.ts`, `frontend/components/sales/sales-order-page.tsx`.
+
 ## Итерация v0.6.1-navigation-remove-deals
 
 - `[x]` активная CRM-навигация разделена на отдельные ссылки `Лиды` → `/sales/leads` и `Заказы покупателей` → `/sales/orders`;

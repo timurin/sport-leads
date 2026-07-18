@@ -303,6 +303,7 @@ class SalesOrderRead(SalesSchema):
     number: str
     lead_id: int
     client_id: int
+    organization_id: int | None
     status: SalesOrderStatus
     responsible_id: int | None
     title: str
@@ -317,6 +318,25 @@ class SalesOrderRead(SalesSchema):
     updated_at: datetime
     client_name: str | None = None
     responsible_name: str | None = None
+    organization_name: str | None = None
+
+
+class OrganizationRead(SalesSchema):
+    id: int
+    name: str
+    legal_form: str | None
+    tax_id: str | None
+    kpp: str | None
+    tax_system: str | None
+    director: str | None
+    legal_address: str | None
+    is_active: bool
+    created_at: datetime
+    updated_at: datetime
+
+
+class SalesOrderOrganizationUpdate(BaseModel):
+    organization_id: int | None = None
 
 
 class SalesOrderStatusUpdate(BaseModel):

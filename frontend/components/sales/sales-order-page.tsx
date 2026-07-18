@@ -35,6 +35,7 @@ export function SalesOrderPage({ order, history }: { order: SalesOrderDetails; h
       <section className="mt-4" aria-label="Основные сведения о заказе">
         <ResponsiveGrid minItemWidth="medium">
           <Detail label="Клиент" value={order.clientName} />
+          <Detail label="Организация" value={order.organizationName} />
           <Detail label="Ответственный" value={order.responsibleName} />
           <Detail label="Сумма" value={order.amount} />
           <Detail label="Желаемая дата" value={order.desiredDate} />

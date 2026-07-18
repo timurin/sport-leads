@@ -171,6 +171,7 @@ def check_sqlalchemy_models() -> None:
         LeadContact.__tablename__,
         LeadRejectionReason.__tablename__,
         SalesOrder.__tablename__,
+        "organizations",
         LeadEvent.__tablename__,
         LeadTask.__tablename__,
     }
