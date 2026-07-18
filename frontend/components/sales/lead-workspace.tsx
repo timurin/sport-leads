@@ -13,7 +13,7 @@ import {
 import { LeadStageSettingsDialog } from "@/components/sales/lead-stage-settings-dialog";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page-header";
-import { leads as demoLeads, salesManagers } from "@/lib/demo-data/sales";
+import { salesManagers } from "@/lib/demo-data/sales";
 import {
   LEAD_STAGE_STORAGE_KEY,
   getActiveLeadStages,
@@ -105,8 +105,16 @@ function boardStatus(lead: WorkspaceLead): string {
   return lead.stageId;
 }
 
-export function LeadWorkspace() {
-  const [leads, setLeads] = useState<WorkspaceLead[]>(() => demoLeads.map(normalizeLead));
+export function LeadWorkspace({
+  initialLeads,
+  dataOrigin,
+  loadError,
+}: {
+  initialLeads: Lead[];
+  dataOrigin: "api" | "demo";
+  loadError?: string;
+}) {
+  const [leads, setLeads] = useState<WorkspaceLead[]>(() => initialLeads.map(normalizeLead));
   const [stages, setStages] = useState<LeadStageConfig[]>(getDefaultLeadStages);
   const [view, setView] = useState<LeadView>("active");
   const [query, setQuery] = useState("");
@@ -134,6 +142,13 @@ export function LeadWorkspace() {
     () => new Set(activeStages.map((stage) => stage.id)),
     [activeStages],
   );
+  const responsibleOptions = useMemo(() => {
+    const names = new Set([
+      ...salesManagers.map((manager) => manager.name),
+      ...leads.map((lead) => lead.responsible.name),
+    ]);
+    return [...names].filter(Boolean).sort((first, second) => first.localeCompare(second, "ru"));
+  }, [leads]);
   const stageLeadCounts = useMemo(
     () => leads.reduce<Record<string, number>>((counts, lead) => {
       if (lead.status !== "completed") {
@@ -277,6 +292,16 @@ export function LeadWorkspace() {
         description="Первичные обращения: от рабочей стадии до заказа покупателя или зафиксированного отказа"
       />
 
+      {loadError ? (
+        <div className="border-b border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-800 lg:px-6" role="alert">
+          {loadError}
+        </div>
+      ) : dataOrigin === "api" ? (
+        <div className="border-b border-emerald-200 bg-emerald-50 px-4 py-2 text-xs font-semibold text-emerald-800 lg:px-6">
+          Лиды загружены из backend.
+        </div>
+      ) : null}
+
       <section
         className="grid gap-3 border-b border-slate-200 bg-slate-50 px-4 py-4 sm:grid-cols-2 lg:px-6 xl:grid-cols-4"
         aria-label="Показатели"
@@ -331,7 +356,7 @@ export function LeadWorkspace() {
             className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-900"
           >
             <option value="">Ответственный: все</option>
-            {salesManagers.map((manager) => <option key={manager.id}>{manager.name}</option>)}
+            {responsibleOptions.map((managerName) => <option key={managerName}>{managerName}</option>)}
           </select>
           {query || responsible ? (
             <Button onClick={() => { setQuery(""); setResponsible(""); }}>
