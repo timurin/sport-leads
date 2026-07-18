@@ -18,6 +18,7 @@ from app.models.sales import (
     LeadTask,
     LeadTaskStatus,
     SalesOrder,
+    SalesOrderItem,
     SalesOrderStatus,
     SalesUser,
 )
@@ -44,6 +45,7 @@ __all__ = [
     "LeadTask",
     "LeadTaskStatus",
     "SalesOrder",
+    "SalesOrderItem",
     "SalesOrderStatus",
     "SalesUser",
 ]

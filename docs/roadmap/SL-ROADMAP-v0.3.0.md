@@ -232,7 +232,7 @@
 
 ## Текущее состояние
 
-* `[~]` read-only карточка заказа покупателя доступна по `/sales/orders/[orderId]` и загружает сохранённый `SalesOrder` из backend; товарные позиции, изменения и расчёты отсутствуют;
+* `[~]` карточка заказа покупателя доступна по `/sales/orders/[orderId]`, загружает сохранённый `SalesOrder` из backend и поддерживает CRUD товарных позиций; документы, оплаты и production workflow отсутствуют;
 * `[~]` заказы отображаются на dashboard;
 * `[~]` существуют интерфейсные статусы заказов;
 * `[ ]` полноценный backend-контур не подтвержден;
@@ -259,6 +259,8 @@
 * `[ ]` файлы.
 
 ### Товарные позиции
+
+* `[x]` минимальные товарные позиции — итерация `v0.7.3-sales-order-items`: `SalesOrderItem` хранит snapshot-наименование, единицу, количество, цену и сумму строки; CRUD API и карточка заказа пересчитывают `SalesOrder.amount`. Подтверждения: `backend/app/models/sales.py`, `backend/app/services/sales_order_items.py`, `backend/app/api/orders.py`, `backend/alembic/versions/c8d9e0f1a234_add_sales_order_items.py`, `frontend/components/sales/sales-order-items.tsx`; ограничения: необязательная связь с `Material`, без Product-каталога и production-документов;
 
 * `[ ]` наименование;
 * `[ ]` модель;

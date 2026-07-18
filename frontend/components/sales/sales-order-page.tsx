@@ -3,6 +3,7 @@ import Link from "next/link";
 
 import { PageContent, ResponsiveGrid } from "@/components/layout/page-layout";
 import type { SalesOrderDetails, SalesOrderHistoryItem } from "@/lib/sales/order-details";
+import { SalesOrderItems } from "@/components/sales/sales-order-items";
 
 function Detail({ label, value }: { label: string; value: string }) {
   return (
@@ -53,6 +54,8 @@ export function SalesOrderPage({ order, history }: { order: SalesOrderDetails; h
           Открыть исходный лид <ExternalLink size={15} />
         </Link>
       </section>
+
+      <SalesOrderItems orderId={order.id} items={order.items} />
 
       <section className="mt-4 rounded-[var(--portal-radius-md)] border border-portal-border bg-portal-surface p-4">
         <h2 className="text-base font-semibold text-portal-text">Описание</h2>

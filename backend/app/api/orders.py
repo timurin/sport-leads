@@ -3,12 +3,15 @@ from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
 from app.database.session import get_db
-from app.models.sales import Client, Lead, LeadEvent, Organization, SalesOrder, SalesUser
+from app.models.sales import Client, Lead, LeadEvent, Organization, SalesOrder, SalesOrderItem, SalesUser
 from app.schemas.sales import (
     LeadEventRead,
     LeadRead,
     SalesOrderRead,
     SalesOrderOrganizationUpdate,
+    SalesOrderItemCreate,
+    SalesOrderItemRead,
+    SalesOrderItemUpdate,
     SalesOrderStatusUpdate,
 )
 from app.services.sales_order_status import (
@@ -19,6 +22,12 @@ from app.services.sales_order_status import (
 from app.services.sales_order_organization import (
     SalesOrderOrganizationError,
     update_sales_order_organization,
+)
+from app.services.sales_order_items import (
+    SalesOrderItemError,
+    create_sales_order_item,
+    delete_sales_order_item,
+    update_sales_order_item,
 )
 
 
@@ -36,6 +45,13 @@ def serialize_order(
         "client_name": client.company_name or client.contact_name,
         "responsible_name": responsible.name if responsible else None,
         "organization_name": organization.name if organization else None,
+        "items": [
+            {
+                column.name: getattr(item, column.name)
+                for column in SalesOrderItem.__table__.columns
+            }
+            for item in order.items
+        ],
     }
 
 
@@ -88,6 +104,60 @@ def update_order_organization(
         raise HTTPException(status_code=status_code, detail=str(error)) from error
     db.commit()
     return get_order(order_id, db)
+
+
+@router.get("/{order_id}/items", response_model=list[SalesOrderItemRead])
+def list_order_items(order_id: int, db: Session = Depends(get_db)) -> list[SalesOrderItem]:
+    if db.get(SalesOrder, order_id) is None:
+        raise HTTPException(status_code=404, detail="Order not found")
+    return list(
+        db.scalars(
+            select(SalesOrderItem)
+            .where(SalesOrderItem.order_id == order_id)
+            .order_by(SalesOrderItem.position, SalesOrderItem.id)
+        ).all()
+    )
+
+
+@router.post("/{order_id}/items", response_model=SalesOrderItemRead, status_code=201)
+def create_order_item(
+    order_id: int,
+    payload: SalesOrderItemCreate,
+    db: Session = Depends(get_db),
+) -> SalesOrderItem:
+    try:
+        item = create_sales_order_item(db, order_id, payload)
+        db.commit()
+    except SalesOrderItemError as error:
+        db.rollback()
+        raise HTTPException(status_code=404, detail=str(error)) from error
+    return item
+
+
+@router.patch("/{order_id}/items/{item_id}", response_model=SalesOrderItemRead)
+def update_order_item(
+    order_id: int,
+    item_id: int,
+    payload: SalesOrderItemUpdate,
+    db: Session = Depends(get_db),
+) -> SalesOrderItem:
+    try:
+        item = update_sales_order_item(db, order_id, item_id, payload)
+        db.commit()
+    except SalesOrderItemError as error:
+        db.rollback()
+        raise HTTPException(status_code=404, detail=str(error)) from error
+    return item
+
+
+@router.delete("/{order_id}/items/{item_id}", status_code=204)
+def delete_order_item(order_id: int, item_id: int, db: Session = Depends(get_db)) -> None:
+    try:
+        delete_sales_order_item(db, order_id, item_id)
+        db.commit()
+    except SalesOrderItemError as error:
+        db.rollback()
+        raise HTTPException(status_code=404, detail=str(error)) from error
 
 
 @router.patch("/{order_id}/status", response_model=SalesOrderRead)

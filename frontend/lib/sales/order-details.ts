@@ -21,6 +21,21 @@ export type ApiSalesOrderDetails = {
   source: string | null;
   created_at: string;
   updated_at: string;
+  items: ApiSalesOrderItem[];
+};
+
+export type ApiSalesOrderItem = {
+  id: number;
+  order_id: number;
+  material_id: number | null;
+  position: number;
+  name: string;
+  unit: string;
+  quantity: number | string;
+  unit_price: number | string;
+  line_total: number | string;
+  created_at: string;
+  updated_at: string;
 };
 
 export type ApiSalesOrderEvent = {
@@ -71,6 +86,16 @@ export type SalesOrderDetails = {
   productCategory: string;
   sport: string;
   quantity: string;
+  items: SalesOrderItem[];
+};
+
+export type SalesOrderItem = {
+  id: number;
+  name: string;
+  unit: string;
+  quantity: string;
+  unitPrice: string;
+  lineTotal: string;
 };
 
 export type SalesOrderHistoryItem = {
@@ -120,6 +145,14 @@ export function fromApiSalesOrder(order: ApiSalesOrderDetails): SalesOrderDetail
     productCategory: order.product_category ?? "Не указана",
     sport: order.sport ?? "Не указан",
     quantity: order.quantity === null ? "Не указано" : `${order.quantity} ед.`,
+    items: (order.items ?? []).map((item) => ({
+      id: item.id,
+      name: item.name,
+      unit: item.unit,
+      quantity: String(item.quantity),
+      unitPrice: currencyFormatter.format(Number(item.unit_price)),
+      lineTotal: currencyFormatter.format(Number(item.line_total)),
+    })),
   };
 }
 

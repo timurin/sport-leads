@@ -181,6 +181,16 @@
 
 Evidence: `backend/app/models/sales.py`, `backend/app/services/lead_conversion.py`, `backend/app/services/sales_order_organization.py`, `backend/app/api/organizations.py`, `backend/app/api/orders.py`, `backend/alembic/versions/b7c8d9e0f123_add_organizations_to_sales_orders.py`, `backend/tests/test_lead_conversion.py`, `frontend/lib/sales/order-details.ts`, `frontend/lib/sales/order-list-api.ts`, `frontend/components/sales/sales-order-page.tsx`.
 
+## Итерация v0.7.3-sales-order-items
+
+- `[x]` добавлена persistent-модель `SalesOrderItem` со связью `SalesOrder`, snapshot-наименованием, единицей, количеством, ценой и суммой строки;
+- `[x]` добавлены `GET/POST/PATCH/DELETE /orders/{order_id}/items`; изменение позиций пересчитывает итоговую сумму заказа через Decimal/Numeric;
+- `[x]` карточка заказа показывает позиции и позволяет добавить, изменить и удалить строку через server actions с последующим reload из backend;
+- `[x]` миграция `c8d9e0f1a234`, backend regression tests, frontend mapping, TypeScript, lint, build и project check пройдены;
+- `[~]` ссылка на существующий `Material` необязательна; отдельный Product-каталог и производственные документы остаются за пределами итерации.
+
+Evidence: `backend/app/models/sales.py`, `backend/app/services/sales_order_items.py`, `backend/app/api/orders.py`, `backend/alembic/versions/c8d9e0f1a234_add_sales_order_items.py`, `backend/tests/test_lead_conversion.py`, `frontend/components/sales/sales-order-items.tsx`, `frontend/app/(workspace)/sales/orders/[orderId]/order-item-actions.ts`.
+
 ## Итерация v0.6.1-navigation-remove-deals
 
 - `[x]` активная CRM-навигация разделена на отдельные ссылки `Лиды` → `/sales/leads` и `Заказы покупателей` → `/sales/orders`;

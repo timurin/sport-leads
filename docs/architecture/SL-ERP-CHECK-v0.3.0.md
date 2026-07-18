@@ -650,6 +650,15 @@ Evidence: `backend/app/models/sales.py`, `backend/app/services/lead_conversion.p
 
 ## Итерация v0.6.1-navigation-remove-deals
 
+## Итерация v0.7.3-sales-order-items
+
+- `[x]` `SalesOrderItem` хранит snapshot-наименование, единицу, количество, цену и рассчитанную сумму строки; `order_id` удаляется каскадно;
+- `[x]` item API разделён на route/service/schema-слои и пересчитывает `SalesOrder.amount` после каждой записи;
+- `[x]` миграция `c8d9e0f1a234` обратима, а тесты подтверждают CRUD, reload и корректный пересчёт Decimal-сумм;
+- `[~]` необязательная связь с `Material` не заменяет будущий Product-каталог; production, склад и документы не затронуты.
+
+Evidence: `backend/app/models/sales.py`, `backend/app/services/sales_order_items.py`, `backend/app/schemas/sales.py`, `backend/app/api/orders.py`, `backend/alembic/versions/c8d9e0f1a234_add_sales_order_items.py`, `backend/tests/test_lead_conversion.py`, `frontend/components/sales/sales-order-items.tsx`.
+
 - `[x]` навигация CRM больше не предлагает отдельную сущность `Сделка`;
 - `[x]` прямые ссылки на лиды и заказы покупателей сохранены, backend и маршруты не изменялись;
 - `[x]` demo route `/sales/deals` оставлен только для исторического/тестового контура и недоступен из активного меню.

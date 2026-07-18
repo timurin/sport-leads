@@ -20,6 +20,7 @@ from app.models.sales import (
     LeadTask,
     LeadTaskStatus,
     SalesOrder,
+    SalesOrderItem,
     SalesUser,
 )
 from app.schemas.sales import LeadConvertRequest
@@ -560,6 +561,44 @@ def test_order_status_patch_rejects_backward_and_terminal_transitions(
     assert client.patch(f"/orders/{order_id}/status", json={"status": "completed"}).status_code == 200
     terminal = client.patch(f"/orders/{order_id}/status", json={"status": "cancelled"})
     assert terminal.status_code == 409
+
+
+def test_order_items_are_crud_persistent_and_recalculate_order_total(
+    client: TestClient,
+    session_factory: sessionmaker[Session],
+) -> None:
+    lead_id = add_lead(session_factory)
+    order_id = client.post(f"/leads/{lead_id}/convert", json={"completed_by_id": 1}).json()["order"]["id"]
+
+    created = client.post(
+        f"/orders/{order_id}/items",
+        json={"name": "Футболка", "unit": "шт", "quantity": "2", "unit_price": "1500"},
+    )
+    assert created.status_code == 201
+    assert created.json()["line_total"] == "3000.00"
+    item_id = created.json()["id"]
+
+    second = client.post(
+        f"/orders/{order_id}/items",
+        json={"name": "Шорты", "unit": "шт", "quantity": "2", "unit_price": "750"},
+    )
+    assert second.status_code == 201
+    assert client.get(f"/orders/{order_id}/items").json()[0]["position"] == 1
+    assert client.get(f"/orders/{order_id}").json()["amount"] == "4500.00"
+
+    updated = client.patch(
+        f"/orders/{order_id}/items/{item_id}",
+        json={"quantity": "3", "unit_price": "1600"},
+    )
+    assert updated.status_code == 200
+    assert updated.json()["line_total"] == "4800.00"
+    assert client.get(f"/orders/{order_id}").json()["amount"] == "6300.00"
+
+    deleted = client.delete(f"/orders/{order_id}/items/{item_id}")
+    assert deleted.status_code == 204
+    assert client.get(f"/orders/{order_id}").json()["amount"] == "1500.00"
+    with session_factory() as db:
+        assert db.scalar(select(func.count()).select_from(SalesOrderItem)) == 1
 def test_lead_history_exposes_status_conversion_and_rejection_events(
     client: TestClient,
     session_factory: sessionmaker[Session],
