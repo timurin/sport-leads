@@ -4,7 +4,7 @@
 **Roadmap code:** `SL-ROADMAP-v0.3.0`
 **Structure code:** `SL-ERP-CHECK-v0.3.0`
 **Предыдущий код roadmap:** `SL-ROADMAP-v1`
-**Статус документа:** актуализирован по состоянию ветки `main`
+**Статус документа:** исторический; актуальный план — [SL-ROADMAP-v0.6.1](SL-ROADMAP-v0.6.1.md)
 
 ---
 
@@ -152,7 +152,7 @@
 
 * `[~]` интерфейс списка и Kanban;
 * `[~]` карточка лида;
-* `[ ]` загрузка лидов из backend;
+* `[~]` загрузка лидов из backend — итерация `v0.6.1-lead-list-backend-load`: `/sales/leads` загружает список через server-side `GET /leads?limit=500`, строит Kanban из API-ответа и при ошибке показывает явное сообщение без скрытой demo-подмены; диагностическая доработка `v0.6.1-lead-list-dev-seed`: добавлена явная идемпотентная development seed-команда `SPORT_LEADS_ALLOW_DEV_SEED=1 .\.venv\Scripts\python.exe scripts\seed_sales_dev.py` для 5 backend-лидов с числовыми id, контактами и коммерческими данными без `lead-1`/`lead-2` fallback; подтверждения: `frontend/app/(workspace)/sales/leads/page.tsx`, `frontend/lib/sales/lead-list-api.ts`, `frontend/lib/sales/lead-list-mapping.ts`, `frontend/components/sales/lead-workspace.tsx`, `frontend/lib/sales/lead-list-api.test.mjs` (2 теста), `scripts/seed_sales_dev.py`, `backend/tests/test_sales_dev_seed.py`; ограничение: пункт не повышен до `[x]` до ручной проверки списка с реальными backend-записями, создание лида, сохранение перемещений Kanban, convert/reject из списка, demo detail-лиды, задачи, заметки и timeline остаются local/demo;
 * `[ ]` создание лида через API;
 * `[~]` редактирование лида через API — итерации `v0.6.1-lead-commercial-frontend` и `v0.6.1-lead-customer-profile-persistence`: форма числовой detail-страницы загружает и сохраняет через существующий PATCH постоянное коммерческое ядро (source, sport, category, description, quantity, amount, desired date, city) и core-профиль клиента (type, organization, INN, website, city, region, address, comment) без demo fallback; подтверждения: `backend/app/models/sales.py`, `backend/app/schemas/sales.py`, `backend/alembic/versions/c12f0f2d0f4b_add_lead_customer_profile.py`, `frontend/app/(workspace)/sales/leads/[leadId]/lead-commercial-actions.ts`, `frontend/app/(workspace)/sales/leads/[leadId]/lead-customer-actions.ts`, `frontend/lib/sales/lead-commercial-api.test.mjs` (3 теста), `frontend/lib/sales/lead-customer-api.test.mjs` (3 теста), `backend/tests/test_lead_conversion.py` (customer profile и commercial PATCH), полный backend pytest (27 тестов), frontend tests (30 тестов), typecheck, lint, production build, Alembic upgrade/downgrade/upgrade/check и project check 9/9 с `PYTHONUTF8=1`; ограничение: demo-лиды, список/Kanban, messenger, расширенные коммерческие поля, задачи, заметки и timeline остаются local/demo;
 * `[ ]` удаление или архивирование;
@@ -828,3 +828,7 @@ Backend API лидов, сделок и клиентов
 * roadmap: `SL-ROADMAP-v1`
 
 Исторические коды сохраняются для ссылок на первоначальную архитектуру, но новые задачи должны основываться на версии `v0.3.0`.
+
+## Синхронизация v0.6.1-roadmap-sync
+
+* `[x]` документ сохранён как исторический, а актуальный план вынесен в `SL-ROADMAP-v0.6.1` без переименования или удаления прежнего roadmap; подтверждения: `docs/roadmap/SL-ROADMAP-v0.6.1.md`, `docs/README.md`, `docs/reports/ROADMAP-SYNC-REPORT.md`; проверки: project check 9/9, backend pytest 28, frontend tests 32, TypeScript, lint, build, Compose и `git diff --check`; ограничение: release/tag `v0.6.1` ещё не создан.

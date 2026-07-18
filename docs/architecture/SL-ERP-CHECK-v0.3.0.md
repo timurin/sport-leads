@@ -1,13 +1,13 @@
 # Структура Sport-Lead
 
-**Platform version:** `v0.3.0-demo`
+**Platform version:** `v0.6.1` (локальная линия разработки)
 **Checkpoint used for status:** `v0.5.0`
 **Structure code:** `SL-ERP-CHECK-v0.3.0`
-**Roadmap code:** `SL-ROADMAP-v0.3.0`
+**Roadmap code:** `SL-ROADMAP-v0.6.1`
 **Previous structure code:** `SL-ERP-CHECK-v1`
-**Status:** актуализировано по состоянию `main` после checkpoint `v0.5.0`
+**Status:** актуализировано по состоянию локальной ветки `feature/v0.6.1-lead-persistence` после checkpoint `v0.5.0`
 
-Связанный документ: [SL-ROADMAP-v0.3.0](../roadmap/SL-ROADMAP-v0.3.0.md).
+Связанный документ: [SL-ROADMAP-v0.6.1](../roadmap/SL-ROADMAP-v0.6.1.md). Исторический план: [SL-ROADMAP-v0.3.0](../roadmap/SL-ROADMAP-v0.3.0.md).
 
 ## Легенда
 
@@ -51,6 +51,7 @@
 - `[~]` логирование присутствует в отдельных backend-сервисах, но не образует централизованный observability-контур;
 - `[~]` обработка ошибок реализована на уровне API и отдельных сервисов, но не унифицирована для всей платформы;
 - `[~]` документация существует, но индекс и архитектурные документы развиваются постепенно;
+- `[x]` итерация `v0.6.1-roadmap-sync` создала актуальный roadmap, индекс и правила model escalation; подтверждения: `AGENTS.md`, `docs/roadmap/SL-ROADMAP-v0.6.1.md`, `docs/README.md`, `docs/reports/ROADMAP-SYNC-REPORT.md`; проверки: project check 9/9, backend pytest 28, frontend tests 32, TypeScript, lint, build, Compose и `git diff --check`; ограничение — release/checkpoint `v0.6.1` ещё не создан;
 - `[~]` PostgreSQL-конфигурация и миграции проверяются, но production-эксплуатация не подтверждена.
 
 ### Осталось
@@ -75,6 +76,7 @@
 - `[x]` модель `LeadContact`, отдельная таблица и максимум один основной контакт на лид;
 - `[x]` миграция sales-таблиц, ограничений и справочника причин отказа;
 - `[x]` API списка, чтения и частичного обновления лида;
+- `[x]` `/sales/leads` загружает список лидов из backend без скрытой demo-подмены при ошибке;
 - `[x]` числовая detail-страница загружает и сохраняет поддерживаемое моделью коммерческое ядро через PATCH без demo fallback;
 - `[x]` числовая detail-страница загружает и сохраняет core-профиль клиента через PATCH без demo fallback;
 - `[x]` API создания, изменения, удаления дополнительного и атомарной смены основного контакта;
@@ -89,6 +91,7 @@
 - `[~]` `lead-1` и `lead-2` вместе с контактами и расширенными коммерческими данными загружаются из явно выбранного demo-источника;
 - `[~]` core-профиль клиента числовой карточки хранится в `Lead`; расширенные коммерческие параметры, заметки, timeline и задачи живут в состоянии страницы;
 - `[~]` стадии Kanban настраиваются через `localStorage`, но перемещения лидов не имеют общего backend persistence;
+- `[~]` список/Kanban лидов строится из `GET /leads`, но операции Kanban, convert/reject и demo detail-лиды ещё не образуют полный backend workflow;
 - `[~]` формы контактов числовой detail-страницы используют `LeadContact` API через Server Actions без fallback; demo-маршруты и messenger остаются локальными;
 - `[~]` коммерческая форма числовой detail-страницы сохраняет source, sport, category, description, quantity, amount, desired date и city; остальные поля формы явно локальны;
 - `[~]` `Client` по-прежнему хранит один плоский контакт и пока не связан с общим справочником контактов;
@@ -100,13 +103,13 @@
 
 - `[ ]` полноценная модель клиента, реквизиты beyond INN, история и связи;
 - `[ ]` модель `Deal`, API сделок и persistence Kanban;
-- `[ ]` подключение detail-страницы и списков к единому backend API без скрытой demo-подмены;
+- `[ ]` полное подключение detail-страницы, списка и Kanban к единому backend API без local-only операций;
 - `[ ]` CRUD лидов/клиентов/контактов и архивирование;
 - `[ ]` поиск и дедупликация по телефону/email;
 - `[ ]` постоянные комментарии, файлы, задачи и активности;
 - `[ ]` авторизация и права менеджеров.
 
-**Подтверждения:** `backend/app/models/sales.py`, `backend/app/schemas/sales.py`, `backend/app/api/leads.py`, `backend/app/api/orders.py`, `backend/app/services/lead_contacts.py`, `backend/app/services/lead_conversion.py`, `backend/alembic/versions/9c47a12e6b02_add_lead_conversion.py`, `backend/alembic/versions/b6c4e2f91a07_add_lead_contacts.py`, `backend/alembic/versions/c12f0f2d0f4b_add_lead_customer_profile.py`, `backend/tests/test_lead_contacts.py`, `backend/tests/test_lead_conversion.py`, `docs/architecture/lead-contacts.md`, `docs/architecture/lead-commercial-persistence.md`, `frontend/app/(workspace)/sales/leads/[leadId]/lead-contact-actions.ts`, `frontend/app/(workspace)/sales/leads/[leadId]/lead-commercial-actions.ts`, `frontend/app/(workspace)/sales/leads/[leadId]/lead-customer-actions.ts`, `frontend/components/sales/lead-customer-details.tsx`, `frontend/components/sales/lead-commercial-details.tsx`, `frontend/lib/sales/lead-contact-api.test.mjs`, `frontend/lib/sales/lead-commercial-api.test.mjs`, `frontend/lib/sales/lead-customer-api.test.mjs`, `frontend/lib/demo-data/sales.ts`.
+**Подтверждения:** `backend/app/models/sales.py`, `backend/app/schemas/sales.py`, `backend/app/api/leads.py`, `backend/app/api/orders.py`, `backend/app/services/lead_contacts.py`, `backend/app/services/lead_conversion.py`, `backend/alembic/versions/9c47a12e6b02_add_lead_conversion.py`, `backend/alembic/versions/b6c4e2f91a07_add_lead_contacts.py`, `backend/alembic/versions/c12f0f2d0f4b_add_lead_customer_profile.py`, `backend/tests/test_lead_contacts.py`, `backend/tests/test_lead_conversion.py`, `docs/architecture/lead-contacts.md`, `docs/architecture/lead-commercial-persistence.md`, `frontend/app/(workspace)/sales/leads/page.tsx`, `frontend/app/(workspace)/sales/leads/[leadId]/lead-contact-actions.ts`, `frontend/app/(workspace)/sales/leads/[leadId]/lead-commercial-actions.ts`, `frontend/app/(workspace)/sales/leads/[leadId]/lead-customer-actions.ts`, `frontend/components/sales/lead-workspace.tsx`, `frontend/components/sales/lead-customer-details.tsx`, `frontend/components/sales/lead-commercial-details.tsx`, `frontend/lib/sales/lead-list-api.ts`, `frontend/lib/sales/lead-list-mapping.ts`, `frontend/lib/sales/lead-contact-api.test.mjs`, `frontend/lib/sales/lead-commercial-api.test.mjs`, `frontend/lib/sales/lead-customer-api.test.mjs`, `frontend/lib/sales/lead-list-api.test.mjs`, `frontend/lib/demo-data/sales.ts`.
 **Критерий готовности:** менеджер создаёт и редактирует лид, клиента, контакты и сделку через API; Kanban и формы сохраняются в PostgreSQL после перезагрузки, а конвертация не требует повторного ввода.
 
 ## 3. Заказы покупателей
@@ -483,7 +486,7 @@
 
 `demo UI → backend CRM → persistence → реальные бизнес-процессы`
 
-Backend уже содержит часть sales-моделей, API, постоянные `LeadContact`, коммерческое ядро и core-профиль клиента в `Lead`; числовая detail-страница читает и изменяет эти данные через backend без fallback. Frontend CRM всё ещё использует смешанную модель: `lead-1`/`lead-2`, messenger, расширенные коммерческие поля, задачи, заметки, timeline и сообщения остаются demo/local. Ближайшая архитектурная задача — подключить список/Kanban или следующий основной сценарий лида к backend без скрытой demo-подмены.
+Backend уже содержит часть sales-моделей, API, постоянные `LeadContact`, коммерческое ядро и core-профиль клиента в `Lead`; список лидов и числовая detail-страница читают backend без fallback. Frontend CRM всё ещё использует смешанную модель: `lead-1`/`lead-2`, локальные операции Kanban, messenger, расширенные коммерческие поля, задачи, заметки, timeline и сообщения остаются demo/local. Ближайшая архитектурная задача — сохранить перемещения Kanban или следующий основной сценарий лида через backend без скрытой demo-подмены.
 
 ## Подтверждение checkpoint v0.5.0
 
@@ -542,3 +545,23 @@ Backend уже содержит часть sales-моделей, API, посто
 - `[x]` backend integration tests проверяют сохранение, очистку и валидацию INN; frontend tests проверяют mapping, payload и server-boundary validation;
 - `[x]` backend pytest — 27, frontend tests — 30, typecheck, lint, production build, Alembic current/upgrade/downgrade/upgrade/check и project check 9/9 с `PYTHONUTF8=1` прошли;
 - `[~]` demo-лиды `lead-1`/`lead-2`, messenger, список/Kanban, расширенные коммерческие поля, задачи, заметки и timeline остаются local/demo.
+
+## Итерация v0.6.1-lead-list-backend-load
+
+- `[x]` `/sales/leads` стал server-rendered route и загружает начальный список через `GET /leads?limit=500` с `cache: "no-store"`;
+- `[x]` API URL и fetch находятся в server-only data layer, client component получает только сериализуемые лиды и статус загрузки;
+- `[x]` API-лиды мапятся в существующую модель `Lead` для Kanban без создания второй frontend-сущности;
+- `[x]` при ошибке backend список показывает явное сообщение и пустой набор, demo-данные не подставляются скрыто;
+- `[~]` диагностическая доработка `v0.6.1-lead-list-dev-seed`: добавлена явная идемпотентная development seed-команда `SPORT_LEADS_ALLOW_DEV_SEED=1 .\.venv\Scripts\python.exe scripts\seed_sales_dev.py`, которая создаёт или обновляет 5 числовых backend-лидов, контакты и коммерческие данные минимум для двух лидов; команда не запускается автоматически и блокируется для `APP_ENV=production` или `ENVIRONMENT=production`;
+- `[x]` focused frontend tests проверяют mapping активного, конвертированного и отклонённого лида;
+- `[x]` focused seed pytest `backend/tests/test_sales_dev_seed.py` подтверждает идемпотентность seed и отсутствие дублей; полные проверки выполняются перед завершением диагностики;
+- `[~]` создание лида, перемещения Kanban, convert/reject из списка, demo detail-лиды, задачи, заметки, timeline и сообщения остаются local/demo.
+
+## Итерация v0.6.1-roadmap-sync
+
+- `[x]` локальная линия разработки определена как `v0.6.1` по ветке, task-документу и реализованным итерациям после `v0.5.0`;
+- `[x]` создан единый актуальный `SL-ROADMAP-v0.6.1`, а `SL-ROADMAP-v0.3.0` сохранён как исторический;
+- `[x]` корневой `AGENTS.md` содержит компактное правило ручного model escalation;
+- `[x]` индекс документации связывает актуальный roadmap, структуру, checkpoint/release, инструкции и исторический roadmap;
+- `[x]` project check 9/9, backend pytest 28, frontend tests 32, TypeScript, lint, production build, Compose и проверка diff прошли;
+- `[~]` отдельного release-документа, checkpoint и тега `v0.6.1` пока нет.
