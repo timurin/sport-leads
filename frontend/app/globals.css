@@ -21,6 +21,8 @@
   --portal-shadow-sm: 0 1px 2px rgb(15 23 42 / 0.05);
   --portal-shadow-card: 0 4px 14px rgb(27 46 94 / 0.05);
   --portal-shadow-overlay: 0 18px 45px rgb(15 23 42 / 0.18);
+  --font-geist-sans: Inter, "Segoe UI", Arial, sans-serif;
+  --font-geist-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
   --portal-space-1: 4px;
   --portal-space-2: 8px;
   --portal-space-3: 12px;

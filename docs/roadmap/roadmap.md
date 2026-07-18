@@ -40,7 +40,7 @@
 
 Карточка, организация, статусы/история и `SalesOrderItem` готовы. Позиция заказа — коммерческая строка с `snapshot_name`, `size_range`, `personalization`, `unit`, `quantity`, `unit_price`, `line_amount`; итог заказа пересчитывается через `Decimal/Numeric`.
 
-`[~]` итерация `v0.7.4-sales-order-item-dimensions-personalization`: размеры и персонализация сохраняются как nullable snapshot-поля через CRUD/API/UI; миграция `e0f1a2b3c456`, backend/frontend focused tests, TypeScript, lint и Alembic upgrade/downgrade/check пройдены. Production build не подтверждён из-за недоступности Google Fonts в среде проверки.
+`[x]` итерация `v0.7.4-sales-order-item-dimensions-personalization`: размеры и персонализация сохраняются как nullable snapshot-поля через CRUD/API/UI; миграция `e0f1a2b3c456`, backend/frontend focused tests, TypeScript, lint, offline production build и Alembic upgrade/downgrade/check пройдены.
 
 В этап 2 не входят материалы, производственные спецификации и фактическое производство. Связь с будущей номенклатурой будет добавлена отдельной задачей.
 
