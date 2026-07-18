@@ -3,6 +3,10 @@
 import { revalidatePath } from "next/cache";
 
 const apiBaseUrl = () => (process.env.SPORT_LEADS_API_URL ?? "http://127.0.0.1:8000").replace(/\/$/, "");
+const optionalText = (value: FormDataEntryValue | null) => {
+  const text = String(value ?? "").trim();
+  return text || null;
+};
 
 async function callItems(orderId: string, path: string, method: string, body?: Record<string, unknown>) {
   const response = await fetch(`${apiBaseUrl()}/orders/${orderId}/items${path}`, {
@@ -22,6 +26,8 @@ async function callItems(orderId: string, path: string, method: string, body?: R
 export async function createOrderItem(orderId: string, formData: FormData) {
   return callItems(orderId, "", "POST", {
     snapshot_name: String(formData.get("snapshot_name") ?? ""),
+    size_range: optionalText(formData.get("size_range")),
+    personalization: optionalText(formData.get("personalization")),
     unit: String(formData.get("unit") ?? "шт"),
     quantity: String(formData.get("quantity") ?? "0"),
     unit_price: String(formData.get("unit_price") ?? "0"),
@@ -31,6 +37,8 @@ export async function createOrderItem(orderId: string, formData: FormData) {
 export async function updateOrderItem(orderId: string, itemId: number, formData: FormData) {
   return callItems(orderId, `/${itemId}`, "PATCH", {
     snapshot_name: String(formData.get("snapshot_name") ?? ""),
+    size_range: optionalText(formData.get("size_range")),
+    personalization: optionalText(formData.get("personalization")),
     unit: String(formData.get("unit") ?? "шт"),
     quantity: String(formData.get("quantity") ?? "0"),
     unit_price: String(formData.get("unit_price") ?? "0"),

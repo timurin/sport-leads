@@ -29,6 +29,8 @@ export type ApiSalesOrderItem = {
   order_id: number;
   position: number;
   snapshot_name: string;
+  size_range: string | null;
+  personalization: string | null;
   unit: string;
   quantity: number | string;
   unit_price: number | string;
@@ -91,6 +93,8 @@ export type SalesOrderDetails = {
 export type SalesOrderItem = {
   id: number;
   snapshotName: string;
+  sizeRange: string;
+  personalization: string;
   unit: string;
   quantity: string;
   unitPrice: string;
@@ -147,6 +151,8 @@ export function fromApiSalesOrder(order: ApiSalesOrderDetails): SalesOrderDetail
     items: (order.items ?? []).map((item) => ({
       id: item.id,
       snapshotName: item.snapshot_name,
+      sizeRange: item.size_range ?? "",
+      personalization: item.personalization ?? "",
       unit: item.unit,
       quantity: String(item.quantity),
       unitPrice: currencyFormatter.format(Number(item.unit_price)),

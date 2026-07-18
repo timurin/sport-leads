@@ -31,8 +31,10 @@ export function SalesOrderItems({ orderId, items }: { orderId: string; items: Sa
       <h2 className="text-base font-semibold text-portal-text">Товарные позиции</h2>
       {items.length === 0 ? <p className="mt-2 text-sm text-portal-muted">Позиции пока не добавлены.</p> : (
         <div className="mt-3 space-y-2">
-          {items.map((item) => <form key={item.id} action={(formData) => submitUpdate(item.id, formData)} className="grid gap-2 rounded border border-portal-border p-3 text-sm sm:grid-cols-[1fr_auto_auto_auto_auto] sm:items-center">
+          {items.map((item) => <form key={item.id} action={(formData) => submitUpdate(item.id, formData)} className="grid gap-2 rounded border border-portal-border p-3 text-sm sm:grid-cols-[1fr_1fr_1.3fr_auto_auto] sm:items-center">
             <input name="snapshot_name" defaultValue={item.snapshotName} required className="rounded border px-2 py-1" />
+            <input name="size_range" defaultValue={item.sizeRange} placeholder="Размеры" className="rounded border px-2 py-1" />
+            <input name="personalization" defaultValue={item.personalization} placeholder="Персонализация" className="rounded border px-2 py-1" />
             <input name="quantity" defaultValue={item.quantity} required type="number" min="0.001" step="0.001" className="w-24 rounded border px-2 py-1" />
             <input name="unit_price" defaultValue={item.unitPrice.replace(/[^0-9,.-]/g, "").replace(",", ".")} required type="number" min="0" step="0.01" className="w-28 rounded border px-2 py-1" />
             <span className="font-semibold">{item.lineAmount}</span>
@@ -40,8 +42,10 @@ export function SalesOrderItems({ orderId, items }: { orderId: string; items: Sa
           </form>)}
         </div>
       )}
-      <form ref={formRef} action={submitCreate} className="mt-4 grid gap-2 sm:grid-cols-4">
+      <form ref={formRef} action={submitCreate} className="mt-4 grid gap-2 sm:grid-cols-5">
         <input name="snapshot_name" required placeholder="Наименование" className="rounded border px-3 py-2 text-sm" />
+        <input name="size_range" placeholder="Размеры" className="rounded border px-3 py-2 text-sm" />
+        <input name="personalization" placeholder="Персонализация" className="rounded border px-3 py-2 text-sm" />
         <input name="quantity" required type="number" min="0.001" step="0.001" placeholder="Количество" className="rounded border px-3 py-2 text-sm" />
         <input name="unit_price" required type="number" min="0" step="0.01" placeholder="Цена" className="rounded border px-3 py-2 text-sm" />
         <button type="submit" disabled={isPending} className="rounded bg-blue-700 px-3 py-2 text-sm font-semibold text-white disabled:opacity-50">Добавить позицию</button>

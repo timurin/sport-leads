@@ -367,6 +367,8 @@ class SalesOrderItem(Base):
     )
     position: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
     snapshot_name: Mapped[str] = mapped_column(String(255), nullable=False)
+    size_range: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    personalization: Mapped[str | None] = mapped_column(String(500), nullable=True)
     unit: Mapped[str] = mapped_column(String(30), nullable=False, default="шт")
     quantity: Mapped[Decimal] = mapped_column(Numeric(14, 3), nullable=False)
     unit_price: Mapped[Decimal] = mapped_column(Numeric(14, 2), nullable=False)

@@ -39,6 +39,8 @@ def create_sales_order_item(
         order=order,
         position=position,
         snapshot_name=payload.snapshot_name.strip(),
+        size_range=payload.size_range.strip() if payload.size_range else None,
+        personalization=payload.personalization.strip() if payload.personalization else None,
         unit=payload.unit.strip(),
         quantity=payload.quantity,
         unit_price=payload.unit_price,
@@ -66,10 +68,17 @@ def update_sales_order_item(
     if item is None:
         raise SalesOrderItemError("Order item not found")
     changes = payload.model_dump(exclude_unset=True)
-    for field_name in ("snapshot_name", "unit", "quantity", "unit_price"):
+    for field_name in (
+        "snapshot_name",
+        "size_range",
+        "personalization",
+        "unit",
+        "quantity",
+        "unit_price",
+    ):
         if field_name in changes:
             value = changes[field_name]
-            setattr(item, field_name, value.strip() if isinstance(value, str) else value)
+            setattr(item, field_name, value.strip() if isinstance(value, str) and value else value)
     item.line_amount = _line_amount(item.quantity, item.unit_price)
     db.flush()
     _recalculate_order(order)

@@ -327,6 +327,8 @@ class SalesOrderItemRead(SalesSchema):
     order_id: int
     position: int
     snapshot_name: str
+    size_range: str | None
+    personalization: str | None
     unit: str
     quantity: Decimal
     unit_price: Decimal
@@ -337,6 +339,8 @@ class SalesOrderItemRead(SalesSchema):
 
 class SalesOrderItemCreate(BaseModel):
     snapshot_name: str = Field(min_length=1, max_length=255)
+    size_range: str | None = Field(default=None, max_length=255)
+    personalization: str | None = Field(default=None, max_length=500)
     unit: str = Field(default="шт", min_length=1, max_length=30)
     quantity: Decimal = Field(gt=0, max_digits=14, decimal_places=3)
     unit_price: Decimal = Field(ge=0, max_digits=14, decimal_places=2)
@@ -344,6 +348,8 @@ class SalesOrderItemCreate(BaseModel):
 
 class SalesOrderItemUpdate(BaseModel):
     snapshot_name: str | None = Field(default=None, min_length=1, max_length=255)
+    size_range: str | None = Field(default=None, max_length=255)
+    personalization: str | None = Field(default=None, max_length=500)
     unit: str | None = Field(default=None, min_length=1, max_length=30)
     quantity: Decimal | None = Field(default=None, gt=0, max_digits=14, decimal_places=3)
     unit_price: Decimal | None = Field(default=None, ge=0, max_digits=14, decimal_places=2)
