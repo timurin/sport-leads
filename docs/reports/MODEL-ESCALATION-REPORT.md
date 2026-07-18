@@ -132,3 +132,57 @@ Task: `docs/tasks/patch-0.6-lead-ux-custom-stages.md`, пункт 2
 Бизнес-код и схема базы в рамках этого аудита не изменялись.
 
 Требуется более сильная модель. Перезапустите Codex и повторите задачу.
+
+---
+
+# Model escalation report — v0.7.0 sales order foundation
+
+Дата аудита: 2026-07-18
+Ветка: `feature/v0.6.1-lead-persistence`
+Задача: `docs/tasks/v0.7.0-sales-order-foundation-and-project-status.md`
+
+## Причина остановки
+
+Следующая итерация v0.7.0 требует реализации карточки заказа покупателя и затрагивает несколько бизнес-контуров одновременно:
+
+- backend-модель и read-контракт `SalesOrder`;
+- связи `SalesOrder` с `Lead` и `Client`;
+- API чтения заказа и обработку not-found/error состояний;
+- frontend data layer, маршрут `/sales/orders/[orderId]` и навигацию из списка;
+- синхронизацию roadmap, ERP-check и автономных HTML-отчётов.
+
+Это новое архитектурное решение в бизнес-модуле продаж, а не локальное изменение CRUD. По правилам `AGENTS.md` и roadmap v0.6.1 до изменения бизнес-кода требуется ручная эскалация модели.
+
+## Результаты безопасного аудита
+
+- Рабочая ветка: `feature/v0.6.1-lead-persistence`.
+- HEAD: `0c2d88f release: complete CRM Leads MVP v0.6.0`.
+- До аудита в рабочем дереве находился только незакоммиченный task-файл v0.7.0; он сохранён.
+- `SalesOrder` уже существует в `backend/app/models/sales.py`.
+- Существуют `GET /orders`, `GET /orders/{order_id}`, `source-lead` и `history` в `backend/app/api/orders.py`.
+- Существуют `SalesOrderRead` и `LeadConversionRead` в `backend/app/schemas/sales.py`.
+- Конвертация `Lead → Client + SalesOrder` реализована транзакционно в `backend/app/services/lead_conversion.py` и покрыта тестами.
+- Список `/sales/orders` уже загружает backend-данные; отдельной рабочей карточки заказа в маршруте `[orderId]` не обнаружено.
+- Frontend имеет demo-типы и demo-шаблоны заказов, которые нельзя принимать за persistence-контур.
+- В `SL-ROADMAP-v0.6.1` заказ отмечен как минимальный backend/read-контур, а полноценная карточка остаётся незавершённой.
+
+## Проверки
+
+- `.venv\Scripts\python.exe -m pytest`: `37 passed`.
+- `git diff --check`: пройден.
+- `scripts/check_project.py`: не пройден по причинам окружения:
+  - PermissionError при записи `.pyc` в существующие `backend/alembic/**/__pycache__`;
+  - UnicodeEncodeError при выводе символа `▲` frontend lint через cp1251.
+- В ходе аудита файлы приложения, миграции и данные не изменялись.
+
+## Риски без эскалации
+
+Самостоятельное проектирование нового контракта карточки заказа может привести к дублированию существующего endpoint, расхождению nullable-полей, неверной связи с исходным лидом/клиентом и преждевременному повышению статуса модуля в документации. Поэтому дальнейшая реализация приостановлена.
+
+## Продолжение после смены модели
+
+После ручного выбора более сильной модели продолжить с первой законченной подзадачи: реализовать read-only foundation карточки заказа на существующем `GET /orders/{order_id}`, добавить mapping и состояния loading/not-found/API error, тесты и только затем обновить roadmap, ERP-check и два автономных HTML-отчёта.
+
+## Результат после продолжения
+
+После ручного переключения модели выполнена итерация `v0.7.0-sales-order-foundation`: существующий detail API возвращает имена клиента и ответственного, список открывает `/sales/orders/[orderId]`, а карточка обрабатывает loading, not-found, API error и nullable-поля без demo fallback. Миграция не потребовалась; полный набор проверок пройден.

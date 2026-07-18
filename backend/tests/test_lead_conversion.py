@@ -440,6 +440,58 @@ def test_orders_list_exposes_converted_order_for_reload(
     assert listed["responsible_name"] == "Test user"
 
 
+def test_order_detail_exposes_conversion_links_and_nullable_fields(
+    client: TestClient,
+    session_factory: sessionmaker[Session],
+) -> None:
+    lead_id = add_lead(session_factory)
+    conversion = client.post(f"/leads/{lead_id}/convert", json={"completed_by_id": 1})
+    assert conversion.status_code == 201
+    created_order = conversion.json()["order"]
+
+    response = client.get(f"/orders/{created_order['id']}")
+    assert response.status_code == 200
+    order = response.json()
+    assert order["id"] == created_order["id"]
+    assert order["lead_id"] == lead_id
+    assert order["client_id"] == created_order["client_id"]
+    assert order["client_name"] == "СК Олимп"
+    assert order["responsible_name"] == "Test user"
+    assert order["description"] == "Форма для команды"
+    assert order["desired_date"] is None
+    assert order["created_at"]
+    assert order["updated_at"]
+
+
+def test_order_detail_returns_404_for_missing_order(client: TestClient) -> None:
+    response = client.get("/orders/999999")
+    assert response.status_code == 404
+
+
+def test_order_status_patch_persists_after_reload(
+    client: TestClient,
+    session_factory: sessionmaker[Session],
+) -> None:
+    lead_id = add_lead(session_factory)
+    conversion = client.post(f"/leads/{lead_id}/convert", json={"completed_by_id": 1})
+    order_id = conversion.json()["order"]["id"]
+
+    updated = client.patch(f"/orders/{order_id}/status", json={"status": "production"})
+    assert updated.status_code == 200
+    assert updated.json()["status"] == "production"
+    assert updated.json()["client_name"] == "СК Олимп"
+
+    reloaded = client.get(f"/orders/{order_id}")
+    assert reloaded.status_code == 200
+    assert reloaded.json()["status"] == "production"
+
+
+def test_order_status_patch_validates_status_and_missing_order(client: TestClient) -> None:
+    invalid_status = client.patch("/orders/999999/status", json={"status": "unknown"})
+    assert invalid_status.status_code == 422
+
+    missing_order = client.patch("/orders/999999/status", json={"status": "production"})
+    assert missing_order.status_code == 404
 def test_lead_history_exposes_status_conversion_and_rejection_events(
     client: TestClient,
     session_factory: sessionmaker[Session],

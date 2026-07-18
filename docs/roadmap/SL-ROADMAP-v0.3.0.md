@@ -232,7 +232,7 @@
 
 ## Текущее состояние
 
-* `[~]` заказ представлен в демонстрационном frontend-контуре;
+* `[~]` read-only карточка заказа покупателя доступна по `/sales/orders/[orderId]` и загружает сохранённый `SalesOrder` из backend; товарные позиции, изменения и расчёты отсутствуют;
 * `[~]` заказы отображаются на dashboard;
 * `[~]` существуют интерфейсные статусы заказов;
 * `[ ]` полноценный backend-контур не подтвержден;
@@ -243,17 +243,17 @@
 
 ### Карточка заказа
 
-* `[ ]` номер и дата;
+* `[x]` номер и дата — итерация `v0.7.0-sales-order-foundation`: read-only header на основе `GET /orders/{order_id}`, подтверждён `backend/tests/test_lead_conversion.py` и `frontend/lib/sales/order-details.test.mjs`;
 * `[ ]` организация;
-* `[ ]` клиент;
+* `[x]` клиент — итерация `v0.7.0-sales-order-foundation`: detail API возвращает имя клиента, карточка показывает его без demo fallback;
 * `[ ]` контактное лицо;
-* `[ ]` ответственный менеджер;
+* `[x]` ответственный менеджер — итерация `v0.7.0-sales-order-foundation`: detail API возвращает имя `SalesUser`, nullable значение отображается явно;
 * `[ ]` договор;
 * `[ ]` срок готовности;
 * `[ ]` способ доставки;
 * `[ ]` адрес доставки;
 * `[ ]` условия оплаты;
-* `[ ]` статус заказа;
+* `[x]` статус заказа — итерация `v0.7.0-sales-order-kanban-status-persistence`: Kanban сохраняет `SalesOrder.status` через `PATCH /orders/{order_id}/status`; backend-ошибка откатывает карточку, а reload возвращает сохранённый статус. Подтверждения: `backend/app/services/sales_order_status.py`, `backend/tests/test_lead_conversion.py`, `frontend/app/(workspace)/sales/orders/order-status-actions.ts`, `frontend/components/kanban/kanban-page.tsx`; тесты: backend pytest 41, frontend tests 51, TypeScript, lint, build, project check;
 * `[ ]` статус оплаты;
 * `[ ]` комментарии;
 * `[ ]` файлы.

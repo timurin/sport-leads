@@ -13,7 +13,7 @@ test("maps persisted sales orders to existing kanban columns", () => {
   }]);
 
   assert.equal(columns.find((column) => column.id === "new")?.cards[0]?.subtitle, "ООО Спорт");
-  assert.equal(columns.find((column) => column.id === "new")?.cards[0]?.href, "/sales/leads/9");
+  assert.equal(columns.find((column) => column.id === "new")?.cards[0]?.href, "/sales/orders/41");
   assert.equal(columns.find((column) => column.id === "new")?.cards[0]?.amount, "125\u00a0000 ₽");
   assert.equal(columns.find((column) => column.id === "new")?.cards[0]?.responsible, "Иван");
 });

@@ -119,7 +119,7 @@
 ## 3. Заказы покупателей
 
 **Назначение:** хранить коммерческий документ с клиентом, позициями, расчётами, оплатами и связью с производством.
-**Текущий статус:** `[~]` существует минимальный заказ результата конвертации, полноценной карточки заказа нет.
+**Текущий статус:** `[~]` существует минимальный заказ результата конвертации и read-only карточка; полноценный коммерческий документ и изменение заказа отсутствуют.
 
 ### Подтверждено
 
@@ -129,16 +129,17 @@
 - `[x]` read API списка, карточки, исходного лида и общей истории;
 - `[x]` уникальность заказа на один лид покрыта ограничением и тестом;
 - `[x]` frontend-страница списка заказов и dashboard-сводка существуют.
+- `[x]` итерация `v0.7.0-sales-order-foundation`: `/sales/orders/[orderId]` загружает существующий `GET /orders/{order_id}`, показывает номер, дату, статус, клиента, ответственного, сумму и ссылку на исходный лид; loading, not-found и API error обработаны без demo fallback.
 
 ### Частично реализовано
 
 - `[~]` заказ хранит заголовок, описание, категорию, спорт, количество, сумму, срок и источник;
-- `[~]` frontend заказов и dashboard используют demo-данные;
-- `[~]` статусы заданы, но полный жизненный цикл не реализован.
+- `[~]` dashboard использует demo-данные; список и read-only карточка заказов используют backend API.
+- `[~]` базовая смена `SalesOrder.status` сохраняется из Kanban через `PATCH /orders/{order_id}/status` (итерация `v0.7.0-sales-order-kanban-status-persistence`); правила допустимых переходов, audit history и полный жизненный цикл не реализованы.
 
 ### Осталось
 
-- `[ ]` полноценная карточка и API изменения заказа;
+- `[~]` read-only карточка готова, но API и UI изменения заказа отсутствуют;
 - `[ ]` товарные позиции, размеры, персонализация, цены, скидки и НДС;
 - `[ ]` план и факт оплат;
 - `[ ]` файлы, версии и печатные формы;
@@ -617,6 +618,16 @@ Backend уже содержит часть sales-моделей, API, посто
 - `[~]` order mutations и отдельная detail-страница заказа остаются вне этой итерации.
 
 Подтверждения: `backend/app/models/sales.py`, `backend/app/schemas/sales.py`, `backend/app/api/orders.py`, `backend/tests/test_lead_conversion.py`, `frontend/lib/sales/order-list-api.ts`, `frontend/app/(workspace)/sales/orders/page.tsx`.
+
+## Итерация v0.7.0-sales-order-foundation
+
+- `[x]` detail read API `GET /orders/{order_id}` повторно использует `SalesOrderRead` и возвращает сериализованный заказ с именами `Client` и `SalesUser`;
+- `[x]` карточка `/sales/orders/[orderId]` получает только backend-данные, показывает обязательный header, nullable поля и сохранённую связь с исходным лидом;
+- `[x]` список заказов ведёт на карточку заказа; отдельные loading, not-found и error UI не скрывают ошибки API;
+- `[x]` API-контракт подтверждён `backend/tests/test_lead_conversion.py`, UI mapping и URL — `frontend/lib/sales/order-details.test.mjs` и `frontend/lib/sales/order-list-api.test.mjs`;
+- `[~]` мутации заказа, позиции, финансы, производство, склад и расширенный workflow остаются вне foundation; миграция не создавалась.
+
+Подтверждения: `backend/app/api/orders.py`, `backend/app/schemas/sales.py`, `backend/tests/test_lead_conversion.py`, `frontend/lib/sales/order-details.ts`, `frontend/lib/sales/order-details.test.mjs`, `frontend/lib/sales/order-list-api.ts`, `frontend/lib/sales/order-list-api.test.mjs`, `frontend/components/sales/sales-order-page.tsx`, `frontend/app/(workspace)/sales/orders/[orderId]`.
 ## Итерация v0.6.1-navigation-remove-deals
 
 - `[x]` навигация CRM больше не предлагает отдельную сущность `Сделка`;

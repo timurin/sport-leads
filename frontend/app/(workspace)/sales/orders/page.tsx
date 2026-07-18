@@ -1,4 +1,5 @@
 import { KanbanPage } from "@/components/kanban/kanban-page";
+import { updateOrderStatus } from "@/app/(workspace)/sales/orders/order-status-actions";
 import { getOrderList } from "@/lib/sales/order-list-api";
 
 export default async function OrdersPage() {
@@ -26,5 +27,6 @@ export default async function OrdersPage() {
       { id: "status", label: "Статус", options: statuses },
     ]}
     loadError={orderList.ok ? undefined : orderList.message}
+    onMove={updateOrderStatus}
   />;
 }

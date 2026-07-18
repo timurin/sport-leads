@@ -12,6 +12,7 @@ import type {
   KanbanColumnData,
   KanbanFilter,
   KanbanMetricDefinition,
+  KanbanMove,
 } from "@/components/kanban/kanban-types";
 import { Button } from "@/components/ui/button";
 import { DemoActionDialog } from "@/components/ui/demo-action-dialog";
@@ -25,6 +26,7 @@ type KanbanPageProps<TStatus extends string> = {
   metrics: KanbanMetricDefinition<TStatus>[];
   filters: KanbanFilter[];
   loadError?: string;
+  onMove?: (move: KanbanMove<TStatus>) => Promise<{ ok: boolean; message: string }>;
 };
 
 type MetricSelection<TStatus extends string> = {
@@ -76,6 +78,7 @@ export function KanbanPage<TStatus extends string>({
   metrics,
   filters,
   loadError,
+  onMove,
 }: KanbanPageProps<TStatus>) {
   const [query, setQuery] = useState("");
   const [selectedFilters, setSelectedFilters] = useState<Record<string, string>>({});
@@ -83,6 +86,8 @@ export function KanbanPage<TStatus extends string>({
   const [metricColumns, setMetricColumns] = useState(
     () => cloneKanbanColumns(columns),
   );
+  const [boardRevision, setBoardRevision] = useState(0);
+  const [moveError, setMoveError] = useState<string | null>(null);
   const metricCards = useMemo(
     () => metricColumns.flatMap((column) => column.cards),
     [metricColumns],
@@ -162,14 +167,48 @@ export function KanbanPage<TStatus extends string>({
       </div>
 
       <div className="p-4 lg:p-6">
+        {moveError ? (
+          <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-800" role="alert">
+            {moveError}
+          </div>
+        ) : null}
         {loadError ? (
           <div className="rounded-xl border border-red-200 bg-red-50 px-6 py-10 text-center text-sm text-red-700" role="alert">{loadError}</div>
         ) : (
           <KanbanBoard
-            columns={columns}
+            key={boardRevision}
+            columns={metricColumns}
             query={query}
             selectedFilters={selectedFilters}
             onColumnsChange={setMetricColumns}
+            onMove={(move) => {
+              if (!onMove) {
+                return;
+              }
+
+              const previousColumns = cloneKanbanColumns(metricColumns);
+              const previousCard = previousColumns
+                .flatMap((column) => column.cards)
+                .find((card) => card.id === move.cardId);
+              if (!previousCard || previousCard.status === move.targetColumnId) {
+                return;
+              }
+
+              setMoveError(null);
+              void onMove(move).then((result) => {
+                if (result.ok) {
+                  return;
+                }
+
+                setMetricColumns(previousColumns);
+                setBoardRevision((value) => value + 1);
+                setMoveError(`Не удалось сохранить статус заказа: ${result.message}`);
+              }).catch(() => {
+                setMetricColumns(previousColumns);
+                setBoardRevision((value) => value + 1);
+                setMoveError("Не удалось связаться с backend. Перемещение заказа отменено.");
+              });
+            }}
           />
         )}
       </div>

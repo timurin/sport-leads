@@ -319,6 +319,10 @@ class SalesOrderRead(SalesSchema):
     responsible_name: str | None = None
 
 
+class SalesOrderStatusUpdate(BaseModel):
+    status: SalesOrderStatus
+
+
 class LeadConversionRead(BaseModel):
     lead: LeadRead
     order: SalesOrderRead

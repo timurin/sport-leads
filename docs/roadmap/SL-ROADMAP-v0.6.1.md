@@ -64,7 +64,7 @@
 - `[~]` Kanban сделок существует только во frontend на demo-данных;
 - `[x]` минимальные модели `Client` и `SalesOrder` создаются транзакционной конвертацией лида;
 - `[x]` `SalesOrder` связан с исходным лидом и клиентом и доступен через read API;
-- `[~]` frontend заказов существует, но использует demo-данные и не сохраняет изменения;
+- `[~]` список и read-only карточка заказов используют backend-данные; создание, редактирование и прочие изменения заказа через UI отсутствуют;
 - `[~]` заказ хранит заголовок и основные поля из лида, но не является полноценным коммерческим документом;
 - `[ ]` товарные позиции, размеры, персонализация, скидки, НДС и расчёты;
 - `[ ]` полный жизненный цикл статусов, платежей и отгрузок;
@@ -160,6 +160,16 @@ Codex должен остановиться и попросить владель
 - `[~]` создание и редактирование заказов через UI остаются отдельным незавершённым сценарием.
 
 Подтверждения: `backend/app/api/orders.py`, `backend/app/schemas/sales.py`, `backend/tests/test_lead_conversion.py`, `frontend/lib/sales/order-list-api.ts`, `frontend/lib/sales/order-list-api.test.mjs`, `frontend/app/(workspace)/sales/orders/page.tsx`.
+
+## Итерация v0.7.0-sales-order-foundation
+
+- `[x]` существующий `GET /orders/{order_id}` обогащён теми же `client_name` и `responsible_name`, что и список, и возвращает Pydantic-контракт, а не ORM-объект;
+- `[x]` добавлен маршрут `/sales/orders/[orderId]` с read-only header и основными полями заказа, ссылкой на исходный лид, состояниями loading/not-found/API error и возвратом к списку;
+- `[x]` Kanban-список открывает карточку заказа, а не карточку исходного лида; frontend не использует demo fallback;
+- `[x]` добавлены backend-проверки существующего заказа, 404, связей и nullable-полей, а также frontend mapping- и URL-тесты;
+- `[~]` это foundation v0.7.0: товарные позиции, редактирование, оплаты, производство, склад и сложный workflow статусов не реализованы; миграция не требовалась.
+
+Подтверждения: `backend/app/api/orders.py`, `backend/tests/test_lead_conversion.py`, `frontend/app/(workspace)/sales/orders/[orderId]/page.tsx`, `frontend/app/(workspace)/sales/orders/[orderId]/loading.tsx`, `frontend/app/(workspace)/sales/orders/[orderId]/not-found.tsx`, `frontend/app/(workspace)/sales/orders/[orderId]/error.tsx`, `frontend/components/sales/sales-order-page.tsx`, `frontend/lib/sales/order-details.ts`, `frontend/lib/sales/order-details.test.mjs`, `frontend/lib/sales/order-list-api.ts`, `frontend/lib/sales/order-list-api.test.mjs`.
 ## Итерация v0.6.1-navigation-remove-deals
 
 - `[x]` активная CRM-навигация разделена на отдельные ссылки `Лиды` → `/sales/leads` и `Заказы покупателей` → `/sales/orders`;

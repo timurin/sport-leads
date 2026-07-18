@@ -4,10 +4,31 @@ from sqlalchemy.orm import Session
 
 from app.database.session import get_db
 from app.models.sales import Client, Lead, LeadEvent, SalesOrder, SalesUser
-from app.schemas.sales import LeadEventRead, LeadRead, SalesOrderRead
+from app.schemas.sales import (
+    LeadEventRead,
+    LeadRead,
+    SalesOrderRead,
+    SalesOrderStatusUpdate,
+)
+from app.services.sales_order_status import (
+    SalesOrderNotFoundError,
+    update_sales_order_status,
+)
 
 
 router = APIRouter(prefix="/orders", tags=["Sales orders"])
+
+
+def serialize_order(
+    order: SalesOrder,
+    client: Client,
+    responsible: SalesUser | None,
+) -> dict[str, object]:
+    return {
+        **{column.name: getattr(order, column.name) for column in SalesOrder.__table__.columns},
+        "client_name": client.company_name or client.contact_name,
+        "responsible_name": responsible.name if responsible else None,
+    }
 
 
 @router.get("", response_model=list[SalesOrderRead])
@@ -25,21 +46,38 @@ def list_orders(
         .limit(limit)
     ).all()
     return [
-        {
-            **{column.name: getattr(order, column.name) for column in SalesOrder.__table__.columns},
-            "client_name": client.company_name or client.contact_name,
-            "responsible_name": responsible.name if responsible else None,
-        }
+        serialize_order(order, client, responsible)
         for order, client, responsible in rows
     ]
 
 
 @router.get("/{order_id}", response_model=SalesOrderRead)
-def get_order(order_id: int, db: Session = Depends(get_db)) -> SalesOrder:
-    order = db.get(SalesOrder, order_id)
-    if order is None:
+def get_order(order_id: int, db: Session = Depends(get_db)) -> dict[str, object]:
+    row = db.execute(
+        select(SalesOrder, Client, SalesUser)
+        .join(Client, Client.id == SalesOrder.client_id)
+        .outerjoin(SalesUser, SalesUser.id == SalesOrder.responsible_id)
+        .where(SalesOrder.id == order_id)
+    ).one_or_none()
+    if row is None:
         raise HTTPException(status_code=404, detail="Order not found")
-    return order
+    order, client, responsible = row
+    return serialize_order(order, client, responsible)
+
+
+@router.patch("/{order_id}/status", response_model=SalesOrderRead)
+def update_order_status(
+    order_id: int,
+    payload: SalesOrderStatusUpdate,
+    db: Session = Depends(get_db),
+) -> dict[str, object]:
+    try:
+        update_sales_order_status(db, order_id, payload.status)
+    except SalesOrderNotFoundError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+
+    db.commit()
+    return get_order(order_id, db)
 
 
 @router.get("/{order_id}/source-lead", response_model=LeadRead)

@@ -44,7 +44,7 @@ export function fromApiSalesOrders(orders: ApiSalesOrder[]): KanbanColumnData<Or
     id: String(order.id),
     status: order.status,
     title: `Заказ ${order.number}`,
-    href: `/sales/leads/${order.lead_id}`,
+    href: `/sales/orders/${order.id}`,
     subtitle: order.client_name ?? `Клиент #${order.client_id}`,
     amount: formatAmount(order.amount),
     badge: { label: statusPresentation[order.status].label, tone: order.status === "completed" ? "emerald" as const : order.status === "cancelled" ? "slate" as const : "blue" as const },
@@ -71,12 +71,37 @@ export type OrderListResult =
   | { ok: true; columns: KanbanColumnData<OrderStatus>[]; orders: ApiSalesOrder[] }
   | { ok: false; message: string };
 
+export type OrderStatusUpdateResult =
+  | { ok: true; order: ApiSalesOrder }
+  | { ok: false; message: string };
+
+function apiBaseUrl() {
+  return (process.env.SPORT_LEADS_API_URL ?? "http://127.0.0.1:8000").replace(/\/$/, "");
+}
+
 export async function getOrderList(): Promise<OrderListResult> {
-  const apiUrl = process.env.SPORT_LEADS_API_URL ?? "http://127.0.0.1:8000";
-  const response = await fetch(`${apiUrl.replace(/\/$/, "")}/orders?limit=500`, { cache: "no-store" });
+  const response = await fetch(`${apiBaseUrl()}/orders?limit=500`, { cache: "no-store" });
   if (!response.ok) {
     return { ok: false, message: `Не удалось загрузить заказы из backend (${response.status}).` };
   }
   const orders = await response.json() as ApiSalesOrder[];
   return { ok: true, orders, columns: fromApiSalesOrders(orders) };
+}
+
+export async function updateApiOrderStatus(
+  orderId: string,
+  status: OrderStatus,
+): Promise<OrderStatusUpdateResult> {
+  const response = await fetch(`${apiBaseUrl()}/orders/${orderId}/status`, {
+    method: "PATCH",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ status }),
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    return { ok: false, message: `Backend не сохранил статус заказа (${response.status}).` };
+  }
+
+  return { ok: true, order: await response.json() as ApiSalesOrder };
 }
