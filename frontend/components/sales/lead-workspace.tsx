@@ -13,7 +13,10 @@ import {
 import { LeadStageSettingsDialog } from "@/components/sales/lead-stage-settings-dialog";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page-header";
-import { updateLeadStatus } from "@/app/(workspace)/sales/leads/[leadId]/lead-header-actions";
+import {
+  convertLead as convertApiLeadAction,
+  updateLeadStatus,
+} from "@/app/(workspace)/sales/leads/[leadId]/lead-header-actions";
 import { salesManagers } from "@/lib/demo-data/sales";
 import {
   getLeadStagePersistenceDecision,
@@ -128,6 +131,7 @@ export function LeadWorkspace({
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [revision, setRevision] = useState(0);
   const [moveError, setMoveError] = useState<string | null>(null);
+  const [completionError, setCompletionError] = useState<string | null>(null);
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
@@ -213,8 +217,13 @@ export function LeadWorkspace({
     }));
   }, [activeStages, leads, view]);
 
-  function convertLead(leadId: string, draft: LeadOrderDraft) {
-    const sequence = 1101 + converted.length;
+  async function convertLead(leadId: string, draft: LeadOrderDraft) {
+    setCompletionError(null);
+    const result = await convertApiLeadAction(leadId, draft);
+    if (!result.ok) {
+      setCompletionError(result.message);
+      return;
+    }
 
     setLeads((current) => current.map((lead) => (
       lead.id === leadId
@@ -222,10 +231,10 @@ export function LeadWorkspace({
             ...lead,
             status: "completed",
             result: "converted",
-            completedAt: "16 июля 2026, 18:00",
+            completedAt: "Сохранено backend",
             completedBy: lead.responsible,
-            convertedOrderId: `order-${sequence}`,
-            convertedOrderNumber: `№${sequence}`,
+            convertedOrderId: result.orderId,
+            convertedOrderNumber: result.orderNumber,
             productCategory: draft.productCategory,
             quantity: draft.quantity,
             needDescription: draft.description,
@@ -377,6 +386,11 @@ export function LeadWorkspace({
         {moveError ? (
           <div className="mb-4 border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-800" role="alert">
             {moveError}
+          </div>
+        ) : null}
+        {completionError ? (
+          <div className="mb-4 border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-800" role="alert">
+            {completionError}
           </div>
         ) : null}
         <KanbanBoard

@@ -574,3 +574,13 @@ Backend уже содержит часть sales-моделей, API, посто
 - `[~]` конфигурация стадий и полный журнал переходов остаются local/следующими задачами.
 
 Подтверждения: `frontend/components/sales/lead-workspace.tsx`, `frontend/lib/sales/lead-stage-persistence.ts`, `frontend/lib/sales/lead-stage-persistence.test.mjs`, `frontend/app/(workspace)/sales/leads/[leadId]/lead-header-actions.ts`, `backend/app/api/leads.py`.
+
+## Итерация v0.6.1-lead-convert-list-persistence
+
+- `[x]` completion dialog числового API-лида использует существующий server action и `POST /leads/{lead_id}/convert`;
+- `[x]` карточка списка получает состояние completed/converted только после подтверждённого backend-ответа с заказом;
+- `[x]` ошибки конвертации не маскируются локальным успешным состоянием;
+- `[x]` payload mapping покрыт focused frontend test;
+- `[~]` reject из списка и единый полный convert/reject workflow ещё не подключены.
+
+Подтверждения: `frontend/app/(workspace)/sales/leads/[leadId]/lead-header-actions.ts`, `frontend/lib/sales/lead-details.ts`, `frontend/lib/sales/lead-conversion.ts`, `frontend/lib/sales/lead-conversion.test.mjs`, `frontend/components/sales/lead-workspace.tsx`, `backend/app/api/leads.py`.

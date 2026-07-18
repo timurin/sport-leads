@@ -274,6 +274,61 @@ export async function updateApiLead(leadId: string, update: LeadApiUpdate): Prom
   return { ok: true, lead: await response.json() as ApiLead };
 }
 
+export type LeadApiConversion = {
+  lead: ApiLead;
+  order: {
+    id: number;
+    number: string;
+    product_category: string | null;
+    sport: string | null;
+    quantity: number | null;
+    amount: number | string | null;
+    desired_date: string | null;
+  };
+};
+
+export type LeadApiConversionResult =
+  | { ok: true; conversion: LeadApiConversion }
+  | { ok: false; status: number; message: string };
+
+export async function convertApiLead(
+  leadId: string,
+  payload: {
+    title: string;
+    description: string;
+    product_category: string;
+    sport: string;
+    quantity: number;
+    amount: number;
+    desired_date: string;
+  },
+): Promise<LeadApiConversionResult> {
+  const apiUrl = process.env.SPORT_LEADS_API_URL ?? "http://127.0.0.1:8000";
+  const response = await fetch(`${apiUrl.replace(/\/$/, "")}/leads/${leadId}/convert`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    let message = `Backend отклонил конвертацию (${response.status}).`;
+    try {
+      const body = await response.json() as { detail?: string | Array<{ msg?: string }> };
+      if (typeof body.detail === "string") {
+        message = body.detail;
+      } else if (Array.isArray(body.detail)) {
+        message = body.detail.map((item) => item.msg).filter(Boolean).join(" ") || message;
+      }
+    } catch {
+      // Use the stable status-based message for empty or non-JSON responses.
+    }
+    return { ok: false, status: response.status, message };
+  }
+
+  return { ok: true, conversion: await response.json() as LeadApiConversion };
+}
+
 export async function getLeadDetails(leadId: string): Promise<LeadDetails | null> {
   const demoLead = leads.find((lead) => lead.id === leadId);
   if (demoLead) {

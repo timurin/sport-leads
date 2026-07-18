@@ -118,6 +118,16 @@ Codex должен остановиться и попросить владель
 
 Подтверждения: `frontend/components/sales/lead-workspace.tsx`, `frontend/lib/sales/lead-stage-persistence.ts`, `frontend/lib/sales/lead-stage-persistence.test.mjs`, `frontend/app/(workspace)/sales/leads/[leadId]/lead-header-actions.ts`, существующий `PATCH /leads/{lead_id}` в `backend/app/api/leads.py`.
 
+## Итерация v0.6.1-lead-convert-list-persistence
+
+- `[x]` конвертация числового API-лида из существующего списка отправляет данные диалога через server action в существующий `POST /leads/{lead_id}/convert`;
+- `[x]` локальное состояние завершённого лида обновляется только после подтверждённого ответа backend с сохранённым заказом;
+- `[x]` ошибка backend остаётся видимой и не создаёт локальный успешный fallback;
+- `[x]` добавлен focused frontend test для преобразования payload диалога в контракт backend;
+- `[~]` отказ из списка и полный combined-сценарий convert/reject остаются отдельной следующей подзадачей.
+
+Подтверждения: `frontend/app/(workspace)/sales/leads/[leadId]/lead-header-actions.ts`, `frontend/lib/sales/lead-details.ts`, `frontend/lib/sales/lead-conversion.ts`, `frontend/lib/sales/lead-conversion.test.mjs`, `frontend/components/sales/lead-workspace.tsx`, существующий `POST /leads/{lead_id}/convert` в `backend/app/api/leads.py`.
+
 ## Критерий завершения текущего этапа
 
 Менеджер создаёт лид, редактирует его основные данные и контакты, меняет статус в Kanban, завершает лид успешно или отказом и после перезагрузки видит состояние из PostgreSQL; конвертация создаёт постоянный коммерческий результат без повторного ввода, а dashboard использует фактические данные.
