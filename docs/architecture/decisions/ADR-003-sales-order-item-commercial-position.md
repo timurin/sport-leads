@@ -5,7 +5,7 @@
 
 ## Решение
 
-`SalesOrderItem` хранит snapshot-наименование, единицу, количество, цену и рассчитанную сумму строки. `Material` не является номенклатурой заказа. Связь с будущим `Nomenclature` вводится отдельным этапом после определения каталога продукции.
+`SalesOrderItem` хранит snapshot-наименование, размеры, персонализацию, цвет, единицу, количество, цену и рассчитанную сумму строки. `Material` не является номенклатурой заказа. Связь с будущим `Nomenclature` вводится отдельным этапом после определения каталога продукции.
 
 ## Последствия
 
@@ -13,6 +13,6 @@
 
 ## Ограничения
 
-Размеры, персонализация, скидки, НДС и связь с номенклатурой ещё не реализованы.
+Скидки, НДС и связь с номенклатурой ещё не реализованы.
 
-**Связанные модули:** `backend/app/models/sales.py`, `backend/app/services/sales_order_items.py`, `frontend/components/sales/sales-order-items.tsx`, migration `d9e0f1a2b345`.
+**Связанные модули:** `backend/app/models/sales.py`, `backend/app/services/sales_order_items.py`, `frontend/components/sales/sales-order-items.tsx`, migrations `d9e0f1a2b345`, `e0f1a2b3c456`, `f1a2b3c4d567`.

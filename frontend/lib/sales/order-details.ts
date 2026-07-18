@@ -31,6 +31,7 @@ export type ApiSalesOrderItem = {
   snapshot_name: string;
   size_range: string | null;
   personalization: string | null;
+  color: string | null;
   unit: string;
   quantity: number | string;
   unit_price: number | string;
@@ -95,6 +96,7 @@ export type SalesOrderItem = {
   snapshotName: string;
   sizeRange: string;
   personalization: string;
+  color: string;
   unit: string;
   quantity: string;
   unitPrice: string;
@@ -153,6 +155,7 @@ export function fromApiSalesOrder(order: ApiSalesOrderDetails): SalesOrderDetail
       snapshotName: item.snapshot_name,
       sizeRange: item.size_range ?? "",
       personalization: item.personalization ?? "",
+      color: item.color ?? "",
       unit: item.unit,
       quantity: String(item.quantity),
       unitPrice: currencyFormatter.format(Number(item.unit_price)),
