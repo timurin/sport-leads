@@ -565,3 +565,12 @@ Backend уже содержит часть sales-моделей, API, посто
 - `[x]` индекс документации связывает актуальный roadmap, структуру, checkpoint/release, инструкции и исторический roadmap;
 - `[x]` project check 9/9, backend pytest 28, frontend tests 32, TypeScript, lint, production build, Compose и проверка diff прошли;
 - `[~]` отдельного release-документа, checkpoint и тега `v0.6.1` пока нет.
+
+## Итерация v0.6.1-lead-kanban-stage-persistence
+
+- `[x]` frontend Kanban для числовых API-лидов использует существующий server action и `PATCH /leads/{lead_id}` для изменения стадии;
+- `[x]` ошибка backend возвращает карточку к снимку предыдущей стадии и показывает явное сообщение, без успешного локального fallback;
+- `[x]` источник истины после перезагрузки остаётся `GET /leads` из PostgreSQL; demo-идентификаторы не участвуют в persistence-контуре;
+- `[~]` конфигурация стадий и полный журнал переходов остаются local/следующими задачами.
+
+Подтверждения: `frontend/components/sales/lead-workspace.tsx`, `frontend/lib/sales/lead-stage-persistence.ts`, `frontend/lib/sales/lead-stage-persistence.test.mjs`, `frontend/app/(workspace)/sales/leads/[leadId]/lead-header-actions.ts`, `backend/app/api/leads.py`.

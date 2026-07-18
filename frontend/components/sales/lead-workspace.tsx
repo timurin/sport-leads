@@ -13,7 +13,12 @@ import {
 import { LeadStageSettingsDialog } from "@/components/sales/lead-stage-settings-dialog";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page-header";
+import { updateLeadStatus } from "@/app/(workspace)/sales/leads/[leadId]/lead-header-actions";
 import { salesManagers } from "@/lib/demo-data/sales";
+import {
+  getLeadStagePersistenceDecision,
+  resolveLeadStageAfterPersistence,
+} from "@/lib/sales/lead-stage-persistence";
 import {
   LEAD_STAGE_STORAGE_KEY,
   getActiveLeadStages,
@@ -122,6 +127,7 @@ export function LeadWorkspace({
   const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [revision, setRevision] = useState(0);
+  const [moveError, setMoveError] = useState<string | null>(null);
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
@@ -368,6 +374,11 @@ export function LeadWorkspace({
       </div>
 
       <div className="p-4 lg:p-6">
+        {moveError ? (
+          <div className="mb-4 border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-800" role="alert">
+            {moveError}
+          </div>
+        ) : null}
         <KanbanBoard
           key={`${view}-${revision}`}
           columns={columns}
@@ -379,9 +390,59 @@ export function LeadWorkspace({
               return;
             }
 
+            const currentLead = leads.find((lead) => lead.id === move.cardId);
+            if (!currentLead) {
+              return;
+            }
+
+            const previousStage = currentLead.stageId;
+            const decision = getLeadStagePersistenceDecision(
+              currentLead.id,
+              previousStage,
+              move.targetColumnId,
+              dataOrigin,
+            );
+            if (!decision.shouldPersist) {
+              if (decision.reason === "unchanged") {
+                return;
+              }
+              setLeads((current) => current.map((lead) => (
+                lead.id === move.cardId ? { ...lead, stageId: move.targetColumnId } : lead
+              )));
+              setRevision((value) => value + 1);
+              return;
+            }
+
+            setMoveError(null);
             setLeads((current) => current.map((lead) => (
               lead.id === move.cardId ? { ...lead, stageId: move.targetColumnId } : lead
             )));
+            setRevision((value) => value + 1);
+
+            void updateLeadStatus(currentLead.id, move.targetColumnId).then((result) => {
+              if (result.ok) {
+                return;
+              }
+
+              setLeads((current) => current.map((lead) => (
+                lead.id === move.cardId && lead.stageId === move.targetColumnId
+                  ? {
+                      ...lead,
+                      stageId: resolveLeadStageAfterPersistence(previousStage, move.targetColumnId, false),
+                    }
+                  : lead
+              )));
+              setRevision((value) => value + 1);
+              setMoveError(`Не удалось сохранить стадию лида: ${result.message}`);
+            }).catch(() => {
+              setLeads((current) => current.map((lead) => (
+                lead.id === move.cardId && lead.stageId === move.targetColumnId
+                  ? { ...lead, stageId: previousStage }
+                  : lead
+              )));
+              setRevision((value) => value + 1);
+              setMoveError("Не удалось связаться с backend. Изменение стадии отменено.");
+            });
           }}
         />
       </div>
