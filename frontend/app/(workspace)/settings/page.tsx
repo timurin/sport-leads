@@ -74,11 +74,17 @@ const settingsGroups = [
     ],
   },
   {
-    title: "Продукция",
+      title: "Продукция",
     description:
       "Номенклатура и параметры выпускаемой продукции",
     icon: Package,
-    items: [
+      items: [
+      {
+        title: "Номенклатура",
+        description: "Готовые изделия и их коммерческие карточки",
+        href: "/settings/catalogs/nomenclature",
+        icon: Package,
+      },
       {
         title: "Продукция",
         description: "Полный каталог выпускаемых изделий",
@@ -92,9 +98,15 @@ const settingsGroups = [
         icon: Settings2,
       },
       {
+        title: "Дополнительные реквизиты",
+        description: "Типизированные поля и настройки категорий номенклатуры",
+        href: "/settings/catalogs/custom-fields",
+        icon: Settings2,
+      },
+      {
         title: "Единицы измерения",
         description: "Штуки, комплекты, метры и килограммы",
-        href: "/settings/products/units",
+        href: "/settings/catalogs/units-of-measure",
         icon: Ruler,
       },
     ],

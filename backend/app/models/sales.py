@@ -370,6 +370,9 @@ class SalesOrderItem(Base):
     order_id: Mapped[int] = mapped_column(
         ForeignKey("sales_orders.id", ondelete="CASCADE"), nullable=False, index=True
     )
+    nomenclature_id: Mapped[int | None] = mapped_column(
+        ForeignKey("nomenclatures.id", ondelete="SET NULL"), nullable=True, index=True
+    )
     position: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
     snapshot_name: Mapped[str] = mapped_column(String(255), nullable=False)
     size_range: Mapped[str | None] = mapped_column(String(255), nullable=True)

@@ -325,6 +325,7 @@ class SalesOrderRead(SalesSchema):
 class SalesOrderItemRead(SalesSchema):
     id: int
     order_id: int
+    nomenclature_id: int | None
     position: int
     snapshot_name: str
     size_range: str | None
@@ -342,6 +343,7 @@ class SalesOrderItemRead(SalesSchema):
 
 
 class SalesOrderItemCreate(BaseModel):
+    nomenclature_id: int | None = None
     snapshot_name: str = Field(min_length=1, max_length=255)
     size_range: str | None = Field(default=None, max_length=255)
     personalization: str | None = Field(default=None, max_length=500)
@@ -353,6 +355,7 @@ class SalesOrderItemCreate(BaseModel):
 
 
 class SalesOrderItemUpdate(BaseModel):
+    nomenclature_id: int | None = None
     snapshot_name: str | None = Field(default=None, min_length=1, max_length=255)
     size_range: str | None = Field(default=None, max_length=255)
     personalization: str | None = Field(default=None, max_length=500)

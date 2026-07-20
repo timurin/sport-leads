@@ -329,9 +329,14 @@ export const appSections: AppSection[] = [
             href: "/settings/products/types",
           },
           {
+            id: "custom-fields",
+            title: "Дополнительные реквизиты",
+            href: "/settings/catalogs/custom-fields",
+          },
+          {
             id: "units",
             title: "Единицы измерения",
-            href: "/settings/products/units",
+            href: "/settings/catalogs/units-of-measure",
           },
         ],
       },

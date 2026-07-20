@@ -27,6 +27,7 @@ export type ApiSalesOrderDetails = {
 export type ApiSalesOrderItem = {
   id: number;
   order_id: number;
+  nomenclature_id: number | null;
   position: number;
   snapshot_name: string;
   size_range: string | null;
@@ -96,6 +97,7 @@ export type SalesOrderDetails = {
 
 export type SalesOrderItem = {
   id: number;
+  nomenclatureId: number | null;
   snapshotName: string;
   sizeRange: string;
   personalization: string;
@@ -158,6 +160,7 @@ export function fromApiSalesOrder(order: ApiSalesOrderDetails): SalesOrderDetail
     quantity: order.quantity === null ? "Не указано" : `${order.quantity} ед.`,
     items: (order.items ?? []).map((item) => ({
       id: item.id,
+      nomenclatureId: item.nomenclature_id,
       snapshotName: item.snapshot_name,
       sizeRange: item.size_range ?? "",
       personalization: item.personalization ?? "",

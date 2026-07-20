@@ -36,7 +36,7 @@
 
 Постоянные лиды, контакты, стадии, создание, коммерческое редактирование и конвертация реализованы частично. Сделки, архивирование, полные активности, авторизация и права доступа не завершены.
 
-### Этап 2. Заказы покупателей — `[~]`
+### Этап 2. Заказы покупателей — `[x]`
 
 Карточка, организация, статусы/история и `SalesOrderItem` готовы. Позиция заказа — коммерческая строка с `snapshot_name`, `size_range`, `personalization`, `color`, `unit`, `quantity`, `unit_price`, `line_amount`; итог заказа пересчитывается через `Decimal/Numeric`.
 
@@ -46,11 +46,38 @@
 
 `[x]` итерация `v0.7.6-sales-order-item-discount-percent`: добавлены nullable `discount_percent` (0–100), вычисляемые `discount_amount` и `line_amount`, API/Server Actions/UI и миграция `a2b3c4d5e678`; подтверждены null/0/100%, обратная совместимость, полный pytest, frontend tests, TypeScript, lint, production build, project check и Alembic upgrade/downgrade/check.
 
-В этап 2 не входят материалы, производственные спецификации и фактическое производство. Связь с будущей номенклатурой будет добавлена отдельной задачей.
+Этап 2 закрыт в объёме MVP. В него не входят НДС и налоговая модель, общая скидка заказа, платежи, финансовые документы, номенклатура и производство. НДС фиксируется как будущий пункт финансового/налогового контура, связанный с организациями, типами цен и интеграцией с 1С.
 
-### Этап 3. Номенклатура, модели, лекала и техкарты — `[ ]`
+### Этап 3. Номенклатура, модели, лекала и техкарты — `[~]`
 
-Номенклатура → модели и артикулы → размеры и характеристики → лекала → операционные узлы → нормативная технология. Рабочих persistent-моделей и API ещё нет.
+Номенклатура → модели и артикулы → размеры и характеристики → лекала → операционные узлы → нормативная технология. Persistent core номенклатуры реализован; следующие производственные и классификационные сущности остаются planned.
+
+`[x]` первый пункт `v0.8.1-nomenclature-core`: базовый persistent-справочник номенклатуры готовых изделий реализован через модель/API и frontend persistence; миграция `c3d4e5f6a789`, backend/frontend regression tests, TypeScript, lint, production build, project check и Alembic upgrade/downgrade/check пройдены. Границы пункта: только номенклатура; без моделей, лекал, материалов, спецификаций и производства.
+
+`[x]` patch `v0.8.1-order-nomenclature-selector`: searchable combobox активной номенклатуры добавлен в создание и редактирование `SalesOrderItem`; выбор явно копирует имя и base price в snapshot, ручные позиции и последующие изменения каталога сохраняются. Подтверждение: `frontend/components/sales/sales-order-items.tsx`, `frontend/app/(workspace)/sales/orders/[orderId]/order-item-actions.ts`, `backend/app/services/sales_order_items.py`, regression tests. Ограничения этапа 3 не изменены.
+
+## Архитектурная декомпозиция v0.8 — `[~]`
+
+`v0.8.1-nomenclature-core` завершён в подтверждённом объёме: persistent-карточка, CRUD/API, поиск, активность, базовая Decimal/Numeric-цена, связь с `SalesOrderItem` и независимый коммерческий snapshot. Текущие текстовые `category` и `unit` являются совместимым MVP и не считаются финальной нормализацией.
+
+Следующая последовательность не расширяет текущую БД автоматически:
+
+- `[x]` `v0.8.2-nomenclature-types-and-category-hierarchy`: системные типы `SERVICE`, `PRODUCT`, `GOODS`, `MATERIAL`; persistent `NomenclatureCategory` с `parent_id`, запретом циклов и правилами совместимости типа и категории; nullable `Nomenclature.category_id`; текущие текстовые категории перенесены миграцией с совместимым default `PRODUCT`. Подтверждение: `backend/app/models/nomenclature.py`, `backend/app/services/nomenclature.py`, `backend/app/api/nomenclature.py`, `backend/alembic/versions/d4e5f6a7b890_add_nomenclature_types_and_categories.py`, `backend/tests/test_lead_conversion.py`, frontend catalog workspace. Проверки backend/frontend и project check пройдены;
+- `[x]` `v0.8.3-units-of-measure`: persistent `UnitOfMeasure` с системными категориями, точностью, активностью и базовой единицей хранения `Nomenclature.storage_unit_id`; CRUD/API, legacy-миграция, frontend-справочник и regression-проверки подтверждены. Альтернативные коэффициенты, продажи/закупки/списания и складской учёт не входят;
+- `[x]` `v0.8.4-category-custom-fields`: типизированные определения реквизитов, persistent варианты выбора, привязка к категории, обязательность, наследование, overrides и backend validation; значения хранятся в типизированных колонках, произвольный JSON не используется как источник истины. Подтверждение: `backend/app/models/custom_fields.py`, `backend/app/services/custom_fields.py`, `backend/app/api/custom_fields.py`, миграция `f6a7b8c9d012`, regression-тесты, frontend `/settings/catalogs/custom-fields` и редактор значений в карточке номенклатуры;
+- `[x]` `v0.8.5-nomenclature-workspace-and-editable-card`: рабочее место с деревом категорий, поиском/фильтрами, отдельными командами создания и отдельная карточка номенклатуры с режимами просмотра/редактирования; custom fields v0.8.4 переиспользуются без второго источника истины. Подтверждение: `frontend/components/settings/nomenclature-workspace.tsx`, `frontend/components/settings/nomenclature-card.tsx`, `frontend/app/(workspace)/settings/catalogs/nomenclature/[nomenclatureId]/page.tsx`, Server Actions, frontend tests, TypeScript, ESLint и production build. Ограничения: полный аудит, массовые действия, сохранение колонок и глобальные права остаются planned;
+- `[ ]` `v0.8.6-characteristics-and-variants`: характеристики, допустимые значения и варианты номенклатуры; вариант выбирается отдельно от базовой карточки и имеет собственный snapshot в заказе; начинается только после v0.8.5;
+- `[ ]` `v0.8.7-nomenclature-media`: persistent media entities, главное изображение, сортировка, безопасные загрузка и удаление; зависит от готовой карточки v0.8.5.
+
+Модели изделий, лекала, размерные сетки, материалы в спецификациях, операции, партии, производство, склад, финансы, НДС, типы цен и интеграция с 1С остаются за пределами этого контура. Следующий технический пункт — `v0.8.5-nomenclature-workspace-and-editable-card`.
+
+### v0.8.5 — Nomenclature Workspace and Editable Card — `[x]`
+
+Рабочее место и отдельная карточка реализованы в заявленных границах. Текущий список сохранён совместимым с прежними URL и API, а встроенные формы заменены отдельными командами создания.
+
+Границы v0.8.5 зафиксированы в ADR-009 и реализованы: отдельное рабочее место с деревом категорий, поиском, фильтрами, режимами «Папки и элементы»/«Вложенные», отдельными командами создания и явными состояниями списка; отдельный маршрут карточки с режимами просмотра и редактирования и расширяемыми секциями. Карточка использует существующий API и typed custom fields v0.8.4: effective schema, наследование, required/default/override, индивидуальные значения и смена категории. Второй параллельный редактор реквизитов не создаётся.
+
+В v0.8.5 не входят характеристики, варианты, SKU, размеры и цвета как варианты, изображения и файлы, модели, лекала, спецификации, производство, склад, закупки, типы цен, НДС, 1С, полный аудит и глобальная система прав при её отсутствии. Реализованы отдельные команды создания, иерархическая навигация, поиск/фильтры, отдельная карточка, view/edit, предупреждение об unsaved changes, сохранение custom fields, совместимость старых URL и выбора номенклатуры в заказе. Массовые действия, сохранение пользовательских колонок и полноценные права остаются planned.
 
 ### Этап 4. Дизайн и согласование — `[ ]`
 

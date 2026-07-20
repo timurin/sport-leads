@@ -23,6 +23,7 @@ from app.models.sales import (
     SalesOrderItem,
     SalesUser,
 )
+from app.models.nomenclature import Nomenclature, UnitOfMeasure
 from app.schemas.sales import LeadConvertRequest
 from app.services.lead_conversion import convert_lead
 
@@ -651,6 +652,159 @@ def test_order_item_discount_percent_recalculates_totals_and_validates_range(
 
     assert client.post(f"/orders/{order_id}/items", json={**base, "discount_percent": "100.01"}).status_code == 422
     assert client.post(f"/orders/{order_id}/items", json={**base, "discount_percent": "-1"}).status_code == 422
+
+
+def test_nomenclature_crud_search_and_order_item_link_preserve_snapshot(
+    client: TestClient,
+    session_factory: sessionmaker[Session],
+) -> None:
+    category = client.post(
+        "/nomenclatures/categories",
+        json={"name": "Спортивная форма", "code": "sportswear", "nomenclature_type": "PRODUCT"},
+    )
+    assert category.status_code == 201
+    category_id = category.json()["id"]
+    child = client.post(
+        "/nomenclatures/categories",
+        json={"name": "Футбол", "code": "football", "parent_id": category_id, "nomenclature_type": "PRODUCT"},
+    )
+    assert child.status_code == 201
+    assert client.post(
+        "/nomenclatures/categories",
+        json={"name": "Услуги", "code": "services", "nomenclature_type": "SERVICE", "parent_id": category_id},
+    ).status_code == 422
+
+    created = client.post(
+        "/nomenclatures",
+        json={
+            "article": "FORM-001",
+            "name": "Футбольная форма",
+            "short_name": "Форма",
+            "description": "Готовое изделие",
+            "category": "Спортивная форма",
+            "category_id": category_id,
+            "nomenclature_type": "PRODUCT",
+            "unit": "шт",
+            "base_price": "12500.00",
+            "currency": "RUB",
+        },
+    )
+    assert created.status_code == 201
+    nomenclature = created.json()
+    assert nomenclature["base_price"] == "12500.00"
+    assert nomenclature["category_id"] == category_id
+    assert nomenclature["nomenclature_type"] == "PRODUCT"
+    nomenclature_id = nomenclature["id"]
+
+    duplicate = client.post("/nomenclatures", json={"article": " FORM-001 ", "name": "Дубликат", "category": "Форма"})
+    assert duplicate.status_code == 409
+    assert client.post(
+        "/nomenclatures",
+        json={"article": "SERVICE-001", "name": "Услуга", "category": "Услуги", "category_id": category_id, "nomenclature_type": "SERVICE"},
+    ).status_code == 422
+    assert client.get("/nomenclatures", params={"search": "FORM-001"}).json()[0]["id"] == nomenclature_id
+
+    lead_id = add_lead(session_factory)
+    order_id = client.post(f"/leads/{lead_id}/convert", json={"completed_by_id": 1}).json()["order"]["id"]
+    item = client.post(
+        f"/orders/{order_id}/items",
+        json={"nomenclature_id": nomenclature_id, "snapshot_name": "Футбольная форма", "unit": "шт", "quantity": "1", "unit_price": "12500"},
+    )
+    assert item.status_code == 201
+    assert item.json()["nomenclature_id"] == nomenclature_id
+
+    renamed = client.patch(f"/nomenclatures/{nomenclature_id}", json={"name": "Форма обновлённая", "is_active": False})
+    assert renamed.status_code == 200
+    assert client.get("/nomenclatures", params={"is_active": True}).json() == []
+    assert client.get(f"/orders/{order_id}").json()["items"][0]["snapshot_name"] == "Футбольная форма"
+    replacement = client.post("/nomenclatures", json={"article": "FORM-002", "name": "Форма 2", "category": "Форма"})
+    assert replacement.status_code == 201
+    replacement_id = replacement.json()["id"]
+    replaced = client.patch(f"/orders/{order_id}/items/{item.json()['id']}", json={"nomenclature_id": replacement_id})
+    assert replaced.status_code == 200
+    assert replaced.json()["nomenclature_id"] == replacement_id
+    assert replaced.json()["snapshot_name"] == "Футбольная форма"
+    assert client.post(
+        f"/orders/{order_id}/items",
+        json={"nomenclature_id": 999999, "snapshot_name": "Ручная позиция", "unit": "шт", "quantity": "1", "unit_price": "1"},
+    ).status_code == 404
+
+    with session_factory() as db:
+        assert db.get(Nomenclature, nomenclature_id) is not None
+
+
+def test_units_of_measure_crud_and_nomenclature_assignment_preserve_legacy_unit(
+    client: TestClient,
+    session_factory: sessionmaker[Session],
+) -> None:
+    created = client.post(
+        "/nomenclatures/units-of-measure",
+        json={"code": "PCS", "name": "Штука", "symbol": "шт.", "unit_category": "QUANTITY", "precision": 0},
+    )
+    assert created.status_code == 201
+    unit_id = created.json()["id"]
+    assert client.post(
+        "/nomenclatures/units-of-measure",
+        json={"code": "PCS", "name": "Дубликат", "symbol": "шт.", "unit_category": "QUANTITY"},
+    ).status_code == 409
+    assert client.get("/nomenclatures/units-of-measure", params={"search": "шт"}).json()[0]["code"] == "PCS"
+
+    created_nomenclature = client.post(
+        "/nomenclatures",
+        json={"article": "UNIT-001", "name": "Изделие", "category": "Спорт", "unit": "legacy-шт", "storage_unit_id": unit_id},
+    )
+    assert created_nomenclature.status_code == 201
+    assert created_nomenclature.json()["storage_unit_id"] == unit_id
+    unit = client.patch(f"/nomenclatures/units-of-measure/{unit_id}", json={"is_active": False})
+    assert unit.status_code == 200
+    assert client.patch(f"/nomenclatures/{created_nomenclature.json()['id']}", json={"name": "Изделие обновлено"}).status_code == 200
+    assert client.post(
+        "/nomenclatures",
+        json={"article": "UNIT-002", "name": "Новое", "category": "Спорт", "unit": "шт", "storage_unit_id": unit_id},
+    ).status_code == 422
+    assert client.get("/nomenclatures/units-of-measure", params={"is_active": False}).json()[0]["code"] == "PCS"
+    with session_factory() as db:
+        assert db.get(UnitOfMeasure, unit_id) is not None
+
+
+def test_category_custom_fields_are_typed_inherited_and_persisted(
+    client: TestClient,
+) -> None:
+    root = client.post("/nomenclatures/categories", json={"name": "Форма", "code": "uniform", "nomenclature_type": "PRODUCT"})
+    assert root.status_code == 201
+    child = client.post("/nomenclatures/categories", json={"name": "Футбол", "code": "football-uniform", "parent_id": root.json()["id"], "nomenclature_type": "PRODUCT"})
+    assert child.status_code == 201
+    root_id = root.json()["id"]
+    child_id = child.json()["id"]
+
+    text_field = client.post("/custom-fields", json={"code": "collar_type", "name": "Тип воротника", "data_type": "STRING"})
+    select_field = client.post("/custom-fields", json={"code": "sport", "name": "Вид спорта", "data_type": "SINGLE_SELECT"})
+    assert text_field.status_code == select_field.status_code == 201
+    text_id = text_field.json()["id"]
+    select_id = select_field.json()["id"]
+    football = client.post(f"/custom-fields/{select_id}/options", json={"code": "football", "label": "Футбол"})
+    assert football.status_code == 201
+    option_id = football.json()["id"]
+    assert client.post(f"/custom-fields/{select_id}/options", json={"code": "football", "label": "Дубликат"}).status_code == 422
+
+    assert client.post(f"/custom-fields/categories/{root_id}/fields", json={"field_definition_id": text_id, "is_required": True}).status_code == 201
+    assert client.post(f"/custom-fields/categories/{root_id}/fields", json={"field_definition_id": select_id}).status_code == 201
+    inherited = client.get(f"/custom-fields/categories/{child_id}/fields")
+    assert inherited.status_code == 200
+    assert {item["field_definition_id"] for item in inherited.json()} == {text_id, select_id}
+    assert all(item["inherited"] for item in inherited.json())
+
+    nomenclature = client.post("/nomenclatures", json={"article": "CF-001", "name": "Форма", "category": "Форма", "category_id": child_id})
+    assert nomenclature.status_code == 201
+    nomenclature_id = nomenclature.json()["id"]
+    missing = client.put(f"/custom-fields/nomenclatures/{nomenclature_id}/fields", json=[])
+    assert missing.status_code == 422
+    saved = client.put(f"/custom-fields/nomenclatures/{nomenclature_id}/fields", json=[{"field_definition_id": text_id, "value": "Стойка"}, {"field_definition_id": select_id, "value": option_id}])
+    assert saved.status_code == 200
+    values = {item["code"]: item["value"] for item in saved.json()}
+    assert values == {"collar_type": "Стойка", "sport": option_id}
+    assert client.put(f"/custom-fields/nomenclatures/{nomenclature_id}/fields", json=[{"field_definition_id": select_id, "value": 999999}]).status_code == 422
+    assert client.get(f"/custom-fields/nomenclatures/{nomenclature_id}/fields").json()[0]["value"] == "Стойка"
 def test_lead_history_exposes_status_conversion_and_rejection_events(
     client: TestClient,
     session_factory: sessionmaker[Session],

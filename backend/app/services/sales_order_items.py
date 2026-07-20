@@ -5,6 +5,7 @@ from decimal import Decimal, ROUND_HALF_UP
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.models.nomenclature import Nomenclature
 from app.models.sales import SalesOrder, SalesOrderItem
 from app.schemas.sales import SalesOrderItemCreate, SalesOrderItemUpdate
 
@@ -38,16 +39,23 @@ def _recalculate_order(order: SalesOrder) -> None:
     order.amount = sum((item.line_amount for item in order.items), Decimal("0.00"))
 
 
+def _validate_nomenclature(db: Session, nomenclature_id: int | None) -> None:
+    if nomenclature_id is not None and db.get(Nomenclature, nomenclature_id) is None:
+        raise SalesOrderItemError("Nomenclature not found")
+
+
 def create_sales_order_item(
     db: Session,
     order_id: int,
     payload: SalesOrderItemCreate,
 ) -> SalesOrderItem:
     order = _get_order(db, order_id)
+    _validate_nomenclature(db, payload.nomenclature_id)
     position = max((item.position for item in order.items), default=0) + 1
     item = SalesOrderItem(
         order=order,
         position=position,
+        nomenclature_id=payload.nomenclature_id,
         snapshot_name=payload.snapshot_name.strip(),
         size_range=payload.size_range.strip() if payload.size_range else None,
         personalization=payload.personalization.strip() if payload.personalization else None,
@@ -85,8 +93,11 @@ def update_sales_order_item(
     if item is None:
         raise SalesOrderItemError("Order item not found")
     changes = payload.model_dump(exclude_unset=True)
+    if "nomenclature_id" in changes:
+        _validate_nomenclature(db, changes["nomenclature_id"])
     for field_name in (
         "snapshot_name",
+        "nomenclature_id",
         "size_range",
         "personalization",
         "color",
