@@ -865,3 +865,77 @@ def test_nomenclature_media_persists_primary_order_and_safe_delete(
     assert invalid.status_code == 422
     assert client.delete(f"/nomenclatures/{nomenclature['id']}/media/{media['id']}").status_code == 204
     assert client.get(f"/nomenclatures/{nomenclature['id']}/media").json() == []
+
+
+def test_nomenclature_card_characteristic_routes_are_registered_and_loadable(
+    client: TestClient,
+) -> None:
+    category = client.post("/nomenclatures/categories", json={"name": "Card", "code": "card-routes", "nomenclature_type": "PRODUCT"}).json()
+    nomenclature = client.post("/nomenclatures", json={"article": "CARD-001", "name": "Card", "category": "Card", "category_id": category["id"]}).json()
+    definition = client.post("/characteristics/definitions", json={"code": "size", "name": "Size"}).json()
+    assert client.post(f"/characteristics/categories/{category['id']}", json={"characteristic_id": definition["id"]}).status_code == 201
+    assert client.post(f"/characteristics/nomenclatures/{nomenclature['id']}", json={"characteristic_id": definition["id"]}).status_code == 201
+    assert client.get("/characteristics/definitions").status_code == 200
+    assert client.get(f"/characteristics/categories/{category['id']}").status_code == 200
+    characteristics = client.get(f"/characteristics/nomenclatures/{nomenclature['id']}")
+    assert characteristics.status_code == 200
+    assert characteristics.json()[0]["characteristic_id"] == definition["id"]
+    assert client.get(f"/characteristics/nomenclatures/{nomenclature['id']}/variants").status_code == 200
+    assert client.get(f"/nomenclatures/{nomenclature['id']}/media").status_code == 200
+
+
+def test_nomenclature_free_custom_field_assignment_search_and_removal(
+    client: TestClient,
+) -> None:
+    nomenclature = client.post("/nomenclatures", json={"article": "FREE-FIELD-001", "name": "Free field", "category": "Free field"}).json()
+    created = client.post("/custom-fields", json={"code": "brand", "name": "Бренд", "data_type": "STRING"})
+    assert created.status_code == 201
+    definition = created.json()
+    assert client.get("/custom-fields", params={"search": "БРЕН"}).json()[0]["id"] == definition["id"]
+
+    assigned = client.post(f"/custom-fields/nomenclatures/{nomenclature['id']}/fields", json={"field_definition_id": definition["id"]})
+    assert assigned.status_code == 201
+    assert assigned.json()[0]["source_category_id"] is None
+    saved = client.put(f"/custom-fields/nomenclatures/{nomenclature['id']}/fields", json=[{"field_definition_id": definition["id"], "value": "Nike"}])
+    assert saved.status_code == 200
+    assert saved.json()[0]["value"] == "Nike"
+    duplicate = client.post(f"/custom-fields/nomenclatures/{nomenclature['id']}/fields", json={"field_definition_id": definition["id"]})
+    assert duplicate.status_code == 409
+    assert client.delete(f"/custom-fields/nomenclatures/{nomenclature['id']}/fields/{definition['id']}").status_code == 204
+    assert client.get(f"/custom-fields/{definition['id']}").status_code == 200
+    assert client.get(f"/custom-fields/nomenclatures/{nomenclature['id']}/fields").json() == []
+
+
+def test_nomenclature_custom_field_patch_generates_code_and_preserves_scope(
+    client: TestClient,
+) -> None:
+    nomenclature = client.post("/nomenclatures", json={"article": "PATCH-FIELD-001", "name": "Patch field", "category": "Patch field"}).json()
+    other = client.post("/nomenclatures", json={"article": "PATCH-FIELD-002", "name": "Other patch field", "category": "Other patch field"}).json()
+    created = client.post("/custom-fields", json={"name": "Auto code", "data_type": "STRING"})
+    duplicate = client.post("/custom-fields", json={"name": "Auto code", "data_type": "STRING"})
+    assert created.status_code == duplicate.status_code == 201
+    assert created.json()["code"].startswith("auto_code")
+    assert created.json()["code"] != duplicate.json()["code"]
+    field_id = created.json()["id"]
+    assert client.post(f"/custom-fields/nomenclatures/{nomenclature['id']}/fields", json={"field_definition_id": field_id}).status_code == 201
+    assert client.put(f"/custom-fields/nomenclatures/{nomenclature['id']}/fields", json=[{"field_definition_id": field_id, "value": "Typed"}]).status_code == 200
+    assert client.get(f"/custom-fields/nomenclatures/{nomenclature['id']}/fields").json()[0]["value"] == "Typed"
+    assert client.get(f"/custom-fields/nomenclatures/{other['id']}/fields").json() == []
+    assert client.delete(f"/custom-fields/nomenclatures/{nomenclature['id']}/fields/{field_id}").status_code == 204
+    assert client.get(f"/custom-fields/{field_id}").status_code == 200
+
+
+def test_nomenclature_custom_field_patch_protects_inherited_required_values(
+    client: TestClient,
+) -> None:
+    category = client.post("/nomenclatures/categories", json={"name": "Patch inherited", "code": "patch-inherited", "nomenclature_type": "PRODUCT"}).json()
+    required = client.post("/custom-fields", json={"name": "Required patch", "data_type": "STRING"}).json()
+    optional = client.post("/custom-fields", json={"name": "Optional patch", "data_type": "STRING"}).json()
+    assert client.post(f"/custom-fields/categories/{category['id']}/fields", json={"field_definition_id": required["id"], "is_required": True}).status_code == 201
+    assert client.post(f"/custom-fields/categories/{category['id']}/fields", json={"field_definition_id": optional["id"], "default_value": "Default"}).status_code == 201
+    nomenclature = client.post("/nomenclatures", json={"article": "PATCH-INHERITED-001", "name": "Inherited patch", "category": "Patch inherited", "category_id": category["id"]}).json()
+    assert client.delete(f"/custom-fields/nomenclatures/{nomenclature['id']}/fields/{required['id']}").status_code == 422
+    assert client.put(f"/custom-fields/nomenclatures/{nomenclature['id']}/fields", json=[{"field_definition_id": required["id"], "value": None}]).status_code == 422
+    cleared = client.put(f"/custom-fields/nomenclatures/{nomenclature['id']}/fields", json=[{"field_definition_id": required["id"], "value": "Filled"}, {"field_definition_id": optional["id"], "value": None}])
+    assert cleared.status_code == 200
+    assert next(item for item in cleared.json() if item["field_definition_id"] == optional["id"])["value"] == "Default"

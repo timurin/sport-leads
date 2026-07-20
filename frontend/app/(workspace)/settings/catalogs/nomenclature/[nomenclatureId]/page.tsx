@@ -1,7 +1,5 @@
 import { notFound } from "next/navigation";
-import { PageHeader } from "@/components/ui/page-header";
 import { NomenclatureCard } from "@/components/settings/nomenclature-card";
-import { NomenclatureCharacteristicsPanel } from "@/components/settings/nomenclature-characteristics-panel";
 import { getCategoryCharacteristics, getCharacteristicDefinitions, getCharacteristicOptions, getCustomFieldDefinitions, getCustomFieldOptions, getNomenclatureCategories, getNomenclatureById, getNomenclatureCharacteristics, getNomenclatureFieldValues, getNomenclatureMedia, getNomenclatureVariants, getUnitsOfMeasure } from "@/lib/nomenclature";
 
 export default async function NomenclatureCardPage({ params }: { params: Promise<{ nomenclatureId: string }> }) {
@@ -14,5 +12,5 @@ export default async function NomenclatureCardPage({ params }: { params: Promise
   const categoryCharacteristics = item.category_id ? await getCategoryCharacteristics(item.category_id) : [];
   const characteristicIds = [...new Set([...categoryCharacteristics.map((row) => row.characteristic_id), ...nomenclatureCharacteristics.map((row) => row.characteristic_id)])];
   const characteristicOptions = Object.fromEntries(await Promise.all(characteristicIds.map(async (id) => [id, await getCharacteristicOptions(id)] as const)));
-  return <><PageHeader title="Карточка номенклатуры" description="Просмотр и редактирование persistent-карточки" /><NomenclatureCard item={item} categories={categories} units={units} fields={fields} fieldOptions={fieldOptions} characteristicDefinitions={characteristicDefinitions} categoryCharacteristics={categoryCharacteristics} nomenclatureCharacteristics={nomenclatureCharacteristics} variants={variants} characteristicOptions={characteristicOptions}/><NomenclatureCharacteristicsPanel itemId={item.id} definitions={characteristicDefinitions} categoryCharacteristics={categoryCharacteristics} assignments={nomenclatureCharacteristics} variants={variants} options={characteristicOptions} media={media}/></>;
+  return <NomenclatureCard item={item} categories={categories} units={units} fields={fields} fieldOptions={fieldOptions} definitions={definitions} characteristicDefinitions={characteristicDefinitions} categoryCharacteristics={categoryCharacteristics} nomenclatureCharacteristics={nomenclatureCharacteristics} variants={variants} characteristicOptions={characteristicOptions} media={media}/>;
 }

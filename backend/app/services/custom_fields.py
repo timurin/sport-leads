@@ -3,14 +3,15 @@ from __future__ import annotations
 import re
 from datetime import date
 from decimal import Decimal, InvalidOperation
+from types import SimpleNamespace
 
-from sqlalchemy import func, or_, select
+from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.models.custom_fields import CategoryField, CustomFieldDataType, CustomFieldDefinition, CustomFieldOption, NomenclatureFieldValue
 from app.models.nomenclature import Nomenclature, NomenclatureCategory, UnitOfMeasure
-from app.schemas.custom_fields import CategoryFieldCreate, CategoryFieldUpdate, CustomFieldDefinitionCreate, CustomFieldDefinitionUpdate, CustomFieldOptionCreate, CustomFieldOptionUpdate, NomenclatureFieldValueInput
+from app.schemas.custom_fields import CategoryFieldCreate, CategoryFieldUpdate, CustomFieldDefinitionCreate, CustomFieldDefinitionUpdate, CustomFieldOptionCreate, CustomFieldOptionUpdate, NomenclatureFieldAssignmentInput, NomenclatureFieldValueInput
 
 
 class CustomFieldNotFoundError(RuntimeError):
@@ -27,14 +28,15 @@ class CustomFieldRuleError(RuntimeError):
 
 def list_definitions(db: Session, search: str | None, data_type: CustomFieldDataType | None, is_active: bool | None) -> list[CustomFieldDefinition]:
     statement = select(CustomFieldDefinition)
-    if search and search.strip():
-        pattern = f"%{search.strip()}%"
-        statement = statement.where(or_(CustomFieldDefinition.code.ilike(pattern), CustomFieldDefinition.name.ilike(pattern)))
     if data_type is not None:
         statement = statement.where(CustomFieldDefinition.data_type == data_type)
     if is_active is not None:
         statement = statement.where(CustomFieldDefinition.is_active == is_active)
-    return list(db.scalars(statement.order_by(CustomFieldDefinition.is_active.desc(), func.lower(CustomFieldDefinition.name))).all())
+    definitions = list(db.scalars(statement.order_by(CustomFieldDefinition.is_active.desc(), func.lower(CustomFieldDefinition.name))).all())
+    if search and search.strip():
+        needle = search.strip().casefold()
+        definitions = [field for field in definitions if needle in field.code.casefold() or needle in field.name.casefold()]
+    return definitions
 
 
 def get_definition(db: Session, field_id: int) -> CustomFieldDefinition:
@@ -51,7 +53,17 @@ def _validate_unit(db: Session, unit_id: int | None) -> None:
 
 def create_definition(db: Session, payload: CustomFieldDefinitionCreate) -> CustomFieldDefinition:
     _validate_unit(db, payload.unit_id)
-    field = CustomFieldDefinition(**payload.model_dump())
+    data = payload.model_dump()
+    if not data.get("code"):
+        base = re.sub(r"[^a-z0-9]+", "_", payload.name.casefold()).strip("_") or "field"
+        base = base[:90]
+        code = base
+        suffix = 2
+        while db.scalar(select(CustomFieldDefinition.id).where(CustomFieldDefinition.code == code)) is not None:
+            code = f"{base[: max(1, 99 - len(str(suffix)))]}_{suffix}"
+            suffix += 1
+        data["code"] = code
+    field = CustomFieldDefinition(**data)
     db.add(field)
     try:
         db.commit()
@@ -271,10 +283,42 @@ def get_nomenclature_values(db: Session, nomenclature_id: int) -> list[tuple[Cat
     nomenclature = db.get(Nomenclature, nomenclature_id)
     if nomenclature is None:
         raise CustomFieldNotFoundError("Номенклатура не найдена")
-    if nomenclature.category_id is None:
-        return []
     rows = {(row.field_definition_id): row for row in db.scalars(select(NomenclatureFieldValue).where(NomenclatureFieldValue.nomenclature_id == nomenclature_id)).all()}
-    return [(assignment, field, rows.get(field.id), source_id, inherited) for assignment, field, source_id, inherited in effective_fields(db, nomenclature.category_id)]
+    effective = effective_fields(db, nomenclature.category_id) if nomenclature.category_id is not None else []
+    result = [(assignment, field, rows.pop(field.id, None), source_id, inherited) for assignment, field, source_id, inherited in effective]
+    for field_id, row in rows.items():
+        field = get_definition(db, field_id)
+        result.append((SimpleNamespace(is_required=False), field, row, None, False))
+    return result
+
+
+def assign_nomenclature_field(db: Session, nomenclature_id: int, payload: NomenclatureFieldAssignmentInput) -> list[tuple[CategoryField, CustomFieldDefinition, NomenclatureFieldValue | None, int | None, bool]]:
+    nomenclature = db.get(Nomenclature, nomenclature_id)
+    if nomenclature is None:
+        raise CustomFieldNotFoundError("Номенклатура не найдена")
+    field = get_definition(db, payload.field_definition_id)
+    if not field.is_active:
+        raise CustomFieldRuleError("Нельзя назначить неактивный реквизит")
+    if any(item[1].id == field.id for item in get_nomenclature_values(db, nomenclature_id)):
+        raise CustomFieldConflictError("Реквизит уже назначен номенклатуре или её категории")
+    db.add(NomenclatureFieldValue(nomenclature_id=nomenclature_id, field_definition_id=field.id))
+    try:
+        db.commit()
+    except IntegrityError as error:
+        db.rollback()
+        raise CustomFieldConflictError("Реквизит уже назначен номенклатуре") from error
+    return get_nomenclature_values(db, nomenclature_id)
+
+
+def remove_nomenclature_field(db: Session, nomenclature_id: int, field_id: int) -> None:
+    rows = get_nomenclature_values(db, nomenclature_id)
+    if any(field.id == field_id and source_id is not None for _, field, _, source_id, _ in rows):
+        raise CustomFieldRuleError("Реквизит назначен категорией и не может быть удалён из карточки")
+    row = db.scalar(select(NomenclatureFieldValue).where(NomenclatureFieldValue.nomenclature_id == nomenclature_id, NomenclatureFieldValue.field_definition_id == field_id))
+    if row is None:
+        raise CustomFieldNotFoundError("Назначение реквизита не найдено")
+    db.delete(row)
+    db.commit()
 
 
 def save_nomenclature_values(db: Session, nomenclature_id: int, payload: list[NomenclatureFieldValueInput]) -> list[tuple[CategoryField, CustomFieldDefinition, NomenclatureFieldValue | None, int, bool]]:
@@ -287,11 +331,17 @@ def save_nomenclature_values(db: Session, nomenclature_id: int, payload: list[No
         if field_id not in available:
             raise CustomFieldRuleError("Реквизит не назначен категории номенклатуры")
         _validate_value(db, available[field_id][1], value)
-    for assignment, field, row, _, _ in rows:
+    for assignment, field, row, source_id, _ in rows:
         value = supplied.get(field.id, _stored_value(row, field))
         if value is None and assignment.is_required and _default_value(assignment, field) is None:
             raise CustomFieldRuleError(f"Обязательный реквизит {field.name} не заполнен")
         if field.id not in supplied:
+            continue
+        if value is None and source_id is not None:
+            if row is not None:
+                db.delete(row)
+            continue
+        if row is None and value is None:
             continue
         if row is None:
             row = NomenclatureFieldValue(nomenclature_id=nomenclature_id, field_definition_id=field.id)

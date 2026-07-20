@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SPORT-LEAD — Карточка номенклатуры</title>
+<style>
+:root{
+  --bg:#f6f8fc;--surface:#fff;--surface-2:#f9fbff;--line:#dfe5ef;
+  --text:#101828;--muted:#667085;--primary:#1f5eff;--primary-2:#164ddb;
+  --success:#16803a;--success-bg:#eaf7ee;--danger:#d92d20;--warning:#b54708;
+  --radius:14px;--shadow:0 1px 2px rgba(16,24,40,.05),0 4px 14px rgba(16,24,40,.04);
+  --sidebar:194px;--gap:14px
+}
+*{box-sizing:border-box} body{margin:0;font:14px/1.45 Inter,Segoe UI,Arial,sans-serif;color:var(--text);background:var(--bg)}
+button,input,select,textarea{font:inherit}.app{display:grid;grid-template-columns:var(--sidebar) 1fr;min-height:100vh}
+.sidebar{background:#fff;border-right:1px solid var(--line);padding:18px 12px;position:sticky;top:0;height:100vh}
+.logo{width:34px;height:34px;border-radius:8px;background:linear-gradient(135deg,#3678ff,#174bd8);color:white;display:grid;place-items:center;font-weight:800;margin:0 0 22px 4px}
+.nav{display:grid;gap:4px}.nav a{padding:10px 12px;border-radius:9px;text-decoration:none;color:#263244}.nav a.active{background:#edf3ff;color:#174bd8;font-weight:700}.nav .group{margin-top:10px;border-top:1px solid var(--line);padding-top:10px}
+.nav .sub{padding-left:38px;font-size:13px}.main{padding:22px 24px 40px;min-width:0}
+.back{color:#175cd3;text-decoration:none;font-weight:700}.header{display:flex;justify-content:space-between;gap:20px;align-items:flex-start;margin-top:12px}
+.title h1{margin:0;font-size:27px}.meta{display:flex;gap:8px;align-items:center;color:var(--muted);margin-top:5px}
+.badge{display:inline-flex;align-items:center;border-radius:999px;padding:3px 9px;font-size:12px;font-weight:700;background:var(--success-bg);color:var(--success)}
+.actions{display:flex;gap:9px;align-items:center}.btn{border:1px solid var(--line);background:#fff;border-radius:8px;padding:9px 14px;font-weight:700;cursor:pointer}.btn.primary{background:var(--primary);border-color:var(--primary);color:#fff}.btn.icon{width:40px;padding:9px}
+.tabs{display:flex;gap:24px;border-bottom:1px solid var(--line);margin:24px 0 14px;overflow:auto}.tab{white-space:nowrap;padding:10px 0 12px;color:#344054}.tab.active{color:var(--primary);font-weight:800;border-bottom:2px solid var(--primary)}
+.grid{display:grid;grid-template-columns:minmax(0,1.75fr) minmax(320px,.95fr);gap:var(--gap);align-items:start}
+.stack{display:grid;gap:var(--gap)}.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px}
+.card-head{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:14px}.card h2{font-size:17px;margin:0}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px 16px}.field{display:grid;gap:6px}.field.full{grid-column:1/-1}.label{font-size:12px;color:#475467}.req{color:var(--danger)}
+.input,.select,.textarea{width:100%;border:1px solid #cfd7e6;border-radius:8px;background:#fff;padding:9px 11px;color:#101828}.textarea{min-height:72px;resize:vertical}.price-row{display:grid;grid-template-columns:1fr 110px;gap:8px}
+.check{display:flex;gap:8px;align-items:center;font-weight:700}
+.table{width:100%;border-collapse:collapse}.table th,.table td{text-align:left;padding:9px 8px;border-bottom:1px solid #edf0f5;font-size:13px}.table th{color:#475467;background:#f8fafc;font-weight:700}.link{color:#175cd3;text-decoration:none;font-weight:600}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}.toolbar .input{flex:1;min-width:180px}.chips{display:flex;gap:6px;flex-wrap:wrap}.chip{padding:5px 9px;border-radius:999px;background:#f1f4f9;font-size:12px}
+.media-actions{display:flex;gap:8px;margin-bottom:12px}.gallery{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}.thumb,.add-thumb{aspect-ratio:1;border-radius:9px;border:1px solid var(--line);background:#eef2f7;overflow:hidden;position:relative}.thumb img{width:100%;height:100%;object-fit:cover}.primary-tag{position:absolute;bottom:5px;left:5px;background:var(--primary);color:#fff;border-radius:5px;padding:2px 5px;font-size:10px;font-weight:800}.add-thumb{display:grid;place-items:center;background:#fff;border-style:dashed;font-weight:700;color:#475467}
+.info-list{display:grid;gap:10px;color:#344054}.info-list b{color:#101828}.timeline{display:grid;gap:14px}.event{display:grid;grid-template-columns:18px 1fr;gap:8px}.dot{width:10px;height:10px;border-radius:50%;background:#3974ff;margin-top:4px;box-shadow:0 0 0 4px #edf3ff}.small{font-size:12px;color:var(--muted)}
+.mobile-bar{display:none}
+@media(max-width:1180px){:root{--sidebar:172px}.main{padding:18px}.grid{grid-template-columns:minmax(0,1.45fr) minmax(290px,.9fr)}.gallery{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:900px){.app{grid-template-columns:72px 1fr}.sidebar{padding:16px 8px}.nav a{font-size:0;padding:11px;text-align:center}.nav a::first-letter{font-size:14px}.nav .sub{display:none}.logo{margin-inline:auto}.grid{grid-template-columns:1fr}.right{grid-row:auto}.header{align-items:center}.form-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:640px){body{padding-bottom:70px}.app{display:block}.sidebar{display:none}.main{padding:14px 12px}.header{display:block}.actions{display:none}.title h1{font-size:24px}.tabs{gap:18px;margin-top:16px}.form-grid{grid-template-columns:1fr}.field.full{grid-column:auto}.gallery{grid-template-columns:repeat(3,1fr)}.card{padding:14px;border-radius:12px}.table-wrap{overflow:auto}.table{min-width:640px}.mobile-bar{position:fixed;display:flex;gap:8px;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--line);padding:10px 12px;z-index:20}.mobile-bar .btn{flex:1}}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="logo">SL</div>
+    <nav class="nav">
+      <a href="#">Дашборд</a><a href="#">Продажи</a><a href="#">Лиды</a><a href="#">Заказы</a><a href="#">Клиенты</a><a href="#">Задачи</a>
+      <div class="group"></div>
+      <a class="active" href="#">Каталоги</a>
+      <a class="sub active" href="#">Номенклатура</a><a class="sub" href="#">Категории</a><a class="sub" href="#">Характеристики</a><a class="sub" href="#">Единицы измерения</a>
+      <div class="group"></div><a href="#">Организации</a><a href="#">Сотрудники</a><a href="#">Настройки</a>
+    </nav>
+  </aside>
+  <main class="main">
+    <a class="back" href="#">← Назад к номенклатуре</a>
+    <div class="header">
+      <div class="title"><div style="display:flex;gap:12px;align-items:center"><h1>Футболка игровая Goal Pro</h1><span class="badge">Активна</span></div><div class="meta">FG-001 · Продукция · Спортивная форма / Футбол / Футболки</div></div>
+      <div class="actions"><button class="btn icon">⋮</button><button class="btn">Отмена</button><button class="btn primary">Сохранить⌄</button></div>
+    </div>
+    <div class="tabs"><div class="tab active">Основное</div><div class="tab">Характеристики и варианты</div><div class="tab">Изображения и файлы</div><div class="tab">История</div></div>
+    <div class="grid">
+      <div class="stack">
+        <section class="card">
+          <div class="card-head"><h2>Основная информация</h2><label class="check"><input type="checkbox" checked> Активна</label></div>
+          <div class="form-grid">
+            <label class="field"><span class="label">Наименование <span class="req">*</span></span><input class="input" value="Футболка игровая Goal Pro"></label>
+            <label class="field"><span class="label">Наименование для печати</span><input class="input" value="Goal Pro"></label>
+            <label class="field"><span class="label">Артикул <span class="req">*</span></span><input class="input" value="FG-001"></label>
+            <label class="field"><span class="label">Код</span><input class="input" value="000321"></label>
+            <label class="field"><span class="label">Категория</span><select class="select"><option>Футболки</option></select></label>
+            <label class="field"><span class="label">Тип номенклатуры</span><select class="select"><option>Продукция</option></select></label>
+            <label class="field"><span class="label">Единица измерения <span class="req">*</span></span><select class="select"><option>шт. — Штука</option></select></label>
+            <label class="field"><span class="label">Краткое наименование</span><input class="input" value="Футболка Goal Pro"></label>
+            <label class="field"><span class="label">Цена (без НДС)</span><div class="price-row"><input class="input" value="0,00"><select class="select"><option>RUB</option></select></div></label>
+            <label class="field"><span class="label">Валюта цены</span><select class="select"><option>RUB</option></select></label>
+            <label class="field full"><span class="label">Описание</span><textarea class="textarea" placeholder="Введите описание номенклатуры…"></textarea></label>
+          </div>
+        </section>
+        <section class="card">
+          <div class="card-head"><h2>Реквизиты</h2><button class="btn">✎ Редактировать</button></div>
+          <div class="table-wrap"><table class="table"><thead><tr><th>Реквизит</th><th>Значение</th><th>Дополнительно</th></tr></thead><tbody>
+            <tr><td>Производитель</td><td class="small">Не указано</td><td>—</td></tr>
+            <tr><td>Страна происхождения</td><td class="small">Не указано</td><td>—</td></tr>
+            <tr><td>Вес</td><td class="small">Не указано</td><td>—</td></tr>
+            <tr><td>Габариты</td><td class="small">Не указано</td><td>—</td></tr>
+          </tbody></table></div>
+          <p><a class="link" href="#">Настроить дополнительные реквизиты</a></p>
+        </section>
+        <section class="card">
+          <div class="card-head"><h2>Характеристики и варианты</h2></div>
+          <div class="toolbar"><select class="select" style="width:auto"><option>Добавить характеристику</option></select><input class="input" placeholder="Поиск характеристики…"><button class="btn primary">Сгенерировать варианты</button><button class="btn">Фильтры</button></div>
+          <div class="table-wrap"><table class="table"><thead><tr><th>Характеристика</th><th>Тип</th><th>Значения</th><th>Обязательная</th><th>Действия</th></tr></thead><tbody>
+            <tr><td><a class="link">Размер</a></td><td>Список</td><td><div class="chips"><span class="chip">XS</span><span class="chip">S</span><span class="chip">M</span><span class="chip">L</span><span class="chip">XL</span></div></td><td style="color:var(--success)">Да</td><td>✎ ⧉ 🗑</td></tr>
+            <tr><td><a class="link">Цвет</a></td><td>Список</td><td><div class="chips"><span class="chip">●</span><span class="chip">○</span><span class="chip">🔵</span><span class="chip">🔴</span></div></td><td style="color:var(--success)">Да</td><td>✎ ⧉ 🗑</td></tr>
+            <tr><td><a class="link">Рост</a></td><td>Список</td><td><div class="chips"><span class="chip">158</span><span class="chip">164</span><span class="chip">170</span><span class="chip">176</span></div></td><td>Нет</td><td>✎ ⧉ 🗑</td></tr>
+          </tbody></table></div>
+        </section>
+      </div>
+      <aside class="stack right">
+        <section class="card">
+          <div class="card-head"><h2>Изображения и файлы</h2></div>
+          <div class="media-actions"><button class="btn primary">Загрузить</button><button class="btn">Создать папку</button></div>
+          <div class="gallery">
+            <div class="thumb"><img src="https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=300&q=80"><span class="primary-tag">Главное</span></div>
+            <div class="thumb"><img src="https://images.unsplash.com/photo-1583743814966-8936f37f4ec6?auto=format&fit=crop&w=300&q=80"></div>
+            <div class="thumb"><img src="https://images.unsplash.com/photo-1598033129183-c4f50c736f10?auto=format&fit=crop&w=300&q=80"></div>
+            <div class="add-thumb">＋<br>Добавить</div>
+          </div>
+          <p class="small">Перетащите файлы сюда или нажмите «Загрузить». JPG, PNG, WEBP. До 10 МБ.</p>
+          <a class="link" href="#">Открыть медиатеку →</a>
+        </section>
+        <section class="card"><div class="card-head"><h2>Карточка</h2></div><div class="info-list"><div>Создано: 20.07.2026, 13:13:27</div><div>Изменено: 20.07.2026, 13:13:27</div><div><b>Позиция доступна для использования</b></div><div>ID: 1a2b3c4d–5678–90ab–cdef–1234567890ab</div></div></section>
+        <section class="card"><div class="card-head"><h2>История изменений</h2></div><div class="timeline">
+          <div class="event"><span class="dot"></span><div><b>Изменены основные данные</b><div class="small">Иванов И.И. · 20.07.2026, 13:13</div></div></div>
+          <div class="event"><span class="dot"></span><div><b>Создана номенклатура</b><div class="small">Иванов И.И. · 20.07.2026, 13:13</div></div></div>
+        </div><p><a class="link" href="#">Открыть полную историю →</a></p></section>
+      </aside>
+    </div>
+  </main>
+</div>
+<div class="mobile-bar"><button class="btn">Отмена</button><button class="btn primary">Сохранить</button></div>
+</body>
+</html>

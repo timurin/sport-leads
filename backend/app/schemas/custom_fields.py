@@ -7,7 +7,7 @@ from app.models.custom_fields import CustomFieldDataType
 
 
 class CustomFieldDefinitionCreate(BaseModel):
-    code: str = Field(min_length=1, max_length=100, pattern=r"^[a-z0-9][a-z0-9_-]*$")
+    code: str | None = Field(default=None, max_length=100, pattern=r"^[a-z0-9][a-z0-9_-]*$")
     name: str = Field(min_length=1, max_length=255)
     description: str | None = None
     data_type: CustomFieldDataType
@@ -98,6 +98,10 @@ class NomenclatureFieldValueInput(BaseModel):
     value: object | None = None
 
 
+class NomenclatureFieldAssignmentInput(BaseModel):
+    field_definition_id: int
+
+
 class NomenclatureFieldValueRead(BaseModel):
     field_definition_id: int
     code: str
@@ -106,4 +110,4 @@ class NomenclatureFieldValueRead(BaseModel):
     value: object | None = None
     is_required: bool
     inherited: bool
-    source_category_id: int
+    source_category_id: int | None

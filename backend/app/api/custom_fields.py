@@ -3,8 +3,8 @@ from sqlalchemy.orm import Session
 
 from app.database.session import get_db
 from app.models.custom_fields import CustomFieldDataType
-from app.schemas.custom_fields import CategoryFieldCreate, CategoryFieldRead, CategoryFieldUpdate, CustomFieldDefinitionCreate, CustomFieldDefinitionRead, CustomFieldDefinitionUpdate, CustomFieldOptionCreate, CustomFieldOptionRead, CustomFieldOptionUpdate, NomenclatureFieldValueInput, NomenclatureFieldValueRead
-from app.services.custom_fields import CustomFieldConflictError, CustomFieldNotFoundError, CustomFieldRuleError, _default_value, assign_field, create_definition, create_option, effective_fields, get_definition, get_nomenclature_values, list_definitions, list_options, remove_field, save_nomenclature_values, update_definition, update_field_assignment, update_option
+from app.schemas.custom_fields import CategoryFieldCreate, CategoryFieldRead, CategoryFieldUpdate, CustomFieldDefinitionCreate, CustomFieldDefinitionRead, CustomFieldDefinitionUpdate, CustomFieldOptionCreate, CustomFieldOptionRead, CustomFieldOptionUpdate, NomenclatureFieldAssignmentInput, NomenclatureFieldValueInput, NomenclatureFieldValueRead
+from app.services.custom_fields import CustomFieldConflictError, CustomFieldNotFoundError, CustomFieldRuleError, _default_value, assign_field, assign_nomenclature_field, create_definition, create_option, effective_fields, get_definition, get_nomenclature_values, list_definitions, list_options, remove_field, remove_nomenclature_field, save_nomenclature_values, update_definition, update_field_assignment, update_option
 
 router = APIRouter(prefix="/custom-fields", tags=["Nomenclature custom fields"])
 
@@ -122,6 +122,28 @@ def read_nomenclature_fields(nomenclature_id: int, db: Session = Depends(get_db)
         return [_value_read(*item) for item in get_nomenclature_values(db, nomenclature_id)]
     except CustomFieldNotFoundError as error:
         raise HTTPException(404, str(error)) from error
+
+
+@router.post("/nomenclatures/{nomenclature_id}/fields", response_model=list[NomenclatureFieldValueRead], status_code=status.HTTP_201_CREATED)
+def add_nomenclature_field(nomenclature_id: int, payload: NomenclatureFieldAssignmentInput, db: Session = Depends(get_db)):
+    try:
+        return [_value_read(*item) for item in assign_nomenclature_field(db, nomenclature_id, payload)]
+    except CustomFieldNotFoundError as error:
+        raise HTTPException(404, str(error)) from error
+    except CustomFieldConflictError as error:
+        raise HTTPException(409, str(error)) from error
+    except CustomFieldRuleError as error:
+        raise HTTPException(422, str(error)) from error
+
+
+@router.delete("/nomenclatures/{nomenclature_id}/fields/{field_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_nomenclature_field(nomenclature_id: int, field_id: int, db: Session = Depends(get_db)) -> None:
+    try:
+        remove_nomenclature_field(db, nomenclature_id, field_id)
+    except CustomFieldNotFoundError as error:
+        raise HTTPException(404, str(error)) from error
+    except CustomFieldRuleError as error:
+        raise HTTPException(422, str(error)) from error
 
 
 @router.put("/nomenclatures/{nomenclature_id}/fields", response_model=list[NomenclatureFieldValueRead])

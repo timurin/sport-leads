@@ -117,9 +117,18 @@ export async function getNomenclatureFieldValues(nomenclatureId: number): Promis
   return await response.json() as NomenclatureFieldValue[];
 }
 
+function apiBaseUrl(): string {
+  return (process.env.SPORT_LEADS_API_URL ?? "http://127.0.0.1:8000").replace(/\/$/, "");
+}
+
+export function characteristicsApiPath(path: string): string {
+  const normalized = path.startsWith("/") ? path : `/${path}`;
+  return normalized === "/characteristics" || normalized.startsWith("/characteristics/") ? normalized : `/characteristics${normalized}`;
+}
+
 async function getCharacteristicApi<T>(path: string): Promise<T> {
   const apiUrl = (process.env.SPORT_LEADS_API_URL ?? "http://127.0.0.1:8000").replace(/\/$/, "");
-  const response = await fetch(`${apiUrl}/characteristics${path}`, { cache: "no-store" });
+  const response = await fetch(`${apiUrl}${characteristicsApiPath(path)}`, { cache: "no-store" });
   if (!response.ok) throw new Error(`Не удалось загрузить характеристики (${response.status}).`);
   return await response.json() as T;
 }
@@ -128,4 +137,8 @@ export const getCategoryCharacteristics = (id: number) => getCharacteristicApi<C
 export const getNomenclatureCharacteristics = (id: number) => getCharacteristicApi<NomenclatureCharacteristic[]>(`/nomenclatures/${id}`);
 export const getNomenclatureVariants = (id: number) => getCharacteristicApi<NomenclatureVariant[]>(`/nomenclatures/${id}/variants`);
 export const getCharacteristicOptions = (id: number) => getCharacteristicApi<CharacteristicOption[]>(`/definitions/${id}/options`);
-export const getNomenclatureMedia = (id: number) => getCharacteristicApi<NomenclatureMedia[]>(`/nomenclatures/${id}/media`);
+export async function getNomenclatureMedia(id: number): Promise<NomenclatureMedia[]> {
+  const response = await fetch(`${apiBaseUrl()}/nomenclatures/${id}/media`, { cache: "no-store" });
+  if (!response.ok) throw new Error(`Не удалось загрузить media номенклатуры (${response.status}).`);
+  return await response.json() as NomenclatureMedia[];
+}

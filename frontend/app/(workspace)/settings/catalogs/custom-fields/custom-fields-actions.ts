@@ -36,3 +36,23 @@ export async function saveNomenclatureCustomField(formData: FormData) {
   await request(`/nomenclatures/${value(formData, "nomenclature_id")}/fields`, "PUT", [{ field_definition_id: Number(formData.get("field_definition_id")), value: fieldValue }]);
   revalidatePath("/settings/catalogs/nomenclature");
 }
+
+export async function assignNomenclatureCustomField(formData: FormData) {
+  await request(`/nomenclatures/${value(formData, "nomenclature_id")}/fields`, "POST", { field_definition_id: Number(formData.get("field_definition_id")) });
+  revalidatePath(`/settings/catalogs/nomenclature/${value(formData, "nomenclature_id")}`);
+}
+
+export async function createAndAssignNomenclatureCustomField(formData: FormData) {
+  const nomenclatureId = value(formData, "nomenclature_id");
+  const response = await fetch(`${base()}/custom-fields`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: value(formData, "name"), data_type: value(formData, "data_type") }), cache: "no-store" });
+  if (!response.ok) { const payload = await response.json().catch(() => null) as { detail?: string } | null; throw new Error(payload?.detail ?? `Backend вернул ${response.status}.`); }
+  const definition = await response.json() as { id: number };
+  await request(`/nomenclatures/${nomenclatureId}/fields`, "POST", { field_definition_id: definition.id });
+  revalidatePath(`/settings/catalogs/nomenclature/${nomenclatureId}`);
+}
+
+export async function removeNomenclatureCustomField(formData: FormData) {
+  const nomenclatureId = value(formData, "nomenclature_id");
+  await request(`/nomenclatures/${nomenclatureId}/fields/${value(formData, "field_definition_id")}`, "DELETE", undefined);
+  revalidatePath(`/settings/catalogs/nomenclature/${nomenclatureId}`);
+}
