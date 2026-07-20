@@ -9,6 +9,8 @@ from app.api.imports import router as imports_router
 from app.api.materials import router as materials_router
 from app.api.nomenclature import router as nomenclature_router
 from app.api.custom_fields import router as custom_fields_router
+from app.api.characteristics import router as characteristics_router
+from app.api.media import router as media_router
 from app.api.leads import router as leads_router
 from app.api.lead_stages import router as lead_stages_router
 from app.api.lead_rejection_reasons import router as lead_rejection_reasons_router
@@ -29,6 +31,8 @@ app.include_router(imports_router)
 app.include_router(materials_router)
 app.include_router(nomenclature_router)
 app.include_router(custom_fields_router)
+app.include_router(characteristics_router)
+app.include_router(media_router)
 app.include_router(leads_router)
 app.include_router(lead_stages_router)
 app.include_router(lead_rejection_reasons_router)

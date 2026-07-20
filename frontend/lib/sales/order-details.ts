@@ -28,6 +28,8 @@ export type ApiSalesOrderItem = {
   id: number;
   order_id: number;
   nomenclature_id: number | null;
+  nomenclature_variant_id: number | null;
+  variant_snapshots: { characteristic_id: number; characteristic_code: string; characteristic_name: string; option_id: number; option_code: string; option_label: string }[];
   position: number;
   snapshot_name: string;
   size_range: string | null;
@@ -98,6 +100,8 @@ export type SalesOrderDetails = {
 export type SalesOrderItem = {
   id: number;
   nomenclatureId: number | null;
+  nomenclatureVariantId: number | null;
+  variantSnapshots: ApiSalesOrderItem["variant_snapshots"];
   snapshotName: string;
   sizeRange: string;
   personalization: string;
@@ -161,6 +165,8 @@ export function fromApiSalesOrder(order: ApiSalesOrderDetails): SalesOrderDetail
     items: (order.items ?? []).map((item) => ({
       id: item.id,
       nomenclatureId: item.nomenclature_id,
+      nomenclatureVariantId: item.nomenclature_variant_id,
+      variantSnapshots: item.variant_snapshots ?? [],
       snapshotName: item.snapshot_name,
       sizeRange: item.size_range ?? "",
       personalization: item.personalization ?? "",

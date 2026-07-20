@@ -26,6 +26,7 @@ async function callItems(orderId: string, path: string, method: string, body?: R
 export async function createOrderItem(orderId: string, formData: FormData) {
   return callItems(orderId, "", "POST", {
     nomenclature_id: formData.get("nomenclature_id") ? Number(formData.get("nomenclature_id")) : null,
+    nomenclature_variant_id: formData.get("nomenclature_variant_id") ? Number(formData.get("nomenclature_variant_id")) : null,
     snapshot_name: String(formData.get("snapshot_name") ?? ""),
     size_range: optionalText(formData.get("size_range")),
     personalization: optionalText(formData.get("personalization")),
@@ -40,6 +41,7 @@ export async function createOrderItem(orderId: string, formData: FormData) {
 export async function updateOrderItem(orderId: string, itemId: number, formData: FormData) {
   return callItems(orderId, `/${itemId}`, "PATCH", {
     nomenclature_id: formData.get("nomenclature_id") ? Number(formData.get("nomenclature_id")) : null,
+    nomenclature_variant_id: formData.get("nomenclature_variant_id") ? Number(formData.get("nomenclature_variant_id")) : null,
     snapshot_name: String(formData.get("snapshot_name") ?? ""),
     size_range: optionalText(formData.get("size_range")),
     personalization: optionalText(formData.get("personalization")),

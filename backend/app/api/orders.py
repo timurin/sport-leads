@@ -57,6 +57,10 @@ def serialize_item(item: SalesOrderItem) -> dict[str, object]:
     return {
         **{column.name: getattr(item, column.name) for column in SalesOrderItem.__table__.columns},
         "gross_amount": gross_amount,
+        "variant_snapshots": [
+            {column.name: getattr(snapshot, column.name) for column in snapshot.__table__.columns if column.name != "id" and column.name != "order_item_id"}
+            for snapshot in item.variant_snapshots
+        ],
     }
 
 

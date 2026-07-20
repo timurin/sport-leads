@@ -73,20 +73,23 @@ function priceValue(value: string): string {
 function ItemForm({
   item,
   nomenclature,
+  variantsByNomenclature,
   isPending,
   onSubmit,
   onDelete,
 }: {
   item: SalesOrderItem;
   nomenclature: Nomenclature[];
+  variantsByNomenclature: Record<number, import("@/lib/nomenclature").NomenclatureVariant[]>;
   isPending: boolean;
   onSubmit: (formData: FormData) => void;
   onDelete: () => void;
 }) {
-  const selected = nomenclature.find((entry) => entry.id === item.nomenclatureId) ?? null;
   const [selectedId, setSelectedId] = useState<number | null>(item.nomenclatureId);
   const [snapshotName, setSnapshotName] = useState(item.snapshotName);
   const [unitPrice, setUnitPrice] = useState(priceValue(item.unitPrice));
+  const selected = nomenclature.find((entry) => entry.id === selectedId) ?? null;
+  const variants = selected ? variantsByNomenclature[selected.id] ?? [] : [];
 
   function selectNomenclature(entry: Nomenclature | null) {
     setSelectedId(entry?.id ?? null);
@@ -99,6 +102,7 @@ function ItemForm({
   return (
     <form action={onSubmit} className="grid gap-2 rounded border border-portal-border p-3 text-sm sm:grid-cols-[1fr_1fr_1.3fr_1fr_auto_auto] sm:items-center">
       <NomenclaturePicker items={nomenclature} value={selectedId} onChange={selectNomenclature} />
+      <select name="nomenclature_variant_id" defaultValue={item.nomenclatureVariantId ?? ""} className="rounded border px-2 py-1"><option value="">Без варианта</option>{variants.filter((variant) => variant.is_active || variant.id === item.nomenclatureVariantId).map((variant) => <option key={variant.id} value={variant.id}>{variant.article} — {variant.name}{variant.is_active ? "" : " (архив)"}</option>)}</select>
       <input name="snapshot_name" value={snapshotName} onChange={(event) => setSnapshotName(event.target.value)} required className="rounded border px-2 py-1" />
       <input name="size_range" defaultValue={item.sizeRange} placeholder="Размеры" className="rounded border px-2 py-1" />
       <input name="personalization" defaultValue={item.personalization} placeholder="Персонализация" className="rounded border px-2 py-1" />
@@ -108,12 +112,12 @@ function ItemForm({
       <input name="discount_percent" defaultValue={item.discountPercent} type="number" min="0" max="100" step="0.01" placeholder="Скидка %" className="w-24 rounded border px-2 py-1" />
       <div className="text-xs text-portal-muted"><div>Исходная: {item.grossAmount}</div><div>Скидка: {item.discountAmount}</div><div className="font-semibold text-portal-text">Итого: {item.lineAmount}</div></div>
       <div className="flex gap-2"><button type="submit" disabled={isPending} className="text-xs font-semibold text-blue-700">Сохранить</button><button type="button" disabled={isPending} onClick={onDelete} className="text-xs font-semibold text-red-700">Удалить</button></div>
-      {selected ? <p className="text-xs text-portal-muted sm:col-span-2">Связано: {nomenclatureLabel(selected)}. Снимок изменится только после явного выбора.</p> : null}
+      {selected ? <p className="text-xs text-portal-muted sm:col-span-2">Связано: {nomenclatureLabel(selected)}{item.variantSnapshots.length ? ` · ${item.variantSnapshots.map((snapshot) => `${snapshot.characteristic_name}: ${snapshot.option_label}`).join(", ")}` : ""}. Снимок изменится только после явного выбора.</p> : null}
     </form>
   );
 }
 
-export function SalesOrderItems({ orderId, items, nomenclature }: { orderId: string; items: SalesOrderItem[]; nomenclature: Nomenclature[] }) {
+export function SalesOrderItems({ orderId, items, nomenclature, variantsByNomenclature }: { orderId: string; items: SalesOrderItem[]; nomenclature: Nomenclature[]; variantsByNomenclature: Record<number, import("@/lib/nomenclature").NomenclatureVariant[]> }) {
   const [isPending, startTransition] = useTransition();
   const [message, setMessage] = useState<string | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
@@ -139,9 +143,10 @@ export function SalesOrderItems({ orderId, items, nomenclature }: { orderId: str
   return (
     <section className="mt-4 rounded-[var(--portal-radius-md)] border border-portal-border bg-portal-surface p-4">
       <h2 className="text-base font-semibold text-portal-text">Товарные позиции</h2>
-      {items.length === 0 ? <p className="mt-2 text-sm text-portal-muted">Позиции пока не добавлены.</p> : <div className="mt-3 space-y-2">{items.map((item) => <ItemForm key={item.id} item={item} nomenclature={nomenclature} isPending={isPending} onSubmit={(formData) => submitUpdate(item.id, formData)} onDelete={() => submitDelete(item.id)} />)}</div>}
+      {items.length === 0 ? <p className="mt-2 text-sm text-portal-muted">Позиции пока не добавлены.</p> : <div className="mt-3 space-y-2">{items.map((item) => <ItemForm key={item.id} item={item} nomenclature={nomenclature} variantsByNomenclature={variantsByNomenclature} isPending={isPending} onSubmit={(formData) => submitUpdate(item.id, formData)} onDelete={() => submitDelete(item.id)} />)}</div>}
       <form ref={formRef} action={submitCreate} className="mt-4 grid gap-2 sm:grid-cols-6">
         <NomenclaturePicker items={nomenclature} value={createNomenclatureId} onChange={selectCreateNomenclature} />
+        <select name="nomenclature_variant_id" className="rounded border px-3 py-2 text-sm"><option value="">Без варианта</option>{(createNomenclatureId ? variantsByNomenclature[createNomenclatureId] ?? [] : []).filter((variant) => variant.is_active).map((variant) => <option key={variant.id} value={variant.id}>{variant.article} — {variant.name}</option>)}</select>
         <input name="snapshot_name" value={createSnapshotName} onChange={(event) => setCreateSnapshotName(event.target.value)} required placeholder="Наименование" className="rounded border px-3 py-2 text-sm" />
         <input name="size_range" placeholder="Размеры" className="rounded border px-3 py-2 text-sm" />
         <input name="personalization" placeholder="Персонализация" className="rounded border px-3 py-2 text-sm" />

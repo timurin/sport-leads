@@ -39,11 +39,11 @@
 - `[x]` `v0.8.3-units-of-measure`: persistent-справочник `UnitOfMeasure` с системными категориями, precision, active-фильтрацией и CRUD/API; `Nomenclature.storage_unit_id` сохраняет базовую единицу хранения, legacy `unit` мигрируется без потери данных; frontend, regression tests, Alembic и project check подтверждены. Альтернативные коэффициенты и складские роли не входят;
 - `[x]` `v0.8.4-category-custom-fields`: `CustomFieldDefinition`, persistent options, `CategoryField` с required/default/inherit/override и typed `NomenclatureFieldValue`; effective schema учитывает всю иерархию, backend проверяет типы, варианты и обязательность; API, миграция, frontend catalog, редактор значений карточки и regression-проверки подтверждены. Characteristics/variants не входят;
 - `[x]` `v0.8.5-nomenclature-workspace-and-editable-card`: рабочее место с деревом категорий, поиском/фильтрами, отдельными командами создания и отдельная карточка с view/edit и интеграцией custom fields v0.8.4; frontend persistence и regression-проверки подтверждены. Полный аудит, массовые действия, пользовательские колонки и глобальные права не входят;
-- `[ ]` `v0.8.6-characteristics-and-variants`: planned; характеристики, допустимые значения и отдельные варианты номенклатуры, только после v0.8.5;
-- `[ ]` `v0.8.7-nomenclature-media`: planned; persistent media, главное изображение и безопасный file lifecycle, с зависимостью от карточки v0.8.5;
+- `[x]` `v0.8.6-characteristics-and-variants`: определения и значения характеристик, category inheritance, nomenclature assignments, persistent variants с проверкой комбинаций/артикулов и order-item snapshots подтверждены API, миграцией `g7b8c9d0e123`, frontend card/actions и regression-проверками. Изображения, модели, производство, цены вариантов и 1С не входят;
+- `[x]` `v0.8.7-nomenclature-media`: persistent media, главное изображение, сортировка, безопасное хранение/выдача/удаление изображений подтверждены моделью, API, миграцией `h8c9d0e1f234`, frontend card и regression-проверками. Файлы ограничены изображениями до 10 MB;
 - `[ ]` единая номенклатура готовых изделий, услуг, полуфабрикатов и комплектов;
 - `[ ]` модели и артикулы;
-- `[ ]` размеры, характеристики, варианты и изображения;
+- `[ ]` размеры и изображения;
 - `[ ]` лекала и версии;
 - `[~]` отдельный `Material` catalog/API существует, но frontend catalog остаётся demo-only и не является номенклатурой.
 

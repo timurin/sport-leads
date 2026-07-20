@@ -373,6 +373,9 @@ class SalesOrderItem(Base):
     nomenclature_id: Mapped[int | None] = mapped_column(
         ForeignKey("nomenclatures.id", ondelete="SET NULL"), nullable=True, index=True
     )
+    nomenclature_variant_id: Mapped[int | None] = mapped_column(
+        ForeignKey("nomenclature_variants.id", ondelete="SET NULL"), nullable=True, index=True
+    )
     position: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
     snapshot_name: Mapped[str] = mapped_column(String(255), nullable=False)
     size_range: Mapped[str | None] = mapped_column(String(255), nullable=True)
@@ -391,6 +394,24 @@ class SalesOrderItem(Base):
         DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now()
     )
     order: Mapped[SalesOrder] = relationship(back_populates="items")
+    variant_snapshots: Mapped[list["SalesOrderItemVariantSnapshot"]] = relationship(
+        back_populates="order_item", cascade="all, delete-orphan", order_by="SalesOrderItemVariantSnapshot.id"
+    )
+
+
+class SalesOrderItemVariantSnapshot(Base):
+    __tablename__ = "sales_order_item_variant_snapshots"
+    __table_args__ = (UniqueConstraint("order_item_id", "characteristic_id", name="uq_sales_order_item_variant_snapshot_characteristic"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    order_item_id: Mapped[int] = mapped_column(ForeignKey("sales_order_items.id", ondelete="CASCADE"), nullable=False, index=True)
+    characteristic_id: Mapped[int] = mapped_column(Integer, nullable=False)
+    characteristic_code: Mapped[str] = mapped_column(String(100), nullable=False)
+    characteristic_name: Mapped[str] = mapped_column(String(255), nullable=False)
+    option_id: Mapped[int] = mapped_column(Integer, nullable=False)
+    option_code: Mapped[str] = mapped_column(String(100), nullable=False)
+    option_label: Mapped[str] = mapped_column(String(255), nullable=False)
+    order_item: Mapped[SalesOrderItem] = relationship(back_populates="variant_snapshots")
 
 
 class LeadEvent(Base):

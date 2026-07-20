@@ -46,6 +46,12 @@ export type CustomFieldDefinition = { id: number; code: string; name: string; de
 export type CategoryField = { id: number; category_id: number; field_definition_id: number; is_required: boolean; inherit: boolean; is_visible: boolean; sort_order: number; default_value: unknown; source_category_id: number; inherited: boolean };
 export type CustomFieldOption = { id: number; field_definition_id: number; code: string; label: string; sort_order: number; is_active: boolean; created_at: string; updated_at: string };
 export type NomenclatureFieldValue = { field_definition_id: number; code: string; name: string; data_type: CustomFieldDataType; value: unknown; is_required: boolean; inherited: boolean; source_category_id: number };
+export type CharacteristicDefinition = { id: number; code: string; name: string; is_active: boolean; created_at: string; updated_at: string };
+export type CharacteristicOption = { id: number; characteristic_id: number; code: string; label: string; sort_order: number; is_active: boolean; created_at: string; updated_at: string };
+export type CategoryCharacteristic = { id: number; category_id: number; characteristic_id: number; is_required: boolean; inherit: boolean; sort_order: number; inherited: boolean; source_category_id: number; created_at: string; updated_at: string };
+export type NomenclatureCharacteristic = { id: number; nomenclature_id: number; characteristic_id: number; created_at: string; updated_at: string };
+export type NomenclatureVariant = { id: number; nomenclature_id: number; article: string; name: string; is_active: boolean; option_ids: number[]; options: CharacteristicOption[]; created_at: string; updated_at: string };
+export type NomenclatureMedia = { id: number; nomenclature_id: number; filename: string; mime_type: string; file_size: number; alt_text: string | null; sort_order: number; is_primary: boolean; created_at: string; updated_at: string; content_url: string };
 
 export function fromApiNomenclature(item: ApiNomenclature): Nomenclature {
   return { ...item, basePrice: Number(item.base_price).toFixed(2) };
@@ -110,3 +116,16 @@ export async function getNomenclatureFieldValues(nomenclatureId: number): Promis
   if (!response.ok) throw new Error(`Не удалось загрузить реквизиты номенклатуры (${response.status}).`);
   return await response.json() as NomenclatureFieldValue[];
 }
+
+async function getCharacteristicApi<T>(path: string): Promise<T> {
+  const apiUrl = (process.env.SPORT_LEADS_API_URL ?? "http://127.0.0.1:8000").replace(/\/$/, "");
+  const response = await fetch(`${apiUrl}/characteristics${path}`, { cache: "no-store" });
+  if (!response.ok) throw new Error(`Не удалось загрузить характеристики (${response.status}).`);
+  return await response.json() as T;
+}
+export const getCharacteristicDefinitions = () => getCharacteristicApi<CharacteristicDefinition[]>("/definitions");
+export const getCategoryCharacteristics = (id: number) => getCharacteristicApi<CategoryCharacteristic[]>(`/categories/${id}`);
+export const getNomenclatureCharacteristics = (id: number) => getCharacteristicApi<NomenclatureCharacteristic[]>(`/nomenclatures/${id}`);
+export const getNomenclatureVariants = (id: number) => getCharacteristicApi<NomenclatureVariant[]>(`/nomenclatures/${id}/variants`);
+export const getCharacteristicOptions = (id: number) => getCharacteristicApi<CharacteristicOption[]>(`/definitions/${id}/options`);
+export const getNomenclatureMedia = (id: number) => getCharacteristicApi<NomenclatureMedia[]>(`/nomenclatures/${id}/media`);

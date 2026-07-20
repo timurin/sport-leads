@@ -828,3 +828,40 @@ def test_lead_history_exposes_status_conversion_and_rejection_events(
     assert [item["event_type"] for item in status_history.json()] == ["lead_status_changed"]
     assert {item["event_type"] for item in converted_history.json()} == {"lead_converted", "order_created"}
     assert [item["event_type"] for item in rejected_history.json()] == ["lead_rejected"]
+
+
+def test_characteristics_variant_snapshot_and_inactive_validation(
+    client: TestClient,
+    session_factory: sessionmaker[Session],
+) -> None:
+    category = client.post("/nomenclatures/categories", json={"name": "Форма", "code": "variant-form", "nomenclature_type": "PRODUCT"}).json()
+    nomenclature = client.post("/nomenclatures", json={"article": "VAR-001", "name": "Форма", "category": "Форма", "category_id": category["id"]}).json()
+    definition = client.post("/characteristics/definitions", json={"code": "color", "name": "Цвет"}).json()
+    option = client.post(f"/characteristics/definitions/{definition['id']}/options", json={"code": "red", "label": "Красный"}).json()
+    assert client.post(f"/characteristics/categories/{category['id']}", json={"characteristic_id": definition["id"]}).status_code == 201
+    assert client.post(f"/characteristics/nomenclatures/{nomenclature['id']}", json={"characteristic_id": definition["id"]}).status_code == 201
+    variant = client.post(f"/characteristics/nomenclatures/{nomenclature['id']}/variants", json={"article": "VAR-001-RED", "name": "Форма / Красный", "option_ids": [option["id"]]})
+    assert variant.status_code == 201
+    duplicate = client.post(f"/characteristics/nomenclatures/{nomenclature['id']}/variants", json={"article": "VAR-001-RED-2", "name": "Дубликат", "option_ids": [option["id"]]})
+    assert duplicate.status_code == 409
+    order_id = client.post(f"/leads/{add_lead(session_factory)}/convert", json={"completed_by_id": 1}).json()["order"]["id"]
+    item = client.post(f"/orders/{order_id}/items", json={"nomenclature_id": nomenclature["id"], "nomenclature_variant_id": variant.json()["id"], "snapshot_name": "Форма", "unit": "шт", "quantity": "1", "unit_price": "100"})
+    assert item.status_code == 201
+    assert item.json()["variant_snapshots"][0]["option_code"] == "red"
+
+
+def test_nomenclature_media_persists_primary_order_and_safe_delete(
+    client: TestClient,
+) -> None:
+    nomenclature = client.post("/nomenclatures", json={"article": "MEDIA-001", "name": "Изображение", "category": "Форма"}).json()
+    content = "aGVsbG8="
+    created = client.post(f"/nomenclatures/{nomenclature['id']}/media", json={"filename": "front.png", "mime_type": "image/png", "content_base64": content, "is_primary": True, "sort_order": 2})
+    assert created.status_code == 201
+    media = created.json()
+    assert media["is_primary"] is True
+    assert media["file_size"] == 5
+    assert client.get(f"/nomenclatures/{nomenclature['id']}/media/{media['id']}/content").content == b"hello"
+    invalid = client.post(f"/nomenclatures/{nomenclature['id']}/media", json={"filename": "bad.exe", "mime_type": "application/octet-stream", "content_base64": content})
+    assert invalid.status_code == 422
+    assert client.delete(f"/nomenclatures/{nomenclature['id']}/media/{media['id']}").status_code == 204
+    assert client.get(f"/nomenclatures/{nomenclature['id']}/media").json() == []

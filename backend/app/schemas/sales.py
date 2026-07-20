@@ -322,10 +322,20 @@ class SalesOrderRead(SalesSchema):
     items: list["SalesOrderItemRead"] = []
 
 
+class SalesOrderItemVariantSnapshotRead(SalesSchema):
+    characteristic_id: int
+    characteristic_code: str
+    characteristic_name: str
+    option_id: int
+    option_code: str
+    option_label: str
+
+
 class SalesOrderItemRead(SalesSchema):
     id: int
     order_id: int
     nomenclature_id: int | None
+    nomenclature_variant_id: int | None
     position: int
     snapshot_name: str
     size_range: str | None
@@ -340,10 +350,12 @@ class SalesOrderItemRead(SalesSchema):
     line_amount: Decimal
     created_at: datetime
     updated_at: datetime
+    variant_snapshots: list[SalesOrderItemVariantSnapshotRead] = Field(default_factory=list)
 
 
 class SalesOrderItemCreate(BaseModel):
     nomenclature_id: int | None = None
+    nomenclature_variant_id: int | None = None
     snapshot_name: str = Field(min_length=1, max_length=255)
     size_range: str | None = Field(default=None, max_length=255)
     personalization: str | None = Field(default=None, max_length=500)
@@ -356,6 +368,7 @@ class SalesOrderItemCreate(BaseModel):
 
 class SalesOrderItemUpdate(BaseModel):
     nomenclature_id: int | None = None
+    nomenclature_variant_id: int | None = None
     snapshot_name: str | None = Field(default=None, min_length=1, max_length=255)
     size_range: str | None = Field(default=None, max_length=255)
     personalization: str | None = Field(default=None, max_length=500)

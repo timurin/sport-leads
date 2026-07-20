@@ -4,6 +4,7 @@ from app.models.sport_event import SportEvent
 from app.models.material import Material
 from app.models.nomenclature import Nomenclature, NomenclatureCategory, NomenclatureType, UnitCategory, UnitOfMeasure
 from app.models.custom_fields import CategoryField, CustomFieldDataType, CustomFieldDefinition, CustomFieldOption, NomenclatureFieldValue
+from app.models.characteristics import CategoryCharacteristic, CharacteristicDefinition, CharacteristicOption, NomenclatureCharacteristic, NomenclatureVariant
 from app.models.sales import (
     Client,
     Organization,
@@ -21,9 +22,12 @@ from app.models.sales import (
     LeadTaskStatus,
     SalesOrder,
     SalesOrderItem,
+    SalesOrderItemVariantSnapshot,
+    SalesOrderItemVariantSnapshot,
     SalesOrderStatus,
     SalesUser,
 )
+from app.models.media import NomenclatureMedia
 
 
 __all__ = [
@@ -42,6 +46,11 @@ __all__ = [
     "CustomFieldOption",
     "CategoryField",
     "NomenclatureFieldValue",
+    "CharacteristicDefinition",
+    "CharacteristicOption",
+    "CategoryCharacteristic",
+    "NomenclatureCharacteristic",
+    "NomenclatureVariant",
     "Client",
     "Organization",
     "Lead",
@@ -58,6 +67,9 @@ __all__ = [
     "LeadTaskStatus",
     "SalesOrder",
     "SalesOrderItem",
+    "SalesOrderItemVariantSnapshot",
+    "NomenclatureMedia",
+    "SalesOrderItemVariantSnapshot",
     "SalesOrderStatus",
     "SalesUser",
 ]
