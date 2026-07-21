@@ -2,17 +2,18 @@ import type { ReactNode } from "react";
 
 import { PageActions } from "@/components/layout/page-layout";
 
-type PageToolbarProps = {
-  /** Left side: search, filters, view toggles */
+export type PageToolbarProps = {
+  /** Left: search, filters, view toggles, status chips */
   start?: ReactNode;
-  /** Right side: primary/secondary actions (add, delete, …) */
+  /** Right: primary/secondary page actions */
   end?: ReactNode;
   className?: string;
 };
 
 /**
- * Page-level toolbar (not Platform Topbar).
- * Holds functional controls for the current page — no page title/description.
+ * Page-level toolbar (not Platform Topbar / DS-SHELL-02).
+ * Functional controls for the current page — no page title/description.
+ * Contract: `DS-PAGE-02` (`docs/design-system/shell-page-header-standardization.md`).
  */
 export function PageToolbar({
   start,
@@ -25,13 +26,16 @@ export function PageToolbar({
 
   return (
     <div
+      data-page-toolbar
       className={[
-        "border-b border-portal-border bg-portal-surface px-4 py-3 sm:px-6",
+        "border-b border-portal-border bg-portal-surface px-portal-4 py-portal-3 sm:px-portal-6",
         className,
-      ].join(" ")}
+      ]
+        .filter(Boolean)
+        .join(" ")}
     >
-      <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
-        <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
+      <div className="flex min-w-0 flex-col gap-portal-3 sm:flex-row sm:items-center sm:justify-between sm:gap-portal-4">
+        <div className="flex min-w-0 flex-1 flex-wrap items-center gap-portal-2">
           {start}
         </div>
 
@@ -46,7 +50,7 @@ export function PageToolbar({
 }
 
 type PageHeaderProps = {
-  /** @deprecated Ignored — titles belong on the page body if needed */
+  /** @deprecated Ignored — titles belong in page body / EntityHeader if needed */
   title?: string;
   /** @deprecated Ignored */
   description?: string;
@@ -54,11 +58,14 @@ type PageHeaderProps = {
   actions?: ReactNode;
   start?: ReactNode;
   end?: ReactNode;
+  /** @deprecated Ignored — toolbar padding is fixed by DS-PAGE-02 */
   size?: "compact" | "default" | "spacious";
   className?: string;
 };
 
-/** @deprecated Use `PageToolbar` — title/description removed by product request. */
+/**
+ * @deprecated Use `PageToolbar`. Kept as a compatibility alias for roadmap name `PageHeader`.
+ */
 export function PageHeader({
   actions,
   start,

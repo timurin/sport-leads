@@ -241,12 +241,12 @@ Microtasks:
 
 #### 5.3.2 — Page shell
 
-- [ ] 5.3.2.1 — Standardize PageLayout
-- [ ] 5.3.2.2 — Standardize PageHeader
-- [ ] 5.3.2.3 — Standardize page actions
-- [ ] 5.3.2.4 — Standardize content containers
-- [ ] 5.3.2.5 — Standardize scrolling ownership
-- [ ] 5.3.2.6 — Add shared loading and error boundaries
+- [x] 5.3.2.1 — Standardize PageLayout — `v0.9.0`; `PageLayout` + `DS-PAGE-01`; evidence: `docs/design-system/shell-page-layout-standardization.md`; smoke: nomenclature-types
+- [x] 5.3.2.2 — Standardize PageHeader — `v0.9.0`; canonical = `PageToolbar` (`DS-PAGE-02`); evidence: `docs/design-system/shell-page-header-standardization.md`
+- [x] 5.3.2.3 — Standardize page actions — `v0.9.0`; `PageActions` + `DS-PAGE-03`; evidence: `docs/design-system/shell-page-actions-standardization.md`
+- [x] 5.3.2.4 — Standardize content containers — `v0.9.0`; `DS-PAGE-04`; evidence: `docs/design-system/shell-content-containers-standardization.md`
+- [x] 5.3.2.5 — Standardize scrolling ownership — `v0.9.0`; `DS-PAGE-05`; evidence: `docs/design-system/shell-scrolling-ownership.md`
+- [x] 5.3.2.6 — Add shared loading and error boundaries — `v0.9.0`; `DS-PAGE-06`; `page-state.tsx` + workspace loading/error; nomenclature 404→`notFound()`; lead retry=`reset`; evidence: `docs/design-system/shell-page-state-boundaries.md`
 
 ### 5.4 — Shared UI components
 

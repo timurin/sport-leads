@@ -69,11 +69,22 @@ export async function getNomenclature(): Promise<Nomenclature[]> {
   return (await response.json() as ApiNomenclature[]).map(fromApiNomenclature);
 }
 
-export async function getNomenclatureById(nomenclatureId: number): Promise<Nomenclature> {
+export async function getNomenclatureById(
+  nomenclatureId: number,
+): Promise<Nomenclature | null> {
   const apiUrl = (process.env.SPORT_LEADS_API_URL ?? "http://127.0.0.1:8000").replace(/\/$/, "");
-  const response = await fetch(`${apiUrl}/nomenclatures/${nomenclatureId}`, { cache: "no-store" });
-  if (!response.ok) throw new Error(`Не удалось загрузить карточку номенклатуры (${response.status}).`);
-  return fromApiNomenclature(await response.json() as ApiNomenclature);
+  const response = await fetch(`${apiUrl}/nomenclatures/${nomenclatureId}`, {
+    cache: "no-store",
+  });
+  if (response.status === 404) {
+    return null;
+  }
+  if (!response.ok) {
+    throw new Error(
+      `Не удалось загрузить карточку номенклатуры (${response.status}).`,
+    );
+  }
+  return fromApiNomenclature((await response.json()) as ApiNomenclature);
 }
 
 export async function getNomenclatureCategories(): Promise<NomenclatureCategory[]> {

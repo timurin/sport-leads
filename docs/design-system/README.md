@@ -21,6 +21,12 @@
 - `docs/design-system/shell-sidebar-standardization.md` — DS-SHELL-01 tokenized (`5.3.1.1`)
 - `docs/design-system/shell-topbar-standardization.md` — DS-SHELL-02 tokenized (`5.3.1.2`)
 - `docs/design-system/shell-responsive-navigation.md` — responsive nav matrix (`5.3.1.4`)
+- `docs/design-system/shell-page-layout-standardization.md` — `DS-PAGE-01` PageLayout (`5.3.2.1`)
+- `docs/design-system/shell-page-header-standardization.md` — `DS-PAGE-02` PageToolbar (`5.3.2.2`)
+- `docs/design-system/shell-page-actions-standardization.md` — `DS-PAGE-03` PageActions (`5.3.2.3`)
+- `docs/design-system/shell-content-containers-standardization.md` — `DS-PAGE-04` containers (`5.3.2.4`)
+- `docs/design-system/shell-scrolling-ownership.md` — `DS-PAGE-05` scroll (`5.3.2.5`)
+- `docs/design-system/shell-page-state-boundaries.md` — `DS-PAGE-06` loading/error (`5.3.2.6`)
 - `docs/design-system/layout-scrolling-audit.md` — AppShell, widths, scroll/sticky rules (`5.1.3.*`)
 - `docs/design-system/component-inventory.md` — инвентарь shared/domain UI (`5.1.2.*`)
 - `docs/design-system/shell-contracts.md` — защищённые контракты `DS-SHELL-01` / `DS-SHELL-02`
@@ -58,15 +64,19 @@ Typed mirror: `frontend/lib/design-system/tokens.ts`.
 Layout:
 
 - `AppShell`, `AppSidebar`, `AppTopbar` — глобальный каркас;
-- `PageContent` — ширина и внешние отступы страницы;
-- `PageActions` — переносимая группа действий;
-- `ResponsiveGrid` — auto-fit сетка с безопасным `minmax`;
-- `PageToolbar` (`page-header.tsx`) — локальный toolbar страницы (поиск, фильтры, действия; без title/description);
+- `PageLayout` — корень страницы внутри `main` (`data-page-layout`, без собственного scroll);
+- `PageContent` — ширина и внешние отступы тела страницы;
+- `PageActions` — переносимая группа действий (`DS-PAGE-03`);
+- `ResponsiveGrid` — auto-fit сетка с безопасным `minmax` (`DS-PAGE-04`);
+- `PageToolbar` (`page-header.tsx`) — локальный toolbar страницы (`DS-PAGE-02`; поиск, фильтры, действия; без title/description); `PageHeader` — deprecated alias;
 - `CreateMenu` — кнопка «Создать» с меню сущностей для page toolbar;
 - `CreateDrawer` — эталон create-панели (inspector/drawer, ADR-013; reference: materials);
-- `EntityHeader` — заголовок сущности внутри карточки документа.
+- `EntityHeader` — заголовок сущности внутри карточки документа;
+- `PageLoadingState` / `PageErrorState` / `PageNotFoundState` (`page-state.tsx`) — shared route boundaries (`DS-PAGE-06`).
 
-`PageContent` всегда занимает доступную ширину (`w-full min-w-0`), а варианты `width` задают только максимальную ширину: `default`, `wide` или `full`. Варианты `size` управляют внешними отступами.
+Канон: `AppShell` → `PageLayout` → (`PageToolbar`) → `PageContent` → контент. Контракт: `docs/design-system/shell-page-layout-standardization.md` (`DS-PAGE-01`).
+
+`PageContent` всегда занимает доступную ширину (`w-full min-w-0`), а варианты `width` задают только максимальную ширину: `default`, `wide` (платформенный default) или `full`. Варианты `size` управляют внешними отступами.
 
 `PageActions` переносит действия на новую строку. Выравнивание `start` всегда начинается слева, `end` становится правым от `sm`, а `between` распределяет элементы по краям только от `sm`; на mobile оба адаптивных режима начинаются слева.
 
@@ -85,22 +95,24 @@ UI:
 ## Пример страницы
 
 ```tsx
-import { PageContent, PageActions, ResponsiveGrid } from "@/components/layout/page-layout";
+import { PageContent, PageLayout, PageActions, ResponsiveGrid } from "@/components/layout/page-layout";
 import { Button } from "@/components/ui/button";
 import { PageToolbar } from "@/components/ui/page-header";
 import { MetricCard, SectionCard } from "@/components/ui/section-card";
 
 export default function ExamplePage() {
-  return <>
-    <PageToolbar end={<Button variant="primary">Создать</Button>} />
-    <PageContent>
-      <ResponsiveGrid minItemWidth="small">
-        <MetricCard label="Всего" value={24} />
-        <MetricCard label="В работе" value={8} tone="primary" />
-      </ResponsiveGrid>
-      <SectionCard title="Последние заказы" className="mt-4">Содержимое</SectionCard>
-    </PageContent>
-  </>;
+  return (
+    <PageLayout>
+      <PageToolbar end={<Button variant="primary">Создать</Button>} />
+      <PageContent>
+        <ResponsiveGrid minItemWidth="small">
+          <MetricCard label="Всего" value={24} />
+          <MetricCard label="В работе" value={8} tone="primary" />
+        </ResponsiveGrid>
+        <SectionCard title="Последние заказы" className="mt-4">Содержимое</SectionCard>
+      </PageContent>
+    </PageLayout>
+  );
 }
 ```
 

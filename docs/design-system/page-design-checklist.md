@@ -3,9 +3,11 @@
 ## Каркас
 
 - [ ] Используются существующие `AppShell`, sidebar и topbar.
-- [ ] Заголовок собран через `PageHeader` или `EntityHeader`.
-- [ ] Контент ограничен `PageContent` либо осознанно использует full-width; базовый контейнер сохраняет `w-full min-w-0`.
-- [ ] Один основной вертикальный scrollbar находится в `[data-app-shell-main]`; корень страницы не добавляет `h-screen` или `overflow-y-auto`.
+- [ ] Страница обёрнута в `PageLayout` (`DS-PAGE-01`); toolbar при необходимости — `PageToolbar` (`DS-PAGE-02`).
+- [ ] Заголовок сущности — через `EntityHeader` (page title в toolbar не используется).
+- [ ] Контент ограничен `PageContent` либо осознанно использует `width="full"`; базовый контейнер сохраняет `w-full min-w-0`.
+- [ ] Один основной вертикальный scrollbar находится в `[data-app-shell-main]` (`DS-PAGE-05`); корень страницы не добавляет `h-screen` или `overflow-y-auto`.
+- [ ] Loading/error сегментов используют `PageLoadingState` / `PageErrorState` с `reset` (`DS-PAGE-06`), либо доменный skeleton с тем же retry.
 
 ## Компоненты
 

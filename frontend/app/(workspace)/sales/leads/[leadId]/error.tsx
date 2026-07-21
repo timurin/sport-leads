@@ -1,23 +1,34 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { LeadPageState } from "@/components/sales/lead-page-state";
+import { useEffect } from "react";
+import Link from "next/link";
+
+import { PageErrorState } from "@/components/ui/page-state";
 
 export default function LeadError({
-  unstable_retry,
+  error,
+  reset,
 }: {
   error: Error & { digest?: string };
-  unstable_retry: () => void;
+  reset: () => void;
 }) {
+  useEffect(() => {
+    console.error(error);
+  }, [error]);
+
   return (
-    <LeadPageState
+    <PageErrorState
       title="Не удалось загрузить лид"
-      description="Произошла ошибка при получении данных. Попробуйте повторить запрос."
-      action={(
-        <Button type="button" variant="primary" onClick={() => unstable_retry()}>
-          Повторить
-        </Button>
-      )}
+      error={error}
+      reset={reset}
+      secondaryAction={
+        <Link
+          href="/sales/leads"
+          className="inline-flex h-portal-control-default items-center justify-center rounded-portal-md border border-portal-border bg-portal-surface px-portal-4 text-portal-body font-medium text-portal-text hover:bg-portal-state-hover"
+        >
+          К списку лидов
+        </Link>
+      }
     />
   );
 }

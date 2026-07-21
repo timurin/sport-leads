@@ -8,18 +8,19 @@
 
 ## Page content max widths
 
-| Token | Value | `PageContent` `width` |
-|---|---|---|
-| `--portal-content-narrow` | `42rem` (672px) | future forms/dialogs |
-| `--portal-content-default` | `80rem` (1280px) | `default` (was `max-w-7xl`) |
-| `--portal-content-max` | `1760px` | `wide` (platform default) |
-| — | none | `full` → `max-w-none` |
+| Token | Value | `PageContent` `width` | Utility |
+|---|---|---|---|
+| `--portal-content-narrow` | `42rem` (672px) | future forms/dialogs | `max-w-portal-narrow` |
+| `--portal-content-default` | `80rem` (1280px) | `default` | `max-w-portal-default` |
+| `--portal-content-max` | `1760px` | `wide` (platform default) | `max-w-portal-max` |
+| — | none | `full` → `max-w-none` | — |
 
 Rules:
 
 1. `PageContent` is always `mx-auto w-full min-w-0`.
 2. Width props only set **max-width**, never force a fixed page width.
 3. No global `min-width` on page roots inside AppShell.
+4. Page frame contract: `shell-page-layout-standardization.md` (`DS-PAGE-01`, `5.3.2.1`).
 
 ## Responsive grid minima
 

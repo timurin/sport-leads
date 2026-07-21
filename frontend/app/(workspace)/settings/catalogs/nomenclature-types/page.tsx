@@ -1,4 +1,4 @@
-import { PageContent } from "@/components/layout/page-layout";
+import { PageContent, PageLayout } from "@/components/layout/page-layout";
 import type { NomenclatureType } from "@/lib/nomenclature";
 
 const NOMENCLATURE_TYPES: Array<{
@@ -30,7 +30,7 @@ const NOMENCLATURE_TYPES: Array<{
 
 export default function NomenclatureTypesPage() {
   return (
-    <div>
+    <PageLayout>
       <PageContent>
         <div className="overflow-x-auto rounded-xl border border-portal-border bg-portal-surface shadow-sm">
           <table className="min-w-full text-left text-sm">
@@ -55,6 +55,6 @@ export default function NomenclatureTypesPage() {
           </table>
         </div>
       </PageContent>
-    </div>
+    </PageLayout>
   );
 }

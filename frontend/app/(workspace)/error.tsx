@@ -4,22 +4,16 @@ import { useEffect } from "react";
 
 import { PageErrorState } from "@/components/ui/page-state";
 
-export default function OrderError({
+export default function WorkspaceError({
   error,
   reset,
 }: {
-  error: Error;
+  error: Error & { digest?: string };
   reset: () => void;
 }) {
   useEffect(() => {
     console.error(error);
   }, [error]);
 
-  return (
-    <PageErrorState
-      title="Не удалось загрузить заказ"
-      error={error}
-      reset={reset}
-    />
-  );
+  return <PageErrorState error={error} reset={reset} />;
 }

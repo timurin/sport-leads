@@ -31,7 +31,7 @@ No production code changed.
 | File | Exports | Role | Notes |
 |---|---|---|---|
 | `button.tsx` | `Button` | Primary actions | variants `primary` / `secondary` / `ghost` / `danger`; sizes compact/default/spacious |
-| `page-header.tsx` | `PageHeader` | Page title + actions | Page-local; not Platform Topbar |
+| `page-header.tsx` | `PageToolbar` (canonical), `PageHeader` (deprecated alias) | Page-local toolbar (`start`/`end`); no title | `DS-PAGE-02` — `shell-page-header-standardization.md` |
 | `entity-header.tsx` | `EntityHeader` | Entity title block | Overlaps conceptually with page/card headers |
 | `section-card.tsx` | `SectionCard`, `InfoCard`, `MetricCard` | Content cards / metrics | Portal tokens |
 | `status-badge.tsx` | `StatusBadge` | Status chips | tone + optional dot |
@@ -48,7 +48,8 @@ No production code changed.
 |---|---|---|---|
 | `app-shell.tsx` | `AppShell` | Sidebar + topbar + main scroll owner | Used by `(workspace)/layout.tsx` |
 | `app-topbar.tsx` | `AppTopbar` | Thin wrapper | Must not fork Topbar; see DS-SHELL-02 |
-| `page-layout.tsx` | `PageContent`, `PageActions`, `ResponsiveGrid` | Page width, action row, auto-fit grid | Documented in design-system README |
+| `page-layout.tsx` | `PageLayout`, `PageContent`, `PageActions`, `ResponsiveGrid` | Page root, width/padding, action row, auto-fit grid | `DS-PAGE-01`…`03` / `04` grid |
+| `page-state.tsx` | `PageLoadingState`, `PageErrorState`, `PageNotFoundState` | Shared route loading/error/not-found | `DS-PAGE-06` — `shell-page-state-boundaries.md` |
 
 ## Platform navigation (shared chrome)
 
@@ -208,10 +209,10 @@ Decisions are documentation-only. Implementation belongs to later Stage 5 items 
 |---|---|---|
 | D1 | **Unify** | Migrate dashboard to `ui/section-card` MetricCard/SectionCard; delete dashboard-local duplicates after visual check |
 | D2 | **Keep + adopt** | Keep `EmptyState`; adopt in list/kanban/catalog empties; remove one-off dashed empties when touching those pages |
-| D3 | **Unify** | Introduce shared page-state / error-banner primitives in `5.3.2.6` / `5.4.2.5`; migrate Lead/Order to shared pattern; standardize on `reset` |
+| D3 | **Unify** | Shared `PageLoadingState` / `PageErrorState` shipped in `5.3.2.6`; continue EmptyState/`loadError` banner adoption in `5.4.2.5` |
 | D4 | **Unify toward KanbanPage** | Keep `KanbanPage` as board host; fold lead-specific filters into composition over shared board rather than a second board framework |
 | D5 | **Keep dedicated workspaces + reuse create inspector UX** | New persistent catalogs use dedicated workspaces (nomenclature pattern). **Create UX эталон** = materials right inspector / `CreateDrawer` (ADR-013). EntityWorkspace remains demo data-host until orgs/employees/materials persistence replace it |
-| D6 | **Keep split** | `PageToolbar`/`EntityHeader` for page chrome; domain card headers stay domain-owned until PT-05/06/07 contracts; never put them in Platform Topbar |
+| D6 | **Keep split** | `PageToolbar` (`DS-PAGE-02`) for page chrome; domain card headers stay domain-owned until PT-05/06/07; never put them in Platform Topbar |
 | D7 | **Keep CompactTabs; unify adopters** | Prefer `CompactTabs` for simple in-page tabs; nomenclature complex tabs may stay custom until PT-06 contract |
 | D8 | **Deprecate DemoActionDialog for create; modal only for confirm** | Create flows use `CreateDrawer` (ADR-013). `DemoActionDialog` only on explicitly demo pages until `5.4.2.3.5`; ban centered create modals for persistent entities |
 | D9 | **Replace** | Characteristic detail must use Platform Shell only; remove local sidebar in a dedicated bug/microtask before treating as PT-05 reference |
