@@ -4,7 +4,7 @@
 **Updated:** `2026-07-21`
 **Project version:** `v0.9.0`
 **Git branch:** `feature/v0.8.1-nomenclature-core`
-**Git commit:** `281569b`
+**Git commit:** `c9bee2b`
 
 **Canonical files:**
 - roadmap: `docs/roadmap/roadmap.md`
@@ -170,24 +170,24 @@ Build a factual map of frontend routes and classify platform pages.
 
 Microtasks:
 - [x] 5.1.1.1 — Audit existing routes, layouts and page types — `v0.9.0`; evidence: `docs/design-system/ui-audit.md`
-- [ ] 5.1.1.2 — Audit loading, error and empty states
-- [ ] 5.1.1.3 — Audit persistent versus demo/local data
-- [ ] 5.1.1.4 — Document reference and migration pages
+- [x] 5.1.1.2 — Audit loading, error and empty states — `v0.9.0`; evidence: `docs/design-system/ui-audit.md` § Loading / error / empty audit
+- [x] 5.1.1.3 — Audit persistent versus demo/local data — `v0.9.0`; evidence: `docs/design-system/ui-audit.md` § Persistent versus demo/local audit
+- [x] 5.1.1.4 — Document reference and migration pages — `v0.9.0`; evidence: `docs/design-system/ui-audit.md` § Reference and migration pages
 
 #### 5.1.2 — Component inventory
 
-- [ ] 5.1.2.1 — Inventory shared UI components
-- [ ] 5.1.2.2 — Inventory domain components
-- [ ] 5.1.2.3 — Identify duplicates and overlapping responsibilities
-- [ ] 5.1.2.4 — Define keep, unify, replace and deprecate decisions
+- [x] 5.1.2.1 — Inventory shared UI components — `v0.9.0`; evidence: `docs/design-system/component-inventory.md`
+- [x] 5.1.2.2 — Inventory domain components — `v0.9.0`; evidence: `docs/design-system/component-inventory.md`
+- [x] 5.1.2.3 — Identify duplicates and overlapping responsibilities — `v0.9.0`; evidence: `docs/design-system/component-inventory.md` § Duplicates
+- [x] 5.1.2.4 — Define keep, unify, replace and deprecate decisions — `v0.9.0`; evidence: `docs/design-system/component-inventory.md` § Keep / unify / replace / deprecate
 
 #### 5.1.3 — Layout and scrolling audit
 
-- [ ] 5.1.3.1 — Audit AppShell and workspace layouts
-- [ ] 5.1.3.2 — Audit page widths and content containers
-- [ ] 5.1.3.3 — Audit nested and double scrolling
-- [ ] 5.1.3.4 — Audit sticky and fixed elements
-- [ ] 5.1.3.5 — Define target scrolling rules
+- [x] 5.1.3.1 — Audit AppShell and workspace layouts — `v0.9.0`; evidence: `docs/design-system/layout-scrolling-audit.md`
+- [x] 5.1.3.2 — Audit page widths and content containers — `v0.9.0`; evidence: `docs/design-system/layout-scrolling-audit.md`
+- [x] 5.1.3.3 — Audit nested and double scrolling — `v0.9.0`; evidence: `docs/design-system/layout-scrolling-audit.md`
+- [x] 5.1.3.4 — Audit sticky and fixed elements — `v0.9.0`; evidence: `docs/design-system/layout-scrolling-audit.md`
+- [x] 5.1.3.5 — Define target scrolling rules — `v0.9.0`; evidence: `docs/design-system/layout-scrolling-audit.md`
 
 #### 5.1.4 — Responsive audit
 
