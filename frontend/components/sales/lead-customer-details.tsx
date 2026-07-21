@@ -17,6 +17,7 @@ import {
 import { saveLeadCustomerProfile } from "@/app/(workspace)/sales/leads/[leadId]/lead-customer-actions";
 import { Button } from "@/components/ui/button";
 import { CityAutocomplete } from "@/components/ui/city-autocomplete";
+import { InlineEditActions } from "@/components/ui/entity-link";
 import {
   getWebsiteHref,
   optionalText,
@@ -408,7 +409,12 @@ export function LeadCustomerDetails({
           {!compact ? <p className="mt-1 text-sm text-slate-500">Сведения о клиенте и контактных лицах лида.</p> : null}
         </div>
         {!editing && hasCustomerData ? (
-          <Button type="button" onClick={startEditing} className={compact ? "h-8 px-2.5 text-xs" : ""}>Редактировать</Button>
+          <InlineEditActions
+            editing={false}
+            onEdit={startEditing}
+            editLabel="Редактировать"
+            disabled={savingCustomer}
+          />
         ) : null}
       </div>
 

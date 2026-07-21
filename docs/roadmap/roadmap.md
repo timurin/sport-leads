@@ -275,13 +275,13 @@ Microtasks:
 
 #### 5.4.3 — Data presentation
 
-- [ ] 5.4.3.1 — Table foundation
-- [ ] 5.4.3.2 — Filter toolbar
-- [ ] 5.4.3.3 — Pagination and totals
-- [ ] 5.4.3.4 — Tabs and compact tabs
-- [ ] 5.4.3.5 — Activity timeline
-- [ ] 5.4.3.6 — Tasks and comments panels
-- [ ] 5.4.3.7 — Entity links and inline editing
+- [x] 5.4.3.1 — Table foundation — `v0.9.0`; `DS-TABLE-01`; `data-table.tsx`
+- [x] 5.4.3.2 — Filter toolbar — `v0.9.0`; `DS-FILTER-01`; `filter-toolbar.tsx`
+- [x] 5.4.3.3 — Pagination and totals — `v0.9.0`; `DS-LIST-01`; `list-pagination.tsx`
+- [x] 5.4.3.4 — Tabs and compact tabs — `v0.9.0`; `DS-TABS-01`; CompactTabs on lead tasks/history
+- [x] 5.4.3.5 — Activity timeline — `v0.9.0`; `DS-TIMELINE-01`; `activity-timeline.tsx`
+- [x] 5.4.3.6 — Tasks and comments panels — `v0.9.0`; `DS-PANEL-01`; `entity-panel.tsx`
+- [x] 5.4.3.7 — Entity links and inline editing — `v0.9.0`; `DS-LINK-01`; `entity-link.tsx`; evidence: `docs/design-system/data-presentation-standardization.md`; owner visual OK (`2026-07-21`) for section `5.4.3`
 
 ### 5.5 — Page templates
 

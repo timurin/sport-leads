@@ -19,6 +19,10 @@ import { memo, useMemo, useRef, useState } from "react";
 
 import { LeadMentionPicker, LeadNoteDeleteDialog, LeadNoteEditDialog } from "@/components/sales/lead-note-dialog";
 import { Button } from "@/components/ui/button";
+import { CompactTabs } from "@/components/ui/compact-tabs";
+import { EmptyState } from "@/components/ui/empty-state";
+import { EntityPanel } from "@/components/ui/entity-panel";
+import { ActivityTimeline } from "@/components/ui/activity-timeline";
 import {
   filterLeadActivities,
   formatActivityDate,
@@ -266,13 +270,26 @@ export function LeadActivityTimeline({
   }
 
   return (
-    <section className={embedded ? `min-w-0 ${compact ? "p-3" : "p-4 sm:p-5"}` : "min-w-0 rounded-xl border border-slate-200 bg-white p-4 sm:p-5"}>
-      <div>
-        <h2 className={`${compact ? "text-sm font-bold" : "text-base font-semibold"} text-slate-950`}>{compact ? (mode === "notes" ? "F) Комментарии менеджера" : "D) История активности") : (mode === "notes" ? "Заметки" : "История лида")}</h2>
-        {!compact ? <p className="mt-1 text-sm text-slate-500">{mode === "notes" ? "Внутренние комментарии, закрепления и упоминания команды." : "События и коммуникации в единой хронологии."}</p> : null}
-      </div>
-
-      {mode === "notes" ? <details open={!compact} className="mt-3 border-t border-slate-200 pt-3">
+    <EntityPanel
+      embedded={embedded}
+      compact={compact}
+      title={compact ? (mode === "notes" ? "F) Комментарии менеджера" : "D) История активности") : (mode === "notes" ? "Заметки" : "История лида")}
+      description={compact ? undefined : (mode === "notes" ? "Внутренние комментарии, закрепления и упоминания команды." : "События и коммуникации в единой хронологии.")}
+      filter={mode === "history" ? (
+        <CompactTabs
+          label="Фильтр истории лида"
+          size="compact"
+          value={activeFilter}
+          onChange={(id) => setActiveFilter(id as LeadActivityFilter)}
+          items={historyFilterOptions.map((option) => ({
+            id: option.id,
+            label: option.label,
+            count: counts[option.id],
+          }))}
+        />
+      ) : undefined}
+    >
+      {mode === "notes" ? <details open={!compact} className="border-t border-slate-200 pt-3">
         <summary className={`${compact ? "cursor-pointer text-xs font-semibold text-blue-700" : "sr-only"}`}>Добавить комментарий</summary>
       <form onSubmit={submitComment} className={`${compact ? "mt-3" : "mt-4"} bg-slate-50 p-3.5`}>
         <label htmlFor="lead-internal-comment" className="text-sm font-semibold text-slate-800">Добавить внутренний комментарий</label>
@@ -321,24 +338,10 @@ export function LeadActivityTimeline({
         </section>
       ) : null}
 
-      {mode === "history" ? <div className="mt-4 overflow-x-auto overflow-y-hidden pb-1" role="tablist" aria-label="Фильтр истории лида">
-        <div className="flex min-w-max gap-2">
-          {historyFilterOptions.map((option) => (
-            <button
-              key={option.id}
-              type="button"
-              role="tab"
-              aria-selected={activeFilter === option.id}
-              onClick={() => setActiveFilter(option.id)}
-              className={`rounded-lg border px-3 py-2 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${activeFilter === option.id ? "border-blue-200 bg-blue-50 text-blue-700" : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"}`}
-            >
-              {option.label} <span className="ml-1 text-xs">{counts[option.id]}</span>
-            </button>
-          ))}
-        </div>
-      </div> : null}
-
-      <div className="mt-4 min-w-0" role="feed" aria-label={mode === "notes" ? "Список заметок" : "События лида"}>
+      <ActivityTimeline
+        className="mt-4"
+        label={mode === "notes" ? "Список заметок" : "События лида"}
+      >
         {filteredActivities.length ? primaryActivities.map((activity) => (
           <ActivityItem
             key={activity.id}
@@ -350,10 +353,11 @@ export function LeadActivityTimeline({
             onTogglePin={onTogglePin}
           />
         )) : mode === "notes" && pinnedNotes.length ? null : (
-          <div className="rounded-lg border border-dashed border-slate-200 bg-slate-50 px-4 py-8 text-center">
-            <p className="text-sm font-medium text-slate-700">{mode === "notes" ? "Заметок пока нет" : "История пока пуста"}</p>
-            <p className="mt-1 text-sm leading-6 text-slate-500">{mode === "notes" ? "Добавьте внутреннюю заметку для команды." : "События и коммуникации появятся здесь."}</p>
-          </div>
+          <EmptyState
+            title={mode === "notes" ? "Заметок пока нет" : "История пока пуста"}
+            description={mode === "notes" ? "Добавьте внутреннюю заметку для команды." : "События и коммуникации появятся здесь."}
+            size="compact"
+          />
         )}
         {remainingActivities.length ? (
           <details className="mt-3 border-t border-slate-200 pt-3">
@@ -373,7 +377,7 @@ export function LeadActivityTimeline({
             </div>
           </details>
         ) : null}
-      </div>
+      </ActivityTimeline>
 
       {dialog?.kind === "edit" ? (
         <LeadNoteEditDialog
@@ -386,6 +390,6 @@ export function LeadActivityTimeline({
       {dialog?.kind === "delete" ? (
         <LeadNoteDeleteDialog note={dialog.note} onClose={closeDialog} onConfirm={() => { onDeleteNote(dialog.note.id); closeDialog(); }} />
       ) : null}
-    </section>
+    </EntityPanel>
   );
 }

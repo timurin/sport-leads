@@ -33,6 +33,7 @@
 - `docs/design-system/create-modal-drawer-boundaries.md` — modal vs CreateDrawer (`5.4.2.3.7`)
 - `docs/design-system/toast-inline-feedback-standardization.md` — `DS-FEEDBACK-01` (`5.4.2.4`)
 - `docs/design-system/empty-error-states-standardization.md` — `DS-FEEDBACK-02` (`5.4.2.5`)
+- `docs/design-system/data-presentation-standardization.md` — `DS-TABLE-01`…`DS-LINK-01` (`5.4.3.*`)
 - `docs/design-system/layout-scrolling-audit.md` — AppShell, widths, scroll/sticky rules (`5.1.3.*`)
 - `docs/design-system/component-inventory.md` — инвентарь shared/domain UI (`5.1.2.*`)
 - `docs/design-system/shell-contracts.md` — защищённые контракты `DS-SHELL-01` / `DS-SHELL-02`
@@ -83,7 +84,8 @@ Layout:
 - `Button` / `IconButton` (`DS-ACTION-01`);
 - `StatusBadge` (`DS-BADGE-01`);
 - `ToastProvider` / `useToast` + `InlineAlert` (`DS-FEEDBACK-01`);
-- `EmptyState` (`DS-FEEDBACK-02` in-page).
+- `EmptyState` (`DS-FEEDBACK-02` in-page);
+- `DataTable` / `FilterToolbar` / `ListTotals` / `Pagination` / `CompactTabs` / `ActivityTimeline` / `EntityPanel` / `EntityLink` (`5.4.3`).
 
 Канон: `AppShell` → `PageLayout` → (`PageToolbar`) → `PageContent` → контент. Контракт: `docs/design-system/shell-page-layout-standardization.md` (`DS-PAGE-01`).
 

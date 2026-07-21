@@ -51,4 +51,4 @@ Reply: `5.4.3 visual OK` or list issues.
 
 ## Status
 
-Owner confirmation: **pending**.
+Owner confirmation: **`5.4.3 visual OK`** (`2026-07-21`).

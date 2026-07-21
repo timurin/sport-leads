@@ -3,6 +3,15 @@
 import { assignCustomFieldToCategory, updateCustomFieldStatus } from "@/app/(workspace)/settings/catalogs/custom-fields/custom-fields-actions";
 import { NomenclatureSectionCreateHost } from "@/components/settings/nomenclature-section-create-host";
 import { Button } from "@/components/ui/button";
+import {
+  DataTable,
+  DataTableBody,
+  DataTableCell,
+  DataTableFrame,
+  DataTableHead,
+  DataTableHeaderCell,
+  DataTableRow,
+} from "@/components/ui/data-table";
 import { Checkbox, Select } from "@/components/ui/form-controls";
 import { EmptyState } from "@/components/ui/empty-state";
 import { StatusBadge } from "@/components/ui/status-badge";
@@ -52,40 +61,42 @@ export function CustomFieldsWorkspace({
             Назначить категории
           </Button>
         </form>
-        <div className="overflow-x-auto rounded-portal-lg border border-portal-border bg-portal-surface shadow-portal-card">
-          {fields.length === 0 ? (
+        {fields.length === 0 ? (
+          <DataTableFrame>
             <div className="p-portal-6">
               <EmptyState
                 title="Реквизитов пока нет"
                 description="Создайте реквизит через кнопку «Создать» в панели инструментов."
               />
             </div>
-          ) : (
-            <table className="min-w-full text-left text-portal-body">
-              <thead className="border-b border-portal-border bg-portal-surface-secondary text-portal-muted">
+          </DataTableFrame>
+        ) : (
+          <DataTableFrame>
+            <DataTable>
+              <DataTableHead>
                 <tr>
-                  <th className="px-portal-4 py-portal-3">Код</th>
-                  <th className="px-portal-4 py-portal-3">Название</th>
-                  <th className="px-portal-4 py-portal-3">Тип</th>
-                  <th className="px-portal-4 py-portal-3">Статус</th>
-                  <th className="px-portal-4 py-portal-3">Действие</th>
+                  <DataTableHeaderCell>Код</DataTableHeaderCell>
+                  <DataTableHeaderCell>Название</DataTableHeaderCell>
+                  <DataTableHeaderCell>Тип</DataTableHeaderCell>
+                  <DataTableHeaderCell>Статус</DataTableHeaderCell>
+                  <DataTableHeaderCell>Действие</DataTableHeaderCell>
                 </tr>
-              </thead>
-              <tbody>
+              </DataTableHead>
+              <DataTableBody>
                 {fields.map((field) => (
-                  <tr key={field.id} className="border-b border-portal-border last:border-0">
-                    <td className="px-portal-4 py-portal-3 font-medium">{field.code}</td>
-                    <td className="px-portal-4 py-portal-3">{field.name}</td>
-                    <td className="px-portal-4 py-portal-3">{labels[field.data_type]}</td>
-                    <td className="px-portal-4 py-portal-3">
+                  <DataTableRow key={field.id}>
+                    <DataTableCell className="font-medium">{field.code}</DataTableCell>
+                    <DataTableCell>{field.name}</DataTableCell>
+                    <DataTableCell>{labels[field.data_type]}</DataTableCell>
+                    <DataTableCell>
                       <StatusBadge
                         tone={field.is_active ? "success" : "neutral"}
                         size="compact"
                       >
                         {field.is_active ? "Активен" : "Отключён"}
                       </StatusBadge>
-                    </td>
-                    <td className="px-portal-4 py-portal-3">
+                    </DataTableCell>
+                    <DataTableCell>
                       <form action={updateCustomFieldStatus}>
                         <input type="hidden" name="id" value={field.id} />
                         <input type="hidden" name="is_active" value={String(!field.is_active)} />
@@ -93,13 +104,13 @@ export function CustomFieldsWorkspace({
                           {field.is_active ? "Отключить" : "Активировать"}
                         </Button>
                       </form>
-                    </td>
-                  </tr>
+                    </DataTableCell>
+                  </DataTableRow>
                 ))}
-              </tbody>
-            </table>
-          )}
-        </div>
+              </DataTableBody>
+            </DataTable>
+          </DataTableFrame>
+        )}
       </div>
     </NomenclatureSectionCreateHost>
   );

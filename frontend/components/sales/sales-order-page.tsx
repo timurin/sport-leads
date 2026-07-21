@@ -1,28 +1,20 @@
 import { ArrowLeft, ExternalLink } from "lucide-react";
-import Link from "next/link";
 
-import { PageContent, ResponsiveGrid } from "@/components/layout/page-layout";
+import { PageContent } from "@/components/layout/page-layout";
 import type { SalesOrderDetails, SalesOrderHistoryItem } from "@/lib/sales/order-details";
 import type { Nomenclature, NomenclatureVariant } from "@/lib/nomenclature";
 import { SalesOrderItems } from "@/components/sales/sales-order-items";
+import { DataList } from "@/components/ui/data-list";
+import { EntityLink } from "@/components/ui/entity-link";
 import { StatusBadge } from "@/components/ui/status-badge";
-
-function Detail({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-[var(--portal-radius-md)] border border-portal-border bg-portal-surface-secondary p-3">
-      <dt className="text-xs font-medium text-portal-muted">{label}</dt>
-      <dd className="mt-1 break-words text-sm font-semibold text-portal-text">{value}</dd>
-    </div>
-  );
-}
 
 export function SalesOrderPage({ order, history, nomenclature, variantsByNomenclature }: { order: SalesOrderDetails; history: SalesOrderHistoryItem[]; nomenclature: Nomenclature[]; variantsByNomenclature: Record<number, NomenclatureVariant[]> }) {
   return (
     <PageContent size="spacious">
-      <Link href="/sales/orders" className="inline-flex items-center gap-2 text-sm font-medium text-blue-700 hover:text-blue-900">
-        <ArrowLeft size={16} />
+      <EntityLink href="/sales/orders" className="text-sm font-medium">
+        <ArrowLeft size={16} aria-hidden="true" />
         К списку заказов
-      </Link>
+      </EntityLink>
 
       <header className="mt-5 rounded-[var(--portal-radius-lg)] border border-portal-border bg-portal-surface p-5 shadow-[var(--portal-shadow-sm)]">
         <p className="text-sm font-medium text-portal-muted">Заказ покупателя {order.number}</p>
@@ -35,26 +27,29 @@ export function SalesOrderPage({ order, history, nomenclature, variantsByNomencl
         </div>
       </header>
 
-      <section className="mt-4" aria-label="Основные сведения о заказе">
-        <ResponsiveGrid minItemWidth="medium">
-          <Detail label="Клиент" value={order.clientName} />
-          <Detail label="Организация" value={order.organizationName} />
-          <Detail label="Ответственный" value={order.responsibleName} />
-          <Detail label="Сумма" value={order.amount} />
-          <Detail label="Желаемая дата" value={order.desiredDate} />
-          <Detail label="Источник" value={order.source} />
-          <Detail label="Категория" value={order.productCategory} />
-          <Detail label="Вид спорта" value={order.sport} />
-          <Detail label="Количество" value={order.quantity} />
-        </ResponsiveGrid>
+      <section className="mt-4 rounded-portal-lg border border-portal-border bg-portal-surface p-portal-5 shadow-portal-card" aria-label="Основные сведения о заказе">
+        <DataList
+          columns={3}
+          items={[
+            { id: "client", label: "Клиент", value: order.clientName },
+            { id: "organization", label: "Организация", value: order.organizationName },
+            { id: "responsible", label: "Ответственный", value: order.responsibleName },
+            { id: "amount", label: "Сумма", value: order.amount },
+            { id: "desiredDate", label: "Желаемая дата", value: order.desiredDate },
+            { id: "source", label: "Источник", value: order.source },
+            { id: "category", label: "Категория", value: order.productCategory },
+            { id: "sport", label: "Вид спорта", value: order.sport },
+            { id: "quantity", label: "Количество", value: order.quantity },
+          ]}
+        />
       </section>
 
       <section className="mt-4 rounded-[var(--portal-radius-md)] border border-portal-border bg-portal-surface p-4">
         <h2 className="text-base font-semibold text-portal-text">Исходный лид</h2>
         <p className="mt-1 text-sm text-portal-muted">Заказ создан конвертацией лида; связь сохранена в backend.</p>
-        <Link href={order.sourceLeadHref} className="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-blue-700 hover:text-blue-900">
-          Открыть исходный лид <ExternalLink size={15} />
-        </Link>
+        <EntityLink href={order.sourceLeadHref} className="mt-3 text-sm">
+          Открыть исходный лид <ExternalLink size={15} aria-hidden="true" />
+        </EntityLink>
       </section>
 
       <SalesOrderItems orderId={order.id} items={order.items} nomenclature={nomenclature} variantsByNomenclature={variantsByNomenclature} />
