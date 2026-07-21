@@ -212,13 +212,13 @@ Microtasks:
 
 #### 5.2.1 — Visual foundations
 
-- [ ] 5.2.1.1 — Audit existing token sources
-- [ ] 5.2.1.2 — Define semantic color tokens
-- [ ] 5.2.1.3 — Define typography scale
-- [ ] 5.2.1.4 — Define spacing scale
-- [ ] 5.2.1.5 — Define borders, radius and shadows
-- [ ] 5.2.1.6 — Define component sizes
-- [ ] 5.2.1.7 — Define interaction states
+- [x] 5.2.1.1 — Audit existing token sources — `v0.9.0`; evidence: `docs/design-system/token-sources-audit.md`
+- [x] 5.2.1.2 — Define semantic color tokens — `v0.9.0`; Decision A (`#1f5eff`); evidence: `docs/design-system/color-tokens.md`, `frontend/app/globals.css`
+- [x] 5.2.1.3 — Define typography scale — `v0.9.0`; Inter + display→caption; evidence: `docs/design-system/typography-tokens.md`, `frontend/app/globals.css`
+- [x] 5.2.1.4 — Define spacing scale — `v0.9.0`; 4px grid `space-0…12`; evidence: `docs/design-system/spacing-tokens.md`, `frontend/app/globals.css`
+- [x] 5.2.1.5 — Define borders, radius and shadows — `v0.9.0`; evidence: `docs/design-system/surface-tokens.md`, `frontend/app/globals.css`
+- [x] 5.2.1.6 — Define component sizes — `v0.9.0`; control 32/40/44 + icons/avatars/shell refs; evidence: `docs/design-system/component-size-tokens.md`
+- [x] 5.2.1.7 — Define interaction states — `v0.9.0`; evidence: `docs/design-system/interaction-tokens.md`; owner visual OK (`2026-07-21`)
 
 #### 5.2.2 — Responsive and layer tokens
 

@@ -2,7 +2,7 @@ import { SectionCard } from "./section-card";
 import type { DynamicsPoint } from "@/lib/dashboard/sales-dashboard-types";
 
 const series = [
-  { key: "leads", label: "Лиды", color: "#2563eb" },
+  { key: "leads", label: "Лиды", color: "#1f5eff" },
   { key: "deals", label: "Сделки", color: "#7c3aed" },
   { key: "orders", label: "Заказы", color: "#059669" },
 ] as const;

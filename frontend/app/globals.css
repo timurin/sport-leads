@@ -1,38 +1,156 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /*
+   * Semantic color tokens (5.2.1.2, Decision A):
+   * primary aligns with DS-SHELL / docs/design references (#1f5eff).
+   * Neutrals align with shell/reference greys (#101828 / #dfe5ef).
+   */
   --portal-page: #f6f8fc;
   --portal-surface: #ffffff;
   --portal-surface-secondary: #f8fafc;
-  --portal-border: #e2e8f0;
-  --portal-text: #0f172a;
-  --portal-text-muted: #64748b;
-  --portal-primary: #2563eb;
-  --portal-primary-hover: #1d4ed8;
+
+  --portal-text: #101828;
+  --portal-text-muted: #667085;
+  --portal-text-subtle: #98a2b3;
+  --portal-text-inverse: #ffffff;
+
+  --portal-border: #dfe5ef;
+  --portal-border-strong: #cfd7e6;
+
+  --portal-primary: #1f5eff;
+  --portal-primary-hover: #174bd8;
+  --portal-primary-soft: #edf3ff;
+  --portal-primary-on: #ffffff;
+  --portal-primary-gradient-from: #3678ff;
+  --portal-primary-gradient-to: #174bd8;
+
   --portal-success: #059669;
+  --portal-success-soft: #eaf7ee;
   --portal-warning: #d97706;
-  --portal-danger: #dc2626;
+  --portal-warning-soft: #fff7ed;
+  --portal-danger: #d92d20;
+  --portal-danger-soft: #fef3f2;
+  --portal-danger-hover: #b42318;
+
+  --portal-focus-ring: #1f5eff;
+  --portal-focus-ring-width: 2px;
+  --portal-focus-ring-offset: 2px;
+
+  /*
+   * Interaction states (5.2.1.7)
+   */
+  --portal-state-hover-bg: var(--portal-surface-secondary);
+  --portal-state-pressed-bg: #eef2f7;
+  --portal-state-selected-bg: var(--portal-primary-soft);
+  --portal-state-selected-fg: var(--portal-primary-hover);
+  --portal-state-selected-border: var(--portal-primary);
+  --portal-state-disabled-opacity: 0.5;
+  --portal-state-disabled-bg: var(--portal-surface-secondary);
+  --portal-state-disabled-fg: var(--portal-text-subtle);
+  --portal-state-disabled-border: var(--portal-border);
+
+  --portal-motion-fast: 120ms;
+  --portal-motion-normal: 180ms;
+  --portal-motion-ease: ease;
+
+  /*
+   * Typography scale (5.2.1.3):
+   * Platform font is Inter (system stack). "Geist" name deprecated — no Geist package loaded.
+   */
+  --portal-font-sans: Inter, "Segoe UI", Arial, sans-serif;
+  --portal-font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  /* Compat aliases (prefer --portal-font-*) */
+  --font-geist-sans: var(--portal-font-sans);
+  --font-geist-mono: var(--portal-font-mono);
+
+  --portal-font-size-display: 30px;
+  --portal-font-size-page: 24px;
+  --portal-font-size-entity: 20px;
+  --portal-font-size-section: 16px;
+  --portal-font-size-section-sm: 14px;
+  --portal-font-size-body: 14px;
+  --portal-font-size-dense: 13px;
+  --portal-font-size-meta: 12px;
+  --portal-font-size-caption: 11px;
+
+  --portal-leading-tight: 1.25;
+  --portal-leading-snug: 1.35;
+  --portal-leading-normal: 1.45;
+  --portal-leading-relaxed: 1.55;
+
+  --portal-font-weight-regular: 400;
+  --portal-font-weight-medium: 500;
+  --portal-font-weight-semibold: 600;
+  --portal-font-weight-bold: 700;
+  --portal-font-weight-extrabold: 800;
+
+  --portal-tracking-tight: -0.01em;
+  --portal-tracking-normal: 0;
+
+  --background: var(--portal-surface);
+  --foreground: var(--portal-text);
+
+  /*
+   * Borders, radius, shadows (5.2.1.5).
+   * Border *colors* live in color tokens; widths/radii/shadows here.
+   */
+  --portal-border-width: 1px;
+  --portal-border-width-strong: 2px;
+
+  --portal-radius-none: 0px;
   --portal-radius-sm: 6px;
   --portal-radius-md: 8px;
   --portal-radius-lg: 12px;
   --portal-radius-xl: 16px;
+  --portal-radius-full: 9999px;
+
   --portal-shadow-sm: 0 1px 2px rgb(15 23 42 / 0.05);
   --portal-shadow-card: 0 4px 14px rgb(27 46 94 / 0.05);
   --portal-shadow-overlay: 0 18px 45px rgb(15 23 42 / 0.18);
-  --font-geist-sans: Inter, "Segoe UI", Arial, sans-serif;
-  --font-geist-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  --portal-shadow-modal: 0 24px 80px rgb(15 23 42 / 0.25);
+
+  /*
+   * Spacing scale (5.2.1.4) — 4px base grid.
+   * Prefer --portal-space-* / spacing-portal-* over ad-hoc px.
+   */
+  --portal-space-0: 0px;
   --portal-space-1: 4px;
   --portal-space-2: 8px;
   --portal-space-3: 12px;
   --portal-space-4: 16px;
+  --portal-space-5: 20px;
   --portal-space-6: 24px;
   --portal-space-8: 32px;
+  --portal-space-10: 40px;
+  --portal-space-12: 48px;
+
+  /*
+   * Component sizes (5.2.1.6).
+   * Density: compact / default / spacious — heights for controls & inputs.
+   */
   --portal-control-compact: 32px;
   --portal-control-default: 40px;
   --portal-control-spacious: 44px;
-  --portal-sidebar-width: 92px;
+  --portal-control-icon: 32px;
+
+  --portal-icon-sm: 14px;
+  --portal-icon-md: 16px;
+  --portal-icon-lg: 18px;
+  --portal-icon-xl: 20px;
+
+  --portal-avatar-sm: 24px;
+  --portal-avatar-md: 32px;
+  --portal-avatar-lg: 40px;
+
+  /* Shell reference sizes (DS-SHELL); do not restyle shell without visual task */
+  --portal-shell-topbar-sm: 64px;
+  --portal-shell-topbar: 72px;
+  --portal-shell-sidebar-expanded: 260px;
+  --portal-shell-sidebar-compact: 72px;
+
+  /* Deprecated alias — was wrong (92); prefer shell-sidebar-* */
+  --portal-sidebar-width: var(--portal-shell-sidebar-compact);
   --portal-content-max: 1760px;
   color-scheme: light;
 }
@@ -40,18 +158,112 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--portal-font-sans);
+  --font-mono: var(--portal-font-mono);
+
   --color-portal-page: var(--portal-page);
   --color-portal-surface: var(--portal-surface);
   --color-portal-surface-secondary: var(--portal-surface-secondary);
-  --color-portal-border: var(--portal-border);
+
   --color-portal-text: var(--portal-text);
   --color-portal-muted: var(--portal-text-muted);
+  --color-portal-subtle: var(--portal-text-subtle);
+  --color-portal-inverse: var(--portal-text-inverse);
+
+  --color-portal-border: var(--portal-border);
+  --color-portal-border-strong: var(--portal-border-strong);
+
   --color-portal-primary: var(--portal-primary);
+  --color-portal-primary-hover: var(--portal-primary-hover);
+  --color-portal-primary-soft: var(--portal-primary-soft);
+  --color-portal-primary-on: var(--portal-primary-on);
+
   --color-portal-success: var(--portal-success);
+  --color-portal-success-soft: var(--portal-success-soft);
   --color-portal-warning: var(--portal-warning);
+  --color-portal-warning-soft: var(--portal-warning-soft);
   --color-portal-danger: var(--portal-danger);
+  --color-portal-danger-soft: var(--portal-danger-soft);
+  --color-portal-danger-hover: var(--portal-danger-hover);
+
+  --color-portal-focus-ring: var(--portal-focus-ring);
+
+  --color-portal-state-hover: var(--portal-state-hover-bg);
+  --color-portal-state-pressed: var(--portal-state-pressed-bg);
+  --color-portal-state-selected: var(--portal-state-selected-bg);
+  --color-portal-state-selected-fg: var(--portal-state-selected-fg);
+  --color-portal-state-disabled-bg: var(--portal-state-disabled-bg);
+  --color-portal-state-disabled-fg: var(--portal-state-disabled-fg);
+
+  --text-portal-display: var(--portal-font-size-display);
+  --text-portal-display--line-height: var(--portal-leading-tight);
+  --text-portal-page: var(--portal-font-size-page);
+  --text-portal-page--line-height: var(--portal-leading-tight);
+  --text-portal-entity: var(--portal-font-size-entity);
+  --text-portal-entity--line-height: var(--portal-leading-snug);
+  --text-portal-section: var(--portal-font-size-section);
+  --text-portal-section--line-height: var(--portal-leading-snug);
+  --text-portal-section-sm: var(--portal-font-size-section-sm);
+  --text-portal-section-sm--line-height: var(--portal-leading-snug);
+  --text-portal-body: var(--portal-font-size-body);
+  --text-portal-body--line-height: var(--portal-leading-normal);
+  --text-portal-dense: var(--portal-font-size-dense);
+  --text-portal-dense--line-height: var(--portal-leading-normal);
+  --text-portal-meta: var(--portal-font-size-meta);
+  --text-portal-meta--line-height: var(--portal-leading-snug);
+  --text-portal-caption: var(--portal-font-size-caption);
+  --text-portal-caption--line-height: var(--portal-leading-snug);
+
+  --spacing-portal-0: var(--portal-space-0);
+  --spacing-portal-1: var(--portal-space-1);
+  --spacing-portal-2: var(--portal-space-2);
+  --spacing-portal-3: var(--portal-space-3);
+  --spacing-portal-4: var(--portal-space-4);
+  --spacing-portal-5: var(--portal-space-5);
+  --spacing-portal-6: var(--portal-space-6);
+  --spacing-portal-8: var(--portal-space-8);
+  --spacing-portal-10: var(--portal-space-10);
+  --spacing-portal-12: var(--portal-space-12);
+
+  --radius-portal-none: var(--portal-radius-none);
+  --radius-portal-sm: var(--portal-radius-sm);
+  --radius-portal-md: var(--portal-radius-md);
+  --radius-portal-lg: var(--portal-radius-lg);
+  --radius-portal-xl: var(--portal-radius-xl);
+  --radius-portal-full: var(--portal-radius-full);
+
+  --shadow-portal-sm: var(--portal-shadow-sm);
+  --shadow-portal-card: var(--portal-shadow-card);
+  --shadow-portal-overlay: var(--portal-shadow-overlay);
+  --shadow-portal-modal: var(--portal-shadow-modal);
+
+  --border-width-portal: var(--portal-border-width);
+  --border-width-portal-strong: var(--portal-border-width-strong);
+
+  --spacing-portal-control-compact: var(--portal-control-compact);
+  --spacing-portal-control-default: var(--portal-control-default);
+  --spacing-portal-control-spacious: var(--portal-control-spacious);
+  --spacing-portal-control-icon: var(--portal-control-icon);
+  --spacing-portal-icon-sm: var(--portal-icon-sm);
+  --spacing-portal-icon-md: var(--portal-icon-md);
+  --spacing-portal-icon-lg: var(--portal-icon-lg);
+  --spacing-portal-icon-xl: var(--portal-icon-xl);
+  --spacing-portal-avatar-sm: var(--portal-avatar-sm);
+  --spacing-portal-avatar-md: var(--portal-avatar-md);
+  --spacing-portal-avatar-lg: var(--portal-avatar-lg);
+}
+
+/* Shared interactive focus ring (5.2.1.7) */
+.portal-focus-ring {
+  outline: none;
+}
+
+.portal-focus-ring:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 var(--portal-focus-ring-offset) var(--portal-surface),
+    0 0 0 calc(var(--portal-focus-ring-offset) + var(--portal-focus-ring-width))
+      var(--portal-focus-ring);
 }
 
 html,
@@ -63,12 +275,16 @@ body {
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-geist-sans), Inter, "Segoe UI", Arial, sans-serif;
+  font-family: var(--portal-font-sans);
+  font-size: var(--portal-font-size-body);
+  line-height: var(--portal-leading-normal);
+  font-weight: var(--portal-font-weight-regular);
 }
 
 [data-lead-workspace] {
   color: var(--portal-text);
-  font-size: 13px;
+  font-size: var(--portal-font-size-dense);
+  line-height: var(--portal-leading-normal);
 }
 
 .portal-grid-small {
@@ -369,7 +585,7 @@ body {
 }
 
 /* Product characteristics: content styles only (Platform Shell provides navigation). */
-.product-characteristics-page { --pc-bg:#f6f8fc; --pc-surface:#fff; --pc-line:#dfe5ef; --pc-text:#101828; --pc-muted:#667085; --pc-primary:#1f5eff; --pc-success:#16803a; --pc-success-bg:#eaf7ee; --pc-danger:#d92d20; --pc-gap:14px; min-width:0; background:var(--pc-bg); color:var(--pc-text); font:14px/1.45 var(--font-geist-sans), Inter, "Segoe UI", Arial, sans-serif; }
+.product-characteristics-page { --pc-bg:var(--portal-page); --pc-surface:var(--portal-surface); --pc-line:var(--portal-border); --pc-text:var(--portal-text); --pc-muted:var(--portal-text-muted); --pc-primary:var(--portal-primary); --pc-success:var(--portal-success); --pc-success-bg:var(--portal-success-soft); --pc-danger:var(--portal-danger); --pc-gap:14px; min-width:0; background:var(--pc-bg); color:var(--pc-text); font:14px/1.45 var(--font-geist-sans), Inter, "Segoe UI", Arial, sans-serif; }
 .product-characteristics-page button,.product-characteristics-page input,.product-characteristics-page select { font:inherit; }
 .product-characteristics-main { padding:22px 24px 40px; min-width:0; }.product-characteristics-breadcrumbs { color:var(--pc-muted); font-size:13px; margin-bottom:14px; }.product-characteristics-breadcrumbs a { color:var(--pc-muted); text-decoration:none; }.product-characteristics-breadcrumbs a:hover { color:var(--pc-primary); }.product-characteristics-breadcrumbs span { padding:0 8px; }.product-characteristics-header { display:flex; justify-content:space-between; gap:20px; align-items:flex-start; margin-bottom:18px; }.product-characteristics-header h1 { font-size:28px; line-height:1.2; margin:0 0 5px; }.product-characteristics-subtitle { color:var(--pc-muted); }
 .product-characteristics-btn { border:1px solid var(--pc-line); background:#fff; border-radius:8px; padding:9px 14px; font-weight:700; color:var(--pc-text); cursor:pointer; text-decoration:none; }.product-characteristics-btn.primary { background:var(--pc-primary); border-color:var(--pc-primary); color:#fff; }.product-characteristics-btn.icon { width:38px; height:38px; padding:0; display:grid; place-items:center; }.product-characteristics-card { background:var(--pc-surface); border:1px solid var(--pc-line); border-radius:14px; box-shadow:0 1px 2px rgb(16 24 40 / 5%),0 4px 14px rgb(16 24 40 / 4%); }.product-characteristics-card-pad { padding:16px; }.product-characteristics-create-form { display:grid; grid-template-columns:1.1fr 1fr 180px auto; gap:8px; margin-bottom:14px; }.product-characteristics-toolbar { display:flex; justify-content:space-between; gap:12px; align-items:center; flex-wrap:wrap; }.product-characteristics-search { display:flex; gap:8px; flex:1; min-width:220px; }.product-characteristics-input,.product-characteristics-select { width:100%; border:1px solid #cfd7e6; border-radius:8px; background:#fff; padding:9px 11px; color:var(--pc-text); }.product-characteristics-search .product-characteristics-select { max-width:210px; }.product-characteristics-search .product-characteristics-select:last-child { max-width:170px; }

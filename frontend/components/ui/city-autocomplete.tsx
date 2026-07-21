@@ -13,7 +13,8 @@ type CityAutocompleteProps = {
   inputClassName?: string;
 };
 
-const defaultInputClass = "mt-1 h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100";
+const defaultInputClass =
+  "mt-1 h-portal-control-default w-full rounded-portal-md border border-portal-border bg-portal-surface px-portal-3 text-portal-body text-portal-text placeholder:text-portal-subtle outline-none transition focus:border-portal-primary focus:ring-2 focus:ring-portal-primary-soft";
 
 export function CityAutocomplete({
   id,

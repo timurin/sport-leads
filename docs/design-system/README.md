@@ -6,6 +6,13 @@
 
 - `docs/design-system/ui-audit.md` — аудит маршрутов, состояний, persistence, reference/migration (`5.1.1.*`)
 - `docs/design-system/responsive-audit.md` — verification matrix + manual viewport gate (`5.1.4.*`)
+- `docs/design-system/token-sources-audit.md` — inventory of token sources and conflicts (`5.2.1.1`)
+- `docs/design-system/color-tokens.md` — semantic color dictionary, Decision A (`5.2.1.2`)
+- `docs/design-system/typography-tokens.md` — type scale and font stacks (`5.2.1.3`)
+- `docs/design-system/spacing-tokens.md` — 4px spacing grid (`5.2.1.4`)
+- `docs/design-system/surface-tokens.md` — borders, radius, shadows (`5.2.1.5`)
+- `docs/design-system/component-size-tokens.md` — control / icon / avatar / shell sizes (`5.2.1.6`)
+- `docs/design-system/interaction-tokens.md` — hover / focus / selected / disabled (`5.2.1.7`)
 - `docs/design-system/layout-scrolling-audit.md` — AppShell, widths, scroll/sticky rules (`5.1.3.*`)
 - `docs/design-system/component-inventory.md` — инвентарь shared/domain UI (`5.1.2.*`)
 - `docs/design-system/shell-contracts.md` — защищённые контракты `DS-SHELL-01` / `DS-SHELL-02`
@@ -15,17 +22,27 @@
 
 ## Токены
 
-Токены объявлены в `frontend/app/globals.css` с префиксом `--portal-*`:
+Цвета (семантика, `5.2.1.2`, Decision A): канон `docs/design-system/color-tokens.md`.
+Типографика (`5.2.1.3`): канон `docs/design-system/typography-tokens.md` — Inter, шкала display→caption, utilities `text-portal-*`.
+Отступы (`5.2.1.4`): канон `docs/design-system/spacing-tokens.md` — сетка 4 px, utilities `p-portal-*` / `gap-portal-*`.
+Поверхности chrome (`5.2.1.5`): канон `docs/design-system/surface-tokens.md` — `rounded-portal-*`, `shadow-portal-*`, border widths.
+Объявлены в `frontend/app/globals.css` с префиксом `--portal-*`:
 
 - поверхности: `page`, `surface`, `surface-secondary`;
-- цвета: `border`, `text`, `text-muted`, `primary`, `success`, `warning`, `danger`;
-- радиусы: `radius-sm`, `radius-md`, `radius-lg`, `radius-xl`;
-- тени: `shadow-sm`, `shadow-card`, `shadow-overlay`;
-- интервалы: `space-1/2/3/4/6/8`;
-- контролы: `control-compact/default/spacious`;
-- каркас: `sidebar-width`, `content-max`.
+- текст (цвет): `text`, `text-muted`, `text-subtle`, `text-inverse`;
+- типографика: `font-sans` / `font-mono`, `font-size-*`, `leading-*`, `font-weight-*`;
+- отступы: `space-0/1/2/3/4/5/6/8/10/12`;
+- границы: цвет `border` / `border-strong`; ширина `border-width` / `border-width-strong`;
+- радиусы: `radius-none/sm/md/lg/xl/full`;
+- тени: `shadow-sm/card/overlay/modal`;
+- контролы: `control-compact/default/spacious` (32/40/44), `control-icon`, `icon-*`, `avatar-*`, shell topbar/sidebar reference;
+- primary: `#1f5eff` (+ hover / soft / on / gradient stops) — выровнено с DS-SHELL и `docs/design/*`;
+- статусы: `success`, `warning`, `danger` (+ soft);
+- focus: `focus-ring` + offset/width; interaction states: hover / pressed / selected / disabled; motion-fast/normal;
+- каркас: `content-max` (контент-ширины — `5.2.2.2`).
 
-Основные цвета зарегистрированы в Tailwind как `portal-page`, `portal-surface`, `portal-border`, `portal-text`, `portal-muted` и семантические tone-цвета.
+Цвета, типографика, spacing, radius, shadows, control sizes и interaction states зарегистрированы в Tailwind `@theme` / CSS.
+Typed mirror: `frontend/lib/design-system/tokens.ts`.
 
 ## Компоненты
 

@@ -18,22 +18,32 @@ export function Button({
   ...props
 }: ButtonProps) {
   const variantClasses = {
-    primary: "bg-portal-primary text-white hover:bg-blue-700",
-    secondary: "border border-portal-border bg-portal-surface text-slate-700 hover:bg-portal-surface-secondary",
-    ghost: "text-slate-600 hover:bg-slate-100 hover:text-slate-950",
-    danger: "bg-red-600 text-white hover:bg-red-700",
+    primary:
+      "bg-portal-primary text-portal-primary-on hover:bg-portal-primary-hover active:bg-portal-primary-hover",
+    secondary:
+      "border border-portal-border bg-portal-surface text-portal-text hover:bg-portal-state-hover active:bg-portal-state-pressed",
+    ghost:
+      "text-portal-muted hover:bg-portal-primary-soft hover:text-portal-text active:bg-portal-state-pressed",
+    danger:
+      "bg-portal-danger text-portal-primary-on hover:bg-portal-danger-hover active:bg-portal-danger-hover",
   }[variant];
   const sizeClasses = {
-    compact: "h-8 gap-1.5 rounded-md px-3 text-xs",
-    default: "h-10 gap-2 rounded-lg px-4 text-sm",
-    spacious: "h-11 gap-2 rounded-lg px-5 text-sm",
+    compact:
+      "h-portal-control-compact gap-portal-1 rounded-portal-sm px-portal-3 text-portal-caption",
+    default:
+      "h-portal-control-default gap-portal-2 rounded-portal-md px-portal-4 text-portal-body",
+    spacious:
+      "h-portal-control-spacious gap-portal-2 rounded-portal-md px-portal-5 text-portal-body",
   }[size];
 
   return (
     <button
       {...props}
       className={[
-        "inline-flex shrink-0 items-center justify-center font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
+        "portal-focus-ring inline-flex shrink-0 items-center justify-center font-medium",
+        "transition-colors duration-[var(--portal-motion-normal)] ease-[var(--portal-motion-ease)]",
+        "disabled:cursor-not-allowed disabled:opacity-[var(--portal-state-disabled-opacity)]",
+        "disabled:pointer-events-none",
         sizeClasses,
         variantClasses,
         className,

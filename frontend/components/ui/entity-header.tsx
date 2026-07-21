@@ -12,17 +12,21 @@ export function EntityHeader({ title, eyebrow, description, meta, status, action
   size?: "compact" | "default" | "spacious";
   className?: string;
 }) {
-  const titleClass = { compact: "text-xl", default: "text-2xl", spacious: "text-3xl" }[size];
+  const titleClass = {
+    compact: "text-portal-entity",
+    default: "text-portal-page",
+    spacious: "text-portal-display",
+  }[size];
   return (
     <div className={`flex min-w-0 flex-col gap-4 lg:flex-row lg:items-start lg:justify-between ${className}`}>
       <div className="min-w-0">
-        {eyebrow ? <div className="mb-1 text-xs font-semibold text-portal-muted">{eyebrow}</div> : null}
+        {eyebrow ? <div className="mb-1 text-portal-caption font-semibold text-portal-muted">{eyebrow}</div> : null}
         <div className="flex min-w-0 flex-wrap items-center gap-2.5">
           <h1 className={`${titleClass} min-w-0 font-semibold tracking-tight text-portal-text`}>{title}</h1>
           {status}
         </div>
-        {description ? <div className="mt-1 text-sm leading-5 text-portal-muted">{description}</div> : null}
-        {meta ? <div className="mt-2 flex min-w-0 flex-wrap items-center gap-x-4 gap-y-1 text-xs text-portal-muted">{meta}</div> : null}
+        {description ? <div className="mt-1 text-portal-body leading-5 text-portal-muted">{description}</div> : null}
+        {meta ? <div className="mt-2 flex min-w-0 flex-wrap items-center gap-x-4 gap-y-1 text-portal-meta text-portal-muted">{meta}</div> : null}
       </div>
       {actions ? <PageActions className="lg:shrink-0">{actions}</PageActions> : null}
     </div>
