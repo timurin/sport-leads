@@ -1,77 +1,126 @@
-# Sport-Lead — Каноническая структура проекта
+# Sport-Lead — Project Structure Checklist
 
-**Код:** `SL-PROJECT-STRUCTURE-v1`  
-**Физический источник истины:** `docs/architecture/project-structure.md`  
-**Связанные документы:** [roadmap](../roadmap/roadmap.md), [erp-check](erp-check.md)
+**Code:** `SL-PROJECT-STRUCTURE-v1`
+**Updated:** `2026-07-21`
+**Project version:** `v0.8.8i`
+**Git branch:** `feature/v0.8.1-nomenclature-core`
+**Git commit:** `05872f3`
 
-## Архитектурный принцип
+## Rules
 
-Система разделена на API, schemas, services, repositories (по мере появления), database models, frontend data layer и UI components. ORM-объекты не возвращаются напрямую из API; бизнес-правила находятся в services; денежные значения используют `Decimal/Numeric`; миграции обратимы.
+- `[x]` marks a capability that is implemented and verified by code and applicable checks.
+- `[ ]` marks a capability that is not finished or is still demo/local-only in a broader flow.
+- Partially implemented areas must be split into narrower checklist items instead of using `[~]`.
+- UI alone, API alone, model alone, or documentation alone is not enough to close a checkbox.
+- When this checklist changes, `docs/erp/status/project-structure.html` must be updated in the same task.
 
-## Модули
+## 1. Platform and System Core
 
-```text
-backend/app/
-├── api/             HTTP routes и response contracts
-├── schemas/         Pydantic input/output contracts
-├── services/        бизнес-правила и транзакционные workflows
-├── models/          SQLAlchemy entities
-├── collectors/      источники ingestion
-├── parsers/         нормализация входных данных
-└── communications/  connector contract и mock core
-backend/alembic/     обратимые миграции
-backend/tests/       API, service и regression tests
-frontend/app/        Next.js routes и server actions
-frontend/components/ переиспользуемый UI
-frontend/lib/        frontend data layer, mapping и tests
-docs/                канонические документы, ADR, процессы и статусы
-```
+- [x] Monorepo with `backend/` and `frontend/`
+- [x] FastAPI backend, PostgreSQL, SQLAlchemy, and Alembic migrations
+- [x] Next.js workspace shell, navigation, and shared UI layer
+- [x] Repository-level verification scripts and project checks
+- [ ] Authentication, system users, and access roles
+- [ ] Universal audit trail
+- [ ] Universal file subsystem beyond nomenclature images
+- [ ] Notifications and background jobs
+- [ ] Production-ready secrets, backup, and recovery contour
 
-## ERP-домены
+## 2. CRM and Leads
 
-### CRM и продажи
+- [x] Persistent `Lead`, `LeadContact`, `Client`, `LeadEvent`, and stage backend contour
+- [x] Lead creation plus customer, contact, and commercial updates through API
+- [x] Lead completion, rejection reasons, and transactional conversion to sales order
+- [x] Lead detail route with timeline, notes, tasks, and communication UI
+- [x] Lead dashboard, Kanban, list, filters, and basic analytics UI
+- [ ] Persistent lead workspace without demo/local frontend states
+- [ ] Persistent tasks, notes, and communications
+- [ ] Deals, archive flow, and finalized access-control contour
 
-`Lead` → `LeadContact`/`Client` → `Organization` → `SalesOrder` → `SalesOrderItem`.
+## 3. Organizations, Clients, and Contacts
 
-`SalesOrderItem` — коммерческая позиция: snapshot-наименование, размеры, персонализация, цвет, единица, количество, исходная цена, nullable процент скидки, вычисляемая сумма скидки и итоговая сумма строки. `Material` не является номенклатурой заказа. В текущем контуре `size_range`, `personalization`, `color` и `discount_percent` сохраняются как nullable snapshot-поля; `discount_amount` и `line_amount` рассчитываются service-слоем через Decimal/Numeric.
+- [x] Persistent organizations API and `SalesOrder.organization_id` binding
+- [ ] Persistent organizations workspace on backend data
+- [ ] Persistent employees directory, org structure, and user linkage
+- [x] Clients and contacts linked to leads and orders
+- [x] Customer and contact saving from the lead workflow
+- [ ] Separate persistent client workspace, card, history, deduplication, and settlements
 
-### Номенклатура и продукция
+## 4. Sales Orders
 
-`v0.8.1-nomenclature-core` реализует базовый persistent-справочник `Nomenclature` готовых изделий с собственным CRUD/API и frontend persistence. `SalesOrderItem.nomenclature_id` — nullable-ссылка на справочник; в формах заказа она выбирается через searchable combobox, а коммерческий snapshot позиции изменяется только явным выбором и сохраняется независимо от последующих изменений карточки. Контур не включает `Model/Article`, размеры и характеристики, лекала, `Material`, спецификации или производство. Последовательность целевого контура: `Nomenclature` → `Model/Article` → sizes/characteristics → patterns → variants.
-`v0.8.2-nomenclature-types-and-category-hierarchy` реализует `NomenclatureType` и persistent `NomenclatureCategory` с parent/child-иерархией, типовой совместимостью и переносом legacy-текстовых категорий. `v0.8.3-units-of-measure` добавляет отдельный persistent `UnitOfMeasure` с системными категориями величин, precision, активностью и nullable-ссылкой `Nomenclature.storage_unit_id`; legacy-текстовое `unit` сохранено для переходной совместимости. `v0.8.4-category-custom-fields` добавляет отдельные `CustomFieldDefinition`, `CustomFieldOption`, `CategoryField` и typed `NomenclatureFieldValue`, включая effective schema по иерархии, required/default/override и индивидуальные значения. Альтернативные коэффициенты, роли продажи/закупки/списания и складской учёт остаются будущими контурами; характеристики, варианты и media также не входят.
+- [x] Persistent sales-order model, list, detail route, and status history
+- [x] Manual order creation and order creation from lead conversion
+- [x] Organization, client, contact, and responsible bindings in order data
+- [x] Persistent order items with commercial snapshot fields
+- [x] Decimal/Numeric line totals and discount-percent recalculation
+- [x] Size distribution, color, and personalization snapshots
+- [x] Nullable nomenclature and variant links with immutable order snapshots
+- [ ] Order-level discount, tax model, currency, print forms, and customer invoice
+- [ ] Design, reserve, production, shipping, payment, and closing workflow
 
-`frontend/components/settings/nomenclature-workspace.tsx` реализует рабочее место v0.8.5: дерево категорий, команды создания, поиск, фильтры, выбор вложенных категорий и ссылки на карточки. `frontend/components/settings/nomenclature-card.tsx` и маршрут `/settings/catalogs/nomenclature/[nomenclatureId]` реализуют view/edit карточки, typed custom fields, характеристики/варианты и media через backend actions. `frontend/components/settings/nomenclature-media-gallery.tsx` обеспечивает reference-like media library на headless Uppy: multi-file queue, thumbnails, validation, primary, сортировку, alt-текст и удаление через канонический media API prefix. v0.8.8a закрепляет reference-разметку карточки: двухколоночную desktop-сетку, responsive-переходы, якорные вкладки, media-галерею, карточку метаданных и историю дат. v0.8.8b делает вкладки рабочими: выбранная секция отображается одна, верхний PageHeader для карточки удалён. v0.8.8c изолирует редактирование блоков и async-save с dirty/status/error states без второго data/API слоя. v0.8.8d исправляет media Server Actions и завершает gallery interactions. v0.8.8e восстанавливает reference-композицию: основной экран 65/35, остальные вкладки используют полную полезную ширину, media library не зажата в sidebar; визуальные overrides находятся в `frontend/app/globals.css`. v0.8.8g уточняет только header и main-block composition: header actions переиспользуют существующий `BlockActions`, история появляется справа на «Основном», mobile actions сохраняются. Backend/API/БД не изменялись. Полный аудит, массовые действия, сохранение колонок и глобальные права остаются planned.
-`v0.8.8h-nomenclature-free-custom-fields` добавляет свободное назначение typed-реквизитов непосредственно номенклатуре через существующую модель `NomenclatureFieldValue`: поиск, выбор, создание, typed-значения и удаление прямого назначения. Вторая система хранения не создаётся.
+## 5. Nomenclature Core
 
-`v0.8.6-characteristics-and-variants` добавляет persistent `CharacteristicDefinition`, `CharacteristicOption`, category/nomenclature assignments и `NomenclatureVariant`; `SalesOrderItem` хранит nullable variant link и immutable characteristic snapshot. Media, модели, спецификации и производство остаются вне пункта.
+- [x] Persistent nomenclature CRUD, card, search, active flag, article, and base price
+- [x] Nomenclature types and category hierarchy
+- [x] Units-of-measure directory and `storage_unit_id` link
+- [x] Typed custom fields with category inheritance and effective schema
+- [x] Separate workspace and editable card for nomenclature
+- [x] Direct free assignment of custom fields to a nomenclature card
+- [ ] Audit history, archive flow, bulk editing, import, and export
 
-`v0.8.7-nomenclature-media` добавляет `NomenclatureMedia` с безопасным storage key, MIME/size metadata, primary flag и sort order. Бинарное содержимое хранится в локальном ignored storage, API выдаёт его только через проверенный путь и удаляет вместе с metadata; media не является моделью изделия или производственным документом.
+## 6. Nomenclature Characteristics, Variants, and Media
 
-### Технологическая подготовка
+- [x] Product-characteristics directory with typed kinds, options, and color HEX values
+- [x] Category and nomenclature characteristic assignments
+- [x] Persistent nomenclature variants with unique combinations and articles
+- [x] Sales-order item variant selection with stored characteristic snapshot
+- [x] Image media upload, storage, primary image, sorting, and deletion in the card
+- [ ] Non-image file attachments
+- [ ] Variant pricing, barcodes, and external-sync contour
 
-Будущий контур: operation units → operations → model norms → batch specification preparation. Модель описывает конструкцию и нормативную технологию изделия.
+## 7. Materials
 
-### Материалы и ресурсы
+- [x] Persistent material model and CRUD API
+- [ ] Persistent materials workspace on backend data
+- [ ] Relation between materials and the common nomenclature contour
+- [ ] Suppliers, procurement prices, batches, stock balances, and consumption norms
 
-`Material` — производственный ресурс для спецификаций, печати, раскроя, пошива и планового/фактического списания. Каталог материалов не подменяет каталог номенклатуры.
+## 8. Product Models, Patterns, Sizes, Specifications, and Routings
 
-### Производство
+- [x] Size distribution inside sales-order items
+- [ ] Product-model catalog and versioning
+- [ ] Pattern catalog, files, and grading
+- [ ] Dedicated size-grid directory and measurements
+- [ ] Specifications and bill-of-materials contour
+- [ ] Routing, operations, equipment, work centers, and quality checkpoints
 
-Будущий контур: production batches → approved batch specifications → printing → cutting → sewing → QC → actual consumption/output.
+## 9. Design, Production, Warehouse, Procurement, and Shipping
 
-Одна партия может объединять несколько позиций, а одна позиция может быть разделена между партиями.
+- [ ] Design approvals and versioned layouts
+- [ ] Production orders, batches, fact operations, scrap, and output
+- [ ] Warehouse movements, reserves, inventory, and finished-goods flow
+- [ ] Procurement requests, supplier orders, receipts, and returns
+- [ ] Shipping documents, delivery tracking, and confirmation of receipt
 
-### Склад, закупки и финансы
+## 10. Finance and Costing
 
-Склад отвечает за движения, остатки, резервы и списание; закупки — за дефицит и поставщиков; финансы — за оплаты, себестоимость, маржу и задолженность. Эти контуры ещё не образуют рабочий end-to-end процесс.
+- [ ] Invoices, payments, advances, debt, and settlements
+- [ ] Tax model, VAT, price types, and financial documents
+- [ ] Planned and actual costing
+- [ ] Margin and management P&L
 
-### Интеграции
+## 11. Analytics and Integrations
 
-Обмен с 1С должен передавать номенклатуры, заказы, утверждённые спецификации, списание материалов, операции, выпуск и связанные документы.
+- [x] CRM dashboard and basic order analytics
+- [x] Collectors, parsers, and import normalization core
+- [x] Mock communications connector core
+- [ ] Real external CRM and communications adapters
+- [ ] Website forms, email, telephony, VK, and Telegram integrations
+- [ ] 1C exchange
+- [ ] Universal import and export contour
 
-## Источники статуса
+## 12. Operations and Deployment
 
-Статусы модулей подтверждаются кодом, API, миграциями и тестами. Наличие frontend-страницы или пункта навигации без persistence отмечается как `[~]`, а не `[x]`. Канонический фактический checklist находится в [erp-check.md](erp-check.md).
-Patch v0.8.8h: `CustomFieldDefinition` codes are generated uniquely by the backend when omitted; card operations preserve typed values and distinguish direct assignments from inherited values.
-
-`v0.8.8i-product-characteristics-directory` reuses `CharacteristicDefinition` and `CharacteristicOption` for the settings directory. `kind` distinguishes `COLOR` and `LIST`, color options persist normalized `hex_value`, and the frontend directory uses the existing characteristics API and Server Actions. The nomenclature card composition is unchanged.
+- [ ] VPS, production Docker, reverse proxy, HTTPS, and domain
+- [ ] CI/CD, monitoring, and logs
+- [ ] Backup, restore, and administrator runbooks

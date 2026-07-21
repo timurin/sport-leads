@@ -1,126 +1,873 @@
-# Sport-Lead — Канонический roadmap
+# Sport-Lead — Global Roadmap
 
-**Код:** `SL-ROADMAP-v1`  
-**Физический источник истины:** `docs/roadmap/roadmap.md`  
-**Связанные документы:** [project-structure](../architecture/project-structure.md), [erp-check](../architecture/erp-check.md)  
-**Статус:** актуальный глобальный план проекта
+**Code:** `SL-ROADMAP-v1`
+**Updated:** `2026-07-21`
+**Project version:** `v0.8.8i`
+**Git branch:** `feature/v0.8.1-nomenclature-core`
+**Git commit:** `05872f3`
 
-## Правила чтения
+**Canonical files:**
+- roadmap: `docs/roadmap/roadmap.md`
+- structure: `docs/architecture/project-structure.md`
+- ERP-check: `docs/architecture/erp-check.md`
 
-`[x]` — подтверждено кодом и проверками; `[~]` — частично или demo-only; `[ ]` — не начато; `[!]` — блокер или технический долг; `[?]` — требуется ручная проверка.
+## Rules
 
-Этот документ определяет последовательность развития. HTML-статусы являются представлением, а документы в `docs/tasks/` описывают отдельные итерации. Версии платформы и коды документов не смешиваются.
+- `[x]` means the roadmap item is completed and confirmed by code and applicable checks.
+- `[ ]` means the roadmap item is not completed.
+- For roadmap Markdown, only `[x]` and `[ ]` are used.
+- Demo/local UI does not close a roadmap item that requires persistent production functionality.
+- `docs/architecture/project-structure.md` is the main factual source for confirmed readiness.
+- Separate task files are created only for the selected microtask before implementation starts.
 
-## Сквозная производственная цепочка
+## Current implementation boundary
 
-Заказ покупателя → позиции заказа → номенклатура → модель/артикул → размеры и характеристики → производственная партия → утверждённая спецификация партии → печать, раскрой, пошив и ОТК → фактический расход и выпуск → передача данных и документов в 1С.
+Current confirmed contour:
 
-Спецификация является плановым составом и формируется до запуска партии. Производственный факт хранится отдельно.
+`CRM -> Sales orders -> Nomenclature`
 
-## Текущий статус
+Next detailed contour:
 
-- `[x]` базовая FastAPI/Next.js/SQLAlchemy/Alembic-платформа, PostgreSQL-конфигурация, Compose и автоматическая проверка;
-- `[x]` CRM-лиды: создание, контакты, стадии, частичное редактирование, конвертация, отказ и история имеют backend-контур;
-- `[~]` CRM-список, Kanban, задачи, заметки, timeline и коммуникации частично используют local/demo-сценарии;
-- `[x]` заказы: список, карточка, организация, статусы/история и коммерческие snapshot-позиции подтверждены;
-- `[~]` каталог `Material` существует как отдельный ресурсный контур, но не является номенклатурой заказа;
-- `[ ]` номенклатура, модели, размеры, лекала, технологическая подготовка, партии, спецификации, производственный факт, складской документооборот, финансы и 1С.
+`Product models -> Size grids -> Patterns -> Specifications -> Routings -> Model link in order items`
 
-## Этапы 0–10
+## Stage 0 — Platform and Infrastructure
 
-### Этап 0. Стабилизация платформы — `[~]`
+### 0.1 — Core platform
 
-Техническое ядро, миграции, Compose и базовые проверки готовы. CI/CD, staging/production observability, полноценная тестовая БД и резервное восстановление остаются незавершёнными.
+- [x] 0.1.1 — Monorepo with `backend/` and `frontend/`
+- [x] 0.1.2 — FastAPI, PostgreSQL, SQLAlchemy, and Alembic foundation
+- [x] 0.1.3 — Next.js workspace shell, navigation, and shared UI layer
+- [x] 0.1.4 — Docker Compose for local development
 
-### Этап 1. Backend-интеграция CRM — `[~]`
+### 0.2 — Quality and documentation
 
-Постоянные лиды, контакты, стадии, создание, коммерческое редактирование и конвертация реализованы частично. Сделки, архивирование, полные активности, авторизация и права доступа не завершены.
+- [x] 0.2.1 — Repository-level project checks and verification scripts
+- [x] 0.2.2 — Canonical documentation set: roadmap, structure, ERP-check, ADR
+- [ ] 0.2.3 — Stable CI/CD pipeline for mandatory checks
 
-### Этап 2. Заказы покупателей — `[x]`
+### 0.3 — Production operations
 
-Карточка, организация, статусы/история и `SalesOrderItem` готовы. Позиция заказа — коммерческая строка с `snapshot_name`, `size_range`, `personalization`, `color`, `unit`, `quantity`, `unit_price`, `line_amount`; итог заказа пересчитывается через `Decimal/Numeric`.
+- [ ] 0.3.1 — Production secrets and deployment baseline
+- [ ] 0.3.2 — Monitoring and operational logs
+- [ ] 0.3.3 — Backup and restore procedures
 
-`[x]` итерация `v0.7.4-sales-order-item-dimensions-personalization`: размеры и персонализация сохраняются как nullable snapshot-поля через CRUD/API/UI; миграция `e0f1a2b3c456`, backend/frontend focused tests, TypeScript, lint, offline production build и Alembic upgrade/downgrade/check пройдены.
+## Stage 1 — CRM and Leads
 
-`[x]` итерация `v0.7.5-sales-order-item-color`: цвет сохраняется как nullable snapshot-поле через CRUD/API/UI; миграция `f1a2b3c4d567`, полный pytest, frontend tests, TypeScript, lint, production build, project check 9/9 и Alembic upgrade/downgrade/check пройдены.
+### 1.1 — Sales workspace
 
-`[x]` итерация `v0.7.6-sales-order-item-discount-percent`: добавлены nullable `discount_percent` (0–100), вычисляемые `discount_amount` и `line_amount`, API/Server Actions/UI и миграция `a2b3c4d5e678`; подтверждены null/0/100%, обратная совместимость, полный pytest, frontend tests, TypeScript, lint, production build, project check и Alembic upgrade/downgrade/check.
+- [x] 1.1.1 — Sales dashboard
+- [x] 1.1.2 — Lead list, filters, and Kanban UI
+- [ ] 1.1.3 — Fully persistent workspace without demo/local lead state
 
-Этап 2 закрыт в объёме MVP. В него не входят НДС и налоговая модель, общая скидка заказа, платежи, финансовые документы, номенклатура и производство. НДС фиксируется как будущий пункт финансового/налогового контура, связанный с организациями, типами цен и интеграцией с 1С.
+### 1.2 — Lead card
 
-### Этап 3. Номенклатура, модели, лекала и техкарты — `[~]`
+- [x] 1.2.1 — Lead detail route and page states
+- [x] 1.2.2 — Customer, contact, and commercial data saving through API
+- [x] 1.2.3 — Configurable stages and stage management
+- [ ] 1.2.4 — Persistent tasks, notes, timeline, and communications
 
-Номенклатура → модели и артикулы → размеры и характеристики → лекала → операционные узлы → нормативная технология. Persistent core номенклатуры реализован; следующие производственные и классификационные сущности остаются planned.
+### 1.3 — Lead lifecycle
 
-`[x]` первый пункт `v0.8.1-nomenclature-core`: базовый persistent-справочник номенклатуры готовых изделий реализован через модель/API и frontend persistence; миграция `c3d4e5f6a789`, backend/frontend regression tests, TypeScript, lint, production build, project check и Alembic upgrade/downgrade/check пройдены. Границы пункта: только номенклатура; без моделей, лекал, материалов, спецификаций и производства.
+- [x] 1.3.1 — Completion and rejection flow
+- [x] 1.3.2 — Transactional conversion from lead to sales order
+- [ ] 1.3.3 — Deals, archive, and finalized CRM access-control contour
 
-`[x]` patch `v0.8.1-order-nomenclature-selector`: searchable combobox активной номенклатуры добавлен в создание и редактирование `SalesOrderItem`; выбор явно копирует имя и base price в snapshot, ручные позиции и последующие изменения каталога сохраняются. Подтверждение: `frontend/components/sales/sales-order-items.tsx`, `frontend/app/(workspace)/sales/orders/[orderId]/order-item-actions.ts`, `backend/app/services/sales_order_items.py`, regression tests. Ограничения этапа 3 не изменены.
+### 1.4 — CRM source integrations
 
-## Архитектурная декомпозиция v0.8 — `[~]`
+- [x] 1.4.1 — Collectors, parsers, and import normalization core
+- [x] 1.4.2 — Mock communication connector core
+- [ ] 1.4.3 — Real external lead-source and communication adapters
 
-`v0.8.1-nomenclature-core` завершён в подтверждённом объёме: persistent-карточка, CRUD/API, поиск, активность, базовая Decimal/Numeric-цена, связь с `SalesOrderItem` и независимый коммерческий snapshot. Текущие текстовые `category` и `unit` являются совместимым MVP и не считаются финальной нормализацией.
+## Stage 2 — Clients and Contacts
 
-Следующая последовательность не расширяет текущую БД автоматически:
+### 2.1 — Core entities and links
 
-- `[x]` `v0.8.2-nomenclature-types-and-category-hierarchy`: системные типы `SERVICE`, `PRODUCT`, `GOODS`, `MATERIAL`; persistent `NomenclatureCategory` с `parent_id`, запретом циклов и правилами совместимости типа и категории; nullable `Nomenclature.category_id`; текущие текстовые категории перенесены миграцией с совместимым default `PRODUCT`. Подтверждение: `backend/app/models/nomenclature.py`, `backend/app/services/nomenclature.py`, `backend/app/api/nomenclature.py`, `backend/alembic/versions/d4e5f6a7b890_add_nomenclature_types_and_categories.py`, `backend/tests/test_lead_conversion.py`, frontend catalog workspace. Проверки backend/frontend и project check пройдены;
-- `[x]` `v0.8.3-units-of-measure`: persistent `UnitOfMeasure` с системными категориями, точностью, активностью и базовой единицей хранения `Nomenclature.storage_unit_id`; CRUD/API, legacy-миграция, frontend-справочник и regression-проверки подтверждены. Альтернативные коэффициенты, продажи/закупки/списания и складской учёт не входят;
-- `[x]` `v0.8.4-category-custom-fields`: типизированные определения реквизитов, persistent варианты выбора, привязка к категории, обязательность, наследование, overrides и backend validation; значения хранятся в типизированных колонках, произвольный JSON не используется как источник истины. Подтверждение: `backend/app/models/custom_fields.py`, `backend/app/services/custom_fields.py`, `backend/app/api/custom_fields.py`, миграция `f6a7b8c9d012`, regression-тесты, frontend `/settings/catalogs/custom-fields` и редактор значений в карточке номенклатуры;
-- `[x]` `v0.8.5-nomenclature-workspace-and-editable-card`: рабочее место с деревом категорий, поиском/фильтрами, отдельными командами создания и отдельная карточка номенклатуры с режимами просмотра/редактирования; custom fields v0.8.4 переиспользуются без второго источника истины. Подтверждение: `frontend/components/settings/nomenclature-workspace.tsx`, `frontend/components/settings/nomenclature-card.tsx`, `frontend/app/(workspace)/settings/catalogs/nomenclature/[nomenclatureId]/page.tsx`, Server Actions, frontend tests, TypeScript, ESLint и production build. Ограничения: полный аудит, массовые действия, сохранение колонок и глобальные права остаются planned;
-- `[x]` `v0.8.6-characteristics-and-variants`: persistent-определения характеристик и значений, наследуемые назначения категорий, варианты с уникальными комбинациями/артикулами, управление в карточке и snapshot выбранного варианта в позиции заказа. Подтверждение: `backend/app/models/characteristics.py`, `backend/app/services/characteristics.py`, `backend/app/api/characteristics.py`, миграция `g7b8c9d0e123`, `backend/app/services/sales_order_items.py`, frontend mapping/actions/card и проверки pytest, TypeScript, ESLint, build. Ограничения: изображения, модели, лекала, спецификации, производство, склад, цены вариантов и 1С не входят;
-- `[x]` `v0.8.7-nomenclature-media`: persistent `NomenclatureMedia`, безопасное offline-хранение изображений, главное изображение, сортировка, выдача контента и удаление. Подтверждение: `backend/app/models/media.py`, `backend/app/services/media.py`, `backend/app/api/media.py`, миграция `h8c9d0e1f234`, frontend media panel/actions и regression-проверки. Модели, спецификации, производство, склад и 1С не входят;
-- `[x]` `v0.8.8a-nomenclature-card-exact-reference`: карточка номенклатуры приведена к reference-структуре с заголовком, якорными вкладками, двухколоночной desktop-сеткой, responsive mobile bar, основной информацией, реквизитами, характеристиками/вариантами, media-галереей, метаданными карточки и историей дат. Используются реальные persistent-данные и существующие Server Actions; planned-заглушки v0.8.6/v0.8.7 удалены. Подтверждение: `docs/design/nomenclature-card-reference-v1.html`, `frontend/components/settings/nomenclature-card.tsx`, маршрут карточки, frontend tests, TypeScript, ESLint и production build. Backend/API/БД не изменялись;
-- `[x]` `v0.8.8b-card-layout-tabs-visual-fix`: удалён верхний PageHeader, карточка начинается с back-link и header, добавлены рабочие вкладки «Основное», «Реквизиты», «Характеристики и варианты», «Изображения и файлы», «История» с показом только выбранной секции и reference-активным состоянием. Backend/API/БД и бизнес-логика не изменялись; подтверждение: маршрут карточки, `frontend/components/settings/nomenclature-card.tsx`, TypeScript, frontend tests, ESLint, production build и static responsive check.
-- `[x]` `v0.8.8c-card-block-editing-and-async-save`: блоки карточки получили независимые режимы редактирования, сохранения/отмены, dirty/status/error states и защиту от повторного сохранения. Основная информация использует `updateNomenclature`, typed-реквизиты — `saveNomenclatureCustomField`, характеристики и media — существующие Server Actions с локальным/RSC обновлением после успеха. Подтверждение: `frontend/components/settings/nomenclature-card.tsx`, `frontend/lib/sales/nomenclature-paths.test.mjs`, TypeScript, frontend tests, ESLint, production build и project check. Backend/API/БД не изменялись;
-- `[x]` `v0.8.8d-card-media-gallery-fix`: media Server Actions используют канонический `/nomenclatures/{id}/media` prefix, а карточка получила responsive gallery с preview, JPG/PNG/WEBP и 10 MB validation, empty state, primary, sorting, alt-text и delete. Подтверждение: `frontend/app/(workspace)/settings/catalogs/nomenclature/characteristics-actions.ts`, `frontend/components/settings/nomenclature-media-gallery.tsx`, карточка и frontend regression test; backend/API/БД не изменялись;
-- `[x]` `v0.8.8e-restore-card-design-and-media-library`: карточка возвращена к reference-композиции с полной шириной для реквизитов, характеристик, media и истории; сохранены отдельные edit/save/cancel flows, вкладки и unsaved guard. Media library получила headless Uppy queue, multi-upload, local thumbnails, dropzone-плитку и существующий JSON/base64 transport. Подтверждение: `frontend/components/settings/nomenclature-card.tsx`, `frontend/components/settings/nomenclature-media-gallery.tsx`, `frontend/app/globals.css`, `frontend/package.json`, frontend regression tests, TypeScript, ESLint, build и project check; backend/API/БД не изменялись;
-- `[x]` `v0.8.8g-card-header-and-main-block`: шапка карточки получила reference-actions с меню, отменой и сохранением через существующий `BlockActions`; вкладка «Основное» показывает основной блок слева, карточку и timeline истории справа, а остальные вкладки и их механика не изменялись. Подтверждение: `frontend/components/settings/nomenclature-card.tsx`, `frontend/app/globals.css`, TypeScript, ESLint, frontend tests, production build и `git diff --check`; backend/API/БД не изменялись;
-- `[x]` `v0.8.8h-nomenclature-free-custom-fields`: карточка поддерживает свободное назначение typed-реквизитов через существующий custom-field API: поиск по имени/коду без учёта регистра, выбор существующего определения, создание и назначение нового, typed-сохранение и удаление только прямого назначения. Категориальные назначения и наследование сохранены. Подтверждение: `backend/app/services/custom_fields.py`, `backend/app/api/custom_fields.py`, `frontend/components/settings/nomenclature-card.tsx`, Server Actions, regression tests, TypeScript, ESLint и production build;
+- [x] 2.1.1 — Client and contact entities linked to leads and orders
+- [x] 2.1.2 — Saving client and contact data from CRM workflows
 
-Модели изделий, лекала, размерные сетки, материалы в спецификациях, операции, партии, производство, склад, финансы, НДС, типы цен и интеграция с 1С остаются за пределами этого контура. Следующий технический пункт определяется отдельной задачей после контрольной проверки v0.8.8d.
+### 2.2 — Separate client workspace
 
-### v0.8.5 — Nomenclature Workspace and Editable Card — `[x]`
+- [ ] 2.2.1 — Persistent client list and dedicated workspace
+- [ ] 2.2.2 — Separate client card
+- [ ] 2.2.3 — Client lead and order history
 
-Рабочее место и отдельная карточка реализованы в заявленных границах. Текущий список сохранён совместимым с прежними URL и API, а встроенные формы заменены отдельными командами создания.
+### 2.3 — Business data and quality
 
-Границы v0.8.5 зафиксированы в ADR-009 и реализованы: отдельное рабочее место с деревом категорий, поиском, фильтрами, режимами «Папки и элементы»/«Вложенные», отдельными командами создания и явными состояниями списка; отдельный маршрут карточки с режимами просмотра и редактирования и расширяемыми секциями. Карточка использует существующий API и typed custom fields v0.8.4: effective schema, наследование, required/default/override, индивидуальные значения и смена категории. Второй параллельный редактор реквизитов не создаётся.
+- [ ] 2.3.1 — Legal details and banking data
+- [ ] 2.3.2 — Segmentation and duplicate detection
+- [ ] 2.3.3 — Settlements and financial client state
 
-В v0.8.5 не входят характеристики, варианты, SKU, размеры и цвета как варианты, изображения и файлы, модели, лекала, спецификации, производство, склад, закупки, типы цен, НДС, 1С, полный аудит и глобальная система прав при её отсутствии. Реализованы отдельные команды создания, иерархическая навигация, поиск/фильтры, отдельная карточка, view/edit, предупреждение об unsaved changes, сохранение custom fields, совместимость старых URL и выбора номенклатуры в заказе. Массовые действия, сохранение пользовательских колонок и полноценные права остаются planned.
+## Stage 3 — Sales Orders
 
-### Этап 4. Дизайн и согласование — `[ ]`
+### 3.1 — Core document
 
-Нужны версии макетов, внутреннее/клиентское согласование и запрет запуска без утверждённой версии.
+- [x] 3.1.1 — Persistent sales-order model, list, detail route, and status history
+- [x] 3.1.2 — Manual creation and creation from lead conversion
+- [x] 3.1.3 — Organization, client, contact, and responsible bindings
 
-### Этап 5. Производственный контур MVP — `[ ]`
+### 3.2 — Order items
 
-Производственные партии → спецификации партий → утверждение версии → печать → раскрой → пошив → ОТК → фактический расход → выпуск продукции. Спецификация — план; факт — отдельные записи расхода, операций, выпуска, брака, исполнителей и отклонений.
+- [x] 3.2.1 — Persistent commercial snapshot items
+- [x] 3.2.2 — Decimal/Numeric totals and discount-percent recalculation
+- [x] 3.2.3 — Sizes, color, and personalization snapshots
+- [x] 3.2.4 — Nullable nomenclature and variant links with immutable snapshots
 
-### Этап 6. Складской контур — `[~]`
+### 3.3 — Financial document scope
 
-У материалов есть отдельные поля остатков и CRUD API. Движения, резервы, партии, списания, выпуск и инвентаризация не реализованы.
+- [ ] 3.3.1 — Order-level discount
+- [ ] 3.3.2 — Tax and VAT model
+- [ ] 3.3.3 — Currency, print forms, quotations, and invoices
 
-### Этап 7. Закупки — `[ ]`
+### 3.4 — Order execution
 
-Не реализованы дефицит, поставщики, заказы поставщикам и связь закупок с потребностью производства.
+- [ ] 3.4.1 — Design and approval states in order flow
+- [ ] 3.4.2 — Reserve, production, shipping, payment, and closure workflow
 
-### Этап 8. Логистика и отгрузка — `[ ]`
+## Stage 4 — Nomenclature
 
-Не реализованы отгрузки, доставки, частичные поставки, возвраты и статусы перевозки.
+### 4.1 — Persistent core
 
-### Этап 9. Финансы и себестоимость — `[ ]`
+- [x] 4.1.1 — `v0.8.1` persistent nomenclature CRUD, card, search, article, activity, and base price
+- [x] 4.1.2 — Nullable order-item link with independent commercial snapshot
 
-Не реализованы оплаты, плановая/фактическая себестоимость, маржа, задолженность и финансовые документы.
+### 4.2 — Classification and typed fields
 
-### Этап 10. Пользователи, интеграции и промышленная эксплуатация — `[ ]`
+- [x] 4.2.1 — `v0.8.2` nomenclature types and category hierarchy
+- [x] 4.2.2 — `v0.8.3` units-of-measure directory and `storage_unit_id`
+- [x] 4.2.3 — `v0.8.4` typed custom fields with category inheritance
 
-Нужны авторизация, роли, аудит, production-инфраструктура и обмен с 1С. Обмен должен включать номенклатуры, заказы, утверждённые спецификации, списание материалов, выполненные операции, выпуск продукции и связанные документы.
+### 4.3 — Workspace and card
 
-## Правило следующей итерации
+- [x] 4.3.1 — `v0.8.5` separate workspace and editable card
+- [x] 4.3.2 — `v0.8.8h` direct free assignment of custom fields in the card
+- [ ] 4.3.3 — Audit history, archive flow, and bulk operations
 
-Выполняется только следующий незавершённый пункт текущего этапа. Переход к следующему этапу требует завершения текущего, обязательных проверок и явного подтверждения владельца проекта.
+### 4.4 — Characteristics, variants, and media
 
-## История и подтверждения
+- [x] 4.4.1 — `v0.8.6` characteristics and variants
+- [x] 4.4.2 — `v0.8.7` image media lifecycle
+- [x] 4.4.3 — `v0.8.8a` to `v0.8.8g` card layout and interaction contour
+- [x] 4.4.4 — `v0.8.8i` product-characteristics directory
+- [ ] 4.4.5 — Non-image file attachments
+- [ ] 4.4.6 — Variant pricing, barcodes, and external sync
 
-Исторические документы `SL-ROADMAP-v0.3.0.md` и `SL-ROADMAP-v0.6.1.md` сохранены в `docs/archive/`. Подробные подтверждения текущих CRM/order-итераций находятся в [ERP-check](../architecture/erp-check.md) и ADR.
-Patch v0.8.8h: backend automatically generates a unique code for a free custom field; typed save/reload, optional inherited-value clearing and scoped direct-assignment deletion preserve definitions, category assignments and other cards.
+### 4.5 — Import and export
 
-`v0.8.8i-product-characteristics-directory` adds the settings directory `/settings/catalogs/product-characteristics` on the existing characteristics models/API. It provides system `Color` and `Size`, generated codes, typed kind/HEX validation, option ordering and safe deactivation without changing the nomenclature card. Confirmation: characteristics service/API, migration `i9j0k1l2m345`, settings workspace and regression tests.
+- [ ] 4.5.1 — Nomenclature import
+- [ ] 4.5.2 — Nomenclature export
+
+## Stage 5 — Product Models
+
+### 5.1 — Architecture and domain boundary
+
+#### 5.1.1 — Product model domain contract
+
+Goal:
+Define the persistent product-model contour and its boundaries against nomenclature, specifications, routings, and production.
+
+Dependencies:
+- 4.1.1
+- 4.4.1
+
+Microtasks:
+- [ ] 5.1.1.1 — Document model boundaries and lifecycle states
+- [ ] 5.1.1.2 — Define links to nomenclature and future size grids
+- [ ] 5.1.1.3 — Define versioning and status rules
+- [ ] 5.1.1.4 — Review order-item integration constraints
+- [ ] 5.1.1.5 — Documentation checkpoint
+
+Completion criteria:
+- model contour has a single agreed source of truth;
+- dependencies on size grids, patterns, specifications, and routings are explicit;
+- future order-item integration is not ambiguous.
+
+#### 5.1.2 — Database core for product models
+
+Goal:
+Create the persistent database foundation for product models and their versions.
+
+Dependencies:
+- 5.1.1
+
+Microtasks:
+- [ ] 5.1.2.1 — Add SQLAlchemy model entities
+- [ ] 5.1.2.2 — Add Alembic migration with upgrade and downgrade
+- [ ] 5.1.2.3 — Add Pydantic read/write schemas
+- [ ] 5.1.2.4 — Add backend regression tests for persistence
+
+Completion criteria:
+- product-model data is stored in PostgreSQL;
+- migration is reversible;
+- tests cover create/read/update persistence rules.
+
+### 5.2 — Backend product models
+
+#### 5.2.1 — Create and list API for product models
+
+Goal:
+Users can create and browse product models through backend API.
+
+Dependencies:
+- 5.1.2
+
+Microtasks:
+- [ ] 5.2.1.1 — Add repository list and create operations
+- [ ] 5.2.1.2 — Add service validation for uniqueness and status defaults
+- [ ] 5.2.1.3 — Add POST and GET endpoints
+- [ ] 5.2.1.4 — Add OpenAPI and regression tests
+
+Completion criteria:
+- API creates and lists models;
+- duplicates are validated;
+- regression tests pass.
+
+#### 5.2.2 — Update API for product models
+
+Goal:
+Users can change model data and keep it consistent after reload.
+
+Dependencies:
+- 5.2.1
+
+Microtasks:
+- [ ] 5.2.2.1 — Add update schema
+- [ ] 5.2.2.2 — Add repository update operation
+- [ ] 5.2.2.3 — Add service validation for editable fields
+- [ ] 5.2.2.4 — Add PATCH endpoint
+- [ ] 5.2.2.5 — Add regression tests
+
+Completion criteria:
+- model data is updated in PostgreSQL;
+- validation errors are explicit;
+- repeat open shows saved changes.
+
+#### 5.2.3 — Statuses and versioning for product models
+
+Goal:
+Models support controlled lifecycle states and version history.
+
+Dependencies:
+- 5.2.2
+
+Microtasks:
+- [ ] 5.2.3.1 — Add status fields and version entity rules
+- [ ] 5.2.3.2 — Add migration changes if required
+- [ ] 5.2.3.3 — Add service rules for activation and archival
+- [ ] 5.2.3.4 — Add API endpoints for status/version actions
+- [ ] 5.2.3.5 — Add backend regression tests
+
+Completion criteria:
+- model statuses are persistent and validated;
+- versions are traceable;
+- state changes are covered by tests.
+
+### 5.3 — Frontend product models
+
+#### 5.3.1 — Product-model workspace and list
+
+Goal:
+Users can open a dedicated product-model workspace and browse the catalog.
+
+Dependencies:
+- 5.2.1
+
+Microtasks:
+- [ ] 5.3.1.1 — Add frontend types and API client
+- [ ] 5.3.1.2 — Add list route in the settings workspace route group
+- [ ] 5.3.1.3 — Add workspace UI with loading and error states
+- [ ] 5.3.1.4 — Add frontend regression tests
+- [ ] 5.3.1.5 — Visual verification
+
+Completion criteria:
+- workspace opens through a real route;
+- list data comes from API;
+- loading and error states are explicit.
+
+#### 5.3.2 — Product-model card route
+
+Goal:
+Users can open a dedicated product-model card.
+
+Dependencies:
+- 5.3.1
+
+Microtasks:
+- [ ] 5.3.2.1 — Add detail route and page shell
+- [ ] 5.3.2.2 — Add card view state
+- [ ] 5.3.2.3 — Add not-found, loading, and error states
+- [ ] 5.3.2.4 — Add frontend regression tests
+- [ ] 5.3.2.5 — Visual verification
+
+Completion criteria:
+- card URL uses the real route structure;
+- page handles loading, missing, and error states correctly.
+
+#### 5.3.3 — Product-model create and edit flows
+
+Goal:
+Users can create and edit models from the workspace and card.
+
+Dependencies:
+- 5.2.2
+- 5.3.2
+
+Microtasks:
+- [ ] 5.3.3.1 — Add create form
+- [ ] 5.3.3.2 — Add edit form
+- [ ] 5.3.3.3 — Add submit actions and validation mapping
+- [ ] 5.3.3.4 — Add frontend regression tests
+- [ ] 5.3.3.5 — Visual verification
+
+Completion criteria:
+- create and edit flows save through API;
+- validation errors are visible;
+- reopened card shows saved data.
+
+### 5.4 — Links to nomenclature and order items
+
+#### 5.4.1 — Link product models to nomenclature
+
+Goal:
+The model card can reference the nomenclature it describes without duplicating the catalog source of truth.
+
+Dependencies:
+- 4.1.1
+- 5.2.2
+
+Microtasks:
+- [ ] 5.4.1.1 — Add backend relation fields
+- [ ] 5.4.1.2 — Add migration and schemas
+- [ ] 5.4.1.3 — Add service validation for active nomenclature selection
+- [ ] 5.4.1.4 — Add API support and regression tests
+
+Completion criteria:
+- model-to-nomenclature relation is persistent;
+- invalid links are rejected;
+- existing nomenclature source of truth remains single.
+
+#### 5.4.2 — Use product model in sales-order items
+
+Goal:
+Order items can reference a product model in a controlled way without breaking existing snapshots.
+
+Dependencies:
+- 5.4.1
+- 3.2.4
+
+Microtasks:
+- [ ] 5.4.2.1 — Define backend order-item relation strategy
+- [ ] 5.4.2.2 — Add nullable storage and migration if approved
+- [ ] 5.4.2.3 — Add schemas, service rules, and API support
+- [ ] 5.4.2.4 — Add frontend selection flow in order item forms
+- [ ] 5.4.2.5 — Add regression tests
+- [ ] 5.4.2.6 — Visual verification
+- [ ] 5.4.2.7 — Documentation checkpoint
+
+Completion criteria:
+- order items can select a model without breaking backward compatibility;
+- snapshot behavior stays explicit;
+- backend and frontend checks pass.
+
+## Stage 6 — Size Grids
+
+### 6.1 — Domain and persistence
+
+#### 6.1.1 — Size-grid architecture
+
+Goal:
+Define the dedicated size-grid contour used by models and future order scenarios.
+
+Dependencies:
+- 5.1.1
+
+Microtasks:
+- [ ] 6.1.1.1 — Define size-grid domain and naming rules
+- [ ] 6.1.1.2 — Define links to product models and order items
+- [ ] 6.1.1.3 — Documentation checkpoint
+
+Completion criteria:
+- size-grid scope is isolated from ad-hoc order-item size snapshots;
+- terminology is stable for backend and frontend.
+
+#### 6.1.2 — Size-grid database core
+
+Goal:
+Create the persistent storage for size grids, sizes, and growth groups.
+
+Dependencies:
+- 6.1.1
+
+Microtasks:
+- [ ] 6.1.2.1 — Add SQLAlchemy entities
+- [ ] 6.1.2.2 — Add Alembic migration
+- [ ] 6.1.2.3 — Add schemas and backend tests
+
+Completion criteria:
+- grids and their items are stored persistently;
+- migration is reversible;
+- tests cover persistence rules.
+
+### 6.2 — Backend and frontend flows
+
+#### 6.2.1 — Size-grid CRUD API
+
+Goal:
+Users can create, view, and update size grids through API.
+
+Dependencies:
+- 6.1.2
+
+Microtasks:
+- [ ] 6.2.1.1 — Add repository and service CRUD
+- [ ] 6.2.1.2 — Add endpoints
+- [ ] 6.2.1.3 — Add backend regression tests
+
+Completion criteria:
+- API supports CRUD for grids;
+- validation is explicit and tested.
+
+#### 6.2.2 — Size-grid workspace and card
+
+Goal:
+Users can manage size grids in the frontend workspace.
+
+Dependencies:
+- 6.2.1
+
+Microtasks:
+- [ ] 6.2.2.1 — Add frontend types and API client
+- [ ] 6.2.2.2 — Add workspace/list route
+- [ ] 6.2.2.3 — Add detail card and forms
+- [ ] 6.2.2.4 — Add loading/error states
+- [ ] 6.2.2.5 — Add frontend regression tests
+- [ ] 6.2.2.6 — Visual verification
+
+Completion criteria:
+- workspace uses real API data;
+- card and forms are usable;
+- loading and error states are covered.
+
+#### 6.2.3 — Link size grids to product models
+
+Goal:
+A product model can reference a dedicated size grid.
+
+Dependencies:
+- 5.2.2
+- 6.2.1
+
+Microtasks:
+- [ ] 6.2.3.1 — Add backend relation fields
+- [ ] 6.2.3.2 — Add migration and schema updates
+- [ ] 6.2.3.3 — Add service and API validation
+- [ ] 6.2.3.4 — Add frontend selection flow in model forms
+- [ ] 6.2.3.5 — Add regression tests
+
+Completion criteria:
+- product models store a valid size-grid relation;
+- invalid relations are rejected;
+- frontend and backend behavior is covered by tests.
+
+## Stage 7 — Patterns
+
+### 7.1 — Pattern catalog foundation
+
+#### 7.1.1 — Pattern domain architecture
+
+Goal:
+Define pattern sets, pattern parts, and versioning boundaries for product models.
+
+Dependencies:
+- 5.1.1
+- 6.2.3
+
+Microtasks:
+- [ ] 7.1.1.1 — Define pattern entities and lifecycle
+- [ ] 7.1.1.2 — Define file and version boundaries
+- [ ] 7.1.1.3 — Documentation checkpoint
+
+Completion criteria:
+- pattern contour is clearly separated from models and specifications;
+- file/version rules are explicit.
+
+#### 7.1.2 — Pattern database and files core
+
+Goal:
+Create the persistent pattern storage and metadata model.
+
+Dependencies:
+- 7.1.1
+
+Microtasks:
+- [ ] 7.1.2.1 — Add SQLAlchemy entities for pattern sets, parts, and versions
+- [ ] 7.1.2.2 — Add Alembic migration
+- [ ] 7.1.2.3 — Add file metadata strategy
+- [ ] 7.1.2.4 — Add backend regression tests
+
+Completion criteria:
+- pattern metadata is persistent;
+- migration is reversible;
+- file metadata does not create a parallel uncontrolled store.
+
+### 7.2 — Pattern management flows
+
+#### 7.2.1 — Pattern API and workspace
+
+Goal:
+Users can browse and maintain the pattern catalog.
+
+Dependencies:
+- 7.1.2
+
+Microtasks:
+- [ ] 7.2.1.1 — Add repository, service, and CRUD API
+- [ ] 7.2.1.2 — Add frontend types and API client
+- [ ] 7.2.1.3 — Add workspace/list route
+- [ ] 7.2.1.4 — Add regression tests
+- [ ] 7.2.1.5 — Visual verification
+
+Completion criteria:
+- catalog works on persistent data;
+- tests cover CRUD and route behavior.
+
+#### 7.2.2 — Pattern card, files, and versions
+
+Goal:
+Users can open a pattern card, inspect files, and manage versions.
+
+Dependencies:
+- 7.2.1
+
+Microtasks:
+- [ ] 7.2.2.1 — Add detail card route
+- [ ] 7.2.2.2 — Add version list and file metadata view
+- [ ] 7.2.2.3 — Add create/edit flows for pattern versions
+- [ ] 7.2.2.4 — Add loading/error states
+- [ ] 7.2.2.5 — Add frontend regression tests
+- [ ] 7.2.2.6 — Visual verification
+
+Completion criteria:
+- pattern versions are visible and editable;
+- route states are explicit;
+- file metadata lifecycle is covered by tests.
+
+#### 7.2.3 — Link patterns to product models
+
+Goal:
+A product model can reference the correct pattern set and version family.
+
+Dependencies:
+- 5.2.3
+- 7.2.2
+
+Microtasks:
+- [ ] 7.2.3.1 — Add backend relation fields
+- [ ] 7.2.3.2 — Add migration and schemas
+- [ ] 7.2.3.3 — Add service validation
+- [ ] 7.2.3.4 — Add model-card integration
+- [ ] 7.2.3.5 — Add regression tests
+
+Completion criteria:
+- model-to-pattern relation is persistent and validated;
+- model UI exposes the relation clearly.
+
+## Stage 8 — Specifications
+
+### 8.1 — Domain and persistence
+
+#### 8.1.1 — Specification architecture
+
+Goal:
+Define specification scope, versioning, and planning role before production start.
+
+Dependencies:
+- 5.1.1
+- 7.2.3
+- ADR-004
+
+Microtasks:
+- [ ] 8.1.1.1 — Define specification entities and version lifecycle
+- [ ] 8.1.1.2 — Define material, accessory, norm, and substitute scope
+- [ ] 8.1.1.3 — Documentation checkpoint
+
+Completion criteria:
+- specification is explicitly a planned composition;
+- boundaries against production fact are fixed.
+
+#### 8.1.2 — Specification database core
+
+Goal:
+Create the persistent storage for specifications and their versions.
+
+Dependencies:
+- 8.1.1
+
+Microtasks:
+- [ ] 8.1.2.1 — Add SQLAlchemy entities
+- [ ] 8.1.2.2 — Add Alembic migration
+- [ ] 8.1.2.3 — Add schemas and backend regression tests
+
+Completion criteria:
+- specification data is stored persistently;
+- migration is reversible;
+- tests cover persistence and version structure.
+
+### 8.2 — Specification workflows
+
+#### 8.2.1 — Specification CRUD API
+
+Goal:
+Users can create, view, and update specifications through API.
+
+Dependencies:
+- 8.1.2
+
+Microtasks:
+- [ ] 8.2.1.1 — Add repository and service CRUD
+- [ ] 8.2.1.2 — Add endpoints
+- [ ] 8.2.1.3 — Add backend regression tests
+
+Completion criteria:
+- API supports CRUD for specifications;
+- validation and error cases are tested.
+
+#### 8.2.2 — Specification workspace and card
+
+Goal:
+Users can manage specifications in a dedicated frontend flow.
+
+Dependencies:
+- 8.2.1
+
+Microtasks:
+- [ ] 8.2.2.1 — Add frontend types and API client
+- [ ] 8.2.2.2 — Add workspace/list route
+- [ ] 8.2.2.3 — Add detail card and edit forms
+- [ ] 8.2.2.4 — Add loading/error states
+- [ ] 8.2.2.5 — Add frontend regression tests
+- [ ] 8.2.2.6 — Visual verification
+
+Completion criteria:
+- specification workspace uses real API data;
+- card and forms are stable;
+- route states are explicit.
+
+#### 8.2.3 — Link specifications to product models
+
+Goal:
+A product model can reference the approved specification line.
+
+Dependencies:
+- 5.2.3
+- 8.2.1
+
+Microtasks:
+- [ ] 8.2.3.1 — Add backend relation fields
+- [ ] 8.2.3.2 — Add migration and schemas
+- [ ] 8.2.3.3 — Add service validation for active/approved versions
+- [ ] 8.2.3.4 — Add model-card integration
+- [ ] 8.2.3.5 — Add regression tests
+
+Completion criteria:
+- model-to-specification relation is persistent and validated;
+- only allowed versions can be linked.
+
+## Stage 9 — Routings
+
+### 9.1 — Domain and persistence
+
+#### 9.1.1 — Routing architecture
+
+Goal:
+Define routing scope, operations, work centers, and quality checkpoints for planned manufacturing.
+
+Dependencies:
+- 5.1.1
+- 8.2.3
+- ADR-004
+
+Microtasks:
+- [ ] 9.1.1.1 — Define routing entities and sequencing rules
+- [ ] 9.1.1.2 — Define links to models, specifications, and future production fact
+- [ ] 9.1.1.3 — Documentation checkpoint
+
+Completion criteria:
+- routing contour is distinct from production fact;
+- operation order and quality checkpoints are explicit.
+
+#### 9.1.2 — Routing database core
+
+Goal:
+Create the persistent storage for routings, operations, and work centers.
+
+Dependencies:
+- 9.1.1
+
+Microtasks:
+- [ ] 9.1.2.1 — Add SQLAlchemy entities
+- [ ] 9.1.2.2 — Add Alembic migration
+- [ ] 9.1.2.3 — Add schemas and backend regression tests
+
+Completion criteria:
+- routing data is stored persistently;
+- migration is reversible;
+- tests cover basic persistence rules.
+
+### 9.2 — Routing workflows
+
+#### 9.2.1 — Routing CRUD API
+
+Goal:
+Users can create, view, and update routings through API.
+
+Dependencies:
+- 9.1.2
+
+Microtasks:
+- [ ] 9.2.1.1 — Add repository and service CRUD
+- [ ] 9.2.1.2 — Add endpoints
+- [ ] 9.2.1.3 — Add backend regression tests
+
+Completion criteria:
+- API supports CRUD for routings;
+- validation and sequencing constraints are covered.
+
+#### 9.2.2 — Routing workspace and card
+
+Goal:
+Users can manage routings in a dedicated frontend flow.
+
+Dependencies:
+- 9.2.1
+
+Microtasks:
+- [ ] 9.2.2.1 — Add frontend types and API client
+- [ ] 9.2.2.2 — Add workspace/list route
+- [ ] 9.2.2.3 — Add detail card and edit forms
+- [ ] 9.2.2.4 — Add loading/error states
+- [ ] 9.2.2.5 — Add frontend regression tests
+- [ ] 9.2.2.6 — Visual verification
+
+Completion criteria:
+- routing workspace uses real API data;
+- card is editable and stable;
+- route states are explicit.
+
+#### 9.2.3 — Link routings to product models and order context
+
+Goal:
+A product model can reference its routing, and the future order flow can reuse that approved plan.
+
+Dependencies:
+- 5.4.2
+- 9.2.1
+
+Microtasks:
+- [ ] 9.2.3.1 — Add backend relation fields
+- [ ] 9.2.3.2 — Add migration and schemas
+- [ ] 9.2.3.3 — Add service validation for approved routing selection
+- [ ] 9.2.3.4 — Add model-card integration
+- [ ] 9.2.3.5 — Add order-context integration notes
+- [ ] 9.2.3.6 — Add regression tests
+
+Completion criteria:
+- model-to-routing relation is persistent and validated;
+- order-context reuse path is documented and technically prepared.
+
+## Stage 10 — Design and Approval
+
+### 10.1 — Design assets and comments
+
+- [ ] 10.1.1 — Design project entity and versions
+- [ ] 10.1.2 — Layouts, logos, and comments
+
+### 10.2 — Approval workflow
+
+- [ ] 10.2.1 — Client review and correction requests
+- [ ] 10.2.2 — Final approval checkpoint before production launch
+
+## Stage 11 — Production
+
+### 11.1 — Production planning
+
+- [ ] 11.1.1 — Production orders and batches
+- [ ] 11.1.2 — Planning and work-center assignment
+
+### 11.2 — Production fact
+
+- [ ] 11.2.1 — Operations, performers, output, and scrap
+- [ ] 11.2.2 — Quality control and released finished goods
+
+## Stage 12 — Warehouse
+
+### 12.1 — Storage structure
+
+- [ ] 12.1.1 — Warehouses and bins
+- [ ] 12.1.2 — Lots and balances
+
+### 12.2 — Movements
+
+- [ ] 12.2.1 — Receipts, issues, reserves, and transfers
+- [ ] 12.2.2 — Inventory and finished-goods flow
+
+## Stage 13 — Procurement
+
+### 13.1 — Supplier contour
+
+- [ ] 13.1.1 — Suppliers and supplier prices
+- [ ] 13.1.2 — Procurement requests and purchase orders
+
+### 13.2 — Supply execution
+
+- [ ] 13.2.1 — Receipts and returns
+- [ ] 13.2.2 — Demand planning and minimum stock linkage
+
+## Stage 14 — Shipping and Payments
+
+### 14.1 — Shipping
+
+- [ ] 14.1.1 — Shipping orders, packaging, delivery, and documents
+
+### 14.2 — Payments
+
+- [ ] 14.2.1 — Invoices, payments, advances, and debt
+- [ ] 14.2.2 — Settlements by order and client
+
+## Stage 15 — Costing and Analytics
+
+### 15.1 — Costing
+
+- [ ] 15.1.1 — Planned, normative, and actual costing
+- [ ] 15.1.2 — Margin and plan-fact analysis
+
+### 15.2 — Analytics
+
+- [x] 15.2.1 — CRM dashboard and base order analytics
+- [ ] 15.2.2 — ERP analytics and management P&L
+
+## Stage 16 — Integrations
+
+### 16.1 — External channels
+
+- [ ] 16.1.1 — Website forms, email, VK, Telegram, and telephony
+- [ ] 16.1.2 — Google Sheets and webhooks
+
+### 16.2 — Enterprise exchange
+
+- [ ] 16.2.1 — 1C:UNF exchange
+- [ ] 16.2.2 — Delivery and payment-system integrations
+- [ ] 16.2.3 — External API for third-party systems
+
+## Stage 17 — Industrial Operations and Access Control
+
+### 17.1 — Access control
+
+- [ ] 17.1.1 — Authentication
+- [ ] 17.1.2 — System users, roles, and permissions
+- [ ] 17.1.3 — Universal audit trail
+
+### 17.2 — Production operations
+
+- [ ] 17.2.1 — VPS, production Docker, reverse proxy, and HTTPS
+- [ ] 17.2.2 — CI/CD, monitoring, and logging
+- [ ] 17.2.3 — Backup, restore, and administrator documentation
