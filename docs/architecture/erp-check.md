@@ -48,11 +48,11 @@
 - `[x]` `v0.8.8e-restore-card-design-and-media-library`: reference-композиция восстановлена без изменения backend/API/БД: основной tab использует desktop 65/35, реквизиты, характеристики, media и история занимают полную полезную ширину, mobile/tablet переходят в одну колонку. Визуальный слой зафиксирован в `frontend/app/globals.css`. Media library использует headless `@uppy/core`, `@uppy/react`, `@uppy/thumbnail-generator`, поддерживает очередь нескольких изображений, thumbnail preview, MIME/size ограничения, удаление из очереди, существующий upload transport, primary, sort, alt и delete. Отдельные block edit/save/cancel flows, tabs и unsaved guard сохранены. Подтверждение: frontend card/gallery, package manifest/lock, regression tests, TypeScript, ESLint, build, backend pytest и project check;
 - `[x]` `v0.8.8g-card-header-and-main-block`: header и main tab приведены к reference composition только на frontend: справа в header переиспользованы существующие menu/BlockActions, на «Основном» сохранены основной блок слева и карточка/timeline справа, на mobile верхние actions скрываются без изменения нижней панели. Остальные вкладки, API, Server Actions и backend не менялись. Подтверждение: `frontend/components/settings/nomenclature-card.tsx`, `frontend/app/globals.css`, TypeScript, ESLint, frontend tests и production build;
 - `[x]` `v0.8.8h-nomenclature-free-custom-fields`: свободные реквизиты используют существующий `CustomFieldDefinition`/`CustomFieldOption`/`NomenclatureFieldValue` без параллельного хранилища; прямое назначение, поиск, typed-значения и безопасное снятие назначения подтверждены backend API и frontend карточкой. Изменений HTML/CSS-композиции нет.
-- `[ ]` единая номенклатура готовых изделий, услуг, полуфабрикатов и комплектов;
+- `[~]` отдельный `Material` catalog/API существует как legacy; frontend catalog demo-only и **не** является номенклатурой заказа. Архитектурное решение: единый каталог номенклатуры с типом `MATERIAL` — `ADR-012` / roadmap `4.6`; консолидация ещё не выполнена;
+- `[ ]` единая номенклатура готовых изделий, услуг, полуфабрикатов и комплектов (частично: типы `PRODUCT`/`GOODS`/`SERVICE`/`MATERIAL` есть; консолидация Material и расширение типов — `4.6`);
 - `[ ]` модели и артикулы;
 - `[ ]` размеры и изображения;
 - `[ ]` лекала и версии;
-- `[~]` отдельный `Material` catalog/API существует, но frontend catalog остаётся demo-only и не является номенклатурой.
 
 ## Технологическая подготовка
 

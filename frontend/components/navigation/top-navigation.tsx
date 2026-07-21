@@ -503,8 +503,8 @@ return ( <header className="relative z-40 border-b border-slate-200 bg-white">
             ].join(" ")}
             aria-label={
               mobileMenuOpen
-                ? "Закрыть навигацию раздела"
-                : "Открыть навигацию раздела"
+                ? "Закрыть меню"
+                : "Открыть меню"
             }
             aria-expanded={mobileMenuOpen}
           >
@@ -529,8 +529,47 @@ return ( <header className="relative z-40 border-b border-slate-200 bg-white">
 
               <nav
                 className="max-h-[min(70vh,520px)] overflow-y-auto p-2"
-                aria-label={`Мобильная навигация раздела ${section.title}`}
+                aria-label="Мобильная навигация платформы"
               >
+                <div className="mb-2 border-b border-slate-100 pb-2">
+                  <div className="px-3 py-1.5 text-[11px] font-medium uppercase tracking-[0.08em] text-slate-400">
+                    Разделы
+                  </div>
+
+                  {appSections.map((appSection) => {
+                    const sectionActive =
+                      appSection.id === section.id;
+
+                    return (
+                      <Link
+                        key={appSection.id}
+                        href={appSection.href}
+                        onClick={() => {
+                          setMobileMenuOpen(false);
+                          setOpenMenuId(null);
+                        }}
+                        className={[
+                          "mb-0.5 block rounded-lg px-3 py-2.5 text-sm font-medium outline-none transition-colors last:mb-0 focus-visible:ring-2 focus-visible:ring-blue-500",
+                          sectionActive
+                            ? "bg-blue-50 text-blue-700"
+                            : "text-slate-700 hover:bg-slate-50 hover:text-slate-950",
+                        ].join(" ")}
+                        aria-current={
+                          sectionActive
+                            ? "page"
+                            : undefined
+                        }
+                      >
+                        {appSection.title}
+                      </Link>
+                    );
+                  })}
+                </div>
+
+                <div className="px-3 py-1.5 text-[11px] font-medium uppercase tracking-[0.08em] text-slate-400">
+                  {section.title}
+                </div>
+
                 {section.topNavigation.map((item) => {
                   const active =
                     getNavigationItemActive(

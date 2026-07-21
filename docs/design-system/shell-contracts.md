@@ -12,6 +12,7 @@
 Approved look and behaviour:
 
 - expanded width `260px`; compact width `72px`;
+- on viewports below `md` (≤767 px) the sidebar is not shown; platform and section navigation use the topbar compact menu;
 - light background and SPORT-LEAD visual system;
 - logo `SL` and title `SPORT-LEAD`;
 - section/subsection grouping;
@@ -72,6 +73,7 @@ Approved composition and behaviour:
 - active top-level section title;
 - in-section navigation from `frontend/lib/navigation.ts`;
 - desktop nav from `lg`; tablet/mobile use compact section menu;
+- on mobile (≤767 px) the compact menu also lists top-level `appSections` (sidebar is hidden);
 - global Search and Create actions;
 - dropdown closes on toggle, item select, outside click, route change, `Escape`;
 - popups stay in viewport; no horizontal page scroll from topbar;

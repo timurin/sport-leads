@@ -156,6 +156,16 @@ Next detailed contour:
 - [ ] 4.5.1 — Nomenclature import
 - [ ] 4.5.2 — Nomenclature export
 
+### 4.6 — Unified catalog (materials consolidation)
+
+Decision (`ADR-012`): one nomenclature master catalog with types; standalone `materials` directory is legacy and must not remain a second source of truth. Stock balances stay outside the nomenclature card.
+
+- [ ] 4.6.1 — Approve migration plan from `materials` rows to `nomenclatures` with type `MATERIAL`
+- [ ] 4.6.2 — Migrate data, preserve articles, and stop dual write paths
+- [ ] 4.6.3 — Point Materials navigation/UI at nomenclature filtered by `MATERIAL` (or remove the duplicate menu)
+- [ ] 4.6.4 — Deprecate `/materials` API and `materials` table after cutover
+- [ ] 4.6.5 — Keep balances/min stock for warehouse register work; do not copy them onto `Nomenclature`
+
 ## Stage 5 — Design System and Platform Templates
 
 Goal:
@@ -191,12 +201,12 @@ Microtasks:
 
 #### 5.1.4 — Responsive audit
 
-- [ ] 5.1.4.1 — Define responsive verification matrix
-- [ ] 5.1.4.2 — Audit desktop layouts
-- [ ] 5.1.4.3 — Audit laptop layouts
-- [ ] 5.1.4.4 — Audit tablet layouts
-- [ ] 5.1.4.5 — Audit mobile layouts
-- [ ] 5.1.4.6 — Register visual bug microtasks
+- [x] 5.1.4.1 — Define responsive verification matrix — `v0.9.0`; evidence: `docs/design-system/responsive-audit.md`
+- [x] 5.1.4.2 — Audit desktop layouts — `v0.9.0`; owner visual pass OK (1920/1600/1440/1280, expanded+compact); evidence: `docs/design-system/responsive-audit.md`
+- [x] 5.1.4.3 — Audit laptop layouts — `v0.9.0`; owner visual pass OK (1280/1024); evidence: `docs/design-system/responsive-audit.md`
+- [x] 5.1.4.4 — Audit tablet layouts — `v0.9.0`; owner visual pass OK (1024/768); evidence: `docs/design-system/responsive-audit.md`
+- [x] 5.1.4.5 — Audit mobile layouts — `v0.9.0`; owner visual pass OK (390); left sidebar hidden below `md`, topbar menu carries sections; evidence: `docs/design-system/responsive-audit.md`
+- [x] 5.1.4.6 — Register visual bug microtasks — `v0.9.0`; no confirmed `B1+` from responsive visual pass; pre-seed candidates dismissed or deferred (see `responsive-audit.md`)
 
 ### 5.2 — Design tokens
 

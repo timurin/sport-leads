@@ -630,6 +630,38 @@
                 done: false
               }
             ]
+          },
+          {
+            title: "4.6 — Unified catalog (materials consolidation)",
+            items: [
+              {
+                code: "4.6.1",
+                title: "Approve migration plan from materials rows to nomenclatures with type MATERIAL",
+                done: false,
+                goal: "ADR-012: single nomenclature master; materials is a type/filter, not a second catalog.",
+                dependencies: ["ADR-012", "4.2.1"]
+              },
+              {
+                code: "4.6.2",
+                title: "Migrate data, preserve articles, and stop dual write paths",
+                done: false
+              },
+              {
+                code: "4.6.3",
+                title: "Point Materials navigation/UI at nomenclature filtered by MATERIAL",
+                done: false
+              },
+              {
+                code: "4.6.4",
+                title: "Deprecate /materials API and materials table after cutover",
+                done: false
+              },
+              {
+                code: "4.6.5",
+                title: "Keep balances/min stock for warehouse register; do not copy onto Nomenclature",
+                done: false
+              }
+            ]
           }
         ]
       },
@@ -730,32 +762,32 @@
                   {
                     code: "5.1.4.1",
                     title: "Define responsive verification matrix",
-                    done: false
+                    done: true
                   },
                   {
                     code: "5.1.4.2",
                     title: "Audit desktop layouts",
-                    done: false
+                    done: true
                   },
                   {
                     code: "5.1.4.3",
                     title: "Audit laptop layouts",
-                    done: false
+                    done: true
                   },
                   {
                     code: "5.1.4.4",
                     title: "Audit tablet layouts",
-                    done: false
+                    done: true
                   },
                   {
                     code: "5.1.4.5",
                     title: "Audit mobile layouts",
-                    done: false
+                    done: true
                   },
                   {
                     code: "5.1.4.6",
                     title: "Register visual bug microtasks",
-                    done: false
+                    done: true
                   }
                 ]
               }

@@ -315,33 +315,33 @@ export const appSections: AppSection[] = [
         ],
       },
       {
-        id: "products",
-        title: "Продукция",
+        id: "nomenclature",
+        title: "Номенклатура",
         children: [
           {
-            id: "products-list",
-            title: "Продукция",
-            href: "/settings/products",
-          },
-          {
-            id: "product-types",
-            title: "Виды продукции",
-            href: "/settings/products/types",
-          },
-          {
-            id: "custom-fields",
-            title: "Дополнительные реквизиты",
-            href: "/settings/catalogs/custom-fields",
-          },
-          {
-            id: "product-characteristics",
-            title: "Характеристики продукции",
-            href: "/settings/catalogs/product-characteristics",
+            id: "nomenclature-list",
+            title: "Номенклатура",
+            href: "/settings/catalogs/nomenclature",
           },
           {
             id: "units",
             title: "Единицы измерения",
             href: "/settings/catalogs/units-of-measure",
+          },
+          {
+            id: "nomenclature-categories",
+            title: "Категории номенклатуры",
+            href: "/settings/catalogs/nomenclature-categories",
+          },
+          {
+            id: "nomenclature-characteristics",
+            title: "Характеристики номенклатуры",
+            href: "/settings/catalogs/product-characteristics",
+          },
+          {
+            id: "nomenclature-types",
+            title: "Тип номенклатуры",
+            href: "/settings/catalogs/nomenclature-types",
           },
         ],
       },

@@ -261,7 +261,7 @@ function updateMode(nextMode: SidebarMode) {
         onClick={() => updateMode("expanded")}
         className="
           fixed left-3 top-3 z-50
-          flex size-10 items-center justify-center
+          hidden size-10 items-center justify-center md:flex
           rounded-[9px] border border-[#dfe5ef]
           bg-white text-[#475467]
           shadow-md transition-colors
@@ -282,7 +282,8 @@ function updateMode(nextMode: SidebarMode) {
       data-platform-sidebar
       data-sidebar-mode={mode}
       className={[
-        "flex h-full shrink-0 flex-col",
+        // Mobile (≤767): sidebar hidden — navigation via topbar menu (DS-SHELL-02).
+        "hidden h-full shrink-0 flex-col md:flex",
         "border-r border-[#dfe5ef] bg-white text-[#263244]",
         "transition-[width] duration-200 ease-out",
         expanded ? "w-[260px]" : "w-[72px]",

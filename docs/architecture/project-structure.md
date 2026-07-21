@@ -80,10 +80,10 @@
 
 ## 7. Materials
 
-- [x] Persistent material model and CRUD API
-- [ ] Persistent materials workspace on backend data
-- [ ] Relation between materials and the common nomenclature contour
-- [ ] Suppliers, procurement prices, batches, stock balances, and consumption norms
+- [x] Persistent material model and CRUD API (legacy; see ADR-012)
+- [ ] Persistent materials workspace on backend data — superseded by nomenclature filter (`4.6.3`) unless interim
+- [ ] Relation between materials and the common nomenclature contour — `ADR-012` / roadmap `4.6` (migrate into `Nomenclature` type `MATERIAL`)
+- [ ] Suppliers, procurement prices, batches, stock balances, and consumption norms (stock balances must not live on the nomenclature card)
 
 ## 8. Product Models, Patterns, Sizes, Specifications, and Routings
 

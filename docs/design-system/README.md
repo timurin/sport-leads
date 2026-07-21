@@ -5,6 +5,7 @@
 Связанные канонические документы:
 
 - `docs/design-system/ui-audit.md` — аудит маршрутов, состояний, persistence, reference/migration (`5.1.1.*`)
+- `docs/design-system/responsive-audit.md` — verification matrix + manual viewport gate (`5.1.4.*`)
 - `docs/design-system/layout-scrolling-audit.md` — AppShell, widths, scroll/sticky rules (`5.1.3.*`)
 - `docs/design-system/component-inventory.md` — инвентарь shared/domain UI (`5.1.2.*`)
 - `docs/design-system/shell-contracts.md` — защищённые контракты `DS-SHELL-01` / `DS-SHELL-02`

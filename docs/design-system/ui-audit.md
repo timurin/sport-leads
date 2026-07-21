@@ -380,8 +380,8 @@ Good precedent to keep: leads/orders loaders that refuse silent demo fallback; n
 
 ## Next audit microtasks
 
-- `5.1.4.1` — Define responsive verification matrix
-- then remaining `5.1.4.*`
+- `5.1.4.2`–`5.1.4.5` — manual viewport audits (blocked; see `docs/design-system/responsive-audit.md`)
+- `5.1.4.6` — Register visual bug microtasks after visual pass
 
 ## Out of scope for this file
 

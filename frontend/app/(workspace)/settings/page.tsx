@@ -74,11 +74,11 @@ const settingsGroups = [
     ],
   },
   {
-      title: "Продукция",
+    title: "Номенклатура",
     description:
-      "Номенклатура и параметры выпускаемой продукции",
+      "Справочник изделий, категорий, типов, характеристик и единиц измерения",
     icon: Package,
-      items: [
+    items: [
       {
         title: "Номенклатура",
         description: "Готовые изделия и их коммерческие карточки",
@@ -86,34 +86,28 @@ const settingsGroups = [
         icon: Package,
       },
       {
-        title: "Характеристики продукции",
-        description: "Цвета, размеры и другие значения для карточек номенклатуры",
-        href: "/settings/catalogs/product-characteristics",
-        icon: Settings2,
-      },
-      {
-        title: "Продукция",
-        description: "Полный каталог выпускаемых изделий",
-        href: "/settings/products",
-        icon: Package,
-      },
-      {
-        title: "Виды продукции",
-        description: "Футбольная форма, волейбол, корпоративная одежда",
-        href: "/settings/products/types",
-        icon: Settings2,
-      },
-      {
-        title: "Дополнительные реквизиты",
-        description: "Типизированные поля и настройки категорий номенклатуры",
-        href: "/settings/catalogs/custom-fields",
-        icon: Settings2,
-      },
-      {
         title: "Единицы измерения",
         description: "Штуки, комплекты, метры и килограммы",
         href: "/settings/catalogs/units-of-measure",
         icon: Ruler,
+      },
+      {
+        title: "Категории номенклатуры",
+        description: "Иерархия групп и классификация каталога",
+        href: "/settings/catalogs/nomenclature-categories",
+        icon: FolderCog,
+      },
+      {
+        title: "Характеристики номенклатуры",
+        description: "Цвета, размеры и другие значения для карточек",
+        href: "/settings/catalogs/product-characteristics",
+        icon: Settings2,
+      },
+      {
+        title: "Тип номенклатуры",
+        description: "Системные типы: продукция, товары, материалы, услуги",
+        href: "/settings/catalogs/nomenclature-types",
+        icon: Settings2,
       },
     ],
   },
