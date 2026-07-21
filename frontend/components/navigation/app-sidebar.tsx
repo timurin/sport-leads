@@ -4,7 +4,6 @@ import {
   BarChart3,
   Boxes,
   ChevronDown,
-  ChevronLeft,
   ChevronRight,
   CircleDollarSign,
   Factory,
@@ -191,21 +190,30 @@ export function AppSidebar() {
     Set<string>
   >(() => new Set([activeSectionId]));
 
-  useEffect(() => {
-    const storedMode = window.localStorage.getItem(
-      SIDEBAR_STORAGE_KEY,
-    );
+useEffect(() => {
+  const storedMode = window.localStorage.getItem(
+    SIDEBAR_STORAGE_KEY,
+  );
 
-    if (
-      storedMode === "expanded" ||
-      storedMode === "compact" ||
-      storedMode === "hidden"
-    ) {
-      setMode(storedMode);
-    }
-  }, []);
+  if (
+    storedMode !== "expanded" &&
+    storedMode !== "compact" &&
+    storedMode !== "hidden"
+  ) {
+    return;
+  }
 
-  useEffect(() => {
+  const frame = window.requestAnimationFrame(() => {
+    setMode(storedMode);
+  });
+
+  return () => {
+    window.cancelAnimationFrame(frame);
+  };
+}, []);
+
+useEffect(() => {
+  const frame = window.requestAnimationFrame(() => {
     setOpenSections((current) => {
       if (current.has(activeSectionId)) {
         return current;
@@ -216,16 +224,21 @@ export function AppSidebar() {
         activeSectionId,
       ]);
     });
-  }, [activeSectionId]);
+  });
 
-  function updateMode(nextMode: SidebarMode) {
-    setMode(nextMode);
+  return () => {
+    window.cancelAnimationFrame(frame);
+  };
+}, [activeSectionId]);
 
-    window.localStorage.setItem(
-      SIDEBAR_STORAGE_KEY,
-      nextMode,
-    );
-  }
+function updateMode(nextMode: SidebarMode) {
+  setMode(nextMode);
+
+  window.localStorage.setItem(
+    SIDEBAR_STORAGE_KEY,
+    nextMode,
+  );
+}
 
   function toggleSection(sectionId: string) {
     setOpenSections((current) => {
