@@ -7,6 +7,7 @@ import { updateLeadResponsible, updateLeadStatus } from "@/app/(workspace)/sales
 import { PageActions, PageContent } from "@/components/layout/page-layout";
 import { LeadBackButton } from "@/components/sales/lead-back-button";
 import { Button } from "@/components/ui/button";
+import { StatusBadge, type StatusBadgeTone } from "@/components/ui/status-badge";
 import { salesManagers } from "@/lib/demo-data/sales";
 import type { LeadDetails, LeadResponsible } from "@/lib/sales/lead-details";
 import { leadFinalActions, type LeadFinalActionId } from "@/lib/sales/lead-final-actions";
@@ -19,15 +20,15 @@ import {
 
 type OpenMenu = "status" | "responsible" | "more" | null;
 
-const statusClasses: Record<LeadStageAccent, string> = {
-  "bg-blue-500": "bg-blue-50 text-blue-700 ring-blue-200",
-  "bg-cyan-500": "bg-cyan-50 text-cyan-700 ring-cyan-200",
-  "bg-violet-500": "bg-violet-50 text-violet-700 ring-violet-200",
-  "bg-amber-500": "bg-amber-50 text-amber-800 ring-amber-200",
-  "bg-orange-500": "bg-orange-50 text-orange-700 ring-orange-200",
-  "bg-emerald-500": "bg-emerald-50 text-emerald-700 ring-emerald-200",
-  "bg-rose-500": "bg-rose-50 text-rose-700 ring-rose-200",
-  "bg-slate-500": "bg-slate-100 text-slate-700 ring-slate-200",
+const statusTones: Record<LeadStageAccent, StatusBadgeTone> = {
+  "bg-blue-500": "primary",
+  "bg-cyan-500": "primary",
+  "bg-violet-500": "primary",
+  "bg-amber-500": "warning",
+  "bg-orange-500": "warning",
+  "bg-emerald-500": "success",
+  "bg-rose-500": "danger",
+  "bg-slate-500": "neutral",
 };
 
 function initials(name: string) {
@@ -109,13 +110,13 @@ export function LeadHeader({
   const currentStageIndex = activeStages.findIndex((stage) => stage.id === statusId);
   const currentStage = stages.find((stage) => stage.id === statusId);
   const statusLabel = currentStage?.title ?? lead.statusLabel;
-  const badgeClass = currentStage
-    ? statusClasses[currentStage.accentClass]
+  const badgeTone: StatusBadgeTone = currentStage
+    ? statusTones[currentStage.accentClass]
     : statusId === "won"
-      ? "bg-emerald-50 text-emerald-700 ring-emerald-200"
+      ? "success"
       : statusId === "unqualified"
-        ? "bg-red-50 text-red-700 ring-red-200"
-        : "bg-slate-100 text-slate-700 ring-slate-200";
+        ? "danger"
+        : "neutral";
   const displayId = lead.id.startsWith("lead-") ? lead.id.slice(5) : lead.id;
 
   function chooseStatus(stage: LeadStageConfig) {
@@ -179,10 +180,9 @@ export function LeadHeader({
           <div className="min-w-0 flex-1">
             <div className="flex min-w-0 flex-wrap items-center gap-2.5">
               <h1 className="min-w-0 text-xl font-bold tracking-tight text-portal-text sm:text-[25px]">Лид #{displayId}</h1>
-              <span className={`inline-flex max-w-full items-center rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ${badgeClass}`}>
-                <span className="mr-1.5 size-1.5 shrink-0 rounded-full bg-current" aria-hidden="true" />
-                <span className="truncate">{statusLabel}</span>
-              </span>
+              <StatusBadge tone={badgeTone} dot>
+                {statusLabel}
+              </StatusBadge>
             </div>
             <p className="mt-1 break-words text-base font-medium text-portal-text sm:text-[17px]">{lead.customer.organizationName ?? lead.title}</p>
           </div>

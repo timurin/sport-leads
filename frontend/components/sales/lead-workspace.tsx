@@ -14,6 +14,7 @@ import {
 import { LeadCreateDialog } from "@/components/sales/lead-create-dialog";
 import { LeadStageSettingsDialog } from "@/components/sales/lead-stage-settings-dialog";
 import { Button } from "@/components/ui/button";
+import { InlineAlert } from "@/components/ui/inline-alert";
 import { PageToolbar } from "@/components/ui/page-header";
 import {
   convertLead as convertApiLeadAction,
@@ -358,13 +359,13 @@ export function LeadWorkspace({
       />
 
       {loadError ? (
-        <div className="border-b border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-800 lg:px-6" role="alert">
+        <InlineAlert className="border-b border-x-0 border-t-0 rounded-none lg:px-6" tone="danger" size="compact">
           {loadError}
-        </div>
+        </InlineAlert>
       ) : dataOrigin === "api" ? (
-        <div className="border-b border-emerald-200 bg-emerald-50 px-4 py-2 text-xs font-semibold text-emerald-800 lg:px-6">
+        <InlineAlert className="border-b border-x-0 border-t-0 rounded-none lg:px-6" tone="success" size="compact">
           Лиды загружены из backend.
-        </div>
+        </InlineAlert>
       ) : null}
 
       <section
@@ -381,14 +382,14 @@ export function LeadWorkspace({
 
       <div className="p-4 lg:p-6">
         {moveError ? (
-          <div className="mb-4 border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-800" role="alert">
+          <InlineAlert className="mb-4" tone="danger">
             {moveError}
-          </div>
+          </InlineAlert>
         ) : null}
         {completionError ? (
-          <div className="mb-4 border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-800" role="alert">
+          <InlineAlert className="mb-4" tone="danger">
             {completionError}
-          </div>
+          </InlineAlert>
         ) : null}
         <KanbanBoard
           key={`${view}-${revision}`}
@@ -466,7 +467,11 @@ export function LeadWorkspace({
         onConvert={convertLead}
         onReject={rejectLead}
       />
-      {createOpen ? <LeadCreateDialog onClose={() => setCreateOpen(false)} onCreate={createLead} /> : null}
+      <LeadCreateDialog
+        open={createOpen}
+        onClose={() => setCreateOpen(false)}
+        onCreate={createLead}
+      />
       {settingsOpen ? (
         <LeadStageSettingsDialog
           stages={stages}

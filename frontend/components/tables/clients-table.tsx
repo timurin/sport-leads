@@ -4,8 +4,10 @@ import { ArrowDownUp, Search } from "lucide-react";
 import { useMemo, useState } from "react";
 
 import { Button } from "@/components/ui/button";
-import { DemoActionDialog } from "@/components/ui/demo-action-dialog";
+import { DemoCreateDrawer } from "@/components/ui/demo-create-drawer";
+import { EmptyState } from "@/components/ui/empty-state";
 import { PageToolbar } from "@/components/ui/page-header";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { salesCurrency } from "@/lib/demo-data/sales";
 import type { Client } from "@/types/sales";
 
@@ -14,7 +16,11 @@ type SortField = "name" | "salesAmount" | "lastContact";
 type SortDirection = "asc" | "desc";
 
 const statusLabels = { new: "Новый", active: "Активный", paused: "Приостановлен" } as const;
-const statusClasses = { new: "bg-blue-50 text-blue-700", active: "bg-emerald-50 text-emerald-700", paused: "bg-slate-100 text-slate-600" } as const;
+const statusTones = {
+  new: "primary",
+  active: "success",
+  paused: "neutral",
+} as const;
 
 export function ClientsTable({ clients }: ClientsTableProps) {
   const [query, setQuery] = useState("");
@@ -84,14 +90,26 @@ export function ClientsTable({ clients }: ClientsTableProps) {
               <td className="px-4 py-3 font-semibold text-slate-900">{client.name}</td><td className="px-4 py-3 text-slate-600">{client.type}</td><td className="px-4 py-3 text-slate-700">{client.contact}</td>
               <td className="whitespace-nowrap px-4 py-3 text-slate-600">{client.phone}</td><td className="px-4 py-3 text-blue-700">{client.email}</td><td className="px-4 py-3 text-slate-600">{client.city}</td><td className="px-4 py-3 text-slate-600">{client.sport}</td>
               <td className="px-4 py-3 text-right font-medium text-slate-700">{client.ordersCount}</td><td className="whitespace-nowrap px-4 py-3 font-semibold text-slate-900">{salesCurrency(client.salesAmount)}</td><td className="whitespace-nowrap px-4 py-3 text-slate-600">{client.lastContact}</td><td className="whitespace-nowrap px-4 py-3 text-slate-600">{client.responsible.name}</td>
-              <td className="px-4 py-3"><span className={`rounded-full px-2 py-1 text-xs font-medium ${statusClasses[client.status]}`}>{statusLabels[client.status]}</span></td>
+              <td className="px-4 py-3">
+                <StatusBadge tone={statusTones[client.status]} size="compact">
+                  {statusLabels[client.status]}
+                </StatusBadge>
+              </td>
             </tr>
           ))}</tbody>
         </table>
-        {!visibleClients.length ? <div className="border-t border-slate-200 px-6 py-16 text-center"><h2 className="font-semibold text-slate-800">Клиенты не найдены</h2><p className="mt-1 text-sm text-slate-500">Измените поисковый запрос или сбросьте фильтры.</p></div> : null}
+        {!visibleClients.length ? (
+          <div className="border-t border-slate-200 p-6">
+            <EmptyState
+              title="Клиенты не найдены"
+              description="Измените поисковый запрос или сбросьте фильтры."
+              size="compact"
+            />
+          </div>
+        ) : null}
       </div>
       <footer className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-500 lg:px-6"><span>Показано: {visibleClients.length} из {clients.length}</span><span>Продажи по выборке: {salesCurrency(visibleClients.reduce((sum, client) => sum + client.salesAmount, 0))}</span></footer>
-      <DemoActionDialog open={dialogOpen} title="Добавить клиента" onClose={() => setDialogOpen(false)} />
+      <DemoCreateDrawer open={dialogOpen} title="Добавить клиента" onClose={() => setDialogOpen(false)} />
     </div>
   );
 }

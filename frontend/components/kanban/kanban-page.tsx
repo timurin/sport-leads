@@ -15,7 +15,9 @@ import type {
   KanbanMove,
 } from "@/components/kanban/kanban-types";
 import { Button } from "@/components/ui/button";
-import { DemoActionDialog } from "@/components/ui/demo-action-dialog";
+import { DemoCreateDrawer } from "@/components/ui/demo-create-drawer";
+import { EmptyState } from "@/components/ui/empty-state";
+import { InlineAlert } from "@/components/ui/inline-alert";
 import { PageToolbar } from "@/components/ui/page-header";
 
 type KanbanPageProps<TStatus extends string> = {
@@ -165,12 +167,16 @@ export function KanbanPage<TStatus extends string>({
 
       <div className="p-4 lg:p-6">
         {moveError ? (
-          <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-800" role="alert">
+          <InlineAlert className="mb-4" tone="danger">
             {moveError}
-          </div>
+          </InlineAlert>
         ) : null}
         {loadError ? (
-          <div className="rounded-xl border border-red-200 bg-red-50 px-6 py-10 text-center text-sm text-red-700" role="alert">{loadError}</div>
+          <EmptyState
+            title="Не удалось загрузить доску"
+            description={loadError}
+            size="default"
+          />
         ) : (
           <KanbanBoard
             key={boardRevision}
@@ -209,7 +215,7 @@ export function KanbanPage<TStatus extends string>({
           />
         )}
       </div>
-      <DemoActionDialog
+      <DemoCreateDrawer
         open={dialogOpen}
         title={actionLabel}
         onClose={() => setDialogOpen(false)}

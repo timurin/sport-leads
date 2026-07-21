@@ -1,7 +1,9 @@
 "use client";
 
 import { X } from "lucide-react";
-import type { ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
+
+import { IconButton } from "@/components/ui/button";
 
 type CreateDrawerProps = {
   open: boolean;
@@ -28,6 +30,19 @@ export function CreateDrawer({
   children,
   variant = "docked",
 }: CreateDrawerProps) {
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        onClose();
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [open, onClose]);
+
   if (!open) {
     return null;
   }
@@ -35,7 +50,7 @@ export function CreateDrawer({
   const panel = (
     <aside
       className={[
-        "flex h-full min-h-[600px] w-full flex-col border-l border-slate-200 bg-white",
+        "flex h-full min-h-[600px] w-full flex-col border-l border-portal-border bg-portal-surface",
         variant === "overlay"
           ? "fixed inset-y-0 right-0 z-portal-modal-1 w-full max-w-[520px] shadow-portal-overlay"
           : "",
@@ -44,21 +59,16 @@ export function CreateDrawer({
       aria-modal={variant === "overlay" ? true : undefined}
       aria-label={title}
     >
-      <header className="flex items-center justify-between border-b border-slate-200 px-6 py-5">
+      <header className="flex items-center justify-between border-b border-portal-border px-portal-6 py-portal-5">
         <div className="min-w-0">
-          <h2 className="text-xl font-semibold text-slate-950">{title}</h2>
+          <h2 className="text-portal-page font-semibold text-portal-text">{title}</h2>
           {description ? (
-            <p className="mt-1 text-sm text-slate-500">{description}</p>
+            <p className="mt-1 text-portal-body text-portal-muted">{description}</p>
           ) : null}
         </div>
-        <button
-          type="button"
-          onClick={onClose}
-          className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
-          aria-label="Закрыть"
-        >
+        <IconButton label="Закрыть" onClick={onClose}>
           <X size={19} aria-hidden="true" />
-        </button>
+        </IconButton>
       </header>
 
       <div className="min-h-0 flex-1">{children}</div>

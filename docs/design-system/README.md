@@ -28,6 +28,11 @@
 - `docs/design-system/shell-scrolling-ownership.md` — `DS-PAGE-05` scroll (`5.3.2.5`)
 - `docs/design-system/shell-page-state-boundaries.md` — `DS-PAGE-06` loading/error (`5.3.2.6`)
 - `docs/design-system/form-controls-standardization.md` — `DS-FORM-01` forms (`5.4.1.*`)
+- `docs/design-system/actions-buttons-standardization.md` — `DS-ACTION-01` buttons (`5.4.2.1`)
+- `docs/design-system/status-badges-standardization.md` — `DS-BADGE-01` badges (`5.4.2.2`)
+- `docs/design-system/create-modal-drawer-boundaries.md` — modal vs CreateDrawer (`5.4.2.3.7`)
+- `docs/design-system/toast-inline-feedback-standardization.md` — `DS-FEEDBACK-01` (`5.4.2.4`)
+- `docs/design-system/empty-error-states-standardization.md` — `DS-FEEDBACK-02` (`5.4.2.5`)
 - `docs/design-system/layout-scrolling-audit.md` — AppShell, widths, scroll/sticky rules (`5.1.3.*`)
 - `docs/design-system/component-inventory.md` — инвентарь shared/domain UI (`5.1.2.*`)
 - `docs/design-system/shell-contracts.md` — защищённые контракты `DS-SHELL-01` / `DS-SHELL-02`
@@ -75,6 +80,10 @@ Layout:
 - `EntityHeader` — заголовок сущности внутри карточки документа;
 - `PageLoadingState` / `PageErrorState` / `PageNotFoundState` (`page-state.tsx`) — shared route boundaries (`DS-PAGE-06`);
 - Form controls (`form-controls.tsx`, `DS-FORM-01`) — `Field`, `Input`, `Textarea`, `Select`, `Checkbox`, `Radio`, `Switch`, `DateInput`, `MoneyInput`.
+- `Button` / `IconButton` (`DS-ACTION-01`);
+- `StatusBadge` (`DS-BADGE-01`);
+- `ToastProvider` / `useToast` + `InlineAlert` (`DS-FEEDBACK-01`);
+- `EmptyState` (`DS-FEEDBACK-02` in-page).
 
 Канон: `AppShell` → `PageLayout` → (`PageToolbar`) → `PageContent` → контент. Контракт: `docs/design-system/shell-page-layout-standardization.md` (`DS-PAGE-01`).
 
@@ -86,10 +95,11 @@ Layout:
 
 UI:
 
-- `Button` — `primary`, `secondary`, `ghost`, `danger`; размеры `compact`, `default`, `spacious`;
+- `Button` / `IconButton` — `primary`, `secondary`, `ghost`, `danger`; sizes compact/default/spacious; icon-only 32 (`DS-ACTION-01`);
 - `SectionCard`, `InfoCard`, `MetricCard`;
-- `StatusBadge`;
+- `StatusBadge` (`DS-BADGE-01`);
 - `EmptyState`;
+- `InlineAlert`, toast (`ToastProvider` / `useToast`);
 - `ActionMenu`, `ActionMenuItem`;
 - `CompactTabs`;
 - `DataList`.

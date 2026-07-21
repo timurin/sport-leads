@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { useSearchParams } from "next/navigation";
 
 import { NomenclatureCreatePanels } from "@/components/settings/nomenclature-create-panels";
 import {
   NomenclatureSectionCreateMenu,
+  parseNomenclatureCreateKind,
   type NomenclatureCreateKind,
 } from "@/components/settings/nomenclature-section-create-menu";
 import { PageToolbar } from "@/components/ui/page-header";
@@ -27,20 +28,8 @@ export function NomenclatureSectionCreateHost({
 }: NomenclatureSectionCreateHostProps) {
   const searchParams = useSearchParams();
   const [createKind, setCreateKind] = useState<NomenclatureCreateKind | null>(
-    null,
+    () => parseNomenclatureCreateKind(searchParams.get("create")),
   );
-
-  useEffect(() => {
-    const create = searchParams.get("create");
-    if (
-      create === "nomenclature" ||
-      create === "category" ||
-      create === "unit" ||
-      create === "characteristic"
-    ) {
-      setCreateKind(create);
-    }
-  }, [searchParams]);
 
   return (
     <div className="flex min-h-0 min-w-0 flex-1 flex-col">

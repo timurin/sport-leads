@@ -10,6 +10,8 @@ import {
   type ReactNode,
 } from "react";
 
+import { Button } from "@/components/ui/button";
+
 export type CreateMenuItem = {
   id: string;
   label: string;
@@ -26,6 +28,13 @@ type CreateMenuProps = {
   align?: "start" | "end";
   className?: string;
 };
+
+const primaryLinkClass = [
+  "portal-focus-ring inline-flex h-portal-control-default shrink-0 items-center justify-center gap-portal-2",
+  "rounded-portal-md bg-portal-primary px-portal-4 text-portal-body font-medium text-portal-primary-on",
+  "transition-colors duration-[var(--portal-motion-normal)] ease-[var(--portal-motion-ease)]",
+  "hover:bg-portal-primary-hover",
+].join(" ");
 
 /**
  * Page-toolbar create control: primary button + menu of creatable entities.
@@ -80,14 +89,7 @@ export function CreateMenu({
 
     if (item.href) {
       return (
-        <Link
-          href={item.href}
-          className={[
-            "portal-focus-ring inline-flex h-portal-control-default shrink-0 items-center justify-center gap-portal-2 rounded-portal-md bg-portal-primary px-portal-4 text-portal-body font-medium text-portal-primary-on",
-            "transition-colors hover:bg-portal-primary-hover",
-            className,
-          ].join(" ")}
-        >
+        <Link href={item.href} className={[primaryLinkClass, className].join(" ")}>
           <Plus size={17} aria-hidden="true" />
           {label}
         </Link>
@@ -95,37 +97,26 @@ export function CreateMenu({
     }
 
     return (
-      <button
-        type="button"
-        onClick={item.onSelect}
-        className={[
-          "portal-focus-ring inline-flex h-portal-control-default shrink-0 items-center justify-center gap-portal-2 rounded-portal-md bg-portal-primary px-portal-4 text-portal-body font-medium text-portal-primary-on",
-          "transition-colors hover:bg-portal-primary-hover",
-          className,
-        ].join(" ")}
-      >
+      <Button type="button" variant="primary" onClick={item.onSelect} className={className}>
         {content}
-      </button>
+      </Button>
     );
   }
 
   return (
     <div ref={rootRef} className={`relative ${className}`}>
-      <button
+      <Button
         type="button"
+        variant="primary"
         aria-haspopup="menu"
         aria-expanded={open}
         aria-controls={menuId}
         onClick={() => setOpen((current) => !current)}
-        className={[
-          "portal-focus-ring inline-flex h-portal-control-default shrink-0 items-center justify-center gap-portal-2 rounded-portal-md bg-portal-primary px-portal-4 text-portal-body font-medium text-portal-primary-on",
-          "transition-colors hover:bg-portal-primary-hover",
-        ].join(" ")}
       >
         <Plus size={17} aria-hidden="true" />
         {label}
         <ChevronDown size={14} aria-hidden="true" />
-      </button>
+      </Button>
 
       {open ? (
         <div

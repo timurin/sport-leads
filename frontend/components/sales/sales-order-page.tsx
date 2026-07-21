@@ -5,6 +5,7 @@ import { PageContent, ResponsiveGrid } from "@/components/layout/page-layout";
 import type { SalesOrderDetails, SalesOrderHistoryItem } from "@/lib/sales/order-details";
 import type { Nomenclature, NomenclatureVariant } from "@/lib/nomenclature";
 import { SalesOrderItems } from "@/components/sales/sales-order-items";
+import { StatusBadge } from "@/components/ui/status-badge";
 
 function Detail({ label, value }: { label: string; value: string }) {
   return (
@@ -30,7 +31,7 @@ export function SalesOrderPage({ order, history, nomenclature, variantsByNomencl
             <h1 className="text-2xl font-bold tracking-tight text-portal-text">{order.title}</h1>
             <p className="mt-1 text-sm text-portal-muted">Создан {order.createdAt}</p>
           </div>
-          <span className="rounded-full bg-blue-50 px-3 py-1 text-sm font-semibold text-blue-700">{order.status}</span>
+          <StatusBadge tone="primary">{order.status}</StatusBadge>
         </div>
       </header>
 

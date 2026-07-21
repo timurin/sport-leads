@@ -1,8 +1,10 @@
 import type { ReactNode } from "react";
 
+export type StatusBadgeTone = "neutral" | "primary" | "success" | "warning" | "danger";
+
 export function StatusBadge({ children, tone = "neutral", size = "default", dot = false, className = "" }: {
   children: ReactNode;
-  tone?: "neutral" | "primary" | "success" | "warning" | "danger";
+  tone?: StatusBadgeTone;
   size?: "compact" | "default";
   dot?: boolean;
   className?: string;

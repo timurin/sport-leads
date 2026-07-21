@@ -10,10 +10,12 @@ import {
   createNomenclatureCategory,
   createUnitOfMeasure,
 } from "@/app/(workspace)/settings/catalogs/nomenclature/nomenclature-actions";
+import { createCustomField } from "@/app/(workspace)/settings/catalogs/custom-fields/custom-fields-actions";
 import type { NomenclatureCreateKind } from "@/components/settings/nomenclature-section-create-menu";
 import { Button } from "@/components/ui/button";
 import { CreateDrawer } from "@/components/ui/create-drawer";
 import {
+  Checkbox,
   Field,
   Input,
   MoneyInput,
@@ -21,6 +23,7 @@ import {
   Textarea,
 } from "@/components/ui/form-controls";
 import type {
+  CustomFieldDataType,
   NomenclatureCategory,
   NomenclatureType,
   UnitCategory,
@@ -43,11 +46,24 @@ const unitLabels: Record<UnitCategory, string> = {
   SERVICE: "Услуга",
 };
 
+const customFieldLabels: Record<CustomFieldDataType, string> = {
+  STRING: "Строка",
+  TEXT: "Текст",
+  INTEGER: "Целое число",
+  DECIMAL: "Десятичное число",
+  BOOLEAN: "Да/нет",
+  DATE: "Дата",
+  SINGLE_SELECT: "Один вариант",
+  MULTI_SELECT: "Несколько вариантов",
+  COLOR: "Цвет",
+};
+
 const TITLES: Record<NomenclatureCreateKind, string> = {
   nomenclature: "Новая номенклатура",
   category: "Новая категория",
   unit: "Новая единица измерения",
   characteristic: "Новая характеристика",
+  customField: "Новый реквизит",
 };
 
 type NomenclatureCreatePanelsProps = {
@@ -185,6 +201,29 @@ export function NomenclatureCreatePanels({
               <option value="COLOR">Цвет</option>
             </Select>
           </Field>
+        </CreateForm>
+      ) : null}
+
+      {kind === "customField" ? (
+        <CreateForm action={createCustomField} onCancel={onClose}>
+          <Field label="Код" required>
+            <Input name="code" required pattern="[a-z0-9][a-z0-9_-]*" autoFocus />
+          </Field>
+          <Field label="Название" required>
+            <Input name="name" required />
+          </Field>
+          <Field label="Тип данных">
+            <Select name="data_type" defaultValue="STRING">
+              {Object.entries(customFieldLabels).map(([value, label]) => (
+                <option key={value} value={value}>{label}</option>
+              ))}
+            </Select>
+          </Field>
+          <Field label="Описание">
+            <Input name="description" />
+          </Field>
+          <Checkbox name="is_searchable" label="Искать" />
+          <Checkbox name="is_filterable" label="Фильтровать" />
         </CreateForm>
       ) : null}
     </CreateDrawer>

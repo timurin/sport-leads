@@ -1,13 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import type { ReactNode } from "react";
 import { useSearchParams } from "next/navigation";
 import { updateNomenclatureCategory } from "@/app/(workspace)/settings/catalogs/nomenclature/nomenclature-actions";
 import { NomenclatureCreatePanels } from "@/components/settings/nomenclature-create-panels";
 import {
   NomenclatureSectionCreateMenu,
+  parseNomenclatureCreateKind,
   type NomenclatureCreateKind,
 } from "@/components/settings/nomenclature-section-create-menu";
 import { PageToolbar } from "@/components/ui/page-header";
@@ -27,7 +28,9 @@ function CategoryTree({ categories, selected, onSelect, showInactive }: { catego
 
 export function NomenclatureWorkspace({ items, categories, units, fieldValues }: { items: Nomenclature[]; categories: NomenclatureCategory[]; units: UnitOfMeasure[]; fieldValues: Record<number, NomenclatureFieldValue[]> }) {
   const searchParams = useSearchParams();
-  const [createKind, setCreateKind] = useState<NomenclatureCreateKind | null>(null);
+  const [createKind, setCreateKind] = useState<NomenclatureCreateKind | null>(
+    () => parseNomenclatureCreateKind(searchParams.get("create")),
+  );
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
   const [search, setSearch] = useState("");
   const [type, setType] = useState<"" | NomenclatureType>("");
@@ -36,17 +39,6 @@ export function NomenclatureWorkspace({ items, categories, units, fieldValues }:
   const [hasPrice, setHasPrice] = useState(false);
   const [missingRequired, setMissingRequired] = useState(false);
 
-  useEffect(() => {
-    const create = searchParams.get("create");
-    if (
-      create === "nomenclature" ||
-      create === "category" ||
-      create === "unit" ||
-      create === "characteristic"
-    ) {
-      setCreateKind(create);
-    }
-  }, [searchParams]);
   const descendants = useMemo(() => { if (selectedCategory === null || selectedCategory === -1) return []; const ids = new Set([selectedCategory]); let changed = true; while (changed) { changed = false; for (const category of categories) if (category.parent_id !== null && ids.has(category.parent_id) && !ids.has(category.id)) { ids.add(category.id); changed = true; } } return [...ids]; }, [categories, selectedCategory]);
   const visibleItems = items.filter((item) => { const values = fieldValues[item.id] ?? []; const text = `${item.article} ${item.name} ${item.short_name ?? ""} ${values.map((field) => String(field.value ?? "")).join(" ")}`.toLowerCase(); if (search && !text.includes(search.toLowerCase())) return false; if (type && item.nomenclature_type !== type) return false; if (active === "active" && !item.is_active || active === "inactive" && item.is_active) return false; if (selectedCategory === -1 ? item.category_id !== null : selectedCategory !== null && !(nested ? descendants : [selectedCategory]).includes(item.category_id ?? -2)) return false; if (hasPrice && Number(item.base_price) <= 0) return false; if (missingRequired && !values.some((field) => field.is_required && (field.value === null || field.value === ""))) return false; return true; });
   const clearFilters = () => { setSearch(""); setType(""); setActive("active"); setSelectedCategory(null); setNested(false); setHasPrice(false); setMissingRequired(false); };

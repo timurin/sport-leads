@@ -8,6 +8,7 @@ import {
 
 import { KanbanCard } from "@/components/kanban/kanban-card";
 import type { KanbanColumnData } from "@/components/kanban/kanban-types";
+import { EmptyState } from "@/components/ui/empty-state";
 
 type KanbanColumnProps = {
   column: KanbanColumnData;
@@ -48,9 +49,12 @@ export function KanbanColumn({ column, onCardSelect }: KanbanColumnProps) {
           {column.cards.length ? column.cards.map((card) => (
             <KanbanCard key={card.id} card={card} onSelect={onCardSelect} />
           )) : (
-            <div className="flex min-h-32 items-center justify-center rounded-lg border border-dashed border-slate-300 bg-white/60 px-5 text-center text-xs leading-5 text-slate-400">
-              В этой колонке пока нет записей
-            </div>
+            <EmptyState
+              title="Нет записей"
+              description="В этой колонке пока нет записей"
+              size="compact"
+              className="min-h-32 border-slate-300 bg-white/60"
+            />
           )}
         </SortableContext>
       </div>

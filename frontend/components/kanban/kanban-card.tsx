@@ -9,14 +9,15 @@ import { useEffect, useRef } from "react";
 
 import { shouldOpenKanbanCard } from "@/components/kanban/kanban-interaction";
 import type { KanbanCardData, KanbanBadgeTone } from "@/components/kanban/kanban-types";
+import { StatusBadge, type StatusBadgeTone } from "@/components/ui/status-badge";
 
-const badgeClasses: Record<KanbanBadgeTone, string> = {
-  blue: "bg-blue-50 text-blue-700",
-  amber: "bg-amber-50 text-amber-700",
-  emerald: "bg-emerald-50 text-emerald-700",
-  red: "bg-red-50 text-red-700",
-  slate: "bg-slate-100 text-slate-600",
-  violet: "bg-violet-50 text-violet-700",
+const badgeToneMap: Record<KanbanBadgeTone, StatusBadgeTone> = {
+  blue: "primary",
+  amber: "warning",
+  emerald: "success",
+  red: "danger",
+  slate: "neutral",
+  violet: "primary",
 };
 
 type KanbanCardProps = {
@@ -63,9 +64,13 @@ export function KanbanCardContent({
           </div>
         </div>
         {card.badge ? (
-          <span className={`shrink-0 rounded-full px-2 py-1 text-[11px] font-medium ${badgeClasses[card.badge.tone]}`}>
+          <StatusBadge
+            tone={badgeToneMap[card.badge.tone]}
+            size="compact"
+            className="shrink-0"
+          >
             {card.badge.label}
-          </span>
+          </StatusBadge>
         ) : null}
       </div>
 
