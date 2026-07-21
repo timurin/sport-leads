@@ -165,9 +165,9 @@
       </div>
       <div class="meta-list">
         <div class="chip">Updated: 2026-07-21</div>
-        <div class="chip">Version: v0.8.8i</div>
+        <div class="chip">Version: v0.9.0</div>
         <div class="chip">Branch: feature/v0.8.1-nomenclature-core</div>
-        <div class="chip">Commit: 05872f3</div>
+        <div class="chip">Commit: 281569b</div>
       </div>
       <div class="sidebar-note" style="margin:18px 0;">
         <strong style="color:var(--text)">Legend</strong>
@@ -221,471 +221,2534 @@
       {
         title: "Stage 0 — Platform and Infrastructure",
         blocks: [
-          { title: "0.1 — Core platform", items: [
-            { code: "0.1.1", title: "Monorepo with backend and frontend", done: true },
-            { code: "0.1.2", title: "FastAPI, PostgreSQL, SQLAlchemy, and Alembic foundation", done: true },
-            { code: "0.1.3", title: "Next.js workspace shell, navigation, and shared UI layer", done: true },
-            { code: "0.1.4", title: "Docker Compose for local development", done: true }
-          ]},
-          { title: "0.2 — Quality and documentation", items: [
-            { code: "0.2.1", title: "Repository-level project checks and verification scripts", done: true },
-            { code: "0.2.2", title: "Canonical documentation set: roadmap, structure, ERP-check, ADR", done: true },
-            { code: "0.2.3", title: "Stable CI/CD pipeline for mandatory checks", done: false }
-          ]},
-          { title: "0.3 — Production operations", items: [
-            { code: "0.3.1", title: "Production secrets and deployment baseline", done: false },
-            { code: "0.3.2", title: "Monitoring and operational logs", done: false },
-            { code: "0.3.3", title: "Backup and restore procedures", done: false }
-          ]}
+          {
+            title: "0.1 — Core platform",
+            items: [
+              {
+                code: "0.1.1",
+                title: "Monorepo with backend and frontend",
+                done: true
+              },
+              {
+                code: "0.1.2",
+                title: "FastAPI, PostgreSQL, SQLAlchemy, and Alembic foundation",
+                done: true
+              },
+              {
+                code: "0.1.3",
+                title: "Next.js workspace shell, navigation, and shared UI layer",
+                done: true
+              },
+              {
+                code: "0.1.4",
+                title: "Docker Compose for local development",
+                done: true
+              }
+            ]
+          },
+          {
+            title: "0.2 — Quality and documentation",
+            items: [
+              {
+                code: "0.2.1",
+                title: "Repository-level project checks and verification scripts",
+                done: true
+              },
+              {
+                code: "0.2.2",
+                title: "Canonical documentation set: roadmap, structure, ERP-check, ADR",
+                done: true
+              },
+              {
+                code: "0.2.3",
+                title: "Stable CI/CD pipeline for mandatory checks",
+                done: false
+              }
+            ]
+          },
+          {
+            title: "0.3 — Production operations",
+            items: [
+              {
+                code: "0.3.1",
+                title: "Production secrets and deployment baseline",
+                done: false
+              },
+              {
+                code: "0.3.2",
+                title: "Monitoring and operational logs",
+                done: false
+              },
+              {
+                code: "0.3.3",
+                title: "Backup and restore procedures",
+                done: false
+              }
+            ]
+          }
         ]
       },
       {
         title: "Stage 1 — CRM and Leads",
         blocks: [
-          { title: "1.1 — Sales workspace", items: [
-            { code: "1.1.1", title: "Sales dashboard", done: true },
-            { code: "1.1.2", title: "Lead list, filters, and Kanban UI", done: true },
-            { code: "1.1.3", title: "Fully persistent workspace without demo/local lead state", done: false }
-          ]},
-          { title: "1.2 — Lead card", items: [
-            { code: "1.2.1", title: "Lead detail route and page states", done: true },
-            { code: "1.2.2", title: "Customer, contact, and commercial data saving through API", done: true },
-            { code: "1.2.3", title: "Configurable stages and stage management", done: true },
-            { code: "1.2.4", title: "Persistent tasks, notes, timeline, and communications", done: false }
-          ]},
-          { title: "1.3 — Lead lifecycle", items: [
-            { code: "1.3.1", title: "Completion and rejection flow", done: true },
-            { code: "1.3.2", title: "Transactional conversion from lead to sales order", done: true },
-            { code: "1.3.3", title: "Deals, archive, and finalized CRM access-control contour", done: false }
-          ]},
-          { title: "1.4 — CRM source integrations", items: [
-            { code: "1.4.1", title: "Collectors, parsers, and import normalization core", done: true },
-            { code: "1.4.2", title: "Mock communication connector core", done: true },
-            { code: "1.4.3", title: "Real external lead-source and communication adapters", done: false }
-          ]}
+          {
+            title: "1.1 — Sales workspace",
+            items: [
+              {
+                code: "1.1.1",
+                title: "Sales dashboard",
+                done: true
+              },
+              {
+                code: "1.1.2",
+                title: "Lead list, filters, and Kanban UI",
+                done: true
+              },
+              {
+                code: "1.1.3",
+                title: "Fully persistent workspace without demo/local lead state",
+                done: false
+              }
+            ]
+          },
+          {
+            title: "1.2 — Lead card",
+            items: [
+              {
+                code: "1.2.1",
+                title: "Lead detail route and page states",
+                done: true
+              },
+              {
+                code: "1.2.2",
+                title: "Customer, contact, and commercial data saving through API",
+                done: true
+              },
+              {
+                code: "1.2.3",
+                title: "Configurable stages and stage management",
+                done: true
+              },
+              {
+                code: "1.2.4",
+                title: "Persistent tasks, notes, timeline, and communications",
+                done: false
+              }
+            ]
+          },
+          {
+            title: "1.3 — Lead lifecycle",
+            items: [
+              {
+                code: "1.3.1",
+                title: "Completion and rejection flow",
+                done: true
+              },
+              {
+                code: "1.3.2",
+                title: "Transactional conversion from lead to sales order",
+                done: true
+              },
+              {
+                code: "1.3.3",
+                title: "Deals, archive, and finalized CRM access-control contour",
+                done: false
+              }
+            ]
+          },
+          {
+            title: "1.4 — CRM source integrations",
+            items: [
+              {
+                code: "1.4.1",
+                title: "Collectors, parsers, and import normalization core",
+                done: true
+              },
+              {
+                code: "1.4.2",
+                title: "Mock communication connector core",
+                done: true
+              },
+              {
+                code: "1.4.3",
+                title: "Real external lead-source and communication adapters",
+                done: false
+              }
+            ]
+          }
         ]
       },
       {
         title: "Stage 2 — Clients and Contacts",
         blocks: [
-          { title: "2.1 — Core entities and links", items: [
-            { code: "2.1.1", title: "Client and contact entities linked to leads and orders", done: true },
-            { code: "2.1.2", title: "Saving client and contact data from CRM workflows", done: true }
-          ]},
-          { title: "2.2 — Separate client workspace", items: [
-            { code: "2.2.1", title: "Persistent client list and dedicated workspace", done: false },
-            { code: "2.2.2", title: "Separate client card", done: false },
-            { code: "2.2.3", title: "Client lead and order history", done: false }
-          ]},
-          { title: "2.3 — Business data and quality", items: [
-            { code: "2.3.1", title: "Legal details and banking data", done: false },
-            { code: "2.3.2", title: "Segmentation and duplicate detection", done: false },
-            { code: "2.3.3", title: "Settlements and financial client state", done: false }
-          ]}
+          {
+            title: "2.1 — Core entities and links",
+            items: [
+              {
+                code: "2.1.1",
+                title: "Client and contact entities linked to leads and orders",
+                done: true
+              },
+              {
+                code: "2.1.2",
+                title: "Saving client and contact data from CRM workflows",
+                done: true
+              }
+            ]
+          },
+          {
+            title: "2.2 — Separate client workspace",
+            items: [
+              {
+                code: "2.2.1",
+                title: "Persistent client list and dedicated workspace",
+                done: false
+              },
+              {
+                code: "2.2.2",
+                title: "Separate client card",
+                done: false
+              },
+              {
+                code: "2.2.3",
+                title: "Client lead and order history",
+                done: false
+              }
+            ]
+          },
+          {
+            title: "2.3 — Business data and quality",
+            items: [
+              {
+                code: "2.3.1",
+                title: "Legal details and banking data",
+                done: false
+              },
+              {
+                code: "2.3.2",
+                title: "Segmentation and duplicate detection",
+                done: false
+              },
+              {
+                code: "2.3.3",
+                title: "Settlements and financial client state",
+                done: false
+              }
+            ]
+          }
         ]
       },
       {
         title: "Stage 3 — Sales Orders",
         blocks: [
-          { title: "3.1 — Core document", items: [
-            { code: "3.1.1", title: "Persistent sales-order model, list, detail route, and status history", done: true },
-            { code: "3.1.2", title: "Manual creation and creation from lead conversion", done: true },
-            { code: "3.1.3", title: "Organization, client, contact, and responsible bindings", done: true }
-          ]},
-          { title: "3.2 — Order items", items: [
-            { code: "3.2.1", title: "Persistent commercial snapshot items", done: true },
-            { code: "3.2.2", title: "Decimal/Numeric totals and discount-percent recalculation", done: true },
-            { code: "3.2.3", title: "Sizes, color, and personalization snapshots", done: true },
-            { code: "3.2.4", title: "Nullable nomenclature and variant links with immutable snapshots", done: true }
-          ]},
-          { title: "3.3 — Financial document scope", items: [
-            { code: "3.3.1", title: "Order-level discount", done: false },
-            { code: "3.3.2", title: "Tax and VAT model", done: false },
-            { code: "3.3.3", title: "Currency, print forms, quotations, and invoices", done: false }
-          ]},
-          { title: "3.4 — Order execution", items: [
-            { code: "3.4.1", title: "Design and approval states in order flow", done: false },
-            { code: "3.4.2", title: "Reserve, production, shipping, payment, and closure workflow", done: false }
-          ]}
+          {
+            title: "3.1 — Core document",
+            items: [
+              {
+                code: "3.1.1",
+                title: "Persistent sales-order model, list, detail route, and status history",
+                done: true
+              },
+              {
+                code: "3.1.2",
+                title: "Manual creation and creation from lead conversion",
+                done: true
+              },
+              {
+                code: "3.1.3",
+                title: "Organization, client, contact, and responsible bindings",
+                done: true
+              }
+            ]
+          },
+          {
+            title: "3.2 — Order items",
+            items: [
+              {
+                code: "3.2.1",
+                title: "Persistent commercial snapshot items",
+                done: true
+              },
+              {
+                code: "3.2.2",
+                title: "Decimal/Numeric totals and discount-percent recalculation",
+                done: true
+              },
+              {
+                code: "3.2.3",
+                title: "Sizes, color, and personalization snapshots",
+                done: true
+              },
+              {
+                code: "3.2.4",
+                title: "Nullable nomenclature and variant links with immutable snapshots",
+                done: true
+              }
+            ]
+          },
+          {
+            title: "3.3 — Financial document scope",
+            items: [
+              {
+                code: "3.3.1",
+                title: "Order-level discount",
+                done: false
+              },
+              {
+                code: "3.3.2",
+                title: "Tax and VAT model",
+                done: false
+              },
+              {
+                code: "3.3.3",
+                title: "Currency, print forms, quotations, and invoices",
+                done: false
+              }
+            ]
+          },
+          {
+            title: "3.4 — Order execution",
+            items: [
+              {
+                code: "3.4.1",
+                title: "Design and approval states in order flow",
+                done: false
+              },
+              {
+                code: "3.4.2",
+                title: "Reserve, production, shipping, payment, and closure workflow",
+                done: false
+              }
+            ]
+          }
         ]
       },
       {
         title: "Stage 4 — Nomenclature",
         blocks: [
-          { title: "4.1 — Persistent core", items: [
-            { code: "4.1.1", title: "v0.8.1 persistent nomenclature CRUD, card, search, article, activity, and base price", done: true },
-            { code: "4.1.2", title: "Nullable order-item link with independent commercial snapshot", done: true }
-          ]},
-          { title: "4.2 — Classification and typed fields", items: [
-            { code: "4.2.1", title: "v0.8.2 nomenclature types and category hierarchy", done: true },
-            { code: "4.2.2", title: "v0.8.3 units-of-measure directory and storage_unit_id", done: true },
-            { code: "4.2.3", title: "v0.8.4 typed custom fields with category inheritance", done: true }
-          ]},
-          { title: "4.3 — Workspace and card", items: [
-            { code: "4.3.1", title: "v0.8.5 separate workspace and editable card", done: true },
-            { code: "4.3.2", title: "v0.8.8h direct free assignment of custom fields in the card", done: true },
-            { code: "4.3.3", title: "Audit history, archive flow, and bulk operations", done: false }
-          ]},
-          { title: "4.4 — Characteristics, variants, and media", items: [
-            { code: "4.4.1", title: "v0.8.6 characteristics and variants", done: true },
-            { code: "4.4.2", title: "v0.8.7 image media lifecycle", done: true },
-            { code: "4.4.3", title: "v0.8.8a to v0.8.8g card layout and interaction contour", done: true },
-            { code: "4.4.4", title: "v0.8.8i product-characteristics directory", done: true },
-            { code: "4.4.5", title: "Non-image file attachments", done: false },
-            { code: "4.4.6", title: "Variant pricing, barcodes, and external sync", done: false }
-          ]},
-          { title: "4.5 — Import and export", items: [
-            { code: "4.5.1", title: "Nomenclature import", done: false },
-            { code: "4.5.2", title: "Nomenclature export", done: false }
-          ]}
+          {
+            title: "4.1 — Persistent core",
+            items: [
+              {
+                code: "4.1.1",
+                title: "v0.8.1 persistent nomenclature CRUD, card, search, article, activity, and base price",
+                done: true
+              },
+              {
+                code: "4.1.2",
+                title: "Nullable order-item link with independent commercial snapshot",
+                done: true
+              }
+            ]
+          },
+          {
+            title: "4.2 — Classification and typed fields",
+            items: [
+              {
+                code: "4.2.1",
+                title: "v0.8.2 nomenclature types and category hierarchy",
+                done: true
+              },
+              {
+                code: "4.2.2",
+                title: "v0.8.3 units-of-measure directory and storage_unit_id",
+                done: true
+              },
+              {
+                code: "4.2.3",
+                title: "v0.8.4 typed custom fields with category inheritance",
+                done: true
+              }
+            ]
+          },
+          {
+            title: "4.3 — Workspace and card",
+            items: [
+              {
+                code: "4.3.1",
+                title: "v0.8.5 separate workspace and editable card",
+                done: true
+              },
+              {
+                code: "4.3.2",
+                title: "v0.8.8h direct free assignment of custom fields in the card",
+                done: true
+              },
+              {
+                code: "4.3.3",
+                title: "Audit history, archive flow, and bulk operations",
+                done: false
+              }
+            ]
+          },
+          {
+            title: "4.4 — Characteristics, variants, and media",
+            items: [
+              {
+                code: "4.4.1",
+                title: "v0.8.6 characteristics and variants",
+                done: true
+              },
+              {
+                code: "4.4.2",
+                title: "v0.8.7 image media lifecycle",
+                done: true
+              },
+              {
+                code: "4.4.3",
+                title: "v0.8.8a to v0.8.8g card layout and interaction contour",
+                done: true
+              },
+              {
+                code: "4.4.4",
+                title: "v0.8.8i product-characteristics directory",
+                done: true
+              },
+              {
+                code: "4.4.5",
+                title: "Non-image file attachments",
+                done: false
+              },
+              {
+                code: "4.4.6",
+                title: "Variant pricing, barcodes, and external sync",
+                done: false
+              }
+            ]
+          },
+          {
+            title: "4.5 — Import and export",
+            items: [
+              {
+                code: "4.5.1",
+                title: "Nomenclature import",
+                done: false
+              },
+              {
+                code: "4.5.2",
+                title: "Nomenclature export",
+                done: false
+              }
+            ]
+          }
         ]
       },
       {
-        title: "Stage 5 — Product Models",
+        title: "Stage 5 — Design System and Platform Templates",
         blocks: [
-          { title: "5.1 — Architecture and domain boundary", items: [
-            { code: "5.1.1", title: "Product model domain contract", goal: "Define the persistent product-model contour and its boundaries against nomenclature, specifications, routings, and production.", dependencies: ["4.1.1", "4.4.1"], microtasks: [
-              { code: "5.1.1.1", title: "Document model boundaries and lifecycle states", done: false },
-              { code: "5.1.1.2", title: "Define links to nomenclature and future size grids", done: false },
-              { code: "5.1.1.3", title: "Define versioning and status rules", done: false },
-              { code: "5.1.1.4", title: "Review order-item integration constraints", done: false },
-              { code: "5.1.1.5", title: "Documentation checkpoint", done: false }
-            ]},
-            { code: "5.1.2", title: "Database core for product models", goal: "Create the persistent database foundation for product models and their versions.", dependencies: ["5.1.1"], microtasks: [
-              { code: "5.1.2.1", title: "Add SQLAlchemy model entities", done: false },
-              { code: "5.1.2.2", title: "Add Alembic migration with upgrade and downgrade", done: false },
-              { code: "5.1.2.3", title: "Add Pydantic read/write schemas", done: false },
-              { code: "5.1.2.4", title: "Add backend regression tests for persistence", done: false }
-            ]}
-          ]},
-          { title: "5.2 — Backend product models", items: [
-            { code: "5.2.1", title: "Create and list API for product models", goal: "Users can create and browse product models through backend API.", dependencies: ["5.1.2"], microtasks: [
-              { code: "5.2.1.1", title: "Add repository list and create operations", done: false },
-              { code: "5.2.1.2", title: "Add service validation for uniqueness and status defaults", done: false },
-              { code: "5.2.1.3", title: "Add POST and GET endpoints", done: false },
-              { code: "5.2.1.4", title: "Add OpenAPI and regression tests", done: false }
-            ]},
-            { code: "5.2.2", title: "Update API for product models", goal: "Users can change model data and keep it consistent after reload.", dependencies: ["5.2.1"], microtasks: [
-              { code: "5.2.2.1", title: "Add update schema", done: false },
-              { code: "5.2.2.2", title: "Add repository update operation", done: false },
-              { code: "5.2.2.3", title: "Add service validation for editable fields", done: false },
-              { code: "5.2.2.4", title: "Add PATCH endpoint", done: false },
-              { code: "5.2.2.5", title: "Add regression tests", done: false }
-            ]},
-            { code: "5.2.3", title: "Statuses and versioning for product models", goal: "Models support controlled lifecycle states and version history.", dependencies: ["5.2.2"], microtasks: [
-              { code: "5.2.3.1", title: "Add status fields and version entity rules", done: false },
-              { code: "5.2.3.2", title: "Add migration changes if required", done: false },
-              { code: "5.2.3.3", title: "Add service rules for activation and archival", done: false },
-              { code: "5.2.3.4", title: "Add API endpoints for status/version actions", done: false },
-              { code: "5.2.3.5", title: "Add backend regression tests", done: false }
-            ]}
-          ]},
-          { title: "5.3 — Frontend product models", items: [
-            { code: "5.3.1", title: "Product-model workspace and list", goal: "Users can open a dedicated product-model workspace and browse the catalog.", dependencies: ["5.2.1"], microtasks: [
-              { code: "5.3.1.1", title: "Add frontend types and API client", done: false },
-              { code: "5.3.1.2", title: "Add list route in the settings workspace route group", done: false },
-              { code: "5.3.1.3", title: "Add workspace UI with loading and error states", done: false },
-              { code: "5.3.1.4", title: "Add frontend regression tests", done: false },
-              { code: "5.3.1.5", title: "Visual verification", done: false }
-            ]},
-            { code: "5.3.2", title: "Product-model card route", goal: "Users can open a dedicated product-model card.", dependencies: ["5.3.1"], microtasks: [
-              { code: "5.3.2.1", title: "Add detail route and page shell", done: false },
-              { code: "5.3.2.2", title: "Add card view state", done: false },
-              { code: "5.3.2.3", title: "Add not-found, loading, and error states", done: false },
-              { code: "5.3.2.4", title: "Add frontend regression tests", done: false },
-              { code: "5.3.2.5", title: "Visual verification", done: false }
-            ]},
-            { code: "5.3.3", title: "Product-model create and edit flows", goal: "Users can create and edit models from the workspace and card.", dependencies: ["5.2.2", "5.3.2"], microtasks: [
-              { code: "5.3.3.1", title: "Add create form", done: false },
-              { code: "5.3.3.2", title: "Add edit form", done: false },
-              { code: "5.3.3.3", title: "Add submit actions and validation mapping", done: false },
-              { code: "5.3.3.4", title: "Add frontend regression tests", done: false },
-              { code: "5.3.3.5", title: "Visual verification", done: false }
-            ]}
-          ]},
-          { title: "5.4 — Links to nomenclature and order items", items: [
-            { code: "5.4.1", title: "Link product models to nomenclature", goal: "The model card can reference the nomenclature it describes without duplicating the catalog source of truth.", dependencies: ["4.1.1", "5.2.2"], microtasks: [
-              { code: "5.4.1.1", title: "Add backend relation fields", done: false },
-              { code: "5.4.1.2", title: "Add migration and schemas", done: false },
-              { code: "5.4.1.3", title: "Add service validation for active nomenclature selection", done: false },
-              { code: "5.4.1.4", title: "Add API support and regression tests", done: false }
-            ]},
-            { code: "5.4.2", title: "Use product model in sales-order items", goal: "Order items can reference a product model in a controlled way without breaking existing snapshots.", dependencies: ["5.4.1", "3.2.4"], microtasks: [
-              { code: "5.4.2.1", title: "Define backend order-item relation strategy", done: false },
-              { code: "5.4.2.2", title: "Add nullable storage and migration if approved", done: false },
-              { code: "5.4.2.3", title: "Add schemas, service rules, and API support", done: false },
-              { code: "5.4.2.4", title: "Add frontend selection flow in order item forms", done: false },
-              { code: "5.4.2.5", title: "Add regression tests", done: false },
-              { code: "5.4.2.6", title: "Visual verification", done: false },
-              { code: "5.4.2.7", title: "Documentation checkpoint", done: false }
-            ]}
-          ]}
+          {
+            title: "5.1 — Audit and inventory",
+            items: [
+              {
+                code: "5.1.1",
+                title: "Routes and page types",
+                goal: "Build a factual map of frontend routes and classify platform pages.",
+                microtasks: [
+                  {
+                    code: "5.1.1.1",
+                    title: "Audit existing routes, layouts and page types",
+                    done: true
+                  },
+                  {
+                    code: "5.1.1.2",
+                    title: "Audit loading, error and empty states",
+                    done: false
+                  },
+                  {
+                    code: "5.1.1.3",
+                    title: "Audit persistent versus demo/local data",
+                    done: false
+                  },
+                  {
+                    code: "5.1.1.4",
+                    title: "Document reference and migration pages",
+                    done: false
+                  }
+                ]
+              },
+              {
+                code: "5.1.2",
+                title: "Component inventory",
+                microtasks: [
+                  {
+                    code: "5.1.2.1",
+                    title: "Inventory shared UI components",
+                    done: false
+                  },
+                  {
+                    code: "5.1.2.2",
+                    title: "Inventory domain components",
+                    done: false
+                  },
+                  {
+                    code: "5.1.2.3",
+                    title: "Identify duplicates and overlapping responsibilities",
+                    done: false
+                  },
+                  {
+                    code: "5.1.2.4",
+                    title: "Define keep, unify, replace and deprecate decisions",
+                    done: false
+                  }
+                ]
+              },
+              {
+                code: "5.1.3",
+                title: "Layout and scrolling audit",
+                microtasks: [
+                  {
+                    code: "5.1.3.1",
+                    title: "Audit AppShell and workspace layouts",
+                    done: false
+                  },
+                  {
+                    code: "5.1.3.2",
+                    title: "Audit page widths and content containers",
+                    done: false
+                  },
+                  {
+                    code: "5.1.3.3",
+                    title: "Audit nested and double scrolling",
+                    done: false
+                  },
+                  {
+                    code: "5.1.3.4",
+                    title: "Audit sticky and fixed elements",
+                    done: false
+                  },
+                  {
+                    code: "5.1.3.5",
+                    title: "Define target scrolling rules",
+                    done: false
+                  }
+                ]
+              },
+              {
+                code: "5.1.4",
+                title: "Responsive audit",
+                microtasks: [
+                  {
+                    code: "5.1.4.1",
+                    title: "Define responsive verification matrix",
+                    done: false
+                  },
+                  {
+                    code: "5.1.4.2",
+                    title: "Audit desktop layouts",
+                    done: false
+                  },
+                  {
+                    code: "5.1.4.3",
+                    title: "Audit laptop layouts",
+                    done: false
+                  },
+                  {
+                    code: "5.1.4.4",
+                    title: "Audit tablet layouts",
+                    done: false
+                  },
+                  {
+                    code: "5.1.4.5",
+                    title: "Audit mobile layouts",
+                    done: false
+                  },
+                  {
+                    code: "5.1.4.6",
+                    title: "Register visual bug microtasks",
+                    done: false
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            title: "5.2 — Design tokens",
+            items: [
+              {
+                code: "5.2.1",
+                title: "Visual foundations",
+                microtasks: [
+                  {
+                    code: "5.2.1.1",
+                    title: "Audit existing token sources",
+                    done: false
+                  },
+                  {
+                    code: "5.2.1.2",
+                    title: "Define semantic color tokens",
+                    done: false
+                  },
+                  {
+                    code: "5.2.1.3",
+                    title: "Define typography scale",
+                    done: false
+                  },
+                  {
+                    code: "5.2.1.4",
+                    title: "Define spacing scale",
+                    done: false
+                  },
+                  {
+                    code: "5.2.1.5",
+                    title: "Define borders, radius and shadows",
+                    done: false
+                  },
+                  {
+                    code: "5.2.1.6",
+                    title: "Define component sizes",
+                    done: false
+                  },
+                  {
+                    code: "5.2.1.7",
+                    title: "Define interaction states",
+                    done: false
+                  }
+                ]
+              },
+              {
+                code: "5.2.2",
+                title: "Responsive and layer tokens",
+                microtasks: [
+                  {
+                    code: "5.2.2.1",
+                    title: "Define breakpoints",
+                    done: false
+                  },
+                  {
+                    code: "5.2.2.2",
+                    title: "Define content width rules",
+                    done: false
+                  },
+                  {
+                    code: "5.2.2.3",
+                    title: "Define z-index layers",
+                    done: false
+                  },
+                  {
+                    code: "5.2.2.4",
+                    title: "Define motion rules",
+                    done: false
+                  },
+                  {
+                    code: "5.2.2.5",
+                    title: "Prepare token migration plan",
+                    done: false
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            title: "5.3 — Platform shell",
+            items: [
+              {
+                code: "5.3.1",
+                title: "Navigation shell",
+                microtasks: [
+                  {
+                    code: "5.3.1.1",
+                    title: "Standardize sidebar",
+                    done: false
+                  },
+                  {
+                    code: "5.3.1.2",
+                    title: "Standardize topbar",
+                    done: false
+                  },
+                  {
+                    code: "5.3.1.3",
+                    title: "Standardize workspace tabs",
+                    done: false
+                  },
+                  {
+                    code: "5.3.1.4",
+                    title: "Define responsive navigation",
+                    done: false
+                  },
+                  {
+                    code: "5.3.1.5",
+                    title: "Verify keyboard navigation",
+                    done: false
+                  }
+                ]
+              },
+              {
+                code: "5.3.2",
+                title: "Page shell",
+                microtasks: [
+                  {
+                    code: "5.3.2.1",
+                    title: "Standardize PageLayout",
+                    done: false
+                  },
+                  {
+                    code: "5.3.2.2",
+                    title: "Standardize PageHeader",
+                    done: false
+                  },
+                  {
+                    code: "5.3.2.3",
+                    title: "Standardize page actions",
+                    done: false
+                  },
+                  {
+                    code: "5.3.2.4",
+                    title: "Standardize content containers",
+                    done: false
+                  },
+                  {
+                    code: "5.3.2.5",
+                    title: "Standardize scrolling ownership",
+                    done: false
+                  },
+                  {
+                    code: "5.3.2.6",
+                    title: "Add shared loading and error boundaries",
+                    done: false
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            title: "5.4 — Shared UI components",
+            items: [
+              {
+                code: "5.4.1",
+                title: "Forms",
+                microtasks: [
+                  {
+                    code: "5.4.1.1",
+                    title: "Text and numeric inputs",
+                    done: false
+                  },
+                  {
+                    code: "5.4.1.2",
+                    title: "Select and combobox",
+                    done: false
+                  },
+                  {
+                    code: "5.4.1.3",
+                    title: "Checkbox, radio and switch",
+                    done: false
+                  },
+                  {
+                    code: "5.4.1.4",
+                    title: "Date and money controls",
+                    done: false
+                  },
+                  {
+                    code: "5.4.1.5",
+                    title: "Validation and help states",
+                    done: false
+                  },
+                  {
+                    code: "5.4.1.6",
+                    title: "Disabled and read-only states",
+                    done: false
+                  }
+                ]
+              },
+              {
+                code: "5.4.2",
+                title: "Actions and feedback",
+                microtasks: [
+                  {
+                    code: "5.4.2.1",
+                    title: "Buttons and icon actions",
+                    done: false
+                  },
+                  {
+                    code: "5.4.2.2",
+                    title: "Status badges",
+                    done: false
+                  },
+                  {
+                    code: "5.4.2.3",
+                    title: "Dialogs and drawers",
+                    done: false
+                  },
+                  {
+                    code: "5.4.2.4",
+                    title: "Toast and inline feedback",
+                    done: false
+                  },
+                  {
+                    code: "5.4.2.5",
+                    title: "Loading, empty and error states",
+                    done: false
+                  }
+                ]
+              },
+              {
+                code: "5.4.3",
+                title: "Data presentation",
+                microtasks: [
+                  {
+                    code: "5.4.3.1",
+                    title: "Table foundation",
+                    done: false
+                  },
+                  {
+                    code: "5.4.3.2",
+                    title: "Filter toolbar",
+                    done: false
+                  },
+                  {
+                    code: "5.4.3.3",
+                    title: "Pagination and totals",
+                    done: false
+                  },
+                  {
+                    code: "5.4.3.4",
+                    title: "Tabs and compact tabs",
+                    done: false
+                  },
+                  {
+                    code: "5.4.3.5",
+                    title: "Activity timeline",
+                    done: false
+                  },
+                  {
+                    code: "5.4.3.6",
+                    title: "Tasks and comments panels",
+                    done: false
+                  },
+                  {
+                    code: "5.4.3.7",
+                    title: "Entity links and inline editing",
+                    done: false
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            title: "5.5 — Page templates",
+            items: [
+              {
+                code: "5.5.1",
+                title: "PT-01 Dashboard",
+                microtasks: [
+                  {
+                    code: "5.5.1.1",
+                    title: "Define template contract",
+                    done: false
+                  },
+                  {
+                    code: "5.5.1.2",
+                    title: "Implement reference layout",
+                    done: false
+                  },
+                  {
+                    code: "5.5.1.3",
+                    title: "Add responsive rules",
+                    done: false
+                  },
+                  {
+                    code: "5.5.1.4",
+                    title: "Verify on Sales Dashboard",
+                    done: false
+                  }
+                ]
+              },
+              {
+                code: "5.5.2",
+                title: "PT-02 List/Table Workspace",
+                microtasks: [
+                  {
+                    code: "5.5.2.1",
+                    title: "Define template contract",
+                    done: false
+                  },
+                  {
+                    code: "5.5.2.2",
+                    title: "Implement reference layout",
+                    done: false
+                  },
+                  {
+                    code: "5.5.2.3",
+                    title: "Add responsive table behaviour",
+                    done: false
+                  },
+                  {
+                    code: "5.5.2.4",
+                    title: "Verify on organizations or clients",
+                    done: false
+                  }
+                ]
+              },
+              {
+                code: "5.5.3",
+                title: "PT-03 Kanban Workspace",
+                microtasks: [
+                  {
+                    code: "5.5.3.1",
+                    title: "Define template contract",
+                    done: false
+                  },
+                  {
+                    code: "5.5.3.2",
+                    title: "Standardize board structure",
+                    done: false
+                  },
+                  {
+                    code: "5.5.3.3",
+                    title: "Define mobile fallback",
+                    done: false
+                  },
+                  {
+                    code: "5.5.3.4",
+                    title: "Verify on Leads Kanban",
+                    done: false
+                  }
+                ]
+              },
+              {
+                code: "5.5.4",
+                title: "PT-04 Tree + List Workspace",
+                microtasks: [
+                  {
+                    code: "5.5.4.1",
+                    title: "Define template contract",
+                    done: false
+                  },
+                  {
+                    code: "5.5.4.2",
+                    title: "Standardize tree and content panes",
+                    done: false
+                  },
+                  {
+                    code: "5.5.4.3",
+                    title: "Add responsive tree drawer",
+                    done: false
+                  },
+                  {
+                    code: "5.5.4.4",
+                    title: "Verify on Nomenclature Workspace",
+                    done: false
+                  }
+                ]
+              },
+              {
+                code: "5.5.5",
+                title: "PT-05 Simple Entity Card",
+                microtasks: [
+                  {
+                    code: "5.5.5.1",
+                    title: "Define template contract",
+                    done: false
+                  },
+                  {
+                    code: "5.5.5.2",
+                    title: "Implement reference card",
+                    done: false
+                  },
+                  {
+                    code: "5.5.5.3",
+                    title: "Add responsive layout",
+                    done: false
+                  },
+                  {
+                    code: "5.5.5.4",
+                    title: "Verify on organization or client",
+                    done: false
+                  }
+                ]
+              },
+              {
+                code: "5.5.6",
+                title: "PT-06 Complex Entity Card",
+                microtasks: [
+                  {
+                    code: "5.5.6.1",
+                    title: "Define template contract",
+                    done: false
+                  },
+                  {
+                    code: "5.5.6.2",
+                    title: "Standardize entity header",
+                    done: false
+                  },
+                  {
+                    code: "5.5.6.3",
+                    title: "Standardize stage and metrics area",
+                    done: false
+                  },
+                  {
+                    code: "5.5.6.4",
+                    title: "Standardize section grid",
+                    done: false
+                  },
+                  {
+                    code: "5.5.6.5",
+                    title: "Standardize activity tabs",
+                    done: false
+                  },
+                  {
+                    code: "5.5.6.6",
+                    title: "Define responsive collapse",
+                    done: false
+                  },
+                  {
+                    code: "5.5.6.7",
+                    title: "Verify on Lead Card",
+                    done: false
+                  }
+                ]
+              },
+              {
+                code: "5.5.7",
+                title: "PT-07 Document Card",
+                microtasks: [
+                  {
+                    code: "5.5.7.1",
+                    title: "Define template contract",
+                    done: false
+                  },
+                  {
+                    code: "5.5.7.2",
+                    title: "Standardize document header",
+                    done: false
+                  },
+                  {
+                    code: "5.5.7.3",
+                    title: "Standardize tabular section",
+                    done: false
+                  },
+                  {
+                    code: "5.5.7.4",
+                    title: "Standardize totals and actions",
+                    done: false
+                  },
+                  {
+                    code: "5.5.7.5",
+                    title: "Define responsive behaviour",
+                    done: false
+                  },
+                  {
+                    code: "5.5.7.6",
+                    title: "Verify on Customer Order Card",
+                    done: false
+                  }
+                ]
+              },
+              {
+                code: "5.5.8",
+                title: "PT-08 Versioned Workspace",
+                microtasks: [
+                  {
+                    code: "5.5.8.1",
+                    title: "Define template contract",
+                    done: false
+                  },
+                  {
+                    code: "5.5.8.2",
+                    title: "Define active version and history",
+                    done: false
+                  },
+                  {
+                    code: "5.5.8.3",
+                    title: "Define draft and published states",
+                    done: false
+                  },
+                  {
+                    code: "5.5.8.4",
+                    title: "Define compare and restore UX",
+                    done: false
+                  },
+                  {
+                    code: "5.5.8.5",
+                    title: "Prepare reference Model Card",
+                    done: false
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            title: "5.6 — Reference migrations",
+            items: [
+              {
+                code: "5.6.1",
+                title: "Migrate Sales Dashboard",
+                done: false
+              },
+              {
+                code: "5.6.2",
+                title: "Migrate Leads Kanban",
+                done: false
+              },
+              {
+                code: "5.6.3",
+                title: "Migrate Lead Card",
+                done: false
+              },
+              {
+                code: "5.6.4",
+                title: "Migrate Customer Order Card",
+                done: false
+              },
+              {
+                code: "5.6.5",
+                title: "Migrate Nomenclature Workspace",
+                done: false
+              },
+              {
+                code: "5.6.6",
+                title: "Migrate Nomenclature Card",
+                done: false
+              },
+              {
+                code: "5.6.7",
+                title: "Create reference Model Card shell",
+                done: false
+              }
+            ]
+          },
+          {
+            title: "5.7 — Responsive and accessibility verification",
+            items: [
+              {
+                code: "5.7.1",
+                title: "Desktop matrix",
+                done: false
+              },
+              {
+                code: "5.7.2",
+                title: "Laptop matrix",
+                done: false
+              },
+              {
+                code: "5.7.3",
+                title: "Tablet matrix",
+                done: false
+              },
+              {
+                code: "5.7.4",
+                title: "Mobile matrix",
+                done: false
+              },
+              {
+                code: "5.7.5",
+                title: "Horizontal overflow verification",
+                done: false
+              },
+              {
+                code: "5.7.6",
+                title: "Keyboard navigation",
+                done: false
+              },
+              {
+                code: "5.7.7",
+                title: "Focus visibility",
+                done: false
+              },
+              {
+                code: "5.7.8",
+                title: "Contrast verification",
+                done: false
+              },
+              {
+                code: "5.7.9",
+                title: "Visual regression checklist",
+                done: false
+              }
+            ]
+          },
+          {
+            title: "5.8 — Design checkpoint",
+            items: [
+              {
+                code: "5.8.1",
+                title: "Design documentation complete",
+                done: false
+              },
+              {
+                code: "5.8.2",
+                title: "Tokens approved",
+                done: false
+              },
+              {
+                code: "5.8.3",
+                title: "Platform shell approved",
+                done: false
+              },
+              {
+                code: "5.8.4",
+                title: "Page templates approved",
+                done: false
+              },
+              {
+                code: "5.8.5",
+                title: "Reference pages approved",
+                done: false
+              },
+              {
+                code: "5.8.6",
+                title: "Critical visual bugs fixed",
+                done: false
+              },
+              {
+                code: "5.8.7",
+                title: "New modules required to use templates",
+                done: false
+              }
+            ]
+          }
         ]
       },
       {
-        title: "Stage 6 — Size Grids",
+        title: "Stage 6 — Product Models",
         blocks: [
-          { title: "6.1 — Domain and persistence", items: [
-            { code: "6.1.1", title: "Size-grid architecture", goal: "Define the dedicated size-grid contour used by models and future order scenarios.", dependencies: ["5.1.1"], microtasks: [
-              { code: "6.1.1.1", title: "Define size-grid domain and naming rules", done: false },
-              { code: "6.1.1.2", title: "Define links to product models and order items", done: false },
-              { code: "6.1.1.3", title: "Documentation checkpoint", done: false }
-            ]},
-            { code: "6.1.2", title: "Size-grid database core", goal: "Create the persistent storage for size grids, sizes, and growth groups.", dependencies: ["6.1.1"], microtasks: [
-              { code: "6.1.2.1", title: "Add SQLAlchemy entities", done: false },
-              { code: "6.1.2.2", title: "Add Alembic migration", done: false },
-              { code: "6.1.2.3", title: "Add schemas and backend tests", done: false }
-            ]}
-          ]},
-          { title: "6.2 — Backend and frontend flows", items: [
-            { code: "6.2.1", title: "Size-grid CRUD API", goal: "Users can create, view, and update size grids through API.", dependencies: ["6.1.2"], microtasks: [
-              { code: "6.2.1.1", title: "Add repository and service CRUD", done: false },
-              { code: "6.2.1.2", title: "Add endpoints", done: false },
-              { code: "6.2.1.3", title: "Add backend regression tests", done: false }
-            ]},
-            { code: "6.2.2", title: "Size-grid workspace and card", goal: "Users can manage size grids in the frontend workspace.", dependencies: ["6.2.1"], microtasks: [
-              { code: "6.2.2.1", title: "Add frontend types and API client", done: false },
-              { code: "6.2.2.2", title: "Add workspace/list route", done: false },
-              { code: "6.2.2.3", title: "Add detail card and forms", done: false },
-              { code: "6.2.2.4", title: "Add loading/error states", done: false },
-              { code: "6.2.2.5", title: "Add frontend regression tests", done: false },
-              { code: "6.2.2.6", title: "Visual verification", done: false }
-            ]},
-            { code: "6.2.3", title: "Link size grids to product models", goal: "A product model can reference a dedicated size grid.", dependencies: ["5.2.2", "6.2.1"], microtasks: [
-              { code: "6.2.3.1", title: "Add backend relation fields", done: false },
-              { code: "6.2.3.2", title: "Add migration and schema updates", done: false },
-              { code: "6.2.3.3", title: "Add service and API validation", done: false },
-              { code: "6.2.3.4", title: "Add frontend selection flow in model forms", done: false },
-              { code: "6.2.3.5", title: "Add regression tests", done: false }
-            ]}
-          ]}
+          {
+            title: "6.1 — Architecture and domain boundary",
+            items: [
+              {
+                code: "6.1.1",
+                title: "Product model domain contract",
+                goal: "Define the persistent product-model contour and its boundaries against nomenclature, specifications, routings, and production.",
+                dependencies: [
+                  "4.1.1",
+                  "4.4.1"
+                ],
+                microtasks: [
+                  {
+                    code: "6.1.1.1",
+                    title: "Document model boundaries and lifecycle states",
+                    done: false
+                  },
+                  {
+                    code: "6.1.1.2",
+                    title: "Define links to nomenclature and future size grids",
+                    done: false
+                  },
+                  {
+                    code: "6.1.1.3",
+                    title: "Define versioning and status rules",
+                    done: false
+                  },
+                  {
+                    code: "6.1.1.4",
+                    title: "Review order-item integration constraints",
+                    done: false
+                  },
+                  {
+                    code: "6.1.1.5",
+                    title: "Documentation checkpoint",
+                    done: false
+                  }
+                ]
+              },
+              {
+                code: "6.1.2",
+                title: "Database core for product models",
+                goal: "Create the persistent database foundation for product models and their versions.",
+                dependencies: [
+                  "6.1.1"
+                ],
+                microtasks: [
+                  {
+                    code: "6.1.2.1",
+                    title: "Add SQLAlchemy model entities",
+                    done: false
+                  },
+                  {
+                    code: "6.1.2.2",
+                    title: "Add Alembic migration with upgrade and downgrade",
+                    done: false
+                  },
+                  {
+                    code: "6.1.2.3",
+                    title: "Add Pydantic read/write schemas",
+                    done: false
+                  },
+                  {
+                    code: "6.1.2.4",
+                    title: "Add backend regression tests for persistence",
+                    done: false
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            title: "6.2 — Backend product models",
+            items: [
+              {
+                code: "6.2.1",
+                title: "Create and list API for product models",
+                goal: "Users can create and browse product models through backend API.",
+                dependencies: [
+                  "6.1.2"
+                ],
+                microtasks: [
+                  {
+                    code: "6.2.1.1",
+                    title: "Add repository list and create operations",
+                    done: false
+                  },
+                  {
+                    code: "6.2.1.2",
+                    title: "Add service validation for uniqueness and status defaults",
+                    done: false
+                  },
+                  {
+                    code: "6.2.1.3",
+                    title: "Add POST and GET endpoints",
+                    done: false
+                  },
+                  {
+                    code: "6.2.1.4",
+                    title: "Add OpenAPI and regression tests",
+                    done: false
+                  }
+                ]
+              },
+              {
+                code: "6.2.2",
+                title: "Update API for product models",
+                goal: "Users can change model data and keep it consistent after reload.",
+                dependencies: [
+                  "6.2.1"
+                ],
+                microtasks: [
+                  {
+                    code: "6.2.2.1",
+                    title: "Add update schema",
+                    done: false
+                  },
+                  {
+                    code: "6.2.2.2",
+                    title: "Add repository update operation",
+                    done: false
+                  },
+                  {
+                    code: "6.2.2.3",
+                    title: "Add service validation for editable fields",
+                    done: false
+                  },
+                  {
+                    code: "6.2.2.4",
+                    title: "Add PATCH endpoint",
+                    done: false
+                  },
+                  {
+                    code: "6.2.2.5",
+                    title: "Add regression tests",
+                    done: false
+                  }
+                ]
+              },
+              {
+                code: "6.2.3",
+                title: "Statuses and versioning for product models",
+                goal: "Models support controlled lifecycle states and version history.",
+                dependencies: [
+                  "6.2.2"
+                ],
+                microtasks: [
+                  {
+                    code: "6.2.3.1",
+                    title: "Add status fields and version entity rules",
+                    done: false
+                  },
+                  {
+                    code: "6.2.3.2",
+                    title: "Add migration changes if required",
+                    done: false
+                  },
+                  {
+                    code: "6.2.3.3",
+                    title: "Add service rules for activation and archival",
+                    done: false
+                  },
+                  {
+                    code: "6.2.3.4",
+                    title: "Add API endpoints for status/version actions",
+                    done: false
+                  },
+                  {
+                    code: "6.2.3.5",
+                    title: "Add backend regression tests",
+                    done: false
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            title: "6.3 — Frontend product models",
+            items: [
+              {
+                code: "6.3.1",
+                title: "Product-model workspace and list",
+                goal: "Users can open a dedicated product-model workspace and browse the catalog.",
+                dependencies: [
+                  "6.2.1"
+                ],
+                microtasks: [
+                  {
+                    code: "6.3.1.1",
+                    title: "Add frontend types and API client",
+                    done: false
+                  },
+                  {
+                    code: "6.3.1.2",
+                    title: "Add list route in the settings workspace route group",
+                    done: false
+                  },
+                  {
+                    code: "6.3.1.3",
+                    title: "Add workspace UI with loading and error states",
+                    done: false
+                  },
+                  {
+                    code: "6.3.1.4",
+                    title: "Add frontend regression tests",
+                    done: false
+                  },
+                  {
+                    code: "6.3.1.5",
+                    title: "Visual verification",
+                    done: false
+                  }
+                ]
+              },
+              {
+                code: "6.3.2",
+                title: "Product-model card route",
+                goal: "Users can open a dedicated product-model card.",
+                dependencies: [
+                  "6.3.1"
+                ],
+                microtasks: [
+                  {
+                    code: "6.3.2.1",
+                    title: "Add detail route and page shell",
+                    done: false
+                  },
+                  {
+                    code: "6.3.2.2",
+                    title: "Add card view state",
+                    done: false
+                  },
+                  {
+                    code: "6.3.2.3",
+                    title: "Add not-found, loading, and error states",
+                    done: false
+                  },
+                  {
+                    code: "6.3.2.4",
+                    title: "Add frontend regression tests",
+                    done: false
+                  },
+                  {
+                    code: "6.3.2.5",
+                    title: "Visual verification",
+                    done: false
+                  }
+                ]
+              },
+              {
+                code: "6.3.3",
+                title: "Product-model create and edit flows",
+                goal: "Users can create and edit models from the workspace and card.",
+                dependencies: [
+                  "6.2.2",
+                  "6.3.2"
+                ],
+                microtasks: [
+                  {
+                    code: "6.3.3.1",
+                    title: "Add create form",
+                    done: false
+                  },
+                  {
+                    code: "6.3.3.2",
+                    title: "Add edit form",
+                    done: false
+                  },
+                  {
+                    code: "6.3.3.3",
+                    title: "Add submit actions and validation mapping",
+                    done: false
+                  },
+                  {
+                    code: "6.3.3.4",
+                    title: "Add frontend regression tests",
+                    done: false
+                  },
+                  {
+                    code: "6.3.3.5",
+                    title: "Visual verification",
+                    done: false
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            title: "6.4 — Links to nomenclature and order items",
+            items: [
+              {
+                code: "6.4.1",
+                title: "Link product models to nomenclature",
+                goal: "The model card can reference the nomenclature it describes without duplicating the catalog source of truth.",
+                dependencies: [
+                  "4.1.1",
+                  "6.2.2"
+                ],
+                microtasks: [
+                  {
+                    code: "6.4.1.1",
+                    title: "Add backend relation fields",
+                    done: false
+                  },
+                  {
+                    code: "6.4.1.2",
+                    title: "Add migration and schemas",
+                    done: false
+                  },
+                  {
+                    code: "6.4.1.3",
+                    title: "Add service validation for active nomenclature selection",
+                    done: false
+                  },
+                  {
+                    code: "6.4.1.4",
+                    title: "Add API support and regression tests",
+                    done: false
+                  }
+                ]
+              },
+              {
+                code: "6.4.2",
+                title: "Use product model in sales-order items",
+                goal: "Order items can reference a product model in a controlled way without breaking existing snapshots.",
+                dependencies: [
+                  "6.4.1",
+                  "3.2.4"
+                ],
+                microtasks: [
+                  {
+                    code: "6.4.2.1",
+                    title: "Define backend order-item relation strategy",
+                    done: false
+                  },
+                  {
+                    code: "6.4.2.2",
+                    title: "Add nullable storage and migration if approved",
+                    done: false
+                  },
+                  {
+                    code: "6.4.2.3",
+                    title: "Add schemas, service rules, and API support",
+                    done: false
+                  },
+                  {
+                    code: "6.4.2.4",
+                    title: "Add frontend selection flow in order item forms",
+                    done: false
+                  },
+                  {
+                    code: "6.4.2.5",
+                    title: "Add regression tests",
+                    done: false
+                  },
+                  {
+                    code: "6.4.2.6",
+                    title: "Visual verification",
+                    done: false
+                  },
+                  {
+                    code: "6.4.2.7",
+                    title: "Documentation checkpoint",
+                    done: false
+                  }
+                ]
+              }
+            ]
+          }
         ]
       },
       {
-        title: "Stage 7 — Patterns",
+        title: "Stage 7 — Size Grids",
         blocks: [
-          { title: "7.1 — Pattern catalog foundation", items: [
-            { code: "7.1.1", title: "Pattern domain architecture", goal: "Define pattern sets, pattern parts, and versioning boundaries for product models.", dependencies: ["5.1.1", "6.2.3"], microtasks: [
-              { code: "7.1.1.1", title: "Define pattern entities and lifecycle", done: false },
-              { code: "7.1.1.2", title: "Define file and version boundaries", done: false },
-              { code: "7.1.1.3", title: "Documentation checkpoint", done: false }
-            ]},
-            { code: "7.1.2", title: "Pattern database and files core", goal: "Create the persistent pattern storage and metadata model.", dependencies: ["7.1.1"], microtasks: [
-              { code: "7.1.2.1", title: "Add SQLAlchemy entities for pattern sets, parts, and versions", done: false },
-              { code: "7.1.2.2", title: "Add Alembic migration", done: false },
-              { code: "7.1.2.3", title: "Add file metadata strategy", done: false },
-              { code: "7.1.2.4", title: "Add backend regression tests", done: false }
-            ]}
-          ]},
-          { title: "7.2 — Pattern management flows", items: [
-            { code: "7.2.1", title: "Pattern API and workspace", goal: "Users can browse and maintain the pattern catalog.", dependencies: ["7.1.2"], microtasks: [
-              { code: "7.2.1.1", title: "Add repository, service, and CRUD API", done: false },
-              { code: "7.2.1.2", title: "Add frontend types and API client", done: false },
-              { code: "7.2.1.3", title: "Add workspace/list route", done: false },
-              { code: "7.2.1.4", title: "Add regression tests", done: false },
-              { code: "7.2.1.5", title: "Visual verification", done: false }
-            ]},
-            { code: "7.2.2", title: "Pattern card, files, and versions", goal: "Users can open a pattern card, inspect files, and manage versions.", dependencies: ["7.2.1"], microtasks: [
-              { code: "7.2.2.1", title: "Add detail card route", done: false },
-              { code: "7.2.2.2", title: "Add version list and file metadata view", done: false },
-              { code: "7.2.2.3", title: "Add create/edit flows for pattern versions", done: false },
-              { code: "7.2.2.4", title: "Add loading/error states", done: false },
-              { code: "7.2.2.5", title: "Add frontend regression tests", done: false },
-              { code: "7.2.2.6", title: "Visual verification", done: false }
-            ]},
-            { code: "7.2.3", title: "Link patterns to product models", goal: "A product model can reference the correct pattern set and version family.", dependencies: ["5.2.3", "7.2.2"], microtasks: [
-              { code: "7.2.3.1", title: "Add backend relation fields", done: false },
-              { code: "7.2.3.2", title: "Add migration and schemas", done: false },
-              { code: "7.2.3.3", title: "Add service validation", done: false },
-              { code: "7.2.3.4", title: "Add model-card integration", done: false },
-              { code: "7.2.3.5", title: "Add regression tests", done: false }
-            ]}
-          ]}
+          {
+            title: "7.1 — Domain and persistence",
+            items: [
+              {
+                code: "7.1.1",
+                title: "Size-grid architecture",
+                goal: "Define the dedicated size-grid contour used by models and future order scenarios.",
+                dependencies: [
+                  "6.1.1"
+                ],
+                microtasks: [
+                  {
+                    code: "7.1.1.1",
+                    title: "Define size-grid domain and naming rules",
+                    done: false
+                  },
+                  {
+                    code: "7.1.1.2",
+                    title: "Define links to product models and order items",
+                    done: false
+                  },
+                  {
+                    code: "7.1.1.3",
+                    title: "Documentation checkpoint",
+                    done: false
+                  }
+                ]
+              },
+              {
+                code: "7.1.2",
+                title: "Size-grid database core",
+                goal: "Create the persistent storage for size grids, sizes, and growth groups.",
+                dependencies: [
+                  "7.1.1"
+                ],
+                microtasks: [
+                  {
+                    code: "7.1.2.1",
+                    title: "Add SQLAlchemy entities",
+                    done: false
+                  },
+                  {
+                    code: "7.1.2.2",
+                    title: "Add Alembic migration",
+                    done: false
+                  },
+                  {
+                    code: "7.1.2.3",
+                    title: "Add schemas and backend tests",
+                    done: false
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            title: "7.2 — Backend and frontend flows",
+            items: [
+              {
+                code: "7.2.1",
+                title: "Size-grid CRUD API",
+                goal: "Users can create, view, and update size grids through API.",
+                dependencies: [
+                  "7.1.2"
+                ],
+                microtasks: [
+                  {
+                    code: "7.2.1.1",
+                    title: "Add repository and service CRUD",
+                    done: false
+                  },
+                  {
+                    code: "7.2.1.2",
+                    title: "Add endpoints",
+                    done: false
+                  },
+                  {
+                    code: "7.2.1.3",
+                    title: "Add backend regression tests",
+                    done: false
+                  }
+                ]
+              },
+              {
+                code: "7.2.2",
+                title: "Size-grid workspace and card",
+                goal: "Users can manage size grids in the frontend workspace.",
+                dependencies: [
+                  "7.2.1"
+                ],
+                microtasks: [
+                  {
+                    code: "7.2.2.1",
+                    title: "Add frontend types and API client",
+                    done: false
+                  },
+                  {
+                    code: "7.2.2.2",
+                    title: "Add workspace/list route",
+                    done: false
+                  },
+                  {
+                    code: "7.2.2.3",
+                    title: "Add detail card and forms",
+                    done: false
+                  },
+                  {
+                    code: "7.2.2.4",
+                    title: "Add loading/error states",
+                    done: false
+                  },
+                  {
+                    code: "7.2.2.5",
+                    title: "Add frontend regression tests",
+                    done: false
+                  },
+                  {
+                    code: "7.2.2.6",
+                    title: "Visual verification",
+                    done: false
+                  }
+                ]
+              },
+              {
+                code: "7.2.3",
+                title: "Link size grids to product models",
+                goal: "A product model can reference a dedicated size grid.",
+                dependencies: [
+                  "6.2.2",
+                  "7.2.1"
+                ],
+                microtasks: [
+                  {
+                    code: "7.2.3.1",
+                    title: "Add backend relation fields",
+                    done: false
+                  },
+                  {
+                    code: "7.2.3.2",
+                    title: "Add migration and schema updates",
+                    done: false
+                  },
+                  {
+                    code: "7.2.3.3",
+                    title: "Add service and API validation",
+                    done: false
+                  },
+                  {
+                    code: "7.2.3.4",
+                    title: "Add frontend selection flow in model forms",
+                    done: false
+                  },
+                  {
+                    code: "7.2.3.5",
+                    title: "Add regression tests",
+                    done: false
+                  }
+                ]
+              }
+            ]
+          }
         ]
       },
       {
-        title: "Stage 8 — Specifications",
+        title: "Stage 8 — Patterns",
         blocks: [
-          { title: "8.1 — Domain and persistence", items: [
-            { code: "8.1.1", title: "Specification architecture", goal: "Define specification scope, versioning, and planning role before production start.", dependencies: ["5.1.1", "7.2.3", "ADR-004"], microtasks: [
-              { code: "8.1.1.1", title: "Define specification entities and version lifecycle", done: false },
-              { code: "8.1.1.2", title: "Define material, accessory, norm, and substitute scope", done: false },
-              { code: "8.1.1.3", title: "Documentation checkpoint", done: false }
-            ]},
-            { code: "8.1.2", title: "Specification database core", goal: "Create the persistent storage for specifications and their versions.", dependencies: ["8.1.1"], microtasks: [
-              { code: "8.1.2.1", title: "Add SQLAlchemy entities", done: false },
-              { code: "8.1.2.2", title: "Add Alembic migration", done: false },
-              { code: "8.1.2.3", title: "Add schemas and backend regression tests", done: false }
-            ]}
-          ]},
-          { title: "8.2 — Specification workflows", items: [
-            { code: "8.2.1", title: "Specification CRUD API", goal: "Users can create, view, and update specifications through API.", dependencies: ["8.1.2"], microtasks: [
-              { code: "8.2.1.1", title: "Add repository and service CRUD", done: false },
-              { code: "8.2.1.2", title: "Add endpoints", done: false },
-              { code: "8.2.1.3", title: "Add backend regression tests", done: false }
-            ]},
-            { code: "8.2.2", title: "Specification workspace and card", goal: "Users can manage specifications in a dedicated frontend flow.", dependencies: ["8.2.1"], microtasks: [
-              { code: "8.2.2.1", title: "Add frontend types and API client", done: false },
-              { code: "8.2.2.2", title: "Add workspace/list route", done: false },
-              { code: "8.2.2.3", title: "Add detail card and edit forms", done: false },
-              { code: "8.2.2.4", title: "Add loading/error states", done: false },
-              { code: "8.2.2.5", title: "Add frontend regression tests", done: false },
-              { code: "8.2.2.6", title: "Visual verification", done: false }
-            ]},
-            { code: "8.2.3", title: "Link specifications to product models", goal: "A product model can reference the approved specification line.", dependencies: ["5.2.3", "8.2.1"], microtasks: [
-              { code: "8.2.3.1", title: "Add backend relation fields", done: false },
-              { code: "8.2.3.2", title: "Add migration and schemas", done: false },
-              { code: "8.2.3.3", title: "Add service validation for active/approved versions", done: false },
-              { code: "8.2.3.4", title: "Add model-card integration", done: false },
-              { code: "8.2.3.5", title: "Add regression tests", done: false }
-            ]}
-          ]}
+          {
+            title: "8.1 — Pattern catalog foundation",
+            items: [
+              {
+                code: "8.1.1",
+                title: "Pattern domain architecture",
+                goal: "Define pattern sets, pattern parts, and versioning boundaries for product models.",
+                dependencies: [
+                  "6.1.1",
+                  "7.2.3"
+                ],
+                microtasks: [
+                  {
+                    code: "8.1.1.1",
+                    title: "Define pattern entities and lifecycle",
+                    done: false
+                  },
+                  {
+                    code: "8.1.1.2",
+                    title: "Define file and version boundaries",
+                    done: false
+                  },
+                  {
+                    code: "8.1.1.3",
+                    title: "Documentation checkpoint",
+                    done: false
+                  }
+                ]
+              },
+              {
+                code: "8.1.2",
+                title: "Pattern database and files core",
+                goal: "Create the persistent pattern storage and metadata model.",
+                dependencies: [
+                  "8.1.1"
+                ],
+                microtasks: [
+                  {
+                    code: "8.1.2.1",
+                    title: "Add SQLAlchemy entities for pattern sets, parts, and versions",
+                    done: false
+                  },
+                  {
+                    code: "8.1.2.2",
+                    title: "Add Alembic migration",
+                    done: false
+                  },
+                  {
+                    code: "8.1.2.3",
+                    title: "Add file metadata strategy",
+                    done: false
+                  },
+                  {
+                    code: "8.1.2.4",
+                    title: "Add backend regression tests",
+                    done: false
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            title: "8.2 — Pattern management flows",
+            items: [
+              {
+                code: "8.2.1",
+                title: "Pattern API and workspace",
+                goal: "Users can browse and maintain the pattern catalog.",
+                dependencies: [
+                  "8.1.2"
+                ],
+                microtasks: [
+                  {
+                    code: "8.2.1.1",
+                    title: "Add repository, service, and CRUD API",
+                    done: false
+                  },
+                  {
+                    code: "8.2.1.2",
+                    title: "Add frontend types and API client",
+                    done: false
+                  },
+                  {
+                    code: "8.2.1.3",
+                    title: "Add workspace/list route",
+                    done: false
+                  },
+                  {
+                    code: "8.2.1.4",
+                    title: "Add regression tests",
+                    done: false
+                  },
+                  {
+                    code: "8.2.1.5",
+                    title: "Visual verification",
+                    done: false
+                  }
+                ]
+              },
+              {
+                code: "8.2.2",
+                title: "Pattern card, files, and versions",
+                goal: "Users can open a pattern card, inspect files, and manage versions.",
+                dependencies: [
+                  "8.2.1"
+                ],
+                microtasks: [
+                  {
+                    code: "8.2.2.1",
+                    title: "Add detail card route",
+                    done: false
+                  },
+                  {
+                    code: "8.2.2.2",
+                    title: "Add version list and file metadata view",
+                    done: false
+                  },
+                  {
+                    code: "8.2.2.3",
+                    title: "Add create/edit flows for pattern versions",
+                    done: false
+                  },
+                  {
+                    code: "8.2.2.4",
+                    title: "Add loading/error states",
+                    done: false
+                  },
+                  {
+                    code: "8.2.2.5",
+                    title: "Add frontend regression tests",
+                    done: false
+                  },
+                  {
+                    code: "8.2.2.6",
+                    title: "Visual verification",
+                    done: false
+                  }
+                ]
+              },
+              {
+                code: "8.2.3",
+                title: "Link patterns to product models",
+                goal: "A product model can reference the correct pattern set and version family.",
+                dependencies: [
+                  "6.2.3",
+                  "8.2.2"
+                ],
+                microtasks: [
+                  {
+                    code: "8.2.3.1",
+                    title: "Add backend relation fields",
+                    done: false
+                  },
+                  {
+                    code: "8.2.3.2",
+                    title: "Add migration and schemas",
+                    done: false
+                  },
+                  {
+                    code: "8.2.3.3",
+                    title: "Add service validation",
+                    done: false
+                  },
+                  {
+                    code: "8.2.3.4",
+                    title: "Add model-card integration",
+                    done: false
+                  },
+                  {
+                    code: "8.2.3.5",
+                    title: "Add regression tests",
+                    done: false
+                  }
+                ]
+              }
+            ]
+          }
         ]
       },
       {
-        title: "Stage 9 — Routings",
+        title: "Stage 9 — Specifications",
         blocks: [
-          { title: "9.1 — Domain and persistence", items: [
-            { code: "9.1.1", title: "Routing architecture", goal: "Define routing scope, operations, work centers, and quality checkpoints for planned manufacturing.", dependencies: ["5.1.1", "8.2.3", "ADR-004"], microtasks: [
-              { code: "9.1.1.1", title: "Define routing entities and sequencing rules", done: false },
-              { code: "9.1.1.2", title: "Define links to models, specifications, and future production fact", done: false },
-              { code: "9.1.1.3", title: "Documentation checkpoint", done: false }
-            ]},
-            { code: "9.1.2", title: "Routing database core", goal: "Create the persistent storage for routings, operations, and work centers.", dependencies: ["9.1.1"], microtasks: [
-              { code: "9.1.2.1", title: "Add SQLAlchemy entities", done: false },
-              { code: "9.1.2.2", title: "Add Alembic migration", done: false },
-              { code: "9.1.2.3", title: "Add schemas and backend regression tests", done: false }
-            ]}
-          ]},
-          { title: "9.2 — Routing workflows", items: [
-            { code: "9.2.1", title: "Routing CRUD API", goal: "Users can create, view, and update routings through API.", dependencies: ["9.1.2"], microtasks: [
-              { code: "9.2.1.1", title: "Add repository and service CRUD", done: false },
-              { code: "9.2.1.2", title: "Add endpoints", done: false },
-              { code: "9.2.1.3", title: "Add backend regression tests", done: false }
-            ]},
-            { code: "9.2.2", title: "Routing workspace and card", goal: "Users can manage routings in a dedicated frontend flow.", dependencies: ["9.2.1"], microtasks: [
-              { code: "9.2.2.1", title: "Add frontend types and API client", done: false },
-              { code: "9.2.2.2", title: "Add workspace/list route", done: false },
-              { code: "9.2.2.3", title: "Add detail card and edit forms", done: false },
-              { code: "9.2.2.4", title: "Add loading/error states", done: false },
-              { code: "9.2.2.5", title: "Add frontend regression tests", done: false },
-              { code: "9.2.2.6", title: "Visual verification", done: false }
-            ]},
-            { code: "9.2.3", title: "Link routings to product models and order context", goal: "A product model can reference its routing, and the future order flow can reuse that approved plan.", dependencies: ["5.4.2", "9.2.1"], microtasks: [
-              { code: "9.2.3.1", title: "Add backend relation fields", done: false },
-              { code: "9.2.3.2", title: "Add migration and schemas", done: false },
-              { code: "9.2.3.3", title: "Add service validation for approved routing selection", done: false },
-              { code: "9.2.3.4", title: "Add model-card integration", done: false },
-              { code: "9.2.3.5", title: "Add order-context integration notes", done: false },
-              { code: "9.2.3.6", title: "Add regression tests", done: false }
-            ]}
-          ]}
+          {
+            title: "9.1 — Domain and persistence",
+            items: [
+              {
+                code: "9.1.1",
+                title: "Specification architecture",
+                goal: "Define specification scope, versioning, and planning role before production start.",
+                dependencies: [
+                  "6.1.1",
+                  "8.2.3",
+                  "ADR-004"
+                ],
+                microtasks: [
+                  {
+                    code: "9.1.1.1",
+                    title: "Define specification entities and version lifecycle",
+                    done: false
+                  },
+                  {
+                    code: "9.1.1.2",
+                    title: "Define material, accessory, norm, and substitute scope",
+                    done: false
+                  },
+                  {
+                    code: "9.1.1.3",
+                    title: "Documentation checkpoint",
+                    done: false
+                  }
+                ]
+              },
+              {
+                code: "9.1.2",
+                title: "Specification database core",
+                goal: "Create the persistent storage for specifications and their versions.",
+                dependencies: [
+                  "9.1.1"
+                ],
+                microtasks: [
+                  {
+                    code: "9.1.2.1",
+                    title: "Add SQLAlchemy entities",
+                    done: false
+                  },
+                  {
+                    code: "9.1.2.2",
+                    title: "Add Alembic migration",
+                    done: false
+                  },
+                  {
+                    code: "9.1.2.3",
+                    title: "Add schemas and backend regression tests",
+                    done: false
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            title: "9.2 — Specification workflows",
+            items: [
+              {
+                code: "9.2.1",
+                title: "Specification CRUD API",
+                goal: "Users can create, view, and update specifications through API.",
+                dependencies: [
+                  "9.1.2"
+                ],
+                microtasks: [
+                  {
+                    code: "9.2.1.1",
+                    title: "Add repository and service CRUD",
+                    done: false
+                  },
+                  {
+                    code: "9.2.1.2",
+                    title: "Add endpoints",
+                    done: false
+                  },
+                  {
+                    code: "9.2.1.3",
+                    title: "Add backend regression tests",
+                    done: false
+                  }
+                ]
+              },
+              {
+                code: "9.2.2",
+                title: "Specification workspace and card",
+                goal: "Users can manage specifications in a dedicated frontend flow.",
+                dependencies: [
+                  "9.2.1"
+                ],
+                microtasks: [
+                  {
+                    code: "9.2.2.1",
+                    title: "Add frontend types and API client",
+                    done: false
+                  },
+                  {
+                    code: "9.2.2.2",
+                    title: "Add workspace/list route",
+                    done: false
+                  },
+                  {
+                    code: "9.2.2.3",
+                    title: "Add detail card and edit forms",
+                    done: false
+                  },
+                  {
+                    code: "9.2.2.4",
+                    title: "Add loading/error states",
+                    done: false
+                  },
+                  {
+                    code: "9.2.2.5",
+                    title: "Add frontend regression tests",
+                    done: false
+                  },
+                  {
+                    code: "9.2.2.6",
+                    title: "Visual verification",
+                    done: false
+                  }
+                ]
+              },
+              {
+                code: "9.2.3",
+                title: "Link specifications to product models",
+                goal: "A product model can reference the approved specification line.",
+                dependencies: [
+                  "6.2.3",
+                  "9.2.1"
+                ],
+                microtasks: [
+                  {
+                    code: "9.2.3.1",
+                    title: "Add backend relation fields",
+                    done: false
+                  },
+                  {
+                    code: "9.2.3.2",
+                    title: "Add migration and schemas",
+                    done: false
+                  },
+                  {
+                    code: "9.2.3.3",
+                    title: "Add service validation for active/approved versions",
+                    done: false
+                  },
+                  {
+                    code: "9.2.3.4",
+                    title: "Add model-card integration",
+                    done: false
+                  },
+                  {
+                    code: "9.2.3.5",
+                    title: "Add regression tests",
+                    done: false
+                  }
+                ]
+              }
+            ]
+          }
         ]
       },
       {
-        title: "Stage 10 — Design and Approval",
+        title: "Stage 10 — Routings",
         blocks: [
-          { title: "10.1 — Design assets and comments", items: [
-            { code: "10.1.1", title: "Design project entity and versions", done: false },
-            { code: "10.1.2", title: "Layouts, logos, and comments", done: false }
-          ]},
-          { title: "10.2 — Approval workflow", items: [
-            { code: "10.2.1", title: "Client review and correction requests", done: false },
-            { code: "10.2.2", title: "Final approval checkpoint before production launch", done: false }
-          ]}
+          {
+            title: "10.1 — Domain and persistence",
+            items: [
+              {
+                code: "10.1.1",
+                title: "Routing architecture",
+                goal: "Define routing scope, operations, work centers, and quality checkpoints for planned manufacturing.",
+                dependencies: [
+                  "6.1.1",
+                  "9.2.3",
+                  "ADR-004"
+                ],
+                microtasks: [
+                  {
+                    code: "10.1.1.1",
+                    title: "Define routing entities and sequencing rules",
+                    done: false
+                  },
+                  {
+                    code: "10.1.1.2",
+                    title: "Define links to models, specifications, and future production fact",
+                    done: false
+                  },
+                  {
+                    code: "10.1.1.3",
+                    title: "Documentation checkpoint",
+                    done: false
+                  }
+                ]
+              },
+              {
+                code: "10.1.2",
+                title: "Routing database core",
+                goal: "Create the persistent storage for routings, operations, and work centers.",
+                dependencies: [
+                  "10.1.1"
+                ],
+                microtasks: [
+                  {
+                    code: "10.1.2.1",
+                    title: "Add SQLAlchemy entities",
+                    done: false
+                  },
+                  {
+                    code: "10.1.2.2",
+                    title: "Add Alembic migration",
+                    done: false
+                  },
+                  {
+                    code: "10.1.2.3",
+                    title: "Add schemas and backend regression tests",
+                    done: false
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            title: "10.2 — Routing workflows",
+            items: [
+              {
+                code: "10.2.1",
+                title: "Routing CRUD API",
+                goal: "Users can create, view, and update routings through API.",
+                dependencies: [
+                  "10.1.2"
+                ],
+                microtasks: [
+                  {
+                    code: "10.2.1.1",
+                    title: "Add repository and service CRUD",
+                    done: false
+                  },
+                  {
+                    code: "10.2.1.2",
+                    title: "Add endpoints",
+                    done: false
+                  },
+                  {
+                    code: "10.2.1.3",
+                    title: "Add backend regression tests",
+                    done: false
+                  }
+                ]
+              },
+              {
+                code: "10.2.2",
+                title: "Routing workspace and card",
+                goal: "Users can manage routings in a dedicated frontend flow.",
+                dependencies: [
+                  "10.2.1"
+                ],
+                microtasks: [
+                  {
+                    code: "10.2.2.1",
+                    title: "Add frontend types and API client",
+                    done: false
+                  },
+                  {
+                    code: "10.2.2.2",
+                    title: "Add workspace/list route",
+                    done: false
+                  },
+                  {
+                    code: "10.2.2.3",
+                    title: "Add detail card and edit forms",
+                    done: false
+                  },
+                  {
+                    code: "10.2.2.4",
+                    title: "Add loading/error states",
+                    done: false
+                  },
+                  {
+                    code: "10.2.2.5",
+                    title: "Add frontend regression tests",
+                    done: false
+                  },
+                  {
+                    code: "10.2.2.6",
+                    title: "Visual verification",
+                    done: false
+                  }
+                ]
+              },
+              {
+                code: "10.2.3",
+                title: "Link routings to product models and order context",
+                goal: "A product model can reference its routing, and the future order flow can reuse that approved plan.",
+                dependencies: [
+                  "6.4.2",
+                  "10.2.1"
+                ],
+                microtasks: [
+                  {
+                    code: "10.2.3.1",
+                    title: "Add backend relation fields",
+                    done: false
+                  },
+                  {
+                    code: "10.2.3.2",
+                    title: "Add migration and schemas",
+                    done: false
+                  },
+                  {
+                    code: "10.2.3.3",
+                    title: "Add service validation for approved routing selection",
+                    done: false
+                  },
+                  {
+                    code: "10.2.3.4",
+                    title: "Add model-card integration",
+                    done: false
+                  },
+                  {
+                    code: "10.2.3.5",
+                    title: "Add order-context integration notes",
+                    done: false
+                  },
+                  {
+                    code: "10.2.3.6",
+                    title: "Add regression tests",
+                    done: false
+                  }
+                ]
+              }
+            ]
+          }
         ]
       },
       {
-        title: "Stage 11 — Production",
+        title: "Stage 11 — Design and Approval",
         blocks: [
-          { title: "11.1 — Production planning", items: [
-            { code: "11.1.1", title: "Production orders and batches", done: false },
-            { code: "11.1.2", title: "Planning and work-center assignment", done: false }
-          ]},
-          { title: "11.2 — Production fact", items: [
-            { code: "11.2.1", title: "Operations, performers, output, and scrap", done: false },
-            { code: "11.2.2", title: "Quality control and released finished goods", done: false }
-          ]}
+          {
+            title: "11.1 — Design assets and comments",
+            items: [
+              {
+                code: "11.1.1",
+                title: "Design project entity and versions",
+                done: false
+              },
+              {
+                code: "11.1.2",
+                title: "Layouts, logos, and comments",
+                done: false
+              }
+            ]
+          },
+          {
+            title: "11.2 — Approval workflow",
+            items: [
+              {
+                code: "11.2.1",
+                title: "Client review and correction requests",
+                done: false
+              },
+              {
+                code: "11.2.2",
+                title: "Final approval checkpoint before production launch",
+                done: false
+              }
+            ]
+          }
         ]
       },
       {
-        title: "Stage 12 — Warehouse",
+        title: "Stage 12 — Production",
         blocks: [
-          { title: "12.1 — Storage structure", items: [
-            { code: "12.1.1", title: "Warehouses and bins", done: false },
-            { code: "12.1.2", title: "Lots and balances", done: false }
-          ]},
-          { title: "12.2 — Movements", items: [
-            { code: "12.2.1", title: "Receipts, issues, reserves, and transfers", done: false },
-            { code: "12.2.2", title: "Inventory and finished-goods flow", done: false }
-          ]}
+          {
+            title: "12.1 — Production planning",
+            items: [
+              {
+                code: "12.1.1",
+                title: "Production orders and batches",
+                done: false
+              },
+              {
+                code: "12.1.2",
+                title: "Planning and work-center assignment",
+                done: false
+              }
+            ]
+          },
+          {
+            title: "12.2 — Production fact",
+            items: [
+              {
+                code: "12.2.1",
+                title: "Operations, performers, output, and scrap",
+                done: false
+              },
+              {
+                code: "12.2.2",
+                title: "Quality control and released finished goods",
+                done: false
+              }
+            ]
+          }
         ]
       },
       {
-        title: "Stage 13 — Procurement",
+        title: "Stage 13 — Warehouse",
         blocks: [
-          { title: "13.1 — Supplier contour", items: [
-            { code: "13.1.1", title: "Suppliers and supplier prices", done: false },
-            { code: "13.1.2", title: "Procurement requests and purchase orders", done: false }
-          ]},
-          { title: "13.2 — Supply execution", items: [
-            { code: "13.2.1", title: "Receipts and returns", done: false },
-            { code: "13.2.2", title: "Demand planning and minimum stock linkage", done: false }
-          ]}
+          {
+            title: "13.1 — Storage structure",
+            items: [
+              {
+                code: "13.1.1",
+                title: "Warehouses and bins",
+                done: false
+              },
+              {
+                code: "13.1.2",
+                title: "Lots and balances",
+                done: false
+              }
+            ]
+          },
+          {
+            title: "13.2 — Movements",
+            items: [
+              {
+                code: "13.2.1",
+                title: "Receipts, issues, reserves, and transfers",
+                done: false
+              },
+              {
+                code: "13.2.2",
+                title: "Inventory and finished-goods flow",
+                done: false
+              }
+            ]
+          }
         ]
       },
       {
-        title: "Stage 14 — Shipping and Payments",
+        title: "Stage 14 — Procurement",
         blocks: [
-          { title: "14.1 — Shipping", items: [
-            { code: "14.1.1", title: "Shipping orders, packaging, delivery, and documents", done: false }
-          ]},
-          { title: "14.2 — Payments", items: [
-            { code: "14.2.1", title: "Invoices, payments, advances, and debt", done: false },
-            { code: "14.2.2", title: "Settlements by order and client", done: false }
-          ]}
+          {
+            title: "14.1 — Supplier contour",
+            items: [
+              {
+                code: "14.1.1",
+                title: "Suppliers and supplier prices",
+                done: false
+              },
+              {
+                code: "14.1.2",
+                title: "Procurement requests and purchase orders",
+                done: false
+              }
+            ]
+          },
+          {
+            title: "14.2 — Supply execution",
+            items: [
+              {
+                code: "14.2.1",
+                title: "Receipts and returns",
+                done: false
+              },
+              {
+                code: "14.2.2",
+                title: "Demand planning and minimum stock linkage",
+                done: false
+              }
+            ]
+          }
         ]
       },
       {
-        title: "Stage 15 — Costing and Analytics",
+        title: "Stage 15 — Shipping and Payments",
         blocks: [
-          { title: "15.1 — Costing", items: [
-            { code: "15.1.1", title: "Planned, normative, and actual costing", done: false },
-            { code: "15.1.2", title: "Margin and plan-fact analysis", done: false }
-          ]},
-          { title: "15.2 — Analytics", items: [
-            { code: "15.2.1", title: "CRM dashboard and base order analytics", done: true },
-            { code: "15.2.2", title: "ERP analytics and management P&L", done: false }
-          ]}
+          {
+            title: "15.1 — Shipping",
+            items: [
+              {
+                code: "15.1.1",
+                title: "Shipping orders, packaging, delivery, and documents",
+                done: false
+              }
+            ]
+          },
+          {
+            title: "15.2 — Payments",
+            items: [
+              {
+                code: "15.2.1",
+                title: "Invoices, payments, advances, and debt",
+                done: false
+              },
+              {
+                code: "15.2.2",
+                title: "Settlements by order and client",
+                done: false
+              }
+            ]
+          }
         ]
       },
       {
-        title: "Stage 16 — Integrations",
+        title: "Stage 16 — Costing and Analytics",
         blocks: [
-          { title: "16.1 — External channels", items: [
-            { code: "16.1.1", title: "Website forms, email, VK, Telegram, and telephony", done: false },
-            { code: "16.1.2", title: "Google Sheets and webhooks", done: false }
-          ]},
-          { title: "16.2 — Enterprise exchange", items: [
-            { code: "16.2.1", title: "1C:UNF exchange", done: false },
-            { code: "16.2.2", title: "Delivery and payment-system integrations", done: false },
-            { code: "16.2.3", title: "External API for third-party systems", done: false }
-          ]}
+          {
+            title: "16.1 — Costing",
+            items: [
+              {
+                code: "16.1.1",
+                title: "Planned, normative, and actual costing",
+                done: false
+              },
+              {
+                code: "16.1.2",
+                title: "Margin and plan-fact analysis",
+                done: false
+              }
+            ]
+          },
+          {
+            title: "16.2 — Analytics",
+            items: [
+              {
+                code: "16.2.1",
+                title: "CRM dashboard and base order analytics",
+                done: true
+              },
+              {
+                code: "16.2.2",
+                title: "ERP analytics and management P&L",
+                done: false
+              }
+            ]
+          }
         ]
       },
       {
-        title: "Stage 17 — Industrial Operations and Access Control",
+        title: "Stage 17 — Integrations",
         blocks: [
-          { title: "17.1 — Access control", items: [
-            { code: "17.1.1", title: "Authentication", done: false },
-            { code: "17.1.2", title: "System users, roles, and permissions", done: false },
-            { code: "17.1.3", title: "Universal audit trail", done: false }
-          ]},
-          { title: "17.2 — Production operations", items: [
-            { code: "17.2.1", title: "VPS, production Docker, reverse proxy, and HTTPS", done: false },
-            { code: "17.2.2", title: "CI/CD, monitoring, and logging", done: false },
-            { code: "17.2.3", title: "Backup, restore, and administrator documentation", done: false }
-          ]}
+          {
+            title: "17.1 — External channels",
+            items: [
+              {
+                code: "17.1.1",
+                title: "Website forms, email, VK, Telegram, and telephony",
+                done: false
+              },
+              {
+                code: "17.1.2",
+                title: "Google Sheets and webhooks",
+                done: false
+              }
+            ]
+          },
+          {
+            title: "17.2 — Enterprise exchange",
+            items: [
+              {
+                code: "17.2.1",
+                title: "1C:UNF exchange",
+                done: false
+              },
+              {
+                code: "17.2.2",
+                title: "Delivery and payment-system integrations",
+                done: false
+              },
+              {
+                code: "17.2.3",
+                title: "External API for third-party systems",
+                done: false
+              }
+            ]
+          }
+        ]
+      },
+      {
+        title: "Stage 18 — Industrial Operations and Access Control",
+        blocks: [
+          {
+            title: "18.1 — Access control",
+            items: [
+              {
+                code: "18.1.1",
+                title: "Authentication",
+                done: false
+              },
+              {
+                code: "18.1.2",
+                title: "System users, roles, and permissions",
+                done: false
+              },
+              {
+                code: "18.1.3",
+                title: "Universal audit trail",
+                done: false
+              }
+            ]
+          },
+          {
+            title: "18.2 — Production operations",
+            items: [
+              {
+                code: "18.2.1",
+                title: "VPS, production Docker, reverse proxy, and HTTPS",
+                done: false
+              },
+              {
+                code: "18.2.2",
+                title: "CI/CD, monitoring, and logging",
+                done: false
+              },
+              {
+                code: "18.2.3",
+                title: "Backup, restore, and administrator documentation",
+                done: false
+              }
+            ]
+          }
         ]
       }
     ];

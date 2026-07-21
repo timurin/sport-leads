@@ -2,9 +2,9 @@
 
 **Code:** `SL-ROADMAP-v1`
 **Updated:** `2026-07-21`
-**Project version:** `v0.8.8i`
+**Project version:** `v0.9.0`
 **Git branch:** `feature/v0.8.1-nomenclature-core`
-**Git commit:** `05872f3`
+**Git commit:** `281569b`
 
 **Canonical files:**
 - roadmap: `docs/roadmap/roadmap.md`
@@ -28,7 +28,7 @@ Current confirmed contour:
 
 Next detailed contour:
 
-`Product models -> Size grids -> Patterns -> Specifications -> Routings -> Model link in order items`
+`Design System and Platform Templates -> Product models -> Size grids -> Patterns -> Specifications -> Routings`
 
 ## Stage 0 — Platform and Infrastructure
 
@@ -156,11 +156,217 @@ Next detailed contour:
 - [ ] 4.5.1 — Nomenclature import
 - [ ] 4.5.2 — Nomenclature export
 
-## Stage 5 — Product Models
+## Stage 5 — Design System and Platform Templates
 
-### 5.1 — Architecture and domain boundary
+Goal:
+Create a single visual and layout foundation so new modules use approved page templates and existing pages migrate without redesigning the interface from scratch.
 
-#### 5.1.1 — Product model domain contract
+### 5.1 — Audit and inventory
+
+#### 5.1.1 — Routes and page types
+
+Goal:
+Build a factual map of frontend routes and classify platform pages.
+
+Microtasks:
+- [x] 5.1.1.1 — Audit existing routes, layouts and page types — `v0.9.0`; evidence: `docs/design-system/ui-audit.md`
+- [ ] 5.1.1.2 — Audit loading, error and empty states
+- [ ] 5.1.1.3 — Audit persistent versus demo/local data
+- [ ] 5.1.1.4 — Document reference and migration pages
+
+#### 5.1.2 — Component inventory
+
+- [ ] 5.1.2.1 — Inventory shared UI components
+- [ ] 5.1.2.2 — Inventory domain components
+- [ ] 5.1.2.3 — Identify duplicates and overlapping responsibilities
+- [ ] 5.1.2.4 — Define keep, unify, replace and deprecate decisions
+
+#### 5.1.3 — Layout and scrolling audit
+
+- [ ] 5.1.3.1 — Audit AppShell and workspace layouts
+- [ ] 5.1.3.2 — Audit page widths and content containers
+- [ ] 5.1.3.3 — Audit nested and double scrolling
+- [ ] 5.1.3.4 — Audit sticky and fixed elements
+- [ ] 5.1.3.5 — Define target scrolling rules
+
+#### 5.1.4 — Responsive audit
+
+- [ ] 5.1.4.1 — Define responsive verification matrix
+- [ ] 5.1.4.2 — Audit desktop layouts
+- [ ] 5.1.4.3 — Audit laptop layouts
+- [ ] 5.1.4.4 — Audit tablet layouts
+- [ ] 5.1.4.5 — Audit mobile layouts
+- [ ] 5.1.4.6 — Register visual bug microtasks
+
+### 5.2 — Design tokens
+
+#### 5.2.1 — Visual foundations
+
+- [ ] 5.2.1.1 — Audit existing token sources
+- [ ] 5.2.1.2 — Define semantic color tokens
+- [ ] 5.2.1.3 — Define typography scale
+- [ ] 5.2.1.4 — Define spacing scale
+- [ ] 5.2.1.5 — Define borders, radius and shadows
+- [ ] 5.2.1.6 — Define component sizes
+- [ ] 5.2.1.7 — Define interaction states
+
+#### 5.2.2 — Responsive and layer tokens
+
+- [ ] 5.2.2.1 — Define breakpoints
+- [ ] 5.2.2.2 — Define content width rules
+- [ ] 5.2.2.3 — Define z-index layers
+- [ ] 5.2.2.4 — Define motion rules
+- [ ] 5.2.2.5 — Prepare token migration plan
+
+### 5.3 — Platform shell
+
+#### 5.3.1 — Navigation shell
+
+- [ ] 5.3.1.1 — Standardize sidebar
+- [ ] 5.3.1.2 — Standardize topbar
+- [ ] 5.3.1.3 — Standardize workspace tabs
+- [ ] 5.3.1.4 — Define responsive navigation
+- [ ] 5.3.1.5 — Verify keyboard navigation
+
+#### 5.3.2 — Page shell
+
+- [ ] 5.3.2.1 — Standardize PageLayout
+- [ ] 5.3.2.2 — Standardize PageHeader
+- [ ] 5.3.2.3 — Standardize page actions
+- [ ] 5.3.2.4 — Standardize content containers
+- [ ] 5.3.2.5 — Standardize scrolling ownership
+- [ ] 5.3.2.6 — Add shared loading and error boundaries
+
+### 5.4 — Shared UI components
+
+#### 5.4.1 — Forms
+
+- [ ] 5.4.1.1 — Text and numeric inputs
+- [ ] 5.4.1.2 — Select and combobox
+- [ ] 5.4.1.3 — Checkbox, radio and switch
+- [ ] 5.4.1.4 — Date and money controls
+- [ ] 5.4.1.5 — Validation and help states
+- [ ] 5.4.1.6 — Disabled and read-only states
+
+#### 5.4.2 — Actions and feedback
+
+- [ ] 5.4.2.1 — Buttons and icon actions
+- [ ] 5.4.2.2 — Status badges
+- [ ] 5.4.2.3 — Dialogs and drawers
+- [ ] 5.4.2.4 — Toast and inline feedback
+- [ ] 5.4.2.5 — Loading, empty and error states
+
+#### 5.4.3 — Data presentation
+
+- [ ] 5.4.3.1 — Table foundation
+- [ ] 5.4.3.2 — Filter toolbar
+- [ ] 5.4.3.3 — Pagination and totals
+- [ ] 5.4.3.4 — Tabs and compact tabs
+- [ ] 5.4.3.5 — Activity timeline
+- [ ] 5.4.3.6 — Tasks and comments panels
+- [ ] 5.4.3.7 — Entity links and inline editing
+
+### 5.5 — Page templates
+
+#### 5.5.1 — PT-01 Dashboard
+
+- [ ] 5.5.1.1 — Define template contract
+- [ ] 5.5.1.2 — Implement reference layout
+- [ ] 5.5.1.3 — Add responsive rules
+- [ ] 5.5.1.4 — Verify on Sales Dashboard
+
+#### 5.5.2 — PT-02 List/Table Workspace
+
+- [ ] 5.5.2.1 — Define template contract
+- [ ] 5.5.2.2 — Implement reference layout
+- [ ] 5.5.2.3 — Add responsive table behaviour
+- [ ] 5.5.2.4 — Verify on organizations or clients
+
+#### 5.5.3 — PT-03 Kanban Workspace
+
+- [ ] 5.5.3.1 — Define template contract
+- [ ] 5.5.3.2 — Standardize board structure
+- [ ] 5.5.3.3 — Define mobile fallback
+- [ ] 5.5.3.4 — Verify on Leads Kanban
+
+#### 5.5.4 — PT-04 Tree + List Workspace
+
+- [ ] 5.5.4.1 — Define template contract
+- [ ] 5.5.4.2 — Standardize tree and content panes
+- [ ] 5.5.4.3 — Add responsive tree drawer
+- [ ] 5.5.4.4 — Verify on Nomenclature Workspace
+
+#### 5.5.5 — PT-05 Simple Entity Card
+
+- [ ] 5.5.5.1 — Define template contract
+- [ ] 5.5.5.2 — Implement reference card
+- [ ] 5.5.5.3 — Add responsive layout
+- [ ] 5.5.5.4 — Verify on organization or client
+
+#### 5.5.6 — PT-06 Complex Entity Card
+
+- [ ] 5.5.6.1 — Define template contract
+- [ ] 5.5.6.2 — Standardize entity header
+- [ ] 5.5.6.3 — Standardize stage and metrics area
+- [ ] 5.5.6.4 — Standardize section grid
+- [ ] 5.5.6.5 — Standardize activity tabs
+- [ ] 5.5.6.6 — Define responsive collapse
+- [ ] 5.5.6.7 — Verify on Lead Card
+
+#### 5.5.7 — PT-07 Document Card
+
+- [ ] 5.5.7.1 — Define template contract
+- [ ] 5.5.7.2 — Standardize document header
+- [ ] 5.5.7.3 — Standardize tabular section
+- [ ] 5.5.7.4 — Standardize totals and actions
+- [ ] 5.5.7.5 — Define responsive behaviour
+- [ ] 5.5.7.6 — Verify on Customer Order Card
+
+#### 5.5.8 — PT-08 Versioned Workspace
+
+- [ ] 5.5.8.1 — Define template contract
+- [ ] 5.5.8.2 — Define active version and history
+- [ ] 5.5.8.3 — Define draft and published states
+- [ ] 5.5.8.4 — Define compare and restore UX
+- [ ] 5.5.8.5 — Prepare reference Model Card
+
+### 5.6 — Reference migrations
+
+- [ ] 5.6.1 — Migrate Sales Dashboard
+- [ ] 5.6.2 — Migrate Leads Kanban
+- [ ] 5.6.3 — Migrate Lead Card
+- [ ] 5.6.4 — Migrate Customer Order Card
+- [ ] 5.6.5 — Migrate Nomenclature Workspace
+- [ ] 5.6.6 — Migrate Nomenclature Card
+- [ ] 5.6.7 — Create reference Model Card shell
+
+### 5.7 — Responsive and accessibility verification
+
+- [ ] 5.7.1 — Desktop matrix
+- [ ] 5.7.2 — Laptop matrix
+- [ ] 5.7.3 — Tablet matrix
+- [ ] 5.7.4 — Mobile matrix
+- [ ] 5.7.5 — Horizontal overflow verification
+- [ ] 5.7.6 — Keyboard navigation
+- [ ] 5.7.7 — Focus visibility
+- [ ] 5.7.8 — Contrast verification
+- [ ] 5.7.9 — Visual regression checklist
+
+### 5.8 — Design checkpoint
+
+- [ ] 5.8.1 — Design documentation complete
+- [ ] 5.8.2 — Tokens approved
+- [ ] 5.8.3 — Platform shell approved
+- [ ] 5.8.4 — Page templates approved
+- [ ] 5.8.5 — Reference pages approved
+- [ ] 5.8.6 — Critical visual bugs fixed
+- [ ] 5.8.7 — New modules required to use templates
+
+## Stage 6 — Product Models
+
+### 6.1 — Architecture and domain boundary
+
+#### 6.1.1 — Product model domain contract
 
 Goal:
 Define the persistent product-model contour and its boundaries against nomenclature, specifications, routings, and production.
@@ -170,535 +376,434 @@ Dependencies:
 - 4.4.1
 
 Microtasks:
-- [ ] 5.1.1.1 — Document model boundaries and lifecycle states
-- [ ] 5.1.1.2 — Define links to nomenclature and future size grids
-- [ ] 5.1.1.3 — Define versioning and status rules
-- [ ] 5.1.1.4 — Review order-item integration constraints
-- [ ] 5.1.1.5 — Documentation checkpoint
+- [ ] 6.1.1.1 — Document model boundaries and lifecycle states
+- [ ] 6.1.1.2 — Define links to nomenclature and future size grids
+- [ ] 6.1.1.3 — Define versioning and status rules
+- [ ] 6.1.1.4 — Review order-item integration constraints
+- [ ] 6.1.1.5 — Documentation checkpoint
 
 Completion criteria:
 - model contour has a single agreed source of truth;
 - dependencies on size grids, patterns, specifications, and routings are explicit;
 - future order-item integration is not ambiguous.
 
-#### 5.1.2 — Database core for product models
+#### 6.1.2 — Database core for product models
 
 Goal:
 Create the persistent database foundation for product models and their versions.
 
 Dependencies:
-- 5.1.1
+- 6.1.1
 
 Microtasks:
-- [ ] 5.1.2.1 — Add SQLAlchemy model entities
-- [ ] 5.1.2.2 — Add Alembic migration with upgrade and downgrade
-- [ ] 5.1.2.3 — Add Pydantic read/write schemas
-- [ ] 5.1.2.4 — Add backend regression tests for persistence
+- [ ] 6.1.2.1 — Add SQLAlchemy model entities
+- [ ] 6.1.2.2 — Add Alembic migration with upgrade and downgrade
+- [ ] 6.1.2.3 — Add Pydantic read/write schemas
+- [ ] 6.1.2.4 — Add backend regression tests for persistence
 
 Completion criteria:
 - product-model data is stored in PostgreSQL;
 - migration is reversible;
 - tests cover create/read/update persistence rules.
 
-### 5.2 — Backend product models
+### 6.2 — Backend product models
 
-#### 5.2.1 — Create and list API for product models
+#### 6.2.1 — Create and list API for product models
 
 Goal:
 Users can create and browse product models through backend API.
 
 Dependencies:
-- 5.1.2
+- 6.1.2
 
 Microtasks:
-- [ ] 5.2.1.1 — Add repository list and create operations
-- [ ] 5.2.1.2 — Add service validation for uniqueness and status defaults
-- [ ] 5.2.1.3 — Add POST and GET endpoints
-- [ ] 5.2.1.4 — Add OpenAPI and regression tests
+- [ ] 6.2.1.1 — Add repository list and create operations
+- [ ] 6.2.1.2 — Add service validation for uniqueness and status defaults
+- [ ] 6.2.1.3 — Add POST and GET endpoints
+- [ ] 6.2.1.4 — Add OpenAPI and regression tests
 
 Completion criteria:
 - API creates and lists models;
 - duplicates are validated;
 - regression tests pass.
 
-#### 5.2.2 — Update API for product models
+#### 6.2.2 — Update API for product models
 
 Goal:
 Users can change model data and keep it consistent after reload.
 
 Dependencies:
-- 5.2.1
+- 6.2.1
 
 Microtasks:
-- [ ] 5.2.2.1 — Add update schema
-- [ ] 5.2.2.2 — Add repository update operation
-- [ ] 5.2.2.3 — Add service validation for editable fields
-- [ ] 5.2.2.4 — Add PATCH endpoint
-- [ ] 5.2.2.5 — Add regression tests
+- [ ] 6.2.2.1 — Add update schema
+- [ ] 6.2.2.2 — Add repository update operation
+- [ ] 6.2.2.3 — Add service validation for editable fields
+- [ ] 6.2.2.4 — Add PATCH endpoint
+- [ ] 6.2.2.5 — Add regression tests
 
 Completion criteria:
 - model data is updated in PostgreSQL;
 - validation errors are explicit;
 - repeat open shows saved changes.
 
-#### 5.2.3 — Statuses and versioning for product models
+#### 6.2.3 — Statuses and versioning for product models
 
 Goal:
 Models support controlled lifecycle states and version history.
 
 Dependencies:
-- 5.2.2
+- 6.2.2
 
 Microtasks:
-- [ ] 5.2.3.1 — Add status fields and version entity rules
-- [ ] 5.2.3.2 — Add migration changes if required
-- [ ] 5.2.3.3 — Add service rules for activation and archival
-- [ ] 5.2.3.4 — Add API endpoints for status/version actions
-- [ ] 5.2.3.5 — Add backend regression tests
+- [ ] 6.2.3.1 — Add status fields and version entity rules
+- [ ] 6.2.3.2 — Add migration changes if required
+- [ ] 6.2.3.3 — Add service rules for activation and archival
+- [ ] 6.2.3.4 — Add API endpoints for status/version actions
+- [ ] 6.2.3.5 — Add backend regression tests
 
 Completion criteria:
 - model statuses are persistent and validated;
 - versions are traceable;
 - state changes are covered by tests.
 
-### 5.3 — Frontend product models
+### 6.3 — Frontend product models
 
-#### 5.3.1 — Product-model workspace and list
+#### 6.3.1 — Product-model workspace and list
 
 Goal:
 Users can open a dedicated product-model workspace and browse the catalog.
 
 Dependencies:
-- 5.2.1
+- 6.2.1
 
 Microtasks:
-- [ ] 5.3.1.1 — Add frontend types and API client
-- [ ] 5.3.1.2 — Add list route in the settings workspace route group
-- [ ] 5.3.1.3 — Add workspace UI with loading and error states
-- [ ] 5.3.1.4 — Add frontend regression tests
-- [ ] 5.3.1.5 — Visual verification
+- [ ] 6.3.1.1 — Add frontend types and API client
+- [ ] 6.3.1.2 — Add list route in the settings workspace route group
+- [ ] 6.3.1.3 — Add workspace UI with loading and error states
+- [ ] 6.3.1.4 — Add frontend regression tests
+- [ ] 6.3.1.5 — Visual verification
 
 Completion criteria:
 - workspace opens through a real route;
 - list data comes from API;
 - loading and error states are explicit.
 
-#### 5.3.2 — Product-model card route
+#### 6.3.2 — Product-model card route
 
 Goal:
 Users can open a dedicated product-model card.
 
 Dependencies:
-- 5.3.1
+- 6.3.1
 
 Microtasks:
-- [ ] 5.3.2.1 — Add detail route and page shell
-- [ ] 5.3.2.2 — Add card view state
-- [ ] 5.3.2.3 — Add not-found, loading, and error states
-- [ ] 5.3.2.4 — Add frontend regression tests
-- [ ] 5.3.2.5 — Visual verification
+- [ ] 6.3.2.1 — Add detail route and page shell
+- [ ] 6.3.2.2 — Add card view state
+- [ ] 6.3.2.3 — Add not-found, loading, and error states
+- [ ] 6.3.2.4 — Add frontend regression tests
+- [ ] 6.3.2.5 — Visual verification
 
 Completion criteria:
 - card URL uses the real route structure;
 - page handles loading, missing, and error states correctly.
 
-#### 5.3.3 — Product-model create and edit flows
+#### 6.3.3 — Product-model create and edit flows
 
 Goal:
 Users can create and edit models from the workspace and card.
 
 Dependencies:
-- 5.2.2
-- 5.3.2
+- 6.2.2
+- 6.3.2
 
 Microtasks:
-- [ ] 5.3.3.1 — Add create form
-- [ ] 5.3.3.2 — Add edit form
-- [ ] 5.3.3.3 — Add submit actions and validation mapping
-- [ ] 5.3.3.4 — Add frontend regression tests
-- [ ] 5.3.3.5 — Visual verification
+- [ ] 6.3.3.1 — Add create form
+- [ ] 6.3.3.2 — Add edit form
+- [ ] 6.3.3.3 — Add submit actions and validation mapping
+- [ ] 6.3.3.4 — Add frontend regression tests
+- [ ] 6.3.3.5 — Visual verification
 
 Completion criteria:
 - create and edit flows save through API;
 - validation errors are visible;
 - reopened card shows saved data.
 
-### 5.4 — Links to nomenclature and order items
+### 6.4 — Links to nomenclature and order items
 
-#### 5.4.1 — Link product models to nomenclature
+#### 6.4.1 — Link product models to nomenclature
 
 Goal:
 The model card can reference the nomenclature it describes without duplicating the catalog source of truth.
 
 Dependencies:
 - 4.1.1
-- 5.2.2
+- 6.2.2
 
 Microtasks:
-- [ ] 5.4.1.1 — Add backend relation fields
-- [ ] 5.4.1.2 — Add migration and schemas
-- [ ] 5.4.1.3 — Add service validation for active nomenclature selection
-- [ ] 5.4.1.4 — Add API support and regression tests
+- [ ] 6.4.1.1 — Add backend relation fields
+- [ ] 6.4.1.2 — Add migration and schemas
+- [ ] 6.4.1.3 — Add service validation for active nomenclature selection
+- [ ] 6.4.1.4 — Add API support and regression tests
 
 Completion criteria:
 - model-to-nomenclature relation is persistent;
 - invalid links are rejected;
 - existing nomenclature source of truth remains single.
 
-#### 5.4.2 — Use product model in sales-order items
+#### 6.4.2 — Use product model in sales-order items
 
 Goal:
 Order items can reference a product model in a controlled way without breaking existing snapshots.
 
 Dependencies:
-- 5.4.1
+- 6.4.1
 - 3.2.4
 
 Microtasks:
-- [ ] 5.4.2.1 — Define backend order-item relation strategy
-- [ ] 5.4.2.2 — Add nullable storage and migration if approved
-- [ ] 5.4.2.3 — Add schemas, service rules, and API support
-- [ ] 5.4.2.4 — Add frontend selection flow in order item forms
-- [ ] 5.4.2.5 — Add regression tests
-- [ ] 5.4.2.6 — Visual verification
-- [ ] 5.4.2.7 — Documentation checkpoint
+- [ ] 6.4.2.1 — Define backend order-item relation strategy
+- [ ] 6.4.2.2 — Add nullable storage and migration if approved
+- [ ] 6.4.2.3 — Add schemas, service rules, and API support
+- [ ] 6.4.2.4 — Add frontend selection flow in order item forms
+- [ ] 6.4.2.5 — Add regression tests
+- [ ] 6.4.2.6 — Visual verification
+- [ ] 6.4.2.7 — Documentation checkpoint
 
 Completion criteria:
 - order items can select a model without breaking backward compatibility;
 - snapshot behavior stays explicit;
 - backend and frontend checks pass.
 
-## Stage 6 — Size Grids
+## Stage 7 — Size Grids
 
-### 6.1 — Domain and persistence
+### 7.1 — Domain and persistence
 
-#### 6.1.1 — Size-grid architecture
+#### 7.1.1 — Size-grid architecture
 
 Goal:
 Define the dedicated size-grid contour used by models and future order scenarios.
 
 Dependencies:
-- 5.1.1
+- 6.1.1
 
 Microtasks:
-- [ ] 6.1.1.1 — Define size-grid domain and naming rules
-- [ ] 6.1.1.2 — Define links to product models and order items
-- [ ] 6.1.1.3 — Documentation checkpoint
+- [ ] 7.1.1.1 — Define size-grid domain and naming rules
+- [ ] 7.1.1.2 — Define links to product models and order items
+- [ ] 7.1.1.3 — Documentation checkpoint
 
 Completion criteria:
 - size-grid scope is isolated from ad-hoc order-item size snapshots;
 - terminology is stable for backend and frontend.
 
-#### 6.1.2 — Size-grid database core
+#### 7.1.2 — Size-grid database core
 
 Goal:
 Create the persistent storage for size grids, sizes, and growth groups.
 
 Dependencies:
-- 6.1.1
+- 7.1.1
 
 Microtasks:
-- [ ] 6.1.2.1 — Add SQLAlchemy entities
-- [ ] 6.1.2.2 — Add Alembic migration
-- [ ] 6.1.2.3 — Add schemas and backend tests
+- [ ] 7.1.2.1 — Add SQLAlchemy entities
+- [ ] 7.1.2.2 — Add Alembic migration
+- [ ] 7.1.2.3 — Add schemas and backend tests
 
 Completion criteria:
 - grids and their items are stored persistently;
 - migration is reversible;
 - tests cover persistence rules.
 
-### 6.2 — Backend and frontend flows
+### 7.2 — Backend and frontend flows
 
-#### 6.2.1 — Size-grid CRUD API
+#### 7.2.1 — Size-grid CRUD API
 
 Goal:
 Users can create, view, and update size grids through API.
 
 Dependencies:
-- 6.1.2
+- 7.1.2
 
 Microtasks:
-- [ ] 6.2.1.1 — Add repository and service CRUD
-- [ ] 6.2.1.2 — Add endpoints
-- [ ] 6.2.1.3 — Add backend regression tests
+- [ ] 7.2.1.1 — Add repository and service CRUD
+- [ ] 7.2.1.2 — Add endpoints
+- [ ] 7.2.1.3 — Add backend regression tests
 
 Completion criteria:
 - API supports CRUD for grids;
 - validation is explicit and tested.
 
-#### 6.2.2 — Size-grid workspace and card
+#### 7.2.2 — Size-grid workspace and card
 
 Goal:
 Users can manage size grids in the frontend workspace.
 
 Dependencies:
-- 6.2.1
+- 7.2.1
 
 Microtasks:
-- [ ] 6.2.2.1 — Add frontend types and API client
-- [ ] 6.2.2.2 — Add workspace/list route
-- [ ] 6.2.2.3 — Add detail card and forms
-- [ ] 6.2.2.4 — Add loading/error states
-- [ ] 6.2.2.5 — Add frontend regression tests
-- [ ] 6.2.2.6 — Visual verification
+- [ ] 7.2.2.1 — Add frontend types and API client
+- [ ] 7.2.2.2 — Add workspace/list route
+- [ ] 7.2.2.3 — Add detail card and forms
+- [ ] 7.2.2.4 — Add loading/error states
+- [ ] 7.2.2.5 — Add frontend regression tests
+- [ ] 7.2.2.6 — Visual verification
 
 Completion criteria:
 - workspace uses real API data;
 - card and forms are usable;
 - loading and error states are covered.
 
-#### 6.2.3 — Link size grids to product models
+#### 7.2.3 — Link size grids to product models
 
 Goal:
 A product model can reference a dedicated size grid.
 
 Dependencies:
-- 5.2.2
-- 6.2.1
+- 6.2.2
+- 7.2.1
 
 Microtasks:
-- [ ] 6.2.3.1 — Add backend relation fields
-- [ ] 6.2.3.2 — Add migration and schema updates
-- [ ] 6.2.3.3 — Add service and API validation
-- [ ] 6.2.3.4 — Add frontend selection flow in model forms
-- [ ] 6.2.3.5 — Add regression tests
+- [ ] 7.2.3.1 — Add backend relation fields
+- [ ] 7.2.3.2 — Add migration and schema updates
+- [ ] 7.2.3.3 — Add service and API validation
+- [ ] 7.2.3.4 — Add frontend selection flow in model forms
+- [ ] 7.2.3.5 — Add regression tests
 
 Completion criteria:
 - product models store a valid size-grid relation;
 - invalid relations are rejected;
 - frontend and backend behavior is covered by tests.
 
-## Stage 7 — Patterns
+## Stage 8 — Patterns
 
-### 7.1 — Pattern catalog foundation
+### 8.1 — Pattern catalog foundation
 
-#### 7.1.1 — Pattern domain architecture
+#### 8.1.1 — Pattern domain architecture
 
 Goal:
 Define pattern sets, pattern parts, and versioning boundaries for product models.
 
 Dependencies:
-- 5.1.1
-- 6.2.3
+- 6.1.1
+- 7.2.3
 
 Microtasks:
-- [ ] 7.1.1.1 — Define pattern entities and lifecycle
-- [ ] 7.1.1.2 — Define file and version boundaries
-- [ ] 7.1.1.3 — Documentation checkpoint
+- [ ] 8.1.1.1 — Define pattern entities and lifecycle
+- [ ] 8.1.1.2 — Define file and version boundaries
+- [ ] 8.1.1.3 — Documentation checkpoint
 
 Completion criteria:
 - pattern contour is clearly separated from models and specifications;
 - file/version rules are explicit.
 
-#### 7.1.2 — Pattern database and files core
+#### 8.1.2 — Pattern database and files core
 
 Goal:
 Create the persistent pattern storage and metadata model.
 
 Dependencies:
-- 7.1.1
+- 8.1.1
 
 Microtasks:
-- [ ] 7.1.2.1 — Add SQLAlchemy entities for pattern sets, parts, and versions
-- [ ] 7.1.2.2 — Add Alembic migration
-- [ ] 7.1.2.3 — Add file metadata strategy
-- [ ] 7.1.2.4 — Add backend regression tests
+- [ ] 8.1.2.1 — Add SQLAlchemy entities for pattern sets, parts, and versions
+- [ ] 8.1.2.2 — Add Alembic migration
+- [ ] 8.1.2.3 — Add file metadata strategy
+- [ ] 8.1.2.4 — Add backend regression tests
 
 Completion criteria:
 - pattern metadata is persistent;
 - migration is reversible;
 - file metadata does not create a parallel uncontrolled store.
 
-### 7.2 — Pattern management flows
+### 8.2 — Pattern management flows
 
-#### 7.2.1 — Pattern API and workspace
+#### 8.2.1 — Pattern API and workspace
 
 Goal:
 Users can browse and maintain the pattern catalog.
 
 Dependencies:
-- 7.1.2
+- 8.1.2
 
 Microtasks:
-- [ ] 7.2.1.1 — Add repository, service, and CRUD API
-- [ ] 7.2.1.2 — Add frontend types and API client
-- [ ] 7.2.1.3 — Add workspace/list route
-- [ ] 7.2.1.4 — Add regression tests
-- [ ] 7.2.1.5 — Visual verification
+- [ ] 8.2.1.1 — Add repository, service, and CRUD API
+- [ ] 8.2.1.2 — Add frontend types and API client
+- [ ] 8.2.1.3 — Add workspace/list route
+- [ ] 8.2.1.4 — Add regression tests
+- [ ] 8.2.1.5 — Visual verification
 
 Completion criteria:
 - catalog works on persistent data;
 - tests cover CRUD and route behavior.
 
-#### 7.2.2 — Pattern card, files, and versions
+#### 8.2.2 — Pattern card, files, and versions
 
 Goal:
 Users can open a pattern card, inspect files, and manage versions.
 
 Dependencies:
-- 7.2.1
+- 8.2.1
 
 Microtasks:
-- [ ] 7.2.2.1 — Add detail card route
-- [ ] 7.2.2.2 — Add version list and file metadata view
-- [ ] 7.2.2.3 — Add create/edit flows for pattern versions
-- [ ] 7.2.2.4 — Add loading/error states
-- [ ] 7.2.2.5 — Add frontend regression tests
-- [ ] 7.2.2.6 — Visual verification
+- [ ] 8.2.2.1 — Add detail card route
+- [ ] 8.2.2.2 — Add version list and file metadata view
+- [ ] 8.2.2.3 — Add create/edit flows for pattern versions
+- [ ] 8.2.2.4 — Add loading/error states
+- [ ] 8.2.2.5 — Add frontend regression tests
+- [ ] 8.2.2.6 — Visual verification
 
 Completion criteria:
 - pattern versions are visible and editable;
 - route states are explicit;
 - file metadata lifecycle is covered by tests.
 
-#### 7.2.3 — Link patterns to product models
+#### 8.2.3 — Link patterns to product models
 
 Goal:
 A product model can reference the correct pattern set and version family.
 
 Dependencies:
-- 5.2.3
-- 7.2.2
+- 6.2.3
+- 8.2.2
 
 Microtasks:
-- [ ] 7.2.3.1 — Add backend relation fields
-- [ ] 7.2.3.2 — Add migration and schemas
-- [ ] 7.2.3.3 — Add service validation
-- [ ] 7.2.3.4 — Add model-card integration
-- [ ] 7.2.3.5 — Add regression tests
+- [ ] 8.2.3.1 — Add backend relation fields
+- [ ] 8.2.3.2 — Add migration and schemas
+- [ ] 8.2.3.3 — Add service validation
+- [ ] 8.2.3.4 — Add model-card integration
+- [ ] 8.2.3.5 — Add regression tests
 
 Completion criteria:
 - model-to-pattern relation is persistent and validated;
 - model UI exposes the relation clearly.
 
-## Stage 8 — Specifications
+## Stage 9 — Specifications
 
-### 8.1 — Domain and persistence
+### 9.1 — Domain and persistence
 
-#### 8.1.1 — Specification architecture
+#### 9.1.1 — Specification architecture
 
 Goal:
 Define specification scope, versioning, and planning role before production start.
 
 Dependencies:
-- 5.1.1
-- 7.2.3
+- 6.1.1
+- 8.2.3
 - ADR-004
 
 Microtasks:
-- [ ] 8.1.1.1 — Define specification entities and version lifecycle
-- [ ] 8.1.1.2 — Define material, accessory, norm, and substitute scope
-- [ ] 8.1.1.3 — Documentation checkpoint
+- [ ] 9.1.1.1 — Define specification entities and version lifecycle
+- [ ] 9.1.1.2 — Define material, accessory, norm, and substitute scope
+- [ ] 9.1.1.3 — Documentation checkpoint
 
 Completion criteria:
 - specification is explicitly a planned composition;
 - boundaries against production fact are fixed.
 
-#### 8.1.2 — Specification database core
+#### 9.1.2 — Specification database core
 
 Goal:
 Create the persistent storage for specifications and their versions.
-
-Dependencies:
-- 8.1.1
-
-Microtasks:
-- [ ] 8.1.2.1 — Add SQLAlchemy entities
-- [ ] 8.1.2.2 — Add Alembic migration
-- [ ] 8.1.2.3 — Add schemas and backend regression tests
-
-Completion criteria:
-- specification data is stored persistently;
-- migration is reversible;
-- tests cover persistence and version structure.
-
-### 8.2 — Specification workflows
-
-#### 8.2.1 — Specification CRUD API
-
-Goal:
-Users can create, view, and update specifications through API.
-
-Dependencies:
-- 8.1.2
-
-Microtasks:
-- [ ] 8.2.1.1 — Add repository and service CRUD
-- [ ] 8.2.1.2 — Add endpoints
-- [ ] 8.2.1.3 — Add backend regression tests
-
-Completion criteria:
-- API supports CRUD for specifications;
-- validation and error cases are tested.
-
-#### 8.2.2 — Specification workspace and card
-
-Goal:
-Users can manage specifications in a dedicated frontend flow.
-
-Dependencies:
-- 8.2.1
-
-Microtasks:
-- [ ] 8.2.2.1 — Add frontend types and API client
-- [ ] 8.2.2.2 — Add workspace/list route
-- [ ] 8.2.2.3 — Add detail card and edit forms
-- [ ] 8.2.2.4 — Add loading/error states
-- [ ] 8.2.2.5 — Add frontend regression tests
-- [ ] 8.2.2.6 — Visual verification
-
-Completion criteria:
-- specification workspace uses real API data;
-- card and forms are stable;
-- route states are explicit.
-
-#### 8.2.3 — Link specifications to product models
-
-Goal:
-A product model can reference the approved specification line.
-
-Dependencies:
-- 5.2.3
-- 8.2.1
-
-Microtasks:
-- [ ] 8.2.3.1 — Add backend relation fields
-- [ ] 8.2.3.2 — Add migration and schemas
-- [ ] 8.2.3.3 — Add service validation for active/approved versions
-- [ ] 8.2.3.4 — Add model-card integration
-- [ ] 8.2.3.5 — Add regression tests
-
-Completion criteria:
-- model-to-specification relation is persistent and validated;
-- only allowed versions can be linked.
-
-## Stage 9 — Routings
-
-### 9.1 — Domain and persistence
-
-#### 9.1.1 — Routing architecture
-
-Goal:
-Define routing scope, operations, work centers, and quality checkpoints for planned manufacturing.
-
-Dependencies:
-- 5.1.1
-- 8.2.3
-- ADR-004
-
-Microtasks:
-- [ ] 9.1.1.1 — Define routing entities and sequencing rules
-- [ ] 9.1.1.2 — Define links to models, specifications, and future production fact
-- [ ] 9.1.1.3 — Documentation checkpoint
-
-Completion criteria:
-- routing contour is distinct from production fact;
-- operation order and quality checkpoints are explicit.
-
-#### 9.1.2 — Routing database core
-
-Goal:
-Create the persistent storage for routings, operations, and work centers.
 
 Dependencies:
 - 9.1.1
@@ -709,16 +814,16 @@ Microtasks:
 - [ ] 9.1.2.3 — Add schemas and backend regression tests
 
 Completion criteria:
-- routing data is stored persistently;
+- specification data is stored persistently;
 - migration is reversible;
-- tests cover basic persistence rules.
+- tests cover persistence and version structure.
 
-### 9.2 — Routing workflows
+### 9.2 — Specification workflows
 
-#### 9.2.1 — Routing CRUD API
+#### 9.2.1 — Specification CRUD API
 
 Goal:
-Users can create, view, and update routings through API.
+Users can create, view, and update specifications through API.
 
 Dependencies:
 - 9.1.2
@@ -729,13 +834,13 @@ Microtasks:
 - [ ] 9.2.1.3 — Add backend regression tests
 
 Completion criteria:
-- API supports CRUD for routings;
-- validation and sequencing constraints are covered.
+- API supports CRUD for specifications;
+- validation and error cases are tested.
 
-#### 9.2.2 — Routing workspace and card
+#### 9.2.2 — Specification workspace and card
 
 Goal:
-Users can manage routings in a dedicated frontend flow.
+Users can manage specifications in a dedicated frontend flow.
 
 Dependencies:
 - 9.2.1
@@ -749,125 +854,226 @@ Microtasks:
 - [ ] 9.2.2.6 — Visual verification
 
 Completion criteria:
-- routing workspace uses real API data;
-- card is editable and stable;
+- specification workspace uses real API data;
+- card and forms are stable;
 - route states are explicit.
 
-#### 9.2.3 — Link routings to product models and order context
+#### 9.2.3 — Link specifications to product models
 
 Goal:
-A product model can reference its routing, and the future order flow can reuse that approved plan.
+A product model can reference the approved specification line.
 
 Dependencies:
-- 5.4.2
+- 6.2.3
 - 9.2.1
 
 Microtasks:
 - [ ] 9.2.3.1 — Add backend relation fields
 - [ ] 9.2.3.2 — Add migration and schemas
-- [ ] 9.2.3.3 — Add service validation for approved routing selection
+- [ ] 9.2.3.3 — Add service validation for active/approved versions
 - [ ] 9.2.3.4 — Add model-card integration
-- [ ] 9.2.3.5 — Add order-context integration notes
-- [ ] 9.2.3.6 — Add regression tests
+- [ ] 9.2.3.5 — Add regression tests
+
+Completion criteria:
+- model-to-specification relation is persistent and validated;
+- only allowed versions can be linked.
+
+## Stage 10 — Routings
+
+### 10.1 — Domain and persistence
+
+#### 10.1.1 — Routing architecture
+
+Goal:
+Define routing scope, operations, work centers, and quality checkpoints for planned manufacturing.
+
+Dependencies:
+- 6.1.1
+- 9.2.3
+- ADR-004
+
+Microtasks:
+- [ ] 10.1.1.1 — Define routing entities and sequencing rules
+- [ ] 10.1.1.2 — Define links to models, specifications, and future production fact
+- [ ] 10.1.1.3 — Documentation checkpoint
+
+Completion criteria:
+- routing contour is distinct from production fact;
+- operation order and quality checkpoints are explicit.
+
+#### 10.1.2 — Routing database core
+
+Goal:
+Create the persistent storage for routings, operations, and work centers.
+
+Dependencies:
+- 10.1.1
+
+Microtasks:
+- [ ] 10.1.2.1 — Add SQLAlchemy entities
+- [ ] 10.1.2.2 — Add Alembic migration
+- [ ] 10.1.2.3 — Add schemas and backend regression tests
+
+Completion criteria:
+- routing data is stored persistently;
+- migration is reversible;
+- tests cover basic persistence rules.
+
+### 10.2 — Routing workflows
+
+#### 10.2.1 — Routing CRUD API
+
+Goal:
+Users can create, view, and update routings through API.
+
+Dependencies:
+- 10.1.2
+
+Microtasks:
+- [ ] 10.2.1.1 — Add repository and service CRUD
+- [ ] 10.2.1.2 — Add endpoints
+- [ ] 10.2.1.3 — Add backend regression tests
+
+Completion criteria:
+- API supports CRUD for routings;
+- validation and sequencing constraints are covered.
+
+#### 10.2.2 — Routing workspace and card
+
+Goal:
+Users can manage routings in a dedicated frontend flow.
+
+Dependencies:
+- 10.2.1
+
+Microtasks:
+- [ ] 10.2.2.1 — Add frontend types and API client
+- [ ] 10.2.2.2 — Add workspace/list route
+- [ ] 10.2.2.3 — Add detail card and edit forms
+- [ ] 10.2.2.4 — Add loading/error states
+- [ ] 10.2.2.5 — Add frontend regression tests
+- [ ] 10.2.2.6 — Visual verification
+
+Completion criteria:
+- routing workspace uses real API data;
+- card is editable and stable;
+- route states are explicit.
+
+#### 10.2.3 — Link routings to product models and order context
+
+Goal:
+A product model can reference its routing, and the future order flow can reuse that approved plan.
+
+Dependencies:
+- 6.4.2
+- 10.2.1
+
+Microtasks:
+- [ ] 10.2.3.1 — Add backend relation fields
+- [ ] 10.2.3.2 — Add migration and schemas
+- [ ] 10.2.3.3 — Add service validation for approved routing selection
+- [ ] 10.2.3.4 — Add model-card integration
+- [ ] 10.2.3.5 — Add order-context integration notes
+- [ ] 10.2.3.6 — Add regression tests
 
 Completion criteria:
 - model-to-routing relation is persistent and validated;
 - order-context reuse path is documented and technically prepared.
 
-## Stage 10 — Design and Approval
+## Stage 11 — Design and Approval
 
-### 10.1 — Design assets and comments
+### 11.1 — Design assets and comments
 
-- [ ] 10.1.1 — Design project entity and versions
-- [ ] 10.1.2 — Layouts, logos, and comments
+- [ ] 11.1.1 — Design project entity and versions
+- [ ] 11.1.2 — Layouts, logos, and comments
 
-### 10.2 — Approval workflow
+### 11.2 — Approval workflow
 
-- [ ] 10.2.1 — Client review and correction requests
-- [ ] 10.2.2 — Final approval checkpoint before production launch
+- [ ] 11.2.1 — Client review and correction requests
+- [ ] 11.2.2 — Final approval checkpoint before production launch
 
-## Stage 11 — Production
+## Stage 12 — Production
 
-### 11.1 — Production planning
+### 12.1 — Production planning
 
-- [ ] 11.1.1 — Production orders and batches
-- [ ] 11.1.2 — Planning and work-center assignment
+- [ ] 12.1.1 — Production orders and batches
+- [ ] 12.1.2 — Planning and work-center assignment
 
-### 11.2 — Production fact
+### 12.2 — Production fact
 
-- [ ] 11.2.1 — Operations, performers, output, and scrap
-- [ ] 11.2.2 — Quality control and released finished goods
+- [ ] 12.2.1 — Operations, performers, output, and scrap
+- [ ] 12.2.2 — Quality control and released finished goods
 
-## Stage 12 — Warehouse
+## Stage 13 — Warehouse
 
-### 12.1 — Storage structure
+### 13.1 — Storage structure
 
-- [ ] 12.1.1 — Warehouses and bins
-- [ ] 12.1.2 — Lots and balances
+- [ ] 13.1.1 — Warehouses and bins
+- [ ] 13.1.2 — Lots and balances
 
-### 12.2 — Movements
+### 13.2 — Movements
 
-- [ ] 12.2.1 — Receipts, issues, reserves, and transfers
-- [ ] 12.2.2 — Inventory and finished-goods flow
+- [ ] 13.2.1 — Receipts, issues, reserves, and transfers
+- [ ] 13.2.2 — Inventory and finished-goods flow
 
-## Stage 13 — Procurement
+## Stage 14 — Procurement
 
-### 13.1 — Supplier contour
+### 14.1 — Supplier contour
 
-- [ ] 13.1.1 — Suppliers and supplier prices
-- [ ] 13.1.2 — Procurement requests and purchase orders
+- [ ] 14.1.1 — Suppliers and supplier prices
+- [ ] 14.1.2 — Procurement requests and purchase orders
 
-### 13.2 — Supply execution
+### 14.2 — Supply execution
 
-- [ ] 13.2.1 — Receipts and returns
-- [ ] 13.2.2 — Demand planning and minimum stock linkage
+- [ ] 14.2.1 — Receipts and returns
+- [ ] 14.2.2 — Demand planning and minimum stock linkage
 
-## Stage 14 — Shipping and Payments
+## Stage 15 — Shipping and Payments
 
-### 14.1 — Shipping
+### 15.1 — Shipping
 
-- [ ] 14.1.1 — Shipping orders, packaging, delivery, and documents
+- [ ] 15.1.1 — Shipping orders, packaging, delivery, and documents
 
-### 14.2 — Payments
+### 15.2 — Payments
 
-- [ ] 14.2.1 — Invoices, payments, advances, and debt
-- [ ] 14.2.2 — Settlements by order and client
+- [ ] 15.2.1 — Invoices, payments, advances, and debt
+- [ ] 15.2.2 — Settlements by order and client
 
-## Stage 15 — Costing and Analytics
+## Stage 16 — Costing and Analytics
 
-### 15.1 — Costing
+### 16.1 — Costing
 
-- [ ] 15.1.1 — Planned, normative, and actual costing
-- [ ] 15.1.2 — Margin and plan-fact analysis
+- [ ] 16.1.1 — Planned, normative, and actual costing
+- [ ] 16.1.2 — Margin and plan-fact analysis
 
-### 15.2 — Analytics
+### 16.2 — Analytics
 
-- [x] 15.2.1 — CRM dashboard and base order analytics
-- [ ] 15.2.2 — ERP analytics and management P&L
+- [x] 16.2.1 — CRM dashboard and base order analytics
+- [ ] 16.2.2 — ERP analytics and management P&L
 
-## Stage 16 — Integrations
+## Stage 17 — Integrations
 
-### 16.1 — External channels
+### 17.1 — External channels
 
-- [ ] 16.1.1 — Website forms, email, VK, Telegram, and telephony
-- [ ] 16.1.2 — Google Sheets and webhooks
+- [ ] 17.1.1 — Website forms, email, VK, Telegram, and telephony
+- [ ] 17.1.2 — Google Sheets and webhooks
 
-### 16.2 — Enterprise exchange
+### 17.2 — Enterprise exchange
 
-- [ ] 16.2.1 — 1C:UNF exchange
-- [ ] 16.2.2 — Delivery and payment-system integrations
-- [ ] 16.2.3 — External API for third-party systems
+- [ ] 17.2.1 — 1C:UNF exchange
+- [ ] 17.2.2 — Delivery and payment-system integrations
+- [ ] 17.2.3 — External API for third-party systems
 
-## Stage 17 — Industrial Operations and Access Control
+## Stage 18 — Industrial Operations and Access Control
 
-### 17.1 — Access control
+### 18.1 — Access control
 
-- [ ] 17.1.1 — Authentication
-- [ ] 17.1.2 — System users, roles, and permissions
-- [ ] 17.1.3 — Universal audit trail
+- [ ] 18.1.1 — Authentication
+- [ ] 18.1.2 — System users, roles, and permissions
+- [ ] 18.1.3 — Universal audit trail
 
-### 17.2 — Production operations
+### 18.2 — Production operations
 
-- [ ] 17.2.1 — VPS, production Docker, reverse proxy, and HTTPS
-- [ ] 17.2.2 — CI/CD, monitoring, and logging
-- [ ] 17.2.3 — Backup, restore, and administrator documentation
+- [ ] 18.2.1 — VPS, production Docker, reverse proxy, and HTTPS
+- [ ] 18.2.2 — CI/CD, monitoring, and logging
+- [ ] 18.2.3 — Backup, restore, and administrator documentation

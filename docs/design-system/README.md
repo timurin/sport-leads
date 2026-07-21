@@ -2,6 +2,14 @@
 
 Базовая дизайн-система портала находится в `frontend/components/ui` и `frontend/components/layout`. Она дополняет Tailwind семантическими токенами и небольшими React-примитивами, не содержит бизнес-логики модулей.
 
+Связанные канонические документы:
+
+- `docs/design-system/ui-audit.md` — аудит маршрутов и типов страниц (`5.1.1.1`)
+- `docs/design-system/shell-contracts.md` — защищённые контракты `DS-SHELL-01` / `DS-SHELL-02`
+- `docs/design-system/page-design-checklist.md`, `visual-rules.md`, `responsive-rules.md`
+- HTML page references: `docs/design/`
+- Platform templates `PT-01`–`PT-08` — Stage 5 roadmap (contracts pending)
+
 ## Токены
 
 Токены объявлены в `frontend/app/globals.css` с префиксом `--portal-*`:
