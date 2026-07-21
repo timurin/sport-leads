@@ -1,16 +1,21 @@
 from datetime import datetime
 
+from typing import Literal
+
 from pydantic import BaseModel, ConfigDict, Field, field_validator
+
+CharacteristicKind = Literal["COLOR", "LIST"]
 
 
 class CharacteristicDefinitionCreate(BaseModel):
-    code: str = Field(min_length=1, max_length=100, pattern=r"^[a-z0-9][a-z0-9_-]*$")
+    code: str | None = Field(default=None, max_length=100, pattern=r"^[a-z0-9][a-z0-9_-]*$")
     name: str = Field(min_length=1, max_length=255)
+    kind: CharacteristicKind = "LIST"
 
     @field_validator("code", "name")
     @classmethod
-    def strip_text(cls, value: str) -> str:
-        return value.strip()
+    def strip_text(cls, value: str | None) -> str | None:
+        return value.strip() if value is not None else value
 
 
 class CharacteristicDefinitionUpdate(BaseModel):
@@ -21,6 +26,7 @@ class CharacteristicDefinitionUpdate(BaseModel):
 class CharacteristicDefinitionRead(CharacteristicDefinitionCreate):
     model_config = ConfigDict(from_attributes=True)
     id: int
+    code: str
     is_active: bool
     created_at: datetime
     updated_at: datetime
@@ -30,11 +36,13 @@ class CharacteristicOptionCreate(BaseModel):
     code: str = Field(min_length=1, max_length=100, pattern=r"^[a-z0-9][a-z0-9_-]*$")
     label: str = Field(min_length=1, max_length=255)
     sort_order: int = Field(default=0, ge=0)
+    hex_value: str | None = Field(default=None, pattern=r"^#[0-9A-Fa-f]{6}$")
 
 
 class CharacteristicOptionUpdate(BaseModel):
     label: str | None = Field(default=None, min_length=1, max_length=255)
     sort_order: int | None = Field(default=None, ge=0)
+    hex_value: str | None = Field(default=None, pattern=r"^#[0-9A-Fa-f]{6}$")
     is_active: bool | None = None
 
 

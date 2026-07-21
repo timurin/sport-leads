@@ -89,3 +89,5 @@
 
 `[x]` ставится только при наличии реализации на соответствующем слое и успешных применимых проверок. HTML-файлы в `docs/erp/status/` не являются источником истины.
 Patch v0.8.8h confirmed: backend-generated unique codes, typed save/reload, scoped direct-assignment delete, inherited-assignment protection and required-clear validation are covered by regression tests; no migration is required.
+
+`v0.8.8i-product-characteristics-directory` confirmed: the existing characteristic model/API now supports `kind`, color HEX values, generated codes, system Color/Size records and safe deactivation. Migration `i9j0k1l2m345` has upgrade/downgrade; the settings directory and regression checks are implemented. Nomenclature card layout and variant snapshot logic are unchanged.

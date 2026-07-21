@@ -15,3 +15,11 @@ test("sales navigation exposes leads and customer orders without deals", () => {
   );
   assert.equal(sales.topNavigation.some((item) => item.href === "/sales/deals"), false);
 });
+
+test("settings navigation exposes the product characteristics directory", () => {
+  const settings = appSections.find((section) => section.id === "settings");
+  assert.ok(settings);
+  const products = settings.topNavigation.find((item) => item.id === "products");
+  assert.ok(products?.children);
+  assert.ok(products.children.some((item) => item.href === "/settings/catalogs/product-characteristics"));
+});

@@ -122,3 +122,5 @@
 
 Исторические документы `SL-ROADMAP-v0.3.0.md` и `SL-ROADMAP-v0.6.1.md` сохранены в `docs/archive/`. Подробные подтверждения текущих CRM/order-итераций находятся в [ERP-check](../architecture/erp-check.md) и ADR.
 Patch v0.8.8h: backend automatically generates a unique code for a free custom field; typed save/reload, optional inherited-value clearing and scoped direct-assignment deletion preserve definitions, category assignments and other cards.
+
+`v0.8.8i-product-characteristics-directory` adds the settings directory `/settings/catalogs/product-characteristics` on the existing characteristics models/API. It provides system `Color` and `Size`, generated codes, typed kind/HEX validation, option ordering and safe deactivation without changing the nomenclature card. Confirmation: characteristics service/API, migration `i9j0k1l2m345`, settings workspace and regression tests.

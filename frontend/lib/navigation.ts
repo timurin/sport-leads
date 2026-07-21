@@ -334,6 +334,11 @@ export const appSections: AppSection[] = [
             href: "/settings/catalogs/custom-fields",
           },
           {
+            id: "product-characteristics",
+            title: "Характеристики продукции",
+            href: "/settings/catalogs/product-characteristics",
+          },
+          {
             id: "units",
             title: "Единицы измерения",
             href: "/settings/catalogs/units-of-measure",

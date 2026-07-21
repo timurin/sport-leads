@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from itertools import product
+import re
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -14,6 +15,9 @@ class CharacteristicError(RuntimeError):
     pass
 
 
+SYSTEM_DEFINITIONS = (("color", "Цвет", "COLOR"), ("size", "Размер", "LIST"))
+
+
 def _definition(db: Session, characteristic_id: int) -> CharacteristicDefinition:
     item = db.get(CharacteristicDefinition, characteristic_id)
     if item is None:
@@ -22,13 +26,32 @@ def _definition(db: Session, characteristic_id: int) -> CharacteristicDefinition
 
 
 def list_definitions(db: Session) -> list[CharacteristicDefinition]:
+    _ensure_system_definitions(db)
     return list(db.scalars(select(CharacteristicDefinition).order_by(CharacteristicDefinition.name, CharacteristicDefinition.id)).all())
 
 
+def _ensure_system_definitions(db: Session) -> None:
+    changed = False
+    for code, name, kind in SYSTEM_DEFINITIONS:
+        if db.scalar(select(CharacteristicDefinition).where(CharacteristicDefinition.code == code)) is None:
+            db.add(CharacteristicDefinition(code=code, name=name, kind=kind, is_active=True))
+            changed = True
+    if changed:
+        db.commit()
+
+
 def create_definition(db: Session, payload: CharacteristicDefinitionCreate) -> CharacteristicDefinition:
-    if db.scalar(select(CharacteristicDefinition).where(CharacteristicDefinition.code == payload.code)):
+    code = payload.code
+    if not code:
+        base = re.sub(r"[^a-z0-9]+", "_", payload.name.casefold()).strip("_") or "characteristic"
+        code = base[:90]
+        suffix = 2
+        while db.scalar(select(CharacteristicDefinition.id).where(CharacteristicDefinition.code == code)) is not None:
+            code = f"{base[: max(1, 99 - len(str(suffix)))]}_{suffix}"
+            suffix += 1
+    if db.scalar(select(CharacteristicDefinition).where(CharacteristicDefinition.code == code)):
         raise CharacteristicError("Characteristic code already exists")
-    item = CharacteristicDefinition(**payload.model_dump())
+    item = CharacteristicDefinition(**payload.model_dump(exclude={"code"}), code=code)
     db.add(item); db.commit(); db.refresh(item); return item
 
 
@@ -44,17 +67,32 @@ def list_options(db: Session, characteristic_id: int) -> list[CharacteristicOpti
 
 
 def create_option(db: Session, characteristic_id: int, payload: CharacteristicOptionCreate) -> CharacteristicOption:
-    _definition(db, characteristic_id)
+    definition = _definition(db, characteristic_id)
+    if definition.kind == "COLOR" and payload.hex_value is None:
+        raise CharacteristicError("Color option HEX is required")
+    if definition.kind != "COLOR" and payload.hex_value is not None:
+        raise CharacteristicError("HEX is available only for color characteristics")
     if db.scalar(select(CharacteristicOption).where(CharacteristicOption.characteristic_id == characteristic_id, CharacteristicOption.code == payload.code)):
         raise CharacteristicError("Characteristic option code already exists")
-    item = CharacteristicOption(characteristic_id=characteristic_id, **payload.model_dump())
+    data = payload.model_dump()
+    if data.get("hex_value"):
+        data["hex_value"] = str(data["hex_value"]).upper()
+    item = CharacteristicOption(characteristic_id=characteristic_id, **data)
     db.add(item); db.commit(); db.refresh(item); return item
 
 
 def update_option(db: Session, option_id: int, payload: CharacteristicOptionUpdate) -> CharacteristicOption:
     item = db.get(CharacteristicOption, option_id)
     if item is None: raise CharacteristicError("Characteristic option not found")
-    for key, value in payload.model_dump(exclude_unset=True).items(): setattr(item, key, value)
+    definition = _definition(db, item.characteristic_id)
+    changes = payload.model_dump(exclude_unset=True)
+    if definition.kind == "COLOR" and "hex_value" in changes and changes["hex_value"] is None:
+        raise CharacteristicError("Color option HEX is required")
+    if definition.kind != "COLOR" and changes.get("hex_value") is not None:
+        raise CharacteristicError("HEX is available only for color characteristics")
+    if changes.get("hex_value"):
+        changes["hex_value"] = str(changes["hex_value"]).upper()
+    for key, value in changes.items(): setattr(item, key, value)
     db.commit(); db.refresh(item); return item
 
 

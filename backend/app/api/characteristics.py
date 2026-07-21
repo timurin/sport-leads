@@ -21,7 +21,7 @@ router = APIRouter(prefix="/characteristics", tags=["Characteristics"])
 
 def _error(error: CharacteristicError) -> HTTPException:
     message = str(error)
-    status = 404 if message.endswith("not found") or message == "Category not found" else 409
+    status = 404 if message.endswith("not found") or message == "Category not found" else 422 if "required" in message or "available only" in message else 409
     return HTTPException(status_code=status, detail=message)
 
 

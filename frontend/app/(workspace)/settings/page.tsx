@@ -86,6 +86,12 @@ const settingsGroups = [
         icon: Package,
       },
       {
+        title: "Характеристики продукции",
+        description: "Цвета, размеры и другие значения для карточек номенклатуры",
+        href: "/settings/catalogs/product-characteristics",
+        icon: Settings2,
+      },
+      {
         title: "Продукция",
         description: "Полный каталог выпускаемых изделий",
         href: "/settings/products",

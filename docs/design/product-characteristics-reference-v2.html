@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SPORT-LEAD — Характеристики продукции</title>
+<style>
+:root{
+  --bg:#f6f8fc;--surface:#fff;--surface-2:#f9fbff;--line:#dfe5ef;
+  --text:#101828;--muted:#667085;--primary:#1f5eff;--primary-2:#164ddb;
+  --success:#16803a;--success-bg:#eaf7ee;--danger:#d92d20;--warning:#b54708;
+  --radius:14px;--shadow:0 1px 2px rgba(16,24,40,.05),0 4px 14px rgba(16,24,40,.04);
+  --sidebar:218px;--gap:14px
+}
+*{box-sizing:border-box}
+body{margin:0;font:14px/1.45 Inter,Segoe UI,Arial,sans-serif;color:var(--text);background:var(--bg)}
+button,input,select,textarea{font:inherit}
+button{cursor:pointer}
+.app{display:grid;grid-template-columns:var(--sidebar) 1fr;min-height:100vh}
+.sidebar{background:#fff;border-right:1px solid var(--line);padding:18px 12px;position:sticky;top:0;height:100vh}
+.brand{display:flex;align-items:center;gap:10px;margin:0 0 24px 4px}
+.logo{width:34px;height:34px;border-radius:8px;background:linear-gradient(135deg,#3678ff,#174bd8);color:#fff;display:grid;place-items:center;font-weight:800}
+.brand strong{font-size:18px}
+.nav-label{margin:18px 10px 8px;color:#98a2b3;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.06em}
+.nav{display:grid;gap:4px}
+.nav a{padding:10px 12px;border-radius:9px;text-decoration:none;color:#263244}
+.nav a.active{background:#edf3ff;color:#174bd8;font-weight:700}
+.main{padding:22px 24px 40px;min-width:0}
+.breadcrumbs{color:#667085;font-size:13px;margin-bottom:14px}
+.header{display:flex;justify-content:space-between;gap:20px;align-items:flex-start;margin-bottom:18px}
+.header h1{font-size:28px;line-height:1.2;margin:0 0 5px}
+.subtitle{color:var(--muted)}
+.btn{border:1px solid var(--line);background:#fff;border-radius:8px;padding:9px 14px;font-weight:700;color:#101828}
+.btn.primary{background:var(--primary);border-color:var(--primary);color:#fff}
+.btn.danger{color:var(--danger);border-color:#fecaca}
+.btn.icon{width:38px;height:38px;padding:0;display:grid;place-items:center}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
+.card-pad{padding:16px}
+.toolbar{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:12px;flex-wrap:wrap}
+.search{display:flex;gap:8px;flex:1;min-width:220px}
+.input,.select,.textarea{width:100%;border:1px solid #cfd7e6;border-radius:8px;background:#fff;padding:9px 11px;color:#101828}
+.textarea{min-height:92px;resize:vertical}
+.table-wrap{overflow:auto}
+.table{width:100%;border-collapse:collapse;min-width:860px}
+.table th,.table td{text-align:left;padding:12px 14px;border-bottom:1px solid #edf0f5;font-size:13px;vertical-align:middle}
+.table th{color:#475467;background:#f8fafc;font-weight:700}
+.row-name{display:flex;align-items:center;gap:10px;font-weight:700}.clickable-row{cursor:pointer}.clickable-row:hover td{background:#f8fbff}
+.type-icon{width:28px;height:28px;border-radius:8px;background:#eef3ff;color:#175cd3;display:grid;place-items:center;font-weight:800}
+.status{display:inline-flex;align-items:center;gap:7px}
+.status::before{content:"";width:7px;height:7px;border-radius:50%;background:#22c55e}
+.status.off::before{background:#98a2b3}
+.card-footer{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;color:var(--muted)}
+.pager{display:flex;gap:6px}
+.page{width:34px;height:34px;border-radius:8px;border:1px solid var(--line);background:#fff}
+.page.active{color:var(--primary);border-color:var(--primary);font-weight:800}
+.detail-grid{display:grid;grid-template-columns:minmax(0,.95fr) minmax(0,1.05fr);gap:var(--gap);margin-top:18px;align-items:start}
+.detail-header{display:flex;justify-content:space-between;gap:14px;align-items:center;margin-bottom:16px}
+.detail-title{display:flex;gap:10px;align-items:center}
+.detail-title h2{font-size:25px;margin:0}
+.badge{display:inline-flex;align-items:center;border-radius:999px;padding:3px 9px;font-size:12px;font-weight:700;background:var(--success-bg);color:var(--success)}
+.tabs{display:flex;gap:22px;border-bottom:1px solid var(--line);margin:0 -16px 16px;padding:0 16px;overflow:auto}
+.tab{white-space:nowrap;padding:10px 0 12px;color:#344054;background:none;border:0}
+.tab.active{color:var(--primary);font-weight:800;border-bottom:2px solid var(--primary)}
+.panel{display:none}.panel.active{display:block}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px 16px}
+.field{display:grid;gap:6px}.field.full{grid-column:1/-1}
+.label{font-size:12px;color:#475467}.req{color:var(--danger)}
+.switch-row{display:flex;gap:10px;align-items:center}
+.switch{position:relative;width:38px;height:22px;border-radius:999px;background:#2f6df6}
+.switch::after{content:"";position:absolute;right:3px;top:3px;width:16px;height:16px;border-radius:50%;background:#fff}
+.help{font-size:12px;color:var(--muted);margin-top:6px}
+.value-toolbar{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:12px;flex-wrap:wrap}
+.value-table{min-width:720px}
+.color-chip{display:inline-block;width:18px;height:18px;border-radius:4px;border:1px solid #cfd7e6;vertical-align:middle}
+.drag{color:#98a2b3;font-weight:900;letter-spacing:-2px}
+.actions-inline{display:flex;gap:6px}
+.mobile-bar{display:none}
+@media(max-width:1120px){:root{--sidebar:190px}.main{padding:18px}.detail-grid{grid-template-columns:1fr}}
+@media(max-width:820px){.app{grid-template-columns:76px 1fr}.sidebar{padding:16px 8px}.brand strong,.nav-label,.nav a span{display:none}.nav a{text-align:center;padding:11px}.brand{justify-content:center}.detail-grid{grid-template-columns:1fr}.form-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:640px){body{padding-bottom:70px}.app{display:block}.sidebar{display:none}.main{padding:14px 12px}.header{display:block}.header .btn{margin-top:12px}.form-grid{grid-template-columns:1fr}.field.full{grid-column:auto}.card{border-radius:12px}.table{min-width:760px}.value-table{min-width:680px}.mobile-bar{position:fixed;display:flex;gap:8px;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--line);padding:10px 12px;z-index:20}.mobile-bar .btn{flex:1}}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand"><div class="logo">SL</div><strong>Настройки</strong></div>
+    <div class="nav-label">Настройки</div>
+    <nav class="nav">
+      <a href="#"><span>Общие</span></a>
+      <a href="#"><span>Организации</span></a>
+      <a href="#"><span>Пользователи и роли</span></a>
+    </nav>
+    <div class="nav-label">Справочники</div>
+    <nav class="nav">
+      <a href="#"><span>Номенклатура</span></a>
+      <a href="#"><span>Единицы измерения</span></a>
+      <a href="#"><span>Категории номенклатуры</span></a>
+      <a class="active" href="#"><span>Характеристики продукции</span></a>
+      <a href="#"><span>Склады</span></a>
+      <a href="#"><span>Валюты</span></a>
+      <a href="#"><span>Страны</span></a>
+      <a href="#"><span>Системные настройки</span></a>
+    </nav>
+  </aside>
+
+  <main class="main">
+    <div class="breadcrumbs">Настройки &nbsp;›&nbsp; Характеристики продукции</div>
+    <div class="header">
+      <div>
+        <h1>Характеристики продукции</h1>
+        <div class="subtitle">Справочник характеристик, используемых в номенклатуре и вариантах продукции.</div>
+      </div>
+      <button class="btn primary">＋ Создать характеристику</button>
+    </div>
+
+    <section class="card">
+      <div class="card-pad">
+        <div class="toolbar">
+          <div class="search">
+            <input class="input" placeholder="Поиск по наименованию или коду">
+            <select class="select" style="max-width:210px">
+              <option>Все типы</option>
+              <option>Цвет</option>
+              <option>Список</option>
+              <option>Число</option>
+            </select>
+            <select class="select" style="max-width:170px">
+              <option>Все статусы</option>
+              <option>Активные</option>
+              <option>Неактивные</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Наименование</th>
+              <th>Код</th>
+              <th>Тип значения</th>
+              <th>Значений</th>
+              <th>Активность</th>
+              <th>Действия</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="clickable-row" onclick="location.href='product-characteristic-card-reference-v1.html?id=color'">
+              <td><div class="row-name"><span class="type-icon">◉</span>Цвет</div></td>
+              <td>color</td>
+              <td>Цвет</td>
+              <td>8</td>
+              <td><span class="status">Активна</span></td>
+              <td><div class="actions-inline"><button class="btn icon" onclick="event.stopPropagation();location.href='product-characteristic-card-reference-v1.html'">✎</button><button class="btn icon" onclick="event.stopPropagation()">⋯</button></div></td>
+            </tr>
+            <tr class="clickable-row" onclick="location.href='product-characteristic-card-reference-v1.html?id=size'">
+              <td><div class="row-name"><span class="type-icon">Aa</span>Размер</div></td>
+              <td>size</td>
+              <td>Список (одно значение)</td>
+              <td>3</td>
+              <td><span class="status">Активна</span></td>
+              <td><div class="actions-inline"><button class="btn icon" onclick="event.stopPropagation();location.href='product-characteristic-card-reference-v1.html'">✎</button><button class="btn icon" onclick="event.stopPropagation()">⋯</button></div></td>
+            </tr>
+            <tr>
+              <td><div class="row-name"><span class="type-icon">≡</span>Материал</div></td>
+              <td>material</td>
+              <td>Список (одно значение)</td>
+              <td>12</td>
+              <td><span class="status">Активна</span></td>
+              <td><div class="actions-inline"><button class="btn icon">✎</button><button class="btn icon">⋯</button></div></td>
+            </tr>
+            <tr>
+              <td><div class="row-name"><span class="type-icon">#</span>Плотность ткани</div></td>
+              <td>fabric_density</td>
+              <td>Число</td>
+              <td>0</td>
+              <td><span class="status off">Неактивна</span></td>
+              <td><div class="actions-inline"><button class="btn icon">✎</button><button class="btn icon">⋯</button></div></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="card-footer">
+        <span>Всего: 4</span>
+        <div class="pager"><button class="page">‹</button><button class="page active">1</button><button class="page">›</button></div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script>
+document.querySelectorAll('[data-tab]').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    const card=btn.closest('.card');
+    card.querySelectorAll('[data-tab]').forEach(x=>x.classList.remove('active'));
+    card.querySelectorAll('[data-panel]').forEach(x=>x.classList.remove('active'));
+    btn.classList.add('active');
+    card.querySelector('[data-panel="'+btn.dataset.tab+'"]').classList.add('active');
+  });
+});
+</script>
+</body>
+</html>

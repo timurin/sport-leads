@@ -939,3 +939,24 @@ def test_nomenclature_custom_field_patch_protects_inherited_required_values(
     cleared = client.put(f"/custom-fields/nomenclatures/{nomenclature['id']}/fields", json=[{"field_definition_id": required["id"], "value": "Filled"}, {"field_definition_id": optional["id"], "value": None}])
     assert cleared.status_code == 200
     assert next(item for item in cleared.json() if item["field_definition_id"] == optional["id"])["value"] == "Default"
+
+
+def test_product_characteristics_directory_seeds_system_types_and_validates_color_values(
+    client: TestClient,
+) -> None:
+    definitions = client.get("/characteristics/definitions")
+    assert definitions.status_code == 200
+    system = {item["code"]: item for item in definitions.json()}
+    assert system["color"]["kind"] == "COLOR"
+    assert system["size"]["kind"] == "LIST"
+    created = client.post("/characteristics/definitions", json={"name": "Brand"})
+    assert created.status_code == 201
+    assert created.json()["code"].startswith("brand")
+    color_id = system["color"]["id"]
+    invalid = client.post(f"/characteristics/definitions/{color_id}/options", json={"code": "red", "label": "Red"})
+    assert invalid.status_code == 422
+    option = client.post(f"/characteristics/definitions/{color_id}/options", json={"code": "red", "label": "Red", "hex_value": "#ff0000"})
+    assert option.status_code == 201
+    assert option.json()["hex_value"] == "#FF0000"
+    assert client.patch(f"/characteristics/options/{option.json()['id']}", json={"is_active": False}).status_code == 200
+    assert client.patch(f"/characteristics/definitions/{created.json()['id']}", json={"name": "Brand updated", "is_active": False}).status_code == 200
