@@ -18,6 +18,9 @@
 - `docs/design-system/z-index-tokens.md` — stacking layers (`5.2.2.3`)
 - `docs/design-system/motion-tokens.md` — motion timing (`5.2.2.4`)
 - `docs/design-system/token-migration-plan.md` — adoption phases (`5.2.2.5`)
+- `docs/design-system/shell-sidebar-standardization.md` — DS-SHELL-01 tokenized (`5.3.1.1`)
+- `docs/design-system/shell-topbar-standardization.md` — DS-SHELL-02 tokenized (`5.3.1.2`)
+- `docs/design-system/shell-responsive-navigation.md` — responsive nav matrix (`5.3.1.4`)
 - `docs/design-system/layout-scrolling-audit.md` — AppShell, widths, scroll/sticky rules (`5.1.3.*`)
 - `docs/design-system/component-inventory.md` — инвентарь shared/domain UI (`5.1.2.*`)
 - `docs/design-system/shell-contracts.md` — защищённые контракты `DS-SHELL-01` / `DS-SHELL-02`
@@ -58,7 +61,10 @@ Layout:
 - `PageContent` — ширина и внешние отступы страницы;
 - `PageActions` — переносимая группа действий;
 - `ResponsiveGrid` — auto-fit сетка с безопасным `minmax`;
-- `PageHeader`, `EntityHeader` — заголовки страницы и сущности.
+- `PageToolbar` (`page-header.tsx`) — локальный toolbar страницы (поиск, фильтры, действия; без title/description);
+- `CreateMenu` — кнопка «Создать» с меню сущностей для page toolbar;
+- `CreateDrawer` — эталон create-панели (inspector/drawer, ADR-013; reference: materials);
+- `EntityHeader` — заголовок сущности внутри карточки документа.
 
 `PageContent` всегда занимает доступную ширину (`w-full min-w-0`), а варианты `width` задают только максимальную ширину: `default`, `wide` или `full`. Варианты `size` управляют внешними отступами.
 
@@ -81,12 +87,12 @@ UI:
 ```tsx
 import { PageContent, PageActions, ResponsiveGrid } from "@/components/layout/page-layout";
 import { Button } from "@/components/ui/button";
-import { PageHeader } from "@/components/ui/page-header";
+import { PageToolbar } from "@/components/ui/page-header";
 import { MetricCard, SectionCard } from "@/components/ui/section-card";
 
 export default function ExamplePage() {
   return <>
-    <PageHeader title="Заказы" description="Рабочее пространство заказов" actions={<Button variant="primary">Создать</Button>} />
+    <PageToolbar end={<Button variant="primary">Создать</Button>} />
     <PageContent>
       <ResponsiveGrid minItemWidth="small">
         <MetricCard label="Всего" value={24} />
@@ -102,4 +108,4 @@ export default function ExamplePage() {
 
 ## Каркас и прокрутка
 
-`AppShell` занимает высоту viewport и содержит sidebar, `AppTopbar` и `WorkspaceTabs`. `AppTopbar` напрямую переиспользует существующий `TopNavigation`. Основной вертикальный scrollbar принадлежит `[data-app-shell-main]`; корневые контейнеры страниц не должны добавлять `h-screen` или второй `overflow-y-auto`. Локальная прокрутка допустима только для самостоятельных рабочих областей вроде чата, dialog, dropdown и длинных списков.
+`AppShell` занимает высоту viewport и содержит sidebar и `AppTopbar` (без `WorkspaceTabs`). `AppTopbar` напрямую переиспользует существующий `TopNavigation`. Основной вертикальный scrollbar принадлежит `[data-app-shell-main]`; корневые контейнеры страниц не должны добавлять `h-screen` или второй `overflow-y-auto`. Локальная прокрутка допустима только для самостоятельных рабочих областей вроде чата, dialog, dropdown и длинных списков.

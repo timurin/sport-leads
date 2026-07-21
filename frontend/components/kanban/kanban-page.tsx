@@ -16,7 +16,7 @@ import type {
 } from "@/components/kanban/kanban-types";
 import { Button } from "@/components/ui/button";
 import { DemoActionDialog } from "@/components/ui/demo-action-dialog";
-import { PageHeader } from "@/components/ui/page-header";
+import { PageToolbar } from "@/components/ui/page-header";
 
 type KanbanPageProps<TStatus extends string> = {
   title: string;
@@ -72,7 +72,7 @@ function formatMetric<TStatus extends string>(
 
 export function KanbanPage<TStatus extends string>({
   title,
-  description,
+  description: _description,
   actionLabel,
   columns,
   metrics,
@@ -97,12 +97,54 @@ export function KanbanPage<TStatus extends string>({
 
   return (
     <div>
-      <PageHeader
-        title={title}
-        description={description}
-        actions={(
+      <PageToolbar
+        start={(
+          <>
+            <label className="flex h-10 min-w-56 flex-1 items-center gap-2 rounded-lg border border-slate-200 px-3 lg:max-w-sm">
+              <Search size={17} className="shrink-0 text-slate-400" />
+              <span className="sr-only">Поиск</span>
+              <input
+                type="search"
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                placeholder={`Поиск: ${title.toLocaleLowerCase("ru")}`}
+                className="min-w-0 flex-1 bg-transparent text-sm outline-none"
+              />
+            </label>
+
+            {filters.map((filter) => (
+              <label key={filter.id} className="sr-only-within">
+                <span className="sr-only">{filter.label}</span>
+                <select
+                  value={selectedFilters[filter.id] ?? ""}
+                  onChange={(event) => setSelectedFilters((current) => ({
+                    ...current,
+                    [filter.id]: event.target.value,
+                  }))}
+                  className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none focus:border-blue-400"
+                >
+                  <option value="">{filter.label}: все</option>
+                  {filter.options.map((option) => (
+                    <option key={option} value={option}>{option}</option>
+                  ))}
+                </select>
+              </label>
+            ))}
+
+            {hasFilters ? (
+              <Button onClick={() => {
+                setQuery("");
+                setSelectedFilters({});
+              }}>
+                <FilterX size={16} />
+                Сбросить
+              </Button>
+            ) : null}
+          </>
+        )}
+        end={(
           <Button variant="primary" onClick={() => setDialogOpen(true)}>
-            + {actionLabel}
+            {actionLabel}
           </Button>
         )}
       />
@@ -120,51 +162,6 @@ export function KanbanPage<TStatus extends string>({
           </article>
         ))}
       </section>
-
-      <div className="border-b border-slate-200 bg-white px-4 py-3 lg:px-6">
-        <div className="flex flex-wrap items-center gap-2">
-          <label className="flex h-10 min-w-56 flex-1 items-center gap-2 rounded-lg border border-slate-200 px-3 lg:max-w-sm">
-            <Search size={17} className="shrink-0 text-slate-400" />
-            <span className="sr-only">Поиск</span>
-            <input
-              type="search"
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder={`Поиск: ${title.toLocaleLowerCase("ru")}`}
-              className="min-w-0 flex-1 bg-transparent text-sm outline-none"
-            />
-          </label>
-
-          {filters.map((filter) => (
-            <label key={filter.id} className="sr-only-within">
-              <span className="sr-only">{filter.label}</span>
-              <select
-                value={selectedFilters[filter.id] ?? ""}
-                onChange={(event) => setSelectedFilters((current) => ({
-                  ...current,
-                  [filter.id]: event.target.value,
-                }))}
-                className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none focus:border-blue-400"
-              >
-                <option value="">{filter.label}: все</option>
-                {filter.options.map((option) => (
-                  <option key={option} value={option}>{option}</option>
-                ))}
-              </select>
-            </label>
-          ))}
-
-          {hasFilters ? (
-            <Button onClick={() => {
-              setQuery("");
-              setSelectedFilters({});
-            }}>
-              <FilterX size={16} />
-              Сбросить
-            </Button>
-          ) : null}
-        </div>
-      </div>
 
       <div className="p-4 lg:p-6">
         {moveError ? (

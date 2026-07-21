@@ -56,7 +56,7 @@ No production code changed.
 |---|---|---|
 | `navigation/app-sidebar.tsx` | Platform Sidebar | `DS-SHELL-01` — protected |
 | `navigation/top-navigation.tsx` | Platform Topbar | `DS-SHELL-02` — protected |
-| `navigation/workspace-tabs.tsx` | Workspace tab strip | Shell-adjacent; inventory only |
+| `navigation/workspace-tabs.tsx` | Workspace tab strip | **Removed** (`5.3.1.3`) — no longer in AppShell |
 
 Navigation data source: `frontend/lib/navigation.ts` (not a component).
 
@@ -210,10 +210,10 @@ Decisions are documentation-only. Implementation belongs to later Stage 5 items 
 | D2 | **Keep + adopt** | Keep `EmptyState`; adopt in list/kanban/catalog empties; remove one-off dashed empties when touching those pages |
 | D3 | **Unify** | Introduce shared page-state / error-banner primitives in `5.3.2.6` / `5.4.2.5`; migrate Lead/Order to shared pattern; standardize on `reset` |
 | D4 | **Unify toward KanbanPage** | Keep `KanbanPage` as board host; fold lead-specific filters into composition over shared board rather than a second board framework |
-| D5 | **Keep dedicated + deprecate EntityWorkspace for new work** | New persistent catalogs use dedicated workspaces (nomenclature pattern). EntityWorkspace remains only for demo until orgs/employees/materials persistence tasks replace it |
-| D6 | **Keep split** | `PageHeader`/`EntityHeader` for page chrome; domain card headers stay domain-owned until PT-05/06/07 contracts; never put them in Platform Topbar |
+| D5 | **Keep dedicated workspaces + reuse create inspector UX** | New persistent catalogs use dedicated workspaces (nomenclature pattern). **Create UX эталон** = materials right inspector / `CreateDrawer` (ADR-013). EntityWorkspace remains demo data-host until orgs/employees/materials persistence replace it |
+| D6 | **Keep split** | `PageToolbar`/`EntityHeader` for page chrome; domain card headers stay domain-owned until PT-05/06/07 contracts; never put them in Platform Topbar |
 | D7 | **Keep CompactTabs; unify adopters** | Prefer `CompactTabs` for simple in-page tabs; nomenclature complex tabs may stay custom until PT-06 contract |
-| D8 | **Deprecate for persistent flows** | `DemoActionDialog` only on explicitly demo pages; ban in API-backed routes |
+| D8 | **Deprecate DemoActionDialog for create; modal only for confirm** | Create flows use `CreateDrawer` (ADR-013). `DemoActionDialog` only on explicitly demo pages until `5.4.2.3.5`; ban centered create modals for persistent entities |
 | D9 | **Replace** | Characteristic detail must use Platform Shell only; remove local sidebar in a dedicated bug/microtask before treating as PT-05 reference |
 
 ### Explicit keep (no change required now)

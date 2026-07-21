@@ -232,11 +232,12 @@ Microtasks:
 
 #### 5.3.1 — Navigation shell
 
-- [ ] 5.3.1.1 — Standardize sidebar
-- [ ] 5.3.1.2 — Standardize topbar
-- [ ] 5.3.1.3 — Standardize workspace tabs
-- [ ] 5.3.1.4 — Define responsive navigation
-- [ ] 5.3.1.5 — Verify keyboard navigation
+- [x] 5.3.1.1 — Standardize sidebar — `v0.9.0`; tokenized without redesign; evidence: `docs/design-system/shell-sidebar-standardization.md`; owner visual OK (`2026-07-21`)
+- [x] 5.3.1.2 — Standardize topbar — `v0.9.0`; tokenized; section title removed by product request; evidence: `docs/design-system/shell-topbar-standardization.md`; **owner visual check pending**
+- [x] 5.3.1.3 — Standardize workspace tabs — `v0.9.0`; `WorkspaceTabs` removed from AppShell (product request); component deleted
+- [x] 5.3.1.4 — Define responsive navigation — `v0.9.0`; evidence: `docs/design-system/shell-responsive-navigation.md`; matrix aligned with implemented `md`/`lg`/`xl` shell behaviour and `5.1.4` owner pass
+
+> Removed by product (`2026-07-21`): former `5.3.1.5` Verify keyboard navigation — keyboard-first platform navigation is not planned.
 
 #### 5.3.2 — Page shell
 
@@ -262,7 +263,13 @@ Microtasks:
 
 - [ ] 5.4.2.1 — Buttons and icon actions
 - [ ] 5.4.2.2 — Status badges
-- [ ] 5.4.2.3 — Dialogs and drawers
+- [x] 5.4.2.3.1 — Adopt create inspector/drawer as platform standard — `v0.9.0`; эталон = materials `EntityInspector` create; ADR-013
+- [x] 5.4.2.3.2 — Extract shared CreateDrawer shell — `v0.9.0`; `frontend/components/ui/create-drawer.tsx` (docked + overlay)
+- [x] 5.4.2.3.3 — Migrate nomenclature create to CreateDrawer — `v0.9.0`; номенклатура/категория docked справа
+- [ ] 5.4.2.3.4 — Migrate lead create to CreateDrawer
+- [ ] 5.4.2.3.5 — Migrate order/deal/task create (replace DemoActionDialog)
+- [ ] 5.4.2.3.6 — Migrate remaining nomenclature-section catalog creates (UoM, characteristics, custom fields) — in progress `v0.9.0`: UoM/характеристики/категории уже через CreateDrawer без смены маршрута; остаётся убрать inline-форму реквизитов на custom-fields
+- [ ] 5.4.2.3.7 — Define modal-vs-drawer boundaries and visual verification
 - [ ] 5.4.2.4 — Toast and inline feedback
 - [ ] 5.4.2.5 — Loading, empty and error states
 

@@ -12,8 +12,6 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
-import { PageHeader } from "@/components/ui/page-header";
-
 const settingsGroups = [
   {
     title: "Справочники",
@@ -116,11 +114,6 @@ const settingsGroups = [
 export default function SettingsPage() {
   return (
     <div>
-      <PageHeader
-        title="Настройки"
-        description="Справочники и системные данные корпоративной ERP"
-      />
-
       <div className="space-y-8 p-6">
         {settingsGroups.map((group) => {
           const GroupIcon = group.icon;

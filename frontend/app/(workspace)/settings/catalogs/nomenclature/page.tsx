@@ -1,9 +1,40 @@
-import { PageHeader } from "@/components/ui/page-header";
+import { Suspense } from "react";
+
 import { NomenclatureWorkspace } from "@/components/settings/nomenclature-workspace";
-import { getNomenclature, getNomenclatureCategories, getNomenclatureFieldValues, getUnitsOfMeasure } from "@/lib/nomenclature";
+import {
+  getNomenclature,
+  getNomenclatureCategories,
+  getNomenclatureFieldValues,
+  getUnitsOfMeasure,
+} from "@/lib/nomenclature";
 
 export default async function NomenclaturePage() {
-  const [items, categories, units] = await Promise.all([getNomenclature(), getNomenclatureCategories(), getUnitsOfMeasure()]);
-  const values = Object.fromEntries(await Promise.all(items.map(async (item) => [item.id, await getNomenclatureFieldValues(item.id)] as const)));
-  return <><PageHeader title="Номенклатура" description="Карточки с типом, категорией и единицей хранения" /><NomenclatureWorkspace items={items} categories={categories} units={units} fieldValues={values} /></>;
+  const [items, categories, units] = await Promise.all([
+    getNomenclature(),
+    getNomenclatureCategories(),
+    getUnitsOfMeasure(),
+  ]);
+  const values = Object.fromEntries(
+    await Promise.all(
+      items.map(
+        async (item) =>
+          [item.id, await getNomenclatureFieldValues(item.id)] as const,
+      ),
+    ),
+  );
+
+  return (
+    <Suspense
+      fallback={
+        <div className="p-6 text-sm text-slate-500">Загрузка номенклатуры…</div>
+      }
+    >
+      <NomenclatureWorkspace
+        items={items}
+        categories={categories}
+        units={units}
+        fieldValues={values}
+      />
+    </Suspense>
+  );
 }

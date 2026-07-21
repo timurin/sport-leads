@@ -144,6 +144,14 @@
   --portal-shell-topbar: 72px;
   --portal-shell-sidebar-expanded: 260px;
   --portal-shell-sidebar-compact: 72px;
+  /* DS-SHELL-01 local neutrals (exact approved hex; do not restyle) */
+  --portal-shell-nav: #475467;
+  --portal-shell-ink: #263244;
+  --portal-shell-group-title: #344054;
+  --portal-shell-group-line: #e7ecf4;
+  --portal-shell-avatar-bg: #eef3ff;
+  --portal-shell-avatar-fg: #175cd3;
+  --portal-shell-radius: 9px;
 
   /* Deprecated alias — was wrong (92); prefer shell-sidebar-* */
   --portal-sidebar-width: var(--portal-shell-sidebar-compact);

@@ -1,8 +1,20 @@
-import { PageHeader } from "@/components/ui/page-header";
+import { Suspense } from "react";
+
 import { CustomFieldsWorkspace } from "@/components/settings/custom-fields-workspace";
 import { getCustomFieldDefinitions, getNomenclatureCategories } from "@/lib/nomenclature";
 
 export default async function CustomFieldsPage() {
-  const [fields, categories] = await Promise.all([getCustomFieldDefinitions(), getNomenclatureCategories()]);
-  return <><PageHeader title="Дополнительные реквизиты" description="Типизированные поля номенклатуры и их назначения по категориям" /><CustomFieldsWorkspace fields={fields} categories={categories} /></>;
+  const [fields, categories] = await Promise.all([
+    getCustomFieldDefinitions(),
+    getNomenclatureCategories(),
+  ]);
+  return (
+    <Suspense
+      fallback={
+        <div className="p-6 text-sm text-slate-500">Загрузка реквизитов…</div>
+      }
+    >
+      <CustomFieldsWorkspace fields={fields} categories={categories} />
+    </Suspense>
+  );
 }

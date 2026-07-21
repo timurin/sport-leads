@@ -14,7 +14,7 @@ import {
 import { LeadCreateDialog } from "@/components/sales/lead-create-dialog";
 import { LeadStageSettingsDialog } from "@/components/sales/lead-stage-settings-dialog";
 import { Button } from "@/components/ui/button";
-import { PageHeader } from "@/components/ui/page-header";
+import { PageToolbar } from "@/components/ui/page-header";
 import {
   convertLead as convertApiLeadAction,
   rejectLead as rejectApiLeadAction,
@@ -300,10 +300,61 @@ export function LeadWorkspace({
 
   return (
     <div>
-      <PageHeader
-        title="Лиды"
-        description="Первичные обращения: от рабочей стадии до заказа покупателя или зафиксированного отказа"
-        actions={<Button variant="primary" onClick={() => setCreateOpen(true)}>+ Создать лид</Button>}
+      <PageToolbar
+        start={(
+          <>
+            {(["active", "converted", "rejected", "all"] as const).map((item) => (
+              <button
+                key={item}
+                type="button"
+                onClick={() => setView(item)}
+                className={`rounded-lg px-3 py-2 text-sm font-medium ${
+                  view === item
+                    ? "bg-blue-600 text-white"
+                    : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                }`}
+              >
+                {item === "active"
+                  ? "Активные"
+                  : item === "converted" ? "Успешные" : item === "rejected" ? "Отказы" : "Все"}
+              </button>
+            ))}
+            <Button type="button" onClick={() => setSettingsOpen(true)}>
+              <Settings2 size={16} />
+              Настроить стадии
+            </Button>
+            <label className="flex h-10 min-w-56 flex-1 items-center gap-2 rounded-lg border border-slate-200 px-3 lg:max-w-sm">
+              <Search size={17} className="text-slate-400" />
+              <span className="sr-only">Поиск</span>
+              <input
+                type="search"
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                placeholder="Поиск: лиды"
+                className="min-w-0 flex-1 bg-transparent text-sm text-slate-900 placeholder:text-slate-400 outline-none"
+              />
+            </label>
+            <select
+              value={responsible}
+              onChange={(event) => setResponsible(event.target.value)}
+              className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-900"
+            >
+              <option value="">Ответственный: все</option>
+              {responsibleOptions.map((managerName) => <option key={managerName}>{managerName}</option>)}
+            </select>
+            {query || responsible ? (
+              <Button onClick={() => { setQuery(""); setResponsible(""); }}>
+                <FilterX size={16} />
+                Сбросить
+              </Button>
+            ) : null}
+          </>
+        )}
+        end={
+          <Button variant="primary" onClick={() => setCreateOpen(true)}>
+            Создать лид
+          </Button>
+        }
       />
 
       {loadError ? (
@@ -327,59 +378,6 @@ export function LeadWorkspace({
           </article>
         ))}
       </section>
-
-      <div className="border-b border-slate-200 bg-white px-4 py-3 lg:px-6">
-        <div className="flex flex-wrap items-center gap-2">
-          {(["active", "converted", "rejected", "all"] as const).map((item) => (
-            <button
-              key={item}
-              type="button"
-              onClick={() => setView(item)}
-              className={`rounded-lg px-3 py-2 text-sm font-medium ${
-                view === item
-                  ? "bg-blue-600 text-white"
-                  : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-              }`}
-            >
-              {item === "active"
-                ? "Активные"
-                : item === "converted" ? "Успешные" : item === "rejected" ? "Отказы" : "Все"}
-            </button>
-          ))}
-          <Button type="button" onClick={() => setSettingsOpen(true)}>
-            <Settings2 size={16} />
-            Настроить стадии
-          </Button>
-        </div>
-
-        <div className="mt-3 flex flex-wrap gap-2">
-          <label className="flex h-10 min-w-56 flex-1 items-center gap-2 rounded-lg border border-slate-200 px-3 lg:max-w-sm">
-            <Search size={17} className="text-slate-400" />
-            <span className="sr-only">Поиск</span>
-            <input
-              type="search"
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder="Поиск: лиды"
-              className="min-w-0 flex-1 bg-transparent text-sm text-slate-900 placeholder:text-slate-400 outline-none"
-            />
-          </label>
-          <select
-            value={responsible}
-            onChange={(event) => setResponsible(event.target.value)}
-            className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-900"
-          >
-            <option value="">Ответственный: все</option>
-            {responsibleOptions.map((managerName) => <option key={managerName}>{managerName}</option>)}
-          </select>
-          {query || responsible ? (
-            <Button onClick={() => { setQuery(""); setResponsible(""); }}>
-              <FilterX size={16} />
-              Сбросить
-            </Button>
-          ) : null}
-        </div>
-      </div>
 
       <div className="p-4 lg:p-6">
         {moveError ? (

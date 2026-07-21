@@ -2,7 +2,6 @@ import type { ReactNode } from "react";
 
 import { AppTopbar } from "@/components/layout/app-topbar";
 import { AppSidebar } from "@/components/navigation/app-sidebar";
-import { WorkspaceTabs } from "@/components/navigation/workspace-tabs";
 
 type AppShellProps = {
   children: ReactNode;
@@ -17,7 +16,6 @@ export function AppShell({
 
       <div data-app-shell-content className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
         <AppTopbar />
-        <WorkspaceTabs />
 
         <main data-app-shell-main className="min-h-0 flex-1 overflow-y-auto">
           {children}

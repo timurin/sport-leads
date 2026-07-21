@@ -11,7 +11,6 @@ import {
 import { EntityInspector } from "@/components/entity/entity-inspector";
 import { EntityTable } from "@/components/entity/entity-table";
 import { EntityToolbar } from "@/components/entity/entity-toolbar";
-import { PageHeader } from "@/components/ui/page-header";
 import type {
   EntityId,
   EntityRecord,
@@ -129,14 +128,9 @@ export function EntityWorkspace({
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <PageHeader
-        title={definition.titlePlural}
-        description={definition.description}
-      />
-
       <EntityToolbar
         searchPlaceholder={`Поиск: ${definition.titlePlural.toLowerCase()}`}
-        createLabel={`Добавить ${definition.title.toLowerCase()}`}
+        createLabel={`Создать ${definition.title.toLowerCase()}`}
         view={definition.defaultView}
         onCreate={handleCreate}
       />

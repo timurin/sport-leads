@@ -2,7 +2,7 @@ import { KanbanPage } from "@/components/kanban/kanban-page";
 import { salesManagers, salesTasks, taskColumns } from "@/lib/demo-data/sales";
 
 export default function TasksPage() {
-  return <KanbanPage title="Задачи" description="Работа менеджеров и контроль следующих действий" actionLabel="Добавить задачу" columns={taskColumns}
+  return <KanbanPage title="Задачи" description="Работа менеджеров и контроль следующих действий" actionLabel="Создать задачу" columns={taskColumns}
     metrics={[
       { label: "Всего задач", kind: "count" },
       { label: "На сегодня", kind: "count", statuses: ["today"] },

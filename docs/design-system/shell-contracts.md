@@ -43,7 +43,9 @@ Allowed without redesign:
 - rename routes by product task;
 - add a Lucide icon for a new top-level section;
 - fix confirmed functional bugs without visual redesign;
-- improve accessibility without changing the approved look.
+- improve accessibility without changing the approved look;
+- map approved hex/sizes to CSS tokens with **identical values** (`5.3.1.1`, see `shell-sidebar-standardization.md`);
+- map topbar Tailwind palette to portal tokens (`5.3.1.2`, see `shell-topbar-standardization.md`) while preserving layout/behaviour.
 
 Navigation rules:
 
@@ -70,14 +72,14 @@ Approved composition and behaviour:
 
 - height `64px` on small screens, `72px` from `md`;
 - light background, bottom border, SPORT-LEAD visual system;
-- active top-level section title;
+- active top-level section title removed (product `2026-07-21`);
 - in-section navigation from `frontend/lib/navigation.ts`;
 - desktop nav from `lg`; tablet/mobile use compact section menu;
 - on mobile (≤767 px) the compact menu also lists top-level `appSections` (sidebar is hidden);
 - global Search and Create actions;
 - dropdown closes on toggle, item select, outside click, route change, `Escape`;
 - popups stay in viewport; no horizontal page scroll from topbar;
-- title may ellipsize; focus/hover/active states are part of the contract.
+- focus/hover/active states are part of the contract.
 
 Global search behaviour:
 
@@ -92,24 +94,24 @@ Responsibility split:
 
 ### Platform Topbar may contain only
 
-- active section title;
-- section navigation;
+- section navigation (no separate section title chrome);
 - global search;
 - global create;
 - adaptive section menu.
 
-### Page Header / Page Toolbar stay on the page and may contain
+### Page Toolbar stay on the page and may contain
 
-- page/entity title, breadcrumbs, document status;
-- local filters and view modes;
-- entity actions (save/edit/delete/post).
+- local search, filters, view modes;
+- entity/list actions (create, delete, export);
+- optional status chips for the current page.
+
+Page **titles/descriptions** are optional inside page content; they are not part of the global shell and not required in the page toolbar.
 
 Pages must not invent an alternate global topbar.
 
 Forbidden without an explicit user visual task:
 
 - height, background, border, radii, core typography;
-- section title placement;
 - desktop/tablet/mobile breakpoint behaviour;
 - active/hover/focus states;
 - active section/route resolution;
@@ -148,3 +150,17 @@ Shell report fields:
 - desktop/tablet/mobile checks;
 - dropdown and global search checks;
 - confirmations: `DS-SHELL-01 visual contract preserved`, `DS-SHELL-02 visual contract preserved`.
+
+## Responsive navigation (`5.3.1.4`)
+
+Canonical matrix and responsibilities: `docs/design-system/shell-responsive-navigation.md` (`SL-SHELL-RESPONSIVE-NAV-v1`).
+
+Summary:
+
+| Viewport | Sidebar | Section nav |
+|---|---|---|
+| ≤767 (`max-md`) | Hidden | Topbar compact menu = `appSections` + current `topNavigation` |
+| ≥768 (`md`) | Expanded 260 / compact 72 (or user-hidden) | Compact menu until `lg` |
+| ≥1024 (`lg`) | Same | Desktop horizontal `topNavigation` |
+
+No visual redesign of DS-SHELL-01/02 in this definition. Dedicated keyboard-navigation verification was removed from the roadmap by product decision (`2026-07-21`); existing focus rings remain part of the approved shell look.

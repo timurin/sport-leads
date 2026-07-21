@@ -96,14 +96,14 @@ function NavigationGroupContent({
           "relative flex min-h-9 min-w-0 items-center rounded-lg px-3 pl-8",
           "text-[12px] transition-colors",
           active
-            ? "bg-[#edf3ff] font-bold text-[#174bd8]"
-            : "text-[#475467] hover:bg-[#f6f8fc] hover:text-[#101828]",
+            ? "bg-portal-primary-soft font-bold text-portal-primary-hover"
+            : "text-[color:var(--portal-shell-nav)] hover:bg-portal-page hover:text-portal-text",
         ].join(" ")}
       >
         {active ? (
           <span
             aria-hidden="true"
-            className="absolute bottom-2 left-3 top-2 w-0.5 rounded-r bg-[#1f5eff]"
+            className="absolute bottom-2 left-3 top-2 w-0.5 rounded-r bg-portal-primary"
           />
         ) : null}
 
@@ -124,11 +124,11 @@ function NavigationGroupContent({
   className="
   mx-1 mb-1.5 mt-2
   min-w-0 rounded-md
-  border border-[#e7ecf4]
-  bg-[#f8fafc]
+  border border-[color:var(--portal-shell-group-line)]
+  bg-portal-surface-secondary
   px-3 py-2
   text-[11px] font-bold
-  leading-4 text-[#344054]
+  leading-4 text-[color:var(--portal-shell-group-title)]
   "
 >
   {group.title}
@@ -150,14 +150,14 @@ function NavigationGroupContent({
                 "relative flex min-h-9 items-center rounded-lg px-3 pl-10",
                 "text-[12px] transition-colors",
                 active
-                  ? "bg-[#edf3ff] font-bold text-[#174bd8]"
-                  : "text-[#475467] hover:bg-[#f6f8fc] hover:text-[#101828]",
+                  ? "bg-portal-primary-soft font-bold text-portal-primary-hover"
+                  : "text-[color:var(--portal-shell-nav)] hover:bg-portal-page hover:text-portal-text",
               ].join(" ")}
             >
               {active ? (
                 <span
                   aria-hidden="true"
-                  className="absolute bottom-2 left-3 top-2 w-0.5 rounded-r bg-[#1f5eff]"
+                  className="absolute bottom-2 left-3 top-2 w-0.5 rounded-r bg-portal-primary"
                 />
               ) : null}
 
@@ -260,12 +260,12 @@ function updateMode(nextMode: SidebarMode) {
         type="button"
         onClick={() => updateMode("expanded")}
         className="
-          fixed left-3 top-3 z-50
+          fixed left-3 top-3 z-portal-shell-float
           hidden size-10 items-center justify-center md:flex
-          rounded-[9px] border border-[#dfe5ef]
-          bg-white text-[#475467]
+          rounded-[var(--portal-shell-radius)] border border-portal-border
+          bg-portal-surface text-[color:var(--portal-shell-nav)]
           shadow-md transition-colors
-          hover:bg-[#f6f8fc] hover:text-[#174bd8]
+          hover:bg-portal-page hover:text-portal-primary-hover
         "
         title="Показать меню"
         aria-label="Показать меню"
@@ -284,14 +284,16 @@ function updateMode(nextMode: SidebarMode) {
       className={[
         // Mobile (≤767): sidebar hidden — navigation via topbar menu (DS-SHELL-02).
         "hidden h-full shrink-0 flex-col md:flex",
-        "border-r border-[#dfe5ef] bg-white text-[#263244]",
+        "border-r border-portal-border bg-portal-surface text-[color:var(--portal-shell-ink)]",
         "transition-[width] duration-200 ease-out",
-        expanded ? "w-[260px]" : "w-[72px]",
+        expanded
+          ? "w-[var(--portal-shell-sidebar-expanded)]"
+          : "w-[var(--portal-shell-sidebar-compact)]",
       ].join(" ")}
     >
       <div
         className={[
-          "flex h-[72px] shrink-0 items-center border-b border-[#dfe5ef]",
+          "flex h-[var(--portal-shell-topbar)] shrink-0 items-center border-b border-portal-border",
           expanded
             ? "justify-between px-3"
             : "justify-center px-2",
@@ -306,8 +308,8 @@ function updateMode(nextMode: SidebarMode) {
             className="
               flex size-10 shrink-0 items-center justify-center
               rounded-lg bg-gradient-to-br
-              from-[#3678ff] to-[#174bd8]
-              text-sm font-extrabold text-white shadow-sm
+              from-[var(--portal-primary-gradient-from)] to-[var(--portal-primary-gradient-to)]
+              text-sm font-extrabold text-portal-primary-on shadow-sm
             "
           >
             SL
@@ -315,11 +317,11 @@ function updateMode(nextMode: SidebarMode) {
 
           {expanded ? (
             <span className="ml-3 min-w-0">
-              <span className="block truncate text-[15px] font-extrabold tracking-[0.01em] text-[#101828]">
+              <span className="block truncate text-[15px] font-extrabold tracking-[0.01em] text-portal-text">
                 SPORT-LEAD
               </span>
 
-              <span className="mt-0.5 block text-[10px] font-semibold uppercase tracking-[0.08em] text-[#98a2b3]">
+              <span className="mt-0.5 block text-[10px] font-semibold uppercase tracking-[0.08em] text-portal-subtle">
                 ERP Platform
               </span>
             </span>
@@ -332,9 +334,9 @@ function updateMode(nextMode: SidebarMode) {
             onClick={() => updateMode("compact")}
             className="
               ml-2 flex size-8 shrink-0 items-center
-              justify-center rounded-lg text-[#98a2b3]
+              justify-center rounded-lg text-portal-subtle
               transition-colors
-              hover:bg-[#f6f8fc] hover:text-[#174bd8]
+              hover:bg-portal-page hover:text-portal-primary-hover
             "
             title="Свернуть меню"
             aria-label="Свернуть меню"
@@ -351,7 +353,7 @@ function updateMode(nextMode: SidebarMode) {
   ].join(" ")}
 >
         {expanded ? (
-          <div className="mb-2 px-2 text-[11px] font-extrabold uppercase tracking-[0.06em] text-[#98a2b3]">
+          <div className="mb-2 px-2 text-[11px] font-extrabold uppercase tracking-[0.06em] text-portal-subtle">
             Разделы
           </div>
         ) : null}
@@ -381,11 +383,11 @@ function updateMode(nextMode: SidebarMode) {
                     active ? "page" : undefined
                   }
                   className={[
-                    "relative flex min-h-10 items-center justify-center rounded-[9px] px-2",
+                    "relative flex min-h-10 items-center justify-center rounded-[var(--portal-shell-radius)] px-2",
                     "transition-colors",
                     active
-                      ? "bg-[#edf3ff] font-bold text-[#174bd8]"
-                      : "text-[#475467] hover:bg-[#f6f8fc] hover:text-[#101828]",
+                      ? "bg-portal-primary-soft font-bold text-portal-primary-hover"
+                      : "text-[color:var(--portal-shell-nav)] hover:bg-portal-page hover:text-portal-text",
                   ].join(" ")}
                 >
                   <Icon
@@ -404,11 +406,11 @@ function updateMode(nextMode: SidebarMode) {
     onClick={() => toggleSection(section.id)}
     aria-expanded={open}
     className={[
-      "group flex min-h-10 w-full items-center rounded-[9px]",
+      "group flex min-h-10 w-full items-center rounded-[var(--portal-shell-radius)]",
       "px-3 py-2 text-left transition-colors",
       active
-        ? "bg-[#edf3ff] text-[#174bd8]"
-        : "text-[#475467] hover:bg-[#f6f8fc] hover:text-[#101828]",
+        ? "bg-portal-primary-soft text-portal-primary-hover"
+        : "text-[color:var(--portal-shell-nav)] hover:bg-portal-page hover:text-portal-text",
     ].join(" ")}
   >
     <Icon
@@ -429,10 +431,10 @@ function updateMode(nextMode: SidebarMode) {
     <span
       className="
         ml-2 flex size-7 shrink-0 items-center
-        justify-center rounded-lg text-[#98a2b3]
+        justify-center rounded-lg text-portal-subtle
         transition-colors
-        group-hover:bg-white/80
-        group-hover:text-[#174bd8]
+        group-hover:bg-portal-surface/80
+        group-hover:text-portal-primary-hover
       "
     >
       {open ? (
@@ -447,11 +449,11 @@ function updateMode(nextMode: SidebarMode) {
     href={section.href}
     aria-current={active ? "page" : undefined}
     className={[
-      "group flex min-h-10 items-center rounded-[9px]",
+      "group flex min-h-10 items-center rounded-[var(--portal-shell-radius)]",
       "px-3 py-2 transition-colors",
       active
-        ? "bg-[#edf3ff] font-bold text-[#174bd8]"
-        : "text-[#475467] hover:bg-[#f6f8fc] hover:text-[#101828]",
+        ? "bg-portal-primary-soft font-bold text-portal-primary-hover"
+        : "text-[color:var(--portal-shell-nav)] hover:bg-portal-page hover:text-portal-text",
     ].join(" ")}
   >
     <Icon
@@ -486,16 +488,16 @@ function updateMode(nextMode: SidebarMode) {
         </div>
       </nav>
 
-      <div className="shrink-0 border-t border-[#dfe5ef] p-2">
+      <div className="shrink-0 border-t border-portal-border p-2">
         {!expanded ? (
           <button
             type="button"
             onClick={() => updateMode("expanded")}
             className="
               mb-1 flex min-h-10 w-full items-center
-              justify-center rounded-[9px]
-              text-[#475467] transition-colors
-              hover:bg-[#f6f8fc] hover:text-[#174bd8]
+              justify-center rounded-[var(--portal-shell-radius)]
+              text-[color:var(--portal-shell-nav)] transition-colors
+              hover:bg-portal-page hover:text-portal-primary-hover
             "
             title="Развернуть меню"
             aria-label="Развернуть меню"
@@ -510,9 +512,9 @@ function updateMode(nextMode: SidebarMode) {
     onClick={() => updateMode("compact")}
     className="
       flex min-h-10 w-full items-center
-      justify-start rounded-[9px] px-3
-      text-[#475467] transition-colors
-      hover:bg-[#f6f8fc] hover:text-[#174bd8]
+      justify-start rounded-[var(--portal-shell-radius)] px-3
+      text-[color:var(--portal-shell-nav)] transition-colors
+      hover:bg-portal-page hover:text-portal-primary-hover
     "
     title="Свернуть меню"
     aria-label="Свернуть меню"
@@ -528,9 +530,9 @@ function updateMode(nextMode: SidebarMode) {
         <button
           type="button"
           className={[
-            "mt-1 flex min-h-11 w-full items-center rounded-[9px]",
-            "text-[#475467] transition-colors",
-            "hover:bg-[#f6f8fc] hover:text-[#101828]",
+            "mt-1 flex min-h-11 w-full items-center rounded-[var(--portal-shell-radius)]",
+            "text-[color:var(--portal-shell-nav)] transition-colors",
+            "hover:bg-portal-page hover:text-portal-text",
             expanded
               ? "justify-start px-3"
               : "justify-center px-2",
@@ -540,8 +542,8 @@ function updateMode(nextMode: SidebarMode) {
           <span
             className="
               flex size-8 shrink-0 items-center justify-center
-              rounded-lg bg-[#eef3ff]
-              text-[11px] font-extrabold text-[#175cd3]
+              rounded-lg bg-[var(--portal-shell-avatar-bg)]
+              text-[11px] font-extrabold text-[color:var(--portal-shell-avatar-fg)]
             "
           >
             ТИ
@@ -549,11 +551,11 @@ function updateMode(nextMode: SidebarMode) {
 
           {expanded ? (
             <span className="ml-3 min-w-0 flex-1 text-left">
-              <span className="block truncate text-[12px] font-bold text-[#101828]">
+              <span className="block truncate text-[12px] font-bold text-portal-text">
                 Тимур
               </span>
 
-              <span className="block truncate text-[10px] text-[#98a2b3]">
+              <span className="block truncate text-[10px] text-portal-subtle">
                 Администратор
               </span>
             </span>

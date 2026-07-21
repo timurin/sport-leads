@@ -1,7 +1,8 @@
 import Link from "next/link";
+import { Suspense } from "react";
 
 import { PageContent } from "@/components/layout/page-layout";
-import { PageHeader } from "@/components/ui/page-header";
+import { NomenclatureSectionCreateHost } from "@/components/settings/nomenclature-section-create-host";
 import {
   getNomenclatureCategories,
   type NomenclatureCategory,
@@ -41,63 +42,64 @@ export default async function NomenclatureCategoriesPage() {
   });
 
   return (
-    <div>
-      <PageHeader
-        title="Категории номенклатуры"
-        description="Иерархия категорий для классификации номенклатуры"
-      />
-      <PageContent>
-        <div className="overflow-x-auto rounded-xl border border-portal-border bg-portal-surface shadow-sm">
-          <table className="min-w-full text-left text-sm">
-            <thead className="border-b bg-portal-surface-secondary text-portal-muted">
-              <tr>
-                <th className="px-4 py-3">Код</th>
-                <th className="px-4 py-3">Путь</th>
-                <th className="px-4 py-3">Тип</th>
-                <th className="px-4 py-3">Порядок</th>
-                <th className="px-4 py-3">Статус</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.length === 0 ? (
+    <Suspense
+      fallback={
+        <div className="p-6 text-sm text-slate-500">Загрузка категорий…</div>
+      }
+    >
+      <NomenclatureSectionCreateHost categories={categories}>
+        <PageContent>
+          <div className="overflow-x-auto rounded-xl border border-portal-border bg-portal-surface shadow-sm">
+            <table className="min-w-full text-left text-sm">
+              <thead className="border-b bg-portal-surface-secondary text-portal-muted">
                 <tr>
-                  <td
-                    colSpan={5}
-                    className="px-4 py-10 text-center text-portal-muted"
-                  >
-                    Категории пока не созданы. Создайте их в рабочем месте
-                    номенклатуры.
-                  </td>
+                  <th className="px-4 py-3">Код</th>
+                  <th className="px-4 py-3">Путь</th>
+                  <th className="px-4 py-3">Тип</th>
+                  <th className="px-4 py-3">Порядок</th>
+                  <th className="px-4 py-3">Статус</th>
                 </tr>
-              ) : (
-                rows.map((category) => (
-                  <tr key={category.id} className="border-b last:border-0">
-                    <td className="px-4 py-3 font-medium">{category.code}</td>
-                    <td className="px-4 py-3">
-                      {categoryPath(category, byId)}
-                    </td>
-                    <td className="px-4 py-3">{category.nomenclature_type}</td>
-                    <td className="px-4 py-3">{category.sort_order}</td>
-                    <td className="px-4 py-3">
-                      {category.is_active ? "Активна" : "Отключена"}
+              </thead>
+              <tbody>
+                {rows.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan={5}
+                      className="px-4 py-10 text-center text-portal-muted"
+                    >
+                      Категории пока не созданы. Нажмите «Создать» → «Категорию».
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-        <p className="mt-4 text-sm text-portal-muted">
-          Редактирование дерева категорий выполняется в{" "}
-          <Link
-            href="/settings/catalogs/nomenclature"
-            className="font-semibold text-blue-700 hover:underline"
-          >
-            рабочем месте номенклатуры
-          </Link>
-          .
-        </p>
-      </PageContent>
-    </div>
+                ) : (
+                  rows.map((category) => (
+                    <tr key={category.id} className="border-b last:border-0">
+                      <td className="px-4 py-3 font-medium">{category.code}</td>
+                      <td className="px-4 py-3">
+                        {categoryPath(category, byId)}
+                      </td>
+                      <td className="px-4 py-3">{category.nomenclature_type}</td>
+                      <td className="px-4 py-3">{category.sort_order}</td>
+                      <td className="px-4 py-3">
+                        {category.is_active ? "Активна" : "Отключена"}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+          <p className="mt-4 text-sm text-portal-muted">
+            Дерево категорий также доступно в{" "}
+            <Link
+              href="/settings/catalogs/nomenclature"
+              className="font-semibold text-blue-700 hover:underline"
+            >
+              рабочем месте номенклатуры
+            </Link>
+            .
+          </p>
+        </PageContent>
+      </NomenclatureSectionCreateHost>
+    </Suspense>
   );
 }

@@ -5,7 +5,7 @@ import { useMemo, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { DemoActionDialog } from "@/components/ui/demo-action-dialog";
-import { PageHeader } from "@/components/ui/page-header";
+import { PageToolbar } from "@/components/ui/page-header";
 import { salesCurrency } from "@/lib/demo-data/sales";
 import type { Client } from "@/types/sales";
 
@@ -50,7 +50,13 @@ export function ClientsTable({ clients }: ClientsTableProps) {
 
   return (
     <div>
-      <PageHeader title="Клиенты" description="Спортивные организации, команды и корпоративные заказчики" actions={<Button variant="primary" onClick={() => setDialogOpen(true)}>+ Добавить клиента</Button>} />
+      <PageToolbar
+        end={
+          <Button variant="primary" onClick={() => setDialogOpen(true)}>
+            Создать клиента
+          </Button>
+        }
+      />
       <section className="grid gap-3 border-b border-slate-200 bg-slate-50 px-4 py-4 sm:grid-cols-3 lg:px-6" aria-label="Статистика по клиентам">
         <article className="rounded-xl border border-slate-200 bg-white px-4 py-3"><p className="text-xs text-slate-500">Всего клиентов</p><strong className="mt-1 block text-xl text-slate-950">{clients.length}</strong></article>
         <article className="rounded-xl border border-slate-200 bg-white px-4 py-3"><p className="text-xs text-slate-500">Активные</p><strong className="mt-1 block text-xl text-slate-950">{clients.filter((client) => client.status === "active").length}</strong></article>

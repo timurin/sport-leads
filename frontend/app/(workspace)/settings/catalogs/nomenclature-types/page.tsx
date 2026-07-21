@@ -1,5 +1,4 @@
 import { PageContent } from "@/components/layout/page-layout";
-import { PageHeader } from "@/components/ui/page-header";
 import type { NomenclatureType } from "@/lib/nomenclature";
 
 const NOMENCLATURE_TYPES: Array<{
@@ -32,10 +31,6 @@ const NOMENCLATURE_TYPES: Array<{
 export default function NomenclatureTypesPage() {
   return (
     <div>
-      <PageHeader
-        title="Тип номенклатуры"
-        description="Системные типы номенклатуры. Список фиксирован и используется в карточках и категориях."
-      />
       <PageContent>
         <div className="overflow-x-auto rounded-xl border border-portal-border bg-portal-surface shadow-sm">
           <table className="min-w-full text-left text-sm">
