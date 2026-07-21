@@ -3,6 +3,7 @@
 import { useId, useMemo, useState } from "react";
 
 import { getCitySuggestions } from "@/lib/city-suggestions";
+import { controlClassName, labelClassName } from "@/lib/design-system/control-styles";
 
 type CityAutocompleteProps = {
   id: string;
@@ -13,8 +14,7 @@ type CityAutocompleteProps = {
   inputClassName?: string;
 };
 
-const defaultInputClass =
-  "mt-1 h-portal-control-default w-full rounded-portal-md border border-portal-border bg-portal-surface px-portal-3 text-portal-body text-portal-text placeholder:text-portal-subtle outline-none transition focus:border-portal-primary focus:ring-2 focus:ring-portal-primary-soft";
+const defaultInputClass = controlClassName({ className: "mt-portal-1" });
 
 export function CityAutocomplete({
   id,
@@ -65,7 +65,7 @@ export function CityAutocomplete({
 
   return (
     <div className={`relative ${className}`}>
-      <label htmlFor={id} className="block text-sm font-medium text-slate-700">
+      <label htmlFor={id} className={labelClassName()}>
         {label}
         <input
           id={id}

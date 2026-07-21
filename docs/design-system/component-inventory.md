@@ -50,6 +50,7 @@ No production code changed.
 | `app-topbar.tsx` | `AppTopbar` | Thin wrapper | Must not fork Topbar; see DS-SHELL-02 |
 | `page-layout.tsx` | `PageLayout`, `PageContent`, `PageActions`, `ResponsiveGrid` | Page root, width/padding, action row, auto-fit grid | `DS-PAGE-01`…`03` / `04` grid |
 | `page-state.tsx` | `PageLoadingState`, `PageErrorState`, `PageNotFoundState` | Shared route loading/error/not-found | `DS-PAGE-06` — `shell-page-state-boundaries.md` |
+| `form-controls.tsx` | `Field`, `Input`, `Textarea`, `Select`, `Checkbox`, `Radio`, `Switch`, `DateInput`, `MoneyInput` | Shared form controls | `DS-FORM-01` — `form-controls-standardization.md` |
 
 ## Platform navigation (shared chrome)
 

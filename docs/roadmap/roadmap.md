@@ -252,12 +252,12 @@ Microtasks:
 
 #### 5.4.1 — Forms
 
-- [ ] 5.4.1.1 — Text and numeric inputs
-- [ ] 5.4.1.2 — Select and combobox
-- [ ] 5.4.1.3 — Checkbox, radio and switch
-- [ ] 5.4.1.4 — Date and money controls
-- [ ] 5.4.1.5 — Validation and help states
-- [ ] 5.4.1.6 — Disabled and read-only states
+- [x] 5.4.1.1 — Text and numeric inputs — `v0.9.0`; `Input`/`Textarea`; evidence: `docs/design-system/form-controls-standardization.md`
+- [x] 5.4.1.2 — Select and combobox — `v0.9.0`; `Select` + `CityAutocomplete` on shared chrome
+- [x] 5.4.1.3 — Checkbox, radio and switch — `v0.9.0`; `Checkbox`/`Radio`/`Switch`
+- [x] 5.4.1.4 — Date and money controls — `v0.9.0`; `DateInput`/`MoneyInput`
+- [x] 5.4.1.5 — Validation and help states — `v0.9.0`; `Field` help/error + `invalid`
+- [x] 5.4.1.6 — Disabled and read-only states — `v0.9.0`; portal disabled/readonly styles; owner visual OK (`2026-07-21`); evidence: `docs/design-system/form-controls-standardization.md`
 
 #### 5.4.2 — Actions and feedback
 

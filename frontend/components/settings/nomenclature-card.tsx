@@ -8,6 +8,7 @@ import { assignNomenclatureCustomField, createAndAssignNomenclatureCustomField, 
 import { assignNomenclatureCharacteristic, createCharacteristicOption, generateNomenclatureVariants } from "@/app/(workspace)/settings/catalogs/nomenclature/characteristics-actions";
 import { updateNomenclature } from "@/app/(workspace)/settings/catalogs/nomenclature/nomenclature-actions";
 import { NomenclatureMediaGallery } from "@/components/settings/nomenclature-media-gallery";
+import { checkboxClassName, controlClassName } from "@/lib/design-system/control-styles";
 import type { CategoryCharacteristic, CharacteristicDefinition, CharacteristicOption, CustomFieldDefinition, CustomFieldOption, Nomenclature, NomenclatureCategory, NomenclatureCharacteristic, NomenclatureFieldValue, NomenclatureMedia, NomenclatureType, NomenclatureVariant, UnitOfMeasure } from "@/lib/nomenclature";
 
 type SaveStatus = "idle" | "saving" | "saved" | "error";
@@ -37,9 +38,9 @@ function FieldValue({ itemId, field, options, editing, onSave, onRemove }: { ite
   const value = field.value;
   const submit = async (event: FormEvent<HTMLFormElement>) => { event.preventDefault(); await onSave(new FormData(event.currentTarget)); };
   if (!editing) return <div className="grid grid-cols-[minmax(180px,1fr)_2fr_1fr] gap-4 border-b border-slate-100 py-2 text-sm last:border-0"><span className="text-slate-500">{field.name}{field.is_required ? " *" : ""}</span><span className="font-medium">{Array.isArray(value) ? value.join(", ") : value === null || value === "" ? "Не указано" : String(value)}</span><span className="text-slate-400">—</span></div>;
-  const common = "w-full rounded-lg border border-[#cfd7e6] px-2.5 py-2 text-sm";
+  const common = controlClassName({ size: "compact" });
   let control: ReactNode;
-  if (field.data_type === "BOOLEAN") control = <input type="checkbox" name="value" defaultChecked={value === true} />;
+  if (field.data_type === "BOOLEAN") control = <input type="checkbox" name="value" defaultChecked={value === true} className={checkboxClassName()} />;
   else if (field.data_type === "TEXT") control = <textarea name="value" defaultValue={typeof value === "string" ? value : ""} className={`${common} min-h-[72px]`} />;
   else if (field.data_type === "SINGLE_SELECT") control = <select name="value" defaultValue={value === null ? "" : String(value)} className={common}><option value="">Не выбрано</option>{options.filter((option) => option.is_active).map((option) => <option key={option.id} value={option.id}>{option.label}</option>)}</select>;
   else control = <input name="value" defaultValue={value === null ? "" : String(value)} type={field.data_type === "INTEGER" || field.data_type === "DECIMAL" ? "number" : field.data_type === "DATE" ? "date" : "text"} className={common} />;
@@ -74,7 +75,7 @@ export function NomenclatureCard({ item: initialItem, categories, units, fields,
   const saveField = async (data: FormData) => { setFieldsStatus("saving"); try { await saveNomenclatureCustomField(data); const id = Number(data.get("field_definition_id")); setFieldState((current) => current.map((field) => field.field_definition_id === id ? { ...field, value: data.get("value") } : field)); setFieldsDirty(false); setFieldsStatus("saved"); } catch { setFieldsStatus("error"); throw new Error("Не удалось сохранить реквизит"); } };
   const characteristicAction = (action: Action) => async (event: FormEvent<HTMLFormElement>) => { event.preventDefault(); setCharacteristicsStatus("saving"); try { await action(new FormData(event.currentTarget)); setCharacteristicsStatus("saved"); router.refresh(); } catch { setCharacteristicsStatus("error"); } };
   const visible = (tab: string) => activeTab === tab ? "" : "hidden";
-  const input = "w-full rounded-lg border border-[#cfd7e6] px-2.5 py-2 text-sm";
+  const input = controlClassName({ size: "compact" });
   const imageMedia = media.filter((entry) => entry.mime_type.startsWith("image/"));
   const assignedFieldIds = new Set(fieldState.map((field) => field.field_definition_id));
   const matchingDefinitions = definitions.filter((field) => field.is_active && !assignedFieldIds.has(field.id) && (field.name.toLocaleLowerCase().includes(fieldSearch.toLocaleLowerCase()) || field.code.toLocaleLowerCase().includes(fieldSearch.toLocaleLowerCase())));

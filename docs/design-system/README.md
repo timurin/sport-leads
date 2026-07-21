@@ -27,6 +27,7 @@
 - `docs/design-system/shell-content-containers-standardization.md` — `DS-PAGE-04` containers (`5.3.2.4`)
 - `docs/design-system/shell-scrolling-ownership.md` — `DS-PAGE-05` scroll (`5.3.2.5`)
 - `docs/design-system/shell-page-state-boundaries.md` — `DS-PAGE-06` loading/error (`5.3.2.6`)
+- `docs/design-system/form-controls-standardization.md` — `DS-FORM-01` forms (`5.4.1.*`)
 - `docs/design-system/layout-scrolling-audit.md` — AppShell, widths, scroll/sticky rules (`5.1.3.*`)
 - `docs/design-system/component-inventory.md` — инвентарь shared/domain UI (`5.1.2.*`)
 - `docs/design-system/shell-contracts.md` — защищённые контракты `DS-SHELL-01` / `DS-SHELL-02`
@@ -72,7 +73,8 @@ Layout:
 - `CreateMenu` — кнопка «Создать» с меню сущностей для page toolbar;
 - `CreateDrawer` — эталон create-панели (inspector/drawer, ADR-013; reference: materials);
 - `EntityHeader` — заголовок сущности внутри карточки документа;
-- `PageLoadingState` / `PageErrorState` / `PageNotFoundState` (`page-state.tsx`) — shared route boundaries (`DS-PAGE-06`).
+- `PageLoadingState` / `PageErrorState` / `PageNotFoundState` (`page-state.tsx`) — shared route boundaries (`DS-PAGE-06`);
+- Form controls (`form-controls.tsx`, `DS-FORM-01`) — `Field`, `Input`, `Textarea`, `Select`, `Checkbox`, `Radio`, `Switch`, `DateInput`, `MoneyInput`.
 
 Канон: `AppShell` → `PageLayout` → (`PageToolbar`) → `PageContent` → контент. Контракт: `docs/design-system/shell-page-layout-standardization.md` (`DS-PAGE-01`).
 

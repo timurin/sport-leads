@@ -5,6 +5,8 @@ import {
 } from "react";
 
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/form-controls";
+import { labelClassName } from "@/lib/design-system/control-styles";
 import type {
   EntityField,
   EntityRecord,
@@ -182,19 +184,19 @@ export function EntityForm({
       onSubmit={handleSubmit}
       className="flex h-full min-h-0 flex-col"
     >
-      <div className="min-h-0 flex-1 space-y-5 overflow-y-auto p-6">
+      <div className="min-h-0 flex-1 space-y-portal-5 overflow-y-auto p-portal-6">
         <div>
           <label
             htmlFor="entity-title"
-            className="mb-2 block text-sm font-medium text-slate-700"
+            className={labelClassName()}
           >
             Наименование
-            <span className="text-red-500">
+            <span className="text-portal-danger">
               {" "}*
             </span>
           </label>
 
-          <input
+          <Input
             id="entity-title"
             type="text"
             value={String(
@@ -206,7 +208,6 @@ export function EntityForm({
                 event.target.value,
               );
             }}
-            className="h-11 w-full rounded-lg border border-slate-200 px-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             autoFocus
           />
         </div>
@@ -214,12 +215,12 @@ export function EntityForm({
         <div>
           <label
             htmlFor="entity-subtitle"
-            className="mb-2 block text-sm font-medium text-slate-700"
+            className={labelClassName()}
           >
             Краткое описание
           </label>
 
-          <input
+          <Input
             id="entity-subtitle"
             type="text"
             value={String(
@@ -231,27 +232,26 @@ export function EntityForm({
                 event.target.value,
               );
             }}
-            className="h-11 w-full rounded-lg border border-slate-200 px-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
           />
         </div>
 
-        <div className="border-t border-slate-200 pt-5">
-          <h3 className="mb-4 text-sm font-semibold text-slate-900">
+        <div className="border-t border-portal-border pt-portal-5">
+          <h3 className="mb-portal-4 text-portal-body font-semibold text-portal-text">
             Основные данные
           </h3>
 
-          <div className="space-y-4">
+          <div className="space-y-portal-4">
             {definition.fields.map(
               (field) => (
                 <div key={field.id}>
                   <label
                     htmlFor={`field-${field.id}`}
-                    className="mb-2 block text-sm font-medium text-slate-700"
+                    className={labelClassName()}
                   >
                     {field.label}
                   </label>
 
-                  <input
+                  <Input
                     id={`field-${field.id}`}
                     type={getInputType(field)}
                     value={String(
@@ -263,7 +263,6 @@ export function EntityForm({
                         event.target.value,
                       );
                     }}
-                    className="h-11 w-full rounded-lg border border-slate-200 px-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                   />
                 </div>
               ),
@@ -272,13 +271,13 @@ export function EntityForm({
         </div>
 
         {error ? (
-          <div className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">
+          <div className="rounded-portal-md border border-portal-danger bg-portal-danger-soft px-portal-4 py-portal-3 text-portal-body text-portal-danger">
             {error}
           </div>
         ) : null}
       </div>
 
-      <footer className="flex items-center justify-end gap-2 border-t border-slate-200 bg-white px-6 py-4">
+      <footer className="flex items-center justify-end gap-portal-2 border-t border-portal-border bg-portal-surface px-portal-6 py-portal-4">
         <Button
           type="button"
           onClick={onCancel}
