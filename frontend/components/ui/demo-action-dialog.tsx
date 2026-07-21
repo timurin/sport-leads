@@ -24,7 +24,7 @@ export function DemoActionDialog({ open, title, onClose }: DemoActionDialogProps
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center bg-slate-950/40 p-4" role="presentation" onMouseDown={onClose}>
+    <div className="fixed inset-0 z-portal-modal flex items-center justify-center bg-slate-950/40 p-4" role="presentation" onMouseDown={onClose}>
       <section className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl" role="dialog" aria-modal="true" aria-labelledby="demo-dialog-title" onMouseDown={(event) => event.stopPropagation()}>
         <div className="flex items-start justify-between gap-4">
           <div>

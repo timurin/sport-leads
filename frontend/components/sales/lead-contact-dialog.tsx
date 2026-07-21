@@ -98,7 +98,7 @@ export function LeadContactDialog({
   }
 
   return (
-    <div className="fixed inset-0 z-[220] flex items-center justify-center bg-slate-950/40 p-4" role="presentation" onMouseDown={onClose}>
+    <div className="fixed inset-0 z-portal-modal-2 flex items-center justify-center bg-slate-950/40 p-4" role="presentation" onMouseDown={onClose}>
       <section
         className="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white p-5 text-slate-900 shadow-2xl sm:p-6"
         role="dialog"
@@ -248,7 +248,7 @@ export function LeadContactDeleteDialog({
   }
 
   return (
-    <div className="fixed inset-0 z-[220] flex items-center justify-center bg-slate-950/40 p-4" role="presentation" onMouseDown={onCancel}>
+    <div className="fixed inset-0 z-portal-modal-2 flex items-center justify-center bg-slate-950/40 p-4" role="presentation" onMouseDown={onCancel}>
       <section
         className="w-full max-w-md rounded-2xl bg-white p-6 text-slate-900 shadow-2xl"
         role="dialog"

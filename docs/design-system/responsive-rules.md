@@ -1,23 +1,28 @@
 # Адаптивные правила
 
+Канонические токены: `docs/design-system/breakpoint-tokens.md`, `content-width-tokens.md`.
+
 ## Контрольные ширины
 
-- Wide desktop: от 1500 px доступной ширины контента.
-- Desktop/laptop: 1200–1499 px.
-- Tablet: 768–1199 px.
-- Mobile: до 767 px; узкий mobile — до 600 px.
+- Wide desktop: от `--portal-bp-wide-min` (1500 px) доступной ширины контента.
+- Desktop: от `--portal-bp-desktop-min` (1280 px / Tailwind `xl`).
+- Laptop: от `--portal-bp-laptop-min` (1024 px / `lg`) — desktop section nav.
+- Tablet: от `--portal-bp-tablet-min` (768 px / `md`).
+- Mobile: до `--portal-bp-mobile-max` (767 px); узкий mobile — до `--portal-bp-narrow-mobile-max` (600 px).
 
 Viewport-breakpoints применяются к глобальному каркасу. Для вложенных рабочих областей предпочтительны container queries: карточка должна реагировать на собственную ширину, а не на ширину окна.
+
+Ниже `md` Platform Sidebar скрыт; навигация — через topbar menu (`shell-contracts.md`).
 
 ## Сетки
 
 - Каждый grid/flex-потомок, содержащий пользовательские данные, получает `min-width: 0`.
-- `ResponsiveGrid` использует `repeat(auto-fit, minmax(min(100%, N), 1fr))`: `small` — 230 px, `medium` — 300 px, `large` — 390 px.
-- Нельзя убирать ограничение `min(100%, N)`: без него минимальная ширина колонки создаёт горизонтальный overflow в узком контейнере.
+- `ResponsiveGrid` использует `repeat(auto-fit, minmax(min(100%, N), 1fr))` с `--portal-grid-min-sm|md|lg` (230 / 300 / 390).
+- Нельзя убирать ограничение `min(100%, N)`.
 - Две колонки разрешены только при комфортной минимальной ширине обеих частей.
 - На mobile карточки идут последовательно; действия переносятся или сворачиваются в `ActionMenu`.
 
-`PageContent` использует `mx-auto w-full min-w-0`: контейнер занимает доступную ширину, а `width` ограничивает только её максимум. `PageActions` сохраняет перенос; `align="between"` использует `justify-start sm:justify-between`, чтобы перенесённые mobile-действия не разъезжались по краям.
+`PageContent` использует `mx-auto w-full min-w-0`; `width` задаёт только max: `default` → `--portal-content-default`, `wide` → `--portal-content-max`, `full` → none.
 
 ## Прокрутка
 
@@ -32,6 +37,11 @@ Viewport-breakpoints применяются к глобальному карка
 - Таблица на mobile превращается в карточки/строки либо получает локальный горизонтальный scroll.
 - Поля формы переходят с нескольких колонок на одну без изменения порядка tab-навигации.
 - Кнопка подтверждения остаётся видимой и не сжимается; вторичные действия могут переноситься.
+
+## Z-index и motion
+
+- Оверлеи: `docs/design-system/z-index-tokens.md` (`z-portal-*`).
+- Движение: `docs/design-system/motion-tokens.md`; уважать `prefers-reduced-motion`.
 
 ## Проверка
 

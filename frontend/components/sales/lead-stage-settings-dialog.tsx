@@ -162,7 +162,7 @@ export function LeadStageSettingsDialog({
 
   return (
     <div
-      className="fixed inset-0 z-[210] flex items-center justify-center bg-slate-950/40 p-4"
+      className="fixed inset-0 z-portal-modal-1 flex items-center justify-center bg-slate-950/40 p-4"
       role="presentation"
       onMouseDown={onClose}
     >

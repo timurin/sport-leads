@@ -207,7 +207,7 @@ return () => {
 
 }, []);
 
-return ( <header className="relative z-40 border-b border-slate-200 bg-white">
+return ( <header className="relative z-portal-shell border-b border-slate-200 bg-white">
   {searchOpen ? (
     <div className="relative flex h-16 items-center px-3 sm:px-4 md:h-[72px] lg:px-6">
       <div className="relative w-full">
@@ -245,7 +245,7 @@ return ( <header className="relative z-40 border-b border-slate-200 bg-white">
 
         <div
           id="platform-search-suggestions"
-          className="absolute left-0 right-0 top-[calc(100%+8px)] z-[120] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-[0_20px_50px_rgba(15,23,42,0.18)]"
+          className="absolute left-0 right-0 top-[calc(100%+8px)] z-portal-search overflow-hidden rounded-xl border border-slate-200 bg-white shadow-[0_20px_50px_rgba(15,23,42,0.18)]"
           role="listbox"
         >
           <div className="border-b border-slate-100 px-4 py-2.5 text-xs font-medium uppercase tracking-[0.08em] text-slate-400">
@@ -365,7 +365,7 @@ return ( <header className="relative z-40 border-b border-slate-200 bg-white">
 
                   {menuOpen ? (
                     <div
-                      className="absolute left-0 top-[calc(100%-1px)] z-[100] w-[300px] max-w-[calc(100vw-24px)] rounded-xl border border-slate-200 bg-white p-2 shadow-[0_18px_45px_rgba(15,23,42,0.16)]"
+                      className="absolute left-0 top-[calc(100%-1px)] z-portal-popover w-[300px] max-w-[calc(100vw-24px)] rounded-xl border border-slate-200 bg-white p-2 shadow-[0_18px_45px_rgba(15,23,42,0.16)]"
                       role="menu"
                     >
                       {item.children.map((child) => {
@@ -516,7 +516,7 @@ return ( <header className="relative z-40 border-b border-slate-200 bg-white">
           </button>
 
           {mobileMenuOpen ? (
-            <div className="absolute right-0 top-[calc(100%+8px)] z-[100] w-[320px] max-w-[calc(100vw-24px)] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-[0_18px_45px_rgba(15,23,42,0.16)]">
+            <div className="absolute right-0 top-[calc(100%+8px)] z-portal-popover w-[320px] max-w-[calc(100vw-24px)] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-[0_18px_45px_rgba(15,23,42,0.16)]">
               <div className="border-b border-slate-100 px-4 py-3">
                 <div className="text-xs font-medium uppercase tracking-[0.08em] text-slate-400">
                   Раздел

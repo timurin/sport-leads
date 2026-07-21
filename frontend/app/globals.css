@@ -50,10 +50,6 @@
   --portal-state-disabled-fg: var(--portal-text-subtle);
   --portal-state-disabled-border: var(--portal-border);
 
-  --portal-motion-fast: 120ms;
-  --portal-motion-normal: 180ms;
-  --portal-motion-ease: ease;
-
   /*
    * Typography scale (5.2.1.3):
    * Platform font is Inter (system stack). "Geist" name deprecated — no Geist package loaded.
@@ -151,7 +147,54 @@
 
   /* Deprecated alias — was wrong (92); prefer shell-sidebar-* */
   --portal-sidebar-width: var(--portal-shell-sidebar-compact);
-  --portal-content-max: 1760px;
+
+  /*
+   * Content widths (5.2.2.2)
+   */
+  --portal-content-narrow: 42rem; /* 672px — forms / dialogs */
+  --portal-content-default: 80rem; /* 1280px — PageContent width=default (max-w-7xl) */
+  --portal-content-max: 1760px; /* PageContent width=wide */
+  --portal-grid-min-sm: 230px;
+  --portal-grid-min-md: 300px;
+  --portal-grid-min-lg: 390px;
+
+  /*
+   * Breakpoints (5.2.2.1) — product bands; Tailwind sm/md/lg/xl/2xl remain the runtime utilities.
+   */
+  --portal-bp-narrow-mobile-max: 600px;
+  --portal-bp-mobile-max: 767px;
+  --portal-bp-tablet-min: 768px; /* Tailwind md */
+  --portal-bp-laptop-min: 1024px; /* Tailwind lg — desktop section nav */
+  --portal-bp-desktop-min: 1280px; /* Tailwind xl */
+  --portal-bp-wide-min: 1500px; /* content-band wide desktop */
+
+  /*
+   * Z-index layers (5.2.2.3) — encode current ladder without changing stacking.
+   */
+  --portal-z-base: 0;
+  --portal-z-raised: 10;
+  --portal-z-sticky: 20;
+  --portal-z-dropdown: 30;
+  --portal-z-shell: 40;
+  --portal-z-shell-float: 50;
+  --portal-z-popover: 100;
+  --portal-z-search: 120;
+  --portal-z-modal: 200;
+  --portal-z-modal-1: 210;
+  --portal-z-modal-2: 220;
+  --portal-z-modal-3: 230;
+  --portal-z-modal-4: 240;
+  --portal-z-toast: 300;
+
+  /*
+   * Motion (5.2.2.4) — extends 5.2.1.7 timing tokens.
+   */
+  --portal-motion-fast: 120ms;
+  --portal-motion-normal: 180ms;
+  --portal-motion-slow: 280ms;
+  --portal-motion-ease: ease;
+  --portal-motion-ease-emphasized: cubic-bezier(0.2, 0, 0, 1);
+
   color-scheme: light;
 }
 
@@ -251,6 +294,30 @@
   --spacing-portal-avatar-sm: var(--portal-avatar-sm);
   --spacing-portal-avatar-md: var(--portal-avatar-md);
   --spacing-portal-avatar-lg: var(--portal-avatar-lg);
+
+  --breakpoint-portal-tablet: 48rem; /* 768px */
+  --breakpoint-portal-laptop: 64rem; /* 1024px */
+  --breakpoint-portal-desktop: 80rem; /* 1280px */
+  --breakpoint-portal-wide: 93.75rem; /* 1500px */
+
+  --container-portal-narrow: var(--portal-content-narrow);
+  --container-portal-default: var(--portal-content-default);
+  --container-portal-max: var(--portal-content-max);
+
+  --z-index-portal-base: var(--portal-z-base);
+  --z-index-portal-raised: var(--portal-z-raised);
+  --z-index-portal-sticky: var(--portal-z-sticky);
+  --z-index-portal-dropdown: var(--portal-z-dropdown);
+  --z-index-portal-shell: var(--portal-z-shell);
+  --z-index-portal-shell-float: var(--portal-z-shell-float);
+  --z-index-portal-popover: var(--portal-z-popover);
+  --z-index-portal-search: var(--portal-z-search);
+  --z-index-portal-modal: var(--portal-z-modal);
+  --z-index-portal-modal-1: var(--portal-z-modal-1);
+  --z-index-portal-modal-2: var(--portal-z-modal-2);
+  --z-index-portal-modal-3: var(--portal-z-modal-3);
+  --z-index-portal-modal-4: var(--portal-z-modal-4);
+  --z-index-portal-toast: var(--portal-z-toast);
 }
 
 /* Shared interactive focus ring (5.2.1.7) */
@@ -288,15 +355,35 @@ body {
 }
 
 .portal-grid-small {
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 230px), 1fr));
+  grid-template-columns: repeat(
+    auto-fit,
+    minmax(min(100%, var(--portal-grid-min-sm)), 1fr)
+  );
 }
 
 .portal-grid-medium {
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+  grid-template-columns: repeat(
+    auto-fit,
+    minmax(min(100%, var(--portal-grid-min-md)), 1fr)
+  );
 }
 
 .portal-grid-large {
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 390px), 1fr));
+  grid-template-columns: repeat(
+    auto-fit,
+    minmax(min(100%, var(--portal-grid-min-lg)), 1fr)
+  );
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 .lead-stage-step + .lead-stage-step {

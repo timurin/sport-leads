@@ -1,11 +1,8 @@
 /**
  * Design-system token mirrors.
- * Color SoT: `docs/design-system/color-tokens.md` (5.2.1.2).
- * Typography SoT: `docs/design-system/typography-tokens.md` (5.2.1.3).
- * Spacing SoT: `docs/design-system/spacing-tokens.md` (5.2.1.4).
- * Surface chrome SoT: `docs/design-system/surface-tokens.md` (5.2.1.5).
- * Component sizes SoT: `docs/design-system/component-size-tokens.md` (5.2.1.6).
- * Interaction SoT: `docs/design-system/interaction-tokens.md` (5.2.1.7).
+ * Foundations: color / typography / spacing / surface / control / interaction (5.2.1).
+ * Layers: breakpoints / content width / z-index / motion (5.2.2).
+ * Migration: `docs/design-system/token-migration-plan.md`.
  */
 
 export const colorTokens = {
@@ -34,6 +31,7 @@ export const colorTokens = {
   warningSoft: "var(--portal-warning-soft)",
   danger: "var(--portal-danger)",
   dangerSoft: "var(--portal-danger-soft)",
+  dangerHover: "var(--portal-danger-hover)",
 
   focusRing: "var(--portal-focus-ring)",
 } as const;
@@ -119,6 +117,8 @@ export const controlSizeTokens = {
   shellTopbar: "var(--portal-shell-topbar)",
   shellSidebarExpanded: "var(--portal-shell-sidebar-expanded)",
   shellSidebarCompact: "var(--portal-shell-sidebar-compact)",
+  contentNarrow: "var(--portal-content-narrow)",
+  contentDefault: "var(--portal-content-default)",
   contentMax: "var(--portal-content-max)",
 } as const;
 
@@ -136,9 +136,49 @@ export const interactionTokens = {
   focusRingWidth: "var(--portal-focus-ring-width)",
   focusRingOffset: "var(--portal-focus-ring-offset)",
   dangerHover: "var(--portal-danger-hover)",
-  motionFast: "var(--portal-motion-fast)",
-  motionNormal: "var(--portal-motion-normal)",
-  motionEase: "var(--portal-motion-ease)",
+} as const;
+
+export const breakpointTokens = {
+  narrowMobileMax: "var(--portal-bp-narrow-mobile-max)",
+  mobileMax: "var(--portal-bp-mobile-max)",
+  tabletMin: "var(--portal-bp-tablet-min)",
+  laptopMin: "var(--portal-bp-laptop-min)",
+  desktopMin: "var(--portal-bp-desktop-min)",
+  wideMin: "var(--portal-bp-wide-min)",
+} as const;
+
+export const contentWidthTokens = {
+  narrow: "var(--portal-content-narrow)",
+  default: "var(--portal-content-default)",
+  max: "var(--portal-content-max)",
+  gridMinSm: "var(--portal-grid-min-sm)",
+  gridMinMd: "var(--portal-grid-min-md)",
+  gridMinLg: "var(--portal-grid-min-lg)",
+} as const;
+
+export const zIndexTokens = {
+  base: "var(--portal-z-base)",
+  raised: "var(--portal-z-raised)",
+  sticky: "var(--portal-z-sticky)",
+  dropdown: "var(--portal-z-dropdown)",
+  shell: "var(--portal-z-shell)",
+  shellFloat: "var(--portal-z-shell-float)",
+  popover: "var(--portal-z-popover)",
+  search: "var(--portal-z-search)",
+  modal: "var(--portal-z-modal)",
+  modal1: "var(--portal-z-modal-1)",
+  modal2: "var(--portal-z-modal-2)",
+  modal3: "var(--portal-z-modal-3)",
+  modal4: "var(--portal-z-modal-4)",
+  toast: "var(--portal-z-toast)",
+} as const;
+
+export const motionTokens = {
+  fast: "var(--portal-motion-fast)",
+  normal: "var(--portal-motion-normal)",
+  slow: "var(--portal-motion-slow)",
+  ease: "var(--portal-motion-ease)",
+  easeEmphasized: "var(--portal-motion-ease-emphasized)",
 } as const;
 
 /** @deprecated Prefer named *Tokens exports. */
@@ -151,4 +191,8 @@ export const uiTokens = {
   shadow: shadowTokens,
   control: controlSizeTokens,
   interaction: interactionTokens,
+  breakpoint: breakpointTokens,
+  contentWidth: contentWidthTokens,
+  zIndex: zIndexTokens,
+  motion: motionTokens,
 } as const;

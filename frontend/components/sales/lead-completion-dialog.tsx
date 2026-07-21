@@ -149,7 +149,7 @@ export function LeadCompletionDialog({
 
   return (
     <div
-      className="fixed inset-0 z-[200] flex items-center justify-center bg-slate-950/40 p-4"
+      className="fixed inset-0 z-portal-modal flex items-center justify-center bg-slate-950/40 p-4"
       role="presentation"
       onMouseDown={onClose}
     >

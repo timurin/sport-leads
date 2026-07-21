@@ -222,11 +222,11 @@ Microtasks:
 
 #### 5.2.2 — Responsive and layer tokens
 
-- [ ] 5.2.2.1 — Define breakpoints
-- [ ] 5.2.2.2 — Define content width rules
-- [ ] 5.2.2.3 — Define z-index layers
-- [ ] 5.2.2.4 — Define motion rules
-- [ ] 5.2.2.5 — Prepare token migration plan
+- [x] 5.2.2.1 — Define breakpoints — `v0.9.0`; evidence: `docs/design-system/breakpoint-tokens.md`
+- [x] 5.2.2.2 — Define content width rules — `v0.9.0`; evidence: `docs/design-system/content-width-tokens.md`
+- [x] 5.2.2.3 — Define z-index layers — `v0.9.0`; evidence: `docs/design-system/z-index-tokens.md`
+- [x] 5.2.2.4 — Define motion rules — `v0.9.0`; evidence: `docs/design-system/motion-tokens.md`
+- [x] 5.2.2.5 — Prepare token migration plan — `v0.9.0`; evidence: `docs/design-system/token-migration-plan.md`
 
 ### 5.3 — Platform shell
 

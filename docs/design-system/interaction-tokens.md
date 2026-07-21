@@ -21,13 +21,7 @@
 
 ## Motion (minimal; full rules in `5.2.2.4`)
 
-| Token | Value | Use |
-|---|---|---|
-| `--portal-motion-fast` | `120ms` | Micro feedback |
-| `--portal-motion-normal` | `180ms` | Color / surface transitions |
-| `--portal-motion-ease` | `ease` | Default easing |
-
-Prefer `transition-colors` for controls; avoid layout-shifting transitions on buttons.
+See `docs/design-system/motion-tokens.md` for timing, easing, and `prefers-reduced-motion`.
 
 ## Tailwind color bridges
 

@@ -17,7 +17,7 @@ export function ActionMenu({ children, label = "Открыть меню дейс
       </summary>
       <div
         role="menu"
-        className={`absolute z-50 mt-1 min-w-44 rounded-portal-lg border border-portal-border bg-portal-surface p-1.5 shadow-portal-overlay ${align === "end" ? "right-0" : "left-0"}`}
+        className={`absolute z-portal-shell-float mt-1 min-w-44 rounded-portal-lg border border-portal-border bg-portal-surface p-1.5 shadow-portal-overlay ${align === "end" ? "right-0" : "left-0"}`}
       >
         {children}
       </div>

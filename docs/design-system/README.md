@@ -13,6 +13,11 @@
 - `docs/design-system/surface-tokens.md` — borders, radius, shadows (`5.2.1.5`)
 - `docs/design-system/component-size-tokens.md` — control / icon / avatar / shell sizes (`5.2.1.6`)
 - `docs/design-system/interaction-tokens.md` — hover / focus / selected / disabled (`5.2.1.7`)
+- `docs/design-system/breakpoint-tokens.md` — product breakpoints (`5.2.2.1`)
+- `docs/design-system/content-width-tokens.md` — page/grid widths (`5.2.2.2`)
+- `docs/design-system/z-index-tokens.md` — stacking layers (`5.2.2.3`)
+- `docs/design-system/motion-tokens.md` — motion timing (`5.2.2.4`)
+- `docs/design-system/token-migration-plan.md` — adoption phases (`5.2.2.5`)
 - `docs/design-system/layout-scrolling-audit.md` — AppShell, widths, scroll/sticky rules (`5.1.3.*`)
 - `docs/design-system/component-inventory.md` — инвентарь shared/domain UI (`5.1.2.*`)
 - `docs/design-system/shell-contracts.md` — защищённые контракты `DS-SHELL-01` / `DS-SHELL-02`
@@ -41,8 +46,9 @@
 - focus: `focus-ring` + offset/width; interaction states: hover / pressed / selected / disabled; motion-fast/normal;
 - каркас: `content-max` (контент-ширины — `5.2.2.2`).
 
-Цвета, типографика, spacing, radius, shadows, control sizes и interaction states зарегистрированы в Tailwind `@theme` / CSS.
+Цвета, типографика, spacing, radius, shadows, control sizes, interaction, breakpoints, content widths, z-index и motion зарегистрированы в CSS / `@theme`.
 Typed mirror: `frontend/lib/design-system/tokens.ts`.
+План миграции UI: `docs/design-system/token-migration-plan.md` (`5.2.2.5`).
 
 ## Компоненты
 
