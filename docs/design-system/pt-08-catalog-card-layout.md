@@ -11,17 +11,20 @@
 ## Purpose
 
 Эталон **карточки справочника** с версиями (База лекал и аналогичные settings-каталоги): одна сетка колонок, фиксированные breakpoints и слоты.  
-Новые карточки справочников **не изобретают** свою разметку — берут этот контракт и `CatalogVersionedCardLayout`.
+Новые карточки справочников, разделов и категорий с версиями **не изобретают** свою разметку — берут этот контракт и `CatalogVersionedCardLayout`.
 
-Не заменяет PT-05 (простая карточка без версий) и PT-06 (CRM complex card).
+Канонический маршрут-эталон: `/settings/catalogs/product-models/[id]` (`6.0.3.5`).
+
+Не заменяет PT-05 (простая карточка без версий) и PT-06 (CRM complex card). Список справочника — `DS-PT-02-CATALOG` (`pt-02-catalog-list.md`).
 
 ## When to use
 
 | Use `DS-PT-08-CATALOG` | Use something else |
 |---|---|
-| Versioned catalog entity card (models, pattern sets, …) | Simple settings card → **PT-05** |
-| Needs media + versions + history beside main attrs | List workspace → **PT-02** |
+| Versioned catalog entity card (models, pattern sets, directories, …) | Simple settings card → **PT-05** |
+| Needs media + versions + history beside main attrs | Catalog list → **`DS-PT-02-CATALOG`** |
 | Settings route under `/settings/catalogs/…` | Lead/order card → **PT-06** / **PT-07** |
+| Section / category card that needs the same catalog chrome | Flat CRM list → **PT-02** (`/sales/clients`) |
 
 ## Canonical composition
 

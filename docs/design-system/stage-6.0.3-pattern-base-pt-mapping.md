@@ -10,35 +10,46 @@
 
 Зафиксировать template IDs **до** feature-fill (`6.1+` / `6.2+` / `6.3+`), чтобы списки и карточки Базы лекал не изобретали layout.
 
+**Canonical catalog etalons (`6.0.3.5`):**
+
+| Route | Contract | Scope |
+|---|---|---|
+| `/settings/catalogs/product-models` | **`DS-PT-02-CATALOG`** | Primary list template for **справочники, разделы, категории** and other flat directory lists |
+| `/settings/catalogs/product-models/[id]` | **`DS-PT-08-CATALOG`** | Primary card template for versioned directory cards (and layout chrome for analogous catalog cards) |
+
+Evidence: `pt-02-catalog-list.md`, `pt-08-catalog-card-layout.md`.
+
 Документ не реализует UI. Плейсхолдеры `6.0.2` остаются EmptyState-shell до своих workspace-итераций.
 
 ## Route → template map
 
 | Route | Role | Template | Reference / notes |
 |---|---|---|---|
-| `/settings/catalogs/product-models` | list | **PT-02** (`DS-PT-02`) | Same strip/table shell as units / product-characteristics (`5.5.2.5`). Create → `CreateDrawer` (ADR-013). |
-| `/settings/catalogs/size-grids` | list | **PT-02** | Same as models list. |
-| `/settings/catalogs/patterns` | list | **PT-02** | Same as models list. |
-| `/settings/catalogs/product-models/[modelId]` | card | **PT-08** + **`DS-PT-08-CATALOG`** | Etalon: `ProductModelPersistentCard` + `CatalogVersionedCardLayout`. Layout: `pt-08-catalog-card-layout.md`. Demo: `demo-reference`. |
-| `/settings/catalogs/size-grids/[gridId]` | card | **PT-05** (`DS-PT-05`) | Simple settings card: header + attributes + size-rows table. Ref: characteristic detail. |
+| `/settings/catalogs/product-models` | list | **PT-02** + **`DS-PT-02-CATALOG`** | **Etalon** for directories / sections / categories lists. Impl: `ProductModelsWorkspace`. Contract: `pt-02-catalog-list.md`. Create → `CreateDrawer` (ADR-013). |
+| `/settings/catalogs/size-grids` | list | **PT-02** + **`DS-PT-02-CATALOG`** | Same catalog-list chrome as models. |
+| `/settings/catalogs/patterns` | list | **PT-02** + **`DS-PT-02-CATALOG`** | Same catalog-list chrome as models. |
+| `/settings/catalogs/product-models/[modelId]` | card | **PT-08** + **`DS-PT-08-CATALOG`** | **Etalon** for versioned catalog cards. Impl: `ProductModelPersistentCard` + `CatalogVersionedCardLayout`. Layout: `pt-08-catalog-card-layout.md`. Demo: `demo-reference`. |
+| `/settings/catalogs/size-grids/[gridId]` | card | **PT-05** (`DS-PT-05`) | Simple settings card (no versions): header + attributes + size-rows table. Ref: characteristic detail. |
 | `/settings/catalogs/patterns/[patternSetId]` | card | **PT-08** + **`DS-PT-08-CATALOG`** | Same catalog grid as models; version bar + history in `versions` slot. |
 | `/settings/catalogs/nomenclature/[id]` | PRODUCT block | **existing nomenclature card** (PT-06 card chrome) | No new page template. Block «Доступные модели лекал» inside current card. |
+| Future settings directories / sections / categories | list (+ card) | **`DS-PT-02-CATALOG`** (+ **`DS-PT-08-CATALOG`** if versioned, else **PT-05**) | Do **not** copy `/sales/clients` or invent parallel chrome. |
 
 PT-06 Lead-style complex card is **not** used for model/pattern/size-grid cards.
 
-## List slots (PT-02) — models / size grids / patterns
+## List slots (PT-02-CATALOG) — models / size grids / patterns / directories
 
-Required when filling `6.1.7` / `6.2.4` / `6.3.4`:
+Required when filling `6.1.7` / `6.2.4` / `6.3.4` and future directory lists:
 
 | Slot | Decision |
 |---|---|
 | Frame | `PageLayout` full-bleed strip (catalog list chrome) |
-| Toolbar | `PageToolbar` + Create (`CreateDrawer`) |
-| Filters | `FilterToolbar` (search + status as needed) |
-| Desktop | `DataTableFrame` + `DataTable` |
+| Toolbar | `PageToolbar`: full-width search + icon actions (`FilterX` + domain icons) |
+| Filters | Optional compact row **below** toolbar, right-aligned — not beside search |
+| Desktop | `DataTableFrame` + `DataTable` (checkbox · photo · keys · attrs · status · cost? · actions) |
+| Row actions | Inline edit icon + Open icon (edit stays in-row) |
 | Mobile `&lt;md` | row cards |
 | Empty | `EmptyState` (true empty / filter empty) |
-| Totals | `ListTotals` |
+| Totals | `ListTotals` only (no duplicate «найдено» in toolbar) |
 | Demo | Forbidden as production readiness (ADR / `6.0.2` smoke) |
 
 ## Model card (PT-08 + DS-PT-08-CATALOG) — body blocks
@@ -106,4 +117,5 @@ Feature iterations must re-check this matrix when closing visual microtasks (`6.
 
 ## Status
 
-Mapping accepted for roadmap `6.0.3` (`2026-07-22`). Implementation starts at `6.1.*`.
+Mapping accepted for roadmap `6.0.3` (`2026-07-22`).  
+Canonical catalog etalons promoted in `6.0.3.5` (`2026-07-22`): product-models list/card for directories / sections / categories. Implementation continues at `6.1.*`.

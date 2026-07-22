@@ -105,3 +105,57 @@ export async function updateNomenclatureCategory(formData: FormData) {
   revalidatePath("/settings/catalogs/nomenclature");
   revalidatePath("/settings/catalogs/nomenclature-categories");
 }
+
+async function readDetail(response: Response): Promise<string> {
+  const payload = (await response.json().catch(() => null)) as
+    | { detail?: string | Array<{ msg?: string }> }
+    | null;
+  if (typeof payload?.detail === "string") return payload.detail;
+  if (Array.isArray(payload?.detail) && payload.detail.length > 0) {
+    return (
+      payload.detail.map((item) => item.msg).filter(Boolean).join("; ") ||
+      `Backend вернул ${response.status}.`
+    );
+  }
+  return `Backend вернул ${response.status}.`;
+}
+
+function revalidateNomenclatureCard(nomenclatureId: number) {
+  revalidatePath("/settings/catalogs/nomenclature");
+  revalidatePath(`/settings/catalogs/nomenclature/${nomenclatureId}`);
+}
+
+export async function addNomenclatureAvailableModel(
+  nomenclatureId: number,
+  productModelId: number,
+): Promise<{ ok: true } | { ok: false; message: string }> {
+  const response = await fetch(
+    `${apiBaseUrl()}/nomenclatures/${nomenclatureId}/available-models`,
+    {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ product_model_id: productModelId }),
+      cache: "no-store",
+    },
+  );
+  if (!response.ok) {
+    return { ok: false, message: await readDetail(response) };
+  }
+  revalidateNomenclatureCard(nomenclatureId);
+  return { ok: true };
+}
+
+export async function removeNomenclatureAvailableModel(
+  nomenclatureId: number,
+  productModelId: number,
+): Promise<{ ok: true } | { ok: false; message: string }> {
+  const response = await fetch(
+    `${apiBaseUrl()}/nomenclatures/${nomenclatureId}/available-models/${productModelId}`,
+    { method: "DELETE", cache: "no-store" },
+  );
+  if (!response.ok && response.status !== 204) {
+    return { ok: false, message: await readDetail(response) };
+  }
+  revalidateNomenclatureCard(nomenclatureId);
+  return { ok: true };
+}

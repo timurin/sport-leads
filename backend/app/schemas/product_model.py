@@ -132,3 +132,27 @@ class ProductModelHistoryRead(BaseModel):
     actor: str
     action: str
     created_at: datetime
+
+
+class NomenclatureProductModelCreate(BaseModel):
+    product_model_id: int
+    sort_order: int | None = Field(default=None, ge=0)
+
+
+class NomenclatureProductModelReorder(BaseModel):
+    product_model_ids: list[int] = Field(min_length=1)
+
+
+class NomenclatureProductModelRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    nomenclature_id: int
+    product_model_id: int
+    sort_order: int
+    created_at: datetime
+    updated_at: datetime
+    article: str
+    name: str
+    size_type: ProductModelSizeType
+    status: ProductModelStatus

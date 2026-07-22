@@ -14,10 +14,16 @@ import {
 
 type ProductModelRouteProps = {
   params: Promise<{ modelId: string }>;
+  searchParams: Promise<{ edit?: string }>;
 };
 
-export default async function ProductModelRoute({ params }: ProductModelRouteProps) {
+export default async function ProductModelRoute({
+  params,
+  searchParams,
+}: ProductModelRouteProps) {
   const { modelId } = await params;
+  const { edit } = await searchParams;
+  const initialEditing = edit === "1" || edit === "true";
 
   if (modelId === productModelReference.id) {
     return <ProductModelCard model={productModelReference} />;
@@ -45,6 +51,7 @@ export default async function ProductModelRoute({ params }: ProductModelRoutePro
       versions={toProductModelVersionViews(versions)}
       media={media}
       history={history}
+      initialEditing={initialEditing}
     />
   );
 }

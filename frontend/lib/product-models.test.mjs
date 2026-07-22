@@ -3,10 +3,13 @@ import test from "node:test";
 
 import {
   filterProductModels,
+  isProductModelRequisitesDirty,
   parseProductModelRouteId,
   productModelLabel,
   productModelStatusTone,
+  toProductModelRequisitesDraft,
   toProductModelVersionViews,
+  validateProductModelCreateDraft,
 } from "./product-models.ts";
 
 const sample = [
@@ -124,4 +127,61 @@ test("toProductModelVersionViews marks draft active and published baseline", () 
   assert.equal(views[2].label, "v3");
   assert.equal(views[2].isActive, true);
   assert.equal(views.filter((item) => item.isActive).length, 1);
+});
+
+test("validateProductModelCreateDraft requires article, name and size_type", () => {
+  assert.equal(
+    validateProductModelCreateDraft({
+      article: "",
+      name: "Модель",
+      size_type: "men",
+      description: "",
+    }),
+    "Укажите артикул",
+  );
+  assert.equal(
+    validateProductModelCreateDraft({
+      article: "A-1",
+      name: "  ",
+      size_type: "women",
+      description: "",
+    }),
+    "Укажите название",
+  );
+  assert.equal(
+    validateProductModelCreateDraft({
+      article: "A-1",
+      name: "Модель",
+      size_type: "kids",
+      description: "ok",
+    }),
+    null,
+  );
+});
+
+test("isProductModelRequisitesDirty compares draft to model", () => {
+  const model = sample[0];
+  assert.equal(
+    isProductModelRequisitesDirty(model, toProductModelRequisitesDraft(model)),
+    false,
+  );
+  assert.equal(
+    isProductModelRequisitesDirty(model, {
+      ...toProductModelRequisitesDraft(model),
+      name: "Другое имя",
+    }),
+    true,
+  );
+  assert.equal(
+    isProductModelRequisitesDirty(
+      { ...model, description: null },
+      {
+        article: model.article,
+        name: model.name,
+        size_type: model.size_type,
+        description: "",
+      },
+    ),
+    false,
+  );
 });

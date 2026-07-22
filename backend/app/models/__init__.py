@@ -36,6 +36,7 @@ from app.models.product_model import (
     ProductModelStatus,
     ProductModelVersion,
     ProductModelVersionState,
+    NomenclatureProductModel,
 )
 
 
@@ -85,6 +86,7 @@ __all__ = [
     "ProductModelStatus",
     "ProductModelVersion",
     "ProductModelVersionState",
+    "NomenclatureProductModel",
     "SalesOrderItemVariantSnapshot",
     "SalesOrderStatus",
     "SalesUser",

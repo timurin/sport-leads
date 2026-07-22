@@ -78,11 +78,12 @@ Additional:
 
 ## Reference consumers
 
-- `/sales/clients` — `frontend/components/tables/clients-table.tsx` (**PT-02 reference**)
+- `/sales/clients` — `frontend/components/tables/clients-table.tsx` (**PT-02 CRM reference**)
+- `/settings/catalogs/product-models` — `ProductModelsWorkspace` (**`DS-PT-02-CATALOG` etalon** for directories / sections / categories — see `pt-02-catalog-list.md`)
 
-Secondary adopters (migrated under `5.5.2.5`): product-characteristics list, units-of-measure, nomenclature-categories, nomenclature-types. Still migrate later: organizations EntityWorkspace, custom-fields list polish.
+Secondary adopters (migrated under `5.5.2.5`; migrate toward `DS-PT-02-CATALOG` when touched): product-characteristics list, units-of-measure, nomenclature-categories, nomenclature-types. Still migrate later: organizations EntityWorkspace, custom-fields list polish.
 
-Stage 6 planned PT-02 adopters (`6.0.3` / `stage-6.0.3-pattern-base-pt-mapping.md`): product-models list, size-grids list, patterns list.
+Stage 6 PT-02-CATALOG adopters (`6.0.3` / `6.0.3.5`): size-grids list, patterns list, future settings directories.
 
 ## Verification (owner)
 

@@ -4,6 +4,11 @@ from sqlalchemy.orm import Session
 from app.database.session import get_db
 from app.models.nomenclature import Nomenclature
 from app.schemas.nomenclature import NomenclatureCategoryCreate, NomenclatureCategoryRead, NomenclatureCategoryUpdate, NomenclatureCreate, NomenclatureRead, NomenclatureUpdate, UnitOfMeasureCreate, UnitOfMeasureRead, UnitOfMeasureUpdate
+from app.schemas.product_model import (
+    NomenclatureProductModelCreate,
+    NomenclatureProductModelRead,
+    NomenclatureProductModelReorder,
+)
 from app.services.nomenclature import (
     NomenclatureArticleConflictError,
     NomenclatureCategoryConflictError,
@@ -25,6 +30,15 @@ from app.services.nomenclature import (
     UnitOfMeasureConflictError,
     UnitOfMeasureNotFoundError,
     UnitOfMeasureRuleError,
+)
+from app.services.nomenclature_product_models import (
+    NomenclatureProductModelConflictError,
+    NomenclatureProductModelNotFoundError,
+    NomenclatureProductModelRuleError,
+    add_available_product_model,
+    list_available_product_models,
+    remove_available_product_model,
+    reorder_available_product_models,
 )
 
 
@@ -139,4 +153,79 @@ def update_one_nomenclature(nomenclature_id: int, payload: NomenclatureUpdate, d
     except NomenclatureArticleConflictError as error:
         raise HTTPException(status_code=409, detail=str(error)) from error
     except (NomenclatureCategoryNotFoundError, NomenclatureCategoryRuleError, UnitOfMeasureNotFoundError, UnitOfMeasureRuleError) as error:
+        raise HTTPException(status_code=422, detail=str(error)) from error
+
+
+@router.get(
+    "/{nomenclature_id}/available-models",
+    response_model=list[NomenclatureProductModelRead],
+    operation_id="list_nomenclature_available_models",
+)
+def read_available_models(nomenclature_id: int, db: Session = Depends(get_db)):
+    try:
+        return list_available_product_models(db, nomenclature_id)
+    except NomenclatureNotFoundError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+    except NomenclatureProductModelRuleError as error:
+        raise HTTPException(status_code=422, detail=str(error)) from error
+
+
+@router.post(
+    "/{nomenclature_id}/available-models",
+    response_model=NomenclatureProductModelRead,
+    status_code=status.HTTP_201_CREATED,
+    operation_id="add_nomenclature_available_model",
+)
+def create_available_model(
+    nomenclature_id: int,
+    payload: NomenclatureProductModelCreate,
+    db: Session = Depends(get_db),
+):
+    try:
+        return add_available_product_model(db, nomenclature_id, payload)
+    except NomenclatureNotFoundError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+    except NomenclatureProductModelNotFoundError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+    except NomenclatureProductModelConflictError as error:
+        raise HTTPException(status_code=409, detail=str(error)) from error
+    except NomenclatureProductModelRuleError as error:
+        raise HTTPException(status_code=422, detail=str(error)) from error
+
+
+@router.put(
+    "/{nomenclature_id}/available-models/order",
+    response_model=list[NomenclatureProductModelRead],
+    operation_id="reorder_nomenclature_available_models",
+)
+def reorder_available_models(
+    nomenclature_id: int,
+    payload: NomenclatureProductModelReorder,
+    db: Session = Depends(get_db),
+):
+    try:
+        return reorder_available_product_models(db, nomenclature_id, payload)
+    except NomenclatureNotFoundError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+    except NomenclatureProductModelRuleError as error:
+        raise HTTPException(status_code=422, detail=str(error)) from error
+
+
+@router.delete(
+    "/{nomenclature_id}/available-models/{product_model_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    operation_id="remove_nomenclature_available_model",
+)
+def delete_available_model(
+    nomenclature_id: int,
+    product_model_id: int,
+    db: Session = Depends(get_db),
+):
+    try:
+        remove_available_product_model(db, nomenclature_id, product_model_id)
+    except NomenclatureNotFoundError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+    except NomenclatureProductModelNotFoundError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+    except NomenclatureProductModelRuleError as error:
         raise HTTPException(status_code=422, detail=str(error)) from error

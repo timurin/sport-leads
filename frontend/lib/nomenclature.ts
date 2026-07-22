@@ -154,3 +154,34 @@ export async function getNomenclatureMedia(id: number): Promise<NomenclatureMedi
   if (!response.ok) throw new Error(`Не удалось загрузить media номенклатуры (${response.status}).`);
   return await response.json() as NomenclatureMedia[];
 }
+
+export type NomenclatureAvailableModel = {
+  id: number;
+  nomenclature_id: number;
+  product_model_id: number;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+  article: string;
+  name: string;
+  size_type: "men" | "women" | "kids";
+  status: "draft" | "active" | "archived";
+};
+
+export async function getNomenclatureAvailableModels(
+  nomenclatureId: number,
+): Promise<NomenclatureAvailableModel[]> {
+  const response = await fetch(
+    `${apiBaseUrl()}/nomenclatures/${nomenclatureId}/available-models`,
+    { cache: "no-store" },
+  );
+  if (!response.ok) {
+    if (response.status === 422) {
+      return [];
+    }
+    throw new Error(
+      `Не удалось загрузить доступные модели лекал (${response.status}).`,
+    );
+  }
+  return (await response.json()) as NomenclatureAvailableModel[];
+}

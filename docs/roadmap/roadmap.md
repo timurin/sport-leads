@@ -451,7 +451,7 @@ Completion criteria:
 #### 6.0.3 — Page template references
 
 Goal:
-List and card UIs follow approved PT contracts before feature fill.
+List and card UIs follow approved PT contracts before feature fill. Product-model routes are the **canonical catalog templates** for directories, sections, and categories.
 
 Dependencies:
 - 5.5.2
@@ -462,9 +462,11 @@ Microtasks:
 - [x] 6.0.3.2 — Map model and pattern cards to PT-05/PT-06 or reference model shell (`5.6.7`); model card includes assembly-variants block — `v0.9.0`; model+pattern → PT-08; size-grid → PT-05; assembly-variants = PT-08 body block
 - [x] 6.0.3.3 — Map PRODUCT nomenclature card block «доступные модели лекал» to existing nomenclature card template — `v0.9.0`; no new PT; PRODUCT-only section on existing card
 - [x] 6.0.3.4 — Record breakpoints in design-system task evidence — `v0.9.0`; matrix 1920…390 in mapping doc; task: `docs/tasks/v0.9.0-stage-6.0.3-pattern-base-pt-mapping.md`
+- [x] 6.0.3.5 — Promote product-model list/card as canonical catalog directory templates — `v0.9.0`; `/settings/catalogs/product-models` → `DS-PT-02-CATALOG`; `/settings/catalogs/product-models/[id]` → `DS-PT-08-CATALOG`; evidence: `docs/design-system/pt-02-catalog-list.md`, `pt-08-catalog-card-layout.md`, mapping update
 
 Completion criteria:
-- template IDs documented per workspace/card before implementation iterations.
+- template IDs documented per workspace/card before implementation iterations;
+- catalog directories / sections / categories reuse product-model list+card templates (not Clients / not ad-hoc chrome).
 
 ### 6.1 — Модели изделий (Product Models)
 
@@ -586,7 +588,7 @@ Completion criteria:
 #### 6.1.7 — Product-model workspace and list
 
 Goal:
-Users can open a dedicated product-model workspace and browse the catalog.
+Users can open a dedicated product-model workspace and browse the catalog. This list is the **canonical `DS-PT-02-CATALOG` etalon** for settings directories, sections, and categories.
 
 Dependencies:
 - 6.1.3
@@ -594,34 +596,36 @@ Dependencies:
 
 Microtasks:
 - [x] 6.1.7.1 — Add frontend types and API client — `v0.9.0`; `frontend/lib/product-models.ts`
-- [x] 6.1.7.2 — Add list route in the settings workspace route group — `v0.9.0`; `/settings/catalogs/product-models` → API list (PT-02)
+- [x] 6.1.7.2 — Add list route in the settings workspace route group — `v0.9.0`; `/settings/catalogs/product-models` → API list (`DS-PT-02-CATALOG` etalon; `6.0.3.5`)
 - [x] 6.1.7.3 — Add workspace UI with loading and error states — `v0.9.0`; `ProductModelsWorkspace` + segment loading/error
 - [x] 6.1.7.4 — Add frontend regression tests — `v0.9.0`; `frontend/lib/product-models.test.mjs`
-- [ ] 6.1.7.5 — Visual verification
+- [x] 6.1.7.5 — Visual verification — `v0.9.0`; owner OK `2026-07-22`
 
 Completion criteria:
 - workspace opens through a real route;
 - list data comes from API;
-- loading and error states are explicit.
+- loading and error states are explicit;
+- route remains the catalog-list template reference for directories / sections / categories.
 
 #### 6.1.8 — Product-model card route
 
 Goal:
-Users can open a dedicated product-model card shell.
+Users can open a dedicated product-model card shell. This card is the **canonical `DS-PT-08-CATALOG` etalon** for versioned settings directories (and the layout reference for catalog section/category cards that need the same chrome).
 
 Dependencies:
 - 6.1.7
 
 Microtasks:
-- [x] 6.1.8.1 — Add detail route and page shell — `v0.9.0`; numeric id → API card; `demo-reference` kept as PT-08 demo
+- [x] 6.1.8.1 — Add detail route and page shell — `v0.9.0`; `/settings/catalogs/product-models/[id]` → API card (`DS-PT-08-CATALOG` etalon; `6.0.3.5`); `demo-reference` kept as PT-08 demo
 - [x] 6.1.8.2 — Add card view state (article, size_type, description, status) — `v0.9.0`; `ProductModelPersistentCard` + version bar from API
 - [x] 6.1.8.3 — Add not-found, loading, and error states — `v0.9.0`; segment boundaries + numeric guard
 - [x] 6.1.8.4 — Add frontend regression tests — `v0.9.0`; `parseProductModelRouteId` / `toProductModelVersionViews`
-- [ ] 6.1.8.5 — Visual verification
+- [x] 6.1.8.5 — Visual verification — `v0.9.0`; owner OK `2026-07-22`
 
 Completion criteria:
 - card URL uses the real route structure;
-- page handles loading, missing, and error states correctly.
+- page handles loading, missing, and error states correctly;
+- route remains the catalog-card template reference for versioned directories / analogous section cards.
 
 #### 6.1.9 — Product-model create flow
 
@@ -633,10 +637,10 @@ Dependencies:
 - 6.1.8
 
 Microtasks:
-- [ ] 6.1.9.1 — Add create form and drawer host (article, size_type, name, description)
-- [ ] 6.1.9.2 — Add submit actions and validation mapping
-- [ ] 6.1.9.3 — Add frontend regression tests
-- [ ] 6.1.9.4 — Visual verification
+- [x] 6.1.9.1 — Add create form and drawer host (article, size_type, name, description) — `v0.9.0`; `ProductModelCreateDrawer` + list «Создать»
+- [x] 6.1.9.2 — Add submit actions and validation mapping — `v0.9.0`; `createProductModel` server action; `validateProductModelCreateDraft`
+- [x] 6.1.9.3 — Add frontend regression tests — `v0.9.0`; `product-models.test.mjs` create-draft validation
+- [x] 6.1.9.4 — Visual verification — `v0.9.0`; owner OK `2026-07-22`
 
 Completion criteria:
 - create flow saves through API;
@@ -651,10 +655,10 @@ Dependencies:
 - 6.1.9
 
 Microtasks:
-- [ ] 6.1.10.1 — Add edit form and save/cancel blocks
-- [ ] 6.1.10.2 — Add dirty guard where required
-- [ ] 6.1.10.3 — Add frontend regression tests
-- [ ] 6.1.10.4 — Visual verification
+- [x] 6.1.10.1 — Add edit form and save/cancel blocks — `v0.9.0`; card requisites edit + toolbar Save/Cancel
+- [x] 6.1.10.2 — Add dirty guard where required — `v0.9.0`; cancel / back / beforeunload when dirty
+- [x] 6.1.10.3 — Add frontend regression tests — `v0.9.0`; `isProductModelRequisitesDirty` / create-draft validation reuse
+- [x] 6.1.10.4 — Visual verification — `v0.9.0`; owner OK `2026-07-22`
 
 Completion criteria:
 - reopened card shows saved changes;
@@ -672,11 +676,11 @@ Dependencies:
 - 6.0.1
 
 Microtasks:
-- [ ] 6.1.11.1 — Add M2M (or link table) `nomenclature_id` ↔ `product_model_id` with sort order
-- [ ] 6.1.11.2 — Add migration and schemas; allow links only when `nomenclature_type == PRODUCT`
-- [ ] 6.1.11.3 — Add service validation (active models; reject SERVICE/GOODS/MATERIAL; empty-list policy from ADR)
-- [ ] 6.1.11.4 — Add API + PRODUCT nomenclature card UI for managing available models
-- [ ] 6.1.11.5 — Add regression tests (foreign model rejected; non-PRODUCT link rejected)
+- [x] 6.1.11.1 — Add M2M (or link table) `nomenclature_id` ↔ `product_model_id` with sort order — `v0.9.0`; `NomenclatureProductModel`
+- [x] 6.1.11.2 — Add migration and schemas; allow links only when `nomenclature_type == PRODUCT` — `v0.9.0`; `o5p6q7r8s901`; schemas in `product_model.py`
+- [x] 6.1.11.3 — Add service validation (active models; reject SERVICE/GOODS/MATERIAL; empty-list policy from ADR) — `v0.9.0`; `nomenclature_product_models` service
+- [x] 6.1.11.4 — Add API + PRODUCT nomenclature card UI for managing available models — `v0.9.0`; `/nomenclatures/{id}/available-models`; `NomenclatureAvailableModelsBlock`
+- [x] 6.1.11.5 — Add regression tests (foreign model rejected; non-PRODUCT link rejected) — `v0.9.0`; `test_nomenclature_available_models.py`
 
 Completion criteria:
 - PRODUCT stores a persistent available-models list;

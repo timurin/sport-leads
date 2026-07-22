@@ -105,6 +105,61 @@ export function validateProductModelImageFile(file: File): string | null {
   return null;
 }
 
+export type ProductModelCreateDraft = {
+  article: string;
+  name: string;
+  size_type: ProductModelSizeType;
+  description: string;
+};
+
+export type ProductModelRequisitesDraft = ProductModelCreateDraft;
+
+export function toProductModelRequisitesDraft(
+  model: Pick<ProductModel, "article" | "name" | "size_type" | "description">,
+): ProductModelRequisitesDraft {
+  return {
+    article: model.article,
+    name: model.name,
+    size_type: model.size_type,
+    description: model.description ?? "",
+  };
+}
+
+/** True when draft differs from the persisted model requisites (`6.1.10.2`). */
+export function isProductModelRequisitesDirty(
+  model: Pick<ProductModel, "article" | "name" | "size_type" | "description">,
+  draft: ProductModelRequisitesDraft,
+): boolean {
+  return (
+    draft.article !== model.article ||
+    draft.name !== model.name ||
+    draft.size_type !== model.size_type ||
+    draft.description !== (model.description ?? "")
+  );
+}
+
+/** Client-side create/edit draft validation (`6.1.9.2` / `6.1.10`). */
+export function validateProductModelCreateDraft(
+  draft: ProductModelCreateDraft,
+): string | null {
+  if (!draft.article.trim()) {
+    return "Укажите артикул";
+  }
+  if (draft.article.trim().length > 100) {
+    return "Артикул не длиннее 100 символов";
+  }
+  if (!draft.name.trim()) {
+    return "Укажите название";
+  }
+  if (draft.name.trim().length > 255) {
+    return "Название не длиннее 255 символов";
+  }
+  if (!["men", "women", "kids"].includes(draft.size_type)) {
+    return "Выберите тип размерной сетки";
+  }
+  return null;
+}
+
 export function productModelCoverUrl(url: string | null | undefined): string | null {
   if (!url?.trim()) return null;
   const value = url.trim();

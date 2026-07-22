@@ -36,14 +36,15 @@
 - `docs/design-system/data-presentation-standardization.md` — `DS-TABLE-01`…`DS-LINK-01` (`5.4.3.*`)
 - `docs/design-system/pt-01-dashboard.md` — `DS-PT-01` / PT-01 Dashboard (`5.5.1.*`)
 - `docs/design-system/pt-02-list-table.md` — `DS-PT-02` / PT-02 List/Table (`5.5.2.*`)
+- `docs/design-system/pt-02-catalog-list.md` — `DS-PT-02-CATALOG` / catalog directory list etalon (`/settings/catalogs/product-models`)
 - `docs/design-system/pt-03-kanban.md` — `DS-PT-03` / PT-03 Kanban (`5.5.3.*`)
 - `docs/design-system/pt-04-tree-list.md` — `DS-PT-04` / PT-04 Tree + List (`5.5.4.*`)
 - `docs/design-system/pt-05-simple-entity-card.md` — `DS-PT-05` / PT-05 Simple Entity Card (`5.5.5.*`)
 - `docs/design-system/pt-06-complex-entity-card.md` — `DS-PT-06` / PT-06 Complex Entity Card (`5.5.6.*`)
 - `docs/design-system/pt-07-document-card.md` — `DS-PT-07` / PT-07 Document Card (`5.5.7.*`)
 - `docs/design-system/pt-08-versioned-workspace.md` — `DS-PT-08` / PT-08 Versioned Workspace (`5.5.8.*`)
-- `docs/design-system/pt-08-catalog-card-layout.md` — `DS-PT-08-CATALOG` / catalog card grid etalon (product-models)
-- `docs/design-system/stage-6.0.3-pattern-base-pt-mapping.md` — Stage 6.0.3 route→PT map (База лекал)
+- `docs/design-system/pt-08-catalog-card-layout.md` — `DS-PT-08-CATALOG` / catalog card grid etalon (`/settings/catalogs/product-models/[id]`)
+- `docs/design-system/stage-6.0.3-pattern-base-pt-mapping.md` — Stage 6.0.3 route→PT map (База лекал + catalog etalons)
 - `docs/design-system/layout-scrolling-audit.md` — AppShell, widths, scroll/sticky rules (`5.1.3.*`)
 - `docs/design-system/component-inventory.md` — инвентарь shared/domain UI (`5.1.2.*`)
 - `docs/design-system/shell-contracts.md` — защищённые контракты `DS-SHELL-01` / `DS-SHELL-02`
@@ -99,7 +100,8 @@ Layout:
 - `TreeListSplit` / `TreePane` / `TreeListContent` / `TreeNodeButton` (`DS-PT-04`, `frontend/components/tree-list/`).
 - `SimpleEntityCard` (`DS-PT-05`, `frontend/components/entity/simple-entity-card.tsx`) + `EntityHeader` / `SectionCard`.
 - `ComplexEntityCard` (`DS-PT-06`, `frontend/components/entity/complex-entity-card.tsx`) — Lead Card body frame.
-- `VersionedWorkspace` (`DS-PT-08`) + `CatalogVersionedCardLayout` (`DS-PT-08-CATALOG`, catalog card grid etalon).
+- `VersionedWorkspace` (`DS-PT-08`) + `CatalogVersionedCardLayout` (`DS-PT-08-CATALOG`, catalog card etalon `/settings/catalogs/product-models/[id]`).
+- Catalog directory lists: `ProductModelsWorkspace` (`DS-PT-02-CATALOG`, etalon `/settings/catalogs/product-models`).
 
 Канон: `AppShell` → `PageLayout` → (`PageToolbar`) → `PageContent` → контент. Контракт: `docs/design-system/shell-page-layout-standardization.md` (`DS-PAGE-01`).
 

@@ -213,3 +213,44 @@ class ProductModelHistoryEntry(Base):
     )
 
     product_model: Mapped[ProductModel] = relationship(back_populates="history_entries")
+
+
+class NomenclatureProductModel(Base):
+    """PRODUCT nomenclature ↔ product-model whitelist (ADR-014 §3 / `6.1.11`)."""
+
+    __tablename__ = "nomenclature_product_models"
+    __table_args__ = (
+        UniqueConstraint(
+            "nomenclature_id",
+            "product_model_id",
+            name="uq_nomenclature_product_models_pair",
+        ),
+        CheckConstraint(
+            "sort_order >= 0",
+            name="ck_nomenclature_product_models_sort_order",
+        ),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    nomenclature_id: Mapped[int] = mapped_column(
+        ForeignKey("nomenclatures.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    product_model_id: Mapped[int] = mapped_column(
+        ForeignKey("product_models.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
+    )
+    sort_order: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+        onupdate=func.now(),
+    )

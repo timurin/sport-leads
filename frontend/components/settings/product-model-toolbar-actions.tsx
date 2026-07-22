@@ -1,6 +1,6 @@
 "use client";
 
-import { Archive, Copy, Pencil, Printer, Save } from "lucide-react";
+import { Archive, Copy, Pencil, Printer, Save, X } from "lucide-react";
 
 import { IconButton } from "@/components/ui/button";
 
@@ -12,6 +12,7 @@ type ProductModelToolbarActionsProps = {
   canArchive?: boolean;
   canSave?: boolean;
   onEdit?: () => void;
+  onCancel?: () => void;
   onArchive?: () => void;
   onSave?: () => void;
   onCopy?: () => void;
@@ -26,6 +27,7 @@ export function ProductModelToolbarActions({
   canArchive = true,
   canSave = false,
   onEdit,
+  onCancel,
   onArchive,
   onSave,
   onCopy,
@@ -39,25 +41,36 @@ export function ProductModelToolbarActions({
       role="toolbar"
       aria-label={inert ? "Действия модели (недоступны в списке)" : "Действия модели"}
     >
-      <IconButton
-        label="Редактировать"
-        variant="secondary"
-        disabled={locked || editing}
-        onClick={inert ? undefined : onEdit}
-      >
-        <Pencil className="size-4" />
-      </IconButton>
+      {editing ? (
+        <IconButton
+          label="Отменить редактирование"
+          variant="secondary"
+          disabled={locked}
+          onClick={inert ? undefined : onCancel}
+        >
+          <X className="size-4" />
+        </IconButton>
+      ) : (
+        <IconButton
+          label="Редактировать"
+          variant="secondary"
+          disabled={locked}
+          onClick={inert ? undefined : onEdit}
+        >
+          <Pencil className="size-4" />
+        </IconButton>
+      )}
       <IconButton
         label="Архив"
         variant="secondary"
-        disabled={locked || !canArchive}
+        disabled={locked || editing || !canArchive}
         onClick={inert ? undefined : onArchive}
       >
         <Archive className="size-4" />
       </IconButton>
       <IconButton
         label="Сохранить"
-        variant="secondary"
+        variant={canSave ? "primary" : "secondary"}
         disabled={locked || !canSave}
         onClick={inert ? undefined : onSave}
       >
@@ -66,7 +79,7 @@ export function ProductModelToolbarActions({
       <IconButton
         label="Копировать"
         variant="secondary"
-        disabled={locked}
+        disabled={locked || editing}
         onClick={inert ? undefined : onCopy}
       >
         <Copy className="size-4" />
@@ -74,7 +87,7 @@ export function ProductModelToolbarActions({
       <IconButton
         label="Распечатать"
         variant="secondary"
-        disabled={locked}
+        disabled={locked || editing}
         onClick={inert ? undefined : onPrint}
       >
         <Printer className="size-4" />

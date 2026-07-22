@@ -1591,7 +1591,7 @@
               {
                 code: "6.0.3",
                 title: "Page template references",
-                goal: "List and card UIs follow approved PT contracts before feature fill.",
+                goal: "List and card UIs follow approved PT contracts. Product-models routes are canonical catalog templates for directories / sections / categories.",
                 dependencies: [
                   "5.5.2",
                   "5.5.5"
@@ -1615,6 +1615,11 @@
                   {
                     code: "6.0.3.4",
                     title: "Record breakpoints in design-system task evidence — `v0.9.0`; matrix 1920…390",
+                    done: true
+                  },
+                  {
+                    code: "6.0.3.5",
+                    title: "Promote product-models list/card as canonical catalog templates — `v0.9.0`; DS-PT-02-CATALOG + DS-PT-08-CATALOG; directories/sections/categories",
                     done: true
                   }
                 ]
@@ -1819,7 +1824,7 @@
               {
                 code: "6.1.7",
                 title: "Product-model workspace and list",
-                goal: "Users can open a dedicated product-model workspace and browse the catalog.",
+                goal: "Users can browse the product-model catalog. Route is DS-PT-02-CATALOG etalon for directories / sections / categories.",
                 dependencies: [
                   "6.1.3",
                   "6.0.3"
@@ -1832,7 +1837,7 @@
                   },
                   {
                     code: "6.1.7.2",
-                    title: "Add list route — `v0.9.0`; /settings/catalogs/product-models PT-02 API list",
+                    title: "Add list route — `v0.9.0`; /settings/catalogs/product-models DS-PT-02-CATALOG etalon (6.0.3.5)",
                     done: true
                   },
                   {
@@ -1847,22 +1852,22 @@
                   },
                   {
                     code: "6.1.7.5",
-                    title: "Visual verification",
-                    done: false
+                    title: "Visual verification — `v0.9.0`; owner OK 2026-07-22",
+                    done: true
                   }
                 ]
               },
               {
                 code: "6.1.8",
                 title: "Product-model card route",
-                goal: "Users can open a dedicated product-model card shell.",
+                goal: "Users can open a product-model card. Route is DS-PT-08-CATALOG etalon for versioned directory cards.",
                 dependencies: [
                   "6.1.7"
                 ],
                 microtasks: [
                   {
                     code: "6.1.8.1",
-                    title: "Add detail route and page shell — `v0.9.0`; numeric id → API card; demo-reference kept",
+                    title: "Add detail route — `v0.9.0`; /settings/catalogs/product-models/[id] DS-PT-08-CATALOG etalon (6.0.3.5); demo-reference kept",
                     done: true
                   },
                   {
@@ -1882,8 +1887,8 @@
                   },
                   {
                     code: "6.1.8.5",
-                    title: "Visual verification",
-                    done: false
+                    title: "Visual verification — `v0.9.0`; owner OK 2026-07-22",
+                    done: true
                   }
                 ]
               },
@@ -1898,23 +1903,23 @@
                 microtasks: [
                   {
                     code: "6.1.9.1",
-                    title: "Add create form and drawer host (article, size_type, name, description)",
-                    done: false
+                    title: "Add create form and drawer host — `v0.9.0`; ProductModelCreateDrawer + list Create",
+                    done: true
                   },
                   {
                     code: "6.1.9.2",
-                    title: "Add submit actions and validation mapping",
-                    done: false
+                    title: "Add submit actions and validation mapping — `v0.9.0`; createProductModel + validateProductModelCreateDraft",
+                    done: true
                   },
                   {
                     code: "6.1.9.3",
-                    title: "Add frontend regression tests",
-                    done: false
+                    title: "Add frontend regression tests — `v0.9.0`; create-draft validation",
+                    done: true
                   },
                   {
                     code: "6.1.9.4",
-                    title: "Visual verification",
-                    done: false
+                    title: "Visual verification — `v0.9.0`; owner OK 2026-07-22",
+                    done: true
                   }
                 ]
               },
@@ -1928,23 +1933,23 @@
                 microtasks: [
                   {
                     code: "6.1.10.1",
-                    title: "Add edit form and save/cancel blocks",
-                    done: false
+                    title: "Add edit form and save/cancel blocks — `v0.9.0`; card requisites + toolbar Save/Cancel",
+                    done: true
                   },
                   {
                     code: "6.1.10.2",
-                    title: "Add dirty guard where required",
-                    done: false
+                    title: "Add dirty guard — `v0.9.0`; cancel / back / beforeunload",
+                    done: true
                   },
                   {
                     code: "6.1.10.3",
-                    title: "Add frontend regression tests",
-                    done: false
+                    title: "Add frontend regression tests — `v0.9.0`; isProductModelRequisitesDirty",
+                    done: true
                   },
                   {
                     code: "6.1.10.4",
-                    title: "Visual verification",
-                    done: false
+                    title: "Visual verification — `v0.9.0`; owner OK 2026-07-22",
+                    done: true
                   }
                 ]
               },
@@ -1961,28 +1966,28 @@
                 microtasks: [
                   {
                     code: "6.1.11.1",
-                    title: "Add M2M (or link table) `nomenclature_id` ↔ `product_model_id` with sort order",
-                    done: false
+                    title: "Add M2M link table — `v0.9.0`; NomenclatureProductModel",
+                    done: true
                   },
                   {
                     code: "6.1.11.2",
-                    title: "Add migration and schemas; allow links only when `nomenclature_type == PRODUCT`",
-                    done: false
+                    title: "Add migration and schemas — `v0.9.0`; o5p6q7r8s901; PRODUCT-only",
+                    done: true
                   },
                   {
                     code: "6.1.11.3",
-                    title: "Add service validation (active models; reject SERVICE/GOODS/MATERIAL; empty-list policy from ADR)",
-                    done: false
+                    title: "Add service validation — `v0.9.0`; active models; reject non-PRODUCT",
+                    done: true
                   },
                   {
                     code: "6.1.11.4",
-                    title: "Add API + PRODUCT nomenclature card UI for managing available models",
-                    done: false
+                    title: "Add API + PRODUCT card UI — `v0.9.0`; available-models endpoints + NomenclatureAvailableModelsBlock",
+                    done: true
                   },
                   {
                     code: "6.1.11.5",
-                    title: "Add regression tests (foreign model rejected; non-PRODUCT link rejected)",
-                    done: false
+                    title: "Add regression tests — `v0.9.0`; test_nomenclature_available_models.py",
+                    done: true
                   }
                 ]
               },

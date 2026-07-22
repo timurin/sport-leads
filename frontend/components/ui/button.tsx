@@ -62,7 +62,7 @@ export function Button({
 type IconButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   label: string;
   children: ReactNode;
-  variant?: "secondary" | "ghost" | "danger";
+  variant?: "primary" | "secondary" | "ghost" | "danger";
 };
 
 /**
@@ -77,11 +77,13 @@ export function IconButton({
   ...props
 }: IconButtonProps) {
   const tone =
-    variant === "danger"
-      ? "text-portal-danger hover:bg-portal-danger-soft"
-      : variant === "secondary"
-        ? "border border-portal-border bg-portal-surface text-portal-muted hover:bg-portal-state-hover hover:text-portal-text"
-        : "text-portal-muted hover:bg-portal-surface-secondary hover:text-portal-text";
+    variant === "primary"
+      ? "bg-portal-primary text-portal-primary-on hover:bg-portal-primary-hover"
+      : variant === "danger"
+        ? "text-portal-danger hover:bg-portal-danger-soft"
+        : variant === "secondary"
+          ? "border border-portal-border bg-portal-surface text-portal-muted hover:bg-portal-state-hover hover:text-portal-text"
+          : "text-portal-muted hover:bg-portal-surface-secondary hover:text-portal-text";
 
   return (
     <button

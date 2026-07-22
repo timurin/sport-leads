@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type MouseEvent } from "react";
 
 import {
   archiveProductModel,
@@ -28,56 +28,70 @@ import {
   PRODUCT_MODEL_IMAGE_RULE,
   PRODUCT_MODEL_SIZE_TYPE_LABELS,
   PRODUCT_MODEL_STATUS_LABELS,
+  isProductModelRequisitesDirty,
   productModelStatusTone,
+  toProductModelRequisitesDraft,
+  validateProductModelCreateDraft,
   validateProductModelImageFile,
   type ProductModel,
   type ProductModelHistoryEntry,
   type ProductModelMedia,
+  type ProductModelRequisitesDraft,
   type ProductModelSizeType,
   type ProductModelVersionView,
 } from "@/lib/product-models";
 
 const COLUMN_GAP = "gap-[14px]";
 
-type RequisitesDraft = {
-  article: string;
-  name: string;
-  size_type: ProductModelSizeType;
-  description: string;
-};
+const DIRTY_LEAVE_MESSAGE =
+  "Есть несохранённые изменения. Уйти без сохранения?";
 
-/** PT-08 + DS-PT-08-CATALOG product-model card (`6.1.8`). */
+/** PT-08 + DS-PT-08-CATALOG product-model card (`6.1.8` / `6.1.10`). */
 export function ProductModelPersistentCard({
   model,
   versions,
   media,
   history,
+  initialEditing = false,
 }: {
   model: ProductModel;
   versions: ProductModelVersionView[];
   media: ProductModelMedia[];
   history: ProductModelHistoryEntry[];
+  initialEditing?: boolean;
 }) {
   const router = useRouter();
   const initialActive =
     versions.find((version) => version.isActive)?.id ?? versions[0]?.id ?? "";
   const [activeVersionId, setActiveVersionId] = useState(initialActive);
+  const [trackedModel, setTrackedModel] = useState(model);
   const [current, setCurrent] = useState(model);
+  const [trackedMedia, setTrackedMedia] = useState(media);
   const [items, setItems] = useState(media);
   const [previewSrc, setPreviewSrc] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [warning, setWarning] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
-  const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState<RequisitesDraft | null>(null);
+  const [editing, setEditing] = useState(initialEditing);
+  const [draft, setDraft] = useState<ProductModelRequisitesDraft | null>(() =>
+    initialEditing ? toProductModelRequisitesDraft(model) : null,
+  );
 
-  useEffect(() => {
+  if (model.id !== trackedModel.id) {
+    setTrackedModel(model);
     setCurrent(model);
-  }, [model]);
+    setEditing(false);
+    setDraft(null);
+    setActionError(null);
+  } else if (model !== trackedModel && !editing) {
+    setTrackedModel(model);
+    setCurrent(model);
+  }
 
-  useEffect(() => {
+  if (media !== trackedMedia) {
+    setTrackedMedia(media);
     setItems(media);
-  }, [media]);
+  }
 
   const activeVersion = useMemo(
     () => versions.find((version) => version.id === activeVersionId),
@@ -85,6 +99,18 @@ export function ProductModelPersistentCard({
   );
   const publishedBaseline = versions.find((version) => version.isPublishedBaseline);
   const sizeTypeLocked = current.status !== "draft";
+  const dirty =
+    editing && draft != null && isProductModelRequisitesDirty(current, draft);
+
+  useEffect(() => {
+    if (!dirty) return;
+    const onBeforeUnload = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = "";
+    };
+    window.addEventListener("beforeunload", onBeforeUnload);
+    return () => window.removeEventListener("beforeunload", onBeforeUnload);
+  }, [dirty]);
 
   const uploadFiles = async (files: File[]) => {
     for (const file of files) {
@@ -207,19 +233,28 @@ export function ProductModelPersistentCard({
 
   const startEdit = () => {
     setEditing(true);
-    setDraft({
-      article: current.article,
-      name: current.name,
-      size_type: current.size_type,
-      description: current.description ?? "",
-    });
+    setDraft(toProductModelRequisitesDraft(current));
+    setActionError(null);
+  };
+
+  const cancelEdit = () => {
+    if (
+      draft &&
+      isProductModelRequisitesDirty(current, draft) &&
+      !window.confirm(DIRTY_LEAVE_MESSAGE)
+    ) {
+      return;
+    }
+    setEditing(false);
+    setDraft(null);
     setActionError(null);
   };
 
   const onSave = async () => {
     if (!draft) return;
-    if (!draft.article.trim() || !draft.name.trim()) {
-      setActionError("Артикул и название обязательны");
+    const validationError = validateProductModelCreateDraft(draft);
+    if (validationError) {
+      setActionError(validationError);
       return;
     }
     setBusy(true);
@@ -241,6 +276,12 @@ export function ProductModelPersistentCard({
       );
     } finally {
       setBusy(false);
+    }
+  };
+
+  const onBackToList = (event: MouseEvent<HTMLAnchorElement>) => {
+    if (dirty && !window.confirm(DIRTY_LEAVE_MESSAGE)) {
+      event.preventDefault();
     }
   };
 
@@ -302,6 +343,7 @@ export function ProductModelPersistentCard({
               eyebrow={
                 <Link
                   href="/settings/catalogs/product-models"
+                  onClick={onBackToList}
                   className="inline-flex items-center gap-1.5 font-medium text-portal-primary hover:underline"
                 >
                   ← Модели изделий
@@ -317,7 +359,11 @@ export function ProductModelPersistentCard({
                 </StatusBadge>
               }
               description={
-                editing ? "Редактирование основных реквизитов" : undefined
+                editing
+                  ? dirty
+                    ? "Редактирование · есть несохранённые изменения"
+                    : "Редактирование основных реквизитов"
+                  : undefined
               }
               actions={
                 <div className="flex flex-col items-stretch gap-1 sm:items-end">
@@ -325,8 +371,9 @@ export function ProductModelPersistentCard({
                     disabled={busy}
                     editing={editing}
                     canArchive={current.status !== "archived"}
-                    canSave={editing && draft != null}
+                    canSave={Boolean(dirty)}
                     onEdit={startEdit}
+                    onCancel={cancelEdit}
                     onArchive={onArchive}
                     onSave={onSave}
                     onCopy={onCopy}

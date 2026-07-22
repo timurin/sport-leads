@@ -15,8 +15,19 @@ function apiBaseUrl(): string {
 }
 
 async function readError(response: Response): Promise<string> {
-  const data = (await response.json().catch(() => null)) as { detail?: string } | null;
-  return data?.detail ?? `Ошибка API (${response.status})`;
+  const data = (await response.json().catch(() => null)) as
+    | { detail?: string | Array<{ msg?: string }> }
+    | null;
+  if (typeof data?.detail === "string") {
+    return data.detail;
+  }
+  if (Array.isArray(data?.detail) && data.detail.length > 0) {
+    return data.detail
+      .map((item) => item.msg)
+      .filter(Boolean)
+      .join("; ") || `Ошибка API (${response.status})`;
+  }
+  return `Ошибка API (${response.status})`;
 }
 
 function revalidateModel(modelId: string | number) {
@@ -43,6 +54,40 @@ export type ProductModelRequisitesInput = {
   size_type: ProductModelSizeType;
   description: string | null;
 };
+
+export type ProductModelCreateResult =
+  | { ok: true; model: ProductModel }
+  | { ok: false; message: string };
+
+export async function createProductModel(
+  payload: ProductModelRequisitesInput,
+): Promise<ProductModelCreateResult> {
+  const article = payload.article.trim();
+  const name = payload.name.trim();
+  if (!article || !name) {
+    return { ok: false, message: "Артикул и название обязательны" };
+  }
+
+  const response = await fetch(`${apiBaseUrl()}/product-models`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      article,
+      name,
+      size_type: payload.size_type,
+      description: payload.description?.trim() || null,
+    }),
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    return { ok: false, message: await readError(response) };
+  }
+
+  const model = (await response.json()) as ProductModel;
+  revalidateModel(model.id);
+  return { ok: true, model };
+}
 
 export async function updateProductModelRequisites(
   modelId: number,

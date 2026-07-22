@@ -168,13 +168,15 @@ Detailed matrix: § Persistent versus demo/local audit (`5.1.1.3`). Summary:
 | PT | Primary reference now | Do not use as reference |
 |---|---|---|
 | PT-01 | `/sales/dashboard` (`DS-PT-01` reference; demo data) | `/dashboard` stub |
-| PT-02 | `/sales/clients` (`DS-PT-02` reference; demo) | blank EntityWorkspace empties |
+| PT-02 | `/sales/clients` (`DS-PT-02` CRM reference; demo) | blank EntityWorkspace empties |
+| PT-02-CATALOG | `/settings/catalogs/product-models` (`DS-PT-02-CATALOG` etalon for directories / sections / categories) | Clients list chrome |
 | PT-03 | `/sales/leads` (`DS-PT-03` reference) | demo tasks/deals only as secondary |
 | PT-04 | `/settings/catalogs/nomenclature` | — |
 | PT-05 | `/settings/catalogs/product-characteristics/[id]` (`DS-PT-05` reference) | local sidebar (removed); EntityWorkspace inspector |
 | PT-06 | `/sales/leads/[leadId]` (`DS-PT-06` reference) | — |
 | PT-07 | `/sales/orders/[orderId]` | — |
-| PT-08 | `/settings/catalogs/product-models/demo-reference` | — |
+| PT-08 | `/settings/catalogs/product-models/demo-reference` (demo shell) | — |
+| PT-08-CATALOG | `/settings/catalogs/product-models/[id]` (`DS-PT-08-CATALOG` etalon) | demo-reference older composition |
 
 ### Migration priority for Stage `5.6`
 
@@ -224,12 +226,14 @@ Superseded by § Reference and migration pages (`5.1.1.4`). Kept summary:
 |---|---|
 | PT-01 Dashboard | `/sales/dashboard` |
 | PT-02 List/Table | clients, orgs, employees, materials, product-characteristics |
+| PT-02-CATALOG | product-models list (**etalon**); size-grids / patterns / future directories · sections · categories |
 | PT-03 Kanban | leads, orders board, tasks, deals |
 | PT-04 Tree + List | nomenclature workspace |
-| PT-05 Simple Card | characteristic detail (after shell fix) |
+| PT-05 Simple Card | characteristic detail (after shell fix); size-grid card |
 | PT-06 Complex Card | lead card, nomenclature card |
 | PT-07 Document Card | order card |
-| PT-08 Versioned Workspace | none yet (prepare with models) |
+| PT-08 Versioned Workspace | product-models demo-reference |
+| PT-08-CATALOG | product-models `[id]` (**etalon**); patterns card |
 
 ## Gaps and risks registered for later microtasks
 

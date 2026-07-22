@@ -1,7 +1,7 @@
 # Sport-Lead — Project Structure Checklist
 
 **Code:** `SL-PROJECT-STRUCTURE-v1`
-**Updated:** `2026-07-22` (product-model card PT-08 API shell awaiting visual `6.1.8.5`; list visual `6.1.7.5` still open)
+**Updated:** `2026-07-22` (product-models through `6.1.11` whitelist shipped; next `6.1.12` assembly variants)
 **Project version:** `v0.9.0`
 **Git branch:** `feature/v0.8.1-nomenclature-core`
 **Git commit:** `bc63397`
@@ -95,9 +95,9 @@
 - [x] Size distribution inside sales-order items
 - [x] Product-model domain contract — `ADR-014` + `product-model-domain.md` (`6.1.1`)
 - [x] Product-model DB + API (create/list/update/status/versions) — `product_models` / `product_model_versions` (`6.1.2`–`6.1.6`)
-- [ ] Product-model list UI owner visual — PT-02 `/settings/catalogs/product-models` (`6.1.7.5`)
-- [ ] Product-model card UI owner visual — PT-08 `/settings/catalogs/product-models/[id]` (`6.1.8.5`)
-- [ ] Product-model create / edit UI and PRODUCT whitelist — `6.1.9+`
+- [x] Product-model list UI owner visual — `DS-PT-02-CATALOG` etalon `/settings/catalogs/product-models` (`6.1.7.5`; directories/sections/categories)
+- [x] Product-model card UI owner visual — `DS-PT-08-CATALOG` etalon `/settings/catalogs/product-models/[id]` (`6.1.8.5`)
+- [x] Product-model create / edit UI and PRODUCT whitelist — create/edit visual OK; whitelist API+UI `6.1.11` shipped
 - [ ] Pattern catalog, files, and grading
 - [ ] Dedicated size-grid directory and measurements
 - [ ] Specifications and bill-of-materials contour
