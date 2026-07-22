@@ -95,4 +95,4 @@ Reply: `5.5.3 visual OK` or list issues.
 
 ## Status
 
-Contract + board standardization + mobile fallback shipped for `5.5.3.*`. Owner confirmation: **`5.5.3 visual OK`** (`2026-07-22`).
+Contract + board standardization + mobile fallback shipped for `5.5.3.*` / `5.6.2`. Owner confirmation: **`5.5.3 visual OK`** (`2026-07-22`).

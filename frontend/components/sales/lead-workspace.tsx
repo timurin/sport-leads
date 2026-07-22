@@ -43,6 +43,7 @@ import type { Lead } from "@/types/sales";
 type LeadView = "active" | "converted" | "rejected" | "all";
 type WorkspaceLead = Lead & { stageId: string };
 
+/** PT-03 reference kanban workspace (`DS-PT-03`). Stage `5.6.2` migration complete. */
 const systemDefinitions = [
   { id: "converted", title: "Успешно завершён", accentClass: "bg-emerald-500" },
   { id: "rejected", title: "Отказ", accentClass: "bg-red-500" },

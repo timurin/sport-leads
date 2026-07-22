@@ -366,7 +366,7 @@ Microtasks:
 ### 5.6 — Reference migrations
 
 - [x] 5.6.1 — Migrate Sales Dashboard — `v0.9.0`; PT-01 alignment (`5.5.1.*`); demo banner; `ui-audit` → reference; prior **`5.5.1 visual OK`**
-- [ ] 5.6.2 — Migrate Leads Kanban
+- [x] 5.6.2 — Migrate Leads Kanban — `v0.9.0`; PT-03 (`LeadWorkspace`); `ui-audit`; prior **`5.5.3 visual OK`**
 - [ ] 5.6.3 — Migrate Lead Card
 - [ ] 5.6.4 — Migrate Customer Order Card
 - [ ] 5.6.5 — Migrate Nomenclature Workspace
