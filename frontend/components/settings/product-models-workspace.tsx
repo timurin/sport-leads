@@ -9,6 +9,7 @@ import { updateProductModelRequisites } from "@/app/(workspace)/settings/catalog
 import { ProductModelCreateDrawer } from "@/components/settings/product-model-create-drawer";
 import { ProductModelToolbarActions } from "@/components/settings/product-model-toolbar-actions";
 import { IconButton } from "@/components/ui/button";
+import { CompactTabs } from "@/components/ui/compact-tabs";
 import {
   DataTable,
   DataTableBody,
@@ -28,11 +29,13 @@ import { checkboxClassName } from "@/lib/design-system/control-styles";
 import {
   filterProductModels,
   PRODUCT_MODEL_SIZE_TYPE_LABELS,
+  PRODUCT_MODEL_STATUS_FILTER_ITEMS,
   PRODUCT_MODEL_STATUS_LABELS,
   productModelCoverUrl,
   productModelStatusTone,
   type ProductModel,
   type ProductModelSizeType,
+  type ProductModelStatus,
 } from "@/lib/product-models";
 
 const ROW_ICON_LINK =
@@ -87,6 +90,7 @@ export function ProductModelsWorkspace({ models }: { models: ProductModel[] }) {
   const [created, setCreated] = useState<ProductModel[]>([]);
   const [patched, setPatched] = useState<Record<number, ProductModel>>({});
   const [query, setQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<ProductModelStatus>("draft");
   const [lightbox, setLightbox] = useState<{ src: string; alt: string } | null>(
     null,
   );
@@ -108,9 +112,25 @@ export function ProductModelsWorkspace({ models }: { models: ProductModel[] }) {
   }, [created, models, patched]);
 
   const filtered = useMemo(
-    () => filterProductModels(rows, { search: query }),
-    [rows, query],
+    () =>
+      filterProductModels(rows, {
+        search: query,
+        status: statusFilter,
+      }),
+    [rows, query, statusFilter],
   );
+
+  const statusCounts = useMemo(() => {
+    const counts: Record<ProductModelStatus, number> = {
+      draft: 0,
+      active: 0,
+      archived: 0,
+    };
+    for (const model of rows) {
+      counts[model.status] += 1;
+    }
+    return counts;
+  }, [rows]);
 
   const allFilteredSelected =
     filtered.length > 0 && filtered.every((model) => selectedIds.has(model.id));
@@ -127,6 +147,7 @@ export function ProductModelsWorkspace({ models }: { models: ProductModel[] }) {
 
   const clearFilters = () => {
     setQuery("");
+    setStatusFilter("draft");
   };
 
   const toggleRow = (id: number, checked: boolean) => {
@@ -201,7 +222,7 @@ export function ProductModelsWorkspace({ models }: { models: ProductModel[] }) {
   const emptyDescription =
     models.length === 0
       ? "Каталог пуст. Создайте первую модель через кнопку «+»."
-      : "Измените поисковый запрос или сбросьте фильтры.";
+      : "Измените поиск, статус или сбросьте фильтры.";
 
   const openLightbox = (src: string, alt: string) => setLightbox({ src, alt });
 
@@ -228,13 +249,26 @@ export function ProductModelsWorkspace({ models }: { models: ProductModel[] }) {
 
       <PageToolbar
         start={
-          <Input
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder="Поиск по артикулу или названию"
-            className="min-w-0 w-full flex-1"
-            aria-label="Поиск моделей изделий"
-          />
+          <>
+            <CompactTabs
+              className="w-full md:w-auto"
+              size="compact"
+              label="Статус моделей"
+              value={statusFilter}
+              onChange={(id) => setStatusFilter(id as ProductModelStatus)}
+              items={PRODUCT_MODEL_STATUS_FILTER_ITEMS.map((item) => ({
+                ...item,
+                count: statusCounts[item.id],
+              }))}
+            />
+            <Input
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Поиск по артикулу или названию"
+              className="min-w-0 w-full flex-1"
+              aria-label="Поиск моделей изделий"
+            />
+          </>
         }
         end={
           <div className="flex flex-wrap items-center gap-1">

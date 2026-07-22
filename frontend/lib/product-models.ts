@@ -74,9 +74,18 @@ export const PRODUCT_MODEL_SIZE_TYPE_LABELS: Record<ProductModelSizeType, string
 
 export const PRODUCT_MODEL_STATUS_LABELS: Record<ProductModelStatus, string> = {
   draft: "Черновик",
-  active: "Активна",
-  archived: "Архив",
+  active: "Используется",
+  archived: "В архиве",
 };
+
+export const PRODUCT_MODEL_STATUS_FILTER_ITEMS: ReadonlyArray<{
+  id: ProductModelStatus;
+  label: string;
+}> = [
+  { id: "draft", label: PRODUCT_MODEL_STATUS_LABELS.draft },
+  { id: "active", label: PRODUCT_MODEL_STATUS_LABELS.active },
+  { id: "archived", label: PRODUCT_MODEL_STATUS_LABELS.archived },
+];
 
 export const PRODUCT_MODEL_IMAGE_ACCEPT = "image/jpeg,image/png,image/webp";
 export const PRODUCT_MODEL_IMAGE_MAX_BYTES = 10 * 1024 * 1024;
@@ -326,6 +335,7 @@ export type AssemblyOperationLine = {
   sequence: number;
   operation_name: string;
   cost: string;
+  sewing_operation_id: number | null;
   created_at: string;
   updated_at: string;
 };
@@ -398,6 +408,19 @@ export function validateAssemblyOperationLineDraft(
     return "Укажите стоимость операции (число ≥ 0)";
   }
   return null;
+}
+
+/** Sum catalog costs of selected sewing operations (variant total preview). */
+export function sumSelectedSewingOperationCosts(
+  operations: Array<{ cost: string | number }>,
+): number {
+  return operations.reduce((total, operation) => {
+    const amount =
+      typeof operation.cost === "number"
+        ? operation.cost
+        : Number(String(operation.cost).replace(",", "."));
+    return total + (Number.isFinite(amount) ? amount : 0);
+  }, 0);
 }
 
 export async function getProductModelAssemblyVariants(

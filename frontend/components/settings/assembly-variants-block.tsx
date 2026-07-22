@@ -1,56 +1,65 @@
 "use client";
 
+import {
+  Archive,
+  ArchiveRestore,
+  ChevronDown,
+  ChevronRight,
+  Copy,
+  Plus,
+  Trash2,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 import {
-  addAssemblyOperationLine,
-  createAssemblyVariant,
+  copyAssemblyVariant,
   deleteAssemblyOperationLine,
   deleteAssemblyVariant,
   updateAssemblyVariant,
 } from "@/app/(workspace)/settings/catalogs/product-models/product-model-actions";
-import { Button } from "@/components/ui/button";
+import { AssemblyVariantSewingOpsDrawer } from "@/components/settings/assembly-variant-sewing-ops-drawer";
+import { Button, IconButton } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
-import { Input } from "@/components/ui/form-controls";
+import { SectionCard } from "@/components/ui/section-card";
 import { StatusBadge } from "@/components/ui/status-badge";
 import {
   formatAssemblyCost,
-  parseAssemblyCostInput,
-  validateAssemblyOperationLineDraft,
-  validateAssemblyVariantDraft,
   type AssemblyVariant,
 } from "@/lib/product-models";
+import type { SewingOperation } from "@/lib/sewing-operations";
 
 type AssemblyVariantsBlockProps = {
   modelId: number;
   variants: AssemblyVariant[];
+  sewingOperations: SewingOperation[];
 };
 
-/** PT-08 main-slot block: manager assembly packages (`6.1.12.4` / ADR-014). */
+/** PT-08 main-slot block: assembly variants as sewing-operation groups (`6.1.12` / `6.3.6`). */
 export function AssemblyVariantsBlock({
   modelId,
   variants,
+  sewingOperations,
 }: AssemblyVariantsBlockProps) {
   const router = useRouter();
-  const [variantName, setVariantName] = useState("");
-  const [lineDrafts, setLineDrafts] = useState<
-    Record<number, { operation_name: string; cost: string }>
-  >({});
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [appendVariantId, setAppendVariantId] = useState<number | null>(null);
+  const [expandedIds, setExpandedIds] = useState<Set<number>>(() => new Set());
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const lineDraft = (variantId: number) =>
-    lineDrafts[variantId] ?? { operation_name: "", cost: "0" };
+  const appendExcludeIds = useMemo(() => {
+    if (appendVariantId == null) return [];
+    const variant = variants.find((row) => row.id === appendVariantId);
+    if (!variant) return [];
+    return variant.operation_lines
+      .map((line) => line.sewing_operation_id)
+      .filter((id): id is number => id != null);
+  }, [appendVariantId, variants]);
 
-  const setLineDraft = (
-    variantId: number,
-    next: { operation_name: string; cost: string },
+  const run = async (
+    action: () => Promise<{ ok: true } | { ok: false; message: string }>,
   ) => {
-    setLineDrafts((current) => ({ ...current, [variantId]: next }));
-  };
-
-  const run = async (action: () => Promise<{ ok: true } | { ok: false; message: string }>) => {
     setBusy(true);
     setError(null);
     const result = await action();
@@ -63,87 +72,75 @@ export function AssemblyVariantsBlock({
     return true;
   };
 
-  const onCreateVariant = async () => {
-    const validationError = validateAssemblyVariantDraft({ name: variantName });
-    if (validationError) {
-      setError(validationError);
-      return;
-    }
-    const ok = await run(() => createAssemblyVariant(modelId, variantName));
-    if (ok) setVariantName("");
+  const toggleExpanded = (variantId: number) => {
+    setExpandedIds((current) => {
+      const next = new Set(current);
+      if (next.has(variantId)) next.delete(variantId);
+      else next.add(variantId);
+      return next;
+    });
   };
 
-  const onToggleActive = async (variant: AssemblyVariant) => {
+  const onArchive = async (variant: AssemblyVariant) => {
+    if (variant.is_active) {
+      if (
+        !window.confirm(
+          `Архивировать вариант «${variant.name}»?\nОн не будет предлагаться в заказах, но останется в истории, если уже использовался.`,
+        )
+      ) {
+        return;
+      }
+      await run(() =>
+        updateAssemblyVariant(modelId, variant.id, { is_active: false }),
+      );
+      return;
+    }
     await run(() =>
-      updateAssemblyVariant(modelId, variant.id, { is_active: !variant.is_active }),
+      updateAssemblyVariant(modelId, variant.id, { is_active: true }),
     );
+  };
+
+  const onCopy = async (variant: AssemblyVariant) => {
+    await run(() => copyAssemblyVariant(modelId, variant.id));
   };
 
   const onDeleteVariant = async (variant: AssemblyVariant) => {
-    if (!window.confirm(`Удалить вариант «${variant.name}»?`)) return;
+    if (
+      !window.confirm(
+        `Удалить вариант «${variant.name}» безвозвратно?\nЕсли вариант уже использовался в заказах, предпочтительнее архивировать.`,
+      )
+    ) {
+      return;
+    }
     await run(() => deleteAssemblyVariant(modelId, variant.id));
   };
 
-  const onAddLine = async (variantId: number) => {
-    const draft = lineDraft(variantId);
-    const validationError = validateAssemblyOperationLineDraft(draft);
-    if (validationError) {
-      setError(validationError);
-      return;
-    }
-    const cost = parseAssemblyCostInput(draft.cost);
-    if (cost == null) {
-      setError("Укажите стоимость операции (число ≥ 0)");
-      return;
-    }
-    const ok = await run(() =>
-      addAssemblyOperationLine(modelId, variantId, {
-        operation_name: draft.operation_name,
-        cost,
-      }),
-    );
-    if (ok) setLineDraft(variantId, { operation_name: "", cost: "0" });
-  };
-
   const onDeleteLine = async (variantId: number, lineId: number, name: string) => {
-    if (!window.confirm(`Удалить операцию «${name}»?`)) return;
+    if (!window.confirm(`Убрать операцию «${name}» из варианта?`)) return;
     await run(() => deleteAssemblyOperationLine(modelId, variantId, lineId));
   };
 
   return (
-    <div className="grid min-w-0 gap-portal-3">
-      <p className="text-portal-caption text-portal-muted">
-        Менеджерские пакеты сборки/отделки со стоимостью операций. Цеховые маршруты —
-        отдельный контур (Stage 8).
-      </p>
-
-      <div className="flex flex-wrap items-end gap-portal-2">
-        <label className="min-w-[220px] flex-1">
-          <span className="mb-1 block text-portal-caption text-portal-muted">
-            Новый вариант
-          </span>
-          <Input
-            value={variantName}
-            disabled={busy}
-            onChange={(event) => {
-              setVariantName(event.target.value);
-              setError(null);
-            }}
-            placeholder="Например, С отстрочкой"
-            aria-label="Название варианта сборки"
-          />
-        </label>
-        <Button
-          type="button"
+    <SectionCard
+      title="Варианты сборки"
+      description="Варианты сборки изделия по технологическим допускам лекал"
+      size="compact"
+      actions={
+        <IconButton
+          label="Добавить вариант"
           variant="primary"
-          size="compact"
-          disabled={busy || !variantName.trim()}
-          onClick={() => void onCreateVariant()}
+          disabled={busy}
+          onClick={() => {
+            setAppendVariantId(null);
+            setDrawerOpen(true);
+            setError(null);
+          }}
         >
-          Добавить вариант
-        </Button>
-      </div>
-
+          <Plus className="size-4" />
+        </IconButton>
+      }
+    >
+      <div className="grid min-w-0 gap-portal-3">
       {error ? (
         <p className="text-portal-caption text-portal-danger" role="alert">
           {error}
@@ -153,145 +150,185 @@ export function AssemblyVariantsBlock({
       {variants.length === 0 ? (
         <EmptyState
           title="Вариантов пока нет"
-          description="Добавьте пакет сборки — строки операций и итоговая стоимость появятся здесь."
+          description="Нажмите «+», отметьте операции пошива в панели справа."
           size="compact"
         />
       ) : (
-        <ul className="grid gap-portal-3">
+        <ul className="grid gap-portal-2">
           {variants.map((variant) => {
-            const draft = lineDraft(variant.id);
+            const expanded = expandedIds.has(variant.id);
+            const archived = !variant.is_active;
             return (
               <li
                 key={variant.id}
-                className="rounded-portal-md border border-portal-border bg-portal-surface-secondary p-portal-3"
+                className="rounded-portal-md border border-portal-border bg-portal-surface-secondary"
               >
-                <div className="flex flex-wrap items-start justify-between gap-portal-2">
-                  <div className="min-w-0">
+                <div className="flex flex-wrap items-center gap-portal-2 px-portal-3 py-portal-2">
+                  <IconButton
+                    label={expanded ? "Свернуть операции" : "Развернуть операции"}
+                    variant="ghost"
+                    disabled={busy}
+                    onClick={() => toggleExpanded(variant.id)}
+                  >
+                    {expanded ? (
+                      <ChevronDown className="size-4" />
+                    ) : (
+                      <ChevronRight className="size-4" />
+                    )}
+                  </IconButton>
+
+                  <button
+                    type="button"
+                    className="min-w-0 flex-1 text-left"
+                    onClick={() => toggleExpanded(variant.id)}
+                  >
                     <div className="flex flex-wrap items-center gap-portal-2">
-                      <p className="font-semibold text-portal-text">{variant.name}</p>
+                      <span className="font-semibold text-portal-text">
+                        {variant.name}
+                      </span>
                       <StatusBadge
                         size="compact"
-                        tone={variant.is_active ? "success" : "neutral"}
+                        tone={archived ? "neutral" : "success"}
                       >
-                        {variant.is_active ? "Активен" : "Неактивен"}
+                        {archived ? "Архив" : "Активен"}
                       </StatusBadge>
                     </div>
-                    <p className="mt-1 text-portal-caption text-portal-muted">
+                    <p className="mt-0.5 text-portal-caption text-portal-muted">
                       Итого: {formatAssemblyCost(variant.total_cost)} ₽ ·{" "}
                       {variant.operation_lines.length} оп.
+                      {!expanded && variant.operation_lines.length > 0
+                        ? " · свёрнуто"
+                        : ""}
                     </p>
-                  </div>
-                  <div className="flex flex-wrap gap-portal-2">
-                    <Button
-                      type="button"
-                      size="compact"
-                      disabled={busy}
-                      onClick={() => void onToggleActive(variant)}
+                  </button>
+
+                  <div
+                    className="flex flex-wrap items-center gap-1"
+                    role="toolbar"
+                    aria-label={`Действия варианта ${variant.name}`}
+                  >
+                    <IconButton
+                      label="Добавить операции"
+                      variant="secondary"
+                      disabled={busy || archived}
+                      onClick={() => {
+                        setAppendVariantId(variant.id);
+                        setDrawerOpen(true);
+                        setError(null);
+                        setExpandedIds((current) => new Set(current).add(variant.id));
+                      }}
                     >
-                      {variant.is_active ? "Деактивировать" : "Активировать"}
-                    </Button>
-                    <Button
-                      type="button"
-                      size="compact"
+                      <Plus className="size-4" />
+                    </IconButton>
+                    <IconButton
+                      label={archived ? "Вернуть из архива" : "Архив"}
+                      variant="secondary"
+                      disabled={busy}
+                      onClick={() => void onArchive(variant)}
+                    >
+                      {archived ? (
+                        <ArchiveRestore className="size-4" />
+                      ) : (
+                        <Archive className="size-4" />
+                      )}
+                    </IconButton>
+                    <IconButton
+                      label="Копировать"
+                      variant="secondary"
+                      disabled={busy}
+                      onClick={() => void onCopy(variant)}
+                    >
+                      <Copy className="size-4" />
+                    </IconButton>
+                    <IconButton
+                      label="Удалить"
+                      variant="danger"
                       disabled={busy}
                       onClick={() => void onDeleteVariant(variant)}
                     >
-                      Удалить
-                    </Button>
+                      <Trash2 className="size-4" />
+                    </IconButton>
                   </div>
                 </div>
 
-                {variant.operation_lines.length > 0 ? (
-                  <ul className="mt-portal-3 divide-y divide-portal-border overflow-hidden rounded-portal-md border border-portal-border bg-portal-surface">
-                    {variant.operation_lines.map((line) => (
-                      <li
-                        key={line.id}
-                        className="flex flex-wrap items-center justify-between gap-portal-2 px-portal-3 py-portal-2"
-                      >
-                        <div className="min-w-0">
-                          <p className="text-portal-body text-portal-text">
-                            <span className="text-portal-muted">{line.sequence}. </span>
-                            {line.operation_name}
-                          </p>
-                        </div>
-                        <div className="flex items-center gap-portal-2">
-                          <span className="text-portal-body font-medium text-portal-text">
-                            {formatAssemblyCost(line.cost)} ₽
-                          </span>
+                {expanded ? (
+                  <div className="border-t border-portal-border px-portal-3 py-portal-3">
+                    {variant.operation_lines.length > 0 ? (
+                      <ul className="divide-y divide-portal-border overflow-hidden rounded-portal-md border border-portal-border bg-portal-surface">
+                        {variant.operation_lines.map((line) => (
+                          <li
+                            key={line.id}
+                            className="flex flex-wrap items-center justify-between gap-portal-2 px-portal-3 py-portal-2"
+                          >
+                            <p className="min-w-0 text-portal-body text-portal-text">
+                              <span className="text-portal-muted">
+                                {line.sequence}.{" "}
+                              </span>
+                              {line.operation_name}
+                            </p>
+                            <div className="flex items-center gap-portal-2">
+                              <span className="text-portal-body font-medium text-portal-text">
+                                {formatAssemblyCost(line.cost)} ₽
+                              </span>
+                              <IconButton
+                                label={`Убрать операцию ${line.operation_name}`}
+                                variant="danger"
+                                disabled={busy || archived}
+                                onClick={() =>
+                                  void onDeleteLine(
+                                    variant.id,
+                                    line.id,
+                                    line.operation_name,
+                                  )
+                                }
+                              >
+                                <Trash2 className="size-4" />
+                              </IconButton>
+                            </div>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <div className="flex flex-wrap items-center justify-between gap-portal-2">
+                        <p className="text-portal-caption text-portal-muted">
+                          Операций пока нет — итог 0,00 ₽.
+                        </p>
+                        {!archived ? (
                           <Button
                             type="button"
                             size="compact"
                             disabled={busy}
-                            onClick={() =>
-                              void onDeleteLine(
-                                variant.id,
-                                line.id,
-                                line.operation_name,
-                              )
-                            }
+                            onClick={() => {
+                              setAppendVariantId(variant.id);
+                              setDrawerOpen(true);
+                            }}
                           >
-                            Убрать
+                            Добавить операции
                           </Button>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p className="mt-portal-3 text-portal-caption text-portal-muted">
-                    Строк операций пока нет — итог 0,00 ₽.
-                  </p>
-                )}
-
-                <div className="mt-portal-3 flex flex-wrap items-end gap-portal-2">
-                  <label className="min-w-[180px] flex-1">
-                    <span className="mb-1 block text-portal-caption text-portal-muted">
-                      Операция
-                    </span>
-                    <Input
-                      value={draft.operation_name}
-                      disabled={busy}
-                      onChange={(event) =>
-                        setLineDraft(variant.id, {
-                          ...draft,
-                          operation_name: event.target.value,
-                        })
-                      }
-                      placeholder="Название операции"
-                      aria-label={`Операция для варианта ${variant.name}`}
-                    />
-                  </label>
-                  <label className="w-[120px]">
-                    <span className="mb-1 block text-portal-caption text-portal-muted">
-                      Стоимость
-                    </span>
-                    <Input
-                      value={draft.cost}
-                      disabled={busy}
-                      onChange={(event) =>
-                        setLineDraft(variant.id, {
-                          ...draft,
-                          cost: event.target.value,
-                        })
-                      }
-                      inputMode="decimal"
-                      aria-label={`Стоимость операции для варианта ${variant.name}`}
-                    />
-                  </label>
-                  <Button
-                    type="button"
-                    variant="primary"
-                    size="compact"
-                    disabled={busy || !draft.operation_name.trim()}
-                    onClick={() => void onAddLine(variant.id)}
-                  >
-                    Добавить строку
-                  </Button>
-                </div>
+                        ) : null}
+                      </div>
+                    )}
+                  </div>
+                ) : null}
               </li>
             );
           })}
         </ul>
       )}
-    </div>
+
+      <AssemblyVariantSewingOpsDrawer
+        open={drawerOpen}
+        modelId={modelId}
+        sewingOperations={sewingOperations}
+        variantId={appendVariantId}
+        excludeSewingOperationIds={appendExcludeIds}
+        onClose={() => {
+          setDrawerOpen(false);
+          setAppendVariantId(null);
+        }}
+        onSaved={() => router.refresh()}
+      />
+      </div>
+    </SectionCard>
   );
 }

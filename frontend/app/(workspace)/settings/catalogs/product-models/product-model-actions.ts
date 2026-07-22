@@ -121,6 +121,17 @@ export async function archiveProductModel(modelId: number): Promise<ProductModel
   return model;
 }
 
+export async function activateProductModel(modelId: number): Promise<ProductModel> {
+  const response = await fetch(`${apiBaseUrl()}/product-models/${modelId}/activate`, {
+    method: "POST",
+    cache: "no-store",
+  });
+  if (!response.ok) throw new Error(await readError(response));
+  const model = (await response.json()) as ProductModel;
+  revalidateModel(model.id);
+  return model;
+}
+
 export async function copyProductModel(modelId: number): Promise<ProductModel> {
   const response = await fetch(`${apiBaseUrl()}/product-models/${modelId}/copy`, {
     method: "POST",
@@ -252,17 +263,25 @@ export type AssemblyActionResult =
 export async function createAssemblyVariant(
   modelId: number,
   name: string,
+  sewingOperationIds: number[] = [],
 ): Promise<AssemblyActionResult> {
   const trimmed = name.trim();
   if (!trimmed) {
     return { ok: false, message: "Укажите название варианта" };
+  }
+  if (sewingOperationIds.length === 0) {
+    return { ok: false, message: "Выберите хотя бы одну операцию пошива" };
   }
   const response = await fetch(
     `${apiBaseUrl()}/product-models/${modelId}/assembly-variants`,
     {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ name: trimmed, operation_lines: [] }),
+      body: JSON.stringify({
+        name: trimmed,
+        sewing_operation_ids: sewingOperationIds,
+        operation_lines: [],
+      }),
       cache: "no-store",
     },
   );
@@ -312,20 +331,35 @@ export async function deleteAssemblyVariant(
   return { ok: true };
 }
 
-export async function addAssemblyOperationLine(
+export async function copyAssemblyVariant(
   modelId: number,
   variantId: number,
-  payload: { operation_name: string; cost: string },
 ): Promise<AssemblyActionResult> {
   const response = await fetch(
-    `${apiBaseUrl()}/product-models/${modelId}/assembly-variants/${variantId}/operation-lines`,
+    `${apiBaseUrl()}/product-models/${modelId}/assembly-variants/${variantId}/copy`,
+    { method: "POST", cache: "no-store" },
+  );
+  if (!response.ok) {
+    return { ok: false, message: await readError(response) };
+  }
+  revalidateModel(modelId);
+  return { ok: true };
+}
+
+export async function addAssemblyVariantSewingOperations(
+  modelId: number,
+  variantId: number,
+  sewingOperationIds: number[],
+): Promise<AssemblyActionResult> {
+  if (sewingOperationIds.length === 0) {
+    return { ok: false, message: "Выберите хотя бы одну операцию пошива" };
+  }
+  const response = await fetch(
+    `${apiBaseUrl()}/product-models/${modelId}/assembly-variants/${variantId}/sewing-operations`,
     {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({
-        operation_name: payload.operation_name.trim(),
-        cost: payload.cost,
-      }),
+      body: JSON.stringify({ sewing_operation_ids: sewingOperationIds }),
       cache: "no-store",
     },
   );

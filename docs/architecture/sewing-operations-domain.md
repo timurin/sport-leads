@@ -27,7 +27,7 @@ No status, versions, files, or nesting.
 
 | Concept | Relation |
 |---|---|
-| `AssemblyOperationLine` | MVP remains **inline** `operation_name` + `cost` on the variant (`6.1.12`). Optional FK / pick-from-catalog — later (`6.3.6`) |
+| `AssemblyOperationLine` | Copy-on-pick from catalog: snapshot `operation_name` + `cost`; optional `sewing_operation_id` (`6.3.6`). Catalog price changes do not rewrite existing variant lines. |
 | `ProductModel` | No `pattern_set_id`; sewing ops are **not** children of a model |
 | Stage 8 shop routing | Separate execution contour; does not replace this catalog |
 

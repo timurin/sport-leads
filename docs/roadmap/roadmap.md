@@ -963,17 +963,17 @@ Completion criteria:
 #### 6.3.6 — Wire sewing operations into assembly variant lines
 
 Goal:
-Optional pick from sewing-operations catalog when editing `AssemblyOperationLine` (keep inline snapshot; no hard dependency for MVP variants).
+Pick from sewing-operations catalog when building `AssemblyVariant` (copy-on-pick snapshot; nullable `sewing_operation_id`).
 
 Dependencies:
 - 6.1.12
 - 6.3.5
 
 Microtasks:
-- [ ] 6.3.6.1 — Decide FK vs copy-on-pick for `AssemblyOperationLine`
-- [ ] 6.3.6.2 — Backend schema/API if FK or picker endpoint needed
-- [ ] 6.3.6.3 — Model-card assembly UI picker
-- [ ] 6.3.6.4 — Regression tests
+- [x] 6.3.6.1 — Decide FK vs copy-on-pick for `AssemblyOperationLine` — `v0.9.0`; copy-on-pick + nullable `sewing_operation_id`
+- [x] 6.3.6.2 — Backend schema/API if FK or picker endpoint needed — `v0.9.0`; migration `r8s9t0u1v234`; create/add via `sewing_operation_ids`
+- [x] 6.3.6.3 — Model-card assembly UI picker — `v0.9.0`; right `CreateDrawer` with checkboxes + live total
+- [x] 6.3.6.4 — Regression tests — `v0.9.0`; `test_assembly_variant_from_sewing_operations_catalog`
 
 Completion criteria:
 - managers can reuse catalog rows without breaking existing inline snapshots.

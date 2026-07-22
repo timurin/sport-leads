@@ -12,6 +12,7 @@ import {
   parseProductModelRouteId,
   toProductModelVersionViews,
 } from "@/lib/product-models";
+import { getSewingOperations } from "@/lib/sewing-operations";
 
 type ProductModelRouteProps = {
   params: Promise<{ modelId: string }>;
@@ -40,12 +41,14 @@ export default async function ProductModelRoute({
     notFound();
   }
 
-  const [versions, media, history, assemblyVariants] = await Promise.all([
-    getProductModelVersions(id),
-    getProductModelMedia(id),
-    getProductModelHistory(id),
-    getProductModelAssemblyVariants(id),
-  ]);
+  const [versions, media, history, assemblyVariants, sewingOperations] =
+    await Promise.all([
+      getProductModelVersions(id),
+      getProductModelMedia(id),
+      getProductModelHistory(id),
+      getProductModelAssemblyVariants(id),
+      getSewingOperations({ limit: 500 }),
+    ]);
 
   return (
     <ProductModelPersistentCard
@@ -54,6 +57,7 @@ export default async function ProductModelRoute({
       media={media}
       history={history}
       assemblyVariants={assemblyVariants}
+      sewingOperations={sewingOperations}
       initialEditing={initialEditing}
     />
   );

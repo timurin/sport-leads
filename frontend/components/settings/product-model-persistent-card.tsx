@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState, type MouseEvent } from "react";
 
 import {
   archiveProductModel,
+  activateProductModel,
   copyProductModel,
   deleteProductModelMedia,
   replaceProductModelMedia,
@@ -18,8 +19,6 @@ import { VersionedWorkspace } from "@/components/entity/versioned-workspace";
 import { AssemblyVariantsBlock } from "@/components/settings/assembly-variants-block";
 import { ProductModelMediaCarousel } from "@/components/settings/product-model-media-carousel";
 import { ProductModelToolbarActions } from "@/components/settings/product-model-toolbar-actions";
-import { ProductModelVersionBar } from "@/components/settings/product-model-version-bar";
-import { EmptyState } from "@/components/ui/empty-state";
 import { EntityHeader } from "@/components/ui/entity-header";
 import { Input, Select, Textarea } from "@/components/ui/form-controls";
 import { ImageLightbox } from "@/components/ui/image-lightbox";
@@ -28,6 +27,7 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import {
   PRODUCT_MODEL_IMAGE_RULE,
   PRODUCT_MODEL_SIZE_TYPE_LABELS,
+  PRODUCT_MODEL_STATUS_FILTER_ITEMS,
   PRODUCT_MODEL_STATUS_LABELS,
   isProductModelRequisitesDirty,
   productModelStatusTone,
@@ -40,8 +40,10 @@ import {
   type ProductModelMedia,
   type ProductModelRequisitesDraft,
   type ProductModelSizeType,
+  type ProductModelStatus,
   type ProductModelVersionView,
 } from "@/lib/product-models";
+import type { SewingOperation } from "@/lib/sewing-operations";
 
 const COLUMN_GAP = "gap-[14px]";
 
@@ -55,6 +57,7 @@ export function ProductModelPersistentCard({
   media,
   history,
   assemblyVariants,
+  sewingOperations,
   initialEditing = false,
 }: {
   model: ProductModel;
@@ -62,6 +65,7 @@ export function ProductModelPersistentCard({
   media: ProductModelMedia[];
   history: ProductModelHistoryEntry[];
   assemblyVariants: AssemblyVariant[];
+  sewingOperations: SewingOperation[];
   initialEditing?: boolean;
 }) {
   const router = useRouter();
@@ -309,6 +313,38 @@ export function ProductModelPersistentCard({
     }
   };
 
+  const onStatusChange = async (nextStatus: string) => {
+    if (busy) return;
+    const status = nextStatus as ProductModelStatus;
+    if (status === current.status) return;
+    if (status === "draft") {
+      setActionError("Нельзя вернуть модель в статус «Черновик»");
+      return;
+    }
+    if (
+      status === "archived" &&
+      !window.confirm(`Перевести модель «${current.name}» в архив?`)
+    ) {
+      return;
+    }
+    setBusy(true);
+    setActionError(null);
+    try {
+      const updated =
+        status === "active"
+          ? await activateProductModel(current.id)
+          : await archiveProductModel(current.id);
+      setCurrent(updated);
+      router.refresh();
+    } catch (caught) {
+      setActionError(
+        caught instanceof Error ? caught.message : "Не удалось сменить статус",
+      );
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const onCopy = async () => {
     setBusy(true);
     setActionError(null);
@@ -399,103 +435,138 @@ export function ProductModelPersistentCard({
           main={
             <>
               <SectionCard title="Основные реквизиты" size="compact">
-                {editing && draft ? (
-                  <div className="grid min-w-0 gap-portal-3 text-portal-body sm:grid-cols-2">
-                    <label className="grid min-w-0 gap-1">
-                      <span className="text-portal-caption text-portal-muted">Артикул</span>
-                      <Input
-                        value={draft.article}
-                        onChange={(event) =>
-                          setDraft({ ...draft, article: event.target.value })
-                        }
-                        aria-label="Артикул"
-                      />
-                    </label>
-                    <label className="grid min-w-0 gap-1">
-                      <span className="text-portal-caption text-portal-muted">Название</span>
-                      <Input
-                        value={draft.name}
-                        onChange={(event) =>
-                          setDraft({ ...draft, name: event.target.value })
-                        }
-                        aria-label="Название"
-                      />
-                    </label>
-                    <label className="grid min-w-0 gap-1">
-                      <span className="text-portal-caption text-portal-muted">
-                        Тип размерной сетки
-                      </span>
-                      <Select
-                        value={draft.size_type}
-                        disabled={sizeTypeLocked}
-                        onChange={(event) =>
-                          setDraft({
-                            ...draft,
-                            size_type: event.target.value as ProductModelSizeType,
-                          })
-                        }
-                        aria-label="Тип размерной сетки"
-                      >
-                        {Object.entries(PRODUCT_MODEL_SIZE_TYPE_LABELS).map(
-                          ([value, label]) => (
-                            <option key={value} value={value}>
-                              {label}
-                            </option>
-                          ),
-                        )}
-                      </Select>
-                      {sizeTypeLocked ? (
+                <div className="grid min-w-0 gap-portal-3 text-portal-body sm:grid-cols-2">
+                  <label className="grid min-w-0 gap-1">
+                    <span className="text-portal-caption text-portal-muted">
+                      Состояние
+                    </span>
+                    <Select
+                      value={current.status}
+                      disabled={busy}
+                      onChange={(event) => void onStatusChange(event.target.value)}
+                      aria-label="Состояние"
+                    >
+                      {PRODUCT_MODEL_STATUS_FILTER_ITEMS.map((item) => (
+                        <option
+                          key={item.id}
+                          value={item.id}
+                          disabled={
+                            item.id === "draft" && current.status !== "draft"
+                          }
+                        >
+                          {item.label}
+                        </option>
+                      ))}
+                    </Select>
+                  </label>
+
+                  {editing && draft ? (
+                    <>
+                      <label className="grid min-w-0 gap-1">
                         <span className="text-portal-caption text-portal-muted">
-                          Тип сетки меняется только у черновика
+                          Артикул
                         </span>
-                      ) : null}
-                    </label>
-                    <label className="grid min-w-0 gap-1 sm:col-span-2">
-                      <span className="text-portal-caption text-portal-muted">Описание</span>
-                      <Textarea
-                        value={draft.description}
-                        onChange={(event) =>
-                          setDraft({ ...draft, description: event.target.value })
-                        }
-                        rows={4}
-                        aria-label="Описание"
-                      />
-                    </label>
-                  </div>
-                ) : (
-                  <dl className="grid min-w-0 gap-portal-3 text-portal-body sm:grid-cols-2">
-                    <div className="min-w-0">
-                      <dt className="text-portal-caption text-portal-muted">Артикул</dt>
-                      <dd className="mt-1 font-medium text-portal-text">{current.article}</dd>
-                    </div>
-                    <div className="min-w-0">
-                      <dt className="text-portal-caption text-portal-muted">
-                        Тип размерной сетки
-                      </dt>
-                      <dd className="mt-1 font-medium text-portal-text">
-                        {PRODUCT_MODEL_SIZE_TYPE_LABELS[current.size_type]}
-                      </dd>
-                    </div>
-                    <div className="min-w-0 sm:col-span-2">
-                      <dt className="text-portal-caption text-portal-muted">Описание</dt>
-                      <dd className="mt-1 whitespace-pre-wrap text-portal-text">
-                        {current.description?.trim() ? current.description : "—"}
-                      </dd>
-                    </div>
-                  </dl>
-                )}
+                        <Input
+                          value={draft.article}
+                          onChange={(event) =>
+                            setDraft({ ...draft, article: event.target.value })
+                          }
+                          aria-label="Артикул"
+                        />
+                      </label>
+                      <label className="grid min-w-0 gap-1">
+                        <span className="text-portal-caption text-portal-muted">
+                          Название
+                        </span>
+                        <Input
+                          value={draft.name}
+                          onChange={(event) =>
+                            setDraft({ ...draft, name: event.target.value })
+                          }
+                          aria-label="Название"
+                        />
+                      </label>
+                      <label className="grid min-w-0 gap-1">
+                        <span className="text-portal-caption text-portal-muted">
+                          Тип размерной сетки
+                        </span>
+                        <Select
+                          value={draft.size_type}
+                          disabled={sizeTypeLocked}
+                          onChange={(event) =>
+                            setDraft({
+                              ...draft,
+                              size_type: event.target.value as ProductModelSizeType,
+                            })
+                          }
+                          aria-label="Тип размерной сетки"
+                        >
+                          {Object.entries(PRODUCT_MODEL_SIZE_TYPE_LABELS).map(
+                            ([value, label]) => (
+                              <option key={value} value={value}>
+                                {label}
+                              </option>
+                            ),
+                          )}
+                        </Select>
+                        {sizeTypeLocked ? (
+                          <span className="text-portal-caption text-portal-muted">
+                            Тип сетки меняется только у черновика
+                          </span>
+                        ) : null}
+                      </label>
+                      <label className="grid min-w-0 gap-1 sm:col-span-2">
+                        <span className="text-portal-caption text-portal-muted">
+                          Описание
+                        </span>
+                        <Textarea
+                          value={draft.description}
+                          onChange={(event) =>
+                            setDraft({ ...draft, description: event.target.value })
+                          }
+                          rows={4}
+                          aria-label="Описание"
+                        />
+                      </label>
+                    </>
+                  ) : (
+                    <>
+                      <div className="min-w-0">
+                        <p className="text-portal-caption text-portal-muted">
+                          Артикул
+                        </p>
+                        <p className="mt-1 font-medium text-portal-text">
+                          {current.article}
+                        </p>
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-portal-caption text-portal-muted">
+                          Тип размерной сетки
+                        </p>
+                        <p className="mt-1 font-medium text-portal-text">
+                          {PRODUCT_MODEL_SIZE_TYPE_LABELS[current.size_type]}
+                        </p>
+                      </div>
+                      <div className="min-w-0 sm:col-span-2">
+                        <p className="text-portal-caption text-portal-muted">
+                          Описание
+                        </p>
+                        <p className="mt-1 whitespace-pre-wrap text-portal-text">
+                          {current.description?.trim()
+                            ? current.description
+                            : "—"}
+                        </p>
+                      </div>
+                    </>
+                  )}
+                </div>
               </SectionCard>
 
-              <SectionCard
-                title="Варианты сборки"
-                description="Пакеты операций и стоимостей для выбора в заказе"
-                size="compact"
-              >
-                <AssemblyVariantsBlock
-                  modelId={current.id}
-                  variants={assemblyVariants}
-                />
-              </SectionCard>
+              <AssemblyVariantsBlock
+                modelId={current.id}
+                variants={assemblyVariants}
+                sewingOperations={sewingOperations}
+              />
 
               <SectionCard
                 title="Рабочая область версии"
@@ -537,49 +608,27 @@ export function ProductModelPersistentCard({
             </SectionCard>
           }
           versions={
-            <SectionCard title="Версии модели" size="compact">
-              <div className={`flex min-w-0 flex-col ${COLUMN_GAP}`}>
-                {versions.length > 0 ? (
-                  <ProductModelVersionBar
-                    versions={versions}
-                    activeVersionId={activeVersionId}
-                    onSelect={setActiveVersionId}
-                    embedded
-                  />
-                ) : (
-                  <EmptyState
-                    title="Версий пока нет"
-                    description="Версия v1 создаётся вместе с моделью."
-                    size="compact"
-                  />
-                )}
-
-                <div className="min-w-0">
-                  <p className="text-portal-caption font-semibold text-portal-muted">
-                    История изменений
-                  </p>
-                  {history.length > 0 ? (
-                    <ul className="mt-portal-2 grid gap-portal-2">
-                      {history.map((entry) => (
-                        <li
-                          key={entry.id}
-                          className="rounded-portal-md border border-portal-border bg-portal-surface-secondary px-portal-3 py-portal-2"
-                        >
-                          <p className="text-portal-body text-portal-text">{entry.action}</p>
-                          <p className="mt-1 text-portal-caption text-portal-muted">
-                            {entry.actor} ·{" "}
-                            {new Date(entry.created_at).toLocaleString("ru-RU")}
-                          </p>
-                        </li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <p className="mt-portal-2 text-portal-caption text-portal-muted">
-                      Записей пока нет.
-                    </p>
-                  )}
-                </div>
-              </div>
+            <SectionCard title="История изменений" size="compact">
+              {history.length > 0 ? (
+                <ul className="grid gap-portal-2">
+                  {history.map((entry) => (
+                    <li
+                      key={entry.id}
+                      className="rounded-portal-md border border-portal-border bg-portal-surface-secondary px-portal-3 py-portal-2"
+                    >
+                      <p className="text-portal-body text-portal-text">{entry.action}</p>
+                      <p className="mt-1 text-portal-caption text-portal-muted">
+                        {entry.actor} ·{" "}
+                        {new Date(entry.created_at).toLocaleString("ru-RU")}
+                      </p>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-portal-caption text-portal-muted">
+                  Записей пока нет.
+                </p>
+              )}
             </SectionCard>
           }
         />

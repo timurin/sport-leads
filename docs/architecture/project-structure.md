@@ -1,7 +1,7 @@
 # Sport-Lead — Project Structure Checklist
 
 **Code:** `SL-PROJECT-STRUCTURE-v1`
-**Updated:** `2026-07-22` (sewing-operations catalog replaces Patterns/`PatternSet`; assembly-variants UI pending owner visual `6.1.12.6`)
+**Updated:** `2026-07-22` (assembly variants pick sewing ops via right panel `6.3.6`; owner visual `6.1.12.6` still open)
 **Project version:** `v0.9.0`
 **Git branch:** `feature/v0.8.1-nomenclature-core`
 **Git commit:** `bc63397`
@@ -98,7 +98,7 @@
 - [x] Product-model list UI owner visual — `DS-PT-02-CATALOG` etalon `/settings/catalogs/product-models` (`6.1.7.5`; directories/sections/categories)
 - [x] Product-model card UI owner visual — `DS-PT-08-CATALOG` etalon `/settings/catalogs/product-models/[id]` (`6.1.8.5`)
 - [x] Product-model create / edit UI and PRODUCT whitelist — create/edit visual OK; whitelist API+UI `6.1.11` shipped
-- [x] Assembly variants API + model-card UI — `assembly_variants` / `AssemblyVariantsBlock` (`6.1.12.1–5`); owner visual pending `6.1.12.6`
+- [x] Assembly variants API + model-card UI (sewing-ops picker) — `AssemblyVariantsBlock` + copy-on-pick (`6.1.12` / `6.3.6`); owner visual pending `6.1.12.6`
 - [x] Sewing operations flat catalog API + PT-02 list UI — `sewing_operations` / `/settings/catalogs/sewing_operations` (`6.3.1–5`; owner visual pending `6.3.4.5` / `6.3.5.4`); PatternSet withdrawn
 - [ ] Dedicated size-grid directory and measurements
 - [ ] Specifications and bill-of-materials contour

@@ -2452,7 +2452,7 @@
               {
                 code: "6.3.6",
                 title: "Wire sewing operations into assembly variant lines",
-                goal: "Optional pick from sewing-operations catalog when editing AssemblyOperationLine.",
+                goal: "Pick from sewing-operations catalog when building AssemblyVariant (copy-on-pick + nullable sewing_operation_id).",
                 dependencies: [
                   "6.1.12",
                   "6.3.5"
@@ -2460,23 +2460,23 @@
                 microtasks: [
                   {
                     code: "6.3.6.1",
-                    title: "Decide FK vs copy-on-pick for AssemblyOperationLine",
-                    done: false
+                    title: "Decide FK vs copy-on-pick for AssemblyOperationLine — `v0.9.0`; copy-on-pick + nullable sewing_operation_id",
+                    done: true
                   },
                   {
                     code: "6.3.6.2",
-                    title: "Backend schema/API if FK or picker endpoint needed",
-                    done: false
+                    title: "Backend schema/API — `v0.9.0`; migration r8s9t0u1v234; sewing_operation_ids create/add",
+                    done: true
                   },
                   {
                     code: "6.3.6.3",
-                    title: "Model-card assembly UI picker",
-                    done: false
+                    title: "Model-card assembly UI picker — `v0.9.0`; right CreateDrawer with checkboxes + live total",
+                    done: true
                   },
                   {
                     code: "6.3.6.4",
-                    title: "Regression tests",
-                    done: false
+                    title: "Regression tests — `v0.9.0`; test_assembly_variant_from_sewing_operations_catalog",
+                    done: true
                   }
                 ]
               },

@@ -313,7 +313,11 @@ class AssemblyVariant(Base):
 
 
 class AssemblyOperationLine(Base):
-    """Ordered operation row inside an assembly variant (MVP: inline name + cost)."""
+    """Ordered operation row inside an assembly variant.
+
+    Copy-on-pick from `SewingOperation`: snapshot `operation_name` + `cost`;
+    optional `sewing_operation_id` for catalog traceability (`6.3.6`).
+    """
 
     __tablename__ = "assembly_operation_lines"
     __table_args__ = (
@@ -341,6 +345,11 @@ class AssemblyOperationLine(Base):
     sequence: Mapped[int] = mapped_column(Integer, nullable=False)
     operation_name: Mapped[str] = mapped_column(String(255), nullable=False)
     cost: Mapped[Decimal] = mapped_column(Numeric(14, 2), nullable=False, default=Decimal("0"))
+    sewing_operation_id: Mapped[int | None] = mapped_column(
+        ForeignKey("sewing_operations.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,

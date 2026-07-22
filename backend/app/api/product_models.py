@@ -8,6 +8,7 @@ from app.schemas.product_model import (
     AssemblyOperationLineCreate,
     AssemblyOperationLineReorder,
     AssemblyOperationLineUpdate,
+    AssemblyVariantAddSewingOperations,
     AssemblyVariantCreate,
     AssemblyVariantRead,
     AssemblyVariantReorder,
@@ -29,6 +30,8 @@ from app.services.assembly_variants import (
     AssemblyVariantNotFoundError,
     AssemblyVariantValidationError,
     add_operation_line,
+    add_sewing_operations_to_variant,
+    copy_assembly_variant,
     create_assembly_variant,
     delete_assembly_variant,
     delete_operation_line,
@@ -512,6 +515,27 @@ def remove_one_assembly_variant(
 
 
 @router.post(
+    "/{model_id}/assembly-variants/{variant_id}/copy",
+    response_model=AssemblyVariantRead,
+    status_code=status.HTTP_201_CREATED,
+    operation_id="copy_product_model_assembly_variant",
+)
+def copy_one_assembly_variant(
+    model_id: int,
+    variant_id: int,
+    db: Session = Depends(get_db),
+):
+    try:
+        return copy_assembly_variant(db, model_id, variant_id)
+    except ProductModelNotFoundError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+    except AssemblyVariantNotFoundError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+    except AssemblyVariantConflictError as error:
+        raise HTTPException(status_code=409, detail=str(error)) from error
+
+
+@router.post(
     "/{model_id}/assembly-variants/reorder",
     response_model=list[AssemblyVariantRead],
     operation_id="reorder_product_model_assembly_variants",
@@ -547,6 +571,29 @@ def create_operation_line(
         raise HTTPException(status_code=404, detail=str(error)) from error
     except AssemblyVariantNotFoundError as error:
         raise HTTPException(status_code=404, detail=str(error)) from error
+    except AssemblyVariantConflictError as error:
+        raise HTTPException(status_code=409, detail=str(error)) from error
+
+
+@router.post(
+    "/{model_id}/assembly-variants/{variant_id}/sewing-operations",
+    response_model=AssemblyVariantRead,
+    operation_id="add_assembly_variant_sewing_operations",
+)
+def attach_sewing_operations(
+    model_id: int,
+    variant_id: int,
+    payload: AssemblyVariantAddSewingOperations,
+    db: Session = Depends(get_db),
+):
+    try:
+        return add_sewing_operations_to_variant(db, model_id, variant_id, payload)
+    except ProductModelNotFoundError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+    except AssemblyVariantNotFoundError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+    except AssemblyVariantValidationError as error:
+        raise HTTPException(status_code=422, detail=str(error)) from error
     except AssemblyVariantConflictError as error:
         raise HTTPException(status_code=409, detail=str(error)) from error
 

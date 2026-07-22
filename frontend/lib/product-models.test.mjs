@@ -9,6 +9,7 @@ import {
   parseProductModelRouteId,
   productModelLabel,
   productModelStatusTone,
+  sumSelectedSewingOperationCosts,
   toProductModelRequisitesDraft,
   toProductModelVersionViews,
   validateAssemblyOperationLineDraft,
@@ -197,6 +198,17 @@ test("formatAssemblyCost and parseAssemblyCostInput handle decimals", () => {
   assert.equal(parseAssemblyCostInput("10"), "10.00");
   assert.equal(parseAssemblyCostInput("-1"), null);
   assert.equal(parseAssemblyCostInput("abc"), null);
+});
+
+test("sumSelectedSewingOperationCosts totals selected catalog rows", () => {
+  assert.equal(
+    sumSelectedSewingOperationCosts([
+      { cost: "100.00" },
+      { cost: "50,50" },
+    ]),
+    150.5,
+  );
+  assert.equal(sumSelectedSewingOperationCosts([]), 0);
 });
 
 test("validateAssemblyVariantDraft and operation line draft", () => {

@@ -2,12 +2,15 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.models.product_model import AssemblyOperationLine, AssemblyVariant
+from app.models.sewing_operation import SewingOperation
 from app.repositories import assembly_variants as repo
+from app.repositories import sewing_operations as sewing_repo
 from app.schemas.product_model import (
     AssemblyOperationLineCreate,
     AssemblyOperationLineRead,
     AssemblyOperationLineReorder,
     AssemblyOperationLineUpdate,
+    AssemblyVariantAddSewingOperations,
     AssemblyVariantCreate,
     AssemblyVariantRead,
     AssemblyVariantReorder,
@@ -76,6 +79,41 @@ def _get_owned_line(
     return variant, line
 
 
+def _resolve_sewing_operations(
+    db: Session,
+    sewing_operation_ids: list[int],
+) -> list[SewingOperation]:
+    ordered_ids = list(dict.fromkeys(sewing_operation_ids))
+    if not ordered_ids:
+        return []
+    rows = sewing_repo.get_sewing_operations_by_ids(db, ordered_ids)
+    if len(rows) != len(ordered_ids):
+        found = {row.id for row in rows}
+        missing = [operation_id for operation_id in ordered_ids if operation_id not in found]
+        raise AssemblyVariantValidationError(
+            f"Операции пошива не найдены: {', '.join(str(item) for item in missing)}"
+        )
+    return rows
+
+
+def _append_sewing_operation_lines(
+    db: Session,
+    variant: AssemblyVariant,
+    operations: list[SewingOperation],
+    *,
+    start_sequence: int,
+) -> None:
+    for offset, operation in enumerate(operations):
+        line = AssemblyOperationLine(
+            assembly_variant_id=variant.id,
+            sequence=start_sequence + offset,
+            operation_name=operation.name,
+            cost=operation.cost,
+            sewing_operation_id=operation.id,
+        )
+        repo.add_operation_line(db, line)
+
+
 def list_assembly_variants(
     db: Session,
     product_model_id: int,
@@ -106,6 +144,7 @@ def create_assembly_variant(
             "Вариант сборки с таким названием уже есть у этой модели"
         )
 
+    sewing_ops = _resolve_sewing_operations(db, payload.sewing_operation_ids)
     explicit_sequences = [
         line.sequence for line in payload.operation_lines if line.sequence is not None
     ]
@@ -127,15 +166,28 @@ def create_assembly_variant(
     )
     try:
         repo.add_variant(db, variant)
-        for index, line_payload in enumerate(payload.operation_lines, start=1):
-            sequence = line_payload.sequence if line_payload.sequence is not None else index
+        sequence = 1
+        if sewing_ops:
+            _append_sewing_operation_lines(
+                db,
+                variant,
+                sewing_ops,
+                start_sequence=sequence,
+            )
+            sequence += len(sewing_ops)
+        for line_payload in payload.operation_lines:
+            line_sequence = (
+                line_payload.sequence if line_payload.sequence is not None else sequence
+            )
             line = AssemblyOperationLine(
                 assembly_variant_id=variant.id,
-                sequence=sequence,
+                sequence=line_sequence,
                 operation_name=line_payload.operation_name,
                 cost=line_payload.cost,
+                sewing_operation_id=line_payload.sewing_operation_id,
             )
             repo.add_operation_line(db, line)
+            sequence = max(sequence, line_sequence) + 1
         db.commit()
     except IntegrityError as error:
         db.rollback()
@@ -148,6 +200,43 @@ def create_assembly_variant(
     refreshed = repo.get_variant(db, variant.id)
     assert refreshed is not None
     return _variant_read(refreshed)
+
+
+def add_sewing_operations_to_variant(
+    db: Session,
+    product_model_id: int,
+    variant_id: int,
+    payload: AssemblyVariantAddSewingOperations,
+) -> AssemblyVariantRead:
+    variant = _get_owned_variant(db, product_model_id, variant_id)
+    sewing_ops = _resolve_sewing_operations(db, payload.sewing_operation_ids)
+    existing_catalog_ids = {
+        line.sewing_operation_id
+        for line in variant.operation_lines
+        if line.sewing_operation_id is not None
+    }
+    to_add = [row for row in sewing_ops if row.id not in existing_catalog_ids]
+    if not to_add:
+        raise AssemblyVariantValidationError(
+            "Выбранные операции пошива уже есть в этом варианте"
+        )
+
+    start_sequence = repo.next_line_sequence(db, variant.id)
+    try:
+        _append_sewing_operation_lines(
+            db,
+            variant,
+            to_add,
+            start_sequence=start_sequence,
+        )
+        db.commit()
+    except IntegrityError as error:
+        db.rollback()
+        raise AssemblyVariantConflictError(
+            "Конфликт уникальности строк операций варианта"
+        ) from error
+
+    return get_assembly_variant(db, product_model_id, variant_id)
 
 
 def update_assembly_variant(
@@ -193,6 +282,60 @@ def delete_assembly_variant(
     repo.delete_variant(db, variant)
 
 
+def _next_copy_name(db: Session, product_model_id: int, source_name: str) -> str:
+    base = f"{source_name} (копия)"
+    if repo.get_variant_by_name(db, product_model_id, base) is None:
+        return base
+    suffix = 2
+    while True:
+        candidate = f"{source_name} (копия {suffix})"
+        if repo.get_variant_by_name(db, product_model_id, candidate) is None:
+            return candidate
+        suffix += 1
+
+
+def copy_assembly_variant(
+    db: Session,
+    product_model_id: int,
+    variant_id: int,
+) -> AssemblyVariantRead:
+    source = _get_owned_variant(db, product_model_id, variant_id)
+    name = _next_copy_name(db, product_model_id, source.name)
+    sort_order = repo.next_variant_sort_order(db, product_model_id)
+    clone = AssemblyVariant(
+        product_model_id=product_model_id,
+        name=name,
+        is_active=True,
+        sort_order=sort_order,
+    )
+    try:
+        repo.add_variant(db, clone)
+        for index, line in enumerate(
+            sorted(source.operation_lines, key=lambda row: (row.sequence, row.id)),
+            start=1,
+        ):
+            repo.add_operation_line(
+                db,
+                AssemblyOperationLine(
+                    assembly_variant_id=clone.id,
+                    sequence=index,
+                    operation_name=line.operation_name,
+                    cost=line.cost,
+                    sewing_operation_id=line.sewing_operation_id,
+                ),
+            )
+        db.commit()
+    except IntegrityError as error:
+        db.rollback()
+        raise AssemblyVariantConflictError(
+            "Вариант сборки с таким названием уже есть у этой модели"
+        ) from error
+
+    refreshed = repo.get_variant(db, clone.id)
+    assert refreshed is not None
+    return _variant_read(refreshed)
+
+
 def reorder_assembly_variants(
     db: Session,
     product_model_id: int,
@@ -227,6 +370,7 @@ def add_operation_line(
         sequence=sequence,
         operation_name=payload.operation_name,
         cost=payload.cost,
+        sewing_operation_id=payload.sewing_operation_id,
     )
     try:
         repo.add_operation_line(db, line)

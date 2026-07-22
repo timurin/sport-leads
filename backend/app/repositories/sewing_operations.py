@@ -22,6 +22,21 @@ def list_sewing_operations(
     return list(db.scalars(statement).all())
 
 
+def get_sewing_operations_by_ids(
+    db: Session,
+    operation_ids: list[int],
+) -> list[SewingOperation]:
+    if not operation_ids:
+        return []
+    rows = list(
+        db.scalars(
+            select(SewingOperation).where(SewingOperation.id.in_(operation_ids))
+        ).all()
+    )
+    by_id = {row.id: row for row in rows}
+    return [by_id[operation_id] for operation_id in operation_ids if operation_id in by_id]
+
+
 def get_sewing_operation(db: Session, operation_id: int) -> SewingOperation | None:
     return db.get(SewingOperation, operation_id)
 

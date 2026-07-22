@@ -159,3 +159,99 @@ def test_assembly_variants_ordering_totals_and_inactive_filter() -> None:
             )
     finally:
         app.dependency_overrides.pop(get_db, None)
+
+
+def test_assembly_variant_from_sewing_operations_catalog() -> None:
+    factory = _session_factory()
+
+    def override_get_db():
+        with factory() as db:
+            yield db
+
+    app.dependency_overrides[get_db] = override_get_db
+    try:
+        with TestClient(app) as client:
+            model = client.post(
+                "/product-models",
+                json={"article": "AV-SEW", "name": "Модель", "size_type": "men"},
+            )
+            assert model.status_code == 201, model.text
+            model_id = model.json()["id"]
+
+            op_a = client.post(
+                "/sewing-operations",
+                json={"name": "Базовая сборка", "cost": "100.00"},
+            )
+            assert op_a.status_code == 201, op_a.text
+            op_b = client.post(
+                "/sewing-operations",
+                json={"name": "Отстрочка", "cost": "50.50"},
+            )
+            assert op_b.status_code == 201, op_b.text
+            id_a = op_a.json()["id"]
+            id_b = op_b.json()["id"]
+
+            created = client.post(
+                f"/product-models/{model_id}/assembly-variants",
+                json={
+                    "name": "С отстрочкой",
+                    "sewing_operation_ids": [id_a, id_b],
+                },
+            )
+            assert created.status_code == 201, created.text
+            body = created.json()
+            assert Decimal(body["total_cost"]) == Decimal("150.50")
+            assert [line["operation_name"] for line in body["operation_lines"]] == [
+                "Базовая сборка",
+                "Отстрочка",
+            ]
+            assert [line["sewing_operation_id"] for line in body["operation_lines"]] == [
+                id_a,
+                id_b,
+            ]
+            variant_id = body["id"]
+
+            missing = client.post(
+                f"/product-models/{model_id}/assembly-variants",
+                json={"name": "Bad", "sewing_operation_ids": [999999]},
+            )
+            assert missing.status_code == 422
+
+            op_c = client.post(
+                "/sewing-operations",
+                json={"name": "Контроль", "cost": "10.00"},
+            )
+            assert op_c.status_code == 201, op_c.text
+            id_c = op_c.json()["id"]
+
+            appended = client.post(
+                f"/product-models/{model_id}/assembly-variants/{variant_id}/sewing-operations",
+                json={"sewing_operation_ids": [id_b, id_c]},
+            )
+            assert appended.status_code == 200, appended.text
+            assert Decimal(appended.json()["total_cost"]) == Decimal("160.50")
+            assert len(appended.json()["operation_lines"]) == 3
+
+            copied = client.post(
+                f"/product-models/{model_id}/assembly-variants/{variant_id}/copy"
+            )
+            assert copied.status_code == 201, copied.text
+            assert copied.json()["name"] == "С отстрочкой (копия)"
+            assert copied.json()["is_active"] is True
+            assert Decimal(copied.json()["total_cost"]) == Decimal("160.50")
+            assert len(copied.json()["operation_lines"]) == 3
+
+            archived = client.patch(
+                f"/product-models/{model_id}/assembly-variants/{variant_id}",
+                json={"is_active": False},
+            )
+            assert archived.status_code == 200, archived.text
+            assert archived.json()["is_active"] is False
+            active_only = client.get(
+                f"/product-models/{model_id}/assembly-variants",
+                params={"active_only": True},
+            )
+            assert all(row["is_active"] for row in active_only.json())
+            assert variant_id not in [row["id"] for row in active_only.json()]
+    finally:
+        app.dependency_overrides.pop(get_db, None)

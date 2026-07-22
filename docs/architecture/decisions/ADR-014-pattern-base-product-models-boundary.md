@@ -106,11 +106,9 @@ Nomenclature (PRODUCT)
 
 ### 6. Строки операций варианта vs справочник операций пошива
 
-**MVP на варианте (`6.1.12`):** `AssemblyOperationLine` хранит inline `operation_name` (текст) + `sequence` + `cost` (`Decimal`). Заказ/спецификация snapshot’ят эти значения.
-
 **Справочник (`6.3`):** `SewingOperation` — плоский каталог (`name` unique, `cost ≥ 0`). UI: `/settings/catalogs/sewing_operations` (`DS-PT-02-CATALOG`).
 
-**Связка позже (`6.3.6`):** опциональный pick из справочника в строку варианта / nullable `sewing_operation_id` без ломки уже сохранённых inline snapshot’ов.
+**Вариант сборки (`6.1.12` + `6.3.6`):** группа выбранных операций пошива. Create/add — copy-on-pick: в `AssemblyOperationLine` пишутся snapshot `operation_name` + `cost` и nullable `sewing_operation_id`. Итог варианта = Σ строк. Правки каталога не переписывают уже сохранённые варианты / заказы.
 
 Стоимость варианта всегда считается как сумма строк в money-safe типах (`Decimal` / `Numeric`).
 

@@ -171,7 +171,7 @@ class AssemblyOperationLineBase(BaseModel):
 
 
 class AssemblyOperationLineCreate(AssemblyOperationLineBase):
-    pass
+    sewing_operation_id: int | None = None
 
 
 class AssemblyOperationLineUpdate(BaseModel):
@@ -193,6 +193,7 @@ class AssemblyOperationLineRead(BaseModel):
     sequence: int
     operation_name: str
     cost: Decimal
+    sewing_operation_id: int | None = None
     created_at: datetime
     updated_at: datetime
 
@@ -206,11 +207,16 @@ class AssemblyVariantCreate(BaseModel):
     is_active: bool = True
     sort_order: int | None = Field(default=None, ge=0)
     operation_lines: list[AssemblyOperationLineCreate] = Field(default_factory=list)
+    sewing_operation_ids: list[int] = Field(default_factory=list)
 
     @field_validator("name", mode="before")
     @classmethod
     def strip_name(cls, value: object) -> object:
         return value.strip() if isinstance(value, str) else value
+
+
+class AssemblyVariantAddSewingOperations(BaseModel):
+    sewing_operation_ids: list[int] = Field(min_length=1)
 
 
 class AssemblyVariantUpdate(BaseModel):
