@@ -24,7 +24,7 @@
 - [x] API liveness and readiness endpoints
 - [x] CI pipeline for mandatory checks (GitHub Actions + `scripts/check_project.py`)
 - [x] Dev/staging database backup and restore scripts
-- [ ] Structured application logging baseline
+- [x] Structured application logging baseline
 - [ ] Authentication, system users, and access roles
 - [ ] Universal audit trail
 - [ ] Universal file subsystem beyond nomenclature images

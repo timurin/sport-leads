@@ -1,4 +1,7 @@
-﻿from fastapi import FastAPI, HTTPException
+﻿import time
+
+from fastapi import FastAPI, HTTPException, Request, Response
+from loguru import logger
 from sqlalchemy import text
 
 from app.api.sport_events import router as sport_events_router
@@ -17,13 +20,44 @@ from app.api.lead_stages import router as lead_stages_router
 from app.api.lead_rejection_reasons import router as lead_rejection_reasons_router
 from app.api.orders import router as orders_router
 from app.api.organizations import router as organizations_router
+from app.config.settings import settings
 from app.database.session import engine
+from app.logging_config import configure_logging
+
+configure_logging(
+    level=settings.log_level,
+    format_name=settings.log_format,
+)
 
 app = FastAPI(
     title="Sport Leads API",
     description="API для сбора и обработки спортивных мероприятий",
     version="0.1.0",
 )
+
+
+@app.middleware("http")
+async def log_requests(
+    request: Request,
+    call_next,
+) -> Response:
+    started = time.perf_counter()
+    response = await call_next(request)
+    duration_ms = round(
+        (time.perf_counter() - started) * 1000,
+        2,
+    )
+
+    logger.bind(
+        component="http",
+        method=request.method,
+        path=request.url.path,
+        status_code=response.status_code,
+        duration_ms=duration_ms,
+    ).info("HTTP request completed")
+
+    return response
+
 
 app.include_router(sport_events_router)
 app.include_router(collector_router)
@@ -64,6 +98,9 @@ def health_ready() -> dict[str, str]:
         with engine.connect() as connection:
             connection.execute(text("SELECT 1"))
     except Exception as exc:
+        logger.bind(component="health").warning(
+            "Database readiness check failed"
+        )
         raise HTTPException(
             status_code=503,
             detail="database unavailable",

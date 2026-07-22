@@ -44,6 +44,16 @@ class Settings:
         "POSTGRES_PASSWORD"
     )
 
+    log_level: str = os.getenv(
+        "LOG_LEVEL",
+        "INFO",
+    )
+
+    log_format: str = os.getenv(
+        "LOG_FORMAT",
+        "text",
+    )
+
     @property
     def database_url(self) -> str:
         explicit_database_url = os.getenv(
