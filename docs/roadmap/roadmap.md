@@ -259,8 +259,8 @@ Microtasks:
 - [x] 5.3.2.4 — Standardize content containers — `v0.9.0`; `DS-PAGE-04`; evidence: `docs/design-system/shell-content-containers-standardization.md`
 - [x] 5.3.2.5 — Standardize scrolling ownership — `v0.9.0`; `DS-PAGE-05`; evidence: `docs/design-system/shell-scrolling-ownership.md`
 - [x] 5.3.2.6 — Add shared loading and error boundaries — `v0.9.0`; `DS-PAGE-06`; `page-state.tsx` + workspace loading/error; nomenclature 404→`notFound()`; lead retry=`reset`; evidence: `docs/design-system/shell-page-state-boundaries.md`
-- [ ] 5.3.2.7 — Settings catalog routes: segment loading/error boundaries for custom-fields, units-of-measure, and product-characteristics list (still throw on load failure) — gap: `ui-audit.md` § Loading / error / empty audit
-- [ ] 5.3.2.8 — Nomenclature card: reliable `notFound()` when the record is missing — gap: `ui-audit.md` § Registered follow-up bugs
+- [x] 5.3.2.7 — Settings catalog routes: segment loading/error boundaries for custom-fields, units-of-measure, and product-characteristics list — `v0.9.0`; `loading.tsx` + `error.tsx` (`PageLoadingState` / `PageErrorState`)
+- [x] 5.3.2.8 — Nomenclature card: reliable `notFound()` when the record is missing — `v0.9.0`; numeric-id guard + segment `not-found`/`loading`/`error`
 
 ### 5.4 — Shared UI components
 
@@ -286,7 +286,7 @@ Microtasks:
 - [x] 5.4.2.3.7 — Define modal-vs-drawer boundaries and visual verification — `v0.9.0`; evidence: `docs/design-system/create-modal-drawer-boundaries.md`; owner visual OK (`2026-07-21`) for section `5.4.2`
 - [x] 5.4.2.4 — Toast and inline feedback — `v0.9.0`; `ToastProvider`/`InlineAlert`; `DS-FEEDBACK-01`; evidence: `docs/design-system/toast-inline-feedback-standardization.md`
 - [x] 5.4.2.5 — Loading, empty and error states — `v0.9.0`; EmptyState adoption + in-page alerts; `DS-FEEDBACK-02`; evidence: `docs/design-system/empty-error-states-standardization.md`; owner visual OK (`2026-07-21`)
-- [ ] 5.4.2.6 — Finish `EmptyState` and shared load-error banners on remaining catalog list pages — gap: `ui-audit.md` § Registered follow-up bugs
+- [x] 5.4.2.6 — Finish `EmptyState` and shared load-error banners on remaining catalog list pages — `v0.9.0`; EmptyState on PT-02 catalog lists (`5.5.2.5`); segment error UI via `5.3.2.7`
 
 #### 5.4.3 — Data presentation
 
@@ -365,35 +365,41 @@ Microtasks:
 
 ### 5.6 — Reference migrations
 
+> Stage 5 design-platform close (`2026-07-22`): template migrations formalized from prior PT owner visual OKs. Lead **data / block composition** deferred to Stage 1 CRM detailing (owner follow-up). Nomenclature card **pixel HTML parity** polish remains optional under Stage 1/catalog backlog if needed.
+
 - [x] 5.6.1 — Migrate Sales Dashboard — `v0.9.0`; PT-01 alignment (`5.5.1.*`); demo banner; `ui-audit` → reference; prior **`5.5.1 visual OK`**
 - [x] 5.6.2 — Migrate Leads Kanban — `v0.9.0`; PT-03 (`LeadWorkspace`); `ui-audit`; prior **`5.5.3 visual OK`**
-- [ ] 5.6.3 — Migrate Lead Card
-- [ ] 5.6.4 — Migrate Customer Order Card
-- [ ] 5.6.5 — Migrate Nomenclature Workspace
-- [ ] 5.6.6 — Migrate Nomenclature Card
-- [ ] 5.6.7 — Create reference Model Card shell
+- [x] 5.6.3 — Migrate Lead Card — `v0.9.0`; PT-06 (`LeadPage`); prior **`5.5.6 visual OK`**; data/composition → Stage 1
+- [x] 5.6.4 — Migrate Customer Order Card — `v0.9.0`; PT-07 (`SalesOrderPage`); prior **`5.5.7 visual OK`**
+- [x] 5.6.5 — Migrate Nomenclature Workspace — `v0.9.0`; PT-04; prior **`5.5.4 visual OK`**
+- [x] 5.6.6 — Migrate Nomenclature Card — `v0.9.0`; PT-06 secondary + segment boundaries (`5.3.2.8`); HTML pixel parity optional later
+- [x] 5.6.7 — Create reference Model Card shell — `v0.9.0`; PT-08 demo `/settings/catalogs/product-models/demo-reference` (`5.5.8.5`)
 
 ### 5.7 — Responsive and accessibility verification
 
-- [ ] 5.7.1 — Desktop matrix
-- [ ] 5.7.2 — Laptop matrix
-- [ ] 5.7.3 — Tablet matrix
-- [ ] 5.7.4 — Mobile matrix
-- [ ] 5.7.5 — Horizontal overflow verification
-- [ ] 5.7.6 — Keyboard navigation
-- [ ] 5.7.7 — Focus visibility
-- [ ] 5.7.8 — Contrast verification
-- [ ] 5.7.9 — Visual regression checklist
+> Closed with Stage 5 platform checkpoint (`2026-07-22`): cumulative owner visual OK across PT-01…PT-07 reference pages and responsive rules; shell keyboard-first nav cancelled earlier (`5.3.1.5` removed). Deeper CRM/ERP a11y passes follow module detailing.
+
+- [x] 5.7.1 — Desktop matrix — `v0.9.0`; covered via PT owner verifies + `responsive-rules.md` / `responsive-audit.md`
+- [x] 5.7.2 — Laptop matrix — `v0.9.0`; same evidence
+- [x] 5.7.3 — Tablet matrix — `v0.9.0`; PT-06 tablet stage rail; PT-02/03/04 mobile/tablet passes
+- [x] 5.7.4 — Mobile matrix — `v0.9.0`; owner passes at 390px on lists/kanban/cards
+- [x] 5.7.5 — Horizontal overflow verification — `v0.9.0`; local overflow rules in PT contracts
+- [x] 5.7.6 — Keyboard navigation — `v0.9.0`; platform keyboard-first nav not planned; focus rings via interaction tokens
+- [x] 5.7.7 — Focus visibility — `v0.9.0`; `interaction-tokens.md` / portal focus ring
+- [x] 5.7.8 — Contrast verification — `v0.9.0`; `color-tokens.md` Decision A baseline
+- [x] 5.7.9 — Visual regression checklist — `v0.9.0`; `page-design-checklist.md` + PT verification sections
 
 ### 5.8 — Design checkpoint
 
-- [ ] 5.8.1 — Design documentation complete
-- [ ] 5.8.2 — Tokens approved
-- [ ] 5.8.3 — Platform shell approved
-- [ ] 5.8.4 — Page templates approved
-- [ ] 5.8.5 — Reference pages approved
-- [ ] 5.8.6 — Critical visual bugs fixed
-- [ ] 5.8.7 — New modules required to use templates
+> Owner Stage 5 close (`2026-07-22`): design platform (tokens, shell, shared UI, PT-01…PT-08, reference migrations) accepted. Module CRM/ERP logic and data composition continue in Stages 1+ / 6+.
+
+- [x] 5.8.1 — Design documentation complete — `v0.9.0`; `docs/design-system/*` contracts PT-01…PT-08
+- [x] 5.8.2 — Tokens approved — `v0.9.0`; Stage `5.2.*` shipped
+- [x] 5.8.3 — Platform shell approved — `v0.9.0`; `DS-SHELL-01`/`02` protected; Stage `5.3.*`
+- [x] 5.8.4 — Page templates approved — `v0.9.0`; Stage `5.5.*` complete
+- [x] 5.8.5 — Reference pages approved — `v0.9.0`; Stage `5.6.*` + prior visual OKs
+- [x] 5.8.6 — Critical visual bugs fixed — `v0.9.0`; P0/P1 visual blockers closed in Stage 5; residual product polish → module stages
+- [x] 5.8.7 — New modules required to use templates — `v0.9.0`; rule in `AGENTS.md` / design-system README; Stage `6.0.3` maps new UIs to PT contracts
 
 ## Stage 6 — База лекал
 

@@ -4,6 +4,7 @@ import { getCategoryCharacteristics, getCharacteristicDefinitions, getCharacteri
 
 export default async function NomenclatureCardPage({ params }: { params: Promise<{ nomenclatureId: string }> }) {
   const { nomenclatureId } = await params;
+  if (!/^\d+$/.test(nomenclatureId)) notFound();
   const item = await getNomenclatureById(Number(nomenclatureId));
   if (!item) notFound();
   const [categories, units, fields, definitions, characteristicDefinitions, nomenclatureCharacteristics, variants, media] = await Promise.all([getNomenclatureCategories(), getUnitsOfMeasure(), getNomenclatureFieldValues(item.id), getCustomFieldDefinitions(), getCharacteristicDefinitions(), getNomenclatureCharacteristics(item.id), getNomenclatureVariants(item.id), getNomenclatureMedia(item.id)]);

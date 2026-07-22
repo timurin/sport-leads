@@ -12,7 +12,7 @@
 
 Define the **complex entity card** template (PT-06): page frame, domain entity header (title / status / actions), optional stage rail, metrics strip, multi-section body grid, activity / workspace panels (tabs on narrow viewports), and responsive collapse. Reference is Lead Card.
 
-Does **not** own: simple settings cards (PT-05), document cards (PT-07), de-mixing demo managers / dual lead IDs (`5.6.3`), nomenclature pixel HTML parity (`5.6.6`).
+Does **not** own: simple settings cards (PT-05), document cards (PT-07), lead data de-mix / page composition (Stage 1 CRM), nomenclature pixel HTML parity (optional backlog).
 
 ## Canonical composition
 

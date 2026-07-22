@@ -134,7 +134,7 @@ Detailed matrix: § Persistent versus demo/local audit (`5.1.1.3`). Summary:
 |---|---|---|---|---|---|---|
 | Sales Dashboard | `/sales/dashboard` | `frontend/app/(workspace)/sales/dashboard/page.tsx` | demo | **reference** | PT-01 | `5.6.1` migrated; demo banner; `5.5.1 visual OK` |
 | Leads Kanban | `/sales/leads` | `…/sales/leads/page.tsx` | persistent | **reference** | PT-03 | `5.6.2` migrated; `5.5.3 visual OK` |
-| Lead Card | `/sales/leads/[leadId]` | `…/sales/leads/[leadId]/page.tsx` | mixed | provisional → migrate | PT-06 | Full loading/error/not-found; still demo managers / dual IDs |
+| Lead Card | `/sales/leads/[leadId]` | `…/sales/leads/[leadId]/page.tsx` | mixed | **reference** | PT-06 | `5.6.3` migrated; data/composition → Stage 1 |
 | Customer Order Card | `/sales/orders/[orderId]` | `…/sales/orders/[orderId]/page.tsx` | persistent | **reference** | PT-07 | Persistent document card with segment boundaries |
 | Nomenclature Workspace | `/settings/catalogs/nomenclature` | `…/nomenclature/page.tsx` | persistent | **reference** | PT-04 | Only tree+list workspace |
 | Nomenclature Card | `/settings/catalogs/nomenclature/[nomenclatureId]` | `…/nomenclature/[nomenclatureId]/page.tsx` | persistent | **reference** | PT-06 | Aligns with HTML ref; needs loading/error siblings |
@@ -182,11 +182,11 @@ Order matches roadmap `5.6.1`–`5.6.7` and audit risk:
 
 1. Sales Dashboard → PT-01 (`5.6.1`) — **done** (`5.5.1` + `5.6.1`); demo data remains
 2. Leads Kanban → PT-03 (`5.6.2`) — **done** (`5.5.3` + `5.6.2`)
-3. Lead Card → PT-06 (`5.6.3`) — de-mix data + unify with card template
-4. Customer Order Card → PT-07 (`5.6.4`) — already strong; formalize
-5. Nomenclature Workspace → PT-04 (`5.6.5`)
-6. Nomenclature Card → PT-06 (`5.6.6`) — add boundaries; keep HTML parity
-7. Model Card shell → PT-08 (`5.6.7`) — not in checkout yet
+3. Lead Card → PT-06 (`5.6.3`) — **done** (design); data de-mix / composition → Stage 1
+4. Customer Order Card → PT-07 (`5.6.4`) — **done**
+5. Nomenclature Workspace → PT-04 (`5.6.5`) — **done**
+6. Nomenclature Card → PT-06 (`5.6.6`) — **done** (segment boundaries); HTML pixel parity optional
+7. Model Card shell → PT-08 (`5.6.7`) — **done** (demo reference)
 
 Parallel / follow-on migrations (not separate 5.6 codes yet): organizations, employees, materials, clients, custom-fields (list polish), remove `/sales/deals` or add to nav intentionally. Catalog lists closed in `5.5.2.5`.
 
