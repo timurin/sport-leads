@@ -164,7 +164,7 @@
         </div>
       </div>
       <div class="meta-list">
-        <div class="chip">Updated: 2026-07-22</div>
+        <div class="chip">Updated: 2026-07-22 (Stage 6 domain)</div>
         <div class="chip">Version: v0.9.0</div>
         <div class="chip">Branch: feature/v0.8.1-nomenclature-core</div>
         <div class="chip">Commit: c9bee2b</div>
@@ -1532,32 +1532,44 @@
               {
                 code: "6.0.1",
                 title: "Pattern-base architecture package",
+                goal: "Single agreed boundary for flat product models, size grids, patterns, assembly variants, and PRODUCT available-models whitelist vs nomenclature variants, specifications, shop routings, and technical cards.",
+                dependencies: [
+                  "4.1.1",
+                  "4.2.1",
+                  "ADR-004",
+                  "ADR-006",
+                  "ADR-010"
+                ],
                 microtasks: [
                   {
                     code: "6.0.1.1",
-                    title: "Document module boundaries and shared terminology (ADR package)",
+                    title: "Document module boundaries and shared terminology (ADR package): ProductModel, SizeGrid, PatternSet, AssemblyVariant, AssemblyOperationLine; rule `1 model = 1 size_type = 1 article`",
                     done: false
                   },
                   {
                     code: "6.0.1.2",
-                    title: "Define cross-links: nomenclature, future technical cards, specifications",
+                    title: "Define cross-links: PRODUCT «доступные модели лекал», order-item selection chain, specification copy of assembly operations, Stage 8 shop-routing boundary",
                     done: false
                   },
                   {
                     code: "6.0.1.3",
+                    title: "Define empty available-models policy and MVP operation lines (inline name+cost vs shared operations catalog)",
+                    done: false
+                  },
+                  {
+                    code: "6.0.1.4",
                     title: "Documentation checkpoint",
                     done: false
                   }
-                ],
-                goal: "Single agreed boundary for models, size grids, and patterns vs nomenclature, technical cards, and specifications.",
-                dependencies: [
-                  "4.1.1",
-                  "ADR-004"
                 ]
               },
               {
                 code: "6.0.2",
                 title: "Settings navigation contour",
+                goal: "Users discover models, size grids, and patterns from one settings section.",
+                dependencies: [
+                  "6.0.1"
+                ],
                 microtasks: [
                   {
                     code: "6.0.2.1",
@@ -1574,15 +1586,16 @@
                     title: "Smoke: shell links resolve (no demo data)",
                     done: false
                   }
-                ],
-                goal: "Users discover models, size grids, and patterns from one settings section.",
-                dependencies: [
-                  "6.0.1"
                 ]
               },
               {
                 code: "6.0.3",
                 title: "Page template references",
+                goal: "List and card UIs follow approved PT contracts before feature fill.",
+                dependencies: [
+                  "5.5.2",
+                  "5.5.5"
+                ],
                 microtasks: [
                   {
                     code: "6.0.3.1",
@@ -1591,19 +1604,19 @@
                   },
                   {
                     code: "6.0.3.2",
-                    title: "Map model and pattern cards to PT-05/PT-06 or reference model shell (`5.6.7`)",
+                    title: "Map model and pattern cards to PT-05/PT-06 or reference model shell (`5.6.7`); model card includes assembly-variants block",
                     done: false
                   },
                   {
                     code: "6.0.3.3",
+                    title: "Map PRODUCT nomenclature card block «доступные модели лекал» to existing nomenclature card template",
+                    done: false
+                  },
+                  {
+                    code: "6.0.3.4",
                     title: "Record breakpoints in design-system task evidence",
                     done: false
                   }
-                ],
-                goal: "List and card UIs follow approved PT contracts before feature fill.",
-                dependencies: [
-                  "5.5.2",
-                  "5.5.5"
                 ]
               }
             ]
@@ -1614,15 +1627,21 @@
               {
                 code: "6.1.1",
                 title: "Product model domain contract",
+                goal: "Define the flat product-model catalog used in leads, sales orders, specifications, and technical cards: one size type and one article per model; boundaries against nomenclature, size grids, patterns, assembly variants, and production.",
+                dependencies: [
+                  "4.1.1",
+                  "4.4.1",
+                  "6.0.1"
+                ],
                 microtasks: [
                   {
                     code: "6.1.1.1",
-                    title: "Document model boundaries and lifecycle states",
+                    title: "Document model fields and lifecycle: article (unique), name, size_type (men/women/kids), description, status",
                     done: false
                   },
                   {
                     code: "6.1.1.2",
-                    title: "Define links to nomenclature and future size grids",
+                    title: "Define 1:1 links to size grid and pattern set; no nested gender contours inside one model",
                     done: false
                   },
                   {
@@ -1632,7 +1651,7 @@
                   },
                   {
                     code: "6.1.1.4",
-                    title: "Review order-item integration constraints",
+                    title: "Review lead / order-item / specification / technical-card integration constraints",
                     done: false
                   },
                   {
@@ -1640,21 +1659,19 @@
                     title: "Documentation checkpoint",
                     done: false
                   }
-                ],
-                goal: "Define the persistent product-model contour and its boundaries against nomenclature, specifications, routings, and production.",
-                dependencies: [
-                  "4.1.1",
-                  "4.4.1",
-                  "6.0.1"
                 ]
               },
               {
                 code: "6.1.2",
                 title: "Database core for product models",
+                goal: "Create the persistent database foundation for product models (article, size_type, status) and optional versioning hooks.",
+                dependencies: [
+                  "6.1.1"
+                ],
                 microtasks: [
                   {
                     code: "6.1.2.1",
-                    title: "Add SQLAlchemy model entities",
+                    title: "Add SQLAlchemy model entities including unique article and size_type",
                     done: false
                   },
                   {
@@ -1672,15 +1689,15 @@
                     title: "Add backend regression tests for persistence",
                     done: false
                   }
-                ],
-                goal: "Create the persistent database foundation for product models and their versions.",
-                dependencies: [
-                  "6.1.1"
                 ]
               },
               {
                 code: "6.1.3",
                 title: "Create and list API for product models",
+                goal: "Users can create and browse product models through backend API.",
+                dependencies: [
+                  "6.1.2"
+                ],
                 microtasks: [
                   {
                     code: "6.1.3.1",
@@ -1689,7 +1706,7 @@
                   },
                   {
                     code: "6.1.3.2",
-                    title: "Add service validation for uniqueness and status defaults",
+                    title: "Add service validation for unique article and status defaults",
                     done: false
                   },
                   {
@@ -1702,15 +1719,15 @@
                     title: "Add OpenAPI and regression tests",
                     done: false
                   }
-                ],
-                goal: "Users can create and browse product models through backend API.",
-                dependencies: [
-                  "6.1.2"
                 ]
               },
               {
                 code: "6.1.4",
                 title: "Update API for product models",
+                goal: "Users can change model data and keep it consistent after reload.",
+                dependencies: [
+                  "6.1.3"
+                ],
                 microtasks: [
                   {
                     code: "6.1.4.1",
@@ -1737,15 +1754,15 @@
                     title: "Add regression tests",
                     done: false
                   }
-                ],
-                goal: "Users can change model data and keep it consistent after reload.",
-                dependencies: [
-                  "6.1.3"
                 ]
               },
               {
                 code: "6.1.5",
                 title: "Product model status MVP",
+                goal: "Models support draft/active (or equivalent) before full version history.",
+                dependencies: [
+                  "6.1.4"
+                ],
                 microtasks: [
                   {
                     code: "6.1.5.1",
@@ -1767,15 +1784,15 @@
                     title: "Add backend regression tests",
                     done: false
                   }
-                ],
-                goal: "Models support draft/active (or equivalent) before full version history.",
-                dependencies: [
-                  "6.1.4"
                 ]
               },
               {
                 code: "6.1.6",
                 title: "Product model versioning and archival",
+                goal: "Controlled version history and archival beyond status MVP.",
+                dependencies: [
+                  "6.1.5"
+                ],
                 microtasks: [
                   {
                     code: "6.1.6.1",
@@ -1797,15 +1814,16 @@
                     title: "Add backend regression tests",
                     done: false
                   }
-                ],
-                goal: "Controlled version history and archival beyond status MVP.",
-                dependencies: [
-                  "6.1.5"
                 ]
               },
               {
                 code: "6.1.7",
                 title: "Product-model workspace and list",
+                goal: "Users can open a dedicated product-model workspace and browse the catalog.",
+                dependencies: [
+                  "6.1.3",
+                  "6.0.3"
+                ],
                 microtasks: [
                   {
                     code: "6.1.7.1",
@@ -1832,16 +1850,15 @@
                     title: "Visual verification",
                     done: false
                   }
-                ],
-                goal: "Users can open a dedicated product-model workspace and browse the catalog.",
-                dependencies: [
-                  "6.1.3",
-                  "6.0.3"
                 ]
               },
               {
                 code: "6.1.8",
                 title: "Product-model card route",
+                goal: "Users can open a dedicated product-model card shell.",
+                dependencies: [
+                  "6.1.7"
+                ],
                 microtasks: [
                   {
                     code: "6.1.8.1",
@@ -1850,7 +1867,7 @@
                   },
                   {
                     code: "6.1.8.2",
-                    title: "Add card view state",
+                    title: "Add card view state (article, size_type, description, status)",
                     done: false
                   },
                   {
@@ -1868,19 +1885,20 @@
                     title: "Visual verification",
                     done: false
                   }
-                ],
-                goal: "Users can open a dedicated product-model card shell.",
-                dependencies: [
-                  "6.1.7"
                 ]
               },
               {
                 code: "6.1.9",
                 title: "Product-model create flow",
+                goal: "Users can create models from the workspace (CreateDrawer).",
+                dependencies: [
+                  "6.1.4",
+                  "6.1.8"
+                ],
                 microtasks: [
                   {
                     code: "6.1.9.1",
-                    title: "Add create form and drawer host",
+                    title: "Add create form and drawer host (article, size_type, name, description)",
                     done: false
                   },
                   {
@@ -1898,16 +1916,15 @@
                     title: "Visual verification",
                     done: false
                   }
-                ],
-                goal: "Users can create models from the workspace (CreateDrawer).",
-                dependencies: [
-                  "6.1.4",
-                  "6.1.8"
                 ]
               },
               {
                 code: "6.1.10",
                 title: "Product-model edit flow",
+                goal: "Users can edit models on the card.",
+                dependencies: [
+                  "6.1.9"
+                ],
                 microtasks: [
                   {
                     code: "6.1.10.1",
@@ -1929,92 +1946,133 @@
                     title: "Visual verification",
                     done: false
                   }
-                ],
-                goal: "Users can edit models on the card.",
-                dependencies: [
-                  "6.1.9"
                 ]
               },
               {
                 code: "6.1.11",
-                title: "Link product models to nomenclature",
+                title: "Available pattern models on PRODUCT nomenclature",
+                goal: "PRODUCT nomenclature card holds a whitelist «доступные модели лекал» so order entry cannot pick a model outside the allowed set.",
+                dependencies: [
+                  "4.1.1",
+                  "4.2.1",
+                  "6.1.4",
+                  "6.0.1"
+                ],
                 microtasks: [
                   {
                     code: "6.1.11.1",
-                    title: "Add backend relation fields",
+                    title: "Add M2M (or link table) `nomenclature_id` ↔ `product_model_id` with sort order",
                     done: false
                   },
                   {
                     code: "6.1.11.2",
-                    title: "Add migration and schemas",
+                    title: "Add migration and schemas; allow links only when `nomenclature_type == PRODUCT`",
                     done: false
                   },
                   {
                     code: "6.1.11.3",
-                    title: "Add service validation for active nomenclature selection",
+                    title: "Add service validation (active models; reject SERVICE/GOODS/MATERIAL; empty-list policy from ADR)",
                     done: false
                   },
                   {
                     code: "6.1.11.4",
-                    title: "Add API and card UI integration",
+                    title: "Add API + PRODUCT nomenclature card UI for managing available models",
                     done: false
                   },
                   {
                     code: "6.1.11.5",
-                    title: "Add regression tests",
+                    title: "Add regression tests (foreign model rejected; non-PRODUCT link rejected)",
                     done: false
                   }
-                ],
-                goal: "The model card can reference the nomenclature it describes without duplicating the catalog source of truth.",
-                dependencies: [
-                  "4.1.1",
-                  "6.1.4"
                 ]
               },
               {
                 code: "6.1.12",
-                title: "Use product model in sales-order items",
+                title: "Assembly variants on product model",
+                goal: "Each product model owns assembly/finishing variants (e.g. «С отстрочкой», «Без отстрочки») with ordered operation lines, per-line cost, and variant total — manager-facing packages before Stage 7/8.",
+                dependencies: [
+                  "6.1.4",
+                  "6.1.8",
+                  "6.0.1"
+                ],
                 microtasks: [
                   {
                     code: "6.1.12.1",
-                    title: "Define backend order-item relation strategy",
+                    title: "Define AssemblyVariant + AssemblyOperationLine entities (sequence, operation name or id, Decimal cost; total = Σ lines)",
                     done: false
                   },
                   {
                     code: "6.1.12.2",
-                    title: "Add nullable storage and migration if approved",
+                    title: "Add Alembic migration, schemas, repository/service CRUD",
                     done: false
                   },
                   {
                     code: "6.1.12.3",
-                    title: "Add schemas, service rules, and API support",
+                    title: "Add API endpoints scoped to product model",
                     done: false
                   },
                   {
                     code: "6.1.12.4",
-                    title: "Add frontend selection flow in order item forms",
+                    title: "Add model-card UI block for variants and operation lines",
                     done: false
                   },
                   {
                     code: "6.1.12.5",
-                    title: "Add regression tests",
+                    title: "Add regression tests (ordering, totals, inactive variants)",
                     done: false
                   },
                   {
                     code: "6.1.12.6",
                     title: "Visual verification",
                     done: false
-                  },
-                  {
-                    code: "6.1.12.7",
-                    title: "Documentation checkpoint",
-                    done: false
                   }
-                ],
-                goal: "Order items can reference a product model in a controlled way without breaking existing snapshots.",
+                ]
+              },
+              {
+                code: "6.1.13",
+                title: "Use model and assembly variant in sales-order items",
+                goal: "After nomenclature selection, manager picks a model from the PRODUCT whitelist; size_type and model article autofill; then picks an assembly variant of that model. Snapshots keep old orders stable.",
                 dependencies: [
                   "6.1.11",
+                  "6.1.12",
                   "3.2.4"
+                ],
+                microtasks: [
+                  {
+                    code: "6.1.13.1",
+                    title: "Define order-item relation + snapshot strategy (model id/article/size_type; variant id/name/total; optional operation-line snapshot)",
+                    done: false
+                  },
+                  {
+                    code: "6.1.13.2",
+                    title: "Add nullable storage and migration",
+                    done: false
+                  },
+                  {
+                    code: "6.1.13.3",
+                    title: "Add schemas and service rules: model ∈ available list; variant ∈ selected model; require model when whitelist non-empty (per ADR)",
+                    done: false
+                  },
+                  {
+                    code: "6.1.13.4",
+                    title: "Add frontend selection flow in order item forms",
+                    done: false
+                  },
+                  {
+                    code: "6.1.13.5",
+                    title: "Add regression tests (whitelist filter; foreign model/variant rejected; snapshot immutability)",
+                    done: false
+                  },
+                  {
+                    code: "6.1.13.6",
+                    title: "Visual verification",
+                    done: false
+                  },
+                  {
+                    code: "6.1.13.7",
+                    title: "Documentation checkpoint (lead reuse notes if applicable)",
+                    done: false
+                  }
                 ]
               }
             ]
@@ -2025,6 +2083,10 @@
               {
                 code: "6.2.1",
                 title: "Size-grid architecture",
+                goal: "Define the dedicated size-grid contour used by models (1:1) and future order size selection.",
+                dependencies: [
+                  "6.1.1"
+                ],
                 microtasks: [
                   {
                     code: "6.2.1.1",
@@ -2033,7 +2095,7 @@
                   },
                   {
                     code: "6.2.1.2",
-                    title: "Define links to product models and order items",
+                    title: "Define 1:1 link to product model (one grid per model; grid may be reusable only if ADR allows shared reference)",
                     done: false
                   },
                   {
@@ -2046,15 +2108,15 @@
                     title: "Documentation checkpoint",
                     done: false
                   }
-                ],
-                goal: "Define the dedicated size-grid contour used by models and future order scenarios.",
-                dependencies: [
-                  "6.1.1"
                 ]
               },
               {
                 code: "6.2.2",
                 title: "Size-grid database core",
+                goal: "Create the persistent storage for size grids, sizes, and growth groups.",
+                dependencies: [
+                  "6.2.1"
+                ],
                 microtasks: [
                   {
                     code: "6.2.2.1",
@@ -2071,15 +2133,15 @@
                     title: "Add schemas and backend tests",
                     done: false
                   }
-                ],
-                goal: "Create the persistent storage for size grids, sizes, and growth groups.",
-                dependencies: [
-                  "6.2.1"
                 ]
               },
               {
                 code: "6.2.3",
                 title: "Size-grid CRUD API",
+                goal: "Users can create, view, and update size grids through API.",
+                dependencies: [
+                  "6.2.2"
+                ],
                 microtasks: [
                   {
                     code: "6.2.3.1",
@@ -2096,15 +2158,16 @@
                     title: "Add backend regression tests",
                     done: false
                   }
-                ],
-                goal: "Users can create, view, and update size grids through API.",
-                dependencies: [
-                  "6.2.2"
                 ]
               },
               {
                 code: "6.2.4",
                 title: "Size-grid list workspace",
+                goal: "Users can browse size grids in a list workspace.",
+                dependencies: [
+                  "6.2.3",
+                  "6.0.3"
+                ],
                 microtasks: [
                   {
                     code: "6.2.4.1",
@@ -2131,16 +2194,15 @@
                     title: "Visual verification",
                     done: false
                   }
-                ],
-                goal: "Users can browse size grids in a list workspace.",
-                dependencies: [
-                  "6.2.3",
-                  "6.0.3"
                 ]
               },
               {
                 code: "6.2.5",
                 title: "Size-grid card route",
+                goal: "Users can open a size-grid card shell.",
+                dependencies: [
+                  "6.2.4"
+                ],
                 microtasks: [
                   {
                     code: "6.2.5.1",
@@ -2162,15 +2224,15 @@
                     title: "Visual verification",
                     done: false
                   }
-                ],
-                goal: "Users can open a size-grid card shell.",
-                dependencies: [
-                  "6.2.4"
                 ]
               },
               {
                 code: "6.2.6",
                 title: "Size-grid create and edit forms",
+                goal: "Users can create and edit grids and size rows on the card.",
+                dependencies: [
+                  "6.2.5"
+                ],
                 microtasks: [
                   {
                     code: "6.2.6.1",
@@ -2197,19 +2259,20 @@
                     title: "Visual verification",
                     done: false
                   }
-                ],
-                goal: "Users can create and edit grids and size rows on the card.",
-                dependencies: [
-                  "6.2.5"
                 ]
               },
               {
                 code: "6.2.7",
                 title: "Link size grids to product models",
+                goal: "A product model references exactly one size grid matching its size_type.",
+                dependencies: [
+                  "6.1.4",
+                  "6.2.3"
+                ],
                 microtasks: [
                   {
                     code: "6.2.7.1",
-                    title: "Add backend relation fields",
+                    title: "Add backend relation field on product model (single size_grid_id)",
                     done: false
                   },
                   {
@@ -2232,11 +2295,6 @@
                     title: "Add regression tests",
                     done: false
                   }
-                ],
-                goal: "A product model can reference a dedicated size grid.",
-                dependencies: [
-                  "6.1.4",
-                  "6.2.3"
                 ]
               }
             ]
@@ -2247,6 +2305,11 @@
               {
                 code: "6.3.1",
                 title: "Pattern domain architecture",
+                goal: "Define pattern sets, pattern parts, and versioning boundaries for product models (1:1 model → pattern set).",
+                dependencies: [
+                  "6.1.1",
+                  "6.2.7"
+                ],
                 microtasks: [
                   {
                     code: "6.3.1.1",
@@ -2263,16 +2326,15 @@
                     title: "Documentation checkpoint",
                     done: false
                   }
-                ],
-                goal: "Define pattern sets, pattern parts, and versioning boundaries for product models.",
-                dependencies: [
-                  "6.1.1",
-                  "6.2.7"
                 ]
               },
               {
                 code: "6.3.2",
                 title: "Pattern database and metadata core",
+                goal: "Create persistent pattern metadata (sets, parts, versions).",
+                dependencies: [
+                  "6.3.1"
+                ],
                 microtasks: [
                   {
                     code: "6.3.2.1",
@@ -2294,15 +2356,15 @@
                     title: "Add backend regression tests",
                     done: false
                   }
-                ],
-                goal: "Create persistent pattern metadata (sets, parts, versions).",
-                dependencies: [
-                  "6.3.1"
                 ]
               },
               {
                 code: "6.3.3",
                 title: "Pattern CRUD API",
+                goal: "Backend catalog for pattern sets and versions.",
+                dependencies: [
+                  "6.3.2"
+                ],
                 microtasks: [
                   {
                     code: "6.3.3.1",
@@ -2319,15 +2381,16 @@
                     title: "Add backend regression tests",
                     done: false
                   }
-                ],
-                goal: "Backend catalog for pattern sets and versions.",
-                dependencies: [
-                  "6.3.2"
                 ]
               },
               {
                 code: "6.3.4",
                 title: "Pattern list workspace",
+                goal: "Users can browse the pattern catalog in a list workspace.",
+                dependencies: [
+                  "6.3.3",
+                  "6.0.3"
+                ],
                 microtasks: [
                   {
                     code: "6.3.4.1",
@@ -2354,16 +2417,15 @@
                     title: "Visual verification",
                     done: false
                   }
-                ],
-                goal: "Users can browse the pattern catalog in a list workspace.",
-                dependencies: [
-                  "6.3.3",
-                  "6.0.3"
                 ]
               },
               {
                 code: "6.3.5",
                 title: "Pattern card and versions UI",
+                goal: "Users open a pattern card and manage version metadata.",
+                dependencies: [
+                  "6.3.4"
+                ],
                 microtasks: [
                   {
                     code: "6.3.5.1",
@@ -2395,15 +2457,16 @@
                     title: "Visual verification",
                     done: false
                   }
-                ],
-                goal: "Users open a pattern card and manage version metadata.",
-                dependencies: [
-                  "6.3.4"
                 ]
               },
               {
                 code: "6.3.6",
                 title: "Pattern file storage and delivery",
+                goal: "Secure upload, storage, download, and delete for pattern files.",
+                dependencies: [
+                  "6.3.2",
+                  "6.3.5"
+                ],
                 microtasks: [
                   {
                     code: "6.3.6.1",
@@ -2425,20 +2488,20 @@
                     title: "Add regression tests (size/MIME limits)",
                     done: false
                   }
-                ],
-                goal: "Secure upload, storage, download, and delete for pattern files.",
-                dependencies: [
-                  "6.3.2",
-                  "6.3.5"
                 ]
               },
               {
                 code: "6.3.7",
                 title: "Link patterns to product models",
+                goal: "A product model references exactly one pattern set / version family.",
+                dependencies: [
+                  "6.1.6",
+                  "6.3.5"
+                ],
                 microtasks: [
                   {
                     code: "6.3.7.1",
-                    title: "Add backend relation fields",
+                    title: "Add backend relation field on product model (single pattern_set_id / version family)",
                     done: false
                   },
                   {
@@ -2461,11 +2524,6 @@
                     title: "Add regression tests",
                     done: false
                   }
-                ],
-                goal: "A product model can reference the correct pattern set and version family.",
-                dependencies: [
-                  "6.1.6",
-                  "6.3.5"
                 ]
               }
             ]
@@ -2476,10 +2534,18 @@
               {
                 code: "6.4.1",
                 title: "End-to-end smoke scenario",
+                goal: "Prove PRODUCT → available models → model (size grid + patterns + assembly variants) → order-item selection without Stage 7 document creation.",
+                dependencies: [
+                  "6.1.11",
+                  "6.1.12",
+                  "6.1.13",
+                  "6.2.7",
+                  "6.3.7"
+                ],
                 microtasks: [
                   {
                     code: "6.4.1.1",
-                    title: "Script or manual smoke checklist",
+                    title: "Script or manual smoke checklist (whitelist filter, autofill size_type/article, variant offer, reject foreign model)",
                     done: false
                   },
                   {
@@ -2487,16 +2553,15 @@
                     title: "Fix P0/P1 gaps found in smoke",
                     done: false
                   }
-                ],
-                goal: "Prove nomenclature → model → size grid → pattern links without Stage 7.",
-                dependencies: [
-                  "6.2.7",
-                  "6.3.7"
                 ]
               },
               {
                 code: "6.4.2",
                 title: "Readiness documentation sync",
+                goal: "Factual readiness reflected in project-structure and erp-check.",
+                dependencies: [
+                  "6.4.1"
+                ],
                 microtasks: [
                   {
                     code: "6.4.2.1",
@@ -2505,22 +2570,25 @@
                   },
                   {
                     code: "6.4.2.2",
-                    title: "Update erp-check pattern-base lines",
+                    title: "Update erp-check pattern-base / assembly-variant lines",
                     done: false
                   }
-                ],
-                goal: "Factual readiness reflected in project-structure and erp-check.",
-                dependencies: [
-                  "6.4.1"
                 ]
               },
               {
                 code: "6.4.3",
                 title: "Owner visual pass",
+                goal: "Owner confirms list/card UX on approved responsive matrix.",
+                dependencies: [
+                  "6.1.7",
+                  "6.1.12",
+                  "6.2.4",
+                  "6.3.4"
+                ],
                 microtasks: [
                   {
                     code: "6.4.3.1",
-                    title: "Visual pass: models list/card",
+                    title: "Visual pass: models list/card (incl. assembly variants block)",
                     done: false
                   },
                   {
@@ -2532,13 +2600,12 @@
                     code: "6.4.3.3",
                     title: "Visual pass: patterns list/card",
                     done: false
+                  },
+                  {
+                    code: "6.4.3.4",
+                    title: "Visual pass: PRODUCT nomenclature available-models block + order selection flow",
+                    done: false
                   }
-                ],
-                goal: "Owner confirms list/card UX on approved responsive matrix.",
-                dependencies: [
-                  "6.1.7",
-                  "6.2.4",
-                  "6.3.4"
                 ]
               }
             ]
@@ -2554,9 +2621,11 @@
               {
                 code: "7.1.1",
                 title: "Specification architecture",
-                goal: "Define specification scope, versioning, and planning role before production start.",
+                goal: "Define specification scope, versioning, and planning role before production start. Specification copies assembly operation lines from the order-item assembly-variant snapshot (not a live edit of the model master).",
                 dependencies: [
                   "6.1.1",
+                  "6.1.12",
+                  "6.1.13",
                   "6.3.7",
                   "ADR-004"
                 ],
@@ -2573,6 +2642,11 @@
                   },
                   {
                     code: "7.1.1.3",
+                    title: "Define copy contract: assembly operations/costs from order-item variant snapshot into specification lines",
+                    done: false
+                  },
+                  {
+                    code: "7.1.1.4",
                     title: "Documentation checkpoint",
                     done: false
                   }
@@ -2675,36 +2749,42 @@
               },
               {
                 code: "7.2.3",
-                title: "Link specifications to product models",
-                goal: "A product model can reference the approved specification line.",
+                title: "Link specifications to order context and product models",
+                goal: "Specification is formed for an order context: materials/norms plus a copied assembly-operation package from the selected model variant; model master remains unchanged when the specification is edited later.",
                 dependencies: [
                   "6.1.6",
+                  "6.1.13",
                   "7.2.1"
                 ],
                 microtasks: [
                   {
                     code: "7.2.3.1",
-                    title: "Add backend relation fields",
+                    title: "Add backend relation fields (order item / model / variant references as approved)",
                     done: false
                   },
                   {
                     code: "7.2.3.2",
-                    title: "Add migration and schemas",
+                    title: "Add migration and schemas for specification operation lines (snapshot)",
                     done: false
                   },
                   {
                     code: "7.2.3.3",
-                    title: "Add service validation for active/approved versions",
+                    title: "Add service: copy assembly operations from order-item variant snapshot on specification create",
                     done: false
                   },
                   {
                     code: "7.2.3.4",
-                    title: "Add model-card integration",
+                    title: "Add service validation for active/approved versions where applicable",
                     done: false
                   },
                   {
                     code: "7.2.3.5",
-                    title: "Add regression tests",
+                    title: "Add workspace/card integration showing copied operations",
+                    done: false
+                  },
+                  {
+                    code: "7.2.3.6",
+                    title: "Add regression tests (copy immutability vs later model-variant edits)",
                     done: false
                   }
                 ]
@@ -2722,21 +2802,22 @@
               {
                 code: "8.1.1",
                 title: "Routing architecture",
-                goal: "Define routing scope, operations, work centers, and quality checkpoints for planned manufacturing.",
+                goal: "Define shop-routing scope, work centers, quality checkpoints, and how they relate to Stage 6 assembly variants and Stage 7 specification snapshots for planned manufacturing.",
                 dependencies: [
                   "6.1.1",
+                  "6.1.12",
                   "7.2.3",
                   "ADR-004"
                 ],
                 microtasks: [
                   {
                     code: "8.1.1.1",
-                    title: "Define routing entities and sequencing rules",
+                    title: "Define routing entities and sequencing rules (distinct from AssemblyVariant)",
                     done: false
                   },
                   {
                     code: "8.1.1.2",
-                    title: "Define links to models, specifications, and future production fact",
+                    title: "Define links to models/assembly variants, specifications, and future production fact",
                     done: false
                   },
                   {
@@ -2843,10 +2924,10 @@
               },
               {
                 code: "8.2.3",
-                title: "Link routings to product models and order context",
-                goal: "A product model can reference its routing, and the future order flow can reuse that approved plan.",
+                title: "Link shop routings to models / variants and order context",
+                goal: "A shop routing can be linked to a product model / assembly variant where needed for production execution; order/technical-card flow reuses the approved shop plan without replacing Stage 6 manager packages.",
                 dependencies: [
-                  "6.1.12",
+                  "6.1.13",
                   "8.2.1"
                 ],
                 microtasks: [
@@ -2867,12 +2948,12 @@
                   },
                   {
                     code: "8.2.3.4",
-                    title: "Add model-card integration",
+                    title: "Add model-card / variant integration notes (no duplicate assembly-variant CRUD)",
                     done: false
                   },
                   {
                     code: "8.2.3.5",
-                    title: "Add order-context integration notes",
+                    title: "Add order-context / technical-card integration notes",
                     done: false
                   },
                   {
@@ -2915,7 +2996,7 @@
                   },
                   {
                     code: "9.1.1.3",
-                    title: "Snapshot vs live link policy for model, patterns, materials, routing",
+                    title: "Snapshot vs live link policy for model, assembly variant, patterns, materials, routing",
                     done: false
                   },
                   {

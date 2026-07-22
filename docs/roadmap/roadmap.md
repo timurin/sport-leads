@@ -1,7 +1,7 @@
 # Sport-Lead — Global Roadmap
 
 **Code:** `SL-ROADMAP-v1`
-**Updated:** `2026-07-22` (Stage 0 platform gaps)
+**Updated:** `2026-07-22` (Stage 6 pattern-base domain: flat model, assembly variants, PRODUCT whitelist)
 **Project version:** `v0.9.0`
 **Git branch:** `feature/v0.8.1-nomenclature-core`
 **Git commit:** `c9bee2b`
@@ -28,7 +28,7 @@ Current confirmed contour:
 
 Next detailed contour:
 
-`Design System and Platform Templates -> База лекал -> Specifications -> Routings -> Технические карты -> Production`
+`Design System and Platform Templates -> База лекал (модели + варианты сборки) -> Specifications -> Routings (цеха / исполнение) -> Технические карты -> Production`
 
 ## Stage 0 — Platform and Infrastructure
 
@@ -403,29 +403,34 @@ Microtasks:
 
 ## Stage 6 — База лекал
 
-> Structure note (`2026-07-22`, Variant B + split): modules `6.1` Models / `6.2` Size grids / `6.3` Patterns; `6.0` shell and ADR; `6.4` integration checkpoint. Stages 7+ include Technical cards (Stage 9).
+> Structure note (`2026-07-22`, flat model + assembly variants): modules `6.1` Models / `6.2` Size grids / `6.3` Patterns; `6.0` shell and ADR; `6.4` integration checkpoint. Agreed domain: **1 model = 1 size type (men/women/kids) = 1 article**; assembly/finishing variants live on the model; PRODUCT nomenclature holds **available pattern models** whitelist. Commercial assembly packages are Stage 6 (before Specs). Stage 8 keeps shop-floor routings / work centers / execution — not a second place to invent manager-facing assembly variants. Stages 7+ include Technical cards (Stage 9).
 
 Goal:
-Собрать конструкторскую базу изделия: модели, размерные сетки и лекала — до спецификаций, маршрутов и производства.
+Собрать справочник моделей изделий для лидов, заказа покупателя, спецификации и технической карты: плоская модель (артикул + тип размера), размерная сетка 1:1, лекала 1:1, варианты сборки/отделки с операциями и стоимостью; на номенклатуре PRODUCT — whitelist доступных моделей.
 
 ### 6.0 — Module shell and contracts
 
 #### 6.0.1 — Pattern-base architecture package
 
 Goal:
-Single agreed boundary for models, size grids, and patterns vs nomenclature, technical cards, and specifications.
+Single agreed boundary for flat product models, size grids, patterns, assembly variants, and PRODUCT available-models whitelist vs nomenclature variants, specifications, shop routings, and technical cards.
 
 Dependencies:
 - 4.1.1
+- 4.2.1
 - ADR-004
+- ADR-006
+- ADR-010
 
 Microtasks:
-- [ ] 6.0.1.1 — Document module boundaries and shared terminology (ADR package)
-- [ ] 6.0.1.2 — Define cross-links: nomenclature, future technical cards, specifications
-- [ ] 6.0.1.3 — Documentation checkpoint
+- [ ] 6.0.1.1 — Document module boundaries and shared terminology (ADR package): ProductModel, SizeGrid, PatternSet, AssemblyVariant, AssemblyOperationLine; rule `1 model = 1 size_type = 1 article`
+- [ ] 6.0.1.2 — Define cross-links: PRODUCT «доступные модели лекал», order-item selection chain, specification copy of assembly operations, Stage 8 shop-routing boundary
+- [ ] 6.0.1.3 — Define empty available-models policy and MVP operation lines (inline name+cost vs shared operations catalog)
+- [ ] 6.0.1.4 — Documentation checkpoint
 
 Completion criteria:
-- ADR(s) approved; no parallel master for model/pattern data.
+- ADR(s) approved; no parallel master for model/pattern/assembly-variant data;
+- nomenclature variant ≠ product model ≠ assembly variant ≠ Stage 8 shop routing.
 
 #### 6.0.2 — Settings navigation contour
 
@@ -454,8 +459,9 @@ Dependencies:
 
 Microtasks:
 - [ ] 6.0.3.1 — Map models/size grids/patterns lists to PT-02
-- [ ] 6.0.3.2 — Map model and pattern cards to PT-05/PT-06 or reference model shell (`5.6.7`)
-- [ ] 6.0.3.3 — Record breakpoints in design-system task evidence
+- [ ] 6.0.3.2 — Map model and pattern cards to PT-05/PT-06 or reference model shell (`5.6.7`); model card includes assembly-variants block
+- [ ] 6.0.3.3 — Map PRODUCT nomenclature card block «доступные модели лекал» to existing nomenclature card template
+- [ ] 6.0.3.4 — Record breakpoints in design-system task evidence
 
 Completion criteria:
 - template IDs documented per workspace/card before implementation iterations.
@@ -465,7 +471,7 @@ Completion criteria:
 #### 6.1.1 — Product model domain contract
 
 Goal:
-Define the persistent product-model contour and its boundaries against nomenclature, specifications, routings, and production.
+Define the flat product-model catalog used in leads, sales orders, specifications, and technical cards: one size type and one article per model; boundaries against nomenclature, size grids, patterns, assembly variants, and production.
 
 Dependencies:
 - 4.1.1
@@ -473,27 +479,27 @@ Dependencies:
 - 6.0.1
 
 Microtasks:
-- [ ] 6.1.1.1 — Document model boundaries and lifecycle states
-- [ ] 6.1.1.2 — Define links to nomenclature and future size grids
+- [ ] 6.1.1.1 — Document model fields and lifecycle: article (unique), name, size_type (men/women/kids), description, status
+- [ ] 6.1.1.2 — Define 1:1 links to size grid and pattern set; no nested gender contours inside one model
 - [ ] 6.1.1.3 — Define versioning and status rules
-- [ ] 6.1.1.4 — Review order-item integration constraints
+- [ ] 6.1.1.4 — Review lead / order-item / specification / technical-card integration constraints
 - [ ] 6.1.1.5 — Documentation checkpoint
 
 Completion criteria:
 - model contour has a single agreed source of truth;
-- dependencies on size grids, patterns, specifications, and routings are explicit;
-- future order-item integration is not ambiguous.
+- flat rule `1 model = 1 size_type = 1 article` is explicit;
+- dependencies on grids, patterns, assembly variants, and specs are explicit.
 
 #### 6.1.2 — Database core for product models
 
 Goal:
-Create the persistent database foundation for product models and their versions.
+Create the persistent database foundation for product models (article, size_type, status) and optional versioning hooks.
 
 Dependencies:
 - 6.1.1
 
 Microtasks:
-- [ ] 6.1.2.1 — Add SQLAlchemy model entities
+- [ ] 6.1.2.1 — Add SQLAlchemy model entities including unique article and size_type
 - [ ] 6.1.2.2 — Add Alembic migration with upgrade and downgrade
 - [ ] 6.1.2.3 — Add Pydantic read/write schemas
 - [ ] 6.1.2.4 — Add backend regression tests for persistence
@@ -501,7 +507,7 @@ Microtasks:
 Completion criteria:
 - product-model data is stored in PostgreSQL;
 - migration is reversible;
-- tests cover create/read/update persistence rules.
+- tests cover create/read/update and uniqueness rules.
 
 #### 6.1.3 — Create and list API for product models
 
@@ -513,13 +519,13 @@ Dependencies:
 
 Microtasks:
 - [ ] 6.1.3.1 — Add repository list and create operations
-- [ ] 6.1.3.2 — Add service validation for uniqueness and status defaults
+- [ ] 6.1.3.2 — Add service validation for unique article and status defaults
 - [ ] 6.1.3.3 — Add POST and GET endpoints
 - [ ] 6.1.3.4 — Add OpenAPI and regression tests
 
 Completion criteria:
 - API creates and lists models;
-- duplicates are validated;
+- duplicate articles are rejected;
 - regression tests pass.
 
 #### 6.1.4 — Update API for product models
@@ -609,7 +615,7 @@ Dependencies:
 
 Microtasks:
 - [ ] 6.1.8.1 — Add detail route and page shell
-- [ ] 6.1.8.2 — Add card view state
+- [ ] 6.1.8.2 — Add card view state (article, size_type, description, status)
 - [ ] 6.1.8.3 — Add not-found, loading, and error states
 - [ ] 6.1.8.4 — Add frontend regression tests
 - [ ] 6.1.8.5 — Visual verification
@@ -628,7 +634,7 @@ Dependencies:
 - 6.1.8
 
 Microtasks:
-- [ ] 6.1.9.1 — Add create form and drawer host
+- [ ] 6.1.9.1 — Add create form and drawer host (article, size_type, name, description)
 - [ ] 6.1.9.2 — Add submit actions and validation mapping
 - [ ] 6.1.9.3 — Add frontend regression tests
 - [ ] 6.1.9.4 — Visual verification
@@ -655,66 +661,95 @@ Completion criteria:
 - reopened card shows saved changes;
 - edit errors are explicit.
 
-#### 6.1.11 — Link product models to nomenclature
+#### 6.1.11 — Available pattern models on PRODUCT nomenclature
 
 Goal:
-The model card can reference the nomenclature it describes without duplicating the catalog source of truth.
+PRODUCT nomenclature card holds a whitelist «доступные модели лекал» so order entry cannot pick a model outside the allowed set.
 
 Dependencies:
 - 4.1.1
+- 4.2.1
 - 6.1.4
+- 6.0.1
 
 Microtasks:
-- [ ] 6.1.11.1 — Add backend relation fields
-- [ ] 6.1.11.2 — Add migration and schemas
-- [ ] 6.1.11.3 — Add service validation for active nomenclature selection
-- [ ] 6.1.11.4 — Add API and card UI integration
-- [ ] 6.1.11.5 — Add regression tests
+- [ ] 6.1.11.1 — Add M2M (or link table) `nomenclature_id` ↔ `product_model_id` with sort order
+- [ ] 6.1.11.2 — Add migration and schemas; allow links only when `nomenclature_type == PRODUCT`
+- [ ] 6.1.11.3 — Add service validation (active models; reject SERVICE/GOODS/MATERIAL; empty-list policy from ADR)
+- [ ] 6.1.11.4 — Add API + PRODUCT nomenclature card UI for managing available models
+- [ ] 6.1.11.5 — Add regression tests (foreign model rejected; non-PRODUCT link rejected)
 
 Completion criteria:
-- model-to-nomenclature relation is persistent;
-- invalid links are rejected.
+- PRODUCT stores a persistent available-models list;
+- invalid links are rejected;
+- manager error path is closed at API level, not only in UI.
 
-#### 6.1.12 — Use product model in sales-order items
+#### 6.1.12 — Assembly variants on product model
 
 Goal:
-Order items can reference a product model in a controlled way without breaking existing snapshots.
+Each product model owns assembly/finishing variants (e.g. «С отстрочкой», «Без отстрочки») with ordered operation lines, per-line cost, and variant total — manager-facing packages before Stage 7/8.
+
+Dependencies:
+- 6.1.4
+- 6.1.8
+- 6.0.1
+
+Microtasks:
+- [ ] 6.1.12.1 — Define AssemblyVariant + AssemblyOperationLine entities (sequence, operation name or id, Decimal cost; total = Σ lines)
+- [ ] 6.1.12.2 — Add Alembic migration, schemas, repository/service CRUD
+- [ ] 6.1.12.3 — Add API endpoints scoped to product model
+- [ ] 6.1.12.4 — Add model-card UI block for variants and operation lines
+- [ ] 6.1.12.5 — Add regression tests (ordering, totals, inactive variants)
+- [ ] 6.1.12.6 — Visual verification
+
+Completion criteria:
+- variants and operation costs persist on the model;
+- totals are consistent and tested;
+- Stage 8 shop routings are not required for this MVP package.
+
+#### 6.1.13 — Use model and assembly variant in sales-order items
+
+Goal:
+After nomenclature selection, manager picks a model from the PRODUCT whitelist; size_type and model article autofill; then picks an assembly variant of that model. Snapshots keep old orders stable.
 
 Dependencies:
 - 6.1.11
+- 6.1.12
 - 3.2.4
 
 Microtasks:
-- [ ] 6.1.12.1 — Define backend order-item relation strategy
-- [ ] 6.1.12.2 — Add nullable storage and migration if approved
-- [ ] 6.1.12.3 — Add schemas, service rules, and API support
-- [ ] 6.1.12.4 — Add frontend selection flow in order item forms
-- [ ] 6.1.12.5 — Add regression tests
-- [ ] 6.1.12.6 — Visual verification
-- [ ] 6.1.12.7 — Documentation checkpoint
+- [ ] 6.1.13.1 — Define order-item relation + snapshot strategy (model id/article/size_type; variant id/name/total; optional operation-line snapshot)
+- [ ] 6.1.13.2 — Add nullable storage and migration
+- [ ] 6.1.13.3 — Add schemas and service rules: model ∈ available list; variant ∈ selected model; require model when whitelist non-empty (per ADR)
+- [ ] 6.1.13.4 — Add frontend selection flow in order item forms
+- [ ] 6.1.13.5 — Add regression tests (whitelist filter; foreign model/variant rejected; snapshot immutability)
+- [ ] 6.1.13.6 — Visual verification
+- [ ] 6.1.13.7 — Documentation checkpoint (lead reuse notes if applicable)
 
 Completion criteria:
-- order items can select a model without breaking backward compatibility;
-- snapshot behavior stays explicit.
+- order chain is nomenclature → available model → assembly variant;
+- autofill of size_type and model article works;
+- backward-compatible nullable links; snapshots explicit.
 
 ### 6.2 — Размерные сетки (Size Grids)
 
 #### 6.2.1 — Size-grid architecture
 
 Goal:
-Define the dedicated size-grid contour used by models and future order scenarios.
+Define the dedicated size-grid contour used by models (1:1) and future order size selection.
 
 Dependencies:
 - 6.1.1
 
 Microtasks:
 - [ ] 6.2.1.1 — Define size-grid domain and naming rules
-- [ ] 6.2.1.2 — Define links to product models and order items
+- [ ] 6.2.1.2 — Define 1:1 link to product model (one grid per model; grid may be reusable only if ADR allows shared reference)
 - [ ] 6.2.1.3 — Define growth groups and measurements scope
 - [ ] 6.2.1.4 — Documentation checkpoint
 
 Completion criteria:
 - size-grid scope is isolated from ad-hoc order-item size snapshots;
+- no multi-gender grids under one model;
 - terminology is stable for backend and frontend.
 
 #### 6.2.2 — Size-grid database core
@@ -811,21 +846,21 @@ Completion criteria:
 #### 6.2.7 — Link size grids to product models
 
 Goal:
-A product model can reference a dedicated size grid.
+A product model references exactly one size grid matching its size_type.
 
 Dependencies:
 - 6.1.4
 - 6.2.3
 
 Microtasks:
-- [ ] 6.2.7.1 — Add backend relation fields
+- [ ] 6.2.7.1 — Add backend relation field on product model (single size_grid_id)
 - [ ] 6.2.7.2 — Add migration and schema updates
 - [ ] 6.2.7.3 — Add service and API validation
 - [ ] 6.2.7.4 — Add frontend selection on model card
 - [ ] 6.2.7.5 — Add regression tests
 
 Completion criteria:
-- product models store a valid size-grid relation;
+- product models store a valid 1:1 size-grid relation;
 - invalid relations are rejected.
 
 ### 6.3 — Лекала (Patterns)
@@ -833,7 +868,7 @@ Completion criteria:
 #### 6.3.1 — Pattern domain architecture
 
 Goal:
-Define pattern sets, pattern parts, and versioning boundaries for product models.
+Define pattern sets, pattern parts, and versioning boundaries for product models (1:1 model → pattern set).
 
 Dependencies:
 - 6.1.1
@@ -845,8 +880,9 @@ Microtasks:
 - [ ] 6.3.1.3 — Documentation checkpoint
 
 Completion criteria:
-- pattern contour is clearly separated from models and specifications;
-- file/version rules are explicit.
+- pattern contour is clearly separated from models, assembly variants, and specifications;
+- file/version rules are explicit;
+- no nested multi-gender pattern families under one model.
 
 #### 6.3.2 — Pattern database and metadata core
 
@@ -944,21 +980,21 @@ Completion criteria:
 #### 6.3.7 — Link patterns to product models
 
 Goal:
-A product model can reference the correct pattern set and version family.
+A product model references exactly one pattern set / version family.
 
 Dependencies:
 - 6.1.6
 - 6.3.5
 
 Microtasks:
-- [ ] 6.3.7.1 — Add backend relation fields
+- [ ] 6.3.7.1 — Add backend relation field on product model (single pattern_set_id / version family)
 - [ ] 6.3.7.2 — Add migration and schemas
 - [ ] 6.3.7.3 — Add service validation
 - [ ] 6.3.7.4 — Add model-card integration
 - [ ] 6.3.7.5 — Add regression tests
 
 Completion criteria:
-- model-to-pattern relation is persistent and validated;
+- model-to-pattern relation is persistent 1:1 and validated;
 - model UI exposes the relation clearly.
 
 ### 6.4 — Pattern-base integration checkpoint
@@ -966,18 +1002,22 @@ Completion criteria:
 #### 6.4.1 — End-to-end smoke scenario
 
 Goal:
-Prove nomenclature → model → size grid → pattern links without Stage 7.
+Prove PRODUCT → available models → model (size grid + patterns + assembly variants) → order-item selection without Stage 7 document creation.
 
 Dependencies:
+- 6.1.11
+- 6.1.12
+- 6.1.13
 - 6.2.7
 - 6.3.7
 
 Microtasks:
-- [ ] 6.4.1.1 — Script or manual smoke checklist
+- [ ] 6.4.1.1 — Script or manual smoke checklist (whitelist filter, autofill size_type/article, variant offer, reject foreign model)
 - [ ] 6.4.1.2 — Fix P0/P1 gaps found in smoke
 
 Completion criteria:
-- one reference path works on persistent API data.
+- one reference path works on persistent API data;
+- manager cannot select a model outside PRODUCT available list.
 
 #### 6.4.2 — Readiness documentation sync
 
@@ -989,7 +1029,7 @@ Dependencies:
 
 Microtasks:
 - [ ] 6.4.2.1 — Update project-structure checklist items
-- [ ] 6.4.2.2 — Update erp-check pattern-base lines
+- [ ] 6.4.2.2 — Update erp-check pattern-base / assembly-variant lines
 
 Completion criteria:
 - canonical docs match implemented contour.
@@ -1001,13 +1041,15 @@ Owner confirms list/card UX on approved responsive matrix.
 
 Dependencies:
 - 6.1.7
+- 6.1.12
 - 6.2.4
 - 6.3.4
 
 Microtasks:
-- [ ] 6.4.3.1 — Visual pass: models list/card
+- [ ] 6.4.3.1 — Visual pass: models list/card (incl. assembly variants block)
 - [ ] 6.4.3.2 — Visual pass: size grids list/card
 - [ ] 6.4.3.3 — Visual pass: patterns list/card
+- [ ] 6.4.3.4 — Visual pass: PRODUCT nomenclature available-models block + order selection flow
 
 Completion criteria:
 - owner sign-off recorded in roadmap evidence or task file.
@@ -1020,20 +1062,24 @@ Completion criteria:
 #### 7.1.1 — Specification architecture
 
 Goal:
-Define specification scope, versioning, and planning role before production start.
+Define specification scope, versioning, and planning role before production start. Specification copies assembly operation lines from the order-item assembly-variant snapshot (not a live edit of the model master).
 
 Dependencies:
 - 6.1.1
+- 6.1.12
+- 6.1.13
 - 6.3.7
 - ADR-004
 
 Microtasks:
 - [ ] 7.1.1.1 — Define specification entities and version lifecycle
 - [ ] 7.1.1.2 — Define material, accessory, norm, and substitute scope
-- [ ] 7.1.1.3 — Documentation checkpoint
+- [ ] 7.1.1.3 — Define copy contract: assembly operations/costs from order-item variant snapshot into specification lines
+- [ ] 7.1.1.4 — Documentation checkpoint
 
 Completion criteria:
 - specification is explicitly a planned composition;
+- operation lines originate from Stage 6 assembly variant via snapshot copy;
 - boundaries against production fact are fixed.
 
 #### 7.1.2 — Specification database core
@@ -1094,47 +1140,53 @@ Completion criteria:
 - card and forms are stable;
 - route states are explicit.
 
-#### 7.2.3 — Link specifications to product models
+#### 7.2.3 — Link specifications to order context and product models
 
 Goal:
-A product model can reference the approved specification line.
+Specification is formed for an order context: materials/norms plus a copied assembly-operation package from the selected model variant; model master remains unchanged when the specification is edited later.
 
 Dependencies:
 - 6.1.6
+- 6.1.13
 - 7.2.1
 
 Microtasks:
-- [ ] 7.2.3.1 — Add backend relation fields
-- [ ] 7.2.3.2 — Add migration and schemas
-- [ ] 7.2.3.3 — Add service validation for active/approved versions
-- [ ] 7.2.3.4 — Add model-card integration
-- [ ] 7.2.3.5 — Add regression tests
+- [ ] 7.2.3.1 — Add backend relation fields (order item / model / variant references as approved)
+- [ ] 7.2.3.2 — Add migration and schemas for specification operation lines (snapshot)
+- [ ] 7.2.3.3 — Add service: copy assembly operations from order-item variant snapshot on specification create
+- [ ] 7.2.3.4 — Add service validation for active/approved versions where applicable
+- [ ] 7.2.3.5 — Add workspace/card integration showing copied operations
+- [ ] 7.2.3.6 — Add regression tests (copy immutability vs later model-variant edits)
 
 Completion criteria:
-- model-to-specification relation is persistent and validated;
-- only allowed versions can be linked.
+- specification receives operation lines from the chosen assembly variant;
+- later edits to model variants do not rewrite existing specifications;
+- only allowed versions/links can be used.
 
 ## Stage 8 — Routings
+
+> Boundary note (`2026-07-22`): manager-facing **assembly variants** (operation packages + costs on the product model) are Stage `6.1.12` / order selection `6.1.13` / specification copy `7.2.3`. Stage 8 covers **shop-floor routings**: work centers, quality checkpoints, and production execution templates — not a duplicate commercial assembly catalog.
 
 ### 8.1 — Domain and persistence
 
 #### 8.1.1 — Routing architecture
 
 Goal:
-Define routing scope, operations, work centers, and quality checkpoints for planned manufacturing.
+Define shop-routing scope, work centers, quality checkpoints, and how they relate to Stage 6 assembly variants and Stage 7 specification snapshots for planned manufacturing.
 
 Dependencies:
 - 6.1.1
+- 6.1.12
 - 7.2.3
 - ADR-004
 
 Microtasks:
-- [ ] 8.1.1.1 — Define routing entities and sequencing rules
-- [ ] 8.1.1.2 — Define links to models, specifications, and future production fact
+- [ ] 8.1.1.1 — Define routing entities and sequencing rules (distinct from AssemblyVariant)
+- [ ] 8.1.1.2 — Define links to models/assembly variants, specifications, and future production fact
 - [ ] 8.1.1.3 — Documentation checkpoint
 
 Completion criteria:
-- routing contour is distinct from production fact;
+- routing contour is distinct from production fact and from Stage 6 commercial assembly variants;
 - operation order and quality checkpoints are explicit.
 
 #### 8.1.2 — Routing database core
@@ -1195,26 +1247,27 @@ Completion criteria:
 - card is editable and stable;
 - route states are explicit.
 
-#### 8.2.3 — Link routings to product models and order context
+#### 8.2.3 — Link shop routings to models / variants and order context
 
 Goal:
-A product model can reference its routing, and the future order flow can reuse that approved plan.
+A shop routing can be linked to a product model / assembly variant where needed for production execution; order/technical-card flow reuses the approved shop plan without replacing Stage 6 manager packages.
 
 Dependencies:
-- 6.1.12
+- 6.1.13
 - 8.2.1
 
 Microtasks:
 - [ ] 8.2.3.1 — Add backend relation fields
 - [ ] 8.2.3.2 — Add migration and schemas
 - [ ] 8.2.3.3 — Add service validation for approved routing selection
-- [ ] 8.2.3.4 — Add model-card integration
-- [ ] 8.2.3.5 — Add order-context integration notes
+- [ ] 8.2.3.4 — Add model-card / variant integration notes (no duplicate assembly-variant CRUD)
+- [ ] 8.2.3.5 — Add order-context / technical-card integration notes
 - [ ] 8.2.3.6 — Add regression tests
 
 Completion criteria:
-- model-to-routing relation is persistent and validated;
-- order-context reuse path is documented and technically prepared.
+- model/variant-to-shop-routing relation is persistent and validated when required;
+- order-context reuse path is documented and technically prepared;
+- Stage 6 assembly variants remain the manager-facing source for costed operation packages.
 
 ## Stage 9 — Технические карты (Technical Cards)
 
@@ -1224,7 +1277,7 @@ Goal:
 Dependencies:
 - 3.2.4
 - 4.2.1
-- 6.1.4, 6.2.7, 6.3.7
+- 6.1.4, 6.1.11, 6.1.12, 6.1.13, 6.2.7, 6.3.7
 - 7.2.3
 - 8.2.3
 - ADR-004
@@ -1240,7 +1293,7 @@ Goal:
 Microtasks:
 - [ ] 9.1.1.1 — Define «изделие» (eligible nomenclature types), one card per `SalesOrderItem`, numbering `{orderNo}/{cardSeq}`
 - [ ] 9.1.1.2 — Define unit lines matrix: N rows = order line quantity (size, personalization, number, …)
-- [ ] 9.1.1.3 — Snapshot vs live link policy for model, patterns, materials, routing template
+- [ ] 9.1.1.3 — Snapshot vs live link policy for model, assembly variant, patterns, materials, routing template
 - [ ] 9.1.1.4 — Order manufacturing completeness: all technical cards in terminal state
 - [ ] 9.1.1.5 — Documentation checkpoint (ADR-014)
 
