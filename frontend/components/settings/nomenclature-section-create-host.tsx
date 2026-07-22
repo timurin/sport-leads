@@ -20,6 +20,7 @@ type NomenclatureSectionCreateHostProps = {
 
 /**
  * Page shell: toolbar create menu + docked CreateDrawer (materials pattern).
+ * Children may include a left EditDrawer beside the list.
  */
 export function NomenclatureSectionCreateHost({
   categories = [],

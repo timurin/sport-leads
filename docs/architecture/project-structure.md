@@ -85,7 +85,7 @@
 - [ ] Relation between materials and the common nomenclature contour — `ADR-012` / roadmap `4.6` (migrate into `Nomenclature` type `MATERIAL`)
 - [ ] Suppliers, procurement prices, batches, stock balances, and consumption norms (stock balances must not live on the nomenclature card)
 
-## 8. Product Models, Patterns, Sizes, Specifications, and Routings
+## 8. База лекал (Models / Size grids / Patterns), Specifications, and Routings
 
 - [x] Size distribution inside sales-order items
 - [ ] Product-model catalog and versioning
@@ -94,7 +94,12 @@
 - [ ] Specifications and bill-of-materials contour
 - [ ] Routing, operations, equipment, work centers, and quality checkpoints
 
-## 9. Design, Production, Warehouse, Procurement, and Shipping
+## 9. Technical cards (Технические карты)
+
+- [ ] Domain contract: one technical card per manufacturable sales order line; unit lines inside the card (ADR-014)
+- [ ] Links to model, patterns, materials, routing; stage execution and order manufacturing completeness
+
+## 10. Design, Production, Warehouse, Procurement, and Shipping
 
 - [ ] Design approvals and versioned layouts
 - [ ] Production orders, batches, fact operations, scrap, and output
@@ -102,14 +107,14 @@
 - [ ] Procurement requests, supplier orders, receipts, and returns
 - [ ] Shipping documents, delivery tracking, and confirmation of receipt
 
-## 10. Finance and Costing
+## 11. Finance and Costing
 
 - [ ] Invoices, payments, advances, debt, and settlements
 - [ ] Tax model, VAT, price types, and financial documents
 - [ ] Planned and actual costing
 - [ ] Margin and management P&L
 
-## 11. Analytics and Integrations
+## 12. Analytics and Integrations
 
 - [x] CRM dashboard and basic order analytics
 - [x] Collectors, parsers, and import normalization core
@@ -119,7 +124,7 @@
 - [ ] 1C exchange
 - [ ] Universal import and export contour
 
-## 12. Operations and Deployment
+## 13. Operations and Deployment
 
 - [ ] VPS, production Docker, reverse proxy, HTTPS, and domain
 - [ ] CI/CD, monitoring, and logs

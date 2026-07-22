@@ -214,7 +214,7 @@ Decisions are documentation-only. Implementation belongs to later Stage 5 items 
 | D6 | **Keep split** | `PageToolbar` (`DS-PAGE-02`) for page chrome; domain card headers stay domain-owned until PT-05/06/07; never put them in Platform Topbar |
 | D7 | **Keep CompactTabs; unify adopters** | Prefer `CompactTabs` for simple in-page tabs; nomenclature complex tabs may stay custom until PT-06 contract |
 | D8 | **Deprecate DemoActionDialog for create; modal only for confirm** | Create flows use `CreateDrawer` (ADR-013). `DemoActionDialog` only on explicitly demo pages until `5.4.2.3.5`; ban centered create modals for persistent entities |
-| D9 | **Replace** | Characteristic detail must use Platform Shell only; remove local sidebar in a dedicated bug/microtask before treating as PT-05 reference |
+| D9 | **Replace** | Characteristic detail migrated to `DS-PT-05` (`CharacteristicCard` / `SimpleEntityCard`); local sidebar not restored |
 
 ### Explicit keep (no change required now)
 

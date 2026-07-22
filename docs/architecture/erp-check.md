@@ -64,6 +64,7 @@
 
 ## Производство
 
+- `[ ]` технические карты: один документ на производимую позицию заказа, строки поштучных характеристик, маршрут участков, готовность заказа по всем ТК; roadmap `9.*`
 - `[ ]` production batches;
 - `[ ]` batch specification formation and version approval;
 - `[ ]` printing, cutting, sewing and QC;

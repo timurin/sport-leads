@@ -80,7 +80,7 @@ Additional:
 
 - `/sales/clients` — `frontend/components/tables/clients-table.tsx` (**PT-02 reference**)
 
-Secondary adopters (migrate later, not required to close `5.5.2`): product-characteristics list, custom-fields, organizations EntityWorkspace.
+Secondary adopters (migrated under `5.5.2.5`): product-characteristics list, units-of-measure, nomenclature-categories, nomenclature-types. Still migrate later: organizations EntityWorkspace, custom-fields list polish.
 
 ## Verification (owner)
 

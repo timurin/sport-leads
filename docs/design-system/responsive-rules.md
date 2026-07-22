@@ -48,6 +48,10 @@ Viewport-breakpoints применяются к глобальному карка
 - PT-01 Dashboard: `docs/design-system/pt-01-dashboard.md` (`DS-PT-01`) — KPI `ResponsiveGrid`, section grids `md`/`xl`, local table overflow.
 - PT-02 List/Table: `docs/design-system/pt-02-list-table.md` (`DS-PT-02`) — `md+` `DataTable` local x-scroll; `<md` card stack (R3).
 - PT-03 Kanban: `docs/design-system/pt-03-kanban.md` (`DS-PT-03`) — local board x-scroll + snap; full-width mobile toolbar (R2).
+- PT-04 Tree + List: `docs/design-system/pt-04-tree-list.md` (`DS-PT-04`) — docked tree `lg+`; `<lg` left tree drawer (R5).
+- PT-05 Simple Entity Card: `docs/design-system/pt-05-simple-entity-card.md` (`DS-PT-05`) — `EntityHeader` + `SectionCard` stack; no local sidebar.
+- PT-06 Complex Entity Card: `docs/design-system/pt-06-complex-entity-card.md` (`DS-PT-06`) — header + stage + metrics; `<lg` CompactTabs (R4).
+- PT-07 Document Card: `docs/design-system/pt-07-document-card.md` (`DS-PT-07`) — full-width sections; line items local `overflow-x-auto`.
 
 ## Проверка
 

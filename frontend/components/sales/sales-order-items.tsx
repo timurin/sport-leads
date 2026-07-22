@@ -5,6 +5,8 @@ import { useRef, useState, useTransition } from "react";
 import { createOrderItem, deleteOrderItem, updateOrderItem } from "@/app/(workspace)/sales/orders/[orderId]/order-item-actions";
 import { Button } from "@/components/ui/button";
 import { Input, Select } from "@/components/ui/form-controls";
+import { ListTotals } from "@/components/ui/list-pagination";
+import { SectionCard } from "@/components/ui/section-card";
 import { nomenclatureLabel, type Nomenclature } from "@/lib/nomenclature";
 import type { SalesOrderItem } from "@/lib/sales/order-details";
 
@@ -270,6 +272,7 @@ export function SalesOrderItems({
   items,
   nomenclature,
   variantsByNomenclature,
+  documentTotal,
 }: {
   orderId: string;
   items: SalesOrderItem[];
@@ -278,6 +281,7 @@ export function SalesOrderItems({
     number,
     import("@/lib/nomenclature").NomenclatureVariant[]
   >;
+  documentTotal: string;
 }) {
   const [isPending, startTransition] = useTransition();
   const [message, setMessage] = useState<string | null>(null);
@@ -323,17 +327,31 @@ export function SalesOrderItems({
     ? variantsByNomenclature[createNomenclatureId] ?? []
     : [];
 
+  const positionLabel =
+    items.length === 1
+      ? "1 позиция"
+      : items.length >= 2 && items.length <= 4
+        ? `${items.length} позиции`
+        : `${items.length} позиций`;
+
   return (
-    <section className="mt-portal-4 rounded-portal-md border border-portal-border bg-portal-surface p-portal-4">
-      <h2 className="text-portal-section font-semibold text-portal-text">
-        Товарные позиции
-      </h2>
+    <SectionCard
+      title="Товарные позиции"
+      size="compact"
+      footer={
+        <ListTotals
+          primary={items.length === 0 ? "Позиции не добавлены" : positionLabel}
+          secondary={`Сумма заказа: ${documentTotal}`}
+          className="rounded-b-portal-lg"
+        />
+      }
+    >
       {items.length === 0 ? (
-        <p className="mt-portal-2 text-portal-body text-portal-muted">
+        <p className="text-portal-body text-portal-muted">
           Позиции пока не добавлены.
         </p>
       ) : (
-        <div className="mt-portal-3 space-y-portal-2">
+        <div className="min-w-0 space-y-portal-2 overflow-x-auto">
           {items.map((item) => (
             <ItemForm
               key={item.id}
@@ -350,7 +368,7 @@ export function SalesOrderItems({
       <form
         ref={formRef}
         action={submitCreate}
-        className="mt-portal-4 grid gap-portal-2 sm:grid-cols-6"
+        className="mt-portal-4 grid min-w-0 gap-portal-2 overflow-x-auto sm:grid-cols-6"
       >
         <NomenclaturePicker
           items={nomenclature}
@@ -412,6 +430,6 @@ export function SalesOrderItems({
           {message}
         </p>
       ) : null}
-    </section>
+    </SectionCard>
   );
 }

@@ -32,7 +32,8 @@ Define the **approved page body containers** for new and migrated workspace page
 
 ## Known debt (tracked, not blocking)
 
-- Nomenclature workspace / characteristics still use local bordered panels — migrate under PT contracts.
+- Characteristics / other catalogs may still use local bordered panels — migrate under PT contracts.
+- ~~Nomenclature workspace local bordered tree/list~~ — migrated to `DS-PT-04` in `5.5.4`.
 - ~~Dashboard module-local `SectionCard`~~ — removed in `5.5.1`.
 
 ## Smoke

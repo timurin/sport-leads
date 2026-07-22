@@ -54,7 +54,7 @@ Almost all product pages live under `(workspace)` and therefore use Platform She
 | `/settings/catalogs/nomenclature/[nomenclatureId]` | `frontend/app/(workspace)/settings/catalogs/nomenclature/[nomenclatureId]/page.tsx` | `(workspace)` | settings | Complex Entity Card | `NomenclatureCard` | persistent | no | no | `notFound()` | likely | likely | likely |
 | `/settings/catalogs/custom-fields` | `frontend/app/(workspace)/settings/catalogs/custom-fields/page.tsx` | `(workspace)` | settings | Settings Page | `CustomFieldsWorkspace` | persistent | no | no | not dedicated | likely | risk | risk |
 | `/settings/catalogs/product-characteristics` | `frontend/app/(workspace)/settings/catalogs/product-characteristics/page.tsx` | `(workspace)` | settings | List/Table Workspace | `ProductCharacteristicsWorkspace` | persistent | no | no | not dedicated | likely | risk | risk |
-| `/settings/catalogs/product-characteristics/[characteristicId]` | `frontend/app/(workspace)/settings/catalogs/product-characteristics/[characteristicId]/page.tsx` | `(workspace)` | settings | Simple Entity Card | local form/table UI | persistent | no | no | inline not-found | risk | risk | risk |
+| `/settings/catalogs/product-characteristics/[characteristicId]` | `frontend/app/(workspace)/settings/catalogs/product-characteristics/[characteristicId]/page.tsx` | `(workspace)` | settings | Simple Entity Card | `CharacteristicCard` | persistent | no | no | `not-found.tsx` | likely | ok | ok |
 | `/settings/catalogs/units-of-measure` | `frontend/app/(workspace)/settings/catalogs/units-of-measure/page.tsx` | `(workspace)` | settings | Settings Page | `UnitsOfMeasureWorkspace` | persistent | no | no | not dedicated | likely | risk | risk |
 
 **Totals:** 21 `page.tsx` routes. Only lead and order cards provide sibling `loading.tsx` / `error.tsx`.
@@ -78,7 +78,7 @@ Secondary notes:
 
 - `/sales/deals` is also Demo/Local and is absent from `navigation.ts`.
 - `/sales/leads/[leadId]` is mixed because numeric IDs use API while demo IDs use local fixtures.
-- Characteristic detail additionally renders a local alternate sidebar and is a Platform Shell deviation.
+- ~~Characteristic detail local sidebar~~ — removed (`DS-PT-05` / `5.5.5`).
 
 ## Persistent / demo / mixed
 
@@ -147,10 +147,10 @@ Detailed matrix: § Persistent versus demo/local audit (`5.1.1.3`). Summary:
 | Role | URL | Tag | Future PT | Notes |
 |---|---|---|---|---|
 | Orders board | `/sales/orders` | migrate (secondary PT-03) | PT-03 / PT-02 | Persistent kanban; prefer leads as primary PT-03 ref |
-| Product characteristics list | `/settings/catalogs/product-characteristics` | provisional → migrate | PT-02 | Persistent list; empty/error UX weak |
-| Characteristic detail | `/settings/catalogs/product-characteristics/[id]` | shell-deviation → migrate | PT-05 | Persistent; **local sidebar** — not a shell reference |
+| Product characteristics list | `/settings/catalogs/product-characteristics` | **reference** (PT-02 list) | PT-02 | `5.5.2.5` |
+| Characteristic detail | `/settings/catalogs/product-characteristics/[id]` | **reference** | PT-05 | `CharacteristicCard` |
 | Custom fields | `/settings/catalogs/custom-fields` | migrate | Settings / PT-02 | Persistent settings workspace |
-| Units of measure | `/settings/catalogs/units-of-measure` | migrate | Settings / PT-02 | Persistent |
+| Units of measure | `/settings/catalogs/units-of-measure` | **reference** (PT-02 list) | PT-02 | `5.5.2.5` |
 | Clients | `/sales/clients` | provisional → migrate | PT-02 | Demo table with filter-empty copy |
 | Tasks / Deals boards | `/sales/tasks`, `/sales/deals` | migrate (demo) | PT-03 | Demo only; deals not in nav |
 | Settings hub | `/settings` | migrate | Settings | Link hub; includes dead links |
@@ -171,8 +171,8 @@ Detailed matrix: § Persistent versus demo/local audit (`5.1.1.3`). Summary:
 | PT-02 | `/sales/clients` (`DS-PT-02` reference; demo) | blank EntityWorkspace empties |
 | PT-03 | `/sales/leads` (`DS-PT-03` reference) | demo tasks/deals only as secondary |
 | PT-04 | `/settings/catalogs/nomenclature` | — |
-| PT-05 | none clean — characteristic detail after shell fix | characteristic detail **until** shell-deviation fixed |
-| PT-06 | nomenclature card + lead card (lead for activity tabs) | — |
+| PT-05 | `/settings/catalogs/product-characteristics/[id]` (`DS-PT-05` reference) | local sidebar (removed); EntityWorkspace inspector |
+| PT-06 | `/sales/leads/[leadId]` (`DS-PT-06` reference) | — |
 | PT-07 | `/sales/orders/[orderId]` | — |
 | PT-08 | **missing** — prepare with product models | — |
 
@@ -188,7 +188,7 @@ Order matches roadmap `5.6.1`–`5.6.7` and audit risk:
 6. Nomenclature Card → PT-06 (`5.6.6`) — add boundaries; keep HTML parity
 7. Model Card shell → PT-08 (`5.6.7`) — not in checkout yet
 
-Parallel / follow-on migrations (not separate 5.6 codes yet): organizations, employees, materials, characteristics detail shell fix, clients, custom-fields, UoM, remove `/sales/deals` or add to nav intentionally.
+Parallel / follow-on migrations (not separate 5.6 codes yet): organizations, employees, materials, clients, custom-fields (list polish), remove `/sales/deals` or add to nav intentionally. Catalog lists closed in `5.5.2.5`.
 
 ### Rules for new pages (until PT contracts land)
 
@@ -238,7 +238,7 @@ Superseded by § Reference and migration pages (`5.1.1.4`). Kept summary:
 3. Shared `EmptyState` exists but is unused; most empties are ad-hoc copy or blank tables.
 4. Demo/local still mixed into CRM and settings catalogs (details in § Persistent versus demo/local audit).
 5. Nomenclature is live but missing from `navigation.ts`.
-6. Characteristic detail uses a local alternate sidebar — Platform Shell contract risk.
+6. ~~Characteristic detail local sidebar~~ — closed in `5.5.5`.
 7. Responsive readiness is assumed only from existing card work; full matrix is `5.1.4.*`.
 8. Nested/double scroll ownership needs AppShell audit (`5.1.3.*`).
 
@@ -279,7 +279,7 @@ Superseded by § Reference and migration pages (`5.1.1.4`). Kept summary:
 | `/settings/catalogs/nomenclature/[id]` | no | no | no | throw on !ok (incl. 404) | nested media/forms | `notFound()` path effectively dead |
 | `/settings/catalogs/custom-fields` | no | no | no | **throw** | **none** | |
 | `/settings/catalogs/product-characteristics` | no | no | no | **throw** | **none** (total 0) | |
-| `/settings/catalogs/product-characteristics/[id]` | no | no | no | inline «не найдена» / throw | options tbody blank | not using `not-found.tsx` |
+| `/settings/catalogs/product-characteristics/[id]` | no | no | no | `notFound()` | options empty → `EmptyState` | `not-found.tsx` |
 | `/settings/catalogs/units-of-measure` | no | no | no | **throw** | **none** | |
 
 ### Patterns to standardize later
@@ -329,7 +329,7 @@ Across audited loaders, **no page silently substitutes demo data when a persiste
 | `/settings/catalogs/nomenclature/[id]` | persistent | — | full card APIs | |
 | `/settings/catalogs/custom-fields` | persistent | — | custom-fields API | |
 | `/settings/catalogs/product-characteristics` | persistent | — | characteristics API | |
-| `/settings/catalogs/product-characteristics/[id]` | persistent | local shell only (not demo data) | definitions/options API | |
+| `/settings/catalogs/product-characteristics/[id]` | persistent | — | definitions/options API | `DS-PT-05` |
 | `/settings/catalogs/units-of-measure` | persistent | — | UoM API | |
 
 Counts: redirect 2 · stub 2 · demo 7 (+ deals) = 8 demo routes · persistent 9 · mixed 1.
@@ -374,8 +374,8 @@ Good precedent to keep: leads/orders loaders that refuse silent demo fallback; n
 ## Obvious responsive risks (not a full audit)
 
 - Kanban boards and wide tables likely overflow or force horizontal scroll on tablet/mobile.
-- Tree + list nomenclature needs a tree drawer strategy on narrow viewports.
-- Characteristic detail local sidebar conflicts with compact Platform Sidebar behaviour.
+- Tree + list nomenclature: PT-04 closed (`DS-PT-04` / R5); collapsible dock + drawer; owner visual OK `2026-07-22`.
+- ~~Characteristic detail local sidebar~~ — closed (`5.5.5`).
 - Settings hub and demo EntityWorkspace pages are not verified against the shell responsive matrix.
 
 ## Next audit microtasks

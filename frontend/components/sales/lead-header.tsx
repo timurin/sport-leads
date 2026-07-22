@@ -173,7 +173,11 @@ export function LeadHeader({
   }
 
   return (
-    <header ref={headerRef} className="border-b border-portal-border bg-portal-surface shadow-[var(--portal-shadow-sm)]">
+    <header
+      ref={headerRef}
+      data-complex-entity-header
+      className="border-b border-portal-border bg-portal-surface shadow-portal-sm"
+    >
       <PageContent size="compact" width="full">
         <div className="flex min-w-0 flex-col gap-3 lg:flex-row lg:items-start">
           <LeadBackButton />

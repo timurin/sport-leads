@@ -23,8 +23,11 @@ import { LeadCommunicationPanel, type LeadMessageDraft } from "@/components/sale
 import { LeadCustomerDetails } from "@/components/sales/lead-customer-details";
 import { LeadTaskCompleteDialog, LeadTaskDeleteDialog, LeadTaskEditDialog, type LeadTaskDraft } from "@/components/sales/lead-task-dialog";
 import { LeadTasks } from "@/components/sales/lead-tasks";
-import { PageActions, PageContent, ResponsiveGrid } from "@/components/layout/page-layout";
+import { ComplexEntityCard } from "@/components/entity/complex-entity-card";
+import { PageActions, PageContent, PageLayout, ResponsiveGrid } from "@/components/layout/page-layout";
 import { Button } from "@/components/ui/button";
+import { CompactTabs } from "@/components/ui/compact-tabs";
+import { MetricCard, SectionCard } from "@/components/ui/section-card";
 import { mockCurrentUser, salesManagers } from "@/lib/demo-data/sales";
 import { getNotePermissions, isInternalNote } from "@/lib/sales/lead-activity";
 import { formatCurrency } from "@/lib/sales/lead-commercial";
@@ -56,16 +59,6 @@ type ReferenceTab = (typeof referenceTabs)[number]["id"];
 
 function formatDate(value: string) {
   return dateFormatter.format(new Date(value));
-}
-
-function KeyMetric({ label, value, detail, prominent = false }: { label: string; value: string; detail?: string; prominent?: boolean }) {
-  return (
-    <dl className="min-w-0 rounded-[var(--portal-radius-md)] border border-portal-border bg-portal-surface-secondary px-3 py-3 shadow-[var(--portal-shadow-sm)]">
-      <dt className="text-[11px] font-medium leading-4 text-portal-muted">{label}</dt>
-      <dd className={`mt-1.5 break-words font-bold ${prominent ? "text-lg text-portal-success" : "text-base text-portal-text"}`} title={value}>{value}</dd>
-      {detail ? <dd className="mt-0.5 break-words text-xs text-portal-muted" title={detail}>{detail}</dd> : null}
-    </dl>
-  );
 }
 
 function cloneLead(lead: LeadDetails): LeadDetails {
@@ -551,7 +544,8 @@ export function LeadPage({
   }
 
   return (
-    <div data-lead-workspace className="w-full min-w-0 bg-portal-page text-portal-text">
+    <PageLayout>
+    <div data-lead-workspace data-complex-entity-card-page className="w-full min-w-0 bg-portal-page text-portal-text">
       <LeadHeader
         key={`${lead.id}-${lead.status}-${lead.stageId ?? "final"}`}
         lead={lead}
@@ -563,6 +557,7 @@ export function LeadPage({
       />
 
       <PageContent size="compact" width="full" className="lead-page-container">
+        <ComplexEntityCard>
         <div className="lead-main-grid grid min-w-0 gap-4">
           <div className="lead-left-column min-w-0 space-y-3">
             <nav className="sr-only" aria-label="Данные лида">
@@ -570,7 +565,7 @@ export function LeadPage({
             </nav>
 
             <ResponsiveGrid minItemWidth="large" gap="default" className="lead-reference-grid">
-              <div id="lead-reference-panel-customer" className="min-w-0 rounded-[var(--portal-radius-lg)] border border-portal-border bg-portal-surface shadow-[var(--portal-shadow-card)]">
+              <div id="lead-reference-panel-customer" className="min-w-0 rounded-portal-lg border border-portal-border bg-portal-surface shadow-portal-card">
                 <LeadCustomerDetails
                   embedded
                   compact
@@ -580,7 +575,7 @@ export function LeadPage({
                   onCustomerChange={updateCustomer}
                 />
               </div>
-              <div id="lead-reference-panel-commercial" className="min-w-0 rounded-[var(--portal-radius-lg)] border border-portal-border bg-portal-surface shadow-[var(--portal-shadow-card)]">
+              <div id="lead-reference-panel-commercial" className="min-w-0 rounded-portal-lg border border-portal-border bg-portal-surface shadow-portal-card">
                 <LeadCommercialDetails
                   embedded
                   compact
@@ -595,33 +590,41 @@ export function LeadPage({
               </div>
             </ResponsiveGrid>
 
-            <section className="min-w-0 rounded-[var(--portal-radius-lg)] border border-portal-border bg-portal-surface p-3 shadow-[var(--portal-shadow-card)]" aria-labelledby="lead-metrics-heading">
-              <h2 id="lead-metrics-heading" className="text-sm font-bold text-portal-text">Ключевые метрики лида</h2>
-              <ResponsiveGrid minItemWidth="small" gap="compact" className="lead-metrics-grid mt-2">
-                <KeyMetric label="Вероятность конверсии" value={lead.probability === null ? "Не указана" : `${lead.probability}%`} />
-                <KeyMetric label="Последний контакт" value={formatDate(lead.lastActivityAt)} />
-                <KeyMetric label="Следующий контакт" value={nearestTask ? formatTaskDate(nearestTask.dueAt) : "Не запланирован"} detail={nearestTask?.title} />
-                <KeyMetric label="Дней в работе" value={`${daysInWork} дн.`} detail={`с ${formatDate(lead.createdAt)}`} />
-                <KeyMetric label="Количество касаний" value={String(lead.activities.length)} detail="событий в истории" />
-                <KeyMetric label="Потенциальная сумма" value={formatCurrency(lead.estimatedAmount)} prominent />
+            <SectionCard title="Ключевые метрики лида" size="compact">
+              <ResponsiveGrid minItemWidth="small" gap="compact" className="lead-metrics-grid">
+                <MetricCard label="Вероятность конверсии" value={lead.probability === null ? "Не указана" : `${lead.probability}%`} size="compact" />
+                <MetricCard label="Последний контакт" value={formatDate(lead.lastActivityAt)} size="compact" />
+                <MetricCard label="Следующий контакт" value={nearestTask ? formatTaskDate(nearestTask.dueAt) : "Не запланирован"} detail={nearestTask?.title} size="compact" />
+                <MetricCard label="Дней в работе" value={`${daysInWork} дн.`} detail={`с ${formatDate(lead.createdAt)}`} size="compact" />
+                <MetricCard label="Количество касаний" value={String(lead.activities.length)} detail="событий в истории" size="compact" />
+                <MetricCard label="Потенциальная сумма" value={formatCurrency(lead.estimatedAmount)} tone="success" size="compact" />
               </ResponsiveGrid>
-            </section>
+            </SectionCard>
+
+            <div className="lg:hidden">
+              <CompactTabs
+                label="Рабочие разделы лида"
+                size="compact"
+                items={workspaceTabs.map(({ id, label }) => ({ id, label }))}
+                value={workspaceTab}
+                onChange={(id) => openWorkspaceSection(id as WorkspaceTab)}
+              />
+            </div>
 
             <nav id="lead-workspace-sections-heading" className="sr-only" aria-label="Рабочие разделы лида">
-              {workspaceTabs.filter(({ id }) => id !== "communication").map(({ id, label }) => (
-                <button key={id} id={`lead-workspace-tab-${id}`} type="button" aria-current={workspaceTab === id ? "page" : undefined} onClick={() => openWorkspaceSection(id)} onKeyDown={(event) => moveWorkspaceTab(event, id)} className={`shrink-0 rounded-lg px-3 py-1.5 text-xs font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${workspaceTab === id ? "bg-blue-50 text-blue-700" : "text-slate-500 hover:bg-white hover:text-slate-800"}`}>{label}</button>
+              {workspaceTabs.map(({ id, label }) => (
+                <button key={id} id={`lead-workspace-tab-${id}`} type="button" aria-current={workspaceTab === id ? "page" : undefined} onClick={() => openWorkspaceSection(id)} onKeyDown={(event) => moveWorkspaceTab(event, id)}>{label}</button>
               ))}
-              <button id="lead-workspace-tab-communication" type="button" className="sr-only" onClick={() => openWorkspaceSection("communication")}>Коммуникации</button>
             </nav>
 
             <div className="lead-bottom-grid grid min-w-0 items-start gap-3">
-              <div id="lead-workspace-panel-history" className="lead-history-card min-w-0 rounded-[var(--portal-radius-lg)] border border-portal-border bg-portal-surface shadow-[var(--portal-shadow-card)]"><LeadActivityTimeline embedded compact mode="history" activities={lead.activities} currentUser={mockCurrentUser} managers={salesManagers} onAddComment={addComment} onEditNote={editNote} onDeleteNote={deleteNote} onTogglePin={toggleNotePin} /></div>
-              <div id="lead-workspace-panel-tasks" className="lead-tasks-card min-w-0 rounded-[var(--portal-radius-lg)] border border-portal-border bg-portal-surface shadow-[var(--portal-shadow-card)]"><LeadTasks embedded compact tasks={lead.tasks} referenceAt={lead.taskReferenceAt} filter={taskFilter} onFilterChange={setTaskFilter} onAdd={(trigger) => openTaskDialog({ kind: "edit", task: null }, trigger)} onEdit={(task, trigger) => openTaskDialog({ kind: "edit", task }, trigger)} onComplete={(task, trigger) => openTaskDialog({ kind: "complete", task }, trigger)} onDelete={(task, trigger) => openTaskDialog({ kind: "delete", task }, trigger)} onReopen={reopenTask} onReschedule={rescheduleTask} /></div>
-              <div id="lead-workspace-panel-notes" className="lead-notes-card min-w-0 rounded-[var(--portal-radius-lg)] border border-portal-border bg-portal-surface shadow-[var(--portal-shadow-card)]"><LeadActivityTimeline embedded compact mode="notes" activities={lead.activities} currentUser={mockCurrentUser} managers={salesManagers} onAddComment={addComment} onEditNote={editNote} onDeleteNote={deleteNote} onTogglePin={toggleNotePin} /></div>
+              <div id="lead-workspace-panel-history" className={`lead-history-card min-w-0 rounded-portal-lg border border-portal-border bg-portal-surface shadow-portal-card ${workspaceTab === "history" ? "block" : "hidden"} lg:block`}><LeadActivityTimeline embedded compact mode="history" activities={lead.activities} currentUser={mockCurrentUser} managers={salesManagers} onAddComment={addComment} onEditNote={editNote} onDeleteNote={deleteNote} onTogglePin={toggleNotePin} /></div>
+              <div id="lead-workspace-panel-tasks" className={`lead-tasks-card min-w-0 rounded-portal-lg border border-portal-border bg-portal-surface shadow-portal-card ${workspaceTab === "tasks" ? "block" : "hidden"} lg:block`}><LeadTasks embedded compact tasks={lead.tasks} referenceAt={lead.taskReferenceAt} filter={taskFilter} onFilterChange={setTaskFilter} onAdd={(trigger) => openTaskDialog({ kind: "edit", task: null }, trigger)} onEdit={(task, trigger) => openTaskDialog({ kind: "edit", task }, trigger)} onComplete={(task, trigger) => openTaskDialog({ kind: "complete", task }, trigger)} onDelete={(task, trigger) => openTaskDialog({ kind: "delete", task }, trigger)} onReopen={reopenTask} onReschedule={rescheduleTask} /></div>
+              <div id="lead-workspace-panel-notes" className={`lead-notes-card min-w-0 rounded-portal-lg border border-portal-border bg-portal-surface shadow-portal-card ${workspaceTab === "notes" ? "block" : "hidden"} lg:block`}><LeadActivityTimeline embedded compact mode="notes" activities={lead.activities} currentUser={mockCurrentUser} managers={salesManagers} onAddComment={addComment} onEditNote={editNote} onDeleteNote={deleteNote} onTogglePin={toggleNotePin} /></div>
             </div>
           </div>
 
-          <aside id="lead-workspace-panel-communication" data-lead-communication-column className="lead-communication-column min-w-0 self-start overflow-hidden rounded-[var(--portal-radius-lg)] border border-portal-border bg-portal-surface shadow-[var(--portal-shadow-card)]">
+          <aside id="lead-workspace-panel-communication" data-lead-communication-column className={`lead-communication-column min-w-0 self-start overflow-hidden rounded-portal-lg border border-portal-border bg-portal-surface shadow-portal-card ${workspaceTab === "communication" ? "block" : "hidden"} lg:block`}>
             <LeadCommunicationPanel
               embedded
               messages={lead.messages}
@@ -653,6 +656,7 @@ export function LeadPage({
             </PageActions>
           </aside>
         </div>
+        </ComplexEntityCard>
       </PageContent>
 
       {taskDialog?.kind === "edit" ? (
@@ -683,5 +687,6 @@ export function LeadPage({
         />
       ) : null}
     </div>
+    </PageLayout>
   );
 }

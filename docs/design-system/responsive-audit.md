@@ -62,8 +62,8 @@ Also verify **expanded** and **compact** sidebar on each band where both modes e
 | B-candidate-2 — nomenclature missing from nav | **Dismissed** | Group «Номенклатура» in `navigation.ts` |
 | R2 — kanban vs page width | **Addressed in PT-03 (`5.5.3`)** | Local board x-scroll + snap; full-width toolbar; no document overflow |
 | R3 — wide settings tables | **Addressed in PT-02 (`5.5.2`)** | Clients: mobile cards; `md+` local x-scroll; other wide lists adopt later |
-| R4 — lead card columns | **Dismissed for 5.1.4** | Owner pass; revisit PT-06 |
-| R5 — nomenclature tree+list | **Dismissed for 5.1.4** | Owner pass; revisit PT-04 |
+| R4 — lead card columns | **Addressed in PT-06** | CompactTabs `&lt;lg`; container grids; see `pt-06-complex-entity-card.md` |
+| R5 — nomenclature tree+list | **Closed in PT-04** | collapsible dock + drawer; owner visual OK |
 | R6 — search + compact sidebar | **Dismissed for 5.1.4** | Owner pass |
 | R7 — `/dashboard` vs sales dashboard | **Deferred** | Product note |
 | B-candidate-3 / 4 — empty states | **Deferred** | Later DS empty-state work |
@@ -110,8 +110,8 @@ Known risks — confirm or dismiss during `5.1.4.2`–`5.1.4.5`:
 | R1 | Characteristic detail local sticky sidebar + `100vh` | — | **Dismissed** (fixed before pass) |
 | R2 | Kanban horizontal board vs page width | tablet/mobile | **Dismissed for 5.1.4** — owner pass OK; revisit in PT-03 |
 | R3 | Wide settings tables (`min-width`) need local x-scroll only | tablet/mobile | **Dismissed for 5.1.4** — owner pass OK; revisit in PT-02 |
-| R4 | Lead card dense two-column → single column behaviour | tablet/mobile | **Dismissed for 5.1.4** — owner pass OK; revisit in PT-06 |
-| R5 | Nomenclature tree+list needs drawer strategy | tablet/mobile | **Dismissed for 5.1.4** — owner pass OK; revisit in PT-04 |
+| R4 | Lead card dense two-column → single column behaviour | tablet/mobile | **Addressed in PT-06** (`5.5.6.6`) — CompactTabs below `lg`; owner visual pending `5.5.6.7` |
+| R5 | Nomenclature tree+list needs drawer strategy | tablet/mobile | **Closed in PT-04** (`5.5.4`) — collapsible dock `lg+` + left drawer `&lt;lg`; owner visual OK `2026-07-22` |
 | R6 | Topbar full-width search + compact sidebar combo | laptop/tablet | **Dismissed for 5.1.4** — owner pass OK |
 | R7 | `/dashboard` stub vs sales dashboard inconsistency | all | **Deferred** — product note, not a responsive shell bug |
 

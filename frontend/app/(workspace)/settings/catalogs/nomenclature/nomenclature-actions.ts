@@ -64,7 +64,20 @@ export async function createUnitOfMeasure(formData: FormData) {
 
 export async function updateUnitOfMeasure(formData: FormData) {
   const id = text(formData, "id");
-  await mutate(`/units-of-measure/${id}`, "PATCH", { is_active: formData.get("is_active") === "true" });
+  const body: Record<string, unknown> = {
+    is_active: formData.get("is_active") === "true",
+  };
+  const name = text(formData, "name");
+  const symbol = text(formData, "symbol");
+  const unitCategory = text(formData, "unit_category");
+  const precisionRaw = formData.get("precision");
+  if (name) body.name = name;
+  if (symbol) body.symbol = symbol;
+  if (unitCategory) body.unit_category = unitCategory;
+  if (precisionRaw != null && String(precisionRaw) !== "") {
+    body.precision = Number(precisionRaw);
+  }
+  await mutate(`/units-of-measure/${id}`, "PATCH", body);
   revalidatePath("/settings/catalogs/units-of-measure");
 }
 
@@ -78,6 +91,7 @@ export async function createNomenclatureCategory(formData: FormData) {
     sort_order: Number(formData.get("sort_order") ?? 0),
   });
   revalidatePath("/settings/catalogs/nomenclature");
+  revalidatePath("/settings/catalogs/nomenclature-categories");
 }
 
 export async function updateNomenclatureCategory(formData: FormData) {
@@ -89,4 +103,5 @@ export async function updateNomenclatureCategory(formData: FormData) {
     is_active: formData.get("is_active") === "true",
   });
   revalidatePath("/settings/catalogs/nomenclature");
+  revalidatePath("/settings/catalogs/nomenclature-categories");
 }
