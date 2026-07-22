@@ -394,6 +394,29 @@ body {
   }
 }
 
+.lead-stage-rail {
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-padding-inline: 0.25rem;
+  -webkit-overflow-scrolling: touch;
+  border-radius: var(--portal-radius-md);
+}
+
+.lead-stage-rail::-webkit-scrollbar {
+  height: 6px;
+}
+
+.lead-stage-rail::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--portal-border) 80%, transparent);
+}
+
+@media (min-width: 80rem) {
+  .lead-stage-rail {
+    overflow-x: visible;
+  }
+}
+
 .lead-stage-step + .lead-stage-step {
   margin-left: -7px;
   padding-left: 22px;

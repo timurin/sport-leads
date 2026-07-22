@@ -329,7 +329,7 @@ Microtasks:
 - [x] 5.5.6.4 — Standardize section grid — `v0.9.0`; portal section shells; `ComplexEntityCard` + `PageLayout`
 - [x] 5.5.6.5 — Standardize activity tabs — `v0.9.0`; `CompactTabs` (`DS-TABS-01`) on narrow bands
 - [x] 5.5.6.6 — Define responsive collapse — `v0.9.0`; R4; tabbed panels `<lg`, multi-panel `lg+`
-- [ ] 5.5.6.7 — Verify on Lead Card — pending owner visual OK (`5.5.6 visual OK`)
+- [x] 5.5.6.7 — Verify on Lead Card — `v0.9.0`; owner **`5.5.6 visual OK`** (`2026-07-22`); tablet stage rail + header grid in `lead-header.tsx`
 
 #### 5.5.7 — PT-07 Document Card
 
@@ -342,11 +342,11 @@ Microtasks:
 
 #### 5.5.8 — PT-08 Versioned Workspace
 
-- [ ] 5.5.8.1 — Define template contract
-- [ ] 5.5.8.2 — Define active version and history
-- [ ] 5.5.8.3 — Define draft and published states
-- [ ] 5.5.8.4 — Define compare and restore UX
-- [ ] 5.5.8.5 — Prepare reference Model Card
+- [x] 5.5.8.1 — Define template contract — `v0.9.0`; `DS-PT-08`; evidence: `docs/design-system/pt-08-versioned-workspace.md`
+- [x] 5.5.8.2 — Define active version and history — `v0.9.0`; version bar + history section in contract
+- [x] 5.5.8.3 — Define draft and published states — `v0.9.0`; `StatusBadge` state matrix in contract
+- [x] 5.5.8.4 — Define compare and restore UX — `v0.9.0`; modal compare + confirm restore (demo)
+- [x] 5.5.8.5 — Prepare reference Model Card — `v0.9.0`; `/settings/catalogs/product-models/demo-reference`; `ProductModelCard`
 
 ### 5.6 — Reference migrations
 

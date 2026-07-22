@@ -106,4 +106,4 @@ Reply: `5.5.6 visual OK` or list issues.
 
 ## Status
 
-Contract + Lead Card standardization shipped for `5.5.6.1`–`5.5.6.6`. Owner confirmation for `5.5.6.7` pending (`5.5.6 visual OK`).
+Contract + Lead Card standardization shipped for `5.5.6.*`. Owner confirmation: **`5.5.6 visual OK`** (`2026-07-22`).

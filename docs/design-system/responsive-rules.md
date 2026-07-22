@@ -52,6 +52,7 @@ Viewport-breakpoints применяются к глобальному карка
 - PT-05 Simple Entity Card: `docs/design-system/pt-05-simple-entity-card.md` (`DS-PT-05`) — `EntityHeader` + `SectionCard` stack; no local sidebar.
 - PT-06 Complex Entity Card: `docs/design-system/pt-06-complex-entity-card.md` (`DS-PT-06`) — header + stage + metrics; `<lg` CompactTabs (R4).
 - PT-07 Document Card: `docs/design-system/pt-07-document-card.md` (`DS-PT-07`) — full-width sections; line items local `overflow-x-auto`.
+- PT-08 Versioned Workspace: `docs/design-system/pt-08-versioned-workspace.md` (`DS-PT-08`) — version bar horizontal scroll; demo-labeled reference.
 
 ## Проверка
 

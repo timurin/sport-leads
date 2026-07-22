@@ -41,12 +41,13 @@
 - `docs/design-system/pt-05-simple-entity-card.md` — `DS-PT-05` / PT-05 Simple Entity Card (`5.5.5.*`)
 - `docs/design-system/pt-06-complex-entity-card.md` — `DS-PT-06` / PT-06 Complex Entity Card (`5.5.6.*`)
 - `docs/design-system/pt-07-document-card.md` — `DS-PT-07` / PT-07 Document Card (`5.5.7.*`)
+- `docs/design-system/pt-08-versioned-workspace.md` — `DS-PT-08` / PT-08 Versioned Workspace (`5.5.8.*`)
 - `docs/design-system/layout-scrolling-audit.md` — AppShell, widths, scroll/sticky rules (`5.1.3.*`)
 - `docs/design-system/component-inventory.md` — инвентарь shared/domain UI (`5.1.2.*`)
 - `docs/design-system/shell-contracts.md` — защищённые контракты `DS-SHELL-01` / `DS-SHELL-02`
 - `docs/design-system/page-design-checklist.md`, `visual-rules.md`, `responsive-rules.md`
 - HTML page references: `docs/design/`
-- Platform templates `PT-01`–`PT-08` — Stage 5 roadmap (`PT-01`…`PT-07` shipped; PT-07 owner visual pending; PT-08 pending)
+- Platform templates `PT-01`–`PT-08` — Stage 5 roadmap (`PT-01`…`PT-08` contracts shipped; PT-07 owner visual pending; PT-08 demo reference)
 
 ## Токены
 

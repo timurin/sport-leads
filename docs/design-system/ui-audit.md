@@ -174,7 +174,7 @@ Detailed matrix: § Persistent versus demo/local audit (`5.1.1.3`). Summary:
 | PT-05 | `/settings/catalogs/product-characteristics/[id]` (`DS-PT-05` reference) | local sidebar (removed); EntityWorkspace inspector |
 | PT-06 | `/sales/leads/[leadId]` (`DS-PT-06` reference) | — |
 | PT-07 | `/sales/orders/[orderId]` | — |
-| PT-08 | **missing** — prepare with product models | — |
+| PT-08 | `/settings/catalogs/product-models/demo-reference` | — |
 
 ### Migration priority for Stage `5.6`
 

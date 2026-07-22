@@ -179,9 +179,9 @@ export function LeadHeader({
       className="border-b border-portal-border bg-portal-surface shadow-portal-sm"
     >
       <PageContent size="compact" width="full">
-        <div className="flex min-w-0 flex-col gap-3 lg:flex-row lg:items-start">
+        <div className="grid min-w-0 grid-cols-1 gap-3 md:grid-cols-[auto_minmax(0,1fr)_auto] md:items-start md:gap-x-3">
           <LeadBackButton />
-          <div className="min-w-0 flex-1">
+          <div className="min-w-0 md:col-start-2 md:row-start-1">
             <div className="flex min-w-0 flex-wrap items-center gap-2.5">
               <h1 className="min-w-0 text-xl font-bold tracking-tight text-portal-text sm:text-[25px]">Лид #{displayId}</h1>
               <StatusBadge tone={badgeTone} dot>
@@ -190,7 +190,7 @@ export function LeadHeader({
             </div>
             <p className="mt-1 break-words text-base font-medium text-portal-text sm:text-[17px]">{lead.customer.organizationName ?? lead.title}</p>
           </div>
-          <PageActions className="lg:ml-auto">
+          <PageActions className="md:col-start-3 md:row-start-1 md:justify-end">
             <div className="relative">
             <Button
               type="button"
@@ -218,28 +218,31 @@ export function LeadHeader({
           </PageActions>
         </div>
 
-        <div className="mt-2 flex min-w-0 flex-col gap-2 xl:flex-row xl:items-center xl:justify-between">
+        <div className="mt-2 flex min-w-0 flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
           <div className="flex min-w-0 flex-wrap items-center gap-x-5 gap-y-2 text-xs text-slate-500">
             <span className="inline-flex items-center gap-2"><span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-slate-100 text-[10px] font-semibold text-slate-700">{responsible ? initials(responsible.name) : <UserRound size={13} />}</span><span><span className="text-slate-400">Ответственный:</span> <b className="font-medium text-slate-700">{responsible?.name ?? "Не назначен"}</b></span></span>
             <span><span className="text-slate-400">Источник:</span> <b className="font-medium text-slate-700">{lead.source ?? "Не указан"}</b></span>
             <span><span className="text-slate-400">Активность:</span> <b className="font-medium text-slate-700">{lastActivityAtLabel}</b></span>
           </div>
 
-          <PageActions className="xl:shrink-0" align="end">
-            <Button type="button" variant="primary" onClick={onWrite} className="h-9 w-full px-3 sm:w-auto">
+          <PageActions
+            className="w-full max-lg:grid max-lg:grid-cols-2 max-lg:gap-2 lg:w-auto lg:shrink-0"
+            align="end"
+          >
+            <Button type="button" variant="primary" onClick={onWrite} className="h-9 w-full px-3 lg:w-auto">
               <MessageSquare size={16} /> Написать
             </Button>
-            <Button type="button" onClick={(event) => onAddTask(event.currentTarget)} className="h-9 w-full px-3 sm:w-auto">
+            <Button type="button" onClick={(event) => onAddTask(event.currentTarget)} className="h-9 w-full px-3 lg:w-auto">
               Добавить задачу
             </Button>
-            <div className="relative w-full sm:w-auto">
+            <div className="relative w-full max-lg:min-w-0 lg:w-auto">
               <Button
                 type="button"
                 disabled={isClosed || isPending}
                 aria-haspopup="menu"
                 aria-expanded={openMenu === "status"}
                 onClick={() => setOpenMenu((current) => current === "status" ? null : "status")}
-                className="h-9 w-full px-3 sm:w-auto"
+                className="h-9 w-full px-3 lg:w-auto"
               >
                 Статус <ChevronDown size={15} />
               </Button>
@@ -264,14 +267,14 @@ export function LeadHeader({
               ) : null}
             </div>
 
-            <div className="relative w-full sm:w-auto">
+            <div className="relative w-full max-lg:min-w-0 lg:w-auto">
               <Button
                 type="button"
                 disabled={isPending}
                 aria-haspopup="menu"
                 aria-expanded={openMenu === "responsible"}
                 onClick={() => setOpenMenu((current) => current === "responsible" ? null : "responsible")}
-                className="h-9 w-full px-3 sm:w-auto"
+                className="h-9 w-full px-3 lg:w-auto"
               >
                 Ответственный <ChevronDown size={15} />
               </Button>
@@ -305,7 +308,11 @@ export function LeadHeader({
 
         {notice ? <p className="mt-2 text-sm text-slate-600" role="status" aria-live="polite">{notice}</p> : null}
 
-        <div className="mt-3 flex min-w-0 overflow-x-auto overflow-y-hidden rounded-[var(--portal-radius-md)] pb-1" aria-label="Этапы лида">
+        <div
+          className="lead-stage-rail relative mt-3 min-w-0 overscroll-x-contain"
+          aria-label="Этапы лида"
+        >
+          <div className="flex w-max min-w-full snap-x snap-mandatory gap-0 pb-1 xl:w-full xl:snap-none">
           {activeStages.map((stage, index) => {
             const isCurrent = stage.id === statusId;
             const isDone = currentStageIndex >= 0 && index < currentStageIndex;
@@ -316,7 +323,8 @@ export function LeadHeader({
                 disabled={isClosed || isPending || isCurrent}
                 onClick={() => chooseStatus(stage)}
                 aria-current={isCurrent ? "step" : undefined}
-                className={`lead-stage-step relative flex h-9 min-w-32 flex-1 items-center justify-center gap-2 px-4 text-xs font-semibold transition focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${isCurrent ? "bg-portal-primary text-white" : isDone ? "bg-blue-50 text-blue-800" : "bg-portal-surface-secondary text-portal-muted hover:bg-slate-200"} disabled:cursor-default`}
+                title={stage.title}
+                className={`lead-stage-step relative flex h-9 shrink-0 snap-start items-center justify-center gap-2 px-4 text-xs font-semibold transition focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 xl:min-w-0 xl:flex-1 ${isCurrent ? "bg-portal-primary text-white" : isDone ? "bg-blue-50 text-blue-800" : "bg-portal-surface-secondary text-portal-muted hover:bg-slate-200"} disabled:cursor-default`}
               >
                 <span className={`flex size-5 shrink-0 items-center justify-center rounded-full text-[10px] ${isCurrent ? "bg-white text-blue-700" : "bg-white text-slate-600"}`}>
                   {isDone ? <Check size={12} strokeWidth={3} /> : index + 1}
@@ -331,7 +339,8 @@ export function LeadHeader({
               type="button"
               disabled={isClosed || isPending}
               onClick={() => onFinalAction(action.id)}
-              className={`lead-stage-step relative flex h-9 min-w-40 flex-1 items-center justify-center gap-2 px-4 text-xs font-semibold transition focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 disabled:cursor-default ${action.id === "convert" ? "bg-emerald-50 text-emerald-800 hover:bg-emerald-100" : "bg-red-50 text-red-800 hover:bg-red-100"}`}
+              title={action.title}
+              className={`lead-stage-step relative flex h-9 shrink-0 snap-start items-center justify-center gap-2 px-4 text-xs font-semibold transition focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 disabled:cursor-default xl:min-w-0 xl:flex-1 ${action.id === "convert" ? "bg-emerald-50 text-emerald-800 hover:bg-emerald-100" : "bg-red-50 text-red-800 hover:bg-red-100"}`}
             >
               <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-white text-[10px] text-slate-600">
                 {activeStages.length + index + 1}
@@ -339,6 +348,7 @@ export function LeadHeader({
               <span className="whitespace-nowrap">{action.title}</span>
             </button>
           ))}
+          </div>
         </div>
       </PageContent>
     </header>
