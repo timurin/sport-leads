@@ -5,6 +5,13 @@ from sqlalchemy.orm import Session
 from app.database.session import get_db
 from app.models.product_model import ProductModelMedia, ProductModelSizeType, ProductModelStatus
 from app.schemas.product_model import (
+    AssemblyOperationLineCreate,
+    AssemblyOperationLineReorder,
+    AssemblyOperationLineUpdate,
+    AssemblyVariantCreate,
+    AssemblyVariantRead,
+    AssemblyVariantReorder,
+    AssemblyVariantUpdate,
     ProductModelCoverUpload,
     ProductModelCreate,
     ProductModelHistoryRead,
@@ -15,6 +22,22 @@ from app.schemas.product_model import (
     ProductModelUpdate,
     ProductModelVersionCreate,
     ProductModelVersionRead,
+)
+from app.services.assembly_variants import (
+    AssemblyOperationLineNotFoundError,
+    AssemblyVariantConflictError,
+    AssemblyVariantNotFoundError,
+    AssemblyVariantValidationError,
+    add_operation_line,
+    create_assembly_variant,
+    delete_assembly_variant,
+    delete_operation_line,
+    get_assembly_variant,
+    list_assembly_variants,
+    reorder_assembly_variants,
+    reorder_operation_lines,
+    update_assembly_variant,
+    update_operation_line,
 )
 from app.services.product_models import (
     ProductModelArticleConflictError,
@@ -392,3 +415,203 @@ def archive_one_product_model_version(
         raise HTTPException(status_code=404, detail=str(error)) from error
     except ProductModelVersionNotFoundError as error:
         raise HTTPException(status_code=404, detail=str(error)) from error
+
+
+@router.get(
+    "/{model_id}/assembly-variants",
+    response_model=list[AssemblyVariantRead],
+    operation_id="list_product_model_assembly_variants",
+)
+def read_assembly_variants(
+    model_id: int,
+    active_only: bool = Query(default=False),
+    db: Session = Depends(get_db),
+):
+    try:
+        return list_assembly_variants(db, model_id, active_only=active_only)
+    except ProductModelNotFoundError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+
+
+@router.get(
+    "/{model_id}/assembly-variants/{variant_id}",
+    response_model=AssemblyVariantRead,
+    operation_id="get_product_model_assembly_variant",
+)
+def read_one_assembly_variant(
+    model_id: int,
+    variant_id: int,
+    db: Session = Depends(get_db),
+):
+    try:
+        return get_assembly_variant(db, model_id, variant_id)
+    except ProductModelNotFoundError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+    except AssemblyVariantNotFoundError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+
+
+@router.post(
+    "/{model_id}/assembly-variants",
+    response_model=AssemblyVariantRead,
+    status_code=status.HTTP_201_CREATED,
+    operation_id="create_product_model_assembly_variant",
+)
+def create_one_assembly_variant(
+    model_id: int,
+    payload: AssemblyVariantCreate,
+    db: Session = Depends(get_db),
+):
+    try:
+        return create_assembly_variant(db, model_id, payload)
+    except ProductModelNotFoundError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+    except AssemblyVariantConflictError as error:
+        raise HTTPException(status_code=409, detail=str(error)) from error
+    except AssemblyVariantValidationError as error:
+        raise HTTPException(status_code=422, detail=str(error)) from error
+
+
+@router.patch(
+    "/{model_id}/assembly-variants/{variant_id}",
+    response_model=AssemblyVariantRead,
+    operation_id="update_product_model_assembly_variant",
+)
+def update_one_assembly_variant(
+    model_id: int,
+    variant_id: int,
+    payload: AssemblyVariantUpdate,
+    db: Session = Depends(get_db),
+):
+    try:
+        return update_assembly_variant(db, model_id, variant_id, payload)
+    except ProductModelNotFoundError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+    except AssemblyVariantNotFoundError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+    except AssemblyVariantConflictError as error:
+        raise HTTPException(status_code=409, detail=str(error)) from error
+
+
+@router.delete(
+    "/{model_id}/assembly-variants/{variant_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    operation_id="delete_product_model_assembly_variant",
+)
+def remove_one_assembly_variant(
+    model_id: int,
+    variant_id: int,
+    db: Session = Depends(get_db),
+) -> None:
+    try:
+        delete_assembly_variant(db, model_id, variant_id)
+    except ProductModelNotFoundError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+    except AssemblyVariantNotFoundError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+
+
+@router.post(
+    "/{model_id}/assembly-variants/reorder",
+    response_model=list[AssemblyVariantRead],
+    operation_id="reorder_product_model_assembly_variants",
+)
+def reorder_model_assembly_variants(
+    model_id: int,
+    payload: AssemblyVariantReorder,
+    db: Session = Depends(get_db),
+):
+    try:
+        return reorder_assembly_variants(db, model_id, payload)
+    except ProductModelNotFoundError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+    except AssemblyVariantValidationError as error:
+        raise HTTPException(status_code=422, detail=str(error)) from error
+
+
+@router.post(
+    "/{model_id}/assembly-variants/{variant_id}/operation-lines",
+    response_model=AssemblyVariantRead,
+    status_code=status.HTTP_201_CREATED,
+    operation_id="add_assembly_variant_operation_line",
+)
+def create_operation_line(
+    model_id: int,
+    variant_id: int,
+    payload: AssemblyOperationLineCreate,
+    db: Session = Depends(get_db),
+):
+    try:
+        return add_operation_line(db, model_id, variant_id, payload)
+    except ProductModelNotFoundError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+    except AssemblyVariantNotFoundError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+    except AssemblyVariantConflictError as error:
+        raise HTTPException(status_code=409, detail=str(error)) from error
+
+
+@router.patch(
+    "/{model_id}/assembly-variants/{variant_id}/operation-lines/{line_id}",
+    response_model=AssemblyVariantRead,
+    operation_id="update_assembly_variant_operation_line",
+)
+def patch_operation_line(
+    model_id: int,
+    variant_id: int,
+    line_id: int,
+    payload: AssemblyOperationLineUpdate,
+    db: Session = Depends(get_db),
+):
+    try:
+        return update_operation_line(db, model_id, variant_id, line_id, payload)
+    except ProductModelNotFoundError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+    except AssemblyVariantNotFoundError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+    except AssemblyOperationLineNotFoundError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+    except AssemblyVariantConflictError as error:
+        raise HTTPException(status_code=409, detail=str(error)) from error
+
+
+@router.delete(
+    "/{model_id}/assembly-variants/{variant_id}/operation-lines/{line_id}",
+    response_model=AssemblyVariantRead,
+    operation_id="delete_assembly_variant_operation_line",
+)
+def remove_operation_line(
+    model_id: int,
+    variant_id: int,
+    line_id: int,
+    db: Session = Depends(get_db),
+):
+    try:
+        return delete_operation_line(db, model_id, variant_id, line_id)
+    except ProductModelNotFoundError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+    except AssemblyVariantNotFoundError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+    except AssemblyOperationLineNotFoundError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+
+
+@router.post(
+    "/{model_id}/assembly-variants/{variant_id}/operation-lines/reorder",
+    response_model=AssemblyVariantRead,
+    operation_id="reorder_assembly_variant_operation_lines",
+)
+def reorder_variant_operation_lines(
+    model_id: int,
+    variant_id: int,
+    payload: AssemblyOperationLineReorder,
+    db: Session = Depends(get_db),
+):
+    try:
+        return reorder_operation_lines(db, model_id, variant_id, payload)
+    except ProductModelNotFoundError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+    except AssemblyVariantNotFoundError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+    except AssemblyVariantValidationError as error:
+        raise HTTPException(status_code=422, detail=str(error)) from error

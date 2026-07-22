@@ -4,6 +4,7 @@ import { ProductModelCard } from "@/components/settings/product-model-card";
 import { ProductModelPersistentCard } from "@/components/settings/product-model-persistent-card";
 import { productModelReference } from "@/lib/demo-data/product-model-reference";
 import {
+  getProductModelAssemblyVariants,
   getProductModelById,
   getProductModelHistory,
   getProductModelMedia,
@@ -39,10 +40,11 @@ export default async function ProductModelRoute({
     notFound();
   }
 
-  const [versions, media, history] = await Promise.all([
+  const [versions, media, history, assemblyVariants] = await Promise.all([
     getProductModelVersions(id),
     getProductModelMedia(id),
     getProductModelHistory(id),
+    getProductModelAssemblyVariants(id),
   ]);
 
   return (
@@ -51,6 +53,7 @@ export default async function ProductModelRoute({
       versions={toProductModelVersionViews(versions)}
       media={media}
       history={history}
+      assemblyVariants={assemblyVariants}
       initialEditing={initialEditing}
     />
   );

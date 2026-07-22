@@ -21,6 +21,7 @@ from app.api.lead_rejection_reasons import router as lead_rejection_reasons_rout
 from app.api.orders import router as orders_router
 from app.api.organizations import router as organizations_router
 from app.api.product_models import router as product_models_router
+from app.api.sewing_operations import router as sewing_operations_router
 from app.config.settings import settings
 from app.database.session import engine
 from app.logging_config import configure_logging
@@ -77,6 +78,7 @@ app.include_router(lead_rejection_reasons_router)
 app.include_router(orders_router)
 app.include_router(organizations_router)
 app.include_router(product_models_router)
+app.include_router(sewing_operations_router)
 
 
 @app.get("/")

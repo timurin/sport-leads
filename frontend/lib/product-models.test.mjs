@@ -3,12 +3,16 @@ import test from "node:test";
 
 import {
   filterProductModels,
+  formatAssemblyCost,
   isProductModelRequisitesDirty,
+  parseAssemblyCostInput,
   parseProductModelRouteId,
   productModelLabel,
   productModelStatusTone,
   toProductModelRequisitesDraft,
   toProductModelVersionViews,
+  validateAssemblyOperationLineDraft,
+  validateAssemblyVariantDraft,
   validateProductModelCreateDraft,
 } from "./product-models.ts";
 
@@ -183,5 +187,31 @@ test("isProductModelRequisitesDirty compares draft to model", () => {
       },
     ),
     false,
+  );
+});
+
+test("formatAssemblyCost and parseAssemblyCostInput handle decimals", () => {
+  assert.equal(formatAssemblyCost("150.50"), "150,50");
+  assert.equal(formatAssemblyCost(0), "0,00");
+  assert.equal(parseAssemblyCostInput("50,5"), "50.50");
+  assert.equal(parseAssemblyCostInput("10"), "10.00");
+  assert.equal(parseAssemblyCostInput("-1"), null);
+  assert.equal(parseAssemblyCostInput("abc"), null);
+});
+
+test("validateAssemblyVariantDraft and operation line draft", () => {
+  assert.equal(validateAssemblyVariantDraft({ name: "  " }), "Укажите название варианта");
+  assert.equal(validateAssemblyVariantDraft({ name: "С отстрочкой" }), null);
+  assert.equal(
+    validateAssemblyOperationLineDraft({ operation_name: "", cost: "10" }),
+    "Укажите название операции",
+  );
+  assert.equal(
+    validateAssemblyOperationLineDraft({ operation_name: "Отстрочка", cost: "-1" }),
+    "Укажите стоимость операции (число ≥ 0)",
+  );
+  assert.equal(
+    validateAssemblyOperationLineDraft({ operation_name: "Отстрочка", cost: "50,00" }),
+    null,
   );
 });

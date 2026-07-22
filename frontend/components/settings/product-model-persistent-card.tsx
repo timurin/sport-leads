@@ -15,6 +15,7 @@ import {
 } from "@/app/(workspace)/settings/catalogs/product-models/product-model-actions";
 import { CatalogVersionedCardLayout } from "@/components/entity/catalog-versioned-card-layout";
 import { VersionedWorkspace } from "@/components/entity/versioned-workspace";
+import { AssemblyVariantsBlock } from "@/components/settings/assembly-variants-block";
 import { ProductModelMediaCarousel } from "@/components/settings/product-model-media-carousel";
 import { ProductModelToolbarActions } from "@/components/settings/product-model-toolbar-actions";
 import { ProductModelVersionBar } from "@/components/settings/product-model-version-bar";
@@ -33,6 +34,7 @@ import {
   toProductModelRequisitesDraft,
   validateProductModelCreateDraft,
   validateProductModelImageFile,
+  type AssemblyVariant,
   type ProductModel,
   type ProductModelHistoryEntry,
   type ProductModelMedia,
@@ -52,12 +54,14 @@ export function ProductModelPersistentCard({
   versions,
   media,
   history,
+  assemblyVariants,
   initialEditing = false,
 }: {
   model: ProductModel;
   versions: ProductModelVersionView[];
   media: ProductModelMedia[];
   history: ProductModelHistoryEntry[];
+  assemblyVariants: AssemblyVariant[];
   initialEditing?: boolean;
 }) {
   const router = useRouter();
@@ -483,6 +487,17 @@ export function ProductModelPersistentCard({
               </SectionCard>
 
               <SectionCard
+                title="Варианты сборки"
+                description="Пакеты операций и стоимостей для выбора в заказе"
+                size="compact"
+              >
+                <AssemblyVariantsBlock
+                  modelId={current.id}
+                  variants={assemblyVariants}
+                />
+              </SectionCard>
+
+              <SectionCard
                 title="Рабочая область версии"
                 description={
                   activeVersion
@@ -496,7 +511,7 @@ export function ProductModelPersistentCard({
                 size="compact"
               >
                 <p className="text-portal-body text-portal-muted">
-                  Здесь появятся состав модели, связи и варианты сборки.
+                  Здесь появятся размерная сетка после этапа 6.2. Операции пошива — отдельный справочник (`/settings/catalogs/sewing_operations`).
                 </p>
               </SectionCard>
             </>

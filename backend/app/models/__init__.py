@@ -29,6 +29,8 @@ from app.models.sales import (
 )
 from app.models.media import NomenclatureMedia
 from app.models.product_model import (
+    AssemblyOperationLine,
+    AssemblyVariant,
     ProductModel,
     ProductModelHistoryEntry,
     ProductModelMedia,
@@ -38,6 +40,7 @@ from app.models.product_model import (
     ProductModelVersionState,
     NomenclatureProductModel,
 )
+from app.models.sewing_operation import SewingOperation
 
 
 __all__ = [
@@ -79,6 +82,8 @@ __all__ = [
     "SalesOrderItem",
     "SalesOrderItemVariantSnapshot",
     "NomenclatureMedia",
+    "AssemblyOperationLine",
+    "AssemblyVariant",
     "ProductModel",
     "ProductModelHistoryEntry",
     "ProductModelMedia",
@@ -87,6 +92,7 @@ __all__ = [
     "ProductModelVersion",
     "ProductModelVersionState",
     "NomenclatureProductModel",
+    "SewingOperation",
     "SalesOrderItemVariantSnapshot",
     "SalesOrderStatus",
     "SalesUser",

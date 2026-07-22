@@ -29,7 +29,6 @@
 | `cover_image_url` | string, nullable | Optional cover/thumbnail URL (list + card preview; full media gallery later) |
 | `status` | enum | See §4 (`draft` \| `active` \| `archived`) |
 | `size_grid_id` | FK, nullable | 0..1 — see §3 |
-| `pattern_set_id` | FK, nullable | 0..1 — see §3 |
 | `created_at` / `updated_at` | timestamptz | Timezone-aware |
 
 Money fields do **not** live on the model header. Assembly costs live on `AssemblyOperationLine` (`6.1.12`).
@@ -50,13 +49,13 @@ Default on create: `draft`.
 | Link | Cardinality | Notes |
 |---|---|---|
 | `ProductModel` → `SizeGrid` | **0..1** now; **1:1 required** when model is production-ready (after `6.2.7` enforcement may stay soft-nullable with validation on activate) | Grid must be compatible with model `size_type`. No multi-gender grid under one model. |
-| `ProductModel` → `PatternSet` | **0..1** now; target **1:1** after `6.3.7` | One pattern set per model; versions live on the set / PT-08 bar, not as nested gender families. |
 
-Inverse: a size grid or pattern set **may** be reusable across models only if a later ADR allows shared reference; default MVP assumption for `6.2.1` / `6.3.1` remains **owned or exclusive** until that ADR says otherwise. This contract does **not** invent shared-grid reuse.
+Inverse: a size grid **may** be reusable across models only if a later ADR allows shared reference; default MVP assumption for `6.2.1` remains **owned or exclusive** until that ADR says otherwise.
 
-**Forbidden:** `ModelContour` / nested size_type arrays / N size grids or N pattern sets on one model.
+**Forbidden:** `ModelContour` / nested size_type arrays / N size grids on one model.  
+**Withdrawn:** `ProductModel` → `PatternSet` (Stage 6.3 now = flat `SewingOperation` catalog; see `sewing-operations-domain.md`).
 
-Assembly variants (`AssemblyVariant[]`) are **1:N children of the model**, not a second link axis like grids/patterns.
+Assembly variants (`AssemblyVariant[]`) are **1:N children of the model**, not a second link axis like grids.
 
 ## 4. Status and versioning (`6.1.1.3`)
 
@@ -113,25 +112,34 @@ Spec copies assembly operation lines from the **order-item assembly-variant snap
 
 ### 5.5 Technical card (Stage 9 / ADR-015)
 
-TC links or snapshots model / assembly variant / patterns per future ADR-015. Domain constraint from this contract: TC must not become a second pattern-base master.
+TC links or snapshots model / assembly variant / sewing operations per future ADR-015. Domain constraint from this contract: TC must not become a second pattern-base master.
 
 ### 5.6 Stage 8 shop routing
 
 Shop routings may later reference a model/variant for execution; they must not duplicate manager-facing assembly packages (ADR-014).
 
-## 6. Out of scope for `6.1.1`
+## 6. Assembly variants (`6.1.12`)
 
-- SQLAlchemy / Alembic / API (`6.1.2+`)
-- Size-grid / pattern entity schemas (`6.2.*` / `6.3.*`)
-- Assembly variant persistence (`6.1.12`)
+| Entity | Fields | Rules |
+|---|---|---|
+| `AssemblyVariant` | `product_model_id`, `name` (unique per model), `is_active`, `sort_order` | 1:N child of `ProductModel`; inactive variants excluded from new order picks (`active_only`) |
+| `AssemblyOperationLine` | `assembly_variant_id`, `sequence` (≥1, unique per variant), `operation_name`, `cost` (`Numeric(14,2)` ≥0) | MVP inline name+cost (ADR-014 §6); no shared operations catalog yet |
+
+`total_cost` is always computed as Σ line costs (`Decimal`); not persisted.
+
+## 7. Out of scope for domain contract alone
+
+- SQLAlchemy / Alembic / API implementation details beyond field contracts
+- Size-grid entity schemas (`6.2.*`); sewing operations (`6.3.*` / `sewing-operations-domain.md`)
+- Order-item snapshot persistence (`6.1.13`)
 - UI feature fill beyond already shipped shells
 
-## 7. Checkpoint (`6.1.1.5`)
+## 8. Checkpoint (`6.1.1.5`)
 
 | Criterion | Status |
 |---|---|
 | Single source of truth for product models | Yes — this doc + ADR-014 |
 | Flat `1 model = 1 size_type = 1 article` | Explicit §1–§2 |
-| Dependencies on grids, patterns, assembly variants, specs | Explicit §3–§5 |
+| Dependencies on grids, sewing ops, assembly variants, specs | Explicit §3–§6 |
 
-**Next:** `6.1.2` database core.
+**Next:** size grids (`6.2`) / sewing-ops catalog link into assembly lines (`6.3.6`) after order binding (`6.1.13`).

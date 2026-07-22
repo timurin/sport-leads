@@ -27,16 +27,15 @@ Evidence: `pt-02-catalog-list.md`, `pt-08-catalog-card-layout.md`.
 |---|---|---|---|
 | `/settings/catalogs/product-models` | list | **PT-02** + **`DS-PT-02-CATALOG`** | **Etalon** for directories / sections / categories lists. Impl: `ProductModelsWorkspace`. Contract: `pt-02-catalog-list.md`. Create → `CreateDrawer` (ADR-013). |
 | `/settings/catalogs/size-grids` | list | **PT-02** + **`DS-PT-02-CATALOG`** | Same catalog-list chrome as models. |
-| `/settings/catalogs/patterns` | list | **PT-02** + **`DS-PT-02-CATALOG`** | Same catalog-list chrome as models. |
+| `/settings/catalogs/sewing_operations` | list | **PT-02** + **`DS-PT-02-CATALOG`** | Same catalog-list chrome as models. Impl: `SewingOperationsWorkspace`. Replaces withdrawn `/settings/catalogs/patterns`. |
 | `/settings/catalogs/product-models/[modelId]` | card | **PT-08** + **`DS-PT-08-CATALOG`** | **Etalon** for versioned catalog cards. Impl: `ProductModelPersistentCard` + `CatalogVersionedCardLayout`. Layout: `pt-08-catalog-card-layout.md`. Demo: `demo-reference`. |
 | `/settings/catalogs/size-grids/[gridId]` | card | **PT-05** (`DS-PT-05`) | Simple settings card (no versions): header + attributes + size-rows table. Ref: characteristic detail. |
-| `/settings/catalogs/patterns/[patternSetId]` | card | **PT-08** + **`DS-PT-08-CATALOG`** | Same catalog grid as models; version bar + history in `versions` slot. |
 | `/settings/catalogs/nomenclature/[id]` | PRODUCT block | **existing nomenclature card** (PT-06 card chrome) | No new page template. Block «Доступные модели лекал» inside current card. |
 | Future settings directories / sections / categories | list (+ card) | **`DS-PT-02-CATALOG`** (+ **`DS-PT-08-CATALOG`** if versioned, else **PT-05**) | Do **not** copy `/sales/clients` or invent parallel chrome. |
 
 PT-06 Lead-style complex card is **not** used for model/pattern/size-grid cards.
 
-## List slots (PT-02-CATALOG) — models / size grids / patterns / directories
+## List slots (PT-02-CATALOG) — models / size grids / sewing operations / directories
 
 Required when filling `6.1.7` / `6.2.4` / `6.3.4` and future directory lists:
 
@@ -59,7 +58,7 @@ Layout etalon: `pt-08-catalog-card-layout.md` / `CatalogVersionedCardLayout`.
 | Slot / block | Content | When |
 |---|---|---|
 | `main` — attributes | article, name, `size_type`, description, status (header) | `6.1.8+` |
-| `main` — workspace | composition / links / assembly variants | `6.1.12+` / links after `6.2.7` / `6.3.7` |
+| `main` — workspace | composition / links / assembly variants | `6.1.12+` / links after `6.2.7` |
 | `media` | photo carousel (primary → list thumb) | `6.1.8+` |
 | `versions` | version bar + change history | `6.1.6` / `6.1.8+` |
 
@@ -73,14 +72,15 @@ Assembly variants are **not** a separate PT and **not** a nomenclature-variant U
 | Primary | meta (name, notes, compatibility with `size_type`) |
 | Secondary table | size rows / growth groups (`DataTable` + local x-scroll) |
 
-## Pattern card (PT-08)
+## Sewing operations list (PT-02)
 
-| Section | Content |
+Flat catalog — no dedicated PT-08 card. Create/edit via CreateDrawer + inline row edit on the list (same chrome as product-models list).
+
+| Column / action | Content |
 |---|---|
-| Version bar | draft / published / archived |
-| Primary | set meta + link to model |
-| Parts / files | table or list; empty → `EmptyState` |
-| History | PT-08 history slot |
+| Наименование | unique name |
+| Стоимость | `Numeric` display |
+| Actions | edit / delete |
 
 ## PRODUCT «доступные модели лекал» (nomenclature card)
 

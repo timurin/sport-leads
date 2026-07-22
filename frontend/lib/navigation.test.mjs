@@ -38,7 +38,10 @@ test("settings navigation exposes pattern-base catalogs", () => {
     [
       { id: "product-models", href: "/settings/catalogs/product-models" },
       { id: "size-grids", href: "/settings/catalogs/size-grids" },
-      { id: "patterns", href: "/settings/catalogs/patterns" },
+      {
+        id: "sewing-operations",
+        href: "/settings/catalogs/sewing_operations",
+      },
     ],
   );
 });

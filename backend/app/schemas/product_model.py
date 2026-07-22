@@ -1,4 +1,5 @@
 from datetime import datetime
+from decimal import Decimal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -156,3 +157,86 @@ class NomenclatureProductModelRead(BaseModel):
     name: str
     size_type: ProductModelSizeType
     status: ProductModelStatus
+
+
+class AssemblyOperationLineBase(BaseModel):
+    operation_name: str = Field(min_length=1, max_length=255)
+    cost: Decimal = Field(default=Decimal("0"), ge=0, max_digits=14, decimal_places=2)
+    sequence: int | None = Field(default=None, ge=1)
+
+    @field_validator("operation_name", mode="before")
+    @classmethod
+    def strip_operation_name(cls, value: object) -> object:
+        return value.strip() if isinstance(value, str) else value
+
+
+class AssemblyOperationLineCreate(AssemblyOperationLineBase):
+    pass
+
+
+class AssemblyOperationLineUpdate(BaseModel):
+    operation_name: str | None = Field(default=None, min_length=1, max_length=255)
+    cost: Decimal | None = Field(default=None, ge=0, max_digits=14, decimal_places=2)
+    sequence: int | None = Field(default=None, ge=1)
+
+    @field_validator("operation_name", mode="before")
+    @classmethod
+    def strip_operation_name(cls, value: object) -> object:
+        return value.strip() if isinstance(value, str) else value
+
+
+class AssemblyOperationLineRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    assembly_variant_id: int
+    sequence: int
+    operation_name: str
+    cost: Decimal
+    created_at: datetime
+    updated_at: datetime
+
+
+class AssemblyOperationLineReorder(BaseModel):
+    operation_line_ids: list[int] = Field(min_length=1)
+
+
+class AssemblyVariantCreate(BaseModel):
+    name: str = Field(min_length=1, max_length=255)
+    is_active: bool = True
+    sort_order: int | None = Field(default=None, ge=0)
+    operation_lines: list[AssemblyOperationLineCreate] = Field(default_factory=list)
+
+    @field_validator("name", mode="before")
+    @classmethod
+    def strip_name(cls, value: object) -> object:
+        return value.strip() if isinstance(value, str) else value
+
+
+class AssemblyVariantUpdate(BaseModel):
+    name: str | None = Field(default=None, min_length=1, max_length=255)
+    is_active: bool | None = None
+    sort_order: int | None = Field(default=None, ge=0)
+
+    @field_validator("name", mode="before")
+    @classmethod
+    def strip_name(cls, value: object) -> object:
+        return value.strip() if isinstance(value, str) else value
+
+
+class AssemblyVariantRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    product_model_id: int
+    name: str
+    is_active: bool
+    sort_order: int
+    total_cost: Decimal
+    operation_lines: list[AssemblyOperationLineRead]
+    created_at: datetime
+    updated_at: datetime
+
+
+class AssemblyVariantReorder(BaseModel):
+    assembly_variant_ids: list[int] = Field(min_length=1)

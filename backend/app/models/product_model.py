@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
+from decimal import Decimal
 from enum import Enum
 
 from sqlalchemy import (
@@ -9,6 +10,7 @@ from sqlalchemy import (
     DateTime,
     ForeignKey,
     Integer,
+    Numeric,
     String,
     Text,
     UniqueConstraint,
@@ -40,7 +42,7 @@ class ProductModelVersionState(str, Enum):
 class ProductModel(Base):
     """Flat product-model catalog (ADR-014 / product-model-domain.md).
 
-    Size-grid / pattern-set FKs land in `6.2.7` / `6.3.7`.
+    Size-grid / pattern-set FKs: size-grid in `6.2.7`; PatternSet withdrawn (`6.3` = sewing operations).
     """
 
     __tablename__ = "product_models"
@@ -96,6 +98,11 @@ class ProductModel(Base):
         back_populates="product_model",
         cascade="all, delete-orphan",
         order_by="ProductModelHistoryEntry.created_at.desc(), ProductModelHistoryEntry.id.desc()",
+    )
+    assembly_variants: Mapped[list[AssemblyVariant]] = relationship(
+        back_populates="product_model",
+        cascade="all, delete-orphan",
+        order_by="AssemblyVariant.sort_order, AssemblyVariant.id",
     )
 
 
@@ -254,3 +261,96 @@ class NomenclatureProductModel(Base):
         server_default=func.now(),
         onupdate=func.now(),
     )
+
+
+class AssemblyVariant(Base):
+    """Manager-facing assembly/finishing package on a product model (ADR-014 / `6.1.12`).
+
+    Total cost is always Σ operation line costs (computed, not stored).
+    Stage 8 shop routings are a separate contour.
+    """
+
+    __tablename__ = "assembly_variants"
+    __table_args__ = (
+        UniqueConstraint(
+            "product_model_id",
+            "name",
+            name="uq_assembly_variants_model_name",
+        ),
+        CheckConstraint(
+            "sort_order >= 0",
+            name="ck_assembly_variants_sort_order",
+        ),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    product_model_id: Mapped[int] = mapped_column(
+        ForeignKey("product_models.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    name: Mapped[str] = mapped_column(String(255), nullable=False)
+    is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True, index=True)
+    sort_order: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+        onupdate=func.now(),
+    )
+
+    product_model: Mapped[ProductModel] = relationship(back_populates="assembly_variants")
+    operation_lines: Mapped[list[AssemblyOperationLine]] = relationship(
+        back_populates="assembly_variant",
+        cascade="all, delete-orphan",
+        order_by="AssemblyOperationLine.sequence, AssemblyOperationLine.id",
+    )
+
+
+class AssemblyOperationLine(Base):
+    """Ordered operation row inside an assembly variant (MVP: inline name + cost)."""
+
+    __tablename__ = "assembly_operation_lines"
+    __table_args__ = (
+        UniqueConstraint(
+            "assembly_variant_id",
+            "sequence",
+            name="uq_assembly_operation_lines_variant_sequence",
+        ),
+        CheckConstraint(
+            "sequence >= 1",
+            name="ck_assembly_operation_lines_sequence",
+        ),
+        CheckConstraint(
+            "cost >= 0",
+            name="ck_assembly_operation_lines_cost",
+        ),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    assembly_variant_id: Mapped[int] = mapped_column(
+        ForeignKey("assembly_variants.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    sequence: Mapped[int] = mapped_column(Integer, nullable=False)
+    operation_name: Mapped[str] = mapped_column(String(255), nullable=False)
+    cost: Mapped[Decimal] = mapped_column(Numeric(14, 2), nullable=False, default=Decimal("0"))
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+        onupdate=func.now(),
+    )
+
+    assembly_variant: Mapped[AssemblyVariant] = relationship(back_populates="operation_lines")

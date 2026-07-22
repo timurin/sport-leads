@@ -360,9 +360,9 @@ export const appSections: AppSection[] = [
             href: "/settings/catalogs/size-grids",
           },
           {
-            id: "patterns",
-            title: "Лекала",
-            href: "/settings/catalogs/patterns",
+            id: "sewing-operations",
+            title: "Операции пошива",
+            href: "/settings/catalogs/sewing_operations",
           },
         ],
       },

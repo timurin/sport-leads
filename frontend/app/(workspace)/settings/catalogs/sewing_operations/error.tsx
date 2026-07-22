@@ -4,7 +4,7 @@ import { useEffect } from "react";
 
 import { PageErrorState } from "@/components/ui/page-state";
 
-export default function PatternSetCardError({
+export default function SewingOperationsError({
   error,
   reset,
 }: {
@@ -17,7 +17,7 @@ export default function PatternSetCardError({
 
   return (
     <PageErrorState
-      title="Не удалось загрузить карточку лекал"
+      title="Не удалось загрузить операции пошива"
       error={error}
       reset={reset}
     />

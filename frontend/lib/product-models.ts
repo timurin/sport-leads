@@ -319,3 +319,98 @@ export async function getProductModelHistory(
   }
   return (await response.json()) as ProductModelHistoryEntry[];
 }
+
+export type AssemblyOperationLine = {
+  id: number;
+  assembly_variant_id: number;
+  sequence: number;
+  operation_name: string;
+  cost: string;
+  created_at: string;
+  updated_at: string;
+};
+
+export type AssemblyVariant = {
+  id: number;
+  product_model_id: number;
+  name: string;
+  is_active: boolean;
+  sort_order: number;
+  total_cost: string;
+  operation_lines: AssemblyOperationLine[];
+  created_at: string;
+  updated_at: string;
+};
+
+export type AssemblyVariantDraft = {
+  name: string;
+};
+
+export type AssemblyOperationLineDraft = {
+  operation_name: string;
+  cost: string;
+};
+
+/** Display money from API Decimal JSON (`6.1.12`). */
+export function formatAssemblyCost(value: string | number): string {
+  const amount = typeof value === "number" ? value : Number(String(value).replace(",", "."));
+  if (!Number.isFinite(amount)) {
+    return "0,00";
+  }
+  return amount.toLocaleString("ru-RU", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+}
+
+/** Normalize user cost input to API decimal string, or null if invalid. */
+export function parseAssemblyCostInput(raw: string): string | null {
+  const normalized = raw.trim().replace(/\s/g, "").replace(",", ".");
+  if (!normalized) return null;
+  if (!/^\d+(\.\d{1,2})?$/.test(normalized)) return null;
+  const amount = Number(normalized);
+  if (!Number.isFinite(amount) || amount < 0) return null;
+  return amount.toFixed(2);
+}
+
+export function validateAssemblyVariantDraft(
+  draft: AssemblyVariantDraft,
+): string | null {
+  if (!draft.name.trim()) {
+    return "Укажите название варианта";
+  }
+  if (draft.name.trim().length > 255) {
+    return "Название варианта не длиннее 255 символов";
+  }
+  return null;
+}
+
+export function validateAssemblyOperationLineDraft(
+  draft: AssemblyOperationLineDraft,
+): string | null {
+  if (!draft.operation_name.trim()) {
+    return "Укажите название операции";
+  }
+  if (draft.operation_name.trim().length > 255) {
+    return "Название операции не длиннее 255 символов";
+  }
+  if (parseAssemblyCostInput(draft.cost) == null) {
+    return "Укажите стоимость операции (число ≥ 0)";
+  }
+  return null;
+}
+
+export async function getProductModelAssemblyVariants(
+  modelId: number,
+): Promise<AssemblyVariant[]> {
+  const response = await fetch(
+    `${apiBaseUrl()}/product-models/${modelId}/assembly-variants`,
+    { cache: "no-store" },
+  );
+  if (!response.ok) {
+    throw new Error(
+      `Не удалось загрузить варианты сборки (${response.status}).`,
+    );
+  }
+  return (await response.json()) as AssemblyVariant[];
+}

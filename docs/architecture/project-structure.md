@@ -1,7 +1,7 @@
 # Sport-Lead — Project Structure Checklist
 
 **Code:** `SL-PROJECT-STRUCTURE-v1`
-**Updated:** `2026-07-22` (product-models through `6.1.11` whitelist shipped; next `6.1.12` assembly variants)
+**Updated:** `2026-07-22` (sewing-operations catalog replaces Patterns/`PatternSet`; assembly-variants UI pending owner visual `6.1.12.6`)
 **Project version:** `v0.9.0`
 **Git branch:** `feature/v0.8.1-nomenclature-core`
 **Git commit:** `bc63397`
@@ -90,7 +90,7 @@
 - [ ] Relation between materials and the common nomenclature contour — `ADR-012` / roadmap `4.6` (migrate into `Nomenclature` type `MATERIAL`)
 - [ ] Suppliers, procurement prices, batches, stock balances, and consumption norms (stock balances must not live on the nomenclature card)
 
-## 8. База лекал (Models / Size grids / Patterns), Specifications, and Routings
+## 8. База лекал (Models / Size grids / Sewing ops), Specifications, and Routings
 
 - [x] Size distribution inside sales-order items
 - [x] Product-model domain contract — `ADR-014` + `product-model-domain.md` (`6.1.1`)
@@ -98,7 +98,8 @@
 - [x] Product-model list UI owner visual — `DS-PT-02-CATALOG` etalon `/settings/catalogs/product-models` (`6.1.7.5`; directories/sections/categories)
 - [x] Product-model card UI owner visual — `DS-PT-08-CATALOG` etalon `/settings/catalogs/product-models/[id]` (`6.1.8.5`)
 - [x] Product-model create / edit UI and PRODUCT whitelist — create/edit visual OK; whitelist API+UI `6.1.11` shipped
-- [ ] Pattern catalog, files, and grading
+- [x] Assembly variants API + model-card UI — `assembly_variants` / `AssemblyVariantsBlock` (`6.1.12.1–5`); owner visual pending `6.1.12.6`
+- [x] Sewing operations flat catalog API + PT-02 list UI — `sewing_operations` / `/settings/catalogs/sewing_operations` (`6.3.1–5`; owner visual pending `6.3.4.5` / `6.3.5.4`); PatternSet withdrawn
 - [ ] Dedicated size-grid directory and measurements
 - [ ] Specifications and bill-of-materials contour
 - [ ] Routing, operations, equipment, work centers, and quality checkpoints
@@ -106,7 +107,7 @@
 ## 9. Technical cards (Технические карты)
 
 - [ ] Domain contract: one technical card per manufacturable sales order line; unit lines inside the card (ADR-015)
-- [ ] Links to model, patterns, materials, routing; stage execution and order manufacturing completeness
+- [ ] Links to model, sewing operations, materials, routing; stage execution and order manufacturing completeness
 
 ## 10. Design, Production, Warehouse, Procurement, and Shipping
 

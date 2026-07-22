@@ -244,3 +244,110 @@ export async function setProductModelMediaPrimary(formData: FormData) {
   revalidateModel(modelId);
   return media;
 }
+
+export type AssemblyActionResult =
+  | { ok: true }
+  | { ok: false; message: string };
+
+export async function createAssemblyVariant(
+  modelId: number,
+  name: string,
+): Promise<AssemblyActionResult> {
+  const trimmed = name.trim();
+  if (!trimmed) {
+    return { ok: false, message: "Укажите название варианта" };
+  }
+  const response = await fetch(
+    `${apiBaseUrl()}/product-models/${modelId}/assembly-variants`,
+    {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ name: trimmed, operation_lines: [] }),
+      cache: "no-store",
+    },
+  );
+  if (!response.ok) {
+    return { ok: false, message: await readError(response) };
+  }
+  revalidateModel(modelId);
+  return { ok: true };
+}
+
+export async function updateAssemblyVariant(
+  modelId: number,
+  variantId: number,
+  payload: { name?: string; is_active?: boolean },
+): Promise<AssemblyActionResult> {
+  const body: Record<string, unknown> = {};
+  if (payload.name != null) body.name = payload.name.trim();
+  if (payload.is_active != null) body.is_active = payload.is_active;
+  const response = await fetch(
+    `${apiBaseUrl()}/product-models/${modelId}/assembly-variants/${variantId}`,
+    {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(body),
+      cache: "no-store",
+    },
+  );
+  if (!response.ok) {
+    return { ok: false, message: await readError(response) };
+  }
+  revalidateModel(modelId);
+  return { ok: true };
+}
+
+export async function deleteAssemblyVariant(
+  modelId: number,
+  variantId: number,
+): Promise<AssemblyActionResult> {
+  const response = await fetch(
+    `${apiBaseUrl()}/product-models/${modelId}/assembly-variants/${variantId}`,
+    { method: "DELETE", cache: "no-store" },
+  );
+  if (!response.ok && response.status !== 204) {
+    return { ok: false, message: await readError(response) };
+  }
+  revalidateModel(modelId);
+  return { ok: true };
+}
+
+export async function addAssemblyOperationLine(
+  modelId: number,
+  variantId: number,
+  payload: { operation_name: string; cost: string },
+): Promise<AssemblyActionResult> {
+  const response = await fetch(
+    `${apiBaseUrl()}/product-models/${modelId}/assembly-variants/${variantId}/operation-lines`,
+    {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        operation_name: payload.operation_name.trim(),
+        cost: payload.cost,
+      }),
+      cache: "no-store",
+    },
+  );
+  if (!response.ok) {
+    return { ok: false, message: await readError(response) };
+  }
+  revalidateModel(modelId);
+  return { ok: true };
+}
+
+export async function deleteAssemblyOperationLine(
+  modelId: number,
+  variantId: number,
+  lineId: number,
+): Promise<AssemblyActionResult> {
+  const response = await fetch(
+    `${apiBaseUrl()}/product-models/${modelId}/assembly-variants/${variantId}/operation-lines/${lineId}`,
+    { method: "DELETE", cache: "no-store" },
+  );
+  if (!response.ok) {
+    return { ok: false, message: await readError(response) };
+  }
+  revalidateModel(modelId);
+  return { ok: true };
+}

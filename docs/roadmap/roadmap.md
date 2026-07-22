@@ -403,10 +403,10 @@ Microtasks:
 
 ## Stage 6 — База лекал
 
-> Structure note (`2026-07-22`, flat model + assembly variants): modules `6.1` Models / `6.2` Size grids / `6.3` Patterns; `6.0` shell and ADR; `6.4` integration checkpoint. Agreed domain: **1 model = 1 size type (men/women/kids) = 1 article**; assembly/finishing variants live on the model; PRODUCT nomenclature holds **available pattern models** whitelist. Commercial assembly packages are Stage 6 (before Specs). Stage 8 keeps shop-floor routings / work centers / execution — not a second place to invent manager-facing assembly variants. Stages 7+ include Technical cards (Stage 9).
+> Structure note (`2026-07-22`, amended): modules `6.1` Models / `6.2` Size grids / `6.3` **Sewing operations** (replaces Patterns/`PatternSet`); `6.0` shell and ADR; `6.4` integration checkpoint. Agreed domain: **1 model = 1 size type (men/women/kids) = 1 article**; assembly/finishing variants live on the model; PRODUCT nomenclature holds **available pattern models** whitelist; sewing ops = flat `name`+`cost` catalog. Commercial assembly packages are Stage 6 (before Specs). Stage 8 keeps shop-floor routings / work centers / execution — not a second place to invent manager-facing assembly variants. Stages 7+ include Technical cards (Stage 9).
 
 Goal:
-Собрать справочник моделей изделий для лидов, заказа покупателя, спецификации и технической карты: плоская модель (артикул + тип размера), размерная сетка 1:1, лекала 1:1, варианты сборки/отделки с операциями и стоимостью; на номенклатуре PRODUCT — whitelist доступных моделей.
+Собрать справочник моделей изделий для лидов, заказа покупателя, спецификации и технической карты: плоская модель (артикул + тип размера), размерная сетка 1:1, плоский справочник операций пошива, варианты сборки/отделки с операциями и стоимостью; на номенклатуре PRODUCT — whitelist доступных моделей.
 
 ### 6.0 — Module shell and contracts
 
@@ -441,8 +441,8 @@ Dependencies:
 - 6.0.1
 
 Microtasks:
-- [x] 6.0.2.1 — Add navigation entries in `frontend/lib/navigation.ts` — `v0.9.0`; settings group `pattern-base` (models / size grids / patterns); evidence: `frontend/lib/navigation.ts`, `frontend/lib/navigation.test.mjs`
-- [x] 6.0.2.2 — Route group placeholders for list/card routes — `v0.9.0`; list shells + size-grid/pattern card placeholders without demo catalog data; evidence: `frontend/app/(workspace)/settings/catalogs/{product-models,size-grids,patterns}/`, `frontend/components/settings/catalog-shell-placeholder.tsx`
+- [x] 6.0.2.1 — Add navigation entries in `frontend/lib/navigation.ts` — `v0.9.0`; settings group `pattern-base` (models / size grids / **sewing operations**; was patterns); evidence: `frontend/lib/navigation.ts`, `frontend/lib/navigation.test.mjs`
+- [x] 6.0.2.2 — Route group placeholders for list/card routes — `v0.9.0`; list shells + size-grid placeholders; **patterns routes removed `2026-07-22`** → `/settings/catalogs/sewing_operations`; evidence: `frontend/app/(workspace)/settings/catalogs/{product-models,size-grids,sewing_operations}/`
 - [x] 6.0.2.3 — Smoke: shell links resolve (no demo data) — `v0.9.0`; owner visual OK (`2026-07-22`); HTTP 200 shells without demo rows; `DS-SHELL-01`/`DS-SHELL-02` visual contract preserved; task: `docs/tasks/v0.9.0-stage-6.0.2-pattern-base-navigation.md`
 
 Completion criteria:
@@ -698,11 +698,11 @@ Dependencies:
 - 6.0.1
 
 Microtasks:
-- [ ] 6.1.12.1 — Define AssemblyVariant + AssemblyOperationLine entities (sequence, operation name or id, Decimal cost; total = Σ lines)
-- [ ] 6.1.12.2 — Add Alembic migration, schemas, repository/service CRUD
-- [ ] 6.1.12.3 — Add API endpoints scoped to product model
-- [ ] 6.1.12.4 — Add model-card UI block for variants and operation lines
-- [ ] 6.1.12.5 — Add regression tests (ordering, totals, inactive variants)
+- [x] 6.1.12.1 — Define AssemblyVariant + AssemblyOperationLine entities (sequence, operation name or id, Decimal cost; total = Σ lines) — `v0.9.0`; `AssemblyVariant` / `AssemblyOperationLine` in `product_model.py`; domain §6
+- [x] 6.1.12.2 — Add Alembic migration, schemas, repository/service CRUD — `v0.9.0`; `p6q7r8s9t012`; `repositories/assembly_variants.py`; `services/assembly_variants.py`
+- [x] 6.1.12.3 — Add API endpoints scoped to product model — `v0.9.0`; `/product-models/{id}/assembly-variants` (+ lines CRUD/reorder)
+- [x] 6.1.12.4 — Add model-card UI block for variants and operation lines — `v0.9.0`; `AssemblyVariantsBlock` on PT-08 card main slot
+- [x] 6.1.12.5 — Add regression tests (ordering, totals, inactive variants) — `v0.9.0`; `test_assembly_variants.py`; frontend helpers in `product-models.test.mjs`
 - [ ] 6.1.12.6 — Visual verification
 
 Completion criteria:
@@ -866,153 +866,147 @@ Completion criteria:
 - product models store a valid 1:1 size-grid relation;
 - invalid relations are rejected.
 
-### 6.3 — Лекала (Patterns)
+### 6.3 — Операции пошива (Sewing Operations)
 
-#### 6.3.1 — Pattern domain architecture
+> Amended `2026-07-22`: former «Лекала / PatternSet» contour withdrawn; Stage `6.3` is a flat sewing-operations catalog (`name` + `cost`).
+
+#### 6.3.1 — Sewing-operation domain architecture
 
 Goal:
-Define pattern sets, pattern parts, and versioning boundaries for product models (1:1 model → pattern set).
+Define flat `SewingOperation` catalog (name, cost) and boundaries vs assembly variant lines and Stage 8 shop operations.
 
 Dependencies:
 - 6.1.1
-- 6.2.7
+- 6.0.1
 
 Microtasks:
-- [ ] 6.3.1.1 — Define pattern entities and lifecycle
-- [ ] 6.3.1.2 — Define file and version boundaries
-- [ ] 6.3.1.3 — Documentation checkpoint
+- [x] 6.3.1.1 — Define sewing-operation entity fields and uniqueness — `v0.9.0`; evidence: `docs/architecture/sewing-operations-domain.md`
+- [x] 6.3.1.2 — Document boundary vs inline `AssemblyOperationLine` and withdrawn `PatternSet` — `v0.9.0`; ADR-014 amendment + domain §3
+- [x] 6.3.1.3 — Documentation checkpoint — `v0.9.0`; task: `docs/tasks/v0.9.0-stage-6.3-sewing-operations.md`
 
 Completion criteria:
-- pattern contour is clearly separated from models, assembly variants, and specifications;
-- file/version rules are explicit;
-- no nested multi-gender pattern families under one model.
+- sewing-ops contour is clearly separated from models, pattern files, and Stage 8 routings;
+- no model→pattern_set link in Stage 6.
 
-#### 6.3.2 — Pattern database and metadata core
+#### 6.3.2 — Sewing-operation database core
 
 Goal:
-Create persistent pattern metadata (sets, parts, versions).
+Create persistent flat sewing-operations table.
 
 Dependencies:
 - 6.3.1
 
 Microtasks:
-- [ ] 6.3.2.1 — Add SQLAlchemy entities for pattern sets, parts, and versions
-- [ ] 6.3.2.2 — Add Alembic migration
-- [ ] 6.3.2.3 — Add file metadata strategy (no uncontrolled parallel store)
-- [ ] 6.3.2.4 — Add backend regression tests
+- [x] 6.3.2.1 — Add SQLAlchemy entity `SewingOperation` — `v0.9.0`; `backend/app/models/sewing_operation.py`
+- [x] 6.3.2.2 — Add Alembic migration — `v0.9.0`; `q7r8s9t0u123_add_sewing_operations.py`
+- [x] 6.3.2.3 — Add backend regression tests — `v0.9.0`; `backend/tests/test_sewing_operations.py`
 
 Completion criteria:
-- pattern metadata is persistent;
+- sewing operations are persistent;
 - migration is reversible.
 
-#### 6.3.3 — Pattern CRUD API
+#### 6.3.3 — Sewing-operation CRUD API
 
 Goal:
-Backend catalog for pattern sets and versions.
+Backend catalog CRUD for sewing operations.
 
 Dependencies:
 - 6.3.2
 
 Microtasks:
-- [ ] 6.3.3.1 — Add repository and service CRUD
-- [ ] 6.3.3.2 — Add endpoints
-- [ ] 6.3.3.3 — Add backend regression tests
+- [x] 6.3.3.1 — Add repository and service CRUD — `v0.9.0`
+- [x] 6.3.3.2 — Add endpoints `/sewing-operations` — `v0.9.0`
+- [x] 6.3.3.3 — Add backend regression tests — `v0.9.0`; unique name, cost ≥ 0, delete
 
 Completion criteria:
-- API supports CRUD;
+- API supports list/create/get/update/delete;
 - validation is tested.
 
-#### 6.3.4 — Pattern list workspace
+#### 6.3.4 — Sewing-operation list workspace
 
 Goal:
-Users can browse the pattern catalog in a list workspace.
+Users browse sewing operations in a PT-02 catalog list like product-models.
 
 Dependencies:
 - 6.3.3
 - 6.0.3
 
 Microtasks:
-- [ ] 6.3.4.1 — Add frontend types and API client
-- [ ] 6.3.4.2 — Add workspace/list route (PT-02)
-- [ ] 6.3.4.3 — Add loading and error states
-- [ ] 6.3.4.4 — Add frontend regression tests
+- [x] 6.3.4.1 — Add frontend types and API client — `v0.9.0`; `frontend/lib/sewing-operations.ts`
+- [x] 6.3.4.2 — Add workspace/list route (PT-02) — `v0.9.0`; `/settings/catalogs/sewing_operations`
+- [x] 6.3.4.3 — Add loading and error states — `v0.9.0`
+- [x] 6.3.4.4 — Add frontend regression tests — `v0.9.0`; `frontend/lib/sewing-operations.test.mjs`
 - [ ] 6.3.4.5 — Visual verification
 
 Completion criteria:
-- catalog list uses persistent API data.
+- catalog list uses persistent API data;
+- chrome matches `DS-PT-02-CATALOG` etalon (product-models).
 
-#### 6.3.5 — Pattern card and versions UI
+#### 6.3.5 — Sewing-operation create and edit UI
 
 Goal:
-Users open a pattern card and manage version metadata.
+Users create and edit sewing operations (name, cost) from the list workspace.
 
 Dependencies:
 - 6.3.4
 
 Microtasks:
-- [ ] 6.3.5.1 — Add detail card route
-- [ ] 6.3.5.2 — Add version list and metadata view
-- [ ] 6.3.5.3 — Add create/edit flows for pattern versions
-- [ ] 6.3.5.4 — Add loading/error states
-- [ ] 6.3.5.5 — Add frontend regression tests
-- [ ] 6.3.5.6 — Visual verification
+- [x] 6.3.5.1 — Add CreateDrawer flow — `v0.9.0`; `SewingOperationCreateDrawer`
+- [x] 6.3.5.2 — Add inline edit and delete on list — `v0.9.0`; `SewingOperationsWorkspace`
+- [x] 6.3.5.3 — Add server actions — `v0.9.0`; `sewing-operation-actions.ts`
+- [ ] 6.3.5.4 — Visual verification
 
 Completion criteria:
-- pattern versions are visible and editable;
-- route states are explicit.
+- forms save through API;
+- validation is visible in UI.
 
-#### 6.3.6 — Pattern file storage and delivery
+#### 6.3.6 — Wire sewing operations into assembly variant lines
 
 Goal:
-Secure upload, storage, download, and delete for pattern files.
+Optional pick from sewing-operations catalog when editing `AssemblyOperationLine` (keep inline snapshot; no hard dependency for MVP variants).
 
 Dependencies:
-- 6.3.2
+- 6.1.12
 - 6.3.5
 
 Microtasks:
-- [ ] 6.3.6.1 — Implement storage adapter and path rules
-- [ ] 6.3.6.2 — Add upload/download/delete API
-- [ ] 6.3.6.3 — Add frontend file actions on pattern card
-- [ ] 6.3.6.4 — Add regression tests (size/MIME limits)
+- [ ] 6.3.6.1 — Decide FK vs copy-on-pick for `AssemblyOperationLine`
+- [ ] 6.3.6.2 — Backend schema/API if FK or picker endpoint needed
+- [ ] 6.3.6.3 — Model-card assembly UI picker
+- [ ] 6.3.6.4 — Regression tests
 
 Completion criteria:
-- file lifecycle is controlled and tested;
-- no orphan files outside metadata.
+- managers can reuse catalog rows without breaking existing inline snapshots.
 
-#### 6.3.7 — Link patterns to product models
+#### 6.3.7 — PatternSet withdrawal checkpoint
 
 Goal:
-A product model references exactly one pattern set / version family.
+Confirm PatternSet / patterns routes / model→pattern link are fully removed from Stage 6 scope and docs.
 
 Dependencies:
-- 6.1.6
-- 6.3.5
+- 6.3.1
 
 Microtasks:
-- [ ] 6.3.7.1 — Add backend relation field on product model (single pattern_set_id / version family)
-- [ ] 6.3.7.2 — Add migration and schemas
-- [ ] 6.3.7.3 — Add service validation
-- [ ] 6.3.7.4 — Add model-card integration
-- [ ] 6.3.7.5 — Add regression tests
+- [x] 6.3.7.1 — Remove `/settings/catalogs/patterns` routes and nav entry — `v0.9.0`
+- [x] 6.3.7.2 — Amend ADR-014 and product-model domain (drop `pattern_set_id`) — `v0.9.0`
+- [x] 6.3.7.3 — Sync roadmap HTML / project-structure / PT mapping — `v0.9.0`
 
 Completion criteria:
-- model-to-pattern relation is persistent 1:1 and validated;
-- model UI exposes the relation clearly.
+- no live PatternSet master or patterns nav item remains in Stage 6.
 
 ### 6.4 — Pattern-base integration checkpoint
 
 #### 6.4.1 — End-to-end smoke scenario
 
 Goal:
-Prove PRODUCT → available models → model (size grid + patterns + assembly variants) → order-item selection without Stage 7 document creation.
+Prove PRODUCT → available models → model (size grid + assembly variants + sewing-ops catalog) → order-item selection without Stage 7 document creation.
 
 Dependencies:
 - 6.1.11
 - 6.1.12
 - 6.1.13
 - 6.2.7
-- 6.3.7
+- 6.3.5
 
 Microtasks:
 - [ ] 6.4.1.1 — Script or manual smoke checklist (whitelist filter, autofill size_type/article, variant offer, reject foreign model)
@@ -1051,7 +1045,7 @@ Dependencies:
 Microtasks:
 - [ ] 6.4.3.1 — Visual pass: models list/card (incl. assembly variants block)
 - [ ] 6.4.3.2 — Visual pass: size grids list/card
-- [ ] 6.4.3.3 — Visual pass: patterns list/card
+- [ ] 6.4.3.3 — Visual pass: sewing-operations list (`/settings/catalogs/sewing_operations`)
 - [ ] 6.4.3.4 — Visual pass: PRODUCT nomenclature available-models block + order selection flow
 
 Completion criteria:
@@ -1071,7 +1065,7 @@ Dependencies:
 - 6.1.1
 - 6.1.12
 - 6.1.13
-- 6.3.7
+- 6.3.5
 - ADR-004
 
 Microtasks:
@@ -1280,7 +1274,7 @@ Goal:
 Dependencies:
 - 3.2.4
 - 4.2.1
-- 6.1.4, 6.1.11, 6.1.12, 6.1.13, 6.2.7, 6.3.7
+- 6.1.4, 6.1.11, 6.1.12, 6.1.13, 6.2.7, 6.3.5
 - 7.2.3
 - 8.2.3
 - ADR-004

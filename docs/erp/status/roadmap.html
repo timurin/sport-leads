@@ -2003,28 +2003,28 @@
                 microtasks: [
                   {
                     code: "6.1.12.1",
-                    title: "Define AssemblyVariant + AssemblyOperationLine entities (sequence, operation name or id, Decimal cost; total = Σ lines)",
-                    done: false
+                    title: "Define AssemblyVariant + AssemblyOperationLine entities (sequence, operation name or id, Decimal cost; total = Σ lines) — `v0.9.0`; ORM + domain §6",
+                    done: true
                   },
                   {
                     code: "6.1.12.2",
-                    title: "Add Alembic migration, schemas, repository/service CRUD",
-                    done: false
+                    title: "Add Alembic migration, schemas, repository/service CRUD — `v0.9.0`; `p6q7r8s9t012`",
+                    done: true
                   },
                   {
                     code: "6.1.12.3",
-                    title: "Add API endpoints scoped to product model",
-                    done: false
+                    title: "Add API endpoints scoped to product model — `v0.9.0`; `/product-models/{id}/assembly-variants`",
+                    done: true
                   },
                   {
                     code: "6.1.12.4",
-                    title: "Add model-card UI block for variants and operation lines",
-                    done: false
+                    title: "Add model-card UI block for variants and operation lines — `v0.9.0`; `AssemblyVariantsBlock`",
+                    done: true
                   },
                   {
                     code: "6.1.12.5",
-                    title: "Add regression tests (ordering, totals, inactive variants)",
-                    done: false
+                    title: "Add regression tests (ordering, totals, inactive variants) — `v0.9.0`; `test_assembly_variants.py`",
+                    done: true
                   },
                   {
                     code: "6.1.12.6",
@@ -2305,93 +2305,88 @@
             ]
           },
           {
-            title: "6.3 — Лекала (Patterns)",
+            title: "6.3 — Операции пошива (Sewing Operations)",
             items: [
               {
                 code: "6.3.1",
-                title: "Pattern domain architecture",
-                goal: "Define pattern sets, pattern parts, and versioning boundaries for product models (1:1 model → pattern set).",
+                title: "Sewing-operation domain architecture",
+                goal: "Define flat SewingOperation catalog (name + cost) and boundaries vs assembly variant lines and Stage 8 shop operations.",
                 dependencies: [
                   "6.1.1",
-                  "6.2.7"
+                  "6.0.1"
                 ],
                 microtasks: [
                   {
                     code: "6.3.1.1",
-                    title: "Define pattern entities and lifecycle",
-                    done: false
+                    title: "Define sewing-operation entity fields and uniqueness — v0.9.0; sewing-operations-domain.md",
+                    done: true
                   },
                   {
                     code: "6.3.1.2",
-                    title: "Define file and version boundaries",
-                    done: false
+                    title: "Document boundary vs inline AssemblyOperationLine and withdrawn PatternSet — v0.9.0; ADR-014 amendment",
+                    done: true
                   },
                   {
                     code: "6.3.1.3",
-                    title: "Documentation checkpoint",
-                    done: false
+                    title: "Documentation checkpoint — v0.9.0; docs/tasks/v0.9.0-stage-6.3-sewing-operations.md",
+                    done: true
                   }
                 ]
               },
               {
                 code: "6.3.2",
-                title: "Pattern database and metadata core",
-                goal: "Create persistent pattern metadata (sets, parts, versions).",
+                title: "Sewing-operation database core",
+                goal: "Create persistent flat sewing-operations table.",
                 dependencies: [
                   "6.3.1"
                 ],
                 microtasks: [
                   {
                     code: "6.3.2.1",
-                    title: "Add SQLAlchemy entities for pattern sets, parts, and versions",
-                    done: false
+                    title: "Add SQLAlchemy entity SewingOperation — v0.9.0",
+                    done: true
                   },
                   {
                     code: "6.3.2.2",
-                    title: "Add Alembic migration",
-                    done: false
+                    title: "Add Alembic migration — v0.9.0; q7r8s9t0u123",
+                    done: true
                   },
                   {
                     code: "6.3.2.3",
-                    title: "Add file metadata strategy (no uncontrolled parallel store)",
-                    done: false
-                  },
-                  {
-                    code: "6.3.2.4",
-                    title: "Add backend regression tests",
-                    done: false
+                    title: "Add backend regression tests — v0.9.0",
+                    done: true
                   }
                 ]
               },
               {
                 code: "6.3.3",
-                title: "Pattern CRUD API",
-                goal: "Backend catalog for pattern sets and versions.",
+                title: "Sewing-operation CRUD API",
+                goal: "Backend catalog CRUD for sewing operations.",
                 dependencies: [
                   "6.3.2"
                 ],
                 microtasks: [
                   {
                     code: "6.3.3.1",
-                    title: "Add repository and service CRUD",
-                    done: false
+                    title: "Add repository and service CRUD — v0.9.0",
+                    done: true
                   },
                   {
                     code: "6.3.3.2",
-                    title: "Add endpoints",
-                    done: false
+                    title: "Add endpoints /sewing-operations — v0.9.0",
+                    done: true
                   },
                   {
                     code: "6.3.3.3",
-                    title: "Add backend regression tests",
-                    done: false
+                    title: "Add backend regression tests — v0.9.0",
+                    done: true
                   }
                 ]
               },
               {
                 code: "6.3.4",
-                title: "Pattern list workspace",
-                goal: "Users can browse the pattern catalog in a list workspace.",
+                title: "Sewing-operation list workspace",
+                goal: "Users browse sewing operations in a PT-02 catalog list like product-models.",
                 dependencies: [
                   "6.3.3",
                   "6.0.3"
@@ -2399,23 +2394,23 @@
                 microtasks: [
                   {
                     code: "6.3.4.1",
-                    title: "Add frontend types and API client",
-                    done: false
+                    title: "Add frontend types and API client — v0.9.0",
+                    done: true
                   },
                   {
                     code: "6.3.4.2",
-                    title: "Add workspace/list route (PT-02)",
-                    done: false
+                    title: "Add workspace/list route (PT-02) — v0.9.0; /settings/catalogs/sewing_operations",
+                    done: true
                   },
                   {
                     code: "6.3.4.3",
-                    title: "Add loading and error states",
-                    done: false
+                    title: "Add loading and error states — v0.9.0",
+                    done: true
                   },
                   {
                     code: "6.3.4.4",
-                    title: "Add frontend regression tests",
-                    done: false
+                    title: "Add frontend regression tests — v0.9.0",
+                    done: true
                   },
                   {
                     code: "6.3.4.5",
@@ -2426,39 +2421,29 @@
               },
               {
                 code: "6.3.5",
-                title: "Pattern card and versions UI",
-                goal: "Users open a pattern card and manage version metadata.",
+                title: "Sewing-operation create and edit UI",
+                goal: "Users create and edit sewing operations (name + cost) from the list workspace.",
                 dependencies: [
                   "6.3.4"
                 ],
                 microtasks: [
                   {
                     code: "6.3.5.1",
-                    title: "Add detail card route",
-                    done: false
+                    title: "Add CreateDrawer flow — v0.9.0",
+                    done: true
                   },
                   {
                     code: "6.3.5.2",
-                    title: "Add version list and metadata view",
-                    done: false
+                    title: "Add inline edit and delete on list — v0.9.0",
+                    done: true
                   },
                   {
                     code: "6.3.5.3",
-                    title: "Add create/edit flows for pattern versions",
-                    done: false
+                    title: "Add server actions — v0.9.0",
+                    done: true
                   },
                   {
                     code: "6.3.5.4",
-                    title: "Add loading/error states",
-                    done: false
-                  },
-                  {
-                    code: "6.3.5.5",
-                    title: "Add frontend regression tests",
-                    done: false
-                  },
-                  {
-                    code: "6.3.5.6",
                     title: "Visual verification",
                     done: false
                   }
@@ -2466,68 +2451,57 @@
               },
               {
                 code: "6.3.6",
-                title: "Pattern file storage and delivery",
-                goal: "Secure upload, storage, download, and delete for pattern files.",
+                title: "Wire sewing operations into assembly variant lines",
+                goal: "Optional pick from sewing-operations catalog when editing AssemblyOperationLine.",
                 dependencies: [
-                  "6.3.2",
+                  "6.1.12",
                   "6.3.5"
                 ],
                 microtasks: [
                   {
                     code: "6.3.6.1",
-                    title: "Implement storage adapter and path rules",
+                    title: "Decide FK vs copy-on-pick for AssemblyOperationLine",
                     done: false
                   },
                   {
                     code: "6.3.6.2",
-                    title: "Add upload/download/delete API",
+                    title: "Backend schema/API if FK or picker endpoint needed",
                     done: false
                   },
                   {
                     code: "6.3.6.3",
-                    title: "Add frontend file actions on pattern card",
+                    title: "Model-card assembly UI picker",
                     done: false
                   },
                   {
                     code: "6.3.6.4",
-                    title: "Add regression tests (size/MIME limits)",
+                    title: "Regression tests",
                     done: false
                   }
                 ]
               },
               {
                 code: "6.3.7",
-                title: "Link patterns to product models",
-                goal: "A product model references exactly one pattern set / version family.",
+                title: "PatternSet withdrawal checkpoint",
+                goal: "Confirm PatternSet / patterns routes / model→pattern link are fully removed from Stage 6 scope and docs.",
                 dependencies: [
-                  "6.1.6",
-                  "6.3.5"
+                  "6.3.1"
                 ],
                 microtasks: [
                   {
                     code: "6.3.7.1",
-                    title: "Add backend relation field on product model (single pattern_set_id / version family)",
-                    done: false
+                    title: "Remove /settings/catalogs/patterns routes and nav entry — v0.9.0",
+                    done: true
                   },
                   {
                     code: "6.3.7.2",
-                    title: "Add migration and schemas",
-                    done: false
+                    title: "Amend ADR-014 and product-model domain (drop pattern_set_id) — v0.9.0",
+                    done: true
                   },
                   {
                     code: "6.3.7.3",
-                    title: "Add service validation",
-                    done: false
-                  },
-                  {
-                    code: "6.3.7.4",
-                    title: "Add model-card integration",
-                    done: false
-                  },
-                  {
-                    code: "6.3.7.5",
-                    title: "Add regression tests",
-                    done: false
+                    title: "Sync roadmap HTML / project-structure / PT mapping — v0.9.0",
+                    done: true
                   }
                 ]
               }
@@ -2539,13 +2513,13 @@
               {
                 code: "6.4.1",
                 title: "End-to-end smoke scenario",
-                goal: "Prove PRODUCT → available models → model (size grid + patterns + assembly variants) → order-item selection without Stage 7 document creation.",
+                goal: "Prove PRODUCT → available models → model (size grid + assembly variants + sewing-ops catalog) → order-item selection without Stage 7 document creation.",
                 dependencies: [
                   "6.1.11",
                   "6.1.12",
                   "6.1.13",
                   "6.2.7",
-                  "6.3.7"
+                  "6.3.5"
                 ],
                 microtasks: [
                   {
@@ -2603,7 +2577,7 @@
                   },
                   {
                     code: "6.4.3.3",
-                    title: "Visual pass: patterns list/card",
+                    title: "Visual pass: sewing-operations list (/settings/catalogs/sewing_operations)",
                     done: false
                   },
                   {
