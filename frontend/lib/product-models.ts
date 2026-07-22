@@ -9,6 +9,10 @@ export type ProductModel = {
   size_type: ProductModelSizeType;
   size_grid_id: number | null;
   description: string | null;
+  patterns_path: string | null;
+  constructor_name: string | null;
+  /** ISO date `YYYY-MM-DD` or null. */
+  patterns_created_on: string | null;
   cover_image_url: string | null;
   status: ProductModelStatus;
   has_journal_operations?: boolean;
@@ -124,7 +128,12 @@ export type ProductModelCreateDraft = {
   size_grid_id: number | null;
 };
 
-export type ProductModelRequisitesDraft = ProductModelCreateDraft;
+export type ProductModelRequisitesDraft = ProductModelCreateDraft & {
+  patterns_path: string;
+  constructor_name: string;
+  /** `YYYY-MM-DD` or empty string when unset. */
+  patterns_created_on: string;
+};
 
 export const MODEL_OPERATIONS_WARNING =
   "По данной модели были операции! Изменения могут затронуть отчетность!";
@@ -132,7 +141,14 @@ export const MODEL_OPERATIONS_WARNING =
 export function toProductModelRequisitesDraft(
   model: Pick<
     ProductModel,
-    "article" | "name" | "size_type" | "description" | "size_grid_id"
+    | "article"
+    | "name"
+    | "size_type"
+    | "description"
+    | "size_grid_id"
+    | "patterns_path"
+    | "constructor_name"
+    | "patterns_created_on"
   >,
 ): ProductModelRequisitesDraft {
   return {
@@ -141,6 +157,9 @@ export function toProductModelRequisitesDraft(
     size_type: model.size_type,
     description: model.description ?? "",
     size_grid_id: model.size_grid_id,
+    patterns_path: model.patterns_path ?? "",
+    constructor_name: model.constructor_name ?? "",
+    patterns_created_on: model.patterns_created_on ?? "",
   };
 }
 
@@ -148,7 +167,14 @@ export function toProductModelRequisitesDraft(
 export function isProductModelRequisitesDirty(
   model: Pick<
     ProductModel,
-    "article" | "name" | "size_type" | "description" | "size_grid_id"
+    | "article"
+    | "name"
+    | "size_type"
+    | "description"
+    | "size_grid_id"
+    | "patterns_path"
+    | "constructor_name"
+    | "patterns_created_on"
   >,
   draft: ProductModelRequisitesDraft,
 ): boolean {
@@ -157,7 +183,10 @@ export function isProductModelRequisitesDirty(
     draft.name !== model.name ||
     draft.size_type !== model.size_type ||
     draft.description !== (model.description ?? "") ||
-    draft.size_grid_id !== model.size_grid_id
+    draft.size_grid_id !== model.size_grid_id ||
+    draft.patterns_path !== (model.patterns_path ?? "") ||
+    draft.constructor_name !== (model.constructor_name ?? "") ||
+    draft.patterns_created_on !== (model.patterns_created_on ?? "")
   );
 }
 

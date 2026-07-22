@@ -54,6 +54,9 @@ export type ProductModelRequisitesInput = {
   size_type: ProductModelSizeType;
   description: string | null;
   size_grid_id?: number | null;
+  patterns_path?: string | null;
+  constructor_name?: string | null;
+  patterns_created_on?: string | null;
 };
 
 export type ProductModelCreateResult =
@@ -108,6 +111,17 @@ export async function updateProductModelRequisites(
       description: payload.description?.trim() || null,
       ...(payload.size_grid_id !== undefined
         ? { size_grid_id: payload.size_grid_id }
+        : {}),
+      ...(payload.patterns_path !== undefined
+        ? { patterns_path: payload.patterns_path?.trim() || null }
+        : {}),
+      ...(payload.constructor_name !== undefined
+        ? { constructor_name: payload.constructor_name?.trim() || null }
+        : {}),
+      ...(payload.patterns_created_on !== undefined
+        ? {
+            patterns_created_on: payload.patterns_created_on?.trim() || null,
+          }
         : {}),
     }),
     cache: "no-store",

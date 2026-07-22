@@ -133,6 +133,9 @@ def create_product_model(db: Session, payload: ProductModelCreate) -> ProductMod
         size_type=size_type,
         size_grid_id=size_grid_id,
         description=payload.description,
+        patterns_path=payload.patterns_path,
+        constructor_name=payload.constructor_name,
+        patterns_created_on=payload.patterns_created_on,
         cover_image_url=payload.cover_image_url,
         status=status,
     )
@@ -292,6 +295,9 @@ def copy_product_model(db: Session, model_id: int) -> ProductModel:
         size_type=source.size_type,
         size_grid_id=source.size_grid_id,
         description=source.description,
+        patterns_path=source.patterns_path,
+        constructor_name=source.constructor_name,
+        patterns_created_on=source.patterns_created_on,
         status=ProductModelStatus.DRAFT,
     )
     try:

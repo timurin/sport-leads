@@ -26,6 +26,9 @@
 | `name` | string | Non-empty display name |
 | `size_type` | enum | Derived from linked `SizeGrid.size_type` when a grid is selected; stored for filters |
 | `description` | text, nullable | Free text |
+| `patterns_path` | string, nullable | Путь к лекалам (card, 2 cols) — `6.1.10.6` |
+| `constructor_name` | string, nullable | Конструктор (card, 1 col) — `6.1.10.6` |
+| `patterns_created_on` | date, nullable | Дата создания лекал (card, 1 col) — `6.1.10.6` |
 | `cover_image_url` | string, nullable | Optional cover/thumbnail URL (list + card preview; full media gallery later) |
 | `status` | enum | See §4 (`draft` \| `active` \| `archived`) |
 | `size_grid_id` | FK, nullable | Single UI field «Размерная сетка»; required before activate — see §3 |
@@ -95,7 +98,9 @@ Rules:
 - Whitelist M2M on PRODUCT card (`6.1.11`); only `active` models should be addable/selectable for new work.
 - Model is **not** a nomenclature variant (ADR-010).
 
-### 5.2 Sales order item (`6.1.13`)
+### 5.2 Sales order item (`3.2.5`, former `6.1.13`)
+
+Order line selects `product_model_id` from PRODUCT available-models whitelist, then `assembly_variant_id` of that model. Snapshots store article / size_type / variant name / total (and optional operation lines). Owned by **Sales Orders**, not Stage 6 catalog.
 
 Chain: nomenclature → model ∈ whitelist → autofill `article` + `size_type` → assembly variant ∈ model.
 
@@ -104,7 +109,7 @@ Manual lines without nomenclature: out of this contour.
 
 ### 5.3 Lead
 
-No separate lead-model master. Reuse the same `ProductModel` catalog when lead commercial details gain model selection (note for `6.1.13.7` / Stage 1). Conversion to order must not invent a second model id space.
+No separate lead-model master. Reuse the same `ProductModel` catalog when lead commercial details gain model selection (note for `3.2.5.7` / Stage 1). Conversion to order must not invent a second model id space.
 
 ### 5.4 Specification (Stage 7)
 
@@ -131,7 +136,7 @@ Shop routings may later reference a model/variant for execution; they must not d
 
 - SQLAlchemy / Alembic / API implementation details beyond field contracts
 - Size-grid entity schemas (`6.2.*`); sewing operations (`6.3.*` / `sewing-operations-domain.md`)
-- Order-item snapshot persistence (`6.1.13`)
+- Order-item snapshot persistence (`3.2.5`, former `6.1.13`)
 - UI feature fill beyond already shipped shells
 
 ## 8. Checkpoint (`6.1.1.5`)
@@ -142,4 +147,4 @@ Shop routings may later reference a model/variant for execution; they must not d
 | Flat `1 model = 1 size_type = 1 article` | Explicit §1–§2 |
 | Dependencies on grids, sewing ops, assembly variants, specs | Explicit §3–§6 |
 
-**Next:** size grids (`6.2`) / sewing-ops catalog link into assembly lines (`6.3.6`) after order binding (`6.1.13`).
+**Catalog closed.** Order-item binding is Stage `3.2.5` (Sales Orders).

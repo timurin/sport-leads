@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, datetime
 from decimal import Decimal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
@@ -16,6 +16,9 @@ class ProductModelBase(BaseModel):
     size_type: ProductModelSizeType
     size_grid_id: int | None = None
     description: str | None = None
+    patterns_path: str | None = Field(default=None, max_length=1000)
+    constructor_name: str | None = Field(default=None, max_length=255)
+    patterns_created_on: date | None = None
     cover_image_url: str | None = Field(default=None, max_length=500)
     status: ProductModelStatus = ProductModelStatus.DRAFT
 
@@ -24,7 +27,13 @@ class ProductModelBase(BaseModel):
     def strip_required_text(cls, value: object) -> object:
         return value.strip() if isinstance(value, str) else value
 
-    @field_validator("description", "cover_image_url", mode="before")
+    @field_validator(
+        "description",
+        "cover_image_url",
+        "patterns_path",
+        "constructor_name",
+        mode="before",
+    )
     @classmethod
     def strip_optional_text(cls, value: object) -> object:
         if isinstance(value, str):
@@ -43,6 +52,9 @@ class ProductModelUpdate(BaseModel):
     size_type: ProductModelSizeType | None = None
     size_grid_id: int | None = None
     description: str | None = None
+    patterns_path: str | None = Field(default=None, max_length=1000)
+    constructor_name: str | None = Field(default=None, max_length=255)
+    patterns_created_on: date | None = None
     cover_image_url: str | None = Field(default=None, max_length=500)
 
     @field_validator("article", "name", mode="before")
@@ -50,7 +62,13 @@ class ProductModelUpdate(BaseModel):
     def strip_optional_required_text(cls, value: object) -> object:
         return value.strip() if isinstance(value, str) else value
 
-    @field_validator("description", "cover_image_url", mode="before")
+    @field_validator(
+        "description",
+        "cover_image_url",
+        "patterns_path",
+        "constructor_name",
+        mode="before",
+    )
     @classmethod
     def strip_optional_text(cls, value: object) -> object:
         if isinstance(value, str):

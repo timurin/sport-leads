@@ -22,7 +22,7 @@ import { AssemblyVariantsBlock } from "@/components/settings/assembly-variants-b
 import { ProductModelMediaCarousel } from "@/components/settings/product-model-media-carousel";
 import { ProductModelToolbarActions } from "@/components/settings/product-model-toolbar-actions";
 import { EntityHeader } from "@/components/ui/entity-header";
-import { Field, Input, Select, Textarea } from "@/components/ui/form-controls";
+import { Field, DateInput, Input, Select, Textarea } from "@/components/ui/form-controls";
 import { ImageLightbox } from "@/components/ui/image-lightbox";
 import { SectionCard } from "@/components/ui/section-card";
 import { StatusBadge } from "@/components/ui/status-badge";
@@ -286,6 +286,9 @@ export function ProductModelPersistentCard({
         size_type: draft.size_type,
         description: draft.description || null,
         size_grid_id: draft.size_grid_id,
+        patterns_path: draft.patterns_path || null,
+        constructor_name: draft.constructor_name || null,
+        patterns_created_on: draft.patterns_created_on || null,
       });
       setCurrent(updated);
       setEditing(false);
@@ -599,6 +602,50 @@ export function ProductModelPersistentCard({
                         </p>
                       </Field>
                     </div>
+                    <div className="grid min-w-0 gap-portal-3 min-[1300px]:grid-cols-2 min-[1700px]:grid-cols-4">
+                      <Field
+                        label="Путь к лекалам"
+                        className="min-w-0 min-[1300px]:col-span-2 min-[1700px]:col-span-2"
+                      >
+                        <Input
+                          value={draft.patterns_path}
+                          size="compact"
+                          onChange={(event) =>
+                            setDraft({
+                              ...draft,
+                              patterns_path: event.target.value,
+                            })
+                          }
+                          aria-label="Путь к лекалам"
+                        />
+                      </Field>
+                      <Field label="Конструктор" className="min-w-0">
+                        <Input
+                          value={draft.constructor_name}
+                          size="compact"
+                          onChange={(event) =>
+                            setDraft({
+                              ...draft,
+                              constructor_name: event.target.value,
+                            })
+                          }
+                          aria-label="Конструктор"
+                        />
+                      </Field>
+                      <Field label="Дата создания лекал" className="min-w-0">
+                        <DateInput
+                          value={draft.patterns_created_on}
+                          size="compact"
+                          onChange={(event) =>
+                            setDraft({
+                              ...draft,
+                              patterns_created_on: event.target.value,
+                            })
+                          }
+                          aria-label="Дата создания лекал"
+                        />
+                      </Field>
+                    </div>
                   </div>
                 ) : (
                   <div className="grid min-w-0 gap-portal-4">
@@ -681,6 +728,52 @@ export function ProductModelPersistentCard({
                         <p className="mt-1 text-portal-body font-semibold text-portal-text">
                           {costRangeLabel}
                         </p>
+                      </div>
+                    </div>
+                    <div className="grid min-w-0 gap-portal-3 min-[1300px]:grid-cols-2 min-[1700px]:grid-cols-4">
+                      <div className="min-w-0 border-l-2 border-portal-border pl-portal-3 min-[1300px]:col-span-2 min-[1700px]:col-span-2">
+                        <p className="text-portal-caption font-medium text-portal-muted">
+                          Путь к лекалам
+                        </p>
+                        {current.patterns_path?.trim() ? (
+                          <p className="mt-1 break-all text-portal-body font-semibold text-portal-text">
+                            {current.patterns_path}
+                          </p>
+                        ) : (
+                          <p className="mt-1 text-portal-body text-portal-muted">
+                            Не указан
+                          </p>
+                        )}
+                      </div>
+                      <div className="min-w-0 border-l-2 border-portal-border pl-portal-3">
+                        <p className="text-portal-caption font-medium text-portal-muted">
+                          Конструктор
+                        </p>
+                        {current.constructor_name?.trim() ? (
+                          <p className="mt-1 text-portal-body font-semibold text-portal-text">
+                            {current.constructor_name}
+                          </p>
+                        ) : (
+                          <p className="mt-1 text-portal-body text-portal-muted">
+                            Не указан
+                          </p>
+                        )}
+                      </div>
+                      <div className="min-w-0 border-l-2 border-portal-border pl-portal-3">
+                        <p className="text-portal-caption font-medium text-portal-muted">
+                          Дата создания лекал
+                        </p>
+                        {current.patterns_created_on ? (
+                          <p className="mt-1 text-portal-body font-semibold text-portal-text">
+                            {new Date(
+                              `${current.patterns_created_on}T00:00:00`,
+                            ).toLocaleDateString("ru-RU")}
+                          </p>
+                        ) : (
+                          <p className="mt-1 text-portal-body text-portal-muted">
+                            Не указана
+                          </p>
+                        )}
                       </div>
                     </div>
                   </div>

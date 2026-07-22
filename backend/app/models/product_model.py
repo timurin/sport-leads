@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import date, datetime
 from decimal import Decimal
 from enum import Enum
 from typing import TYPE_CHECKING
@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING
 from sqlalchemy import (
     Boolean,
     CheckConstraint,
+    Date,
     DateTime,
     ForeignKey,
     Integer,
@@ -72,6 +73,9 @@ class ProductModel(Base):
         index=True,
     )
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    patterns_path: Mapped[str | None] = mapped_column(String(1000), nullable=True)
+    constructor_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    patterns_created_on: Mapped[date | None] = mapped_column(Date, nullable=True)
     cover_image_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
     cover_storage_key: Mapped[str | None] = mapped_column(String(500), nullable=True)
     cover_mime_type: Mapped[str | None] = mapped_column(String(100), nullable=True)

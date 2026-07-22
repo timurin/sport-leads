@@ -1,7 +1,7 @@
 # Sport-Lead — Global Roadmap
 
 **Code:** `SL-ROADMAP-v1`
-**Updated:** `2026-07-22` (Stage 18 Administration + print forms structure)
+**Updated:** `2026-07-22` (Stage 6 catalog close; order-item model binding moved to `3.2.5`)
 **Project version:** `v0.9.0`
 **Git branch:** `feature/v0.8.1-nomenclature-core`
 **Git commit:** `bc63397`
@@ -28,7 +28,7 @@ Current confirmed contour:
 
 Next detailed contour:
 
-`Design System and Platform Templates -> База лекал (модели + варианты сборки) -> Specifications -> Routings (цеха / исполнение) -> Технические карты -> Production -> … -> Администрирование (системные настройки, справочники платформы, печатные формы)`
+`База лекал (catalog closed) → Order-item model/assembly binding (3.2.5) → Specifications → Routings → Технические карты → … → Администрирование`
 
 ## Stage 0 — Platform and Infrastructure
 
@@ -122,6 +122,55 @@ Next detailed contour:
 - [x] 3.2.2 — Decimal/Numeric totals and discount-percent recalculation
 - [x] 3.2.3 — Sizes, color, and personalization snapshots
 - [x] 3.2.4 — Nullable nomenclature and variant links with immutable snapshots
+
+#### 3.2.5 — Product model and assembly variant on order items
+
+> Moved from Stage `6.1.13` (`2026-07-22`): Stage 6 owns the pattern-base **catalog**; selection and snapshots live on the **sales-order item** (closer to Заказ покупателя than to nomenclature master / база лекал). Whitelist config stays on PRODUCT nomenclature card (`6.1.11`).
+
+Goal:
+After nomenclature selection, manager picks a model from the PRODUCT whitelist; size_type and model article autofill; then picks an assembly variant of that model. Snapshots keep old orders stable.
+
+Dependencies:
+- 3.2.4
+- 6.1.11
+- 6.1.12
+- 6.2.7
+
+Microtasks:
+- [ ] 3.2.5.1 — Define order-item relation + snapshot strategy (model id/article/size_type; variant id/name/total; optional operation-line snapshot)
+- [ ] 3.2.5.2 — Add nullable storage and migration
+- [ ] 3.2.5.3 — Add schemas and service rules: model ∈ available list; variant ∈ selected model; require model when whitelist non-empty (per ADR-014)
+- [ ] 3.2.5.4 — Add frontend selection flow in order item forms
+- [ ] 3.2.5.5 — Add regression tests (whitelist filter; foreign model/variant rejected; snapshot immutability)
+- [ ] 3.2.5.6 — Visual verification
+- [ ] 3.2.5.7 — Documentation checkpoint (lead reuse notes if applicable)
+
+Completion criteria:
+- order chain is nomenclature → available model → assembly variant;
+- autofill of size_type and model article works;
+- backward-compatible nullable links; snapshots explicit.
+
+#### 3.2.6 — Order-item model selection smoke
+
+> Moved from Stage `6.4.1` (`2026-07-22`): full path including order-item selection is a Sales Orders checkpoint, not pattern-base catalog close.
+
+Goal:
+Prove PRODUCT → available models → model (size grid + assembly variants + sewing-ops catalog) → order-item selection without Stage 7 document creation.
+
+Dependencies:
+- 3.2.5
+- 6.1.11
+- 6.1.12
+- 6.2.7
+- 6.3.5
+
+Microtasks:
+- [ ] 3.2.6.1 — Script or manual smoke checklist (whitelist filter, autofill size_type/article, variant offer, reject foreign model)
+- [ ] 3.2.6.2 — Fix P0/P1 gaps found in smoke
+
+Completion criteria:
+- one reference path works on persistent API data;
+- manager cannot select a model outside PRODUCT available list.
 
 ### 3.3 — Financial document scope
 
@@ -403,10 +452,12 @@ Microtasks:
 
 ## Stage 6 — База лекал
 
-> Structure note (`2026-07-22`, amended): modules `6.1` Models / `6.2` Size grids / `6.3` **Sewing operations** (replaces Patterns/`PatternSet`); `6.0` shell and ADR; `6.4` integration checkpoint. Agreed domain: **1 model = 1 size type (men/women/kids) = 1 article**; assembly/finishing variants live on the model; PRODUCT nomenclature holds **available pattern models** whitelist; sewing ops = flat `name`+`cost` catalog. Commercial assembly packages are Stage 6 (before Specs). Stage 8 keeps shop-floor routings / work centers / execution — not a second place to invent manager-facing assembly variants. Stages 7+ include Technical cards (Stage 9).
+> Structure note (`2026-07-22`, amended): modules `6.1` Models / `6.2` Size grids / `6.3` **Sewing operations** (replaces Patterns/`PatternSet`); `6.0` shell and ADR; `6.4` catalog checkpoint. Agreed domain: **1 model = 1 size type (men/women/kids) = 1 article**; assembly/finishing variants live on the model; PRODUCT nomenclature holds **available pattern models** whitelist; sewing ops = flat `name`+`cost` catalog. Commercial assembly packages are Stage 6 catalog (before Specs). **Order-item selection of model/assembly variant is Stage `3.2.5`** (moved from former `6.1.13`). Stage 8 keeps shop-floor routings / work centers / execution — not a second place to invent manager-facing assembly variants. Stages 7+ include Technical cards (Stage 9).
 
 Goal:
 Собрать справочник моделей изделий для лидов, заказа покупателя, спецификации и технической карты: плоская модель (артикул + тип размера), размерная сетка 1:1, плоский справочник операций пошива, варианты сборки/отделки с операциями и стоимостью; на номенклатуре PRODUCT — whitelist доступных моделей.
+
+> Stage 6 catalog close (`2026-07-22`): masters + UI + owner visual OK. Kids Mosmade seed cancelled (`6.2.2.7`). Order binding → `3.2.5` / smoke `3.2.6`.
 
 ### 6.0 — Module shell and contracts
 
@@ -660,6 +711,7 @@ Microtasks:
 - [x] 6.1.10.3 — Add frontend regression tests — `v0.9.0`; `isProductModelRequisitesDirty` / create-draft validation reuse
 - [x] 6.1.10.4 — Visual verification — `v0.9.0`; owner OK `2026-07-22`
 - [x] 6.1.10.5 — Requisites block visual polish — `v0.9.0`; owner OK `2026-07-22`; responsive 1/2/4-col field grid; status edit-gated; accent field layout (name/article/size/status/description); workspace placeholder text synced to `6.2` / sewing-ops; evidence: `product-model-persistent-card.tsx`
+- [x] 6.1.10.6 — Pattern meta fields on model card — `v0.9.0`; `patterns_path` (2 cols), `constructor_name` (1 col), `patterns_created_on` (date, 1 col); migration `x4y5z6a7b890`; edit+view in «Основные реквизиты»
 
 Completion criteria:
 - reopened card shows saved changes;
@@ -711,29 +763,7 @@ Completion criteria:
 - totals are consistent and tested;
 - Stage 8 shop routings are not required for this MVP package.
 
-#### 6.1.13 — Use model and assembly variant in sales-order items
-
-Goal:
-After nomenclature selection, manager picks a model from the PRODUCT whitelist; size_type and model article autofill; then picks an assembly variant of that model. Snapshots keep old orders stable.
-
-Dependencies:
-- 6.1.11
-- 6.1.12
-- 3.2.4
-
-Microtasks:
-- [ ] 6.1.13.1 — Define order-item relation + snapshot strategy (model id/article/size_type; variant id/name/total; optional operation-line snapshot)
-- [ ] 6.1.13.2 — Add nullable storage and migration
-- [ ] 6.1.13.3 — Add schemas and service rules: model ∈ available list; variant ∈ selected model; require model when whitelist non-empty (per ADR)
-- [ ] 6.1.13.4 — Add frontend selection flow in order item forms
-- [ ] 6.1.13.5 — Add regression tests (whitelist filter; foreign model/variant rejected; snapshot immutability)
-- [ ] 6.1.13.6 — Visual verification
-- [ ] 6.1.13.7 — Documentation checkpoint (lead reuse notes if applicable)
-
-Completion criteria:
-- order chain is nomenclature → available model → assembly variant;
-- autofill of size_type and model article works;
-- backward-compatible nullable links; snapshots explicit.
+> Moved `2026-07-22`: former **`6.1.13`** (use model + assembly variant in sales-order items) → Stage **`3.2.5`**. Pattern-base Stage 6 stops at catalog masters + PRODUCT whitelist UI; commercial line selection is Заказ покупателя.
 
 ### 6.2 — Размерные сетки (Size Grids)
 
@@ -773,7 +803,7 @@ Microtasks:
 - [x] 6.2.2.4 — Seed Mosmade men grid + **one** row (RU `46` / INT `S`) — `v0.9.0`; owner verify before remaining rows; evidence: seed helper + migration insert
 - [x] 6.2.2.5 — Seed remaining Mosmade men rows — `v0.9.0`; 18 rows; migration `v2w3x4y5z678`
 - [x] 6.2.2.6 — Seed Mosmade women grid + rows — `v0.9.0`; «Женская (Mosmade)» 14 rows; same migration
-- [ ] 6.2.2.7 — Optional: Mosmade kids reference grid (modal table)
+- [x] 6.2.2.7 — ~~Optional: Mosmade kids reference grid (modal table)~~ — **cancelled** `2026-07-22` (no current business need)
 
 Completion criteria:
 - grids and their items are stored persistently;
@@ -1009,29 +1039,21 @@ Microtasks:
 Completion criteria:
 - no live PatternSet master or patterns nav item remains in Stage 6.
 
-### 6.4 — Pattern-base integration checkpoint
+### 6.4 — Pattern-base catalog checkpoint
 
 #### 6.4.1 — End-to-end smoke scenario
 
-Goal:
-Prove PRODUCT → available models → model (size grid + assembly variants + sewing-ops catalog) → order-item selection without Stage 7 document creation.
-
-> Model-base v1 checkpoint (`2026-07-22`): catalog path (models / grids / sewing ops / PRODUCT whitelist / assembly variants) owner-visual OK. Full order-item smoke remains blocked on `6.1.13`.
+> Moved `2026-07-22`: order-item path smoke → Stage **`3.2.6`** (depends on `3.2.5`). Stage 6 catalog close does not wait on sales-order binding.
 
 Dependencies:
-- 6.1.11
-- 6.1.12
-- 6.1.13
-- 6.2.7
-- 6.3.5
+- 3.2.5
 
 Microtasks:
-- [ ] 6.4.1.1 — Script or manual smoke checklist (whitelist filter, autofill size_type/article, variant offer, reject foreign model) — blocked on `6.1.13`
-- [ ] 6.4.1.2 — Fix P0/P1 gaps found in smoke — blocked on `6.1.13`
+- [x] 6.4.1.1 — ~~Script or manual smoke checklist (whitelist filter, autofill size_type/article, variant offer, reject foreign model)~~ — **moved** `2026-07-22` → `3.2.6.1`
+- [x] 6.4.1.2 — ~~Fix P0/P1 gaps found in smoke~~ — **moved** `2026-07-22` → `3.2.6.2`
 
 Completion criteria:
-- one reference path works on persistent API data;
-- manager cannot select a model outside PRODUCT available list.
+- order-item smoke owned by Sales Orders (`3.2.6`); Stage 6 remains catalog-complete without it.
 
 #### 6.4.2 — Readiness documentation sync
 
@@ -1042,8 +1064,8 @@ Dependencies:
 - 6.4.3
 
 Microtasks:
-- [x] 6.4.2.1 — Update project-structure checklist items — `v0.9.0`; model-base catalog v1 (owner visual OK); order-item `6.1.13` still open
-- [x] 6.4.2.2 — Update erp-check pattern-base / assembly-variant lines — `v0.9.0`; sewing-ops visual closed; order binding remains `[~]`
+- [x] 6.4.2.1 — Update project-structure checklist items — `v0.9.0`; model-base catalog v1 closed; order-item binding → `3.2.5`
+- [x] 6.4.2.2 — Update erp-check pattern-base / assembly-variant lines — `v0.9.0`; sewing-ops visual closed; order binding tracked under Stage 3
 
 Completion criteria:
 - canonical docs match implemented contour.
@@ -1063,7 +1085,7 @@ Microtasks:
 - [x] 6.4.3.1 — Visual pass: models list/card (incl. assembly variants block) — `v0.9.0`; owner OK `2026-07-22`
 - [x] 6.4.3.2 — Visual pass: size grids list/card — `v0.9.0`; owner OK `2026-07-22`
 - [x] 6.4.3.3 — Visual pass: sewing-operations list (`/settings/catalogs/sewing_operations`) — `v0.9.0`; owner OK `2026-07-22`
-- [x] 6.4.3.4 — Visual pass: PRODUCT nomenclature available-models block — `v0.9.0`; owner OK `2026-07-22`; order selection flow deferred with `6.1.13.6`
+- [x] 6.4.3.4 — Visual pass: PRODUCT nomenclature available-models block — `v0.9.0`; owner OK `2026-07-22`; order selection flow → `3.2.5.6`
 
 Completion criteria:
 - owner sign-off recorded in roadmap evidence or task file.
@@ -1081,7 +1103,7 @@ Define specification scope, versioning, and planning role before production star
 Dependencies:
 - 6.1.1
 - 6.1.12
-- 6.1.13
+- 3.2.5
 - 6.3.5
 - ADR-004
 
@@ -1161,7 +1183,7 @@ Specification is formed for an order context: materials/norms plus a copied asse
 
 Dependencies:
 - 6.1.6
-- 6.1.13
+- 3.2.5
 - 7.2.1
 
 Microtasks:
@@ -1179,7 +1201,7 @@ Completion criteria:
 
 ## Stage 8 — Routings
 
-> Boundary note (`2026-07-22`): manager-facing **assembly variants** (operation packages + costs on the product model) are Stage `6.1.12` / order selection `6.1.13` / specification copy `7.2.3`. Stage 8 covers **shop-floor routings**: work centers, quality checkpoints, and production execution templates — not a duplicate commercial assembly catalog.
+> Boundary note (`2026-07-22`): manager-facing **assembly variants** (operation packages + costs on the product model) are Stage `6.1.12` / order selection `3.2.5` / specification copy `7.2.3`. Stage 8 covers **shop-floor routings**: work centers, quality checkpoints, and production execution templates — not a duplicate commercial assembly catalog.
 
 ### 8.1 — Domain and persistence
 
@@ -1267,7 +1289,7 @@ Goal:
 A shop routing can be linked to a product model / assembly variant where needed for production execution; order/technical-card flow reuses the approved shop plan without replacing Stage 6 manager packages.
 
 Dependencies:
-- 6.1.13
+- 3.2.5
 - 8.2.1
 
 Microtasks:
@@ -1291,7 +1313,7 @@ Goal:
 Dependencies:
 - 3.2.4
 - 4.2.1
-- 6.1.4, 6.1.11, 6.1.12, 6.1.13, 6.2.7, 6.3.5
+- 6.1.4, 6.1.11, 6.1.12, 3.2.5, 6.2.7, 6.3.5
 - 7.2.3
 - 8.2.3
 - ADR-004
@@ -1638,7 +1660,7 @@ Goal:
 
 Dependencies:
 - 18.1
-- 6.1.13 (order-item ↔ model binding for sales writes)
+- 3.2.5 (order-item ↔ model binding for sales writes)
 - Stage 8 / technical cards for production writes (as available)
 
 Microtasks:

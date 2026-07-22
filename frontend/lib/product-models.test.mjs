@@ -26,6 +26,9 @@ const sample = [
     size_type: "men",
     size_grid_id: null,
     description: "Мужская",
+    patterns_path: null,
+    constructor_name: null,
+    patterns_created_on: null,
     status: "draft",
     cover_image_url: null,
     created_at: "2026-07-22T10:00:00Z",
@@ -38,6 +41,9 @@ const sample = [
     size_type: "women",
     size_grid_id: 2,
     description: null,
+    patterns_path: null,
+    constructor_name: null,
+    patterns_created_on: null,
     status: "active",
     cover_image_url: null,
     created_at: "2026-07-22T10:00:00Z",
@@ -50,6 +56,9 @@ const sample = [
     size_type: "kids",
     size_grid_id: null,
     description: null,
+    patterns_path: null,
+    constructor_name: null,
+    patterns_created_on: null,
     status: "archived",
     cover_image_url: "/product-models/sample-cover.svg",
     created_at: "2026-07-22T10:00:00Z",
@@ -196,16 +205,33 @@ test("isProductModelRequisitesDirty compares draft to model", () => {
   );
   assert.equal(
     isProductModelRequisitesDirty(
-      { ...model, description: null, size_grid_id: null },
+      {
+        ...model,
+        description: null,
+        size_grid_id: null,
+        patterns_path: null,
+        constructor_name: null,
+        patterns_created_on: null,
+      },
       {
         article: model.article,
         name: model.name,
         size_type: model.size_type,
         description: "",
         size_grid_id: null,
+        patterns_path: "",
+        constructor_name: "",
+        patterns_created_on: "",
       },
     ),
     false,
+  );
+  assert.equal(
+    isProductModelRequisitesDirty(model, {
+      ...toProductModelRequisitesDraft(model),
+      patterns_path: "\\\\files\\patterns\\213",
+    }),
+    true,
   );
   assert.equal(
     isProductModelRequisitesDirty(model, {

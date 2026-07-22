@@ -218,6 +218,34 @@ def test_product_model_update_api_persists_and_validates() -> None:
             assert body["size_type"] == "kids"
             assert body["status"] == "draft"
 
+            meta = client.patch(
+                f"/product-models/{model_id}",
+                json={
+                    "patterns_path": "  \\\\share\\lecala\\213  ",
+                    "constructor_name": "  Иванов  ",
+                    "patterns_created_on": "2026-03-15",
+                },
+            )
+            assert meta.status_code == 200, meta.text
+            meta_body = meta.json()
+            assert meta_body["patterns_path"] == "\\\\share\\lecala\\213"
+            assert meta_body["constructor_name"] == "Иванов"
+            assert meta_body["patterns_created_on"] == "2026-03-15"
+
+            cleared = client.patch(
+                f"/product-models/{model_id}",
+                json={
+                    "patterns_path": "",
+                    "constructor_name": " ",
+                    "patterns_created_on": None,
+                },
+            )
+            assert cleared.status_code == 200, cleared.text
+            cleared_body = cleared.json()
+            assert cleared_body["patterns_path"] is None
+            assert cleared_body["constructor_name"] is None
+            assert cleared_body["patterns_created_on"] is None
+
             reopened = client.get(f"/product-models/{model_id}")
             assert reopened.status_code == 200
             assert reopened.json()["name"] == "Футболка 213"

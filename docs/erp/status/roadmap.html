@@ -528,6 +528,78 @@
                 code: "3.2.4",
                 title: "Nullable nomenclature and variant links with immutable snapshots",
                 done: true
+              },
+              {
+                code: "3.2.5",
+                title: "Product model and assembly variant on order items — moved from former 6.1.13 (2026-07-22)",
+                goal: "After nomenclature selection, manager picks a model from the PRODUCT whitelist; size_type and model article autofill; then picks an assembly variant. Snapshots keep old orders stable. Stage 6 owns catalog; Stage 3 owns order-line selection.",
+                dependencies: [
+                  "3.2.4",
+                  "6.1.11",
+                  "6.1.12",
+                  "6.2.7"
+                ],
+                microtasks: [
+                  {
+                    code: "3.2.5.1",
+                    title: "Define order-item relation + snapshot strategy (model id/article/size_type; variant id/name/total; optional operation-line snapshot)",
+                    done: false
+                  },
+                  {
+                    code: "3.2.5.2",
+                    title: "Add nullable storage and migration",
+                    done: false
+                  },
+                  {
+                    code: "3.2.5.3",
+                    title: "Add schemas and service rules: model ∈ available list; variant ∈ selected model; require model when whitelist non-empty (per ADR-014)",
+                    done: false
+                  },
+                  {
+                    code: "3.2.5.4",
+                    title: "Add frontend selection flow in order item forms",
+                    done: false
+                  },
+                  {
+                    code: "3.2.5.5",
+                    title: "Add regression tests (whitelist filter; foreign model/variant rejected; snapshot immutability)",
+                    done: false
+                  },
+                  {
+                    code: "3.2.5.6",
+                    title: "Visual verification",
+                    done: false
+                  },
+                  {
+                    code: "3.2.5.7",
+                    title: "Documentation checkpoint (lead reuse notes if applicable)",
+                    done: false
+                  }
+                ]
+              },
+              {
+                code: "3.2.6",
+                title: "Order-item model selection smoke — moved from former 6.4.1 (2026-07-22)",
+                goal: "Prove PRODUCT → available models → model → order-item selection without Stage 7 document creation.",
+                dependencies: [
+                  "3.2.5",
+                  "6.1.11",
+                  "6.1.12",
+                  "6.2.7",
+                  "6.3.5"
+                ],
+                microtasks: [
+                  {
+                    code: "3.2.6.1",
+                    title: "Script or manual smoke checklist (whitelist filter, autofill size_type/article, variant offer, reject foreign model)",
+                    done: false
+                  },
+                  {
+                    code: "3.2.6.2",
+                    title: "Fix P0/P1 gaps found in smoke",
+                    done: false
+                  }
+                ]
               }
             ]
           },
@@ -1955,6 +2027,11 @@
                     code: "6.1.10.5",
                     title: "Requisites block visual polish — `v0.9.0`; owner OK 2026-07-22; responsive field grid; status edit-gated; accent layout; workspace placeholder synced to 6.2 / sewing-ops",
                     done: true
+                  },
+                  {
+                    code: "6.1.10.6",
+                    title: "Pattern meta fields on model card — `v0.9.0`; patterns_path (2 cols), constructor_name (1 col), patterns_created_on (date, 1 col); migration x4y5z6a7b890",
+                    done: true
                   }
                 ]
               },
@@ -2040,48 +2117,16 @@
               },
               {
                 code: "6.1.13",
-                title: "Use model and assembly variant in sales-order items",
-                goal: "After nomenclature selection, manager picks a model from the PRODUCT whitelist; size_type and model article autofill; then picks an assembly variant of that model. Snapshots keep old orders stable.",
+                title: "~~Use model and assembly variant in sales-order items~~ — moved 2026-07-22 → 3.2.5",
+                goal: "Commercial order-line selection lives under Sales Orders (Заказ покупателя), not pattern-base catalog.",
                 dependencies: [
-                  "6.1.11",
-                  "6.1.12",
-                  "3.2.4"
+                  "3.2.5"
                 ],
                 microtasks: [
                   {
-                    code: "6.1.13.1",
-                    title: "Define order-item relation + snapshot strategy (model id/article/size_type; variant id/name/total; optional operation-line snapshot)",
-                    done: false
-                  },
-                  {
-                    code: "6.1.13.2",
-                    title: "Add nullable storage and migration",
-                    done: false
-                  },
-                  {
-                    code: "6.1.13.3",
-                    title: "Add schemas and service rules: model ∈ available list; variant ∈ selected model; require model when whitelist non-empty (per ADR)",
-                    done: false
-                  },
-                  {
-                    code: "6.1.13.4",
-                    title: "Add frontend selection flow in order item forms",
-                    done: false
-                  },
-                  {
-                    code: "6.1.13.5",
-                    title: "Add regression tests (whitelist filter; foreign model/variant rejected; snapshot immutability)",
-                    done: false
-                  },
-                  {
-                    code: "6.1.13.6",
-                    title: "Visual verification",
-                    done: false
-                  },
-                  {
-                    code: "6.1.13.7",
-                    title: "Documentation checkpoint (lead reuse notes if applicable)",
-                    done: false
+                    code: "6.1.13.moved",
+                    title: "Moved to Stage 3.2.5 (order-item model + assembly variant) — Stage 6 catalog ends at 6.1.12",
+                    done: true
                   }
                 ]
               }
@@ -2161,8 +2206,8 @@
                   },
                   {
                     code: "6.2.2.7",
-                    title: "Optional: Mosmade kids reference grid",
-                    done: false
+                    title: "~~Optional: Mosmade kids reference grid~~ — cancelled 2026-07-22 (no current business need)",
+                    done: true
                   }
                 ]
               },
@@ -2543,29 +2588,25 @@
             ]
           },
           {
-            title: "6.4 — Pattern-base integration checkpoint",
+            title: "6.4 — Pattern-base catalog checkpoint",
             items: [
               {
                 code: "6.4.1",
                 title: "End-to-end smoke scenario",
-                goal: "Prove PRODUCT → available models → model (size grid + assembly variants + sewing-ops catalog) → order-item selection without Stage 7 document creation. Model-base v1 catalog path owner-visual OK; full order-item smoke blocked on 6.1.13.",
+                goal: "Order-item path smoke moved to Stage 3.2.6 (2026-07-22). Stage 6 catalog close does not wait on sales-order binding.",
                 dependencies: [
-                  "6.1.11",
-                  "6.1.12",
-                  "6.1.13",
-                  "6.2.7",
-                  "6.3.5"
+                  "3.2.5"
                 ],
                 microtasks: [
                   {
                     code: "6.4.1.1",
-                    title: "Script or manual smoke checklist (whitelist filter, autofill size_type/article, variant offer, reject foreign model) — blocked on 6.1.13",
-                    done: false
+                    title: "~~Script or manual smoke checklist~~ — moved 2026-07-22 → 3.2.6.1",
+                    done: true
                   },
                   {
                     code: "6.4.1.2",
-                    title: "Fix P0/P1 gaps found in smoke — blocked on 6.1.13",
-                    done: false
+                    title: "~~Fix P0/P1 gaps found in smoke~~ — moved 2026-07-22 → 3.2.6.2",
+                    done: true
                   }
                 ]
               },
@@ -2579,12 +2620,12 @@
                 microtasks: [
                   {
                     code: "6.4.2.1",
-                    title: "Update project-structure checklist items — `v0.9.0`; model-base catalog v1 (owner visual OK); order-item 6.1.13 still open",
+                    title: "Update project-structure checklist items — `v0.9.0`; model-base catalog v1 closed; order-item binding → 3.2.5",
                     done: true
                   },
                   {
                     code: "6.4.2.2",
-                    title: "Update erp-check pattern-base / assembly-variant lines — `v0.9.0`; sewing-ops visual closed; order binding remains [~]",
+                    title: "Update erp-check pattern-base / assembly-variant lines — `v0.9.0`; sewing-ops visual closed; order binding tracked under Stage 3",
                     done: true
                   }
                 ]
@@ -2617,7 +2658,7 @@
                   },
                   {
                     code: "6.4.3.4",
-                    title: "Visual pass: PRODUCT nomenclature available-models block — `v0.9.0`; owner OK 2026-07-22; order selection deferred with 6.1.13.6",
+                    title: "Visual pass: PRODUCT nomenclature available-models block — `v0.9.0`; owner OK 2026-07-22; order selection → 3.2.5.6",
                     done: true
                   }
                 ]
@@ -2639,7 +2680,7 @@
                 dependencies: [
                   "6.1.1",
                   "6.1.12",
-                  "6.1.13",
+                  "3.2.5",
                   "6.3.7",
                   "ADR-004"
                 ],
@@ -2767,7 +2808,7 @@
                 goal: "Specification is formed for an order context: materials/norms plus a copied assembly-operation package from the selected model variant; model master remains unchanged when the specification is edited later.",
                 dependencies: [
                   "6.1.6",
-                  "6.1.13",
+                  "3.2.5",
                   "7.2.1"
                 ],
                 microtasks: [
@@ -2941,7 +2982,7 @@
                 title: "Link shop routings to models / variants and order context",
                 goal: "A shop routing can be linked to a product model / assembly variant where needed for production execution; order/technical-card flow reuses the approved shop plan without replacing Stage 6 manager packages.",
                 dependencies: [
-                  "6.1.13",
+                  "3.2.5",
                   "8.2.1"
                 ],
                 microtasks: [
