@@ -346,6 +346,27 @@ export const appSections: AppSection[] = [
         ],
       },
       {
+        id: "pattern-base",
+        title: "База лекал",
+        children: [
+          {
+            id: "product-models",
+            title: "Модели изделий",
+            href: "/settings/catalogs/product-models",
+          },
+          {
+            id: "size-grids",
+            title: "Размерные сетки",
+            href: "/settings/catalogs/size-grids",
+          },
+          {
+            id: "patterns",
+            title: "Лекала",
+            href: "/settings/catalogs/patterns",
+          },
+        ],
+      },
+      {
         id: "users",
         title: "Пользователи",
         href: "/settings/users",

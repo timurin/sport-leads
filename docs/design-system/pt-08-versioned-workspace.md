@@ -95,7 +95,7 @@ Verification widths: 1920…390.
 
 - `/settings/catalogs/product-models/demo-reference` — **PT-08 reference (demo)**
 
-Future: product-model card after `6.1.8`, specification/routing versioned editors.
+Future: product-model card after `6.1.8` (incl. assembly-variants block), pattern-set card after `6.3.5`, specification/routing versioned editors. Mapping: `stage-6.0.3-pattern-base-pt-mapping.md`.
 
 ## Verification (owner)
 

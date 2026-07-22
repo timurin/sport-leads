@@ -82,6 +82,8 @@ Additional:
 
 Secondary adopters (migrated under `5.5.2.5`): product-characteristics list, units-of-measure, nomenclature-categories, nomenclature-types. Still migrate later: organizations EntityWorkspace, custom-fields list polish.
 
+Stage 6 planned PT-02 adopters (`6.0.3` / `stage-6.0.3-pattern-base-pt-mapping.md`): product-models list, size-grids list, patterns list.
+
 ## Verification (owner)
 
 1. `/sales/clients` — toolbar, metrics, filters, table, totals/pagination, empty filters.

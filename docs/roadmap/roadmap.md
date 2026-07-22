@@ -1,10 +1,10 @@
 # Sport-Lead — Global Roadmap
 
 **Code:** `SL-ROADMAP-v1`
-**Updated:** `2026-07-22` (Stage 6 pattern-base domain: flat model, assembly variants, PRODUCT whitelist)
+**Updated:** `2026-07-22` (Stage 6.1.3 product-model create/list API)
 **Project version:** `v0.9.0`
 **Git branch:** `feature/v0.8.1-nomenclature-core`
-**Git commit:** `c9bee2b`
+**Git commit:** `bc63397`
 
 **Canonical files:**
 - roadmap: `docs/roadmap/roadmap.md`
@@ -423,10 +423,10 @@ Dependencies:
 - ADR-010
 
 Microtasks:
-- [ ] 6.0.1.1 — Document module boundaries and shared terminology (ADR package): ProductModel, SizeGrid, PatternSet, AssemblyVariant, AssemblyOperationLine; rule `1 model = 1 size_type = 1 article`
-- [ ] 6.0.1.2 — Define cross-links: PRODUCT «доступные модели лекал», order-item selection chain, specification copy of assembly operations, Stage 8 shop-routing boundary
-- [ ] 6.0.1.3 — Define empty available-models policy and MVP operation lines (inline name+cost vs shared operations catalog)
-- [ ] 6.0.1.4 — Documentation checkpoint
+- [x] 6.0.1.1 — Document module boundaries and shared terminology (ADR package): ProductModel, SizeGrid, PatternSet, AssemblyVariant, AssemblyOperationLine; rule `1 model = 1 size_type = 1 article` — `v0.9.0`; evidence: `docs/architecture/decisions/ADR-014-pattern-base-product-models-boundary.md`
+- [x] 6.0.1.2 — Define cross-links: PRODUCT «доступные модели лекал», order-item selection chain, specification copy of assembly operations, Stage 8 shop-routing boundary — `v0.9.0`; ADR-014 §§ 3–4
+- [x] 6.0.1.3 — Define empty available-models policy and MVP operation lines (inline name+cost vs shared operations catalog) — `v0.9.0`; ADR-014 §§ 5–6 (empty whitelist → model optional; non-empty → required; MVP lines = inline name+cost)
+- [x] 6.0.1.4 — Documentation checkpoint — `v0.9.0`; ADR-014 accepted; Stage 9 tech-card ADR reserved as ADR-015; task: `docs/tasks/v0.9.0-stage-6.0.1-pattern-base-adr.md`
 
 Completion criteria:
 - ADR(s) approved; no parallel master for model/pattern/assembly-variant data;
@@ -441,9 +441,9 @@ Dependencies:
 - 6.0.1
 
 Microtasks:
-- [ ] 6.0.2.1 — Add navigation entries in `frontend/lib/navigation.ts`
-- [ ] 6.0.2.2 — Route group placeholders for list/card routes
-- [ ] 6.0.2.3 — Smoke: shell links resolve (no demo data)
+- [x] 6.0.2.1 — Add navigation entries in `frontend/lib/navigation.ts` — `v0.9.0`; settings group `pattern-base` (models / size grids / patterns); evidence: `frontend/lib/navigation.ts`, `frontend/lib/navigation.test.mjs`
+- [x] 6.0.2.2 — Route group placeholders for list/card routes — `v0.9.0`; list shells + size-grid/pattern card placeholders without demo catalog data; evidence: `frontend/app/(workspace)/settings/catalogs/{product-models,size-grids,patterns}/`, `frontend/components/settings/catalog-shell-placeholder.tsx`
+- [x] 6.0.2.3 — Smoke: shell links resolve (no demo data) — `v0.9.0`; owner visual OK (`2026-07-22`); HTTP 200 shells without demo rows; `DS-SHELL-01`/`DS-SHELL-02` visual contract preserved; task: `docs/tasks/v0.9.0-stage-6.0.2-pattern-base-navigation.md`
 
 Completion criteria:
 - section visible in settings; routes exist without 404 shell.
@@ -458,10 +458,10 @@ Dependencies:
 - 5.5.5
 
 Microtasks:
-- [ ] 6.0.3.1 — Map models/size grids/patterns lists to PT-02
-- [ ] 6.0.3.2 — Map model and pattern cards to PT-05/PT-06 or reference model shell (`5.6.7`); model card includes assembly-variants block
-- [ ] 6.0.3.3 — Map PRODUCT nomenclature card block «доступные модели лекал» to existing nomenclature card template
-- [ ] 6.0.3.4 — Record breakpoints in design-system task evidence
+- [x] 6.0.3.1 — Map models/size grids/patterns lists to PT-02 — `v0.9.0`; evidence: `docs/design-system/stage-6.0.3-pattern-base-pt-mapping.md`
+- [x] 6.0.3.2 — Map model and pattern cards to PT-05/PT-06 or reference model shell (`5.6.7`); model card includes assembly-variants block — `v0.9.0`; model+pattern → PT-08; size-grid → PT-05; assembly-variants = PT-08 body block
+- [x] 6.0.3.3 — Map PRODUCT nomenclature card block «доступные модели лекал» to existing nomenclature card template — `v0.9.0`; no new PT; PRODUCT-only section on existing card
+- [x] 6.0.3.4 — Record breakpoints in design-system task evidence — `v0.9.0`; matrix 1920…390 in mapping doc; task: `docs/tasks/v0.9.0-stage-6.0.3-pattern-base-pt-mapping.md`
 
 Completion criteria:
 - template IDs documented per workspace/card before implementation iterations.
@@ -479,11 +479,11 @@ Dependencies:
 - 6.0.1
 
 Microtasks:
-- [ ] 6.1.1.1 — Document model fields and lifecycle: article (unique), name, size_type (men/women/kids), description, status
-- [ ] 6.1.1.2 — Define 1:1 links to size grid and pattern set; no nested gender contours inside one model
-- [ ] 6.1.1.3 — Define versioning and status rules
-- [ ] 6.1.1.4 — Review lead / order-item / specification / technical-card integration constraints
-- [ ] 6.1.1.5 — Documentation checkpoint
+- [x] 6.1.1.1 — Document model fields and lifecycle: article (unique), name, size_type (men/women/kids), description, status — `v0.9.0`; evidence: `docs/architecture/product-model-domain.md` §2
+- [x] 6.1.1.2 — Define 1:1 links to size grid and pattern set; no nested gender contours inside one model — `v0.9.0`; domain §3
+- [x] 6.1.1.3 — Define versioning and status rules — `v0.9.0`; domain §4 (`draft`/`active`/`archived` MVP; PT-08 versions in `6.1.6`)
+- [x] 6.1.1.4 — Review lead / order-item / specification / technical-card integration constraints — `v0.9.0`; domain §5
+- [x] 6.1.1.5 — Documentation checkpoint — `v0.9.0`; task: `docs/tasks/v0.9.0-stage-6.1.1-product-model-domain.md`
 
 Completion criteria:
 - model contour has a single agreed source of truth;
@@ -499,10 +499,10 @@ Dependencies:
 - 6.1.1
 
 Microtasks:
-- [ ] 6.1.2.1 — Add SQLAlchemy model entities including unique article and size_type
-- [ ] 6.1.2.2 — Add Alembic migration with upgrade and downgrade
-- [ ] 6.1.2.3 — Add Pydantic read/write schemas
-- [ ] 6.1.2.4 — Add backend regression tests for persistence
+- [x] 6.1.2.1 — Add SQLAlchemy model entities including unique article and size_type — `v0.9.0`; `backend/app/models/product_model.py`
+- [x] 6.1.2.2 — Add Alembic migration with upgrade and downgrade — `v0.9.0`; `j0k1l2m3n456_add_product_models.py`
+- [x] 6.1.2.3 — Add Pydantic read/write schemas — `v0.9.0`; `backend/app/schemas/product_model.py`
+- [x] 6.1.2.4 — Add backend regression tests for persistence — `v0.9.0`; `backend/tests/test_product_models.py` (create/read/update + unique article)
 
 Completion criteria:
 - product-model data is stored in PostgreSQL;
@@ -518,10 +518,10 @@ Dependencies:
 - 6.1.2
 
 Microtasks:
-- [ ] 6.1.3.1 — Add repository list and create operations
-- [ ] 6.1.3.2 — Add service validation for unique article and status defaults
-- [ ] 6.1.3.3 — Add POST and GET endpoints
-- [ ] 6.1.3.4 — Add OpenAPI and regression tests
+- [x] 6.1.3.1 — Add repository list and create operations — `v0.9.0`; `backend/app/repositories/product_models.py`
+- [x] 6.1.3.2 — Add service validation for unique article and status defaults — `v0.9.0`; `backend/app/services/product_models.py` (default `draft`; 409 on duplicate article)
+- [x] 6.1.3.3 — Add POST and GET endpoints — `v0.9.0`; `/product-models` list/create + get by id
+- [x] 6.1.3.4 — Add OpenAPI and regression tests — `v0.9.0`; `test_product_models.py` (operationIds unique; duplicate → 409)
 
 Completion criteria:
 - API creates and lists models;
@@ -1281,7 +1281,7 @@ Dependencies:
 - 7.2.3
 - 8.2.3
 - ADR-004
-- ADR-014 (domain contract — to be created)
+- ADR-015 (domain contract — to be created; ADR-014 is pattern-base)
 
 ### 9.1 — Domain and architecture
 
@@ -1295,7 +1295,7 @@ Microtasks:
 - [ ] 9.1.1.2 — Define unit lines matrix: N rows = order line quantity (size, personalization, number, …)
 - [ ] 9.1.1.3 — Snapshot vs live link policy for model, assembly variant, patterns, materials, routing template
 - [ ] 9.1.1.4 — Order manufacturing completeness: all technical cards in terminal state
-- [ ] 9.1.1.5 — Documentation checkpoint (ADR-014)
+- [ ] 9.1.1.5 — Documentation checkpoint (ADR-015)
 
 Completion criteria:
 - one technical card per manufacturable order line is the single agreed rule;

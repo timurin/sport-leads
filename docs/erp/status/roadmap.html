@@ -164,7 +164,7 @@
         </div>
       </div>
       <div class="meta-list">
-        <div class="chip">Updated: 2026-07-22 (Stage 6 domain)</div>
+        <div class="chip">Updated: 2026-07-22 (Stage 6.1.3 API)</div>
         <div class="chip">Version: v0.9.0</div>
         <div class="chip">Branch: feature/v0.8.1-nomenclature-core</div>
         <div class="chip">Commit: c9bee2b</div>
@@ -1543,23 +1543,23 @@
                 microtasks: [
                   {
                     code: "6.0.1.1",
-                    title: "Document module boundaries and shared terminology (ADR package): ProductModel, SizeGrid, PatternSet, AssemblyVariant, AssemblyOperationLine; rule `1 model = 1 size_type = 1 article`",
-                    done: false
+                    title: "Document module boundaries and shared terminology (ADR package): ProductModel, SizeGrid, PatternSet, AssemblyVariant, AssemblyOperationLine; rule `1 model = 1 size_type = 1 article` — `v0.9.0`; ADR-014",
+                    done: true
                   },
                   {
                     code: "6.0.1.2",
-                    title: "Define cross-links: PRODUCT «доступные модели лекал», order-item selection chain, specification copy of assembly operations, Stage 8 shop-routing boundary",
-                    done: false
+                    title: "Define cross-links: PRODUCT «доступные модели лекал», order-item selection chain, specification copy of assembly operations, Stage 8 shop-routing boundary — `v0.9.0`; ADR-014 §§ 3–4",
+                    done: true
                   },
                   {
                     code: "6.0.1.3",
-                    title: "Define empty available-models policy and MVP operation lines (inline name+cost vs shared operations catalog)",
-                    done: false
+                    title: "Define empty available-models policy and MVP operation lines (inline name+cost vs shared operations catalog) — `v0.9.0`; ADR-014 §§ 5–6",
+                    done: true
                   },
                   {
                     code: "6.0.1.4",
-                    title: "Documentation checkpoint",
-                    done: false
+                    title: "Documentation checkpoint — `v0.9.0`; ADR-014 accepted; Stage 9 tech-card ADR reserved as ADR-015",
+                    done: true
                   }
                 ]
               },
@@ -1573,18 +1573,18 @@
                 microtasks: [
                   {
                     code: "6.0.2.1",
-                    title: "Add navigation entries in `frontend/lib/navigation.ts`",
-                    done: false
+                    title: "Add navigation entries in `frontend/lib/navigation.ts` — `v0.9.0`; settings group pattern-base",
+                    done: true
                   },
                   {
                     code: "6.0.2.2",
-                    title: "Route group placeholders for list/card routes",
-                    done: false
+                    title: "Route group placeholders for list/card routes — `v0.9.0`; shells without demo catalog data",
+                    done: true
                   },
                   {
                     code: "6.0.2.3",
-                    title: "Smoke: shell links resolve (no demo data)",
-                    done: false
+                    title: "Smoke: shell links resolve (no demo data) — `v0.9.0`; owner visual OK (2026-07-22)",
+                    done: true
                   }
                 ]
               },
@@ -1599,23 +1599,23 @@
                 microtasks: [
                   {
                     code: "6.0.3.1",
-                    title: "Map models/size grids/patterns lists to PT-02",
-                    done: false
+                    title: "Map models/size grids/patterns lists to PT-02 — `v0.9.0`; stage-6.0.3-pattern-base-pt-mapping.md",
+                    done: true
                   },
                   {
                     code: "6.0.3.2",
-                    title: "Map model and pattern cards to PT-05/PT-06 or reference model shell (`5.6.7`); model card includes assembly-variants block",
-                    done: false
+                    title: "Map model and pattern cards to PT-08 (5.6.7); size-grid PT-05; assembly-variants block on model card — `v0.9.0`",
+                    done: true
                   },
                   {
                     code: "6.0.3.3",
-                    title: "Map PRODUCT nomenclature card block «доступные модели лекал» to existing nomenclature card template",
-                    done: false
+                    title: "Map PRODUCT available-models block to existing nomenclature card — `v0.9.0`",
+                    done: true
                   },
                   {
                     code: "6.0.3.4",
-                    title: "Record breakpoints in design-system task evidence",
-                    done: false
+                    title: "Record breakpoints in design-system task evidence — `v0.9.0`; matrix 1920…390",
+                    done: true
                   }
                 ]
               }
@@ -1636,28 +1636,28 @@
                 microtasks: [
                   {
                     code: "6.1.1.1",
-                    title: "Document model fields and lifecycle: article (unique), name, size_type (men/women/kids), description, status",
-                    done: false
+                    title: "Document model fields and lifecycle — `v0.9.0`; product-model-domain.md §2",
+                    done: true
                   },
                   {
                     code: "6.1.1.2",
-                    title: "Define 1:1 links to size grid and pattern set; no nested gender contours inside one model",
-                    done: false
+                    title: "Define 1:1 links to size grid and pattern set — `v0.9.0`; domain §3",
+                    done: true
                   },
                   {
                     code: "6.1.1.3",
-                    title: "Define versioning and status rules",
-                    done: false
+                    title: "Define versioning and status rules — `v0.9.0`; domain §4",
+                    done: true
                   },
                   {
                     code: "6.1.1.4",
-                    title: "Review lead / order-item / specification / technical-card integration constraints",
-                    done: false
+                    title: "Review lead / order-item / specification / technical-card integration — `v0.9.0`; domain §5",
+                    done: true
                   },
                   {
                     code: "6.1.1.5",
-                    title: "Documentation checkpoint",
-                    done: false
+                    title: "Documentation checkpoint — `v0.9.0`; product-model-domain.md",
+                    done: true
                   }
                 ]
               },
@@ -1671,23 +1671,23 @@
                 microtasks: [
                   {
                     code: "6.1.2.1",
-                    title: "Add SQLAlchemy model entities including unique article and size_type",
-                    done: false
+                    title: "Add SQLAlchemy model entities including unique article and size_type — `v0.9.0`",
+                    done: true
                   },
                   {
                     code: "6.1.2.2",
-                    title: "Add Alembic migration with upgrade and downgrade",
-                    done: false
+                    title: "Add Alembic migration with upgrade and downgrade — `v0.9.0`; j0k1l2m3n456",
+                    done: true
                   },
                   {
                     code: "6.1.2.3",
-                    title: "Add Pydantic read/write schemas",
-                    done: false
+                    title: "Add Pydantic read/write schemas — `v0.9.0`",
+                    done: true
                   },
                   {
                     code: "6.1.2.4",
-                    title: "Add backend regression tests for persistence",
-                    done: false
+                    title: "Add backend regression tests for persistence — `v0.9.0`; test_product_models.py",
+                    done: true
                   }
                 ]
               },
@@ -1701,23 +1701,23 @@
                 microtasks: [
                   {
                     code: "6.1.3.1",
-                    title: "Add repository list and create operations",
-                    done: false
+                    title: "Add repository list and create operations — `v0.9.0`",
+                    done: true
                   },
                   {
                     code: "6.1.3.2",
-                    title: "Add service validation for unique article and status defaults",
-                    done: false
+                    title: "Add service validation for unique article and status defaults — `v0.9.0`",
+                    done: true
                   },
                   {
                     code: "6.1.3.3",
-                    title: "Add POST and GET endpoints",
-                    done: false
+                    title: "Add POST and GET endpoints — `v0.9.0`; /product-models",
+                    done: true
                   },
                   {
                     code: "6.1.3.4",
-                    title: "Add OpenAPI and regression tests",
-                    done: false
+                    title: "Add OpenAPI and regression tests — `v0.9.0`",
+                    done: true
                   }
                 ]
               },
@@ -2981,7 +2981,7 @@
                   "3.2.4",
                   "4.2.1",
                   "ADR-004",
-                  "ADR-014"
+                  "ADR-015"
                 ],
                 microtasks: [
                   {
@@ -3006,7 +3006,7 @@
                   },
                   {
                     code: "9.1.1.5",
-                    title: "Documentation checkpoint (ADR-014)",
+                    title: "Documentation checkpoint (ADR-015)",
                     done: false
                   }
                 ]

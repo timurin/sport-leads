@@ -75,7 +75,7 @@ Additional:
 
 - `/settings/catalogs/product-characteristics/[characteristicId]` — **PT-05 reference**
 
-Future adopters: organization card, client card (`2.2.2`), other simple settings entities.
+Future adopters: organization card, client card (`2.2.2`), **size-grid card** (`6.2.5`, see `stage-6.0.3-pattern-base-pt-mapping.md`), other simple settings entities.
 
 ## Verification (owner)
 

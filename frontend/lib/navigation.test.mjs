@@ -19,7 +19,26 @@ test("sales navigation exposes leads and customer orders without deals", () => {
 test("settings navigation exposes the product characteristics directory", () => {
   const settings = appSections.find((section) => section.id === "settings");
   assert.ok(settings);
-  const products = settings.topNavigation.find((item) => item.id === "products");
-  assert.ok(products?.children);
-  assert.ok(products.children.some((item) => item.href === "/settings/catalogs/product-characteristics"));
+  const nomenclature = settings.topNavigation.find((item) => item.id === "nomenclature");
+  assert.ok(nomenclature?.children);
+  assert.ok(
+    nomenclature.children.some(
+      (item) => item.href === "/settings/catalogs/product-characteristics",
+    ),
+  );
+});
+
+test("settings navigation exposes pattern-base catalogs", () => {
+  const settings = appSections.find((section) => section.id === "settings");
+  assert.ok(settings);
+  const patternBase = settings.topNavigation.find((item) => item.id === "pattern-base");
+  assert.ok(patternBase?.children);
+  assert.deepEqual(
+    patternBase.children.map((item) => ({ id: item.id, href: item.href })),
+    [
+      { id: "product-models", href: "/settings/catalogs/product-models" },
+      { id: "size-grids", href: "/settings/catalogs/size-grids" },
+      { id: "patterns", href: "/settings/catalogs/patterns" },
+    ],
+  );
 });

@@ -28,6 +28,7 @@ from app.models.sales import (
     SalesUser,
 )
 from app.models.media import NomenclatureMedia
+from app.models.product_model import ProductModel, ProductModelSizeType, ProductModelStatus
 
 
 __all__ = [
@@ -69,6 +70,9 @@ __all__ = [
     "SalesOrderItem",
     "SalesOrderItemVariantSnapshot",
     "NomenclatureMedia",
+    "ProductModel",
+    "ProductModelSizeType",
+    "ProductModelStatus",
     "SalesOrderItemVariantSnapshot",
     "SalesOrderStatus",
     "SalesUser",

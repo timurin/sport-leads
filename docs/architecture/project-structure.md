@@ -1,10 +1,10 @@
 # Sport-Lead — Project Structure Checklist
 
 **Code:** `SL-PROJECT-STRUCTURE-v1`
-**Updated:** `2026-07-22`
+**Updated:** `2026-07-22` (`ADR-014` + `product-model-domain.md` `6.1.1`; Stage 9 tech-card ADR → `ADR-015`)
 **Project version:** `v0.9.0`
 **Git branch:** `feature/v0.8.1-nomenclature-core`
-**Git commit:** `05872f3`
+**Git commit:** `bc63397`
 
 ## Rules
 
@@ -93,7 +93,7 @@
 ## 8. База лекал (Models / Size grids / Patterns), Specifications, and Routings
 
 - [x] Size distribution inside sales-order items
-- [ ] Product-model catalog and versioning
+- [ ] Product-model catalog and versioning — domain `ADR-014` + `product-model-domain.md`; DB `product_models` + create/list API (`6.1.2`/`6.1.3`); update/UI not started
 - [ ] Pattern catalog, files, and grading
 - [ ] Dedicated size-grid directory and measurements
 - [ ] Specifications and bill-of-materials contour
@@ -101,7 +101,7 @@
 
 ## 9. Technical cards (Технические карты)
 
-- [ ] Domain contract: one technical card per manufacturable sales order line; unit lines inside the card (ADR-014)
+- [ ] Domain contract: one technical card per manufacturable sales order line; unit lines inside the card (ADR-015)
 - [ ] Links to model, patterns, materials, routing; stage execution and order manufacturing completeness
 
 ## 10. Design, Production, Warehouse, Procurement, and Shipping
