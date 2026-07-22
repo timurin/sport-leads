@@ -241,7 +241,17 @@
               },
               {
                 code: "0.1.4",
-                title: "Docker Compose for local development",
+                title: "Docker Compose for local development (PostgreSQL; app via uvicorn / npm run dev)",
+                done: true
+              },
+              {
+                code: "0.1.5",
+                title: "Documented environment contract (Settings, .env.example)",
+                done: true
+              },
+              {
+                code: "0.1.6",
+                title: "API liveness and readiness endpoints (database ping on /health/ready)",
                 done: true
               }
             ]
@@ -262,27 +272,37 @@
               {
                 code: "0.2.3",
                 title: "Stable CI/CD pipeline for mandatory checks",
-                done: false
+                done: true
+              },
+              {
+                code: "0.2.4",
+                title: "Backend pytest and frontend unit tests in mandatory project checks",
+                done: true
+              },
+              {
+                code: "0.2.5",
+                title: "TypeScript tsc --noEmit in mandatory project checks",
+                done: true
               }
             ]
           },
           {
-            title: "0.3 — Production operations",
+            title: "0.3 — Development and staging operations",
             items: [
               {
                 code: "0.3.1",
-                title: "Production secrets and deployment baseline",
-                done: false
+                title: "Secrets and environment baseline for dev and staging",
+                done: true
               },
               {
                 code: "0.3.2",
-                title: "Monitoring and operational logs",
+                title: "Structured application logging baseline for API and local runs",
                 done: false
               },
               {
                 code: "0.3.3",
-                title: "Backup and restore procedures",
-                done: false
+                title: "Documented database backup and restore on dev/staging",
+                done: true
               }
             ]
           }
@@ -308,6 +328,11 @@
                 code: "1.1.3",
                 title: "Fully persistent workspace without demo/local lead state",
                 done: false
+              },
+              {
+                code: "1.1.4",
+                title: "Leads list filters without demo salesManagers on persistent routes",
+                done: false
               }
             ]
           },
@@ -332,6 +357,11 @@
               {
                 code: "1.2.4",
                 title: "Persistent tasks, notes, timeline, and communications",
+                done: false
+              },
+              {
+                code: "1.2.5",
+                title: "Single lead detail data path; real actor for notes/tasks",
                 done: false
               }
             ]
@@ -435,6 +465,21 @@
                 done: false
               }
             ]
+          },
+          {
+            title: "2.4 — Organizations workspace",
+            items: [
+              {
+                code: "2.4.1",
+                title: "Persistent organizations list and card on backend data",
+                done: false
+              },
+              {
+                code: "2.4.2",
+                title: "Persistent employees directory on backend data",
+                done: false
+              }
+            ]
           }
         ]
       },
@@ -517,6 +562,11 @@
               {
                 code: "3.4.2",
                 title: "Reserve, production, shipping, payment, and closure workflow",
+                done: false
+              },
+              {
+                code: "3.4.3",
+                title: "Orders list loading.tsx and surfaced network errors",
                 done: false
               }
             ]
@@ -935,6 +985,16 @@
                     code: "5.3.2.6",
                     title: "Add shared loading and error boundaries",
                     done: true
+                  },
+                  {
+                    code: "5.3.2.7",
+                    title: "Settings catalog segment loading/error boundaries",
+                    done: false
+                  },
+                  {
+                    code: "5.3.2.8",
+                    title: "Nomenclature card reliable notFound()",
+                    done: false
                   }
                 ]
               }
@@ -1037,6 +1097,11 @@
                     code: "5.4.2.5",
                     title: "Loading, empty and error states",
                     done: true
+                  },
+                  {
+                    code: "5.4.2.6",
+                    title: "EmptyState and load-error banners on remaining catalog lists",
+                    done: false
                   }
                 ]
               },
@@ -1289,7 +1354,7 @@
                   {
                     code: "5.5.7.6",
                     title: "Verify on Customer Order Card",
-                    done: false
+                    done: true
                   }
                 ]
               },
@@ -1332,7 +1397,7 @@
               {
                 code: "5.6.1",
                 title: "Migrate Sales Dashboard",
-                done: false
+                done: true
               },
               {
                 code: "5.6.2",
@@ -3395,12 +3460,12 @@
               },
               {
                 code: "17.2.2",
-                title: "CI/CD, monitoring, and logging",
+                title: "Production deployment pipeline, centralized monitoring, and log aggregation",
                 done: false
               },
               {
                 code: "17.2.3",
-                title: "Backup, restore, and administrator documentation",
+                title: "Production backup, disaster recovery, and administrator runbooks",
                 done: false
               }
             ]

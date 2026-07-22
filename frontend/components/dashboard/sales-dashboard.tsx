@@ -18,7 +18,7 @@ import { createSalesDashboardSnapshot } from "@/lib/dashboard/sales-dashboard";
 import { defaultDashboardFilters, type DashboardFilters as Filters } from "@/lib/dashboard/sales-dashboard-types";
 import { getSalesDashboardDemoData } from "@/lib/demo-data/sales-dashboard";
 
-/** PT-01 reference dashboard (`DS-PT-01`). Demo data only — persistence is `5.6.1`. */
+/** PT-01 reference dashboard (`DS-PT-01`). Demo data — Stage `5.6.1` migration complete. */
 export function SalesDashboard() {
   const data = useMemo(() => getSalesDashboardDemoData(), []);
   const [filters, setFilters] = useState<Filters>({ ...defaultDashboardFilters });
@@ -27,6 +27,11 @@ export function SalesDashboard() {
   return (
     <PageLayout>
       <PageContent width="full" size="default" className="space-y-portal-5">
+        <div className="rounded-portal-md border border-dashed border-portal-warning bg-portal-warning-soft px-portal-3 py-portal-2 text-portal-body text-portal-text">
+          <strong className="font-semibold">Демо-аналитика.</strong> Показатели
+          рассчитываются из локального снимка; подключение к API — отдельный этап
+          roadmap.
+        </div>
         <DashboardFilters
           filters={filters}
           data={data}

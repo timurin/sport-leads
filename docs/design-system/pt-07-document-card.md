@@ -98,4 +98,4 @@ Reply: `5.5.7 visual OK` or list issues.
 
 ## Status
 
-Contract + Customer Order Card standardization shipping for `5.5.7.*`. Owner confirmation for `5.5.7.6` pending.
+Contract + Customer Order Card standardization shipped for `5.5.7.*`. Owner confirmation: **`5.5.7 visual OK`** (`2026-07-22`).

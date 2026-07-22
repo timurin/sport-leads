@@ -88,4 +88,4 @@ Reply: `5.5.1 visual OK` or list issues.
 
 ## Status
 
-Contract + reference layout + responsive rules shipped for `5.5.1.*`. Owner confirmation: **`5.5.1 visual OK`** (`2026-07-21`). `PageContent width="full"` (full-bleed).
+Contract + reference layout + responsive rules shipped for `5.5.1.*` / `5.6.1`. Owner confirmation: **`5.5.1 visual OK`** (`2026-07-21`). `PageContent width="full"` (full-bleed).

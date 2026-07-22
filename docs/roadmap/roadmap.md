@@ -1,7 +1,7 @@
 # Sport-Lead — Global Roadmap
 
 **Code:** `SL-ROADMAP-v1`
-**Updated:** `2026-07-22`
+**Updated:** `2026-07-22` (Stage 0 platform gaps)
 **Project version:** `v0.9.0`
 **Git branch:** `feature/v0.8.1-nomenclature-core`
 **Git commit:** `c9bee2b`
@@ -37,19 +37,23 @@ Next detailed contour:
 - [x] 0.1.1 — Monorepo with `backend/` and `frontend/`
 - [x] 0.1.2 — FastAPI, PostgreSQL, SQLAlchemy, and Alembic foundation
 - [x] 0.1.3 — Next.js workspace shell, navigation, and shared UI layer
-- [x] 0.1.4 — Docker Compose for local development
+- [x] 0.1.4 — Docker Compose for local development (PostgreSQL; app processes run via `uvicorn` / `npm run dev`)
+- [x] 0.1.5 — Documented environment contract (`Settings`, `.env.example`) — `v0.9.0`; evidence: `backend/app/config/settings.py`, `.env.example`
+- [x] 0.1.6 — API liveness and readiness endpoints (database ping on `/health/ready`) — `v0.9.0`; evidence: `backend/app/main.py`
 
 ### 0.2 — Quality and documentation
 
 - [x] 0.2.1 — Repository-level project checks and verification scripts
 - [x] 0.2.2 — Canonical documentation set: roadmap, structure, ERP-check, ADR
-- [ ] 0.2.3 — Stable CI/CD pipeline for mandatory checks
+- [x] 0.2.3 — Stable CI/CD pipeline for mandatory checks — `v0.9.0`; GitHub Actions aligned with `scripts/check_project.py` (`backend/requirements.txt`, `backend/` migrations, Node.js, PostgreSQL service); evidence: `.github/workflows/checks.yml`
+- [x] 0.2.4 — Backend `pytest` and frontend unit tests in mandatory project checks — `v0.9.0`; evidence: `scripts/check_project.py`
+- [x] 0.2.5 — TypeScript `tsc --noEmit` in mandatory project checks — `v0.9.0`; evidence: `scripts/check_project.py`
 
-### 0.3 — Production operations
+### 0.3 — Development and staging operations
 
-- [ ] 0.3.1 — Production secrets and deployment baseline
-- [ ] 0.3.2 — Monitoring and operational logs
-- [ ] 0.3.3 — Backup and restore procedures
+- [x] 0.3.1 — Secrets and environment baseline for dev and staging (no production secrets in repo) — `v0.9.0`; evidence: `.env.example`, `.gitignore`
+- [ ] 0.3.2 — Structured application logging baseline for API and local runs
+- [x] 0.3.3 — Documented database backup and restore on dev/staging — `v0.9.0`; evidence: `scripts/backup_db.ps1`, `scripts/restore_db.ps1`
 
 ## Stage 1 — CRM and Leads
 
@@ -58,6 +62,7 @@ Next detailed contour:
 - [x] 1.1.1 — Sales dashboard
 - [x] 1.1.2 — Lead list, filters, and Kanban UI
 - [ ] 1.1.3 — Fully persistent workspace without demo/local lead state
+- [ ] 1.1.4 — Leads list filters without demo `salesManagers` data on persistent routes — gap: `docs/design-system/ui-audit.md` § Persistent versus demo/local
 
 ### 1.2 — Lead card
 
@@ -65,6 +70,7 @@ Next detailed contour:
 - [x] 1.2.2 — Customer, contact, and commercial data saving through API
 - [x] 1.2.3 — Configurable stages and stage management
 - [ ] 1.2.4 — Persistent tasks, notes, timeline, and communications
+- [ ] 1.2.5 — Single lead detail data path (remove `lead-*` fixture IDs); real actor for notes/tasks (depends on `17.1.1` for production auth) — gap: `ui-audit.md`
 
 ### 1.3 — Lead lifecycle
 
@@ -97,6 +103,11 @@ Next detailed contour:
 - [ ] 2.3.2 — Segmentation and duplicate detection
 - [ ] 2.3.3 — Settlements and financial client state
 
+### 2.4 — Organizations workspace
+
+- [ ] 2.4.1 — Persistent organizations list and card on backend data (replace demo `organizationRecords`)
+- [ ] 2.4.2 — Persistent employees directory on backend data (replace demo `employeeRecords`)
+
 ## Stage 3 — Sales Orders
 
 ### 3.1 — Core document
@@ -122,6 +133,7 @@ Next detailed contour:
 
 - [ ] 3.4.1 — Design and approval states in order flow
 - [ ] 3.4.2 — Reserve, production, shipping, payment, and closure workflow
+- [ ] 3.4.3 — Orders list route `loading.tsx` and surfaced network errors (no silent empty list) — gap: `ui-audit.md` § Registered follow-up bugs
 
 ## Stage 4 — Nomenclature
 
@@ -247,6 +259,8 @@ Microtasks:
 - [x] 5.3.2.4 — Standardize content containers — `v0.9.0`; `DS-PAGE-04`; evidence: `docs/design-system/shell-content-containers-standardization.md`
 - [x] 5.3.2.5 — Standardize scrolling ownership — `v0.9.0`; `DS-PAGE-05`; evidence: `docs/design-system/shell-scrolling-ownership.md`
 - [x] 5.3.2.6 — Add shared loading and error boundaries — `v0.9.0`; `DS-PAGE-06`; `page-state.tsx` + workspace loading/error; nomenclature 404→`notFound()`; lead retry=`reset`; evidence: `docs/design-system/shell-page-state-boundaries.md`
+- [ ] 5.3.2.7 — Settings catalog routes: segment loading/error boundaries for custom-fields, units-of-measure, and product-characteristics list (still throw on load failure) — gap: `ui-audit.md` § Loading / error / empty audit
+- [ ] 5.3.2.8 — Nomenclature card: reliable `notFound()` when the record is missing — gap: `ui-audit.md` § Registered follow-up bugs
 
 ### 5.4 — Shared UI components
 
@@ -272,6 +286,7 @@ Microtasks:
 - [x] 5.4.2.3.7 — Define modal-vs-drawer boundaries and visual verification — `v0.9.0`; evidence: `docs/design-system/create-modal-drawer-boundaries.md`; owner visual OK (`2026-07-21`) for section `5.4.2`
 - [x] 5.4.2.4 — Toast and inline feedback — `v0.9.0`; `ToastProvider`/`InlineAlert`; `DS-FEEDBACK-01`; evidence: `docs/design-system/toast-inline-feedback-standardization.md`
 - [x] 5.4.2.5 — Loading, empty and error states — `v0.9.0`; EmptyState adoption + in-page alerts; `DS-FEEDBACK-02`; evidence: `docs/design-system/empty-error-states-standardization.md`; owner visual OK (`2026-07-21`)
+- [ ] 5.4.2.6 — Finish `EmptyState` and shared load-error banners on remaining catalog list pages — gap: `ui-audit.md` § Registered follow-up bugs
 
 #### 5.4.3 — Data presentation
 
@@ -338,7 +353,7 @@ Microtasks:
 - [x] 5.5.7.3 — Standardize tabular section — `v0.9.0`; `SalesOrderItems` → `SectionCard`; local `overflow-x-auto`
 - [x] 5.5.7.4 — Standardize totals and actions — `v0.9.0`; `ListTotals` footer; row save/delete unchanged
 - [x] 5.5.7.5 — Define responsive behaviour — `v0.9.0`; contract + stacked sections; line grid local scroll
-- [ ] 5.5.7.6 — Verify on Customer Order Card — pending owner visual OK
+- [x] 5.5.7.6 — Verify on Customer Order Card — `v0.9.0`; owner **`5.5.7 visual OK`** (`2026-07-22`)
 
 #### 5.5.8 — PT-08 Versioned Workspace
 
@@ -350,7 +365,7 @@ Microtasks:
 
 ### 5.6 — Reference migrations
 
-- [ ] 5.6.1 — Migrate Sales Dashboard
+- [x] 5.6.1 — Migrate Sales Dashboard — `v0.9.0`; PT-01 alignment (`5.5.1.*`); demo banner; `ui-audit` → reference; prior **`5.5.1 visual OK`**
 - [ ] 5.6.2 — Migrate Leads Kanban
 - [ ] 5.6.3 — Migrate Lead Card
 - [ ] 5.6.4 — Migrate Customer Order Card
@@ -1479,5 +1494,5 @@ Completion criteria:
 ### 17.2 — Production operations
 
 - [ ] 17.2.1 — VPS, production Docker, reverse proxy, and HTTPS
-- [ ] 17.2.2 — CI/CD, monitoring, and logging
-- [ ] 17.2.3 — Backup, restore, and administrator documentation
+- [ ] 17.2.2 — Production deployment pipeline, centralized monitoring, and log aggregation (dev CI covered in `0.2.3`)
+- [ ] 17.2.3 — Production backup, disaster recovery, and administrator runbooks (dev/staging scripts covered in `0.3.3`)

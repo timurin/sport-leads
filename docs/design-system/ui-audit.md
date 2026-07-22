@@ -132,7 +132,7 @@ Detailed matrix: § Persistent versus demo/local audit (`5.1.1.3`). Summary:
 
 | Role | URL | File | Data | Tag | Future PT | Notes |
 |---|---|---|---|---|---|---|
-| Sales Dashboard | `/sales/dashboard` | `frontend/app/(workspace)/sales/dashboard/page.tsx` | demo | provisional → migrate | PT-01 | Only dashboard implementation; demo-labeled UI |
+| Sales Dashboard | `/sales/dashboard` | `frontend/app/(workspace)/sales/dashboard/page.tsx` | demo | **reference** | PT-01 | `5.6.1` migrated; demo banner; `5.5.1 visual OK` |
 | Leads Kanban | `/sales/leads` | `…/sales/leads/page.tsx` | persistent | **reference** | PT-03 | Best kanban + API `loadError` precedent |
 | Lead Card | `/sales/leads/[leadId]` | `…/sales/leads/[leadId]/page.tsx` | mixed | provisional → migrate | PT-06 | Full loading/error/not-found; still demo managers / dual IDs |
 | Customer Order Card | `/sales/orders/[orderId]` | `…/sales/orders/[orderId]/page.tsx` | persistent | **reference** | PT-07 | Persistent document card with segment boundaries |
@@ -180,7 +180,7 @@ Detailed matrix: § Persistent versus demo/local audit (`5.1.1.3`). Summary:
 
 Order matches roadmap `5.6.1`–`5.6.7` and audit risk:
 
-1. Sales Dashboard → PT-01 (`5.6.1`) — landing is demo
+1. Sales Dashboard → PT-01 (`5.6.1`) — **done** (`5.5.1` + `5.6.1`); demo data remains
 2. Leads Kanban → PT-03 (`5.6.2`) — already strongest; formalize
 3. Lead Card → PT-06 (`5.6.3`) — de-mix data + unify with card template
 4. Customer Order Card → PT-07 (`5.6.4`) — already strong; formalize

@@ -47,7 +47,7 @@
 - `docs/design-system/shell-contracts.md` — защищённые контракты `DS-SHELL-01` / `DS-SHELL-02`
 - `docs/design-system/page-design-checklist.md`, `visual-rules.md`, `responsive-rules.md`
 - HTML page references: `docs/design/`
-- Platform templates `PT-01`–`PT-08` — Stage 5 roadmap (`PT-01`…`PT-08` contracts shipped; PT-07 owner visual pending; PT-08 demo reference)
+- Platform templates `PT-01`–`PT-08` — Stage 5 page templates complete (`5.5.*`); PT-07/08 owner OK on order card + demo model; Stage `5.6` migrations in progress
 
 ## Токены
 
