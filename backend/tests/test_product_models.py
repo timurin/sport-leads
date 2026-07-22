@@ -8,6 +8,7 @@ from app.database.base import Base
 from app.database.session import get_db
 from app.main import app
 from app.models.product_model import ProductModel, ProductModelSizeType, ProductModelStatus
+from app.models.size_grid import SizeGrid, SizeGridSizeType
 from app.schemas.product_model import ProductModelCreate, ProductModelRead, ProductModelUpdate
 
 
@@ -19,6 +20,28 @@ def _session_factory() -> sessionmaker[Session]:
     )
     Base.metadata.create_all(engine)
     return sessionmaker(bind=engine, expire_on_commit=False)
+
+
+def _add_size_grid(
+    db: Session,
+    *,
+    name: str,
+    size_type: SizeGridSizeType = SizeGridSizeType.MEN,
+) -> SizeGrid:
+    grid = SizeGrid(name=name, size_type=size_type)
+    db.add(grid)
+    db.commit()
+    db.refresh(grid)
+    return grid
+
+
+def _link_size_grid(client: TestClient, model_id: int, size_grid_id: int) -> None:
+    patched = client.patch(
+        f"/product-models/{model_id}",
+        json={"size_grid_id": size_grid_id},
+    )
+    assert patched.status_code == 200, patched.text
+    assert patched.json()["size_grid_id"] == size_grid_id
 
 
 def test_product_model_persists_create_read_update_and_unique_article() -> None:
@@ -206,6 +229,13 @@ def test_product_model_update_api_persists_and_validates() -> None:
             )
             assert conflict.status_code == 409
 
+            with factory() as db:
+                kids_grid = _add_size_grid(
+                    db, name="Детская тест", size_type=SizeGridSizeType.KIDS
+                )
+                kids_grid_id = kids_grid.id
+            _link_size_grid(client, model_id, kids_grid_id)
+
             activated = client.post(f"/product-models/{model_id}/activate")
             assert activated.status_code == 200
             assert activated.json()["status"] == "active"
@@ -214,7 +244,13 @@ def test_product_model_update_api_persists_and_validates() -> None:
                 f"/product-models/{model_id}",
                 json={"size_type": "women"},
             )
+            # Existing kids grid remains; incompatible size_type patch is rejected.
             assert locked_size.status_code == 422
+
+            to_draft = client.post(f"/product-models/{model_id}/draft")
+            assert to_draft.status_code == 200, to_draft.text
+            assert to_draft.json()["status"] == "draft"
+            assert to_draft.json()["has_journal_operations"] is False
 
             missing = client.patch(
                 "/product-models/999999",
@@ -247,6 +283,29 @@ def test_product_model_status_actions_api() -> None:
             assert created.status_code == 201, created.text
             model_id = created.json()["id"]
             assert created.json()["status"] == "draft"
+            assert created.json()["size_grid_id"] is None
+
+            blocked = client.post(f"/product-models/{model_id}/activate")
+            assert blocked.status_code == 422
+
+            with factory() as db:
+                men_grid = _add_size_grid(db, name="Мужская тест")
+                men_grid_id = men_grid.id
+                kids_grid = _add_size_grid(
+                    db, name="Детская тест", size_type=SizeGridSizeType.KIDS
+                )
+                kids_grid_id = kids_grid.id
+
+            switched = client.patch(
+                f"/product-models/{model_id}",
+                json={"size_grid_id": kids_grid_id},
+            )
+            assert switched.status_code == 200, switched.text
+            assert switched.json()["size_type"] == "kids"
+            assert switched.json()["size_grid_id"] == kids_grid_id
+
+            _link_size_grid(client, model_id, men_grid_id)
+            assert client.get(f"/product-models/{model_id}").json()["size_type"] == "men"
 
             activated = client.post(f"/product-models/{model_id}/activate")
             assert activated.status_code == 200
@@ -271,6 +330,12 @@ def test_product_model_status_actions_api() -> None:
                 json={"article": "S-02", "name": "Черновик", "size_type": "kids"},
             )
             draft_id = draft_only.json()["id"]
+            with factory() as db:
+                kids_grid = _add_size_grid(
+                    db, name="Детская архив", size_type=SizeGridSizeType.KIDS
+                )
+                kids_grid_id = kids_grid.id
+            _link_size_grid(client, draft_id, kids_grid_id)
             archived_draft = client.post(f"/product-models/{draft_id}/archive")
             assert archived_draft.status_code == 200
             assert archived_draft.json()["status"] == "archived"
@@ -543,6 +608,10 @@ def test_product_model_copy_creates_draft() -> None:
             )
             assert created.status_code == 201, created.text
             model_id = created.json()["id"]
+            with factory() as db:
+                men_grid = _add_size_grid(db, name="Мужская копия")
+                men_grid_id = men_grid.id
+            _link_size_grid(client, model_id, men_grid_id)
             client.post(f"/product-models/{model_id}/activate")
 
             copied = client.post(f"/product-models/{model_id}/copy")
@@ -553,5 +622,90 @@ def test_product_model_copy_creates_draft() -> None:
             assert body["name"] == "Источник (копия)"
             assert body["id"] != model_id
             assert body["description"] == "Описание"
+            assert body["size_grid_id"] == men_grid_id
+    finally:
+        app.dependency_overrides.clear()
+
+
+def test_product_model_size_grid_link_api() -> None:
+    factory = _session_factory()
+
+    def override_get_db():
+        with factory() as db:
+            yield db
+
+    app.dependency_overrides[get_db] = override_get_db
+    try:
+        with factory() as db:
+            men_grid = _add_size_grid(db, name="Мужская связь")
+            women_grid = _add_size_grid(
+                db, name="Женская связь", size_type=SizeGridSizeType.WOMEN
+            )
+            men_grid_id, women_grid_id = men_grid.id, women_grid.id
+
+        with TestClient(app) as client:
+            created = client.post(
+                "/product-models",
+                json={
+                    "article": "SG-01",
+                    "name": "С сеткой",
+                    "size_type": "men",
+                    "size_grid_id": men_grid_id,
+                },
+            )
+            assert created.status_code == 201, created.text
+            model_id = created.json()["id"]
+            assert created.json()["size_grid_id"] == men_grid_id
+            assert created.json()["size_type"] == "men"
+
+            derived = client.post(
+                "/product-models",
+                json={
+                    "article": "SG-02",
+                    "name": "Тип из сетки",
+                    "size_type": "men",
+                    "size_grid_id": women_grid_id,
+                },
+            )
+            assert derived.status_code == 201, derived.text
+            assert derived.json()["size_type"] == "women"
+            assert derived.json()["size_grid_id"] == women_grid_id
+
+            missing_grid = client.patch(
+                f"/product-models/{model_id}",
+                json={"size_grid_id": 999999},
+            )
+            assert missing_grid.status_code == 422
+
+            incompatible_type = client.patch(
+                f"/product-models/{model_id}",
+                json={"size_type": "women"},
+            )
+            assert incompatible_type.status_code == 422
+
+            linked = client.patch(
+                f"/product-models/{model_id}",
+                json={"size_grid_id": women_grid_id},
+            )
+            assert linked.status_code == 200, linked.text
+            assert linked.json()["size_grid_id"] == women_grid_id
+            assert linked.json()["size_type"] == "women"
+
+            activated = client.post(f"/product-models/{model_id}/activate")
+            assert activated.status_code == 200
+
+            blocked_clear = client.patch(
+                f"/product-models/{model_id}",
+                json={"size_grid_id": None},
+            )
+            assert blocked_clear.status_code == 422
+
+            still_linked = client.get(f"/product-models/{model_id}")
+            assert still_linked.json()["size_grid_id"] == women_grid_id
+            assert still_linked.json()["has_journal_operations"] is False
+
+            to_draft = client.post(f"/product-models/{model_id}/draft")
+            assert to_draft.status_code == 200, to_draft.text
+            assert to_draft.json()["status"] == "draft"
     finally:
         app.dependency_overrides.clear()

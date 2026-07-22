@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState, type MouseEvent } from "react";
+import { ChevronDown } from "lucide-react";
 
 import {
   archiveProductModel,
@@ -10,6 +11,7 @@ import {
   copyProductModel,
   deleteProductModelMedia,
   replaceProductModelMedia,
+  revertProductModelToDraft,
   setProductModelMediaPrimary,
   updateProductModelRequisites,
   uploadProductModelMedia,
@@ -20,7 +22,7 @@ import { AssemblyVariantsBlock } from "@/components/settings/assembly-variants-b
 import { ProductModelMediaCarousel } from "@/components/settings/product-model-media-carousel";
 import { ProductModelToolbarActions } from "@/components/settings/product-model-toolbar-actions";
 import { EntityHeader } from "@/components/ui/entity-header";
-import { Input, Select, Textarea } from "@/components/ui/form-controls";
+import { Field, Input, Select, Textarea } from "@/components/ui/form-controls";
 import { ImageLightbox } from "@/components/ui/image-lightbox";
 import { SectionCard } from "@/components/ui/section-card";
 import { StatusBadge } from "@/components/ui/status-badge";
@@ -29,6 +31,8 @@ import {
   PRODUCT_MODEL_SIZE_TYPE_LABELS,
   PRODUCT_MODEL_STATUS_FILTER_ITEMS,
   PRODUCT_MODEL_STATUS_LABELS,
+  MODEL_OPERATIONS_WARNING,
+  formatAssemblyVariantCostRange,
   isProductModelRequisitesDirty,
   productModelStatusTone,
   toProductModelRequisitesDraft,
@@ -39,11 +43,11 @@ import {
   type ProductModelHistoryEntry,
   type ProductModelMedia,
   type ProductModelRequisitesDraft,
-  type ProductModelSizeType,
   type ProductModelStatus,
   type ProductModelVersionView,
 } from "@/lib/product-models";
 import type { SewingOperation } from "@/lib/sewing-operations";
+import type { SizeGridListItem } from "@/lib/size-grids";
 
 const COLUMN_GAP = "gap-[14px]";
 
@@ -53,25 +57,24 @@ const DIRTY_LEAVE_MESSAGE =
 /** PT-08 + DS-PT-08-CATALOG product-model card (`6.1.8` / `6.1.10`). */
 export function ProductModelPersistentCard({
   model,
-  versions,
   media,
   history,
   assemblyVariants,
   sewingOperations,
+  sizeGrids,
   initialEditing = false,
 }: {
   model: ProductModel;
-  versions: ProductModelVersionView[];
+  /** Reserved for PT-08 version bar; history lives in main column. */
+  versions?: ProductModelVersionView[];
   media: ProductModelMedia[];
   history: ProductModelHistoryEntry[];
   assemblyVariants: AssemblyVariant[];
   sewingOperations: SewingOperation[];
+  sizeGrids: SizeGridListItem[];
   initialEditing?: boolean;
 }) {
   const router = useRouter();
-  const initialActive =
-    versions.find((version) => version.isActive)?.id ?? versions[0]?.id ?? "";
-  const [activeVersionId, setActiveVersionId] = useState(initialActive);
   const [trackedModel, setTrackedModel] = useState(model);
   const [current, setCurrent] = useState(model);
   const [trackedMedia, setTrackedMedia] = useState(media);
@@ -80,6 +83,7 @@ export function ProductModelPersistentCard({
   const [busy, setBusy] = useState(false);
   const [warning, setWarning] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [historyOpen, setHistoryOpen] = useState(false);
   const [editing, setEditing] = useState(initialEditing);
   const [draft, setDraft] = useState<ProductModelRequisitesDraft | null>(() =>
     initialEditing ? toProductModelRequisitesDraft(model) : null,
@@ -101,14 +105,22 @@ export function ProductModelPersistentCard({
     setItems(media);
   }
 
-  const activeVersion = useMemo(
-    () => versions.find((version) => version.id === activeVersionId),
-    [activeVersionId, versions],
-  );
-  const publishedBaseline = versions.find((version) => version.isPublishedBaseline);
-  const sizeTypeLocked = current.status !== "draft";
+  const hasJournalOperations = Boolean(current.has_journal_operations);
+  const sizeContourLocked = hasJournalOperations;
+  const canRevertToDraft = !hasJournalOperations && current.status !== "draft";
   const dirty =
     editing && draft != null && isProductModelRequisitesDirty(current, draft);
+  const linkedSizeGrid = useMemo(() => {
+    const gridId =
+      editing && draft ? draft.size_grid_id : current.size_grid_id;
+    if (gridId == null) return null;
+    return sizeGrids.find((grid) => grid.id === gridId) ?? null;
+  }, [current.size_grid_id, draft, editing, sizeGrids]);
+  const historySummary =
+    history.length === 0
+      ? "Записей пока нет"
+      : `${history.length} ${history.length === 1 ? "запись" : history.length < 5 ? "записи" : "записей"}`;
+  const costRangeLabel = formatAssemblyVariantCostRange(assemblyVariants);
 
   useEffect(() => {
     if (!dirty) return;
@@ -273,6 +285,7 @@ export function ProductModelPersistentCard({
         name: draft.name,
         size_type: draft.size_type,
         description: draft.description || null,
+        size_grid_id: draft.size_grid_id,
       });
       setCurrent(updated);
       setEditing(false);
@@ -318,8 +331,13 @@ export function ProductModelPersistentCard({
     const status = nextStatus as ProductModelStatus;
     if (status === current.status) return;
     if (status === "draft") {
-      setActionError("Нельзя вернуть модель в статус «Черновик»");
-      return;
+      if (hasJournalOperations) {
+        window.alert(MODEL_OPERATIONS_WARNING);
+        return;
+      }
+      if (!window.confirm(`Вернуть модель «${current.name}» в черновик?`)) {
+        return;
+      }
     }
     if (
       status === "archived" &&
@@ -333,13 +351,18 @@ export function ProductModelPersistentCard({
       const updated =
         status === "active"
           ? await activateProductModel(current.id)
-          : await archiveProductModel(current.id);
+          : status === "draft"
+            ? await revertProductModelToDraft(current.id)
+            : await archiveProductModel(current.id);
       setCurrent(updated);
       router.refresh();
     } catch (caught) {
-      setActionError(
-        caught instanceof Error ? caught.message : "Не удалось сменить статус",
-      );
+      const message =
+        caught instanceof Error ? caught.message : "Не удалось сменить статус";
+      if (message.includes("были операции")) {
+        window.alert(MODEL_OPERATIONS_WARNING);
+      }
+      setActionError(message);
     } finally {
       setBusy(false);
     }
@@ -435,131 +458,233 @@ export function ProductModelPersistentCard({
           main={
             <>
               <SectionCard title="Основные реквизиты" size="compact">
-                <div className="grid min-w-0 gap-portal-3 text-portal-body sm:grid-cols-2">
-                  <label className="grid min-w-0 gap-1">
-                    <span className="text-portal-caption text-portal-muted">
-                      Состояние
-                    </span>
-                    <Select
-                      value={current.status}
-                      disabled={busy}
-                      onChange={(event) => void onStatusChange(event.target.value)}
-                      aria-label="Состояние"
-                    >
-                      {PRODUCT_MODEL_STATUS_FILTER_ITEMS.map((item) => (
-                        <option
-                          key={item.id}
-                          value={item.id}
-                          disabled={
-                            item.id === "draft" && current.status !== "draft"
+                {editing && draft ? (
+                  <div className="grid min-w-0 gap-portal-4">
+                    <div className="grid min-w-0 gap-portal-3 min-[1300px]:grid-cols-2 min-[1700px]:grid-cols-4">
+                      <Field
+                        label="Наименование"
+                        className="order-1 min-w-0"
+                      >
+                        <Input
+                          value={draft.name}
+                          size="compact"
+                          onChange={(event) =>
+                            setDraft({ ...draft, name: event.target.value })
                           }
-                        >
-                          {item.label}
-                        </option>
-                      ))}
-                    </Select>
-                  </label>
-
-                  {editing && draft ? (
-                    <>
-                      <label className="grid min-w-0 gap-1">
-                        <span className="text-portal-caption text-portal-muted">
-                          Артикул
-                        </span>
+                          aria-label="Наименование"
+                        />
+                      </Field>
+                      <Field label="Артикул" className="order-2 min-w-0">
                         <Input
                           value={draft.article}
+                          size="compact"
                           onChange={(event) =>
                             setDraft({ ...draft, article: event.target.value })
                           }
                           aria-label="Артикул"
                         />
-                      </label>
-                      <label className="grid min-w-0 gap-1">
-                        <span className="text-portal-caption text-portal-muted">
-                          Название
-                        </span>
-                        <Input
-                          value={draft.name}
-                          onChange={(event) =>
-                            setDraft({ ...draft, name: event.target.value })
-                          }
-                          aria-label="Название"
-                        />
-                      </label>
-                      <label className="grid min-w-0 gap-1">
-                        <span className="text-portal-caption text-portal-muted">
-                          Тип размерной сетки
-                        </span>
+                      </Field>
+                      <Field
+                        label="Размерная сетка"
+                        className="order-3 min-w-0 min-[1700px]:order-4"
+                        help={
+                          sizeContourLocked
+                            ? MODEL_OPERATIONS_WARNING
+                            : sizeGrids.length === 0
+                              ? "Нет сеток в каталоге — заведите в «Размерные сетки»"
+                              : "Тип (муж/жен/дет) определяется выбранной сеткой"
+                        }
+                      >
                         <Select
-                          value={draft.size_type}
-                          disabled={sizeTypeLocked}
+                          value={
+                            draft.size_grid_id == null
+                              ? ""
+                              : String(draft.size_grid_id)
+                          }
+                          size="compact"
+                          disabled={busy || sizeContourLocked}
+                          onChange={(event) => {
+                            if (sizeContourLocked) {
+                              window.alert(MODEL_OPERATIONS_WARNING);
+                              return;
+                            }
+                            const raw = event.target.value;
+                            if (raw === "") {
+                              setDraft({
+                                ...draft,
+                                size_grid_id: null,
+                              });
+                              return;
+                            }
+                            const gridId = Number(raw);
+                            const grid = sizeGrids.find((row) => row.id === gridId);
+                            if (!grid) return;
+                            setDraft({
+                              ...draft,
+                              size_grid_id: gridId,
+                              size_type: grid.size_type,
+                            });
+                          }}
+                          aria-label="Размерная сетка"
+                        >
+                          <option
+                            value=""
+                            disabled={current.status !== "draft"}
+                          >
+                            Не выбрана
+                          </option>
+                          {sizeGrids.map((grid) => (
+                            <option key={grid.id} value={grid.id}>
+                              {grid.name} ·{" "}
+                              {PRODUCT_MODEL_SIZE_TYPE_LABELS[grid.size_type]} ·{" "}
+                              {grid.row_count} разм.
+                            </option>
+                          ))}
+                        </Select>
+                      </Field>
+                      <Field
+                        label="Состояние"
+                        className="order-4 min-w-0 min-[1700px]:order-3"
+                      >
+                        <Select
+                          value={current.status}
+                          disabled={busy}
+                          size="compact"
+                          onChange={(event) =>
+                            void onStatusChange(event.target.value)
+                          }
+                          aria-label="Состояние"
+                        >
+                          {PRODUCT_MODEL_STATUS_FILTER_ITEMS.map((item) => (
+                            <option
+                              key={item.id}
+                              value={item.id}
+                              disabled={
+                                item.id === "draft" &&
+                                current.status !== "draft" &&
+                                !canRevertToDraft
+                              }
+                            >
+                              {item.label}
+                            </option>
+                          ))}
+                        </Select>
+                      </Field>
+                    </div>
+                    <div className="grid min-w-0 gap-portal-3 min-[1700px]:grid-cols-4">
+                      <Field
+                        label="Описание"
+                        className="min-w-0 min-[1700px]:col-span-3"
+                      >
+                        <Textarea
+                          value={draft.description}
+                          size="compact"
                           onChange={(event) =>
                             setDraft({
                               ...draft,
-                              size_type: event.target.value as ProductModelSizeType,
+                              description: event.target.value,
                             })
-                          }
-                          aria-label="Тип размерной сетки"
-                        >
-                          {Object.entries(PRODUCT_MODEL_SIZE_TYPE_LABELS).map(
-                            ([value, label]) => (
-                              <option key={value} value={value}>
-                                {label}
-                              </option>
-                            ),
-                          )}
-                        </Select>
-                        {sizeTypeLocked ? (
-                          <span className="text-portal-caption text-portal-muted">
-                            Тип сетки меняется только у черновика
-                          </span>
-                        ) : null}
-                      </label>
-                      <label className="grid min-w-0 gap-1 sm:col-span-2">
-                        <span className="text-portal-caption text-portal-muted">
-                          Описание
-                        </span>
-                        <Textarea
-                          value={draft.description}
-                          onChange={(event) =>
-                            setDraft({ ...draft, description: event.target.value })
                           }
                           rows={4}
                           aria-label="Описание"
                         />
-                      </label>
-                    </>
-                  ) : (
-                    <>
-                      <div className="min-w-0">
-                        <p className="text-portal-caption text-portal-muted">
+                      </Field>
+                      <Field
+                        label="Стоимость"
+                        className="min-w-0"
+                        help="мин / макс по вариантам сборки"
+                      >
+                        <p className="mt-1 text-portal-body font-semibold text-portal-text">
+                          {costRangeLabel}
+                        </p>
+                      </Field>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="grid min-w-0 gap-portal-4">
+                    <div className="grid min-w-0 gap-portal-3 min-[1300px]:grid-cols-2 min-[1700px]:grid-cols-4">
+                      <div className="order-1 min-w-0 border-l-2 border-portal-primary/40 pl-portal-3">
+                        <p className="text-portal-caption font-medium text-portal-muted">
+                          Наименование
+                        </p>
+                        <p className="mt-1 text-portal-body font-semibold text-portal-text">
+                          {current.name}
+                        </p>
+                      </div>
+                      <div className="order-2 min-w-0 border-l-2 border-portal-primary/40 pl-portal-3">
+                        <p className="text-portal-caption font-medium text-portal-muted">
                           Артикул
                         </p>
-                        <p className="mt-1 font-medium text-portal-text">
+                        <p className="mt-1 font-mono text-portal-body font-semibold tracking-wide text-portal-text">
                           {current.article}
                         </p>
                       </div>
-                      <div className="min-w-0">
-                        <p className="text-portal-caption text-portal-muted">
-                          Тип размерной сетки
+                      <div className="order-3 min-w-0 border-l-2 border-portal-border pl-portal-3 min-[1700px]:order-4">
+                        <p className="text-portal-caption font-medium text-portal-muted">
+                          Размерная сетка
                         </p>
-                        <p className="mt-1 font-medium text-portal-text">
-                          {PRODUCT_MODEL_SIZE_TYPE_LABELS[current.size_type]}
-                        </p>
+                        {linkedSizeGrid ? (
+                          <p className="mt-1 text-portal-body font-semibold text-portal-text">
+                            <Link
+                              href={`/settings/catalogs/size-grids/${linkedSizeGrid.id}`}
+                              className="text-portal-primary hover:underline"
+                            >
+                              {linkedSizeGrid.name}
+                            </Link>
+                            <span className="ml-2 font-normal text-portal-muted">
+                              · {PRODUCT_MODEL_SIZE_TYPE_LABELS[linkedSizeGrid.size_type]}
+                            </span>
+                          </p>
+                        ) : (
+                          <p className="mt-1 text-portal-body text-portal-muted">
+                            Не привязана
+                            {current.status === "draft"
+                              ? " — нужна для активации"
+                              : ""}
+                          </p>
+                        )}
                       </div>
-                      <div className="min-w-0 sm:col-span-2">
-                        <p className="text-portal-caption text-portal-muted">
+                      <div className="order-4 min-w-0 border-l-2 border-portal-border pl-portal-3 min-[1700px]:order-3">
+                        <p className="text-portal-caption font-medium text-portal-muted">
+                          Состояние
+                        </p>
+                        <div className="mt-1">
+                          <StatusBadge
+                            tone={productModelStatusTone(current.status)}
+                            size="compact"
+                            dot
+                          >
+                            {PRODUCT_MODEL_STATUS_LABELS[current.status]}
+                          </StatusBadge>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="grid min-w-0 gap-portal-3 min-[1700px]:grid-cols-4">
+                      <div className="min-w-0 border-l-2 border-portal-primary/40 pl-portal-3 min-[1700px]:col-span-3">
+                        <p className="text-portal-caption font-medium text-portal-muted">
                           Описание
                         </p>
-                        <p className="mt-1 whitespace-pre-wrap text-portal-text">
-                          {current.description?.trim()
-                            ? current.description
-                            : "—"}
+                        {current.description?.trim() ? (
+                          <p className="mt-1 whitespace-pre-wrap text-portal-body leading-relaxed font-semibold text-portal-text">
+                            {current.description}
+                          </p>
+                        ) : (
+                          <p className="mt-1 text-portal-body leading-relaxed text-portal-muted">
+                            Описание пока не заполнено
+                          </p>
+                        )}
+                      </div>
+                      <div className="min-w-0 border-l-2 border-portal-border pl-portal-3">
+                        <p className="text-portal-caption font-medium text-portal-muted">
+                          Стоимость
+                        </p>
+                        <p className="mt-1 text-portal-body font-semibold text-portal-text">
+                          {costRangeLabel}
                         </p>
                       </div>
-                    </>
-                  )}
-                </div>
+                    </div>
+                  </div>
+                )}
               </SectionCard>
 
               <AssemblyVariantsBlock
@@ -569,21 +694,50 @@ export function ProductModelPersistentCard({
               />
 
               <SectionCard
-                title="Рабочая область версии"
-                description={
-                  activeVersion
-                    ? `Активная: ${activeVersion.label}${
-                        publishedBaseline && activeVersion.id !== publishedBaseline.id
-                          ? ` · база: ${publishedBaseline.label}`
-                          : ""
-                      }`
-                    : "Версия не выбрана"
-                }
+                title="История изменений"
+                description={historySummary}
                 size="compact"
+                collapsed={!historyOpen}
+                actions={
+                  <button
+                    type="button"
+                    className="portal-focus-ring inline-flex items-center gap-1 rounded-portal-md border border-portal-border bg-portal-surface px-portal-3 py-1.5 text-portal-caption font-medium text-portal-text hover:bg-portal-state-hover"
+                    aria-expanded={historyOpen}
+                    onClick={() => setHistoryOpen((open) => !open)}
+                  >
+                    {historyOpen ? "Свернуть" : "Развернуть"}
+                    <ChevronDown
+                      className={[
+                        "size-4 transition-transform",
+                        historyOpen ? "rotate-180" : "",
+                      ].join(" ")}
+                      aria-hidden="true"
+                    />
+                  </button>
+                }
               >
-                <p className="text-portal-body text-portal-muted">
-                  Здесь появятся размерная сетка после этапа 6.2. Операции пошива — отдельный справочник (`/settings/catalogs/sewing_operations`).
-                </p>
+                {history.length > 0 ? (
+                  <ul className="grid gap-portal-2">
+                    {history.map((entry) => (
+                      <li
+                        key={entry.id}
+                        className="rounded-portal-md border border-portal-border bg-portal-surface-secondary px-portal-3 py-portal-2"
+                      >
+                        <p className="text-portal-body text-portal-text">
+                          {entry.action}
+                        </p>
+                        <p className="mt-1 text-portal-caption text-portal-muted">
+                          {entry.actor} ·{" "}
+                          {new Date(entry.created_at).toLocaleString("ru-RU")}
+                        </p>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-portal-caption text-portal-muted">
+                    Записей пока нет.
+                  </p>
+                )}
               </SectionCard>
             </>
           }
@@ -605,30 +759,6 @@ export function ProductModelPersistentCard({
                   </p>
                 ) : null}
               </div>
-            </SectionCard>
-          }
-          versions={
-            <SectionCard title="История изменений" size="compact">
-              {history.length > 0 ? (
-                <ul className="grid gap-portal-2">
-                  {history.map((entry) => (
-                    <li
-                      key={entry.id}
-                      className="rounded-portal-md border border-portal-border bg-portal-surface-secondary px-portal-3 py-portal-2"
-                    >
-                      <p className="text-portal-body text-portal-text">{entry.action}</p>
-                      <p className="mt-1 text-portal-caption text-portal-muted">
-                        {entry.actor} ·{" "}
-                        {new Date(entry.created_at).toLocaleString("ru-RU")}
-                      </p>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="text-portal-caption text-portal-muted">
-                  Записей пока нет.
-                </p>
-              )}
             </SectionCard>
           }
         />

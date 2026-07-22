@@ -1,7 +1,7 @@
 # Sport-Lead — Project Structure Checklist
 
 **Code:** `SL-PROJECT-STRUCTURE-v1`
-**Updated:** `2026-07-22` (assembly variants pick sewing ops via right panel `6.3.6`; owner visual `6.1.12.6` still open)
+**Updated:** `2026-07-22` (model-base catalog v1 owner visual OK `6.4.3`; sewing-ops visual closed; order-item `6.1.13` open)
 **Project version:** `v0.9.0`
 **Git branch:** `feature/v0.8.1-nomenclature-core`
 **Git commit:** `bc63397`
@@ -96,11 +96,13 @@
 - [x] Product-model domain contract — `ADR-014` + `product-model-domain.md` (`6.1.1`)
 - [x] Product-model DB + API (create/list/update/status/versions) — `product_models` / `product_model_versions` (`6.1.2`–`6.1.6`)
 - [x] Product-model list UI owner visual — `DS-PT-02-CATALOG` etalon `/settings/catalogs/product-models` (`6.1.7.5`; directories/sections/categories)
-- [x] Product-model card UI owner visual — `DS-PT-08-CATALOG` etalon `/settings/catalogs/product-models/[id]` (`6.1.8.5`)
-- [x] Product-model create / edit UI and PRODUCT whitelist — create/edit visual OK; whitelist API+UI `6.1.11` shipped
-- [x] Assembly variants API + model-card UI (sewing-ops picker) — `AssemblyVariantsBlock` + copy-on-pick (`6.1.12` / `6.3.6`); owner visual pending `6.1.12.6`
-- [x] Sewing operations flat catalog API + PT-02 list UI — `sewing_operations` / `/settings/catalogs/sewing_operations` (`6.3.1–5`; owner visual pending `6.3.4.5` / `6.3.5.4`); PatternSet withdrawn
-- [ ] Dedicated size-grid directory and measurements
+- [x] Product-model card UI owner visual — `DS-PT-08-CATALOG` etalon `/settings/catalogs/product-models/[id]` (`6.1.8.5`; requisites polish `6.1.10.5`)
+- [x] Product-model create / edit UI and PRODUCT whitelist — create/edit visual OK; requisites polish `6.1.10.5`; whitelist API+UI `6.1.11` shipped
+- [x] Assembly variants API + model-card UI (sewing-ops picker) — `AssemblyVariantsBlock` + copy-on-pick (`6.1.12` / `6.3.6`); owner visual OK `6.1.12.6` (`2026-07-22`)
+- [x] Sewing operations flat catalog API + PT-02 list UI — `sewing_operations` / `/settings/catalogs/sewing_operations` (`6.3.1–5`; owner visual OK `6.3.4.5` / `6.3.5.4` / `6.4.3.3`); PatternSet withdrawn
+- [x] Dedicated size-grid directory and measurements — Mosmade men 18 + women 14; list/card visual OK (`6.2.4.5` / `6.2.5.4` / `6.4.3.2`); Stage-6 read-only; write/edit → `17.1.2.4`; model link `6.2.7` shipped (`ProductModel.size_grid_id`)
+- [x] Pattern-base owner visual checkpoint — models / grids / sewing ops / PRODUCT available-models (`6.4.3`; order selection deferred to `6.1.13`)
+- [ ] Order-item model + assembly-variant selection — roadmap `6.1.13` / E2E smoke `6.4.1`
 - [ ] Specifications and bill-of-materials contour
 - [ ] Routing, operations, equipment, work centers, and quality checkpoints
 

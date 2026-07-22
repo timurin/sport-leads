@@ -34,18 +34,18 @@ AppShell
         └── VersionedWorkspace (DS-PT-08)
               ├── EntityHeader (back · title · status)
               └── CatalogVersionedCardLayout (DS-PT-08-CATALOG)
-                    ├── main      → реквизиты + рабочая область
-                    ├── media     → фото / обложка (колонка 300px на wide)
-                    └── versions  → версии + история изменений
+                    ├── media     → фото / обложка («Карточка»; first on mobile)
+                    ├── main      → реквизиты → варианты сборки → история (collapsible)
+                    └── versions  → optional right column (unused when history lives in main)
 ```
 
 ## Column slots
 
 | Slot | Content (etalon) | Notes |
 |---|---|---|
-| `main` | `SectionCard` «Основные реквизиты» + `SectionCard` «Рабочая область…» | Domain fields; workspace grows with Stage 6 features |
-| `media` | `SectionCard` «Карточка» + media carousel | Fixed **300px** column width at `≥1900`; photo max **300px**, height proportional |
-| `versions` | `SectionCard` «Версии модели» → version bar + change history | History: who / what / when; FIFO cap is domain rule (models: 10) |
+| `media` | `SectionCard` «Карточка» + media carousel | Fixed **300px** column width at `≥1900`; **first** in single-column stack (`&lt;1300`) |
+| `main` | «Основные реквизиты» → assembly variants → «История изменений» (collapsed by default) | History toggle expand/collapse in section actions |
+| `versions` | Optional | Omit when history is in `main` |
 
 Gap between columns/sections: **14px** (`gap-[14px]`).
 
@@ -53,19 +53,19 @@ Gap between columns/sections: **14px** (`gap-[14px]`).
 
 | Viewport | Grid | Behaviour |
 |---|---|---|
-| **&lt; 1300px** | `1` col | All slots full width, stacked: main → media → versions |
-| **1300px – 1899px** | `75fr / 25fr` | `main` left (`row-span-2`); `media` + `versions` stacked in right column |
-| **≥ 1900px** (full width) | `60fr / 300px / 20fr` | Three columns; **media column fixed 300px** |
+| **&lt; 1300px** | `1` col | Stack: **media → main** (history last inside main); versions last if present |
+| **1300px – 1899px** | `75fr / 25fr` | `main` left; `media` (+ versions) right |
+| **≥ 1900px** (full width) | `1fr / 300px` (or `60fr / 300px / 20fr` with versions) | Media column fixed **300px** |
 
 Tailwind reference (must stay in sync with `CatalogVersionedCardLayout`):
 
 ```txt
 grid-cols-1
 min-[1300px]:grid-cols-[minmax(0,75fr)_minmax(0,25fr)]
-min-[1900px]:grid-cols-[minmax(0,60fr)_300px_minmax(0,20fr)]
+min-[1900px]:grid-cols-[minmax(0,1fr)_300px]   # or +20fr when versions present
 
-main:   min-[1300px]:row-span-2 min-[1900px]:row-span-1
-media:  min-[1900px]:w-[300px]
+media:  order-1 (<1300); min-[1900px]:w-[300px]
+main:   order-2 (<1300)
 ```
 
 Do **not** use the old 65/35 `lg:` split for new catalog cards.
@@ -84,9 +84,9 @@ Inside the media slot (product-models reference):
 ## History vs meta
 
 - Do **not** put created/updated/id/status prose in the media column.
-- Change log lives in the **versions** slot (per-entity DB history when required).
+- Change log lives in **main** after assembly variants; section **collapsed by default** with expand/collapse control.
 - Catalog status stays in `EntityHeader` via `StatusBadge`.
-
+- «Рабочая область версии» placeholder removed (`6.2.7` size grid lives in requisites).
 ## Agent / implementer checklist
 
 When rebuilding or adding a catalog card:

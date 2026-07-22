@@ -53,6 +53,7 @@ export type ProductModelRequisitesInput = {
   name: string;
   size_type: ProductModelSizeType;
   description: string | null;
+  size_grid_id?: number | null;
 };
 
 export type ProductModelCreateResult =
@@ -67,6 +68,9 @@ export async function createProductModel(
   if (!article || !name) {
     return { ok: false, message: "Артикул и название обязательны" };
   }
+  if (payload.size_grid_id == null) {
+    return { ok: false, message: "Выберите размерную сетку" };
+  }
 
   const response = await fetch(`${apiBaseUrl()}/product-models`, {
     method: "POST",
@@ -75,6 +79,7 @@ export async function createProductModel(
       article,
       name,
       size_type: payload.size_type,
+      size_grid_id: payload.size_grid_id,
       description: payload.description?.trim() || null,
     }),
     cache: "no-store",
@@ -101,6 +106,9 @@ export async function updateProductModelRequisites(
       name: payload.name.trim(),
       size_type: payload.size_type,
       description: payload.description?.trim() || null,
+      ...(payload.size_grid_id !== undefined
+        ? { size_grid_id: payload.size_grid_id }
+        : {}),
     }),
     cache: "no-store",
   });
@@ -112,6 +120,17 @@ export async function updateProductModelRequisites(
 
 export async function archiveProductModel(modelId: number): Promise<ProductModel> {
   const response = await fetch(`${apiBaseUrl()}/product-models/${modelId}/archive`, {
+    method: "POST",
+    cache: "no-store",
+  });
+  if (!response.ok) throw new Error(await readError(response));
+  const model = (await response.json()) as ProductModel;
+  revalidateModel(model.id);
+  return model;
+}
+
+export async function revertProductModelToDraft(modelId: number): Promise<ProductModel> {
+  const response = await fetch(`${apiBaseUrl()}/product-models/${modelId}/draft`, {
     method: "POST",
     cache: "no-store",
   });

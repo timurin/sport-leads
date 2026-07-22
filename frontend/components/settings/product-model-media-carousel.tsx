@@ -9,7 +9,7 @@ import {
   Star,
   Trash2,
 } from "lucide-react";
-import { useEffect, useRef, useState, type ChangeEvent } from "react";
+import { useRef, useState, type ChangeEvent } from "react";
 
 import { IconButton } from "@/components/ui/button";
 import {
@@ -45,13 +45,8 @@ export function ProductModelMediaCarousel({
   const [index, setIndex] = useState(0);
   const replaceInputRef = useRef<HTMLInputElement>(null);
   const addInputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    setIndex((current) => {
-      if (items.length === 0) return 0;
-      return Math.min(current, items.length - 1);
-    });
-  }, [items]);
+  const safeIndex =
+    items.length === 0 ? 0 : Math.min(index, items.length - 1);
 
   const onAddPick = (event: ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files ?? []);
@@ -64,7 +59,7 @@ export function ProductModelMediaCarousel({
     const file = event.target.files?.[0];
     event.target.value = "";
     if (!file || items.length === 0) return;
-    const item = items[index] ?? items[0];
+    const item = items[safeIndex] ?? items[0];
     onReplace(item, file);
   };
 
@@ -122,7 +117,7 @@ export function ProductModelMediaCarousel({
     );
   }
 
-  const item = items[index] ?? items[0];
+  const item = items[safeIndex] ?? items[0];
   const src = productModelCoverUrl(item.content_url);
   if (!src) {
     return null;
@@ -234,7 +229,7 @@ export function ProductModelMediaCarousel({
           aria-label="Фото модели"
         >
           {items.map((row, rowIndex) => {
-            const active = rowIndex === index;
+            const active = rowIndex === safeIndex;
             return (
               <button
                 key={row.id}

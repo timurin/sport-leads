@@ -13,6 +13,7 @@ import {
   toProductModelVersionViews,
 } from "@/lib/product-models";
 import { getSewingOperations } from "@/lib/sewing-operations";
+import { getSizeGrids } from "@/lib/size-grids";
 
 type ProductModelRouteProps = {
   params: Promise<{ modelId: string }>;
@@ -41,13 +42,14 @@ export default async function ProductModelRoute({
     notFound();
   }
 
-  const [versions, media, history, assemblyVariants, sewingOperations] =
+  const [versions, media, history, assemblyVariants, sewingOperations, sizeGrids] =
     await Promise.all([
       getProductModelVersions(id),
       getProductModelMedia(id),
       getProductModelHistory(id),
       getProductModelAssemblyVariants(id),
       getSewingOperations({ limit: 500 }),
+      getSizeGrids(),
     ]);
 
   return (
@@ -58,6 +60,7 @@ export default async function ProductModelRoute({
       history={history}
       assemblyVariants={assemblyVariants}
       sewingOperations={sewingOperations}
+      sizeGrids={sizeGrids}
       initialEditing={initialEditing}
     />
   );

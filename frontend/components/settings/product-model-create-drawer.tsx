@@ -17,18 +17,21 @@ import {
   type ProductModelCreateDraft,
   type ProductModelSizeType,
 } from "@/lib/product-models";
+import type { SizeGridListItem } from "@/lib/size-grids";
 
 const emptyDraft: ProductModelCreateDraft = {
   article: "",
   name: "",
   size_type: "men",
   description: "",
+  size_grid_id: null,
 };
 
 type ProductModelCreateDrawerProps = {
   open: boolean;
   onClose: () => void;
   onCreated?: (model: ProductModel) => void;
+  sizeGrids: SizeGridListItem[];
 };
 
 /** CreateDrawer host for product models (`6.1.9`, ADR-013). */
@@ -36,6 +39,7 @@ export function ProductModelCreateDrawer({
   open,
   onClose,
   onCreated,
+  sizeGrids,
 }: ProductModelCreateDrawerProps) {
   const { push: pushToast } = useToast();
   const [draft, setDraft] = useState<ProductModelCreateDraft>(emptyDraft);
@@ -72,6 +76,7 @@ export function ProductModelCreateDrawer({
         article: draft.article,
         name: draft.name,
         size_type: draft.size_type,
+        size_grid_id: draft.size_grid_id,
         description: draft.description.trim() || null,
       });
       if (result.ok) {
@@ -123,25 +128,39 @@ export function ProductModelCreateDrawer({
                   disabled={saving}
                 />
               </Field>
-              <Field label="Тип размерной сетки" required>
+              <Field
+                label="Размерная сетка"
+                required
+                help="Тип (муж/жен/дет) берётся из выбранной сетки"
+              >
                 <Select
                   required
-                  value={draft.size_type}
-                  onChange={(event) =>
-                    update(
-                      "size_type",
-                      event.target.value as ProductModelSizeType,
-                    )
-                  }
-                  disabled={saving}
+                  value={draft.size_grid_id == null ? "" : String(draft.size_grid_id)}
+                  onChange={(event) => {
+                    const raw = event.target.value;
+                    if (raw === "") {
+                      update("size_grid_id", null);
+                      return;
+                    }
+                    const gridId = Number(raw);
+                    const grid = sizeGrids.find((row) => row.id === gridId);
+                    if (!grid) return;
+                    setDraft((current) => ({
+                      ...current,
+                      size_grid_id: gridId,
+                      size_type: grid.size_type as ProductModelSizeType,
+                    }));
+                    setError("");
+                  }}
+                  disabled={saving || sizeGrids.length === 0}
                 >
-                  {Object.entries(PRODUCT_MODEL_SIZE_TYPE_LABELS).map(
-                    ([value, label]) => (
-                      <option key={value} value={value}>
-                        {label}
-                      </option>
-                    ),
-                  )}
+                  <option value="">Выберите сетку</option>
+                  {sizeGrids.map((grid) => (
+                    <option key={grid.id} value={grid.id}>
+                      {grid.name} · {PRODUCT_MODEL_SIZE_TYPE_LABELS[grid.size_type]} ·{" "}
+                      {grid.row_count} разм.
+                    </option>
+                  ))}
                 </Select>
               </Field>
               <Field label="Описание">

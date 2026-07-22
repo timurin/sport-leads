@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import compileall
+import os
 import shutil
 import subprocess
 import sys
@@ -17,6 +18,9 @@ FRONTEND_ROOT = PROJECT_ROOT / "frontend"
 
 if str(BACKEND_ROOT) not in sys.path:
     sys.path.insert(0, str(BACKEND_ROOT))
+
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
 
 APP_DIR = BACKEND_ROOT / "app"
 ALEMBIC_DIR = BACKEND_ROOT / "alembic"
@@ -45,7 +49,12 @@ def run_command(
     command: list[str],
     *,
     cwd: Path = PROJECT_ROOT,
+    env: dict[str, str] | None = None,
 ) -> subprocess.CompletedProcess[str]:
+    merged_env = None
+    if env is not None:
+        merged_env = {**os.environ, **env}
+
     result = subprocess.run(
         command,
         cwd=cwd,
@@ -53,6 +62,7 @@ def run_command(
         capture_output=True,
         encoding="utf-8",
         errors="replace",
+        env=merged_env,
     )
 
     if result.stdout.strip():
@@ -286,6 +296,11 @@ def check_alembic() -> None:
 
 
 def check_pytest() -> None:
+    pythonpath_parts = [str(PROJECT_ROOT), str(BACKEND_ROOT)]
+    existing = os.environ.get("PYTHONPATH", "")
+    if existing:
+        pythonpath_parts.append(existing)
+
     run_command(
         [
             sys.executable,
@@ -294,6 +309,7 @@ def check_pytest() -> None:
             "-q",
         ],
         cwd=BACKEND_ROOT,
+        env={"PYTHONPATH": os.pathsep.join(pythonpath_parts)},
     )
 
     print("Backend pytest успешно пройден")

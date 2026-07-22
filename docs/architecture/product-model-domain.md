@@ -24,11 +24,11 @@
 | `id` | PK | Surrogate key |
 | `article` | string | **Globally unique** among product models; trim; non-empty. Independent from `Nomenclature.article`. |
 | `name` | string | Non-empty display name |
-| `size_type` | enum | Exactly one of: `men` \| `women` \| `kids`. Immutable after first publish/activation if versions exist; until then editable with caution (API may allow while `draft`) |
+| `size_type` | enum | Derived from linked `SizeGrid.size_type` when a grid is selected; stored for filters |
 | `description` | text, nullable | Free text |
 | `cover_image_url` | string, nullable | Optional cover/thumbnail URL (list + card preview; full media gallery later) |
 | `status` | enum | See §4 (`draft` \| `active` \| `archived`) |
-| `size_grid_id` | FK, nullable | 0..1 — see §3 |
+| `size_grid_id` | FK, nullable | Single UI field «Размерная сетка»; required before activate — see §3 |
 | `created_at` / `updated_at` | timestamptz | Timezone-aware |
 
 Money fields do **not** live on the model header. Assembly costs live on `AssemblyOperationLine` (`6.1.12`).
@@ -48,7 +48,7 @@ Default on create: `draft`.
 
 | Link | Cardinality | Notes |
 |---|---|---|
-| `ProductModel` → `SizeGrid` | **0..1** now; **1:1 required** when model is production-ready (after `6.2.7` enforcement may stay soft-nullable with validation on activate) | Grid must be compatible with model `size_type`. No multi-gender grid under one model. |
+| `ProductModel` → `SizeGrid` | **0..1** while unused; **required on activate**; UI picks **one** field «Размерная сетка» (`size_type` follows the grid) | Changing grid / reverting to draft blocked when global ops journal has rows for the model (`18.4`; stub until journal ships). Warning: «По данной модели были операции! Изменения могут затронуть отчетность!» |
 
 Inverse: a size grid **may** be reusable across models only if a later ADR allows shared reference; default MVP assumption for `6.2.1` remains **owned or exclusive** until that ADR says otherwise.
 

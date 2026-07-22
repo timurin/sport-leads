@@ -17,13 +17,19 @@ from app.models.product_model import (
     ProductModelVersion,
     ProductModelVersionState,
 )
+from app.models.size_grid import SizeGrid
 from app.repositories import product_models as repo
+from app.repositories import size_grids as size_grids_repo
 from app.schemas.product_model import (
     ProductModelCoverUpload,
     ProductModelCreate,
     ProductModelMediaCreate,
     ProductModelUpdate,
     ProductModelVersionCreate,
+)
+from app.services.product_model_operations_journal import (
+    MODEL_OPERATIONS_WARNING,
+    product_model_has_journal_operations,
 )
 
 COVER_ROOT = Path("storage/product-model-covers").resolve()
@@ -47,6 +53,38 @@ class ProductModelValidationError(RuntimeError):
 
 class ProductModelVersionNotFoundError(RuntimeError):
     pass
+
+
+def _validate_size_grid_link(
+    db: Session,
+    *,
+    size_type: ProductModelSizeType | None,
+    size_grid_id: int | None,
+) -> SizeGrid | None:
+    """Ensure optional size_grid_id exists; optionally check size_type match."""
+    if size_grid_id is None:
+        return None
+    grid = size_grids_repo.get_size_grid(db, size_grid_id)
+    if grid is None:
+        raise ProductModelValidationError("Размерная сетка не найдена")
+    if size_type is not None:
+        grid_type = getattr(grid.size_type, "value", grid.size_type)
+        model_type = getattr(size_type, "value", size_type)
+        if str(grid_type) != str(model_type):
+            raise ProductModelValidationError(
+                "Размерная сетка должна совпадать с типом размерной сетки модели"
+            )
+    return grid
+
+
+def _size_type_from_grid(grid: SizeGrid) -> ProductModelSizeType:
+    raw = getattr(grid.size_type, "value", grid.size_type)
+    return ProductModelSizeType(str(raw))
+
+
+def _assert_size_contour_editable(db: Session, model_id: int) -> None:
+    if product_model_has_journal_operations(db, model_id):
+        raise ProductModelValidationError(MODEL_OPERATIONS_WARNING)
 
 
 def list_product_models(
@@ -80,10 +118,20 @@ def create_product_model(db: Session, payload: ProductModelCreate) -> ProductMod
     if repo.get_product_model_by_article(db, payload.article) is not None:
         raise ProductModelArticleConflictError("Модель с таким артикулом уже существует")
 
+    size_type = payload.size_type
+    size_grid_id = payload.size_grid_id
+    if size_grid_id is not None:
+        grid = _validate_size_grid_link(db, size_type=None, size_grid_id=size_grid_id)
+        assert grid is not None
+        size_type = _size_type_from_grid(grid)
+    else:
+        _validate_size_grid_link(db, size_type=size_type, size_grid_id=None)
+
     row = ProductModel(
         article=payload.article,
         name=payload.name,
-        size_type=payload.size_type,
+        size_type=size_type,
+        size_grid_id=size_grid_id,
         description=payload.description,
         cover_image_url=payload.cover_image_url,
         status=status,
@@ -119,12 +167,41 @@ def update_product_model(db: Session, model_id: int, payload: ProductModelUpdate
         if existing is not None and existing.id != row.id:
             raise ProductModelArticleConflictError("Модель с таким артикулом уже существует")
 
-    # Domain: size_type may change while draft; lock after activation/archive.
-    if "size_type" in changes and changes["size_type"] != row.size_type:
-        if row.status != ProductModelStatus.DRAFT:
-            raise ProductModelValidationError(
-                "Тип размерной сетки можно менять только у модели в статусе draft"
-            )
+    # Selecting a size grid is the single UI source of truth; size_type follows the grid.
+    if "size_grid_id" in changes and changes["size_grid_id"] is not None:
+        grid = _validate_size_grid_link(
+            db,
+            size_type=None,
+            size_grid_id=changes["size_grid_id"],
+        )
+        assert grid is not None
+        changes["size_type"] = _size_type_from_grid(grid)
+    elif "size_type" in changes and "size_grid_id" not in changes and row.size_grid_id is not None:
+        # Explicit size_type change with an existing grid must stay compatible.
+        _validate_size_grid_link(
+            db,
+            size_type=changes["size_type"],
+            size_grid_id=row.size_grid_id,
+        )
+    elif "size_type" in changes and changes.get("size_grid_id", row.size_grid_id) is not None:
+        _validate_size_grid_link(
+            db,
+            size_type=changes["size_type"],
+            size_grid_id=changes.get("size_grid_id", row.size_grid_id),
+        )
+
+    size_contour_changing = (
+        ("size_type" in changes and changes["size_type"] != row.size_type)
+        or ("size_grid_id" in changes and changes["size_grid_id"] != row.size_grid_id)
+    )
+    if size_contour_changing:
+        _assert_size_contour_editable(db, row.id)
+
+    effective_grid_id = changes.get("size_grid_id", row.size_grid_id)
+    if row.status != ProductModelStatus.DRAFT and effective_grid_id is None:
+        raise ProductModelValidationError(
+            "Нельзя снять размерную сетку у активной или архивной модели"
+        )
 
     repo.apply_product_model_updates(row, changes)
     summary = ", ".join(sorted(changes.keys()))
@@ -140,6 +217,7 @@ def update_product_model(db: Session, model_id: int, payload: ProductModelUpdate
 
 _ACTIVATE_FROM = {ProductModelStatus.DRAFT, ProductModelStatus.ARCHIVED}
 _ARCHIVE_FROM = {ProductModelStatus.DRAFT, ProductModelStatus.ACTIVE}
+_DRAFT_FROM = {ProductModelStatus.ACTIVE, ProductModelStatus.ARCHIVED}
 
 
 def activate_product_model(db: Session, model_id: int) -> ProductModel:
@@ -150,6 +228,15 @@ def activate_product_model(db: Session, model_id: int) -> ProductModel:
         raise ProductModelValidationError(
             f"Нельзя активировать модель из статуса {row.status.value}"
         )
+    if row.size_grid_id is None:
+        raise ProductModelValidationError(
+            "Перед активацией привяжите размерную сетку к модели"
+        )
+    _validate_size_grid_link(
+        db,
+        size_type=row.size_type,
+        size_grid_id=row.size_grid_id,
+    )
     row.status = ProductModelStatus.ACTIVE
     _append_history(db, row.id, "Модель активирована")
     db.commit()
@@ -172,6 +259,23 @@ def archive_product_model(db: Session, model_id: int) -> ProductModel:
     return row
 
 
+def revert_product_model_to_draft(db: Session, model_id: int) -> ProductModel:
+    """Return model to draft when the global ops journal has no rows for it (18.4)."""
+    row = get_product_model(db, model_id)
+    if row.status == ProductModelStatus.DRAFT:
+        return row
+    if row.status not in _DRAFT_FROM:
+        raise ProductModelValidationError(
+            f"Нельзя вернуть модель в черновик из статуса {row.status.value}"
+        )
+    _assert_size_contour_editable(db, row.id)
+    row.status = ProductModelStatus.DRAFT
+    _append_history(db, row.id, "Модель возвращена в черновик")
+    db.commit()
+    db.refresh(row)
+    return row
+
+
 def copy_product_model(db: Session, model_id: int) -> ProductModel:
     """Create a draft copy of the model (new article, status=draft, fresh v1)."""
     source = get_product_model(db, model_id)
@@ -186,6 +290,7 @@ def copy_product_model(db: Session, model_id: int) -> ProductModel:
         article=article,
         name=f"{source.name} (копия)",
         size_type=source.size_type,
+        size_grid_id=source.size_grid_id,
         description=source.description,
         status=ProductModelStatus.DRAFT,
     )

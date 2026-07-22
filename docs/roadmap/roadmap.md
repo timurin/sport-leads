@@ -620,7 +620,7 @@ Microtasks:
 - [x] 6.1.8.2 — Add card view state (article, size_type, description, status) — `v0.9.0`; `ProductModelPersistentCard` + version bar from API
 - [x] 6.1.8.3 — Add not-found, loading, and error states — `v0.9.0`; segment boundaries + numeric guard
 - [x] 6.1.8.4 — Add frontend regression tests — `v0.9.0`; `parseProductModelRouteId` / `toProductModelVersionViews`
-- [x] 6.1.8.5 — Visual verification — `v0.9.0`; owner OK `2026-07-22`
+- [x] 6.1.8.5 — Visual verification — `v0.9.0`; owner OK `2026-07-22`; requisites polish follow-up `6.1.10.5`
 
 Completion criteria:
 - card URL uses the real route structure;
@@ -659,6 +659,7 @@ Microtasks:
 - [x] 6.1.10.2 — Add dirty guard where required — `v0.9.0`; cancel / back / beforeunload when dirty
 - [x] 6.1.10.3 — Add frontend regression tests — `v0.9.0`; `isProductModelRequisitesDirty` / create-draft validation reuse
 - [x] 6.1.10.4 — Visual verification — `v0.9.0`; owner OK `2026-07-22`
+- [x] 6.1.10.5 — Requisites block visual polish — `v0.9.0`; owner OK `2026-07-22`; responsive 1/2/4-col field grid; status edit-gated; accent field layout (name/article/size/status/description); workspace placeholder text synced to `6.2` / sewing-ops; evidence: `product-model-persistent-card.tsx`
 
 Completion criteria:
 - reopened card shows saved changes;
@@ -703,7 +704,7 @@ Microtasks:
 - [x] 6.1.12.3 — Add API endpoints scoped to product model — `v0.9.0`; `/product-models/{id}/assembly-variants` (+ lines CRUD/reorder)
 - [x] 6.1.12.4 — Add model-card UI block for variants and operation lines — `v0.9.0`; `AssemblyVariantsBlock` on PT-08 card main slot
 - [x] 6.1.12.5 — Add regression tests (ordering, totals, inactive variants) — `v0.9.0`; `test_assembly_variants.py`; frontend helpers in `product-models.test.mjs`
-- [ ] 6.1.12.6 — Visual verification
+- [x] 6.1.12.6 — Visual verification — `v0.9.0`; owner OK `2026-07-22`
 
 Completion criteria:
 - variants and operation costs persist on the model;
@@ -736,6 +737,8 @@ Completion criteria:
 
 ### 6.2 — Размерные сетки (Size Grids)
 
+> Decision (`2026-07-22`): **Variant A** — separate `SizeGrid` per `size_type` (`men`/`women`/`kids`). Reference seed from [Mosmade size tables](https://mosmade.ru/about/tablitsy-razmerov/). Import proceeds **one row at a time** (verify, then continue). Domain: `docs/architecture/size-grids-domain.md`.
+
 #### 6.2.1 — Size-grid architecture
 
 Goal:
@@ -745,10 +748,10 @@ Dependencies:
 - 6.1.1
 
 Microtasks:
-- [ ] 6.2.1.1 — Define size-grid domain and naming rules
-- [ ] 6.2.1.2 — Define 1:1 link to product model (one grid per model; grid may be reusable only if ADR allows shared reference)
-- [ ] 6.2.1.3 — Define growth groups and measurements scope
-- [ ] 6.2.1.4 — Documentation checkpoint
+- [x] 6.2.1.1 — Define size-grid domain and naming rules — `v0.9.0`; Variant A; evidence: `docs/architecture/size-grids-domain.md`
+- [x] 6.2.1.2 — Define 1:1 link to product model (one grid per model; shared reference grids allowed for Mosmade seed until later ADR) — `v0.9.0`; domain §4
+- [x] 6.2.1.3 — Define growth groups and measurements scope — `v0.9.0`; S/N/T height ranges + ОГ/ОТ/ОБ min/max; domain §2–§3
+- [x] 6.2.1.4 — Documentation checkpoint — `v0.9.0`; task: `docs/tasks/v0.9.0-stage-6.2-size-grids-mosmade.md`
 
 Completion criteria:
 - size-grid scope is isolated from ad-hoc order-item size snapshots;
@@ -758,36 +761,44 @@ Completion criteria:
 #### 6.2.2 — Size-grid database core
 
 Goal:
-Create the persistent storage for size grids, sizes, and growth groups.
+Create the persistent storage for size grids, sizes, and growth groups; seed Mosmade reference data row-by-row.
 
 Dependencies:
 - 6.2.1
 
 Microtasks:
-- [ ] 6.2.2.1 — Add SQLAlchemy entities
-- [ ] 6.2.2.2 — Add Alembic migration
-- [ ] 6.2.2.3 — Add schemas and backend tests
+- [x] 6.2.2.1 — Add SQLAlchemy entities — `v0.9.0`; `backend/app/models/size_grid.py`
+- [x] 6.2.2.2 — Add Alembic migration — `v0.9.0`; `s9t0u1v2w345_add_size_grids_mosmade_first_row.py`
+- [x] 6.2.2.3 — Add schemas and backend read tests — `v0.9.0`; schemas + `GET /size-grids`; `backend/tests/test_size_grids.py`
+- [x] 6.2.2.4 — Seed Mosmade men grid + **one** row (RU `46` / INT `S`) — `v0.9.0`; owner verify before remaining rows; evidence: seed helper + migration insert
+- [x] 6.2.2.5 — Seed remaining Mosmade men rows — `v0.9.0`; 18 rows; migration `v2w3x4y5z678`
+- [x] 6.2.2.6 — Seed Mosmade women grid + rows — `v0.9.0`; «Женская (Mosmade)» 14 rows; same migration
+- [ ] 6.2.2.7 — Optional: Mosmade kids reference grid (modal table)
 
 Completion criteria:
 - grids and their items are stored persistently;
-- migration is reversible.
+- migration is reversible;
+- Mosmade import is incremental and verified.
 
-#### 6.2.3 — Size-grid CRUD API
+#### 6.2.3 — Size-grid read API (write cancelled for Stage 6)
 
 Goal:
-Users can create, view, and update size grids through API.
+Read-only catalog API for size grids in Stage 6. Mutations are **not** part of pattern-base MVP.
+
+> Amended `2026-07-22`: create/update/delete of size grids requires an authorized role (auth/roles not implemented yet). Write work moved to Stage `17.1.2` (see `17.1.2.4`). Former write microtasks `6.2.3.1`–`6.2.3.3` are **cancelled** (not blocking Stage 6).
 
 Dependencies:
 - 6.2.2
 
 Microtasks:
-- [ ] 6.2.3.1 — Add repository and service CRUD
-- [ ] 6.2.3.2 — Add endpoints
-- [ ] 6.2.3.3 — Add backend regression tests
+- [x] 6.2.3.0 — Read API for list/detail (shipped with `6.2.2.3`) — `v0.9.0`; `GET /size-grids`, `GET /size-grids/{id}`
+- [x] 6.2.3.1 — ~~Add repository and service write CRUD~~ — **cancelled** `2026-07-22` → `17.1.2.4`
+- [x] 6.2.3.2 — ~~Add write endpoints~~ — **cancelled** `2026-07-22` → `17.1.2.4`
+- [x] 6.2.3.3 — ~~Add backend regression tests for write path~~ — **cancelled** `2026-07-22` → `17.1.2.4`
 
 Completion criteria:
-- API supports CRUD for grids;
-- validation is explicit and tested.
+- read API supports list/get for catalog UI;
+- write path is explicitly owned by access-control stage, not Stage 6.
 
 #### 6.2.4 — Size-grid list workspace
 
@@ -795,15 +806,15 @@ Goal:
 Users can browse size grids in a list workspace.
 
 Dependencies:
-- 6.2.3
+- 6.2.2
 - 6.0.3
 
 Microtasks:
-- [ ] 6.2.4.1 — Add frontend types and API client
-- [ ] 6.2.4.2 — Add workspace/list route (PT-02)
-- [ ] 6.2.4.3 — Add loading and error states
-- [ ] 6.2.4.4 — Add frontend regression tests
-- [ ] 6.2.4.5 — Visual verification
+- [x] 6.2.4.1 — Add frontend types and API client — `v0.9.0`; `frontend/lib/size-grids.ts`
+- [x] 6.2.4.2 — Add workspace/list route (PT-02) — `v0.9.0`; `/settings/catalogs/size-grids` → `SizeGridsWorkspace`
+- [x] 6.2.4.3 — Add loading and error states — `v0.9.0`; segment loading/error + EmptyState
+- [x] 6.2.4.4 — Add frontend regression tests — `v0.9.0`; `frontend/lib/size-grids.test.mjs`
+- [x] 6.2.4.5 — Visual verification — `v0.9.0`; owner OK `2026-07-22`
 
 Completion criteria:
 - list uses real API data;
@@ -818,10 +829,10 @@ Dependencies:
 - 6.2.4
 
 Microtasks:
-- [ ] 6.2.5.1 — Add detail route and page shell
-- [ ] 6.2.5.2 — Add not-found, loading, and error states
-- [ ] 6.2.5.3 — Add frontend regression tests
-- [ ] 6.2.5.4 — Visual verification
+- [x] 6.2.5.1 — Add detail route and page shell — `v0.9.0`; `/settings/catalogs/size-grids/[id]` → `SizeGridCard` (PT-05)
+- [x] 6.2.5.2 — Add not-found, loading, and error states — `v0.9.0`; `not-found.tsx` + segment boundaries
+- [x] 6.2.5.3 — Add frontend regression tests — `v0.9.0`; `parseSizeGridRouteId` in `size-grids.test.mjs`
+- [x] 6.2.5.4 — Visual verification — `v0.9.0`; owner OK `2026-07-22`
 
 Completion criteria:
 - card route is stable;
@@ -830,21 +841,24 @@ Completion criteria:
 #### 6.2.6 — Size-grid create and edit forms
 
 Goal:
-Users can create and edit grids and size rows on the card.
+Authorized users can create and edit grids and size rows on the card.
+
+> Amended `2026-07-22`: edit UI deferred with write API to Stage `17.1.2` (role-gated). Stage 6 card remains **read-only** after visual OK. Former microtasks below are **cancelled** as Stage-6 work (tracked under `17.1.2.4`).
 
 Dependencies:
 - 6.2.5
+- 17.1.2
 
 Microtasks:
-- [ ] 6.2.6.1 — Add create flow (workspace or drawer)
-- [ ] 6.2.6.2 — Add edit forms for grid and lines
-- [ ] 6.2.6.3 — Add validation mapping
-- [ ] 6.2.6.4 — Add frontend regression tests
-- [ ] 6.2.6.5 — Visual verification
+- [x] 6.2.6.1 — ~~Add create flow~~ — **cancelled** `2026-07-22` → `17.1.2.4`
+- [x] 6.2.6.2 — ~~Add edit forms for grid and lines~~ — **cancelled** `2026-07-22` → `17.1.2.4`
+- [x] 6.2.6.3 — ~~Add validation mapping~~ — **cancelled** `2026-07-22` → `17.1.2.4`
+- [x] 6.2.6.4 — ~~Add frontend regression tests~~ — **cancelled** `2026-07-22` → `17.1.2.4`
+- [x] 6.2.6.5 — ~~Visual verification~~ — **cancelled** `2026-07-22` → `17.1.2.4`
 
 Completion criteria:
-- forms save through API;
-- validation is visible in UI.
+- Stage 6 does not ship unauthenticated grid mutation UI;
+- role-gated edit is delivered with `17.1.2.4`.
 
 #### 6.2.7 — Link size grids to product models
 
@@ -853,14 +867,15 @@ A product model references exactly one size grid matching its size_type.
 
 Dependencies:
 - 6.1.4
-- 6.2.3
+- 6.2.2
+- 6.2.5
 
 Microtasks:
-- [ ] 6.2.7.1 — Add backend relation field on product model (single size_grid_id)
-- [ ] 6.2.7.2 — Add migration and schema updates
-- [ ] 6.2.7.3 — Add service and API validation
-- [ ] 6.2.7.4 — Add frontend selection on model card
-- [ ] 6.2.7.5 — Add regression tests
+- [x] 6.2.7.1 — Add backend relation field on product model (single size_grid_id) — `v0.9.0`; `ProductModel.size_grid_id` FK → `size_grids`
+- [x] 6.2.7.2 — Add migration and schema updates — `v0.9.0`; `w3x4y5z6a789`; schemas Create/Update/Read
+- [x] 6.2.7.3 — Add service and API validation — `v0.9.0`; size_type match; required on activate; clear on incompatible size_type change
+- [x] 6.2.7.4 — Add frontend selection on model card — `v0.9.0`; single «Размерная сетка» in requisites (`size_type` derived); draft revert + journal-ops guard stub (`18.4`)
+- [x] 6.2.7.5 — Add regression tests — `v0.9.0`; `test_product_model_size_grid_link_api`; frontend dirty/draft helpers
 
 Completion criteria:
 - product models store a valid 1:1 size-grid relation;
@@ -936,7 +951,7 @@ Microtasks:
 - [x] 6.3.4.2 — Add workspace/list route (PT-02) — `v0.9.0`; `/settings/catalogs/sewing_operations`
 - [x] 6.3.4.3 — Add loading and error states — `v0.9.0`
 - [x] 6.3.4.4 — Add frontend regression tests — `v0.9.0`; `frontend/lib/sewing-operations.test.mjs`
-- [ ] 6.3.4.5 — Visual verification
+- [x] 6.3.4.5 — Visual verification — `v0.9.0`; owner OK `2026-07-22`
 
 Completion criteria:
 - catalog list uses persistent API data;
@@ -954,7 +969,7 @@ Microtasks:
 - [x] 6.3.5.1 — Add CreateDrawer flow — `v0.9.0`; `SewingOperationCreateDrawer`
 - [x] 6.3.5.2 — Add inline edit and delete on list — `v0.9.0`; `SewingOperationsWorkspace`
 - [x] 6.3.5.3 — Add server actions — `v0.9.0`; `sewing-operation-actions.ts`
-- [ ] 6.3.5.4 — Visual verification
+- [x] 6.3.5.4 — Visual verification — `v0.9.0`; owner OK `2026-07-22`
 
 Completion criteria:
 - forms save through API;
@@ -1001,6 +1016,8 @@ Completion criteria:
 Goal:
 Prove PRODUCT → available models → model (size grid + assembly variants + sewing-ops catalog) → order-item selection without Stage 7 document creation.
 
+> Model-base v1 checkpoint (`2026-07-22`): catalog path (models / grids / sewing ops / PRODUCT whitelist / assembly variants) owner-visual OK. Full order-item smoke remains blocked on `6.1.13`.
+
 Dependencies:
 - 6.1.11
 - 6.1.12
@@ -1009,8 +1026,8 @@ Dependencies:
 - 6.3.5
 
 Microtasks:
-- [ ] 6.4.1.1 — Script or manual smoke checklist (whitelist filter, autofill size_type/article, variant offer, reject foreign model)
-- [ ] 6.4.1.2 — Fix P0/P1 gaps found in smoke
+- [ ] 6.4.1.1 — Script or manual smoke checklist (whitelist filter, autofill size_type/article, variant offer, reject foreign model) — blocked on `6.1.13`
+- [ ] 6.4.1.2 — Fix P0/P1 gaps found in smoke — blocked on `6.1.13`
 
 Completion criteria:
 - one reference path works on persistent API data;
@@ -1022,11 +1039,11 @@ Goal:
 Factual readiness reflected in project-structure and erp-check.
 
 Dependencies:
-- 6.4.1
+- 6.4.3
 
 Microtasks:
-- [ ] 6.4.2.1 — Update project-structure checklist items
-- [ ] 6.4.2.2 — Update erp-check pattern-base / assembly-variant lines
+- [x] 6.4.2.1 — Update project-structure checklist items — `v0.9.0`; model-base catalog v1 (owner visual OK); order-item `6.1.13` still open
+- [x] 6.4.2.2 — Update erp-check pattern-base / assembly-variant lines — `v0.9.0`; sewing-ops visual closed; order binding remains `[~]`
 
 Completion criteria:
 - canonical docs match implemented contour.
@@ -1043,10 +1060,10 @@ Dependencies:
 - 6.3.4
 
 Microtasks:
-- [ ] 6.4.3.1 — Visual pass: models list/card (incl. assembly variants block)
-- [ ] 6.4.3.2 — Visual pass: size grids list/card
-- [ ] 6.4.3.3 — Visual pass: sewing-operations list (`/settings/catalogs/sewing_operations`)
-- [ ] 6.4.3.4 — Visual pass: PRODUCT nomenclature available-models block + order selection flow
+- [x] 6.4.3.1 — Visual pass: models list/card (incl. assembly variants block) — `v0.9.0`; owner OK `2026-07-22`
+- [x] 6.4.3.2 — Visual pass: size grids list/card — `v0.9.0`; owner OK `2026-07-22`
+- [x] 6.4.3.3 — Visual pass: sewing-operations list (`/settings/catalogs/sewing_operations`) — `v0.9.0`; owner OK `2026-07-22`
+- [x] 6.4.3.4 — Visual pass: PRODUCT nomenclature available-models block — `v0.9.0`; owner OK `2026-07-22`; order selection flow deferred with `6.1.13.6`
 
 Completion criteria:
 - owner sign-off recorded in roadmap evidence or task file.
@@ -1543,9 +1560,40 @@ Completion criteria:
 
 ### 17.1 — Access control
 
-- [ ] 17.1.1 — Authentication
-- [ ] 17.1.2 — System users, roles, and permissions
-- [ ] 17.1.3 — Universal audit trail
+#### 17.1.1 — Authentication
+
+Goal:
+Users sign in before using protected ERP surfaces.
+
+Microtasks:
+- [ ] 17.1.1.1 — Define auth strategy and session/token contract
+- [ ] 17.1.1.2 — Implement authentication API and session lifecycle
+- [ ] 17.1.1.3 — Wire frontend login / session gate
+- [ ] 17.1.1.4 — Regression tests and documentation checkpoint
+
+#### 17.1.2 — System users, roles, and permissions
+
+Goal:
+Platform has system users, roles, and permission checks for sensitive catalog mutations and admin actions.
+
+Microtasks:
+- [ ] 17.1.2.1 — Define user/role/permission domain model
+- [ ] 17.1.2.2 — Persist users, roles, and role↔permission links
+- [ ] 17.1.2.3 — Enforce permission checks in API (deny-by-default for protected writes)
+- [ ] 17.1.2.4 — Size-grid mutation (create/update/delete grids and rows): role-gated API + UI — supersedes cancelled Stage `6.2.3` write / `6.2.6` edit; catalog stays readable without this permission
+- [ ] 17.1.2.5 — Administration UI for assigning roles to users
+- [ ] 17.1.2.6 — Regression tests (forbidden without role; allowed with role)
+
+Completion criteria:
+- unauthorized users cannot mutate size grids;
+- authorized role can change size grids end-to-end;
+- other modules can reuse the same permission model.
+
+#### 17.1.3 — Universal audit trail
+
+- [ ] 17.1.3.1 — Define audit event contract
+- [ ] 17.1.3.2 — Persist and query audit trail
+- [ ] 17.1.3.3 — Surface critical mutations (incl. size-grid edits when `17.1.2.4` ships)
 
 ### 17.2 — Production operations
 
@@ -1555,7 +1603,7 @@ Completion criteria:
 
 ## Stage 18 — Администрирование
 
-> Structure note (`2026-07-22`): раздел платформы для **системных настроек** и **справочников платформы**. Доменные каталоги (номенклатура / Stage 4, база лекал / Stage 6 и т.п.) остаются в своих stage и навигационных группах; Stage 18 владеет оболочкой администрирования, кросс-модульными платформенными справочниками и **реестром печатных форм**, привязанных к моделям и справочникам. Auth/roles остаются в Stage 17.1; production ops — в Stage 17.2.
+> Structure note (`2026-07-22`): раздел платформы для **системных настроек** и **справочников платформы**. Доменные каталоги (номенклатура / Stage 4, база лекал / Stage 6 и т.п.) остаются в своих stage и навигационных группах; Stage 18 владеет оболочкой администрирования, кросс-модульными платформенными справочниками, **реестром печатных форм** и **глобальным журналом операций**. Auth/roles остаются в Stage 17.1; production ops — в Stage 17.2.
 
 ### 18.1 — Оболочка администрирования и системные настройки
 
@@ -1582,3 +1630,28 @@ Completion criteria:
 - [ ] 18.3.5 — Administration UI: print forms list and card under Administration → Печатные формы
 - [ ] 18.3.6 — Integration points: sales order / quotation / invoice print output uses registry (link from `3.3.3`)
 - [ ] 18.3.7 — Documentation checkpoint (ADR or domain note) and regression tests
+
+### 18.4 — Глобальный журнал операций
+
+Goal:
+Единый журнал движений сущностей (сначала — моделей изделий) по продажам и производству. Запись создаётся **только** когда модель реально участвовала в операции (продажа / производство); отсутствие участия = нет записи. Журнал — источник проверки для возврата модели в черновик и смены размерной сетки.
+
+Dependencies:
+- 18.1
+- 6.1.13 (order-item ↔ model binding for sales writes)
+- Stage 8 / technical cards for production writes (as available)
+
+Microtasks:
+- [ ] 18.4.1 — Domain contract: OperationJournal entry fields, sources (sales / production), idempotency, retention
+- [ ] 18.4.2 — Database model, migration, schemas for global operations journal
+- [ ] 18.4.3 — Service API: append / query by entity (`product_model_id`, …); `has_operations(entity)` helper
+- [ ] 18.4.4 — Write path: sales order uses model → append journal row (no write if model not used)
+- [ ] 18.4.5 — Write path: production / ТК uses model → append journal row
+- [ ] 18.4.6 — Wire product-model guards (`revert_to_draft`, size-grid change) to real `has_operations` (replace Stage-6 stub)
+- [ ] 18.4.7 — Administration UI: journal list/filter (PT-02) under Администрирование → Журнал операций
+- [ ] 18.4.8 — Regression tests + documentation checkpoint
+
+Completion criteria:
+- model used in a sale produces a journal row; unused model produces none;
+- catalog guards block draft/size changes when journal has rows and show warning: «По данной модели были операции! Изменения могут затронуть отчетность!»;
+- journal is readable from Administration.

@@ -7,9 +7,11 @@ export type ProductModel = {
   article: string;
   name: string;
   size_type: ProductModelSizeType;
+  size_grid_id: number | null;
   description: string | null;
   cover_image_url: string | null;
   status: ProductModelStatus;
+  has_journal_operations?: boolean;
   created_at: string;
   updated_at: string;
 };
@@ -119,31 +121,43 @@ export type ProductModelCreateDraft = {
   name: string;
   size_type: ProductModelSizeType;
   description: string;
+  size_grid_id: number | null;
 };
 
 export type ProductModelRequisitesDraft = ProductModelCreateDraft;
 
+export const MODEL_OPERATIONS_WARNING =
+  "По данной модели были операции! Изменения могут затронуть отчетность!";
+
 export function toProductModelRequisitesDraft(
-  model: Pick<ProductModel, "article" | "name" | "size_type" | "description">,
+  model: Pick<
+    ProductModel,
+    "article" | "name" | "size_type" | "description" | "size_grid_id"
+  >,
 ): ProductModelRequisitesDraft {
   return {
     article: model.article,
     name: model.name,
     size_type: model.size_type,
     description: model.description ?? "",
+    size_grid_id: model.size_grid_id,
   };
 }
 
 /** True when draft differs from the persisted model requisites (`6.1.10.2`). */
 export function isProductModelRequisitesDirty(
-  model: Pick<ProductModel, "article" | "name" | "size_type" | "description">,
+  model: Pick<
+    ProductModel,
+    "article" | "name" | "size_type" | "description" | "size_grid_id"
+  >,
   draft: ProductModelRequisitesDraft,
 ): boolean {
   return (
     draft.article !== model.article ||
     draft.name !== model.name ||
     draft.size_type !== model.size_type ||
-    draft.description !== (model.description ?? "")
+    draft.description !== (model.description ?? "") ||
+    draft.size_grid_id !== model.size_grid_id
   );
 }
 
@@ -163,8 +177,8 @@ export function validateProductModelCreateDraft(
   if (draft.name.trim().length > 255) {
     return "Название не длиннее 255 символов";
   }
-  if (!["men", "women", "kids"].includes(draft.size_type)) {
-    return "Выберите тип размерной сетки";
+  if (draft.size_grid_id == null || !Number.isSafeInteger(draft.size_grid_id)) {
+    return "Выберите размерную сетку";
   }
   return null;
 }
@@ -371,6 +385,34 @@ export function formatAssemblyCost(value: string | number): string {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
+}
+
+/** Min/max `total_cost` across assembly variants (`от` / `до`). */
+export function assemblyVariantCostRange(
+  variants: ReadonlyArray<Pick<AssemblyVariant, "total_cost">>,
+): { min: number; max: number } | null {
+  if (variants.length === 0) return null;
+  let min = Number.POSITIVE_INFINITY;
+  let max = Number.NEGATIVE_INFINITY;
+  for (const variant of variants) {
+    const amount = Number(String(variant.total_cost).replace(",", "."));
+    if (!Number.isFinite(amount)) continue;
+    if (amount < min) min = amount;
+    if (amount > max) max = amount;
+  }
+  if (!Number.isFinite(min) || !Number.isFinite(max)) return null;
+  return { min, max };
+}
+
+export function formatAssemblyVariantCostRange(
+  variants: ReadonlyArray<Pick<AssemblyVariant, "total_cost">>,
+): string {
+  const range = assemblyVariantCostRange(variants);
+  if (range == null) return "—";
+  if (range.min === range.max) {
+    return `${formatAssemblyCost(range.min)} ₽`;
+  }
+  return `от ${formatAssemblyCost(range.min)} — до ${formatAssemblyCost(range.max)} ₽`;
 }
 
 /** Normalize user cost input to API decimal string, or null if invalid. */

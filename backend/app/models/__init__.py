@@ -41,6 +41,7 @@ from app.models.product_model import (
     NomenclatureProductModel,
 )
 from app.models.sewing_operation import SewingOperation
+from app.models.size_grid import SizeGrid, SizeGridRow, SizeGridSizeType
 
 
 __all__ = [
@@ -93,6 +94,9 @@ __all__ = [
     "ProductModelVersionState",
     "NomenclatureProductModel",
     "SewingOperation",
+    "SizeGrid",
+    "SizeGridRow",
+    "SizeGridSizeType",
     "SalesOrderItemVariantSnapshot",
     "SalesOrderStatus",
     "SalesUser",

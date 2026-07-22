@@ -1,17 +1,19 @@
-import { CatalogShellPlaceholder } from "@/components/settings/catalog-shell-placeholder";
+import { notFound } from "next/navigation";
+
+import { SizeGridCard } from "@/components/settings/size-grid-card";
+import { getSizeGrid, parseSizeGridRouteId } from "@/lib/size-grids";
 
 type SizeGridCardRouteProps = {
   params: Promise<{ gridId: string }>;
 };
 
-export default async function SizeGridCardPlaceholderPage({
-  params,
-}: SizeGridCardRouteProps) {
-  const { gridId } = await params;
-  return (
-    <CatalogShellPlaceholder
-      catalogTitle="Карточка размерной сетки"
-      description={`Маршрут карточки /settings/catalogs/size-grids/${gridId} зарезервирован. Данные и редактирование появятся в Stage 6.2.`}
-    />
-  );
+export default async function SizeGridCardPage({ params }: SizeGridCardRouteProps) {
+  const { gridId: rawId } = await params;
+  const gridId = parseSizeGridRouteId(rawId);
+  if (gridId == null) notFound();
+
+  const grid = await getSizeGrid(gridId);
+  if (!grid) notFound();
+
+  return <SizeGridCard grid={grid} />;
 }

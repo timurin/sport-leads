@@ -14,6 +14,7 @@ class ProductModelBase(BaseModel):
     article: str = Field(min_length=1, max_length=100)
     name: str = Field(min_length=1, max_length=255)
     size_type: ProductModelSizeType
+    size_grid_id: int | None = None
     description: str | None = None
     cover_image_url: str | None = Field(default=None, max_length=500)
     status: ProductModelStatus = ProductModelStatus.DRAFT
@@ -40,6 +41,7 @@ class ProductModelUpdate(BaseModel):
     article: str | None = Field(default=None, min_length=1, max_length=100)
     name: str | None = Field(default=None, min_length=1, max_length=255)
     size_type: ProductModelSizeType | None = None
+    size_grid_id: int | None = None
     description: str | None = None
     cover_image_url: str | None = Field(default=None, max_length=500)
 
@@ -63,6 +65,7 @@ class ProductModelRead(ProductModelBase):
     id: int
     created_at: datetime
     updated_at: datetime
+    has_journal_operations: bool = False
 
 
 class ProductModelVersionCreate(BaseModel):

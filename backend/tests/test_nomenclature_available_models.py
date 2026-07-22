@@ -6,6 +6,7 @@ from sqlalchemy.pool import StaticPool
 from app.database.base import Base
 from app.database.session import get_db
 from app.main import app
+from app.models.size_grid import SizeGrid, SizeGridSizeType
 
 
 def _session_factory() -> sessionmaker[Session]:
@@ -18,6 +19,27 @@ def _session_factory() -> sessionmaker[Session]:
     return sessionmaker(bind=engine, expire_on_commit=False)
 
 
+def _add_size_grid(
+    db: Session,
+    *,
+    name: str,
+    size_type: SizeGridSizeType,
+) -> SizeGrid:
+    grid = SizeGrid(name=name, size_type=size_type)
+    db.add(grid)
+    db.commit()
+    db.refresh(grid)
+    return grid
+
+
+def _link_size_grid(client: TestClient, model_id: int, size_grid_id: int) -> None:
+    patched = client.patch(
+        f"/product-models/{model_id}",
+        json={"size_grid_id": size_grid_id},
+    )
+    assert patched.status_code == 200, patched.text
+
+
 def test_nomenclature_available_models_whitelist_rules() -> None:
     factory = _session_factory()
 
@@ -28,6 +50,16 @@ def test_nomenclature_available_models_whitelist_rules() -> None:
     app.dependency_overrides[get_db] = override_get_db
     try:
         with TestClient(app) as client:
+            with factory() as db:
+                women_grid = _add_size_grid(
+                    db, name="Женская whitelist", size_type=SizeGridSizeType.WOMEN
+                )
+                kids_grid = _add_size_grid(
+                    db, name="Детская whitelist", size_type=SizeGridSizeType.KIDS
+                )
+                women_grid_id = women_grid.id
+                kids_grid_id = kids_grid.id
+
             product = client.post(
                 "/nomenclatures",
                 json={
@@ -73,6 +105,7 @@ def test_nomenclature_available_models_whitelist_rules() -> None:
             )
             assert active_model.status_code == 201, active_model.text
             active_id = active_model.json()["id"]
+            _link_size_grid(client, active_id, women_grid_id)
             activated = client.post(f"/product-models/{active_id}/activate")
             assert activated.status_code == 200, activated.text
 
@@ -86,6 +119,7 @@ def test_nomenclature_available_models_whitelist_rules() -> None:
             )
             assert second.status_code == 201, second.text
             second_id = second.json()["id"]
+            _link_size_grid(client, second_id, kids_grid_id)
             assert client.post(f"/product-models/{second_id}/activate").status_code == 200
 
             # Non-PRODUCT rejected

@@ -67,12 +67,25 @@ from app.services.product_models import (
     product_model_cover_path,
     product_model_media_path,
     publish_product_model_version,
+    revert_product_model_to_draft,
     set_product_model_media_primary,
     update_product_model,
     upload_product_model_cover,
 )
+from app.services.product_model_operations_journal import (
+    product_model_has_journal_operations,
+)
+from app.models.product_model import ProductModel
 
 router = APIRouter(prefix="/product-models", tags=["Product models"])
+
+
+def _model_read(db: Session, row: ProductModel) -> ProductModelRead:
+    return ProductModelRead.model_validate(row).model_copy(
+        update={
+            "has_journal_operations": product_model_has_journal_operations(db, row.id),
+        }
+    )
 
 
 def _media_read(item: ProductModelMedia) -> ProductModelMediaRead:
@@ -98,8 +111,8 @@ def read_product_models(
     limit: int = Query(default=100, ge=1, le=500),
     offset: int = Query(default=0, ge=0),
     db: Session = Depends(get_db),
-) -> list:
-    return list_product_models(
+) -> list[ProductModelRead]:
+    rows = list_product_models(
         db,
         search=search,
         status=status_filter,
@@ -107,12 +120,13 @@ def read_product_models(
         limit=limit,
         offset=offset,
     )
+    return [_model_read(db, row) for row in rows]
 
 
 @router.get("/{model_id}", response_model=ProductModelRead, operation_id="get_product_model")
 def read_one_product_model(model_id: int, db: Session = Depends(get_db)):
     try:
-        return get_product_model(db, model_id)
+        return _model_read(db, get_product_model(db, model_id))
     except ProductModelNotFoundError as error:
         raise HTTPException(status_code=404, detail=str(error)) from error
 
@@ -125,9 +139,11 @@ def read_one_product_model(model_id: int, db: Session = Depends(get_db)):
 )
 def create_one_product_model(payload: ProductModelCreate, db: Session = Depends(get_db)):
     try:
-        return create_product_model(db, payload)
+        return _model_read(db, create_product_model(db, payload))
     except ProductModelArticleConflictError as error:
         raise HTTPException(status_code=409, detail=str(error)) from error
+    except ProductModelValidationError as error:
+        raise HTTPException(status_code=422, detail=str(error)) from error
 
 
 @router.patch(
@@ -141,7 +157,7 @@ def update_one_product_model(
     db: Session = Depends(get_db),
 ):
     try:
-        return update_product_model(db, model_id, payload)
+        return _model_read(db, update_product_model(db, model_id, payload))
     except ProductModelNotFoundError as error:
         raise HTTPException(status_code=404, detail=str(error)) from error
     except ProductModelArticleConflictError as error:
@@ -157,7 +173,7 @@ def update_one_product_model(
 )
 def activate_one_product_model(model_id: int, db: Session = Depends(get_db)):
     try:
-        return activate_product_model(db, model_id)
+        return _model_read(db, activate_product_model(db, model_id))
     except ProductModelNotFoundError as error:
         raise HTTPException(status_code=404, detail=str(error)) from error
     except ProductModelValidationError as error:
@@ -171,7 +187,21 @@ def activate_one_product_model(model_id: int, db: Session = Depends(get_db)):
 )
 def archive_one_product_model(model_id: int, db: Session = Depends(get_db)):
     try:
-        return archive_product_model(db, model_id)
+        return _model_read(db, archive_product_model(db, model_id))
+    except ProductModelNotFoundError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+    except ProductModelValidationError as error:
+        raise HTTPException(status_code=422, detail=str(error)) from error
+
+
+@router.post(
+    "/{model_id}/draft",
+    response_model=ProductModelRead,
+    operation_id="revert_product_model_to_draft",
+)
+def draft_one_product_model(model_id: int, db: Session = Depends(get_db)):
+    try:
+        return _model_read(db, revert_product_model_to_draft(db, model_id))
     except ProductModelNotFoundError as error:
         raise HTTPException(status_code=404, detail=str(error)) from error
     except ProductModelValidationError as error:
@@ -186,7 +216,7 @@ def archive_one_product_model(model_id: int, db: Session = Depends(get_db)):
 )
 def copy_one_product_model(model_id: int, db: Session = Depends(get_db)):
     try:
-        return copy_product_model(db, model_id)
+        return _model_read(db, copy_product_model(db, model_id))
     except ProductModelNotFoundError as error:
         raise HTTPException(status_code=404, detail=str(error)) from error
     except ProductModelArticleConflictError as error:
@@ -204,7 +234,7 @@ def upload_one_product_model_cover(
     db: Session = Depends(get_db),
 ):
     try:
-        return upload_product_model_cover(db, model_id, payload)
+        return _model_read(db, upload_product_model_cover(db, model_id, payload))
     except ProductModelNotFoundError as error:
         raise HTTPException(status_code=404, detail=str(error)) from error
     except ProductModelValidationError as error:
@@ -218,7 +248,7 @@ def upload_one_product_model_cover(
 )
 def delete_one_product_model_cover(model_id: int, db: Session = Depends(get_db)):
     try:
-        return delete_product_model_cover(db, model_id)
+        return _model_read(db, delete_product_model_cover(db, model_id))
     except ProductModelNotFoundError as error:
         raise HTTPException(status_code=404, detail=str(error)) from error
     except ProductModelValidationError as error:

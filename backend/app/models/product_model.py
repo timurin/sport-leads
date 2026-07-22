@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from decimal import Decimal
 from enum import Enum
+from typing import TYPE_CHECKING
 
 from sqlalchemy import (
     Boolean,
@@ -19,6 +20,9 @@ from sqlalchemy import (
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database.base import Base
+
+if TYPE_CHECKING:
+    from app.models.size_grid import SizeGrid
 
 
 class ProductModelSizeType(str, Enum):
@@ -42,7 +46,7 @@ class ProductModelVersionState(str, Enum):
 class ProductModel(Base):
     """Flat product-model catalog (ADR-014 / product-model-domain.md).
 
-    Size-grid / pattern-set FKs: size-grid in `6.2.7`; PatternSet withdrawn (`6.3` = sewing operations).
+    Size-grid FK: `6.2.7` (`size_grid_id`, same `size_type`). PatternSet withdrawn (`6.3` = sewing ops).
     """
 
     __tablename__ = "product_models"
@@ -62,6 +66,11 @@ class ProductModel(Base):
     article: Mapped[str] = mapped_column(String(100), nullable=False, index=True)
     name: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
     size_type: Mapped[ProductModelSizeType] = mapped_column(String(20), nullable=False, index=True)
+    size_grid_id: Mapped[int | None] = mapped_column(
+        ForeignKey("size_grids.id", ondelete="RESTRICT"),
+        nullable=True,
+        index=True,
+    )
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
     cover_image_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
     cover_storage_key: Mapped[str | None] = mapped_column(String(500), nullable=True)
@@ -84,6 +93,7 @@ class ProductModel(Base):
         onupdate=func.now(),
     )
 
+    size_grid: Mapped[SizeGrid | None] = relationship("SizeGrid")
     versions: Mapped[list[ProductModelVersion]] = relationship(
         back_populates="product_model",
         cascade="all, delete-orphan",

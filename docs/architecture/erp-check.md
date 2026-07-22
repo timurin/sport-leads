@@ -50,9 +50,9 @@
 - `[x]` `v0.8.8h-nomenclature-free-custom-fields`: свободные реквизиты используют существующий `CustomFieldDefinition`/`CustomFieldOption`/`NomenclatureFieldValue` без параллельного хранилища; прямое назначение, поиск, typed-значения и безопасное снятие назначения подтверждены backend API и frontend карточкой. Изменений HTML/CSS-композиции нет.
 - `[~]` отдельный `Material` catalog/API существует как legacy; frontend catalog demo-only и **не** является номенклатурой заказа. Архитектурное решение: единый каталог номенклатуры с типом `MATERIAL` — `ADR-012` / roadmap `4.6`; консолидация ещё не выполнена;
 - `[ ]` единая номенклатура готовых изделий, услуг, полуфабрикатов и комплектов (частично: типы `PRODUCT`/`GOODS`/`SERVICE`/`MATERIAL` есть; консолидация Material и расширение типов — `4.6`);
-- `[ ]` модели и артикулы;
-- `[ ]` размеры и изображения;
-- `[~]` операции пошива (каталог) + связка со строками варианта (`6.3.6` shipped; owner visual `6.3.4.5` / `6.3.5.4` / `6.1.12.6` open);
+- `[~]` модели и артикулы — model-base catalog v1 (`6.1.1`–`6.1.12`, `6.2.*`, `6.3.*`) shipped; owner visual OK `2026-07-22` (`6.4.3`); size-grid link `6.2.7` shipped; order-item binding `6.1.13` / full E2E smoke `6.4.1` open;
+- `[~]` размеры и изображения — SizeGrid Mosmade men+women + list/card visual OK (`6.2.4.5` / `6.2.5.4` / `6.4.3.2`); Stage-6 read-only; write/edit role-gated → `17.1.2.4`; model link `6.2.7` shipped (`size_grid_id`, activate requires grid);
+- `[x]` операции пошива (каталог) + связка со строками варианта — `6.3.1`–`6.3.6` shipped; owner visual OK `6.3.4.5` / `6.3.5.4` / `6.4.3.3` (`2026-07-22`);
 
 ## Технологическая подготовка
 

@@ -8,7 +8,7 @@ import {
   X,
 } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 import { Input, Select, Textarea } from "@/components/ui/form-controls";
 import {
@@ -65,10 +65,7 @@ export function ProductModelInspector({
   onClose,
 }: ProductModelInspectorProps) {
   const [activeTab, setActiveTab] = useState<TabId>("main");
-
-  useEffect(() => {
-    if (editing) setActiveTab("main");
-  }, [editing, model?.id]);
+  const visibleTab: TabId = editing ? "main" : activeTab;
 
   if (!model) {
     return (
@@ -196,7 +193,7 @@ export function ProductModelInspector({
             onClick={() => setActiveTab(tab.id)}
             className={[
               "shrink-0 border-b-2 px-4 py-3 text-sm font-medium",
-              activeTab === tab.id
+              visibleTab === tab.id
                 ? "border-blue-600 text-blue-700"
                 : "border-transparent text-slate-500 hover:text-slate-900",
             ].join(" ")}
@@ -207,7 +204,7 @@ export function ProductModelInspector({
       </nav>
 
       <div className="min-h-0 flex-1 overflow-y-auto">
-        {activeTab === "main" ? (
+        {visibleTab === "main" ? (
           <div className="space-y-6 p-6">
             <section>
               <h3 className="text-sm font-semibold text-slate-900">
@@ -327,7 +324,7 @@ export function ProductModelInspector({
             <div>
               <History size={36} className="mx-auto text-slate-300" />
               <h3 className="mt-4 font-semibold text-slate-800">
-                {TABS.find((tab) => tab.id === activeTab)?.title}
+                {TABS.find((tab) => tab.id === visibleTab)?.title}
               </h3>
               <p className="mt-2 text-sm text-slate-500">
                 Содержимое вкладки доступно в полной карточке модели.

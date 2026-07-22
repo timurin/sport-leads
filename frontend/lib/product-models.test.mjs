@@ -4,6 +4,7 @@ import test from "node:test";
 import {
   filterProductModels,
   formatAssemblyCost,
+  formatAssemblyVariantCostRange,
   isProductModelRequisitesDirty,
   parseAssemblyCostInput,
   parseProductModelRouteId,
@@ -23,6 +24,7 @@ const sample = [
     article: "213",
     name: "Футболка спортивная",
     size_type: "men",
+    size_grid_id: null,
     description: "Мужская",
     status: "draft",
     cover_image_url: null,
@@ -34,6 +36,7 @@ const sample = [
     article: "213-W",
     name: "Футболка женская",
     size_type: "women",
+    size_grid_id: 2,
     description: null,
     status: "active",
     cover_image_url: null,
@@ -45,6 +48,7 @@ const sample = [
     article: "K-01",
     name: "Детская форма",
     size_type: "kids",
+    size_grid_id: null,
     description: null,
     status: "archived",
     cover_image_url: "/product-models/sample-cover.svg",
@@ -134,13 +138,14 @@ test("toProductModelVersionViews marks draft active and published baseline", () 
   assert.equal(views.filter((item) => item.isActive).length, 1);
 });
 
-test("validateProductModelCreateDraft requires article, name and size_type", () => {
+test("validateProductModelCreateDraft requires article, name and size grid", () => {
   assert.equal(
     validateProductModelCreateDraft({
       article: "",
       name: "Модель",
       size_type: "men",
       description: "",
+      size_grid_id: 1,
     }),
     "Укажите артикул",
   );
@@ -150,6 +155,7 @@ test("validateProductModelCreateDraft requires article, name and size_type", () 
       name: "  ",
       size_type: "women",
       description: "",
+      size_grid_id: 1,
     }),
     "Укажите название",
   );
@@ -159,6 +165,17 @@ test("validateProductModelCreateDraft requires article, name and size_type", () 
       name: "Модель",
       size_type: "kids",
       description: "ok",
+      size_grid_id: null,
+    }),
+    "Выберите размерную сетку",
+  );
+  assert.equal(
+    validateProductModelCreateDraft({
+      article: "A-1",
+      name: "Модель",
+      size_type: "kids",
+      description: "ok",
+      size_grid_id: 3,
     }),
     null,
   );
@@ -179,15 +196,23 @@ test("isProductModelRequisitesDirty compares draft to model", () => {
   );
   assert.equal(
     isProductModelRequisitesDirty(
-      { ...model, description: null },
+      { ...model, description: null, size_grid_id: null },
       {
         article: model.article,
         name: model.name,
         size_type: model.size_type,
         description: "",
+        size_grid_id: null,
       },
     ),
     false,
+  );
+  assert.equal(
+    isProductModelRequisitesDirty(model, {
+      ...toProductModelRequisitesDraft(model),
+      size_grid_id: 10,
+    }),
+    true,
   );
 });
 
@@ -198,6 +223,22 @@ test("formatAssemblyCost and parseAssemblyCostInput handle decimals", () => {
   assert.equal(parseAssemblyCostInput("10"), "10.00");
   assert.equal(parseAssemblyCostInput("-1"), null);
   assert.equal(parseAssemblyCostInput("abc"), null);
+});
+
+test("formatAssemblyVariantCostRange shows min–max across variants", () => {
+  assert.equal(formatAssemblyVariantCostRange([]), "—");
+  assert.equal(
+    formatAssemblyVariantCostRange([{ total_cost: "100.00" }]),
+    "100,00 ₽",
+  );
+  assert.equal(
+    formatAssemblyVariantCostRange([
+      { total_cost: "50.5" },
+      { total_cost: "150.00" },
+      { total_cost: "90" },
+    ]),
+    "от 50,50 — до 150,00 ₽",
+  );
 });
 
 test("sumSelectedSewingOperationCosts totals selected catalog rows", () => {

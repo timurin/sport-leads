@@ -1887,7 +1887,7 @@
                   },
                   {
                     code: "6.1.8.5",
-                    title: "Visual verification — `v0.9.0`; owner OK 2026-07-22",
+                    title: "Visual verification — `v0.9.0`; owner OK 2026-07-22; requisites polish follow-up 6.1.10.5",
                     done: true
                   }
                 ]
@@ -1949,6 +1949,11 @@
                   {
                     code: "6.1.10.4",
                     title: "Visual verification — `v0.9.0`; owner OK 2026-07-22",
+                    done: true
+                  },
+                  {
+                    code: "6.1.10.5",
+                    title: "Requisites block visual polish — `v0.9.0`; owner OK 2026-07-22; responsive field grid; status edit-gated; accent layout; workspace placeholder synced to 6.2 / sewing-ops",
                     done: true
                   }
                 ]
@@ -2028,8 +2033,8 @@
                   },
                   {
                     code: "6.1.12.6",
-                    title: "Visual verification",
-                    done: false
+                    title: "Visual verification — `v0.9.0`; owner OK 2026-07-22",
+                    done: true
                   }
                 ]
               },
@@ -2084,84 +2089,111 @@
           },
           {
             title: "6.2 — Размерные сетки (Size Grids)",
+            note: "Variant A: separate SizeGrid per size_type. Mosmade seed row-by-row from https://mosmade.ru/about/tablitsy-razmerov/",
             items: [
               {
                 code: "6.2.1",
                 title: "Size-grid architecture",
-                goal: "Define the dedicated size-grid contour used by models (1:1) and future order size selection.",
+                goal: "Define the dedicated size-grid contour used by models (1:1) and future order size selection. Variant A.",
                 dependencies: [
                   "6.1.1"
                 ],
                 microtasks: [
                   {
                     code: "6.2.1.1",
-                    title: "Define size-grid domain and naming rules",
-                    done: false
+                    title: "Define size-grid domain and naming rules — `v0.9.0`; Variant A; size-grids-domain.md",
+                    done: true
                   },
                   {
                     code: "6.2.1.2",
-                    title: "Define 1:1 link to product model (one grid per model; grid may be reusable only if ADR allows shared reference)",
-                    done: false
+                    title: "Define 1:1 link to product model — `v0.9.0`; shared Mosmade reference allowed; domain §4",
+                    done: true
                   },
                   {
                     code: "6.2.1.3",
-                    title: "Define growth groups and measurements scope",
-                    done: false
+                    title: "Define growth groups and measurements — `v0.9.0`; S/N/T + ОГ/ОТ/ОБ min/max",
+                    done: true
                   },
                   {
                     code: "6.2.1.4",
-                    title: "Documentation checkpoint",
-                    done: false
+                    title: "Documentation checkpoint — `v0.9.0`; v0.9.0-stage-6.2-size-grids-mosmade.md",
+                    done: true
                   }
                 ]
               },
               {
                 code: "6.2.2",
                 title: "Size-grid database core",
-                goal: "Create the persistent storage for size grids, sizes, and growth groups.",
+                goal: "Persistent storage + Mosmade reference seed row-by-row.",
                 dependencies: [
                   "6.2.1"
                 ],
                 microtasks: [
                   {
                     code: "6.2.2.1",
-                    title: "Add SQLAlchemy entities",
-                    done: false
+                    title: "Add SQLAlchemy entities — `v0.9.0`; size_grid.py",
+                    done: true
                   },
                   {
                     code: "6.2.2.2",
-                    title: "Add Alembic migration",
-                    done: false
+                    title: "Add Alembic migration — `v0.9.0`; s9t0u1v2w345",
+                    done: true
                   },
                   {
                     code: "6.2.2.3",
-                    title: "Add schemas and backend tests",
+                    title: "Add schemas and backend read tests — `v0.9.0`; GET /size-grids; test_size_grids.py",
+                    done: true
+                  },
+                  {
+                    code: "6.2.2.4",
+                    title: "Seed Mosmade men grid + one row RU 46 / INT S — `v0.9.0`; owner verify before remaining rows",
+                    done: true
+                  },
+                  {
+                    code: "6.2.2.5",
+                    title: "Seed remaining Mosmade men rows — `v0.9.0`; 18 rows; migration v2w3x4y5z678",
+                    done: true
+                  },
+                  {
+                    code: "6.2.2.6",
+                    title: "Seed Mosmade women grid + rows — `v0.9.0`; 14 rows; same migration",
+                    done: true
+                  },
+                  {
+                    code: "6.2.2.7",
+                    title: "Optional: Mosmade kids reference grid",
                     done: false
                   }
                 ]
               },
               {
                 code: "6.2.3",
-                title: "Size-grid CRUD API",
-                goal: "Users can create, view, and update size grids through API.",
+                title: "Size-grid read API (write cancelled for Stage 6)",
+                goal: "Read-only catalog API in Stage 6. Write mutations require role under 17.1.2.4.",
+                note: "Amended 2026-07-22: write CRUD cancelled → 17.1.2.4",
                 dependencies: [
                   "6.2.2"
                 ],
                 microtasks: [
                   {
+                    code: "6.2.3.0",
+                    title: "Read API list/detail — `v0.9.0`; GET /size-grids (shipped with 6.2.2.3)",
+                    done: true
+                  },
+                  {
                     code: "6.2.3.1",
-                    title: "Add repository and service CRUD",
-                    done: false
+                    title: "Write repository/service CRUD — cancelled 2026-07-22 → 17.1.2.4",
+                    done: true
                   },
                   {
                     code: "6.2.3.2",
-                    title: "Add endpoints",
-                    done: false
+                    title: "Write endpoints — cancelled 2026-07-22 → 17.1.2.4",
+                    done: true
                   },
                   {
                     code: "6.2.3.3",
-                    title: "Add backend regression tests",
-                    done: false
+                    title: "Write regression tests — cancelled 2026-07-22 → 17.1.2.4",
+                    done: true
                   }
                 ]
               },
@@ -2170,34 +2202,34 @@
                 title: "Size-grid list workspace",
                 goal: "Users can browse size grids in a list workspace.",
                 dependencies: [
-                  "6.2.3",
+                  "6.2.2",
                   "6.0.3"
                 ],
                 microtasks: [
                   {
                     code: "6.2.4.1",
-                    title: "Add frontend types and API client",
-                    done: false
+                    title: "Add frontend types and API client — `v0.9.0`; size-grids.ts",
+                    done: true
                   },
                   {
                     code: "6.2.4.2",
-                    title: "Add workspace/list route (PT-02)",
-                    done: false
+                    title: "Add workspace/list route (PT-02) — `v0.9.0`; SizeGridsWorkspace",
+                    done: true
                   },
                   {
                     code: "6.2.4.3",
-                    title: "Add loading and error states",
-                    done: false
+                    title: "Add loading and error states — `v0.9.0`",
+                    done: true
                   },
                   {
                     code: "6.2.4.4",
-                    title: "Add frontend regression tests",
-                    done: false
+                    title: "Add frontend regression tests — `v0.9.0`; size-grids.test.mjs",
+                    done: true
                   },
                   {
                     code: "6.2.4.5",
-                    title: "Visual verification",
-                    done: false
+                    title: "Visual verification — `v0.9.0`; owner OK 2026-07-22",
+                    done: true
                   }
                 ]
               },
@@ -2211,58 +2243,60 @@
                 microtasks: [
                   {
                     code: "6.2.5.1",
-                    title: "Add detail route and page shell",
-                    done: false
+                    title: "Add detail route and page shell — `v0.9.0`; SizeGridCard PT-05",
+                    done: true
                   },
                   {
                     code: "6.2.5.2",
-                    title: "Add not-found, loading, and error states",
-                    done: false
+                    title: "Add not-found, loading, and error states — `v0.9.0`",
+                    done: true
                   },
                   {
                     code: "6.2.5.3",
-                    title: "Add frontend regression tests",
-                    done: false
+                    title: "Add frontend regression tests — `v0.9.0`; parseSizeGridRouteId",
+                    done: true
                   },
                   {
                     code: "6.2.5.4",
-                    title: "Visual verification",
-                    done: false
+                    title: "Visual verification — `v0.9.0`; owner OK 2026-07-22",
+                    done: true
                   }
                 ]
               },
               {
                 code: "6.2.6",
                 title: "Size-grid create and edit forms",
-                goal: "Users can create and edit grids and size rows on the card.",
+                goal: "Role-gated create/edit deferred to 17.1.2.4. Stage 6 card stays read-only.",
+                note: "Amended 2026-07-22: cancelled as Stage-6 work → 17.1.2.4",
                 dependencies: [
-                  "6.2.5"
+                  "6.2.5",
+                  "17.1.2"
                 ],
                 microtasks: [
                   {
                     code: "6.2.6.1",
-                    title: "Add create flow (workspace or drawer)",
-                    done: false
+                    title: "Create flow — cancelled 2026-07-22 → 17.1.2.4",
+                    done: true
                   },
                   {
                     code: "6.2.6.2",
-                    title: "Add edit forms for grid and lines",
-                    done: false
+                    title: "Edit forms — cancelled 2026-07-22 → 17.1.2.4",
+                    done: true
                   },
                   {
                     code: "6.2.6.3",
-                    title: "Add validation mapping",
-                    done: false
+                    title: "Validation mapping — cancelled 2026-07-22 → 17.1.2.4",
+                    done: true
                   },
                   {
                     code: "6.2.6.4",
-                    title: "Add frontend regression tests",
-                    done: false
+                    title: "Frontend regression tests — cancelled 2026-07-22 → 17.1.2.4",
+                    done: true
                   },
                   {
                     code: "6.2.6.5",
-                    title: "Visual verification",
-                    done: false
+                    title: "Visual verification — cancelled 2026-07-22 → 17.1.2.4",
+                    done: true
                   }
                 ]
               },
@@ -2272,33 +2306,34 @@
                 goal: "A product model references exactly one size grid matching its size_type.",
                 dependencies: [
                   "6.1.4",
-                  "6.2.3"
+                  "6.2.2",
+                  "6.2.5"
                 ],
                 microtasks: [
                   {
                     code: "6.2.7.1",
-                    title: "Add backend relation field on product model (single size_grid_id)",
-                    done: false
+                    title: "Add backend relation field on product model (single size_grid_id) — `v0.9.0`; ProductModel.size_grid_id FK → size_grids",
+                    done: true
                   },
                   {
                     code: "6.2.7.2",
-                    title: "Add migration and schema updates",
-                    done: false
+                    title: "Add migration and schema updates — `v0.9.0`; w3x4y5z6a789; schemas Create/Update/Read",
+                    done: true
                   },
                   {
                     code: "6.2.7.3",
-                    title: "Add service and API validation",
-                    done: false
+                    title: "Add service and API validation — `v0.9.0`; size_type match; required on activate; clear on incompatible size_type change",
+                    done: true
                   },
                   {
                     code: "6.2.7.4",
-                    title: "Add frontend selection on model card",
-                    done: false
+                    title: "Add frontend selection on model card — `v0.9.0`; size-grid select in «Основные реквизиты»; workspace shows bound-grid link only",
+                    done: true
                   },
                   {
                     code: "6.2.7.5",
-                    title: "Add regression tests",
-                    done: false
+                    title: "Add regression tests — `v0.9.0`; test_product_model_size_grid_link_api; frontend dirty/draft helpers",
+                    done: true
                   }
                 ]
               }
@@ -2414,8 +2449,8 @@
                   },
                   {
                     code: "6.3.4.5",
-                    title: "Visual verification",
-                    done: false
+                    title: "Visual verification — `v0.9.0`; owner OK 2026-07-22",
+                    done: true
                   }
                 ]
               },
@@ -2444,8 +2479,8 @@
                   },
                   {
                     code: "6.3.5.4",
-                    title: "Visual verification",
-                    done: false
+                    title: "Visual verification — `v0.9.0`; owner OK 2026-07-22",
+                    done: true
                   }
                 ]
               },
@@ -2513,7 +2548,7 @@
               {
                 code: "6.4.1",
                 title: "End-to-end smoke scenario",
-                goal: "Prove PRODUCT → available models → model (size grid + assembly variants + sewing-ops catalog) → order-item selection without Stage 7 document creation.",
+                goal: "Prove PRODUCT → available models → model (size grid + assembly variants + sewing-ops catalog) → order-item selection without Stage 7 document creation. Model-base v1 catalog path owner-visual OK; full order-item smoke blocked on 6.1.13.",
                 dependencies: [
                   "6.1.11",
                   "6.1.12",
@@ -2524,12 +2559,12 @@
                 microtasks: [
                   {
                     code: "6.4.1.1",
-                    title: "Script or manual smoke checklist (whitelist filter, autofill size_type/article, variant offer, reject foreign model)",
+                    title: "Script or manual smoke checklist (whitelist filter, autofill size_type/article, variant offer, reject foreign model) — blocked on 6.1.13",
                     done: false
                   },
                   {
                     code: "6.4.1.2",
-                    title: "Fix P0/P1 gaps found in smoke",
+                    title: "Fix P0/P1 gaps found in smoke — blocked on 6.1.13",
                     done: false
                   }
                 ]
@@ -2539,18 +2574,18 @@
                 title: "Readiness documentation sync",
                 goal: "Factual readiness reflected in project-structure and erp-check.",
                 dependencies: [
-                  "6.4.1"
+                  "6.4.3"
                 ],
                 microtasks: [
                   {
                     code: "6.4.2.1",
-                    title: "Update project-structure checklist items",
-                    done: false
+                    title: "Update project-structure checklist items — `v0.9.0`; model-base catalog v1 (owner visual OK); order-item 6.1.13 still open",
+                    done: true
                   },
                   {
                     code: "6.4.2.2",
-                    title: "Update erp-check pattern-base / assembly-variant lines",
-                    done: false
+                    title: "Update erp-check pattern-base / assembly-variant lines — `v0.9.0`; sewing-ops visual closed; order binding remains [~]",
+                    done: true
                   }
                 ]
               },
@@ -2567,23 +2602,23 @@
                 microtasks: [
                   {
                     code: "6.4.3.1",
-                    title: "Visual pass: models list/card (incl. assembly variants block)",
-                    done: false
+                    title: "Visual pass: models list/card (incl. assembly variants block) — `v0.9.0`; owner OK 2026-07-22",
+                    done: true
                   },
                   {
                     code: "6.4.3.2",
-                    title: "Visual pass: size grids list/card",
-                    done: false
+                    title: "Visual pass: size grids list/card — `v0.9.0`; owner OK 2026-07-22",
+                    done: true
                   },
                   {
                     code: "6.4.3.3",
-                    title: "Visual pass: sewing-operations list (/settings/catalogs/sewing_operations)",
-                    done: false
+                    title: "Visual pass: sewing-operations list (/settings/catalogs/sewing_operations) — `v0.9.0`; owner OK 2026-07-22",
+                    done: true
                   },
                   {
                     code: "6.4.3.4",
-                    title: "Visual pass: PRODUCT nomenclature available-models block + order selection flow",
-                    done: false
+                    title: "Visual pass: PRODUCT nomenclature available-models block — `v0.9.0`; owner OK 2026-07-22; order selection deferred with 6.1.13.6",
+                    done: true
                   }
                 ]
               }
@@ -3496,17 +3531,87 @@
               {
                 code: "17.1.1",
                 title: "Authentication",
-                done: false
+                goal: "Users sign in before using protected ERP surfaces.",
+                microtasks: [
+                  {
+                    code: "17.1.1.1",
+                    title: "Define auth strategy and session/token contract",
+                    done: false
+                  },
+                  {
+                    code: "17.1.1.2",
+                    title: "Implement authentication API and session lifecycle",
+                    done: false
+                  },
+                  {
+                    code: "17.1.1.3",
+                    title: "Wire frontend login / session gate",
+                    done: false
+                  },
+                  {
+                    code: "17.1.1.4",
+                    title: "Regression tests and documentation checkpoint",
+                    done: false
+                  }
+                ]
               },
               {
                 code: "17.1.2",
                 title: "System users, roles, and permissions",
-                done: false
+                goal: "Platform users/roles/permissions; sensitive catalog mutations are role-gated.",
+                microtasks: [
+                  {
+                    code: "17.1.2.1",
+                    title: "Define user/role/permission domain model",
+                    done: false
+                  },
+                  {
+                    code: "17.1.2.2",
+                    title: "Persist users, roles, and role↔permission links",
+                    done: false
+                  },
+                  {
+                    code: "17.1.2.3",
+                    title: "Enforce permission checks in API (deny-by-default for protected writes)",
+                    done: false
+                  },
+                  {
+                    code: "17.1.2.4",
+                    title: "Size-grid mutation (create/update/delete): role-gated API + UI — supersedes cancelled 6.2.3 write / 6.2.6 edit",
+                    done: false
+                  },
+                  {
+                    code: "17.1.2.5",
+                    title: "Administration UI for assigning roles to users",
+                    done: false
+                  },
+                  {
+                    code: "17.1.2.6",
+                    title: "Regression tests (forbidden without role; allowed with role)",
+                    done: false
+                  }
+                ]
               },
               {
                 code: "17.1.3",
                 title: "Universal audit trail",
-                done: false
+                microtasks: [
+                  {
+                    code: "17.1.3.1",
+                    title: "Define audit event contract",
+                    done: false
+                  },
+                  {
+                    code: "17.1.3.2",
+                    title: "Persist and query audit trail",
+                    done: false
+                  },
+                  {
+                    code: "17.1.3.3",
+                    title: "Surface critical mutations (incl. size-grid edits when 17.1.2.4 ships)",
+                    done: false
+                  }
+                ]
               }
             ]
           },
@@ -3621,6 +3726,51 @@
               {
                 code: "18.3.7",
                 title: "Documentation checkpoint (ADR or domain note) and regression tests",
+                done: false
+              }
+            ]
+          },
+          {
+            title: "18.4 — Глобальный журнал операций",
+            items: [
+              {
+                code: "18.4.1",
+                title: "Domain contract: OperationJournal entry fields, sources (sales / production), idempotency, retention",
+                done: false
+              },
+              {
+                code: "18.4.2",
+                title: "Database model, migration, schemas for global operations journal",
+                done: false
+              },
+              {
+                code: "18.4.3",
+                title: "Service API: append / query by entity (product_model_id, …); has_operations(entity) helper",
+                done: false
+              },
+              {
+                code: "18.4.4",
+                title: "Write path: sales order uses model → append journal row (no write if model not used)",
+                done: false
+              },
+              {
+                code: "18.4.5",
+                title: "Write path: production / ТК uses model → append journal row",
+                done: false
+              },
+              {
+                code: "18.4.6",
+                title: "Wire product-model guards (revert_to_draft, size-grid change) to real has_operations (replace Stage-6 stub)",
+                done: false
+              },
+              {
+                code: "18.4.7",
+                title: "Administration UI: journal list/filter (PT-02) under Администрирование → Журнал операций",
+                done: false
+              },
+              {
+                code: "18.4.8",
+                title: "Regression tests + documentation checkpoint",
                 done: false
               }
             ]

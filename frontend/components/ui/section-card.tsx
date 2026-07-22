@@ -4,7 +4,16 @@ import { PageActions } from "@/components/layout/page-layout";
 
 type CardSize = "compact" | "default" | "spacious";
 
-export function SectionCard({ children, title, description, actions, footer, size = "default", className = "" }: {
+export function SectionCard({
+  children,
+  title,
+  description,
+  actions,
+  footer,
+  size = "default",
+  className = "",
+  collapsed = false,
+}: {
   children: ReactNode;
   title?: ReactNode;
   description?: ReactNode;
@@ -12,13 +21,39 @@ export function SectionCard({ children, title, description, actions, footer, siz
   footer?: ReactNode;
   size?: CardSize;
   className?: string;
+  /** When true, header stays visible and body/footer are hidden. */
+  collapsed?: boolean;
 }) {
-  const padding = { compact: "p-portal-3", default: "p-portal-4", spacious: "p-portal-5 sm:p-portal-6" }[size];
+  const padding = {
+    compact: "p-portal-3",
+    default: "p-portal-4",
+    spacious: "p-portal-5 sm:p-portal-6",
+  }[size];
   return (
-    <section className={`min-w-0 rounded-portal-lg border border-portal-border bg-portal-surface shadow-portal-card ${className}`}>
-      {title || description || actions ? <header className={`flex min-w-0 flex-col gap-portal-3 border-b border-portal-border ${padding} sm:flex-row sm:items-start sm:justify-between`}><div className="min-w-0">{title ? <h2 className="text-portal-section font-semibold text-portal-text">{title}</h2> : null}{description ? <p className="mt-1 text-portal-body text-portal-muted">{description}</p> : null}</div>{actions ? <PageActions>{actions}</PageActions> : null}</header> : null}
-      <div className={padding}>{children}</div>
-      {footer ? <footer className={`border-t border-portal-border ${padding}`}>{footer}</footer> : null}
+    <section
+      className={`min-w-0 rounded-portal-lg border border-portal-border bg-portal-surface shadow-portal-card ${className}`}
+    >
+      {title || description || actions ? (
+        <header
+          className={`flex min-w-0 flex-col gap-portal-3 ${collapsed ? "" : "border-b border-portal-border"} ${padding} sm:flex-row sm:items-start sm:justify-between`}
+        >
+          <div className="min-w-0">
+            {title ? (
+              <h2 className="text-portal-section font-semibold text-portal-text">
+                {title}
+              </h2>
+            ) : null}
+            {description ? (
+              <p className="mt-1 text-portal-body text-portal-muted">{description}</p>
+            ) : null}
+          </div>
+          {actions ? <PageActions>{actions}</PageActions> : null}
+        </header>
+      ) : null}
+      {collapsed ? null : <div className={padding}>{children}</div>}
+      {collapsed || !footer ? null : (
+        <footer className={`border-t border-portal-border ${padding}`}>{footer}</footer>
+      )}
     </section>
   );
 }
