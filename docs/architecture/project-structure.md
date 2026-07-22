@@ -1,8 +1,8 @@
 # Sport-Lead — Project Structure Checklist
 
 **Code:** `SL-PROJECT-STRUCTURE-v1`
-**Updated:** `2026-07-21`
-**Project version:** `v0.8.8i`
+**Updated:** `2026-07-22`
+**Project version:** `v0.9.0`
 **Git branch:** `feature/v0.8.1-nomenclature-core`
 **Git commit:** `05872f3`
 
@@ -20,11 +20,16 @@
 - [x] FastAPI backend, PostgreSQL, SQLAlchemy, and Alembic migrations
 - [x] Next.js workspace shell, navigation, and shared UI layer
 - [x] Repository-level verification scripts and project checks
+- [x] Documented dev/staging environment contract (`.env.example`, `Settings`)
+- [x] API liveness and readiness endpoints
+- [x] CI pipeline for mandatory checks (GitHub Actions + `scripts/check_project.py`)
+- [x] Dev/staging database backup and restore scripts
+- [ ] Structured application logging baseline
 - [ ] Authentication, system users, and access roles
 - [ ] Universal audit trail
 - [ ] Universal file subsystem beyond nomenclature images
 - [ ] Notifications and background jobs
-- [ ] Production-ready secrets, backup, and recovery contour
+- [ ] Production secrets management, monitoring, and disaster recovery
 
 ## 2. CRM and Leads
 
@@ -127,5 +132,6 @@
 ## 13. Operations and Deployment
 
 - [ ] VPS, production Docker, reverse proxy, HTTPS, and domain
-- [ ] CI/CD, monitoring, and logs
-- [ ] Backup, restore, and administrator runbooks
+- [x] Dev/staging CI for mandatory checks
+- [ ] Production deployment pipeline, centralized monitoring, and log aggregation
+- [ ] Production backup, disaster recovery, and administrator runbooks

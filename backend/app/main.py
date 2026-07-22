@@ -1,4 +1,5 @@
-﻿from fastapi import FastAPI
+﻿from fastapi import FastAPI, HTTPException
+from sqlalchemy import text
 
 from app.api.sport_events import router as sport_events_router
 from app.api.collector import router as collector_router
@@ -16,6 +17,8 @@ from app.api.lead_stages import router as lead_stages_router
 from app.api.lead_rejection_reasons import router as lead_rejection_reasons_router
 from app.api.orders import router as orders_router
 from app.api.organizations import router as organizations_router
+from app.database.session import engine
+
 app = FastAPI(
     title="Sport Leads API",
     description="API для сбора и обработки спортивных мероприятий",
@@ -52,4 +55,21 @@ def root() -> dict[str, str]:
 def health() -> dict[str, str]:
     return {
         "status": "healthy",
+    }
+
+
+@app.get("/health/ready")
+def health_ready() -> dict[str, str]:
+    try:
+        with engine.connect() as connection:
+            connection.execute(text("SELECT 1"))
+    except Exception as exc:
+        raise HTTPException(
+            status_code=503,
+            detail="database unavailable",
+        ) from exc
+
+    return {
+        "status": "ready",
+        "database": "ok",
     }

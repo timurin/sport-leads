@@ -33,6 +33,14 @@ def print_header(title: str) -> None:
     print("=" * 72)
 
 
+def safe_print(text: str) -> None:
+    if not text.strip():
+        return
+
+    encoding = getattr(sys.stdout, "encoding", None) or "utf-8"
+    print(text.rstrip().encode(encoding, errors="replace").decode(encoding))
+
+
 def run_command(
     command: list[str],
     *,
@@ -48,11 +56,11 @@ def run_command(
     )
 
     if result.stdout.strip():
-        print(result.stdout.rstrip())
+        safe_print(result.stdout)
 
     if result.returncode != 0:
         if result.stderr.strip():
-            print(result.stderr.rstrip())
+            safe_print(result.stderr)
 
         raise ProjectCheckError(
             f"Команда завершилась с кодом "
@@ -146,42 +154,19 @@ def check_openapi() -> None:
 
 
 def check_sqlalchemy_models() -> None:
+    import app.models as models_pkg
     from app.database.base import Base
-    from app.models import (
-        Client,
-        ImportRun,
-        Lead,
-        LeadContact,
-        LeadEvent,
-        LeadRejectionReason,
-        LeadTask,
-        SalesOrder,
-        SalesOrderItem,
-        SalesUser,
-        Source,
-        SportEvent,
-    )
 
-    expected_tables = {
-        ImportRun.__tablename__,
-        Source.__tablename__,
-        SportEvent.__tablename__,
-        SalesUser.__tablename__,
-        Client.__tablename__,
-        Lead.__tablename__,
-        LeadContact.__tablename__,
-        LeadRejectionReason.__tablename__,
-        SalesOrder.__tablename__,
-        SalesOrderItem.__tablename__,
-        "organizations",
-        LeadEvent.__tablename__,
-        LeadTask.__tablename__,
-    }
+    expected_tables: set[str] = set()
 
-    actual_tables = set(
-        Base.metadata.tables.keys()
-    )
+    for name in models_pkg.__all__:
+        model = getattr(models_pkg, name)
+        tablename = getattr(model, "__tablename__", None)
 
+        if tablename:
+            expected_tables.add(tablename)
+
+    actual_tables = set(Base.metadata.tables.keys())
     missing_tables = expected_tables - actual_tables
 
     if missing_tables:
@@ -191,8 +176,12 @@ def check_sqlalchemy_models() -> None:
         )
 
     print(
-        "Таблицы SQLAlchemy: "
-        + ", ".join(sorted(actual_tables))
+        "Таблицы SQLAlchemy (модели): "
+        + ", ".join(sorted(expected_tables))
+    )
+    print(
+        "Всего таблиц в metadata: "
+        f"{len(actual_tables)}"
     )
 
 
@@ -294,6 +283,22 @@ def check_alembic() -> None:
         ],
         cwd=BACKEND_ROOT,
     )
+
+
+def check_pytest() -> None:
+    run_command(
+        [
+            sys.executable,
+            "-m",
+            "pytest",
+            "-q",
+        ],
+        cwd=BACKEND_ROOT,
+    )
+
+    print("Backend pytest успешно пройден")
+
+
 def check_frontend() -> None:
     package_json = FRONTEND_ROOT / "package.json"
 
@@ -317,6 +322,34 @@ def check_frontend() -> None:
             npm_command,
             "run",
             "lint",
+        ],
+        cwd=FRONTEND_ROOT,
+    )
+
+    npx_command = (
+        shutil.which("npx.cmd")
+        or shutil.which("npx")
+    )
+
+    if npx_command is None:
+        raise ProjectCheckError(
+            "npx не найден в PATH"
+        )
+
+    run_command(
+        [
+            npx_command,
+            "tsc",
+            "--noEmit",
+        ],
+        cwd=FRONTEND_ROOT,
+    )
+
+    run_command(
+        [
+            npm_command,
+            "run",
+            "test",
         ],
         cwd=FRONTEND_ROOT,
     )
@@ -404,11 +437,15 @@ def main() -> int:
             check_alembic,
         ),
         (
-            "8. Проверка frontend",
+            "8. Backend pytest",
+            check_pytest,
+        ),
+        (
+            "9. Проверка frontend",
             check_frontend,
         ),
         (
-            "9. Проверка Docker Compose",
+            "10. Проверка Docker Compose",
             check_docker_compose,
         ),
     ]

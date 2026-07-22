@@ -448,7 +448,7 @@
       </div>
 
       <div class="meta-list">
-        <div class="meta-chip">Updated: 2026-07-21</div>
+        <div class="meta-chip">Updated: 2026-07-22</div>
         <div class="meta-chip">Version: v0.8.8i</div>
         <div class="meta-chip">Branch: feature/v0.8.1-nomenclature-core</div>
         <div class="meta-chip">Commit: 05872f3</div>
@@ -519,11 +519,16 @@
           { text: "FastAPI backend, PostgreSQL, SQLAlchemy, and Alembic migrations", done: true },
           { text: "Next.js workspace shell, navigation, and shared UI layer", done: true },
           { text: "Repository-level verification scripts and project checks", done: true },
+          { text: "Documented dev/staging environment contract (`.env.example`, `Settings`)", done: true },
+          { text: "API liveness and readiness endpoints", done: true },
+          { text: "CI pipeline for mandatory checks (GitHub Actions + `scripts/check_project.py`)", done: true },
+          { text: "Dev/staging database backup and restore scripts", done: true },
+          { text: "Structured application logging baseline", done: false },
           { text: "Authentication, system users, and access roles", done: false },
           { text: "Universal audit trail", done: false },
           { text: "Universal file subsystem beyond nomenclature images", done: false },
           { text: "Notifications and background jobs", done: false },
-          { text: "Production-ready secrets, backup, and recovery contour", done: false }
+          { text: "Production secrets management, monitoring, and disaster recovery", done: false }
         ]
       },
       {
@@ -650,8 +655,9 @@
         title: "13. Operations and Deployment",
         items: [
           { text: "VPS, production Docker, reverse proxy, HTTPS, and domain", done: false },
-          { text: "CI/CD, monitoring, and logs", done: false },
-          { text: "Backup, restore, and administrator runbooks", done: false }
+          { text: "Dev/staging CI for mandatory checks", done: true },
+          { text: "Production deployment pipeline, centralized monitoring, and log aggregation", done: false },
+          { text: "Production backup, disaster recovery, and administrator runbooks", done: false }
         ]
       }
     ];

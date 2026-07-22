@@ -6,11 +6,13 @@
 
 ## Build, Test, and Development Commands
 
+- Copy `.env.example` to `.env` and set `POSTGRES_PASSWORD` before backend or `scripts/check_project.py`
 - `docker compose up -d postgres`
 - `pip install -r backend/requirements.txt` (Python 3.13+)
 - Backend: `alembic upgrade head`, `uvicorn app.main:app --reload` from `backend/`
 - Frontend: `npm ci`, then `npm run dev` / `lint` / `build` from `frontend/`
-- Repo checks: `powershell -File scripts/check.ps1` or `python scripts/check_project.py`
+- Repo checks: `powershell -File scripts/check.ps1` or `python scripts/check_project.py` (backend pytest, frontend lint/tsc/test/build, Alembic, Compose config)
+- Database backup (dev): `powershell -File scripts/backup_db.ps1`; restore: `scripts/restore_db.ps1 -DumpFile backup\…`
 
 ## Coding Style & Naming Conventions
 
