@@ -60,8 +60,8 @@ Also verify **expanded** and **compact** sidebar on each band where both modes e
 |---|---|---|
 | R1 / B-candidate-1 — characteristics local sidebar + `100vh` | **Dismissed** | Removed; page uses Platform Shell only |
 | B-candidate-2 — nomenclature missing from nav | **Dismissed** | Group «Номенклатура» in `navigation.ts` |
-| R2 — kanban vs page width | **Dismissed for 5.1.4** | Owner pass; revisit PT-03 |
-| R3 — wide settings tables | **Dismissed for 5.1.4** | Owner pass; revisit PT-02 |
+| R2 — kanban vs page width | **Addressed in PT-03 (`5.5.3`)** | Local board x-scroll + snap; full-width toolbar; no document overflow |
+| R3 — wide settings tables | **Addressed in PT-02 (`5.5.2`)** | Clients: mobile cards; `md+` local x-scroll; other wide lists adopt later |
 | R4 — lead card columns | **Dismissed for 5.1.4** | Owner pass; revisit PT-06 |
 | R5 — nomenclature tree+list | **Dismissed for 5.1.4** | Owner pass; revisit PT-04 |
 | R6 — search + compact sidebar | **Dismissed for 5.1.4** | Owner pass |

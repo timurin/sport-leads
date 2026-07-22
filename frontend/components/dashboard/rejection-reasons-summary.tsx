@@ -1,10 +1,34 @@
-import { SectionCard } from "./section-card";
+import { SectionCard } from "@/components/ui/section-card";
+import { EmptyState } from "@/components/ui/empty-state";
 
-export function RejectionReasonsSummary({ reasons }: { reasons: Array<{ reason: string; count: number }> }) {
+export function RejectionReasonsSummary({
+  reasons,
+}: {
+  reasons: Array<{ reason: string; count: number }>;
+}) {
   const maximum = Math.max(1, ...reasons.map((item) => item.count));
   return (
     <SectionCard title="Причины отказов" description="Реальные результаты завершённых лидов">
-      {reasons.length ? <div className="space-y-3">{reasons.map((item) => <div key={item.reason}><div className="flex justify-between text-sm"><span className="text-slate-600">{item.reason}</span><strong>{item.count}</strong></div><div className="mt-1 h-2 rounded-full bg-slate-100"><div className="h-2 rounded-full bg-red-400" style={{ width: `${item.count / maximum * 100}%` }} /></div></div>)}</div> : <p className="text-sm text-slate-500">За выбранный период отказов нет.</p>}
+      {reasons.length ? (
+        <div className="space-y-portal-3">
+          {reasons.map((item) => (
+            <div key={item.reason} className="min-w-0">
+              <div className="flex justify-between gap-portal-3 text-portal-body">
+                <span className="min-w-0 truncate text-portal-muted">{item.reason}</span>
+                <strong className="shrink-0 text-portal-text">{item.count}</strong>
+              </div>
+              <div className="mt-1 h-2 rounded-portal-full bg-portal-surface-secondary">
+                <div
+                  className="h-2 rounded-portal-full bg-portal-danger"
+                  style={{ width: `${(item.count / maximum) * 100}%` }}
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <EmptyState title="За выбранный период отказов нет" size="compact" />
+      )}
     </SectionCard>
   );
 }

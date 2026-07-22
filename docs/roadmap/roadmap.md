@@ -287,24 +287,24 @@ Microtasks:
 
 #### 5.5.1 — PT-01 Dashboard
 
-- [ ] 5.5.1.1 — Define template contract
-- [ ] 5.5.1.2 — Implement reference layout
-- [ ] 5.5.1.3 — Add responsive rules
-- [ ] 5.5.1.4 — Verify on Sales Dashboard
+- [x] 5.5.1.1 — Define template contract — `v0.9.0`; `DS-PT-01`; evidence: `docs/design-system/pt-01-dashboard.md`
+- [x] 5.5.1.2 — Implement reference layout — `v0.9.0`; `SalesDashboard` → `PageLayout`/`PageContent` + `ui/section-card` (D1); deleted `dashboard/section-card.tsx` / `metric-card.tsx`; `PageContent width="full"`
+- [x] 5.5.1.3 — Add responsive rules — `v0.9.0`; matrix in `pt-01-dashboard.md`; KPI `ResponsiveGrid`; section grids `md`/`xl`
+- [x] 5.5.1.4 — Verify on Sales Dashboard — owner visual OK (`2026-07-21`); full-bleed width confirmed
 
 #### 5.5.2 — PT-02 List/Table Workspace
 
-- [ ] 5.5.2.1 — Define template contract
-- [ ] 5.5.2.2 — Implement reference layout
-- [ ] 5.5.2.3 — Add responsive table behaviour
-- [ ] 5.5.2.4 — Verify on organizations or clients
+- [x] 5.5.2.1 — Define template contract — `v0.9.0`; `DS-PT-02`; evidence: `docs/design-system/pt-02-list-table.md`
+- [x] 5.5.2.2 — Implement reference layout — `v0.9.0`; `/sales/clients` `ClientsTable` → `PageLayout` + `MetricCard` + DS-TABLE/FILTER/LIST
+- [x] 5.5.2.3 — Add responsive table behaviour — `v0.9.0`; `md+` local x-scroll table; `<md` card stack (R3); mobile full-width filter/toolbar fields
+- [x] 5.5.2.4 — Verify on organizations or clients — owner visual OK (`2026-07-22`); `/sales/clients` + orders toolbar full-width at 390px
 
 #### 5.5.3 — PT-03 Kanban Workspace
 
-- [ ] 5.5.3.1 — Define template contract
-- [ ] 5.5.3.2 — Standardize board structure
-- [ ] 5.5.3.3 — Define mobile fallback
-- [ ] 5.5.3.4 — Verify on Leads Kanban
+- [x] 5.5.3.1 — Define template contract — `v0.9.0`; `DS-PT-03`; evidence: `docs/design-system/pt-03-kanban.md`
+- [x] 5.5.3.2 — Standardize board structure — `v0.9.0`; portal `KanbanColumn`/`KanbanBoard`; `LeadWorkspace`/`KanbanPage` → `PageLayout` + `MetricCard`
+- [x] 5.5.3.3 — Define mobile fallback — `v0.9.0`; local board x-scroll + snap; full-width toolbar (R2)
+- [x] 5.5.3.4 — Verify on Leads Kanban — owner visual OK (`2026-07-22`); `/sales/leads`
 
 #### 5.5.4 — PT-04 Tree + List Workspace
 

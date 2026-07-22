@@ -167,9 +167,9 @@ Detailed matrix: § Persistent versus demo/local audit (`5.1.1.3`). Summary:
 
 | PT | Primary reference now | Do not use as reference |
 |---|---|---|
-| PT-01 | `/sales/dashboard` (provisional) | `/dashboard` stub |
-| PT-02 | `/settings/catalogs/product-characteristics` (persistent list) or clients table patterns | blank EntityWorkspace empties |
-| PT-03 | `/sales/leads` | demo tasks/deals only as secondary |
+| PT-01 | `/sales/dashboard` (`DS-PT-01` reference; demo data) | `/dashboard` stub |
+| PT-02 | `/sales/clients` (`DS-PT-02` reference; demo) | blank EntityWorkspace empties |
+| PT-03 | `/sales/leads` (`DS-PT-03` reference) | demo tasks/deals only as secondary |
 | PT-04 | `/settings/catalogs/nomenclature` | — |
 | PT-05 | none clean — characteristic detail after shell fix | characteristic detail **until** shell-deviation fixed |
 | PT-06 | nomenclature card + lead card (lead for activity tabs) | — |

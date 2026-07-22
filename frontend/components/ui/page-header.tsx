@@ -35,12 +35,12 @@ export function PageToolbar({
         .join(" ")}
     >
       <div className="flex min-w-0 flex-col gap-portal-3 sm:flex-row sm:items-center sm:justify-between sm:gap-portal-4">
-        <div className="flex min-w-0 flex-1 flex-wrap items-center gap-portal-2">
+        <div className="flex min-w-0 w-full flex-1 flex-col items-stretch gap-portal-2 md:flex-row md:flex-wrap md:items-center">
           {start}
         </div>
 
         {end ? (
-          <PageActions align="end" className="sm:shrink-0">
+          <PageActions align="end" className="w-full sm:w-auto sm:shrink-0 [&>*]:w-full sm:[&>*]:w-auto">
             {end}
           </PageActions>
         ) : null}

@@ -150,11 +150,9 @@ Navigation data source: `frontend/lib/navigation.ts` (not a component).
 
 | File | Role |
 |---|---|
-| `sales-dashboard.tsx` | Dashboard composition (demo data) |
-| `dashboard-kpi-grid.tsx` | KPI grid |
-| `dashboard-filters.tsx` | Period filters |
-| `metric-card.tsx` | **Local** metric card (overlaps `ui/MetricCard`) |
-| `section-card.tsx` | **Local** section card (overlaps `ui/SectionCard`) |
+| `sales-dashboard.tsx` | PT-01 reference composition (demo data) |
+| `dashboard-kpi-grid.tsx` | KPI grid → `ui/MetricCard` + `ResponsiveGrid` |
+| `dashboard-filters.tsx` | Analytics filters → `ui/SectionCard` + form controls |
 | `sales-funnel.tsx` | Funnel |
 | `sales-dynamics-chart.tsx` | Dynamics chart |
 | `sales-status-summary.tsx` | Status summary |
@@ -178,21 +176,21 @@ Navigation data source: `frontend/lib/navigation.ts` (not a component).
 | settings | 6 | nomenclature/characteristics/fields/UoM API; materials via entity demo |
 | kanban | 4 (+3 helpers) | shared by API orders + demo tasks/deals |
 | entity | 6 | demo catalogs only |
-| dashboard | 13 | demo |
+| dashboard | 11 | demo |
 | tables | 1 | demo clients |
 
 ### Cross-domain coupling notes (for `5.1.2.3`)
 
 - `LeadWorkspace` vs `KanbanPage` — two board entry patterns.
 - `EntityWorkspace` family vs nomenclature/characteristics dedicated workspaces.
-- Dashboard local cards vs portal `ui/section-card`.
+- ~~Dashboard local cards vs portal `ui/section-card`~~ — resolved in `5.5.1`.
 - Characteristic detail page still embeds layout outside shared settings components (shell deviation).
 
 ## Duplicates and overlaps (`5.1.2.3`)
 
 | ID | Overlap | Components | Risk |
 |---|---|---|---|
-| D1 | Metric / section cards | `dashboard/metric-card.tsx`, `dashboard/section-card.tsx` vs `ui/section-card` (`MetricCard`, `SectionCard`) | Parallel visual systems |
+| D1 | Metric / section cards | ~~`dashboard/metric-card.tsx`, `dashboard/section-card.tsx`~~ vs `ui/section-card` | **Resolved in `5.5.1`** — dashboard uses `ui/section-card`; locals deleted |
 | D2 | Empty UX | Unused `ui/empty-state` vs ad-hoc copy in kanban, clients, catalogs, dashboard | Inconsistent empty language |
 | D3 | Page / error state | `LeadPageState` vs order `error.tsx`/`not-found.tsx` panels vs red `loadError` banners | Three error languages |
 | D4 | Kanban hosts | `LeadWorkspace` vs `KanbanPage` | Divergent filters/error chrome |
@@ -208,10 +206,10 @@ Decisions are documentation-only. Implementation belongs to later Stage 5 items 
 
 | ID | Decision | Action |
 |---|---|---|
-| D1 | **Unify** | Migrate dashboard to `ui/section-card` MetricCard/SectionCard; delete dashboard-local duplicates after visual check |
+| D1 | **Unify** | **Done (`5.5.1`)** — Sales Dashboard on `ui/section-card`; local `dashboard/section-card` / `metric-card` removed; owner visual pending `5.5.1.4` |
 | D2 | **Keep + adopt** | Keep `EmptyState`; adopt in list/kanban/catalog empties; remove one-off dashed empties when touching those pages |
 | D3 | **Unify** | Shared `PageLoadingState` / `PageErrorState` shipped in `5.3.2.6`; continue EmptyState/`loadError` banner adoption in `5.4.2.5` |
-| D4 | **Unify toward KanbanPage** | Keep `KanbanPage` as board host; fold lead-specific filters into composition over shared board rather than a second board framework |
+| D4 | **Unify toward KanbanPage** | **Partial (`5.5.3`)** — shared board chrome standardized; `LeadWorkspace` keeps domain dialogs; hosts share `PageLayout`/`MetricCard`/`KanbanBoard` |
 | D5 | **Keep dedicated workspaces + reuse create inspector UX** | New persistent catalogs use dedicated workspaces (nomenclature pattern). **Create UX эталон** = materials right inspector / `CreateDrawer` (ADR-013). EntityWorkspace remains demo data-host until orgs/employees/materials persistence replace it |
 | D6 | **Keep split** | `PageToolbar` (`DS-PAGE-02`) for page chrome; domain card headers stay domain-owned until PT-05/06/07; never put them in Platform Topbar |
 | D7 | **Keep CompactTabs; unify adopters** | Prefer `CompactTabs` for simple in-page tabs; nomenclature complex tabs may stay custom until PT-06 contract |

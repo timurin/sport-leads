@@ -16,9 +16,7 @@ import {
 import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import { useId, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 
-import {
-  KanbanCardContent,
-} from "@/components/kanban/kanban-card";
+import { KanbanCardContent } from "@/components/kanban/kanban-card";
 import { KanbanColumn } from "@/components/kanban/kanban-column";
 import { canStartKanbanDrag } from "@/components/kanban/kanban-interaction";
 import {
@@ -34,7 +32,7 @@ import type {
   KanbanMove,
   KanbanMoveHandler,
 } from "@/components/kanban/kanban-types";
-
+import { EmptyState } from "@/components/ui/empty-state";
 type KanbanBoardProps<TStatus extends string> = {
   columns: KanbanColumnData<TStatus>[];
   query: string;
@@ -253,10 +251,10 @@ export function KanbanBoard<TStatus extends string>({
 
   if (!cardsCount) {
     return (
-      <div className="rounded-xl border border-dashed border-slate-300 bg-white px-6 py-16 text-center">
-        <h2 className="font-semibold text-slate-800">Ничего не найдено</h2>
-        <p className="mt-1 text-sm text-slate-500">Измените запрос или сбросьте выбранные фильтры.</p>
-      </div>
+      <EmptyState
+        title="Ничего не найдено"
+        description="Измените запрос или сбросьте выбранные фильтры."
+      />
     );
   }
 
@@ -270,8 +268,12 @@ export function KanbanBoard<TStatus extends string>({
       onDragEnd={handleDragEnd}
       onDragCancel={handleDragCancel}
     >
-      <div className="overflow-x-auto pb-3" aria-label="Канбан-доска">
-        <div className="flex min-w-max items-start gap-4">
+      <div
+        data-pt03-board
+        className="min-w-0 overflow-x-auto overscroll-x-contain pb-portal-3 [-webkit-overflow-scrolling:touch]"
+        aria-label="Канбан-доска"
+      >
+        <div className="flex min-w-max snap-x snap-mandatory items-start gap-portal-4">
           {visibleColumns.map((column) => (
             <KanbanColumn key={column.id} column={column} onCardSelect={onCardSelect} />
           ))}

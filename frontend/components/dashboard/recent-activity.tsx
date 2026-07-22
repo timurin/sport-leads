@@ -1,7 +1,7 @@
 import type { RecentActivity as Activity } from "@/lib/dashboard/sales-dashboard-types";
 import { ActivityTimeline, ActivityTimelineItem } from "@/components/ui/activity-timeline";
 import { EmptyState } from "@/components/ui/empty-state";
-import { SectionCard } from "./section-card";
+import { SectionCard } from "@/components/ui/section-card";
 
 const dots = {
   blue: "bg-portal-primary",
@@ -26,7 +26,7 @@ export function RecentActivity({ activity }: { activity: Activity[] }) {
     >
       {activity.length ? (
         <ActivityTimeline label="Последние события CRM">
-          <div className="grid gap-x-8 md:grid-cols-2">
+          <div className="grid min-w-0 gap-x-portal-8 md:grid-cols-2">
             {activity.map((item) => (
               <ActivityTimelineItem
                 key={item.id}
@@ -48,10 +48,7 @@ export function RecentActivity({ activity }: { activity: Activity[] }) {
           </div>
         </ActivityTimeline>
       ) : (
-        <EmptyState
-          title="Событий за период нет"
-          size="compact"
-        />
+        <EmptyState title="Событий за период нет" size="compact" />
       )}
     </SectionCard>
   );

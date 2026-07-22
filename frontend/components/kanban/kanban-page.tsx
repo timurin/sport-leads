@@ -14,11 +14,14 @@ import type {
   KanbanMetricDefinition,
   KanbanMove,
 } from "@/components/kanban/kanban-types";
+import { PageLayout, ResponsiveGrid } from "@/components/layout/page-layout";
 import { Button } from "@/components/ui/button";
 import { DemoCreateDrawer } from "@/components/ui/demo-create-drawer";
 import { EmptyState } from "@/components/ui/empty-state";
+import { Input, Select } from "@/components/ui/form-controls";
 import { InlineAlert } from "@/components/ui/inline-alert";
 import { PageToolbar } from "@/components/ui/page-header";
+import { MetricCard } from "@/components/ui/section-card";
 
 type KanbanPageProps<TStatus extends string> = {
   title: string;
@@ -98,46 +101,53 @@ export function KanbanPage<TStatus extends string>({
     || Object.values(selectedFilters).some(Boolean);
 
   return (
-    <div>
+    <PageLayout>
       <PageToolbar
         start={(
           <>
-            <label className="flex h-10 min-w-56 flex-1 items-center gap-2 rounded-lg border border-slate-200 px-3 lg:max-w-sm">
-              <Search size={17} className="shrink-0 text-slate-400" />
+            <label className="relative flex h-portal-control-default w-full min-w-0 items-center md:min-w-56 md:flex-1 lg:max-w-sm">
+              <Search
+                size={17}
+                className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-portal-muted"
+              />
               <span className="sr-only">Поиск</span>
-              <input
+              <Input
                 type="search"
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
                 placeholder={`Поиск: ${title.toLocaleLowerCase("ru")}`}
-                className="min-w-0 flex-1 bg-transparent text-sm outline-none"
+                className="pl-9"
+                aria-label={`Поиск: ${title}`}
               />
             </label>
 
             {filters.map((filter) => (
-              <label key={filter.id} className="sr-only-within">
-                <span className="sr-only">{filter.label}</span>
-                <select
-                  value={selectedFilters[filter.id] ?? ""}
-                  onChange={(event) => setSelectedFilters((current) => ({
-                    ...current,
-                    [filter.id]: event.target.value,
-                  }))}
-                  className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none focus:border-blue-400"
-                >
-                  <option value="">{filter.label}: все</option>
-                  {filter.options.map((option) => (
-                    <option key={option} value={option}>{option}</option>
-                  ))}
-                </select>
-              </label>
+              <Select
+                key={filter.id}
+                className="w-full md:w-auto md:min-w-40"
+                value={selectedFilters[filter.id] ?? ""}
+                onChange={(event) => setSelectedFilters((current) => ({
+                  ...current,
+                  [filter.id]: event.target.value,
+                }))}
+                aria-label={filter.label}
+              >
+                <option value="">{filter.label}: все</option>
+                {filter.options.map((option) => (
+                  <option key={option} value={option}>{option}</option>
+                ))}
+              </Select>
             ))}
 
             {hasFilters ? (
-              <Button onClick={() => {
-                setQuery("");
-                setSelectedFilters({});
-              }}>
+              <Button
+                type="button"
+                className="w-full md:w-auto"
+                onClick={() => {
+                  setQuery("");
+                  setSelectedFilters({});
+                }}
+              >
                 <FilterX size={16} />
                 Сбросить
               </Button>
@@ -145,29 +155,31 @@ export function KanbanPage<TStatus extends string>({
           </>
         )}
         end={(
-          <Button variant="primary" onClick={() => setDialogOpen(true)}>
+          <Button variant="primary" className="w-full sm:w-auto" onClick={() => setDialogOpen(true)}>
             {actionLabel}
           </Button>
         )}
       />
 
-      <section className="grid gap-3 border-b border-slate-200 bg-slate-50 px-4 py-4 sm:grid-cols-2 lg:px-6 xl:grid-cols-4" aria-label="Показатели">
-        {metrics.map((metric) => (
-          <article key={metric.label} className="rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
-            <p className="text-xs font-medium text-slate-500">{metric.label}</p>
-            <div className="mt-1 flex items-baseline gap-2">
-              <strong className="text-xl font-semibold text-slate-950">
-                {formatMetric(metric, metricCards)}
-              </strong>
-              {metric.hint ? <span className="text-xs text-slate-400">{metric.hint}</span> : null}
-            </div>
-          </article>
-        ))}
+      <section
+        className="border-b border-portal-border bg-portal-surface-secondary px-portal-4 py-portal-4 lg:px-portal-6"
+        aria-label="Показатели"
+      >
+        <ResponsiveGrid minItemWidth="small" gap="default">
+          {metrics.map((metric) => (
+            <MetricCard
+              key={metric.label}
+              label={metric.label}
+              value={formatMetric(metric, metricCards)}
+              detail={metric.hint}
+            />
+          ))}
+        </ResponsiveGrid>
       </section>
 
-      <div className="p-4 lg:p-6">
+      <div className="min-w-0 p-portal-4 lg:p-portal-6">
         {moveError ? (
-          <InlineAlert className="mb-4" tone="danger">
+          <InlineAlert className="mb-portal-4" tone="danger">
             {moveError}
           </InlineAlert>
         ) : null}
@@ -220,6 +232,6 @@ export function KanbanPage<TStatus extends string>({
         title={actionLabel}
         onClose={() => setDialogOpen(false)}
       />
-    </div>
+    </PageLayout>
   );
 }

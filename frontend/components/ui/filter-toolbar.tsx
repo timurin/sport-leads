@@ -12,6 +12,7 @@ type FilterToolbarProps = {
 /**
  * In-page filter row (`DS-FILTER-01`).
  * Prefer `Input`/`Select`/`Button` from form controls and actions.
+ * Below `md`, fields stack full width (PT-02 mobile).
  */
 export function FilterToolbar({
   children,
@@ -24,7 +25,7 @@ export function FilterToolbar({
       role="search"
       aria-label={label}
       className={[
-        "flex flex-wrap items-center gap-portal-2",
+        "flex flex-col items-stretch gap-portal-2 md:flex-row md:flex-wrap md:items-center",
         variant === "strip"
           ? "border-b border-portal-border bg-portal-surface px-portal-4 py-portal-3 lg:px-portal-6"
           : "rounded-portal-lg border border-portal-border bg-portal-surface p-portal-3 shadow-portal-card",

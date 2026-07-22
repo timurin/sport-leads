@@ -25,7 +25,7 @@ Define the **approved page body containers** for new and migrated workspace page
 
 1. New list/settings pages: `PageLayout` → (`PageToolbar`) → `PageContent` → `SectionCard` / table / `ResponsiveGrid`.
 2. Cards use portal surface tokens: `bg-portal-surface`, `border-portal-border`, `rounded-portal-lg`, `shadow-portal-card|sm`.
-3. Do not invent parallel dashboard `SectionCard` copies for new work — prefer `@/components/ui/section-card` (legacy `dashboard/section-card.tsx` is migrate/deprecate later).
+3. Do not invent parallel dashboard `SectionCard` copies — use `@/components/ui/section-card` only (`5.5.1` / D1 closed on Sales Dashboard).
 4. Wide tables stay inside a local `overflow-x-auto` wrapper; page root stays `min-w-0`.
 5. Full-bleed exceptions (`PageContent width="full"`) require a documented PT / CRM workspace reason.
 6. Mass migration of existing ad-hoc `p-6` / raw bordered divs is incremental via PT templates (`5.5` / `5.6`) — not required to close this microtask.
@@ -33,7 +33,7 @@ Define the **approved page body containers** for new and migrated workspace page
 ## Known debt (tracked, not blocking)
 
 - Nomenclature workspace / characteristics still use local bordered panels — migrate under PT contracts.
-- Dashboard module-local `SectionCard` duplicates shared UI.
+- ~~Dashboard module-local `SectionCard`~~ — removed in `5.5.1`.
 
 ## Smoke
 

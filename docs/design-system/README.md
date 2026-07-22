@@ -34,12 +34,15 @@
 - `docs/design-system/toast-inline-feedback-standardization.md` — `DS-FEEDBACK-01` (`5.4.2.4`)
 - `docs/design-system/empty-error-states-standardization.md` — `DS-FEEDBACK-02` (`5.4.2.5`)
 - `docs/design-system/data-presentation-standardization.md` — `DS-TABLE-01`…`DS-LINK-01` (`5.4.3.*`)
+- `docs/design-system/pt-01-dashboard.md` — `DS-PT-01` / PT-01 Dashboard (`5.5.1.*`)
+- `docs/design-system/pt-02-list-table.md` — `DS-PT-02` / PT-02 List/Table (`5.5.2.*`)
+- `docs/design-system/pt-03-kanban.md` — `DS-PT-03` / PT-03 Kanban (`5.5.3.*`)
 - `docs/design-system/layout-scrolling-audit.md` — AppShell, widths, scroll/sticky rules (`5.1.3.*`)
 - `docs/design-system/component-inventory.md` — инвентарь shared/domain UI (`5.1.2.*`)
 - `docs/design-system/shell-contracts.md` — защищённые контракты `DS-SHELL-01` / `DS-SHELL-02`
 - `docs/design-system/page-design-checklist.md`, `visual-rules.md`, `responsive-rules.md`
 - HTML page references: `docs/design/`
-- Platform templates `PT-01`–`PT-08` — Stage 5 roadmap (contracts pending)
+- Platform templates `PT-01`–`PT-08` — Stage 5 roadmap (`PT-01`…`PT-03` shipped; others pending)
 
 ## Токены
 

@@ -43,6 +43,12 @@ Viewport-breakpoints применяются к глобальному карка
 - Оверлеи: `docs/design-system/z-index-tokens.md` (`z-portal-*`).
 - Движение: `docs/design-system/motion-tokens.md`; уважать `prefers-reduced-motion`.
 
+## Page templates
+
+- PT-01 Dashboard: `docs/design-system/pt-01-dashboard.md` (`DS-PT-01`) — KPI `ResponsiveGrid`, section grids `md`/`xl`, local table overflow.
+- PT-02 List/Table: `docs/design-system/pt-02-list-table.md` (`DS-PT-02`) — `md+` `DataTable` local x-scroll; `<md` card stack (R3).
+- PT-03 Kanban: `docs/design-system/pt-03-kanban.md` (`DS-PT-03`) — local board x-scroll + snap; full-width mobile toolbar (R2).
+
 ## Проверка
 
 Минимальный набор viewport: 1920, 1600, 1440, 1280, 1024, 768 и 390 px. Проверять длинные названия, email, пустые значения, открытые dropdown/dialog и состояние с максимальным числом действий.

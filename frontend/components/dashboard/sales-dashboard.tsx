@@ -12,25 +12,50 @@ import { SalesDynamicsChart } from "./sales-dynamics-chart";
 import { SalesFunnel } from "./sales-funnel";
 import { SalesStatusSummary } from "./sales-status-summary";
 import { TasksSummary } from "./tasks-summary";
+import { PageContent, PageLayout } from "@/components/layout/page-layout";
+import { EmptyState } from "@/components/ui/empty-state";
 import { createSalesDashboardSnapshot } from "@/lib/dashboard/sales-dashboard";
 import { defaultDashboardFilters, type DashboardFilters as Filters } from "@/lib/dashboard/sales-dashboard-types";
 import { getSalesDashboardDemoData } from "@/lib/demo-data/sales-dashboard";
 
+/** PT-01 reference dashboard (`DS-PT-01`). Demo data only — persistence is `5.6.1`. */
 export function SalesDashboard() {
   const data = useMemo(() => getSalesDashboardDemoData(), []);
   const [filters, setFilters] = useState<Filters>({ ...defaultDashboardFilters });
   const snapshot = useMemo(() => createSalesDashboardSnapshot(data, filters), [data, filters]);
 
   return (
-    <div className="min-w-0">
-      <div className="space-y-5 p-4 sm:p-6">
-        <DashboardFilters filters={filters} data={data} activeLabels={snapshot.activeFilterLabels} validationError={snapshot.validationError} onChange={setFilters} />
-        {snapshot.empty ? <div className="rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-10 text-center"><h2 className="font-semibold text-slate-800">За выбранный период данных нет</h2><p className="mt-1 text-sm text-slate-500">Показатели остаются равными нулю. Измените период или сбросьте фильтры.</p></div> : null}
+    <PageLayout>
+      <PageContent width="full" size="default" className="space-y-portal-5">
+        <DashboardFilters
+          filters={filters}
+          data={data}
+          activeLabels={snapshot.activeFilterLabels}
+          validationError={snapshot.validationError}
+          onChange={setFilters}
+        />
+        {snapshot.empty ? (
+          <EmptyState
+            title="За выбранный период данных нет"
+            description="Показатели остаются равными нулю. Измените период или сбросьте фильтры."
+          />
+        ) : null}
         <DashboardKpiGrid kpis={snapshot.kpis} />
-        <div className="grid min-w-0 gap-5 xl:grid-cols-2"><SalesFunnel stages={snapshot.funnel} /><SalesDynamicsChart points={snapshot.dynamics} /></div>
-        <div className="grid min-w-0 gap-5 xl:grid-cols-4"><LeadSourcesTable sources={snapshot.sources} /><RejectionReasonsSummary reasons={snapshot.rejectionReasons} /><SalesStatusSummary statuses={snapshot.dealStatuses} /><OrdersSummary orders={snapshot.orders} /></div>
-        <div className="grid min-w-0 gap-5 xl:grid-cols-3"><TasksSummary tasks={snapshot.tasks} /><RecentActivity activity={snapshot.activity} /></div>
-      </div>
-    </div>
+        <div className="grid min-w-0 gap-portal-5 xl:grid-cols-2">
+          <SalesFunnel stages={snapshot.funnel} />
+          <SalesDynamicsChart points={snapshot.dynamics} />
+        </div>
+        <div className="grid min-w-0 gap-portal-5 md:grid-cols-2 xl:grid-cols-4">
+          <LeadSourcesTable sources={snapshot.sources} />
+          <RejectionReasonsSummary reasons={snapshot.rejectionReasons} />
+          <SalesStatusSummary statuses={snapshot.dealStatuses} />
+          <OrdersSummary orders={snapshot.orders} />
+        </div>
+        <div className="grid min-w-0 gap-portal-5 xl:grid-cols-3">
+          <TasksSummary tasks={snapshot.tasks} />
+          <RecentActivity activity={snapshot.activity} />
+        </div>
+      </PageContent>
+    </PageLayout>
   );
 }

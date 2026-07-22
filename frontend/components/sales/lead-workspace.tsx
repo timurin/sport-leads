@@ -13,9 +13,13 @@ import {
 } from "@/components/sales/lead-completion-dialog";
 import { LeadCreateDialog } from "@/components/sales/lead-create-dialog";
 import { LeadStageSettingsDialog } from "@/components/sales/lead-stage-settings-dialog";
+import { PageLayout, ResponsiveGrid } from "@/components/layout/page-layout";
 import { Button } from "@/components/ui/button";
+import { CompactTabs } from "@/components/ui/compact-tabs";
+import { Input, Select } from "@/components/ui/form-controls";
 import { InlineAlert } from "@/components/ui/inline-alert";
 import { PageToolbar } from "@/components/ui/page-header";
+import { MetricCard } from "@/components/ui/section-card";
 import {
   convertLead as convertApiLeadAction,
   rejectLead as rejectApiLeadAction,
@@ -289,62 +293,75 @@ export function LeadWorkspace({
     return null;
   }
 
-  const metricItems: Array<[string, string | number]> = [
-    ["Всего лидов", leads.length],
-    ["Завершено", completed.length],
-    ["Конвертировано", converted.length],
-    [
-      "Конверсия завершённых",
-      `${completed.length ? Math.round(converted.length / completed.length * 100) : 0}%`,
-    ],
+  const metricItems: Array<{ label: string; value: string | number; tone?: "default" | "success" | "primary" }> = [
+    { label: "Всего лидов", value: leads.length },
+    { label: "Завершено", value: completed.length },
+    { label: "Конвертировано", value: converted.length, tone: "success" },
+    {
+      label: "Конверсия завершённых",
+      value: `${completed.length ? Math.round((converted.length / completed.length) * 100) : 0}%`,
+      tone: "primary",
+    },
   ];
 
+  const viewTabs = [
+    { id: "active", label: "Активные" },
+    { id: "converted", label: "Успешные" },
+    { id: "rejected", label: "Отказы" },
+    { id: "all", label: "Все" },
+  ] as const;
+
   return (
-    <div>
+    <PageLayout>
       <PageToolbar
         start={(
           <>
-            {(["active", "converted", "rejected", "all"] as const).map((item) => (
-              <button
-                key={item}
-                type="button"
-                onClick={() => setView(item)}
-                className={`rounded-lg px-3 py-2 text-sm font-medium ${
-                  view === item
-                    ? "bg-blue-600 text-white"
-                    : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-                }`}
-              >
-                {item === "active"
-                  ? "Активные"
-                  : item === "converted" ? "Успешные" : item === "rejected" ? "Отказы" : "Все"}
-              </button>
-            ))}
-            <Button type="button" onClick={() => setSettingsOpen(true)}>
+            <CompactTabs
+              className="w-full md:w-auto"
+              label="Представление лидов"
+              value={view}
+              onChange={(id) => setView(id as LeadView)}
+              items={[...viewTabs]}
+            />
+            <Button type="button" className="w-full md:w-auto" onClick={() => setSettingsOpen(true)}>
               <Settings2 size={16} />
               Настроить стадии
             </Button>
-            <label className="flex h-10 min-w-56 flex-1 items-center gap-2 rounded-lg border border-slate-200 px-3 lg:max-w-sm">
-              <Search size={17} className="text-slate-400" />
+            <label className="relative flex h-portal-control-default w-full min-w-0 items-center md:min-w-56 md:flex-1 lg:max-w-sm">
+              <Search
+                size={17}
+                className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-portal-muted"
+              />
               <span className="sr-only">Поиск</span>
-              <input
+              <Input
                 type="search"
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
                 placeholder="Поиск: лиды"
-                className="min-w-0 flex-1 bg-transparent text-sm text-slate-900 placeholder:text-slate-400 outline-none"
+                className="pl-9"
+                aria-label="Поиск лидов"
               />
             </label>
-            <select
+            <Select
+              className="w-full md:w-auto md:min-w-44"
               value={responsible}
               onChange={(event) => setResponsible(event.target.value)}
-              className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-900"
+              aria-label="Ответственный"
             >
               <option value="">Ответственный: все</option>
-              {responsibleOptions.map((managerName) => <option key={managerName}>{managerName}</option>)}
-            </select>
+              {responsibleOptions.map((managerName) => (
+                <option key={managerName}>{managerName}</option>
+              ))}
+            </Select>
             {query || responsible ? (
-              <Button onClick={() => { setQuery(""); setResponsible(""); }}>
+              <Button
+                type="button"
+                className="w-full md:w-auto"
+                onClick={() => {
+                  setQuery("");
+                  setResponsible("");
+                }}
+              >
                 <FilterX size={16} />
                 Сбросить
               </Button>
@@ -352,42 +369,49 @@ export function LeadWorkspace({
           </>
         )}
         end={
-          <Button variant="primary" onClick={() => setCreateOpen(true)}>
+          <Button variant="primary" className="w-full sm:w-auto" onClick={() => setCreateOpen(true)}>
             Создать лид
           </Button>
         }
       />
 
       {loadError ? (
-        <InlineAlert className="border-b border-x-0 border-t-0 rounded-none lg:px-6" tone="danger" size="compact">
+        <InlineAlert
+          className="rounded-none border-x-0 border-t-0 border-b lg:px-portal-6"
+          tone="danger"
+          size="compact"
+        >
           {loadError}
         </InlineAlert>
       ) : dataOrigin === "api" ? (
-        <InlineAlert className="border-b border-x-0 border-t-0 rounded-none lg:px-6" tone="success" size="compact">
+        <InlineAlert
+          className="rounded-none border-x-0 border-t-0 border-b lg:px-portal-6"
+          tone="success"
+          size="compact"
+        >
           Лиды загружены из backend.
         </InlineAlert>
       ) : null}
 
       <section
-        className="grid gap-3 border-b border-slate-200 bg-slate-50 px-4 py-4 sm:grid-cols-2 lg:px-6 xl:grid-cols-4"
+        className="border-b border-portal-border bg-portal-surface-secondary px-portal-4 py-portal-4 lg:px-portal-6"
         aria-label="Показатели"
       >
-        {metricItems.map(([label, value]) => (
-          <article key={label} className="rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
-            <p className="text-xs font-medium text-slate-500">{label}</p>
-            <strong className="mt-1 block text-xl text-slate-950">{value}</strong>
-          </article>
-        ))}
+        <ResponsiveGrid minItemWidth="small" gap="default">
+          {metricItems.map((item) => (
+            <MetricCard key={item.label} label={item.label} value={item.value} tone={item.tone} />
+          ))}
+        </ResponsiveGrid>
       </section>
 
-      <div className="p-4 lg:p-6">
+      <div className="min-w-0 p-portal-4 lg:p-portal-6">
         {moveError ? (
-          <InlineAlert className="mb-4" tone="danger">
+          <InlineAlert className="mb-portal-4" tone="danger">
             {moveError}
           </InlineAlert>
         ) : null}
         {completionError ? (
-          <InlineAlert className="mb-4" tone="danger">
+          <InlineAlert className="mb-portal-4" tone="danger">
             {completionError}
           </InlineAlert>
         ) : null}
@@ -481,6 +505,6 @@ export function LeadWorkspace({
           onReset={resetStages}
         />
       ) : null}
-    </div>
+    </PageLayout>
   );
 }
