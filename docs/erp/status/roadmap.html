@@ -164,7 +164,7 @@
         </div>
       </div>
       <div class="meta-list">
-        <div class="chip">Updated: 2026-07-22 (Stage 6.1.3 API)</div>
+        <div class="chip">Updated: 2026-07-22 (Stage 18 Administration + print forms)</div>
         <div class="chip">Version: v0.9.0</div>
         <div class="chip">Branch: feature/v0.8.1-nomenclature-core</div>
         <div class="chip">Commit: c9bee2b</div>
@@ -546,7 +546,7 @@
               },
               {
                 code: "3.3.3",
-                title: "Currency, print forms, quotations, and invoices",
+                title: "Currency, quotations, and invoices (order print output consumes Stage 18 print-form registry)",
                 done: false
               }
             ]
@@ -1731,28 +1731,28 @@
                 microtasks: [
                   {
                     code: "6.1.4.1",
-                    title: "Add update schema",
-                    done: false
+                    title: "Add update schema — `v0.9.0`; ProductModelUpdate (no status; status via 6.1.5 actions)",
+                    done: true
                   },
                   {
                     code: "6.1.4.2",
-                    title: "Add repository update operation",
-                    done: false
+                    title: "Add repository update operation — `v0.9.0`; apply_product_model_updates",
+                    done: true
                   },
                   {
                     code: "6.1.4.3",
-                    title: "Add service validation for editable fields",
-                    done: false
+                    title: "Add service validation for editable fields — `v0.9.0`; unique article; size_type only while draft",
+                    done: true
                   },
                   {
                     code: "6.1.4.4",
-                    title: "Add PATCH endpoint",
-                    done: false
+                    title: "Add PATCH endpoint — `v0.9.0`; PATCH /product-models/{id}",
+                    done: true
                   },
                   {
                     code: "6.1.4.5",
-                    title: "Add regression tests",
-                    done: false
+                    title: "Add regression tests — `v0.9.0`; test_product_models.py",
+                    done: true
                   }
                 ]
               },
@@ -1766,23 +1766,23 @@
                 microtasks: [
                   {
                     code: "6.1.5.1",
-                    title: "Add status fields and validation rules",
-                    done: false
+                    title: "Add status fields and validation rules — `v0.9.0`; draft/active/archived",
+                    done: true
                   },
                   {
                     code: "6.1.5.2",
-                    title: "Add service rules for activation and deactivation",
-                    done: false
+                    title: "Add service rules for activation and deactivation — `v0.9.0`; activate/archive (+ reactivate)",
+                    done: true
                   },
                   {
                     code: "6.1.5.3",
-                    title: "Add API endpoints for status actions",
-                    done: false
+                    title: "Add API endpoints for status actions — `v0.9.0`; POST …/activate, POST …/archive",
+                    done: true
                   },
                   {
                     code: "6.1.5.4",
-                    title: "Add backend regression tests",
-                    done: false
+                    title: "Add backend regression tests — `v0.9.0`; test_product_model_status_actions_api",
+                    done: true
                   }
                 ]
               },
@@ -1796,23 +1796,23 @@
                 microtasks: [
                   {
                     code: "6.1.6.1",
-                    title: "Add version entity rules and migration if required",
-                    done: false
+                    title: "Add version entity rules and migration — `v0.9.0`; ProductModelVersion + k1l2m3n4o567",
+                    done: true
                   },
                   {
                     code: "6.1.6.2",
-                    title: "Add service rules for version create/activate/archive",
-                    done: false
+                    title: "Add service rules for version create/publish/archive — `v0.9.0`; ≤1 published; v1 on create",
+                    done: true
                   },
                   {
                     code: "6.1.6.3",
-                    title: "Add API endpoints for version actions",
-                    done: false
+                    title: "Add API endpoints for version actions — `v0.9.0`; /product-models/{id}/versions",
+                    done: true
                   },
                   {
                     code: "6.1.6.4",
-                    title: "Add backend regression tests",
-                    done: false
+                    title: "Add backend regression tests — `v0.9.0`; test_product_model_version_lifecycle_api",
+                    done: true
                   }
                 ]
               },
@@ -1827,23 +1827,23 @@
                 microtasks: [
                   {
                     code: "6.1.7.1",
-                    title: "Add frontend types and API client",
-                    done: false
+                    title: "Add frontend types and API client — `v0.9.0`; frontend/lib/product-models.ts",
+                    done: true
                   },
                   {
                     code: "6.1.7.2",
-                    title: "Add list route in the settings workspace route group",
-                    done: false
+                    title: "Add list route — `v0.9.0`; /settings/catalogs/product-models PT-02 API list",
+                    done: true
                   },
                   {
                     code: "6.1.7.3",
-                    title: "Add workspace UI with loading and error states",
-                    done: false
+                    title: "Add workspace UI with loading and error states — `v0.9.0`; ProductModelsWorkspace",
+                    done: true
                   },
                   {
                     code: "6.1.7.4",
-                    title: "Add frontend regression tests",
-                    done: false
+                    title: "Add frontend regression tests — `v0.9.0`; product-models.test.mjs",
+                    done: true
                   },
                   {
                     code: "6.1.7.5",
@@ -1862,23 +1862,23 @@
                 microtasks: [
                   {
                     code: "6.1.8.1",
-                    title: "Add detail route and page shell",
-                    done: false
+                    title: "Add detail route and page shell — `v0.9.0`; numeric id → API card; demo-reference kept",
+                    done: true
                   },
                   {
                     code: "6.1.8.2",
-                    title: "Add card view state (article, size_type, description, status)",
-                    done: false
+                    title: "Add card view state — `v0.9.0`; ProductModelPersistentCard + API versions",
+                    done: true
                   },
                   {
                     code: "6.1.8.3",
-                    title: "Add not-found, loading, and error states",
-                    done: false
+                    title: "Add not-found, loading, and error states — `v0.9.0`; segment + numeric guard",
+                    done: true
                   },
                   {
                     code: "6.1.8.4",
-                    title: "Add frontend regression tests",
-                    done: false
+                    title: "Add frontend regression tests — `v0.9.0`; parseProductModelRouteId / version views",
+                    done: true
                   },
                   {
                     code: "6.1.8.5",
@@ -3547,6 +3547,101 @@
               {
                 code: "17.2.3",
                 title: "Production backup, disaster recovery, and administrator runbooks",
+                done: false
+              }
+            ]
+          }
+        ]
+      },
+      {
+        title: "Stage 18 — Администрирование",
+        blocks: [
+          {
+            title: "18.1 — Оболочка администрирования и системные настройки",
+            items: [
+              {
+                code: "18.1.1",
+                title: "Navigation contour for Administration (system settings + platform directories + print forms)",
+                done: false
+              },
+              {
+                code: "18.1.2",
+                title: "System settings workspace (platform-level parameters)",
+                done: false
+              },
+              {
+                code: "18.1.3",
+                title: "Placement rules: platform directories vs domain catalogs (nomenclature, pattern base, organizations)",
+                done: false
+              },
+              {
+                code: "18.1.4",
+                title: "Page template mapping for Administration list/card routes (PT-02 / PT-05 as applicable)",
+                done: false
+              }
+            ]
+          },
+          {
+            title: "18.2 — Справочники платформы",
+            items: [
+              {
+                code: "18.2.1",
+                title: "Platform directories registry and domain contracts",
+                done: false
+              },
+              {
+                code: "18.2.2",
+                title: "Persistent CRUD API for platform directories under Administration",
+                done: false
+              },
+              {
+                code: "18.2.3",
+                title: "Administration UI for platform directories (list/card, no demo substitution)",
+                done: false
+              },
+              {
+                code: "18.2.4",
+                title: "Cross-links from consuming modules to platform directories",
+                done: false
+              }
+            ]
+          },
+          {
+            title: "18.3 — Печатные формы",
+            items: [
+              {
+                code: "18.3.1",
+                title: "Print-form domain contract: entity binding (model / directory / document type), status, versioning",
+                done: false
+              },
+              {
+                code: "18.3.2",
+                title: "Database model, migration, and schemas for print-form registry and templates",
+                done: false
+              },
+              {
+                code: "18.3.3",
+                title: "Service and API: list/create/update, bind to model or directory, activate/archive",
+                done: false
+              },
+              {
+                code: "18.3.4",
+                title: "Template storage, preview, and generation pipeline",
+                done: false
+              },
+              {
+                code: "18.3.5",
+                title: "Administration UI: print forms list and card under Administration → Печатные формы",
+                done: false
+              },
+              {
+                code: "18.3.6",
+                title: "Integration points: sales order / quotation / invoice print output uses registry (link from 3.3.3)",
+                done: false
+              },
+              {
+                code: "18.3.7",
+                title: "Documentation checkpoint (ADR or domain note) and regression tests",
                 done: false
               }
             ]

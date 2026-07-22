@@ -1,7 +1,7 @@
 # Sport-Lead — Global Roadmap
 
 **Code:** `SL-ROADMAP-v1`
-**Updated:** `2026-07-22` (Stage 6.1.3 product-model create/list API)
+**Updated:** `2026-07-22` (Stage 18 Administration + print forms structure)
 **Project version:** `v0.9.0`
 **Git branch:** `feature/v0.8.1-nomenclature-core`
 **Git commit:** `bc63397`
@@ -28,7 +28,7 @@ Current confirmed contour:
 
 Next detailed contour:
 
-`Design System and Platform Templates -> База лекал (модели + варианты сборки) -> Specifications -> Routings (цеха / исполнение) -> Технические карты -> Production`
+`Design System and Platform Templates -> База лекал (модели + варианты сборки) -> Specifications -> Routings (цеха / исполнение) -> Технические карты -> Production -> … -> Администрирование (системные настройки, справочники платформы, печатные формы)`
 
 ## Stage 0 — Platform and Infrastructure
 
@@ -127,7 +127,7 @@ Next detailed contour:
 
 - [ ] 3.3.1 — Order-level discount
 - [ ] 3.3.2 — Tax and VAT model
-- [ ] 3.3.3 — Currency, print forms, quotations, and invoices
+- [ ] 3.3.3 — Currency, quotations, and invoices (order print output consumes Stage 18 print-form registry)
 
 ### 3.4 — Order execution
 
@@ -537,12 +537,11 @@ Dependencies:
 - 6.1.3
 
 Microtasks:
-- [ ] 6.1.4.1 — Add update schema
-- [ ] 6.1.4.2 — Add repository update operation
-- [ ] 6.1.4.3 — Add service validation for editable fields
-- [ ] 6.1.4.4 — Add PATCH endpoint
-- [ ] 6.1.4.5 — Add regression tests
-
+- [x] 6.1.4.1 — Add update schema — `v0.9.0`; `ProductModelUpdate` (no status; status via `6.1.5` actions)
+- [x] 6.1.4.2 — Add repository update operation — `v0.9.0`; `apply_product_model_updates`
+- [x] 6.1.4.3 — Add service validation for editable fields — `v0.9.0`; unique article; `size_type` only while `draft`
+- [x] 6.1.4.4 — Add PATCH endpoint — `v0.9.0`; `PATCH /product-models/{id}`
+- [x] 6.1.4.5 — Add regression tests — `v0.9.0`; `test_product_models.py`
 Completion criteria:
 - model data is updated in PostgreSQL;
 - validation errors are explicit;
@@ -557,10 +556,10 @@ Dependencies:
 - 6.1.4
 
 Microtasks:
-- [ ] 6.1.5.1 — Add status fields and validation rules
-- [ ] 6.1.5.2 — Add service rules for activation and deactivation
-- [ ] 6.1.5.3 — Add API endpoints for status actions
-- [ ] 6.1.5.4 — Add backend regression tests
+- [x] 6.1.5.1 — Add status fields and validation rules — `v0.9.0`; catalog `draft`/`active`/`archived` (fields from `6.1.2`)
+- [x] 6.1.5.2 — Add service rules for activation and deactivation — `v0.9.0`; `activate_product_model` / `archive_product_model` (+ reactivate archived)
+- [x] 6.1.5.3 — Add API endpoints for status actions — `v0.9.0`; `POST …/activate`, `POST …/archive`
+- [x] 6.1.5.4 — Add backend regression tests — `v0.9.0`; `test_product_model_status_actions_api`
 
 Completion criteria:
 - statuses are persistent and validated;
@@ -575,10 +574,10 @@ Dependencies:
 - 6.1.5
 
 Microtasks:
-- [ ] 6.1.6.1 — Add version entity rules and migration if required
-- [ ] 6.1.6.2 — Add service rules for version create/activate/archive
-- [ ] 6.1.6.3 — Add API endpoints for version actions
-- [ ] 6.1.6.4 — Add backend regression tests
+- [x] 6.1.6.1 — Add version entity rules and migration if required — `v0.9.0`; `ProductModelVersion` + `k1l2m3n4o567_add_product_model_versions.py`
+- [x] 6.1.6.2 — Add service rules for version create/activate/archive — `v0.9.0`; create draft / publish (≤1 published) / archive; initial v1 on model create
+- [x] 6.1.6.3 — Add API endpoints for version actions — `v0.9.0`; `/product-models/{id}/versions` (+ publish/archive)
+- [x] 6.1.6.4 — Add backend regression tests — `v0.9.0`; `test_product_model_version_lifecycle_api`
 
 Completion criteria:
 - versions are traceable;
@@ -594,10 +593,10 @@ Dependencies:
 - 6.0.3
 
 Microtasks:
-- [ ] 6.1.7.1 — Add frontend types and API client
-- [ ] 6.1.7.2 — Add list route in the settings workspace route group
-- [ ] 6.1.7.3 — Add workspace UI with loading and error states
-- [ ] 6.1.7.4 — Add frontend regression tests
+- [x] 6.1.7.1 — Add frontend types and API client — `v0.9.0`; `frontend/lib/product-models.ts`
+- [x] 6.1.7.2 — Add list route in the settings workspace route group — `v0.9.0`; `/settings/catalogs/product-models` → API list (PT-02)
+- [x] 6.1.7.3 — Add workspace UI with loading and error states — `v0.9.0`; `ProductModelsWorkspace` + segment loading/error
+- [x] 6.1.7.4 — Add frontend regression tests — `v0.9.0`; `frontend/lib/product-models.test.mjs`
 - [ ] 6.1.7.5 — Visual verification
 
 Completion criteria:
@@ -614,10 +613,10 @@ Dependencies:
 - 6.1.7
 
 Microtasks:
-- [ ] 6.1.8.1 — Add detail route and page shell
-- [ ] 6.1.8.2 — Add card view state (article, size_type, description, status)
-- [ ] 6.1.8.3 — Add not-found, loading, and error states
-- [ ] 6.1.8.4 — Add frontend regression tests
+- [x] 6.1.8.1 — Add detail route and page shell — `v0.9.0`; numeric id → API card; `demo-reference` kept as PT-08 demo
+- [x] 6.1.8.2 — Add card view state (article, size_type, description, status) — `v0.9.0`; `ProductModelPersistentCard` + version bar from API
+- [x] 6.1.8.3 — Add not-found, loading, and error states — `v0.9.0`; segment boundaries + numeric guard
+- [x] 6.1.8.4 — Add frontend regression tests — `v0.9.0`; `parseProductModelRouteId` / `toProductModelVersionViews`
 - [ ] 6.1.8.5 — Visual verification
 
 Completion criteria:
@@ -1555,3 +1554,33 @@ Completion criteria:
 - [ ] 17.2.1 — VPS, production Docker, reverse proxy, and HTTPS
 - [ ] 17.2.2 — Production deployment pipeline, centralized monitoring, and log aggregation (dev CI covered in `0.2.3`)
 - [ ] 17.2.3 — Production backup, disaster recovery, and administrator runbooks (dev/staging scripts covered in `0.3.3`)
+
+## Stage 18 — Администрирование
+
+> Structure note (`2026-07-22`): раздел платформы для **системных настроек** и **справочников платформы**. Доменные каталоги (номенклатура / Stage 4, база лекал / Stage 6 и т.п.) остаются в своих stage и навигационных группах; Stage 18 владеет оболочкой администрирования, кросс-модульными платформенными справочниками и **реестром печатных форм**, привязанных к моделям и справочникам. Auth/roles остаются в Stage 17.1; production ops — в Stage 17.2.
+
+### 18.1 — Оболочка администрирования и системные настройки
+
+- [ ] 18.1.1 — Navigation contour for Administration (system settings + platform directories + print forms)
+- [ ] 18.1.2 — System settings workspace (platform-level parameters)
+- [ ] 18.1.3 — Placement rules: platform directories vs domain catalogs (nomenclature, pattern base, organizations)
+- [ ] 18.1.4 — Page template mapping for Administration list/card routes (PT-02 / PT-05 as applicable)
+
+### 18.2 — Справочники платформы
+
+- [ ] 18.2.1 — Platform directories registry and domain contracts
+- [ ] 18.2.2 — Persistent CRUD API for platform directories under Administration
+- [ ] 18.2.3 — Administration UI for platform directories (list/card, no demo substitution)
+- [ ] 18.2.4 — Cross-links from consuming modules to platform directories
+
+### 18.3 — Печатные формы
+
+> Category under Administration: print-form templates bound to specific **models** and **directories** (справочники). Document modules (orders, invoices, …) consume the registry; they do not own a parallel template store.
+
+- [ ] 18.3.1 — Print-form domain contract: entity binding (model / directory / document type), status, versioning
+- [ ] 18.3.2 — Database model, migration, and schemas for print-form registry and templates
+- [ ] 18.3.3 — Service and API: list/create/update, bind to model or directory, activate/archive
+- [ ] 18.3.4 — Template storage, preview, and generation pipeline
+- [ ] 18.3.5 — Administration UI: print forms list and card under Administration → Печатные формы
+- [ ] 18.3.6 — Integration points: sales order / quotation / invoice print output uses registry (link from `3.3.3`)
+- [ ] 18.3.7 — Documentation checkpoint (ADR or domain note) and regression tests

@@ -1,0 +1,266 @@
+export type ProductModelSizeType = "men" | "women" | "kids";
+export type ProductModelStatus = "draft" | "active" | "archived";
+export type ProductModelVersionState = "draft" | "published" | "archived";
+
+export type ProductModel = {
+  id: number;
+  article: string;
+  name: string;
+  size_type: ProductModelSizeType;
+  description: string | null;
+  cover_image_url: string | null;
+  status: ProductModelStatus;
+  created_at: string;
+  updated_at: string;
+};
+
+export type ProductModelVersion = {
+  id: number;
+  product_model_id: number;
+  version_number: number;
+  label: string | null;
+  state: ProductModelVersionState;
+  note: string | null;
+  published_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type ProductModelMedia = {
+  id: number;
+  product_model_id: number;
+  filename: string;
+  mime_type: string;
+  file_size: number;
+  sort_order: number;
+  is_primary: boolean;
+  created_at: string;
+  updated_at: string;
+  content_url: string;
+};
+
+export type ProductModelHistoryEntry = {
+  id: number;
+  product_model_id: number;
+  actor: string;
+  action: string;
+  created_at: string;
+};
+
+/** View model for PT-08 version bar (demo + API). */
+export type ProductModelVersionView = {
+  id: string;
+  label: string;
+  state: ProductModelVersionState;
+  updatedAt: string;
+  author: string;
+  isActive: boolean;
+  isPublishedBaseline: boolean;
+};
+
+export type ProductModelListParams = {
+  search?: string;
+  status?: ProductModelStatus;
+  size_type?: ProductModelSizeType;
+  limit?: number;
+  offset?: number;
+};
+
+export const PRODUCT_MODEL_SIZE_TYPE_LABELS: Record<ProductModelSizeType, string> = {
+  men: "Мужской",
+  women: "Женский",
+  kids: "Детский",
+};
+
+export const PRODUCT_MODEL_STATUS_LABELS: Record<ProductModelStatus, string> = {
+  draft: "Черновик",
+  active: "Активна",
+  archived: "Архив",
+};
+
+export const PRODUCT_MODEL_IMAGE_ACCEPT = "image/jpeg,image/png,image/webp";
+export const PRODUCT_MODEL_IMAGE_MAX_BYTES = 10 * 1024 * 1024;
+export const PRODUCT_MODEL_IMAGE_RULE = "JPEG / PNG / WebP, до 10 МБ";
+
+export function productModelStatusTone(
+  status: ProductModelStatus,
+): "neutral" | "success" | "warning" {
+  if (status === "active") return "success";
+  if (status === "draft") return "warning";
+  return "neutral";
+}
+
+export function productModelLabel(model: Pick<ProductModel, "article" | "name">): string {
+  return `${model.article} — ${model.name}`;
+}
+
+export function validateProductModelImageFile(file: File): string | null {
+  const allowed = new Set(["image/jpeg", "image/png", "image/webp"]);
+  if (!allowed.has(file.type)) {
+    return PRODUCT_MODEL_IMAGE_RULE;
+  }
+  if (file.size <= 0 || file.size > PRODUCT_MODEL_IMAGE_MAX_BYTES) {
+    return PRODUCT_MODEL_IMAGE_RULE;
+  }
+  return null;
+}
+
+export function productModelCoverUrl(url: string | null | undefined): string | null {
+  if (!url?.trim()) return null;
+  const value = url.trim();
+  if (
+    value.startsWith("http://") ||
+    value.startsWith("https://") ||
+    value.startsWith("blob:")
+  ) {
+    return value;
+  }
+  // Uploaded images are served by the API; public assets stay on the Next origin.
+  if (
+    value.startsWith("/product-models/") &&
+    (value.includes("/cover/") || value.includes("/media/"))
+  ) {
+    const api = (
+      process.env.NEXT_PUBLIC_SPORT_LEADS_API_URL ??
+      process.env.SPORT_LEADS_API_URL ??
+      "http://127.0.0.1:8000"
+    ).replace(/\/$/, "");
+    return `${api}${value}`;
+  }
+  if (value.startsWith("/")) return value;
+  return `/${value.replace(/^\.\//, "")}`;
+}
+
+export function parseProductModelRouteId(raw: string): number | null {
+  if (!/^\d+$/.test(raw)) return null;
+  const id = Number(raw);
+  if (!Number.isFinite(id) || id <= 0) return null;
+  return id;
+}
+
+export function filterProductModels(
+  models: ProductModel[],
+  {
+    search = "",
+    status = "",
+    sizeType = "",
+  }: {
+    search?: string;
+    status?: "" | ProductModelStatus;
+    sizeType?: "" | ProductModelSizeType;
+  },
+): ProductModel[] {
+  const query = search.trim().toLocaleLowerCase();
+  return models.filter((model) => {
+    const matchesQuery =
+      !query ||
+      `${model.article} ${model.name} ${model.description ?? ""}`
+        .toLocaleLowerCase()
+        .includes(query);
+    const matchesStatus = !status || model.status === status;
+    const matchesSizeType = !sizeType || model.size_type === sizeType;
+    return matchesQuery && matchesStatus && matchesSizeType;
+  });
+}
+
+export function toProductModelVersionViews(
+  versions: ProductModelVersion[],
+): ProductModelVersionView[] {
+  const published = versions.find((version) => version.state === "published");
+  const draft = versions.find((version) => version.state === "draft");
+  const activeId = draft?.id ?? published?.id ?? versions[0]?.id;
+
+  return versions.map((version) => ({
+    id: String(version.id),
+    label: version.label?.trim() || `v${version.version_number}`,
+    state: version.state,
+    updatedAt: version.updated_at,
+    author: "—",
+    isActive: version.id === activeId,
+    isPublishedBaseline: version.state === "published",
+  }));
+}
+
+function apiBaseUrl(): string {
+  return (process.env.SPORT_LEADS_API_URL ?? "http://127.0.0.1:8000").replace(/\/$/, "");
+}
+
+export async function getProductModels(
+  params: ProductModelListParams = {},
+): Promise<ProductModel[]> {
+  const query = new URLSearchParams();
+  if (params.search?.trim()) query.set("search", params.search.trim());
+  if (params.status) query.set("status", params.status);
+  if (params.size_type) query.set("size_type", params.size_type);
+  if (params.limit != null) query.set("limit", String(params.limit));
+  if (params.offset != null) query.set("offset", String(params.offset));
+
+  const suffix = query.size > 0 ? `?${query.toString()}` : "";
+  const response = await fetch(`${apiBaseUrl()}/product-models${suffix}`, {
+    cache: "no-store",
+  });
+  if (!response.ok) {
+    throw new Error(`Не удалось загрузить модели изделий (${response.status}).`);
+  }
+  return (await response.json()) as ProductModel[];
+}
+
+export async function getProductModelById(
+  modelId: number,
+): Promise<ProductModel | null> {
+  const response = await fetch(`${apiBaseUrl()}/product-models/${modelId}`, {
+    cache: "no-store",
+  });
+  if (response.status === 404) {
+    return null;
+  }
+  if (!response.ok) {
+    throw new Error(`Не удалось загрузить модель изделия (${response.status}).`);
+  }
+  return (await response.json()) as ProductModel;
+}
+
+export async function getProductModelVersions(
+  modelId: number,
+): Promise<ProductModelVersion[]> {
+  const response = await fetch(
+    `${apiBaseUrl()}/product-models/${modelId}/versions`,
+    { cache: "no-store" },
+  );
+  if (!response.ok) {
+    throw new Error(
+      `Не удалось загрузить версии модели изделия (${response.status}).`,
+    );
+  }
+  return (await response.json()) as ProductModelVersion[];
+}
+
+export async function getProductModelMedia(
+  modelId: number,
+): Promise<ProductModelMedia[]> {
+  const response = await fetch(
+    `${apiBaseUrl()}/product-models/${modelId}/media`,
+    { cache: "no-store" },
+  );
+  if (!response.ok) {
+    throw new Error(
+      `Не удалось загрузить фото модели изделия (${response.status}).`,
+    );
+  }
+  return (await response.json()) as ProductModelMedia[];
+}
+
+export async function getProductModelHistory(
+  modelId: number,
+): Promise<ProductModelHistoryEntry[]> {
+  const response = await fetch(
+    `${apiBaseUrl()}/product-models/${modelId}/history`,
+    { cache: "no-store" },
+  );
+  if (!response.ok) {
+    throw new Error(
+      `Не удалось загрузить историю модели изделия (${response.status}).`,
+    );
+  }
+  return (await response.json()) as ProductModelHistoryEntry[];
+}

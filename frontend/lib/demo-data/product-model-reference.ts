@@ -1,21 +1,16 @@
-export type ProductModelVersionState = "draft" | "published" | "archived";
+export type {
+  ProductModelVersionState,
+  ProductModelVersionView as ProductModelVersion,
+} from "@/lib/product-models";
 
-export type ProductModelVersion = {
-  id: string;
-  label: string;
-  state: ProductModelVersionState;
-  updatedAt: string;
-  author: string;
-  isActive: boolean;
-  isPublishedBaseline: boolean;
-};
+import type { ProductModelVersionView } from "@/lib/product-models";
 
 export type ProductModelReference = {
   id: string;
   code: string;
   name: string;
   nomenclatureLabel: string;
-  versions: ProductModelVersion[];
+  versions: ProductModelVersionView[];
 };
 
 /** Demo-only PT-08 reference payload (`DS-PT-08`). */

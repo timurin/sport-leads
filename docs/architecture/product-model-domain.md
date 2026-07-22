@@ -26,6 +26,7 @@
 | `name` | string | Non-empty display name |
 | `size_type` | enum | Exactly one of: `men` \| `women` \| `kids`. Immutable after first publish/activation if versions exist; until then editable with caution (API may allow while `draft`) |
 | `description` | text, nullable | Free text |
+| `cover_image_url` | string, nullable | Optional cover/thumbnail URL (list + card preview; full media gallery later) |
 | `status` | enum | See §4 (`draft` \| `active` \| `archived`) |
 | `size_grid_id` | FK, nullable | 0..1 — see §3 |
 | `pattern_set_id` | FK, nullable | 0..1 — see §3 |

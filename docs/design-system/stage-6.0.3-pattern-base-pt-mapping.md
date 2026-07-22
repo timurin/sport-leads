@@ -19,9 +19,9 @@
 | `/settings/catalogs/product-models` | list | **PT-02** (`DS-PT-02`) | Same strip/table shell as units / product-characteristics (`5.5.2.5`). Create → `CreateDrawer` (ADR-013). |
 | `/settings/catalogs/size-grids` | list | **PT-02** | Same as models list. |
 | `/settings/catalogs/patterns` | list | **PT-02** | Same as models list. |
-| `/settings/catalogs/product-models/[modelId]` | card | **PT-08** (`DS-PT-08`) | Reference shell: `5.6.7` / `/settings/catalogs/product-models/demo-reference`. Not PT-05/PT-06. |
+| `/settings/catalogs/product-models/[modelId]` | card | **PT-08** + **`DS-PT-08-CATALOG`** | Etalon: `ProductModelPersistentCard` + `CatalogVersionedCardLayout`. Layout: `pt-08-catalog-card-layout.md`. Demo: `demo-reference`. |
 | `/settings/catalogs/size-grids/[gridId]` | card | **PT-05** (`DS-PT-05`) | Simple settings card: header + attributes + size-rows table. Ref: characteristic detail. |
-| `/settings/catalogs/patterns/[patternSetId]` | card | **PT-08** | Pattern sets are versioned (files/parts/history) — reuse version bar contract; body sections for parts/files. |
+| `/settings/catalogs/patterns/[patternSetId]` | card | **PT-08** + **`DS-PT-08-CATALOG`** | Same catalog grid as models; version bar + history in `versions` slot. |
 | `/settings/catalogs/nomenclature/[id]` | PRODUCT block | **existing nomenclature card** (PT-06 card chrome) | No new page template. Block «Доступные модели лекал» inside current card. |
 
 PT-06 Lead-style complex card is **not** used for model/pattern/size-grid cards.
@@ -41,16 +41,16 @@ Required when filling `6.1.7` / `6.2.4` / `6.3.4`:
 | Totals | `ListTotals` |
 | Demo | Forbidden as production readiness (ADR / `6.0.2` smoke) |
 
-## Model card (PT-08) — body blocks
+## Model card (PT-08 + DS-PT-08-CATALOG) — body blocks
 
-Beyond PT-08 version bar / history:
+Layout etalon: `pt-08-catalog-card-layout.md` / `CatalogVersionedCardLayout`.
 
-| Block | Content | When |
+| Slot / block | Content | When |
 |---|---|---|
-| Main attributes | article, name, `size_type`, description, status | `6.1.8+` |
-| Links | size grid 1:1, pattern set 1:1 | after `6.2.7` / `6.3.7` |
-| **Assembly variants** | variants list + operation lines + Decimal totals | `6.1.12` — **required** body section on model card |
-| History / compare | PT-08 slots | as versioning lands (`6.1.6`) |
+| `main` — attributes | article, name, `size_type`, description, status (header) | `6.1.8+` |
+| `main` — workspace | composition / links / assembly variants | `6.1.12+` / links after `6.2.7` / `6.3.7` |
+| `media` | photo carousel (primary → list thumb) | `6.1.8+` |
+| `versions` | version bar + change history | `6.1.6` / `6.1.8+` |
 
 Assembly variants are **not** a separate PT and **not** a nomenclature-variant UI (ADR-010 / ADR-014).
 

@@ -4,8 +4,9 @@
 **Contract:** `DS-PT-08`  
 **Date:** `2026-07-22`  
 **Roadmap:** `5.5.8.1`–`5.5.8.5`  
-**Reference page:** `/settings/catalogs/product-models/demo-reference` (`ProductModelCard`)  
-**Related:** `DS-PAGE-01`…`04`, `DS-TABS-01`, `DS-BADGE-01`, `DS-ACTION-01`, `DS-FEEDBACK-02`, Stage `6.1` product models, `responsive-rules.md`
+**Reference page:** `/settings/catalogs/product-models/[modelId]` (`ProductModelPersistentCard`) — layout etalon `DS-PT-08-CATALOG`  
+**Demo shell:** `/settings/catalogs/product-models/demo-reference` (`ProductModelCard`)  
+**Related:** `DS-PAGE-01`…`04`, `DS-TABS-01`, `DS-BADGE-01`, `DS-ACTION-01`, `DS-FEEDBACK-02`, `pt-08-catalog-card-layout.md`, Stage `6.1` product models, `responsive-rules.md`
 
 ## Scope
 
@@ -21,16 +22,14 @@ AppShell
         └── PageLayout
               └── PageContent (width="full", size="default")
                     └── VersionedWorkspace
-                          ├── Entity header (+ back, title, model meta)
-                          ├── Version bar (active selector + state badges)
-                          ├── Optional primary actions (publish, new draft)
-                          └── Body
-                                ├── CompactTabs or section stack (domain)
-                                ├── Version history panel (timeline / table)
-                                └── Compare / restore affordances (dialog/drawer)
+                          ├── Entity header (+ back, title, status)
+                          └── CatalogVersionedCardLayout (DS-PT-08-CATALOG)
+                                ├── main     — attributes + workspace
+                                ├── media    — photo / cover (300px @ ≥1900)
+                                └── versions — version bar + change history
 ```
 
-Persistent data and mutations ship in roadmap `6.1.*`; PT-08 defines **layout and UX contracts** only.
+For catalog cards, body grid rules live in `pt-08-catalog-card-layout.md` (`DS-PT-08-CATALOG`). Demo reference may still use an older PT-08 composition until migrated.
 
 ## `DS-PT-08` rules
 
@@ -93,9 +92,10 @@ Verification widths: 1920…390.
 
 ## Reference consumers
 
-- `/settings/catalogs/product-models/demo-reference` — **PT-08 reference (demo)**
+- `/settings/catalogs/product-models/[modelId]` — **PT-08 + DS-PT-08-CATALOG etalon** (API)
+- `/settings/catalogs/product-models/demo-reference` — labeled PT-08 demo shell
 
-Future: product-model card after `6.1.8` (incl. assembly-variants block), pattern-set card after `6.3.5`, specification/routing versioned editors. Mapping: `stage-6.0.3-pattern-base-pt-mapping.md`.
+Future: pattern-set card after `6.3.5`, specification/routing versioned editors. Mapping: `stage-6.0.3-pattern-base-pt-mapping.md`. Layout: `pt-08-catalog-card-layout.md`.
 
 ## Verification (owner)
 

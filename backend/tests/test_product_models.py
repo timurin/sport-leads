@@ -52,9 +52,9 @@ def test_product_model_persists_create_read_update_and_unique_article() -> None:
         assert read.article == "213"
         assert read.size_type == ProductModelSizeType.MEN
 
-        patch = ProductModelUpdate(name="Футболка 213", status=ProductModelStatus.ACTIVE)
+        patch = ProductModelUpdate(name="Футболка 213")
         row.name = patch.name or row.name
-        row.status = patch.status or row.status
+        row.status = ProductModelStatus.ACTIVE
         db.commit()
         db.refresh(row)
         assert row.name == "Футболка 213"
@@ -147,5 +147,411 @@ def test_product_model_create_and_list_api_rejects_duplicate_article() -> None:
             assert "list_product_models" in operation_ids
             assert "create_product_model" in operation_ids
             assert "get_product_model" in operation_ids
+            assert "update_product_model" in operation_ids
+    finally:
+        app.dependency_overrides.clear()
+
+
+def test_product_model_update_api_persists_and_validates() -> None:
+    factory = _session_factory()
+
+    def override_get_db():
+        with factory() as db:
+            yield db
+
+    app.dependency_overrides[get_db] = override_get_db
+    try:
+        with TestClient(app) as client:
+            created = client.post(
+                "/product-models",
+                json={
+                    "article": "213",
+                    "name": "Футболка спортивная",
+                    "size_type": "men",
+                    "description": "Мужская",
+                },
+            )
+            assert created.status_code == 201, created.text
+            model_id = created.json()["id"]
+
+            other = client.post(
+                "/product-models",
+                json={"article": "213-W", "name": "Женская", "size_type": "women"},
+            )
+            assert other.status_code == 201, other.text
+
+            patched = client.patch(
+                f"/product-models/{model_id}",
+                json={
+                    "name": " Футболка 213 ",
+                    "description": "  Обновлено  ",
+                    "size_type": "kids",
+                },
+            )
+            assert patched.status_code == 200, patched.text
+            body = patched.json()
+            assert body["name"] == "Футболка 213"
+            assert body["description"] == "Обновлено"
+            assert body["size_type"] == "kids"
+            assert body["status"] == "draft"
+
+            reopened = client.get(f"/product-models/{model_id}")
+            assert reopened.status_code == 200
+            assert reopened.json()["name"] == "Футболка 213"
+            assert reopened.json()["size_type"] == "kids"
+
+            conflict = client.patch(
+                f"/product-models/{model_id}",
+                json={"article": "213-W"},
+            )
+            assert conflict.status_code == 409
+
+            activated = client.post(f"/product-models/{model_id}/activate")
+            assert activated.status_code == 200
+            assert activated.json()["status"] == "active"
+
+            locked_size = client.patch(
+                f"/product-models/{model_id}",
+                json={"size_type": "women"},
+            )
+            assert locked_size.status_code == 422
+
+            missing = client.patch(
+                "/product-models/999999",
+                json={"name": "Нет"},
+            )
+            assert missing.status_code == 404
+
+            openapi = client.get("/openapi.json")
+            assert openapi.status_code == 200
+            paths = openapi.json()["paths"]
+            assert "patch" in paths["/product-models/{model_id}"]
+    finally:
+        app.dependency_overrides.clear()
+
+
+def test_product_model_status_actions_api() -> None:
+    factory = _session_factory()
+
+    def override_get_db():
+        with factory() as db:
+            yield db
+
+    app.dependency_overrides[get_db] = override_get_db
+    try:
+        with TestClient(app) as client:
+            created = client.post(
+                "/product-models",
+                json={"article": "S-01", "name": "Шорты", "size_type": "men"},
+            )
+            assert created.status_code == 201, created.text
+            model_id = created.json()["id"]
+            assert created.json()["status"] == "draft"
+
+            activated = client.post(f"/product-models/{model_id}/activate")
+            assert activated.status_code == 200
+            assert activated.json()["status"] == "active"
+
+            # Idempotent activate
+            again = client.post(f"/product-models/{model_id}/activate")
+            assert again.status_code == 200
+            assert again.json()["status"] == "active"
+
+            archived = client.post(f"/product-models/{model_id}/archive")
+            assert archived.status_code == 200
+            assert archived.json()["status"] == "archived"
+
+            # Reactivate archived → active (domain §2.2)
+            reactivated = client.post(f"/product-models/{model_id}/activate")
+            assert reactivated.status_code == 200
+            assert reactivated.json()["status"] == "active"
+
+            draft_only = client.post(
+                "/product-models",
+                json={"article": "S-02", "name": "Черновик", "size_type": "kids"},
+            )
+            draft_id = draft_only.json()["id"]
+            archived_draft = client.post(f"/product-models/{draft_id}/archive")
+            assert archived_draft.status_code == 200
+            assert archived_draft.json()["status"] == "archived"
+
+            missing = client.post("/product-models/999999/activate")
+            assert missing.status_code == 404
+
+            openapi = client.get("/openapi.json")
+            assert openapi.status_code == 200
+            operation_ids = {
+                method.get("operationId")
+                for path_item in openapi.json()["paths"].values()
+                for method in path_item.values()
+                if isinstance(method, dict) and method.get("operationId")
+            }
+            assert "activate_product_model" in operation_ids
+            assert "archive_product_model" in operation_ids
+    finally:
+        app.dependency_overrides.clear()
+
+
+def test_product_model_version_lifecycle_api() -> None:
+    factory = _session_factory()
+
+    def override_get_db():
+        with factory() as db:
+            yield db
+
+    app.dependency_overrides[get_db] = override_get_db
+    try:
+        with TestClient(app) as client:
+            created = client.post(
+                "/product-models",
+                json={"article": "V-01", "name": "Версия", "size_type": "men"},
+            )
+            assert created.status_code == 201, created.text
+            model_id = created.json()["id"]
+
+            versions = client.get(f"/product-models/{model_id}/versions")
+            assert versions.status_code == 200
+            assert len(versions.json()) == 1
+            v1 = versions.json()[0]
+            assert v1["version_number"] == 1
+            assert v1["state"] == "draft"
+            assert v1["label"] == "v1"
+            v1_id = v1["id"]
+
+            published = client.post(f"/product-models/{model_id}/versions/{v1_id}/publish")
+            assert published.status_code == 200, published.text
+            assert published.json()["state"] == "published"
+            assert published.json()["published_at"] is not None
+
+            draft2 = client.post(
+                f"/product-models/{model_id}/versions",
+                json={"source_version_id": v1_id, "note": " Правка после публикации "},
+            )
+            assert draft2.status_code == 201, draft2.text
+            v2 = draft2.json()
+            assert v2["version_number"] == 2
+            assert v2["state"] == "draft"
+            assert v2["note"] == "Правка после публикации"
+            v2_id = v2["id"]
+
+            published2 = client.post(f"/product-models/{model_id}/versions/{v2_id}/publish")
+            assert published2.status_code == 200
+            assert published2.json()["state"] == "published"
+
+            after = client.get(f"/product-models/{model_id}/versions")
+            assert after.status_code == 200
+            by_number = {item["version_number"]: item for item in after.json()}
+            assert by_number[1]["state"] == "archived"
+            assert by_number[2]["state"] == "published"
+
+            archived = client.post(f"/product-models/{model_id}/versions/{v2_id}/archive")
+            assert archived.status_code == 200
+            assert archived.json()["state"] == "archived"
+
+            reject_publish = client.post(
+                f"/product-models/{model_id}/versions/{v2_id}/publish"
+            )
+            assert reject_publish.status_code == 422
+
+            missing_model = client.get("/product-models/999999/versions")
+            assert missing_model.status_code == 404
+
+            openapi = client.get("/openapi.json")
+            assert openapi.status_code == 200
+            operation_ids = {
+                method.get("operationId")
+                for path_item in openapi.json()["paths"].values()
+                for method in path_item.values()
+                if isinstance(method, dict) and method.get("operationId")
+            }
+            assert "list_product_model_versions" in operation_ids
+            assert "create_product_model_version" in operation_ids
+            assert "publish_product_model_version" in operation_ids
+            assert "archive_product_model_version" in operation_ids
+    finally:
+        app.dependency_overrides.clear()
+
+
+def test_product_model_cover_upload_and_delete_api() -> None:
+    factory = _session_factory()
+
+    def override_get_db():
+        with factory() as db:
+            yield db
+
+    app.dependency_overrides[get_db] = override_get_db
+    try:
+        with TestClient(app) as client:
+            created = client.post(
+                "/product-models",
+                json={"article": "IMG-01", "name": "С обложкой", "size_type": "men"},
+            )
+            assert created.status_code == 201, created.text
+            model_id = created.json()["id"]
+
+            png_b64 = (
+                "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8"
+                "z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=="
+            )
+            uploaded = client.post(
+                f"/product-models/{model_id}/cover",
+                json={
+                    "filename": "dot.png",
+                    "mime_type": "image/png",
+                    "content_base64": png_b64,
+                },
+            )
+            assert uploaded.status_code == 200, uploaded.text
+            cover_url = uploaded.json()["cover_image_url"]
+            assert cover_url is not None
+            assert cover_url.startswith(f"/product-models/{model_id}/media/")
+            assert cover_url.endswith("/content")
+
+            content = client.get(f"/product-models/{model_id}/cover/content")
+            assert content.status_code == 200
+            assert content.headers["content-type"].startswith("image/png")
+
+            deleted = client.delete(f"/product-models/{model_id}/cover")
+            assert deleted.status_code == 200
+            assert deleted.json()["cover_image_url"] is None
+
+            missing = client.get(f"/product-models/{model_id}/cover/content")
+            assert missing.status_code == 404
+    finally:
+        app.dependency_overrides.clear()
+
+
+def test_product_model_media_gallery_and_history_fifo() -> None:
+    factory = _session_factory()
+
+    def override_get_db():
+        with factory() as db:
+            yield db
+
+    app.dependency_overrides[get_db] = override_get_db
+    png_b64 = (
+        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8"
+        "z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=="
+    )
+    try:
+        with TestClient(app) as client:
+            created = client.post(
+                "/product-models",
+                json={"article": "GAL-01", "name": "Галерея", "size_type": "women"},
+            )
+            assert created.status_code == 201, created.text
+            model_id = created.json()["id"]
+
+            history = client.get(f"/product-models/{model_id}/history")
+            assert history.status_code == 200
+            assert any(entry["action"] == "Модель создана" for entry in history.json())
+
+            first = client.post(
+                f"/product-models/{model_id}/media",
+                json={
+                    "filename": "a.png",
+                    "mime_type": "image/png",
+                    "content_base64": png_b64,
+                },
+            )
+            assert first.status_code == 201, first.text
+            assert first.json()["is_primary"] is True
+            media_a = first.json()["id"]
+
+            second = client.post(
+                f"/product-models/{model_id}/media",
+                json={
+                    "filename": "b.png",
+                    "mime_type": "image/png",
+                    "content_base64": png_b64,
+                },
+            )
+            assert second.status_code == 201, second.text
+            media_b = second.json()["id"]
+            assert second.json()["is_primary"] is False
+
+            listed = client.get(f"/product-models/{model_id}/media")
+            assert listed.status_code == 200
+            assert len(listed.json()) == 2
+
+            primary = client.patch(
+                f"/product-models/{model_id}/media/{media_b}",
+                json={"is_primary": True},
+            )
+            assert primary.status_code == 200
+            assert primary.json()["is_primary"] is True
+
+            model = client.get(f"/product-models/{model_id}")
+            assert model.json()["cover_image_url"] == (
+                f"/product-models/{model_id}/media/{media_b}/content"
+            )
+
+            content = client.get(f"/product-models/{model_id}/media/{media_b}/content")
+            assert content.status_code == 200
+
+            deleted = client.delete(f"/product-models/{model_id}/media/{media_a}")
+            assert deleted.status_code == 204
+
+            # FIFO: keep at most 10 history rows
+            for index in range(20):
+                patched = client.patch(
+                    f"/product-models/{model_id}",
+                    json={"description": f"note-{index}"},
+                )
+                assert patched.status_code == 200, patched.text
+
+            history_after = client.get(f"/product-models/{model_id}/history")
+            assert history_after.status_code == 200
+            rows = history_after.json()
+            assert len(rows) == 10
+            assert rows[0]["action"].startswith("Обновлены поля")
+            assert all(entry["actor"] == "Система" for entry in rows)
+
+            openapi = client.get("/openapi.json")
+            assert openapi.status_code == 200
+            operation_ids = {
+                method.get("operationId")
+                for path_item in openapi.json()["paths"].values()
+                for method in path_item.values()
+                if isinstance(method, dict) and method.get("operationId")
+            }
+            assert "list_product_model_media" in operation_ids
+            assert "add_product_model_media" in operation_ids
+            assert "list_product_model_history" in operation_ids
+    finally:
+        app.dependency_overrides.clear()
+
+
+def test_product_model_copy_creates_draft() -> None:
+    factory = _session_factory()
+
+    def override_get_db():
+        with factory() as db:
+            yield db
+
+    app.dependency_overrides[get_db] = override_get_db
+    try:
+        with TestClient(app) as client:
+            created = client.post(
+                "/product-models",
+                json={
+                    "article": "SRC-01",
+                    "name": "Источник",
+                    "size_type": "men",
+                    "description": "Описание",
+                },
+            )
+            assert created.status_code == 201, created.text
+            model_id = created.json()["id"]
+            client.post(f"/product-models/{model_id}/activate")
+
+            copied = client.post(f"/product-models/{model_id}/copy")
+            assert copied.status_code == 201, copied.text
+            body = copied.json()
+            assert body["status"] == "draft"
+            assert body["article"].startswith("SRC-01-копия")
+            assert body["name"] == "Источник (копия)"
+            assert body["id"] != model_id
+            assert body["description"] == "Описание"
     finally:
         app.dependency_overrides.clear()

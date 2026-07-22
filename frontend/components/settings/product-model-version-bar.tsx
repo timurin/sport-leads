@@ -1,6 +1,6 @@
 "use client";
 
-import type { ProductModelVersion, ProductModelVersionState } from "@/lib/demo-data/product-model-reference";
+import type { ProductModelVersionView, ProductModelVersionState } from "@/lib/product-models";
 import { StatusBadge, type StatusBadgeTone } from "@/components/ui/status-badge";
 
 const stateTone: Record<ProductModelVersionState, StatusBadgeTone> = {
@@ -16,10 +16,12 @@ const stateLabel: Record<ProductModelVersionState, string> = {
 };
 
 type ProductModelVersionBarProps = {
-  versions: ProductModelVersion[];
+  versions: ProductModelVersionView[];
   activeVersionId: string;
   onSelect: (versionId: string) => void;
   disabled?: boolean;
+  /** When true, omit outer card chrome (used inside SectionCard). */
+  embedded?: boolean;
 };
 
 /** PT-08 version selector strip (`DS-PT-08`). */
@@ -28,22 +30,26 @@ export function ProductModelVersionBar({
   activeVersionId,
   onSelect,
   disabled = false,
+  embedded = false,
 }: ProductModelVersionBarProps) {
-  return (
-    <div
-      data-version-bar
-      className="min-w-0 rounded-portal-lg border border-portal-border bg-portal-surface p-portal-3 shadow-portal-sm"
-    >
-      <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-portal-caption font-semibold text-portal-muted">
-          Версии модели
-        </p>
+  const body = (
+    <>
+      {!embedded ? (
+        <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-portal-caption font-semibold text-portal-muted">
+            Версии модели
+          </p>
+          <p className="text-portal-caption text-portal-muted">
+            Опубликованная база отмечена отдельно от активного черновика
+          </p>
+        </div>
+      ) : (
         <p className="text-portal-caption text-portal-muted">
           Опубликованная база отмечена отдельно от активного черновика
         </p>
-      </div>
+      )}
       <div
-        className="mt-portal-3 flex min-w-0 gap-2 overflow-x-auto overscroll-x-contain pb-1"
+        className={`${embedded ? "mt-portal-2" : "mt-portal-3"} flex min-w-0 gap-2 overflow-x-auto overscroll-x-contain pb-1`}
         role="tablist"
         aria-label="Версии модели"
       >
@@ -91,6 +97,19 @@ export function ProductModelVersionBar({
           );
         })}
       </div>
+    </>
+  );
+
+  if (embedded) {
+    return <div data-version-bar className="min-w-0">{body}</div>;
+  }
+
+  return (
+    <div
+      data-version-bar
+      className="min-w-0 rounded-portal-lg border border-portal-border bg-portal-surface p-portal-3 shadow-portal-sm"
+    >
+      {body}
     </div>
   );
 }
