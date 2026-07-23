@@ -1,7 +1,7 @@
 # Sport-Lead — Global Roadmap
 
 **Code:** `SL-ROADMAP-v1`
-**Updated:** `2026-07-22` (Stage 6 catalog close; order-item model binding moved to `3.2.5`)
+**Updated:** `2026-07-22` (dashboard pattern-model sales analysis `1.1.5`; Stage 6 catalog close; order-item binding → `3.2.5`)
 **Project version:** `v0.9.0`
 **Git branch:** `feature/v0.8.1-nomenclature-core`
 **Git commit:** `bc63397`
@@ -63,6 +63,7 @@ Next detailed contour:
 - [x] 1.1.2 — Lead list, filters, and Kanban UI
 - [ ] 1.1.3 — Fully persistent workspace without demo/local lead state
 - [ ] 1.1.4 — Leads list filters without demo `salesManagers` data on persistent routes — gap: `docs/design-system/ui-audit.md` § Persistent versus demo/local
+- [ ] 1.1.5 — Dashboard: top pattern-model sales analysis with filters — dimensions: model article / order count / units manufactured / order amount / sewing-cost amount; depends on order-item model binding `3.2.5` (and sewing costs from assembly-variant snapshots)
 
 ### 1.2 — Lead card
 
