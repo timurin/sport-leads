@@ -28,6 +28,17 @@ const TABS = [
 
 type TabId = (typeof TABS)[number]["id"];
 
+function formatInstant(value: string): string {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "—";
+  const dd = String(date.getUTCDate()).padStart(2, "0");
+  const mm = String(date.getUTCMonth() + 1).padStart(2, "0");
+  const yyyy = String(date.getUTCFullYear());
+  const hh = String(date.getUTCHours()).padStart(2, "0");
+  const mi = String(date.getUTCMinutes()).padStart(2, "0");
+  return `${dd}.${mm}.${yyyy} ${hh}:${mi}`;
+}
+
 export type ProductModelRequisitesDraft = {
   article: string;
   name: string;
@@ -113,12 +124,12 @@ export function ProductModelInspector({
     {
       id: "created_at",
       label: "Создано",
-      value: new Date(model.created_at).toLocaleString("ru-RU"),
+      value: formatInstant(model.created_at),
     },
     {
       id: "updated_at",
       label: "Изменено",
-      value: new Date(model.updated_at).toLocaleString("ru-RU"),
+      value: formatInstant(model.updated_at),
     },
   ];
 

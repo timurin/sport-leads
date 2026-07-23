@@ -25,9 +25,14 @@ import { SectionCard } from "@/components/ui/section-card";
 import { StatusBadge } from "@/components/ui/status-badge";
 import {
   formatAssemblyCost,
+  sumAssemblyVariantDurationSeconds,
   type AssemblyVariant,
 } from "@/lib/product-models";
-import type { SewingOperation } from "@/lib/sewing-operations";
+import {
+  formatDurationMinutesSeconds,
+  formatDurationSecondsLabel,
+  type SewingOperation,
+} from "@/lib/sewing-operations";
 
 type AssemblyVariantsBlockProps = {
   modelId: number;
@@ -194,8 +199,14 @@ export function AssemblyVariantsBlock({
                       </StatusBadge>
                     </div>
                     <p className="mt-0.5 text-portal-caption text-portal-muted">
-                      Итого: {formatAssemblyCost(variant.total_cost)} ₽ ·{" "}
-                      {variant.operation_lines.length} оп.
+                      Итого: {formatAssemblyCost(variant.total_cost)} ₽ · Время
+                      сборки 1 изделия{" "}
+                      {formatDurationMinutesSeconds(
+                        sumAssemblyVariantDurationSeconds(
+                          variant.operation_lines,
+                        ),
+                      )}{" "}
+                      · {variant.operation_lines.length} оп.
                       {!expanded && variant.operation_lines.length > 0
                         ? " · свёрнуто"
                         : ""}
@@ -267,6 +278,11 @@ export function AssemblyVariantsBlock({
                               {line.operation_name}
                             </p>
                             <div className="flex items-center gap-portal-2">
+                              <span className="text-portal-caption text-portal-muted">
+                                {formatDurationSecondsLabel(
+                                  line.duration_seconds,
+                                )}
+                              </span>
                               <span className="text-portal-body font-medium text-portal-text">
                                 {formatAssemblyCost(line.cost)} ₽
                               </span>

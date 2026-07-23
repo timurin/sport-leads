@@ -25,6 +25,8 @@ const sample = [
     name: "Футболка спортивная",
     size_type: "men",
     size_grid_id: null,
+    product_type_id: null,
+    product_type_name: null,
     description: "Мужская",
     patterns_path: null,
     constructor_name: null,
@@ -40,6 +42,8 @@ const sample = [
     name: "Футболка женская",
     size_type: "women",
     size_grid_id: 2,
+    product_type_id: 1,
+    product_type_name: "Футболка",
     description: null,
     patterns_path: null,
     constructor_name: null,
@@ -55,6 +59,8 @@ const sample = [
     name: "Детская форма",
     size_type: "kids",
     size_grid_id: null,
+    product_type_id: null,
+    product_type_name: null,
     description: null,
     patterns_path: null,
     constructor_name: null,
@@ -91,6 +97,10 @@ test("filterProductModels filters by search, status and size_type", () => {
   assert.equal(
     filterProductModels(sample, { search: "нет такого" }).length,
     0,
+  );
+  assert.equal(
+    filterProductModels(sample, { productTypeId: 1 }).length,
+    1,
   );
 });
 
@@ -212,6 +222,7 @@ test("isProductModelRequisitesDirty compares draft to model", () => {
         patterns_path: null,
         constructor_name: null,
         patterns_created_on: null,
+        product_type_id: null,
       },
       {
         article: model.article,
@@ -222,6 +233,7 @@ test("isProductModelRequisitesDirty compares draft to model", () => {
         patterns_path: "",
         constructor_name: "",
         patterns_created_on: "",
+        product_type_id: null,
       },
     ),
     false,

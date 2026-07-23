@@ -19,6 +19,7 @@ from app.models.product_model import (
 )
 from app.models.size_grid import SizeGrid
 from app.repositories import product_models as repo
+from app.repositories import product_types as product_types_repo
 from app.repositories import size_grids as size_grids_repo
 from app.schemas.product_model import (
     ProductModelCoverUpload,
@@ -87,11 +88,19 @@ def _assert_size_contour_editable(db: Session, model_id: int) -> None:
         raise ProductModelValidationError(MODEL_OPERATIONS_WARNING)
 
 
+def _validate_product_type_link(db: Session, product_type_id: int | None) -> None:
+    if product_type_id is None:
+        return
+    if product_types_repo.get_product_type(db, product_type_id) is None:
+        raise ProductModelValidationError("Тип изделия не найден")
+
+
 def list_product_models(
     db: Session,
     search: str | None = None,
     status: ProductModelStatus | None = None,
     size_type: ProductModelSizeType | None = None,
+    product_type_id: int | None = None,
     limit: int = 100,
     offset: int = 0,
 ) -> list[ProductModel]:
@@ -100,6 +109,7 @@ def list_product_models(
         search=search,
         status=status,
         size_type=size_type,
+        product_type_id=product_type_id,
         limit=limit,
         offset=offset,
     )
@@ -127,11 +137,14 @@ def create_product_model(db: Session, payload: ProductModelCreate) -> ProductMod
     else:
         _validate_size_grid_link(db, size_type=size_type, size_grid_id=None)
 
+    _validate_product_type_link(db, payload.product_type_id)
+
     row = ProductModel(
         article=payload.article,
         name=payload.name,
         size_type=size_type,
         size_grid_id=size_grid_id,
+        product_type_id=payload.product_type_id,
         description=payload.description,
         patterns_path=payload.patterns_path,
         constructor_name=payload.constructor_name,
@@ -205,6 +218,9 @@ def update_product_model(db: Session, model_id: int, payload: ProductModelUpdate
         raise ProductModelValidationError(
             "Нельзя снять размерную сетку у активной или архивной модели"
         )
+
+    if "product_type_id" in changes:
+        _validate_product_type_link(db, changes["product_type_id"])
 
     repo.apply_product_model_updates(row, changes)
     summary = ", ".join(sorted(changes.keys()))
@@ -294,6 +310,7 @@ def copy_product_model(db: Session, model_id: int) -> ProductModel:
         name=f"{source.name} (копия)",
         size_type=source.size_type,
         size_grid_id=source.size_grid_id,
+        product_type_id=source.product_type_id,
         description=source.description,
         patterns_path=source.patterns_path,
         constructor_name=source.constructor_name,

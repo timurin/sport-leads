@@ -180,12 +180,12 @@ def test_assembly_variant_from_sewing_operations_catalog() -> None:
 
             op_a = client.post(
                 "/sewing-operations",
-                json={"name": "Базовая сборка", "cost": "100.00"},
+                json={"name": "Базовая сборка", "cost": "100.00", "duration_seconds": 60},
             )
             assert op_a.status_code == 201, op_a.text
             op_b = client.post(
                 "/sewing-operations",
-                json={"name": "Отстрочка", "cost": "50.50"},
+                json={"name": "Отстрочка", "cost": "50.50", "duration_seconds": 30},
             )
             assert op_b.status_code == 201, op_b.text
             id_a = op_a.json()["id"]
@@ -204,6 +204,10 @@ def test_assembly_variant_from_sewing_operations_catalog() -> None:
             assert [line["operation_name"] for line in body["operation_lines"]] == [
                 "Базовая сборка",
                 "Отстрочка",
+            ]
+            assert [line["duration_seconds"] for line in body["operation_lines"]] == [
+                60,
+                30,
             ]
             assert [line["sewing_operation_id"] for line in body["operation_lines"]] == [
                 id_a,

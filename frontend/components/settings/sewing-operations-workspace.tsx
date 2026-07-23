@@ -25,7 +25,9 @@ import { ListTotals } from "@/components/ui/list-pagination";
 import { PageToolbar } from "@/components/ui/page-header";
 import {
   filterSewingOperations,
+  formatDurationSecondsLabel,
   formatSewingCost,
+  toSewingCostInput,
   type SewingOperation,
   type SewingOperationCreateDraft,
 } from "@/lib/sewing-operations";
@@ -68,7 +70,11 @@ export function SewingOperationsWorkspace({
 
   const startEdit = (row: SewingOperation) => {
     setEditingId(row.id);
-    setDraft({ name: row.name, cost: formatSewingCost(row.cost) });
+    setDraft({
+      name: row.name,
+      cost: toSewingCostInput(row.cost),
+      duration_seconds: String(row.duration_seconds ?? 0),
+    });
     setRowError(null);
   };
 
@@ -188,6 +194,9 @@ export function SewingOperationsWorkspace({
                   <DataTableHeaderCell className="w-40">
                     Стоимость
                   </DataTableHeaderCell>
+                  <DataTableHeaderCell className="w-48">
+                    Время выполнения
+                  </DataTableHeaderCell>
                   <DataTableHeaderCell className="w-28">
                     Действия
                   </DataTableHeaderCell>
@@ -202,9 +211,12 @@ export function SewingOperationsWorkspace({
                         {editing ? (
                           <Input
                             value={draft.name}
-                            onChange={(event) =>
-                              setDraft({ ...draft, name: event.target.value })
-                            }
+                            onChange={(event) => {
+                              const name = event.target.value;
+                              setDraft((prev) =>
+                                prev ? { ...prev, name } : prev,
+                              );
+                            }}
                             disabled={saving}
                             aria-label="Наименование"
                           />
@@ -218,15 +230,36 @@ export function SewingOperationsWorkspace({
                         {editing ? (
                           <Input
                             value={draft.cost}
-                            onChange={(event) =>
-                              setDraft({ ...draft, cost: event.target.value })
-                            }
+                            onChange={(event) => {
+                              const cost = event.target.value;
+                              setDraft((prev) =>
+                                prev ? { ...prev, cost } : prev,
+                              );
+                            }}
                             disabled={saving}
                             inputMode="decimal"
                             aria-label="Стоимость"
                           />
                         ) : (
                           formatSewingCost(row.cost)
+                        )}
+                      </DataTableCell>
+                      <DataTableCell>
+                        {editing ? (
+                          <Input
+                            value={draft.duration_seconds}
+                            onChange={(event) => {
+                              const duration_seconds = event.target.value;
+                              setDraft((prev) =>
+                                prev ? { ...prev, duration_seconds } : prev,
+                              );
+                            }}
+                            disabled={saving}
+                            inputMode="numeric"
+                            aria-label="Время выполнения операции, секунды"
+                          />
+                        ) : (
+                          formatDurationSecondsLabel(row.duration_seconds)
                         )}
                       </DataTableCell>
                       <DataTableCell>
@@ -289,20 +322,34 @@ export function SewingOperationsWorkspace({
                   <div className="grid gap-portal-3">
                     <Input
                       value={draft.name}
-                      onChange={(event) =>
-                        setDraft({ ...draft, name: event.target.value })
-                      }
+                      onChange={(event) => {
+                        const name = event.target.value;
+                        setDraft((prev) => (prev ? { ...prev, name } : prev));
+                      }}
                       disabled={saving}
                       aria-label="Наименование"
                     />
                     <Input
                       value={draft.cost}
-                      onChange={(event) =>
-                        setDraft({ ...draft, cost: event.target.value })
-                      }
+                      onChange={(event) => {
+                        const cost = event.target.value;
+                        setDraft((prev) => (prev ? { ...prev, cost } : prev));
+                      }}
                       disabled={saving}
                       inputMode="decimal"
                       aria-label="Стоимость"
+                    />
+                    <Input
+                      value={draft.duration_seconds}
+                      onChange={(event) => {
+                        const duration_seconds = event.target.value;
+                        setDraft((prev) =>
+                          prev ? { ...prev, duration_seconds } : prev,
+                        );
+                      }}
+                      disabled={saving}
+                      inputMode="numeric"
+                      aria-label="Время выполнения операции, секунды"
                     />
                     <div className="flex gap-1">
                       <IconButton
@@ -327,7 +374,8 @@ export function SewingOperationsWorkspace({
                     <div>
                       <p className="font-medium text-portal-text">{row.name}</p>
                       <p className="text-portal-caption text-portal-muted">
-                        {formatSewingCost(row.cost)}
+                        {formatSewingCost(row.cost)} ·{" "}
+                        {formatDurationSecondsLabel(row.duration_seconds)}
                       </p>
                     </div>
                     <div className="flex gap-1">

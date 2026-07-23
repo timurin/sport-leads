@@ -17,6 +17,7 @@ import {
 } from "@/lib/product-models";
 import {
   filterSewingOperations,
+  formatDurationMinutesSeconds,
   formatSewingCost,
   type SewingOperation,
 } from "@/lib/sewing-operations";
@@ -69,6 +70,10 @@ export function AssemblyVariantSewingOpsDrawer({
   );
 
   const total = sumSelectedSewingOperationCosts(selectedOps);
+  const totalDuration = selectedOps.reduce(
+    (sum, operation) => sum + (Number(operation.duration_seconds) || 0),
+    0,
+  );
 
   function resetAndClose() {
     if (saving) return;
@@ -152,7 +157,9 @@ export function AssemblyVariantSewingOpsDrawer({
                 Операции пошива
               </h3>
               <p className="text-portal-caption text-portal-muted">
-                Выбрано: {selectedIds.length} · Итого: {formatAssemblyCost(total)} ₽
+                Выбрано: {selectedIds.length} · Итого: {formatAssemblyCost(total)}{" "}
+                ₽ · Время сборки 1 изделия{" "}
+                {formatDurationMinutesSeconds(totalDuration)}
               </p>
             </div>
             <Field label="Поиск">
@@ -192,7 +199,7 @@ export function AssemblyVariantSewingOpsDrawer({
                         checked={checked}
                         disabled={saving}
                         onChange={() => toggle(operation.id)}
-                        label={`${operation.name} — ${formatSewingCost(operation.cost)} ₽`}
+                        label={`${operation.name} — ${formatSewingCost(operation.cost)} ₽ · ${operation.duration_seconds ?? 0} с`}
                       />
                     </li>
                   );

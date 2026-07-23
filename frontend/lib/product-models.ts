@@ -8,6 +8,8 @@ export type ProductModel = {
   name: string;
   size_type: ProductModelSizeType;
   size_grid_id: number | null;
+  product_type_id: number | null;
+  product_type_name?: string | null;
   description: string | null;
   patterns_path: string | null;
   constructor_name: string | null;
@@ -68,6 +70,7 @@ export type ProductModelListParams = {
   search?: string;
   status?: ProductModelStatus;
   size_type?: ProductModelSizeType;
+  product_type_id?: number;
   limit?: number;
   offset?: number;
 };
@@ -133,6 +136,7 @@ export type ProductModelRequisitesDraft = ProductModelCreateDraft & {
   constructor_name: string;
   /** `YYYY-MM-DD` or empty string when unset. */
   patterns_created_on: string;
+  product_type_id: number | null;
 };
 
 export const MODEL_OPERATIONS_WARNING =
@@ -149,6 +153,7 @@ export function toProductModelRequisitesDraft(
     | "patterns_path"
     | "constructor_name"
     | "patterns_created_on"
+    | "product_type_id"
   >,
 ): ProductModelRequisitesDraft {
   return {
@@ -160,6 +165,7 @@ export function toProductModelRequisitesDraft(
     patterns_path: model.patterns_path ?? "",
     constructor_name: model.constructor_name ?? "",
     patterns_created_on: model.patterns_created_on ?? "",
+    product_type_id: model.product_type_id,
   };
 }
 
@@ -175,6 +181,7 @@ export function isProductModelRequisitesDirty(
     | "patterns_path"
     | "constructor_name"
     | "patterns_created_on"
+    | "product_type_id"
   >,
   draft: ProductModelRequisitesDraft,
 ): boolean {
@@ -186,7 +193,8 @@ export function isProductModelRequisitesDirty(
     draft.size_grid_id !== model.size_grid_id ||
     draft.patterns_path !== (model.patterns_path ?? "") ||
     draft.constructor_name !== (model.constructor_name ?? "") ||
-    draft.patterns_created_on !== (model.patterns_created_on ?? "")
+    draft.patterns_created_on !== (model.patterns_created_on ?? "") ||
+    draft.product_type_id !== model.product_type_id
   );
 }
 
@@ -228,9 +236,7 @@ export function productModelCoverUrl(url: string | null | undefined): string | n
     (value.includes("/cover/") || value.includes("/media/"))
   ) {
     const api = (
-      process.env.NEXT_PUBLIC_SPORT_LEADS_API_URL ??
-      process.env.SPORT_LEADS_API_URL ??
-      "http://127.0.0.1:8000"
+      process.env.NEXT_PUBLIC_SPORT_LEADS_API_URL ?? "http://127.0.0.1:8000"
     ).replace(/\/$/, "");
     return `${api}${value}`;
   }
@@ -251,22 +257,26 @@ export function filterProductModels(
     search = "",
     status = "",
     sizeType = "",
+    productTypeId = null,
   }: {
     search?: string;
     status?: "" | ProductModelStatus;
     sizeType?: "" | ProductModelSizeType;
+    productTypeId?: number | null;
   },
 ): ProductModel[] {
   const query = search.trim().toLocaleLowerCase();
   return models.filter((model) => {
     const matchesQuery =
       !query ||
-      `${model.article} ${model.name} ${model.description ?? ""}`
+      `${model.article} ${model.name} ${model.description ?? ""} ${model.product_type_name ?? ""}`
         .toLocaleLowerCase()
         .includes(query);
     const matchesStatus = !status || model.status === status;
     const matchesSizeType = !sizeType || model.size_type === sizeType;
-    return matchesQuery && matchesStatus && matchesSizeType;
+    const matchesProductType =
+      productTypeId == null || model.product_type_id === productTypeId;
+    return matchesQuery && matchesStatus && matchesSizeType && matchesProductType;
   });
 }
 
@@ -299,6 +309,9 @@ export async function getProductModels(
   if (params.search?.trim()) query.set("search", params.search.trim());
   if (params.status) query.set("status", params.status);
   if (params.size_type) query.set("size_type", params.size_type);
+  if (params.product_type_id != null) {
+    query.set("product_type_id", String(params.product_type_id));
+  }
   if (params.limit != null) query.set("limit", String(params.limit));
   if (params.offset != null) query.set("offset", String(params.offset));
 
@@ -378,6 +391,7 @@ export type AssemblyOperationLine = {
   sequence: number;
   operation_name: string;
   cost: string;
+  duration_seconds: number;
   sewing_operation_id: number | null;
   created_at: string;
   updated_at: string;
@@ -410,10 +424,8 @@ export function formatAssemblyCost(value: string | number): string {
   if (!Number.isFinite(amount)) {
     return "0,00";
   }
-  return amount.toLocaleString("ru-RU", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
+  // Deterministic ru-style decimals (avoid toLocaleString SSR/client hydration drift).
+  return amount.toFixed(2).replace(".", ",");
 }
 
 /** Min/max `total_cost` across assembly variants (`от` / `до`). */
@@ -491,6 +503,16 @@ export function sumSelectedSewingOperationCosts(
         ? operation.cost
         : Number(String(operation.cost).replace(",", "."));
     return total + (Number.isFinite(amount) ? amount : 0);
+  }, 0);
+}
+
+/** Sum snapshot duration_seconds across assembly variant lines. */
+export function sumAssemblyVariantDurationSeconds(
+  lines: ReadonlyArray<Pick<AssemblyOperationLine, "duration_seconds">>,
+): number {
+  return lines.reduce((total, line) => {
+    const value = Number(line.duration_seconds);
+    return total + (Number.isFinite(value) && value > 0 ? Math.floor(value) : 0);
   }, 0);
 }
 

@@ -1,6 +1,6 @@
 # ADR-008 — Category custom fields and typed values
 
-**Status:** принято; `v0.8.4` реализован в заявленных границах
+**Status:** принято; `v0.8.4` реализован в заявленных границах. **Частично superseded** ADR-015 (`4.8`): typed values и назначения категорий перенесены в `CharacteristicDefinition` / `CategoryCharacteristic` / `NomenclatureCharacteristicValue`; отдельный SoT `CustomField*` снят.
 
 ## Решение
 

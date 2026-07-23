@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 
 import {
   createCharacteristic,
@@ -10,7 +10,6 @@ import {
   createNomenclatureCategory,
   createUnitOfMeasure,
 } from "@/app/(workspace)/settings/catalogs/nomenclature/nomenclature-actions";
-import { createCustomField } from "@/app/(workspace)/settings/catalogs/custom-fields/custom-fields-actions";
 import type { NomenclatureCreateKind } from "@/components/settings/nomenclature-section-create-menu";
 import { Button } from "@/components/ui/button";
 import { CreateDrawer } from "@/components/ui/create-drawer";
@@ -23,10 +22,11 @@ import {
   Textarea,
 } from "@/components/ui/form-controls";
 import type {
-  CustomFieldDataType,
+  CharacteristicKind,
   NomenclatureCategory,
   NomenclatureType,
   UnitCategory,
+  UnitOfMeasure,
 } from "@/lib/nomenclature";
 
 const typeLabels: Record<NomenclatureType, string> = {
@@ -46,14 +46,14 @@ const unitLabels: Record<UnitCategory, string> = {
   SERVICE: "Услуга",
 };
 
-const customFieldLabels: Record<CustomFieldDataType, string> = {
+const characteristicKindLabels: Record<CharacteristicKind, string> = {
   STRING: "Строка",
   TEXT: "Текст",
   INTEGER: "Целое число",
   DECIMAL: "Десятичное число",
   BOOLEAN: "Да/нет",
   DATE: "Дата",
-  SINGLE_SELECT: "Один вариант",
+  LIST: "Список",
   MULTI_SELECT: "Несколько вариантов",
   COLOR: "Цвет",
 };
@@ -63,21 +63,23 @@ const TITLES: Record<NomenclatureCreateKind, string> = {
   category: "Новая категория",
   unit: "Новая единица измерения",
   characteristic: "Новая характеристика",
-  customField: "Новый реквизит",
 };
 
 type NomenclatureCreatePanelsProps = {
   kind: NomenclatureCreateKind | null;
   categories?: NomenclatureCategory[];
+  units?: UnitOfMeasure[];
   onClose: () => void;
-  variant?: "docked" | "overlay";
+  /** Default fullscreen so create sits above the list (ADR-013 / 4.7.9). */
+  variant?: "docked" | "overlay" | "fullscreen";
 };
 
 export function NomenclatureCreatePanels({
   kind,
   categories = [],
+  units = [],
   onClose,
-  variant = "docked",
+  variant = "fullscreen",
 }: NomenclatureCreatePanelsProps) {
   const open = kind != null;
 
@@ -85,56 +87,20 @@ export function NomenclatureCreatePanels({
     <CreateDrawer
       open={open}
       title={kind ? TITLES[kind] : ""}
+      description={
+        kind === "nomenclature"
+          ? "Заполните обязательные поля. Раскладку уточним после визуальной проверки."
+          : undefined
+      }
       onClose={onClose}
       variant={variant}
     >
       {kind === "nomenclature" ? (
-        <CreateForm action={createNomenclature} onCancel={onClose}>
-          <Field label="Артикул" required>
-            <Input name="article" required autoFocus />
-          </Field>
-          <Field label="Наименование" required>
-            <Input name="name" required />
-          </Field>
-          <Field label="Legacy категория" required>
-            <Input name="category" required />
-          </Field>
-          <Field label="Legacy ед. изм." required>
-            <Input name="unit" defaultValue="шт" required />
-          </Field>
-          <Field label="Тип">
-            <Select name="nomenclature_type" defaultValue="PRODUCT">
-              {typeOptions.map(([value, label]) => (
-                <option key={value} value={value}>{label}</option>
-              ))}
-            </Select>
-          </Field>
-          <Field label="Категория">
-            <Select name="category_id" defaultValue="">
-              <option value="">Без категории</option>
-              {categories.map((category) => (
-                <option key={category.id} value={category.id}>{category.name}</option>
-              ))}
-            </Select>
-          </Field>
-          <Field label="Базовая цена" help="Сумма и валюта">
-            <MoneyInput
-              name="base_price"
-              currencyName="currency"
-              defaultValue="0"
-              defaultCurrency="RUB"
-            />
-          </Field>
-          <Field label="Краткое наименование">
-            <Input name="short_name" />
-          </Field>
-          <Field label="ID единицы хранения">
-            <Input name="storage_unit_id" />
-          </Field>
-          <Field label="Описание">
-            <Textarea name="description" rows={3} />
-          </Field>
-        </CreateForm>
+        <NomenclatureCreateForm
+          categories={categories}
+          units={units}
+          onCancel={onClose}
+        />
       ) : null}
 
       {kind === "category" ? (
@@ -148,7 +114,9 @@ export function NomenclatureCreatePanels({
           <Field label="Тип номенклатуры">
             <Select name="nomenclature_type" defaultValue="PRODUCT">
               {typeOptions.map(([value, label]) => (
-                <option key={value} value={value}>{label}</option>
+                <option key={value} value={value}>
+                  {label}
+                </option>
               ))}
             </Select>
           </Field>
@@ -156,7 +124,9 @@ export function NomenclatureCreatePanels({
             <Select name="parent_id" defaultValue="">
               <option value="">Корневая группа</option>
               {categories.map((category) => (
-                <option key={category.id} value={category.id}>{category.name}</option>
+                <option key={category.id} value={category.id}>
+                  {category.name}
+                </option>
               ))}
             </Select>
           </Field>
@@ -166,7 +136,12 @@ export function NomenclatureCreatePanels({
       {kind === "unit" ? (
         <CreateForm action={createUnitOfMeasure} onCancel={onClose}>
           <Field label="Код" required>
-            <Input name="code" required pattern="[A-Z0-9][A-Z0-9_-]*" autoFocus />
+            <Input
+              name="code"
+              required
+              pattern="[A-Z0-9][A-Z0-9_-]*"
+              autoFocus
+            />
           </Field>
           <Field label="Наименование" required>
             <Input name="name" required />
@@ -177,12 +152,20 @@ export function NomenclatureCreatePanels({
           <Field label="Категория">
             <Select name="unit_category" defaultValue="QUANTITY">
               {Object.entries(unitLabels).map(([value, label]) => (
-                <option key={value} value={value}>{label}</option>
+                <option key={value} value={value}>
+                  {label}
+                </option>
               ))}
             </Select>
           </Field>
           <Field label="Точность">
-            <Input name="precision" type="number" min={0} max={6} defaultValue={0} />
+            <Input
+              name="precision"
+              type="number"
+              min={0}
+              max={6}
+              defaultValue={0}
+            />
           </Field>
         </CreateForm>
       ) : null}
@@ -193,40 +176,196 @@ export function NomenclatureCreatePanels({
             <Input name="name" required autoFocus />
           </Field>
           <Field label="Код">
-            <Input name="code" pattern="[a-z0-9][a-z0-9_-]*" placeholder="Необязательно" />
+            <Input
+              name="code"
+              pattern="[a-z0-9][a-z0-9_-]*"
+              placeholder="Необязательно"
+            />
           </Field>
-          <Field label="Тип значения">
+          <Field label="Тип">
             <Select name="kind" defaultValue="LIST">
-              <option value="LIST">Список</option>
-              <option value="COLOR">Цвет</option>
-            </Select>
-          </Field>
-        </CreateForm>
-      ) : null}
-
-      {kind === "customField" ? (
-        <CreateForm action={createCustomField} onCancel={onClose}>
-          <Field label="Код" required>
-            <Input name="code" required pattern="[a-z0-9][a-z0-9_-]*" autoFocus />
-          </Field>
-          <Field label="Название" required>
-            <Input name="name" required />
-          </Field>
-          <Field label="Тип данных">
-            <Select name="data_type" defaultValue="STRING">
-              {Object.entries(customFieldLabels).map(([value, label]) => (
-                <option key={value} value={value}>{label}</option>
+              {Object.entries(characteristicKindLabels).map(([value, label]) => (
+                <option key={value} value={value}>
+                  {label}
+                </option>
               ))}
             </Select>
           </Field>
-          <Field label="Описание">
-            <Input name="description" />
-          </Field>
-          <Checkbox name="is_searchable" label="Искать" />
-          <Checkbox name="is_filterable" label="Фильтровать" />
+          <Checkbox
+            name="is_variant_dimension"
+            value="true"
+            label="Измерение варианта (цвет, размер…)"
+          />
         </CreateForm>
       ) : null}
     </CreateDrawer>
+  );
+}
+
+/**
+ * Proposed create layout (owner may reorder after visual check):
+ * 1. Identity — name (full), type (half)
+ * 2. Classification — category + storage unit
+ * 3. Commercial — base price
+ * 4. Optional — short name, description
+ * Legacy category/unit strings are derived (hidden), not edited.
+ */
+function NomenclatureCreateForm({
+  categories,
+  units,
+  onCancel,
+}: {
+  categories: NomenclatureCategory[];
+  units: UnitOfMeasure[];
+  onCancel: () => void;
+}) {
+  const [nomenclatureType, setNomenclatureType] =
+    useState<NomenclatureType>("PRODUCT");
+  const [categoryId, setCategoryId] = useState("");
+  const [storageUnitId, setStorageUnitId] = useState("");
+
+  const typeCategories = useMemo(
+    () =>
+      categories.filter(
+        (category) =>
+          category.is_active &&
+          category.nomenclature_type === nomenclatureType,
+      ),
+    [categories, nomenclatureType],
+  );
+
+  const activeUnits = useMemo(
+    () => units.filter((unit) => unit.is_active),
+    [units],
+  );
+
+  const legacyCategory =
+    typeCategories.find((category) => String(category.id) === categoryId)
+      ?.name ?? "Без категории";
+
+  const legacyUnit =
+    activeUnits.find((unit) => String(unit.id) === storageUnitId)?.symbol ??
+    "шт";
+
+  return (
+    <form action={createNomenclature} className="flex h-full min-h-0 flex-col">
+      <input type="hidden" name="category" value={legacyCategory} />
+      <input type="hidden" name="unit" value={legacyUnit} />
+
+      <div className="min-h-0 flex-1 overflow-y-auto">
+        <div className="mx-auto w-full max-w-5xl space-y-portal-6 p-portal-6">
+          <FormSection title="Идентификация">
+            <div className="grid gap-portal-4 md:grid-cols-2">
+              <Field
+                label="Наименование"
+                required
+                className="md:col-span-2"
+              >
+                <Input name="name" required autoFocus />
+              </Field>
+              <Field label="Тип">
+                <Select
+                  name="nomenclature_type"
+                  value={nomenclatureType}
+                  onChange={(event) => {
+                    const next = event.target.value as NomenclatureType;
+                    setNomenclatureType(next);
+                    setCategoryId("");
+                  }}
+                >
+                  {typeOptions.map(([value, label]) => (
+                    <option key={value} value={value}>
+                      {label}
+                    </option>
+                  ))}
+                </Select>
+              </Field>
+            </div>
+          </FormSection>
+
+          <FormSection title="Классификация">
+            <div className="grid gap-portal-4 md:grid-cols-2">
+              <Field label="Категория">
+                <Select
+                  name="category_id"
+                  value={categoryId}
+                  onChange={(event) => setCategoryId(event.target.value)}
+                >
+                  <option value="">Без категории</option>
+                  {typeCategories.map((category) => (
+                    <option key={category.id} value={category.id}>
+                      {category.name}
+                    </option>
+                  ))}
+                </Select>
+              </Field>
+              <Field label="Единица хранения">
+                <Select
+                  name="storage_unit_id"
+                  value={storageUnitId}
+                  onChange={(event) => setStorageUnitId(event.target.value)}
+                >
+                  <option value="">Не выбрана</option>
+                  {activeUnits.map((unit) => (
+                    <option key={unit.id} value={unit.id}>
+                      {unit.name} ({unit.symbol})
+                    </option>
+                  ))}
+                </Select>
+              </Field>
+            </div>
+          </FormSection>
+
+          <FormSection title="Коммерция">
+            <Field label="Базовая цена" help="Сумма и валюта">
+              <MoneyInput
+                name="base_price"
+                currencyName="currency"
+                defaultValue="0"
+                defaultCurrency="RUB"
+              />
+            </Field>
+          </FormSection>
+
+          <FormSection title="Дополнительно">
+            <div className="grid gap-portal-4">
+              <Field label="Наименование для печати">
+                <Input name="short_name" />
+              </Field>
+              <Field label="Описание">
+                <Textarea name="description" rows={4} />
+              </Field>
+            </div>
+          </FormSection>
+        </div>
+      </div>
+
+      <footer className="flex shrink-0 items-center justify-end gap-portal-2 border-t border-portal-border bg-portal-surface px-portal-6 py-portal-4">
+        <Button type="button" onClick={onCancel}>
+          Отмена
+        </Button>
+        <Button type="submit" variant="primary">
+          Сохранить
+        </Button>
+      </footer>
+    </form>
+  );
+}
+
+function FormSection({
+  title,
+  children,
+}: {
+  title: string;
+  children: ReactNode;
+}) {
+  return (
+    <section className="rounded-portal-lg border border-portal-border bg-portal-surface p-portal-5">
+      <h3 className="mb-portal-4 text-portal-body font-semibold text-portal-text">
+        {title}
+      </h3>
+      {children}
+    </section>
   );
 }
 
@@ -242,14 +381,9 @@ function CreateForm({
   return (
     <form action={action} className="flex h-full min-h-0 flex-col">
       <div className="min-h-0 flex-1 space-y-portal-5 overflow-y-auto p-portal-6">
-        <div className="border-t border-portal-border pt-portal-5">
-          <h3 className="mb-portal-4 text-portal-body font-semibold text-portal-text">
-            Основные данные
-          </h3>
-          <div className="space-y-portal-4">{children}</div>
-        </div>
+        <div className="mx-auto w-full max-w-xl space-y-portal-4">{children}</div>
       </div>
-      <footer className="flex items-center justify-end gap-portal-2 border-t border-portal-border bg-portal-surface px-portal-6 py-portal-4">
+      <footer className="flex shrink-0 items-center justify-end gap-portal-2 border-t border-portal-border bg-portal-surface px-portal-6 py-portal-4">
         <Button type="button" onClick={onCancel}>
           Отмена
         </Button>

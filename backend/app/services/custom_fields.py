@@ -51,8 +51,24 @@ def _validate_unit(db: Session, unit_id: int | None) -> None:
         raise CustomFieldRuleError("Единица измерения реквизита не найдена")
 
 
+def _assert_unique_name(
+    db: Session,
+    name: str,
+    *,
+    exclude_id: int | None = None,
+) -> None:
+    statement = select(CustomFieldDefinition.id).where(
+        func.lower(CustomFieldDefinition.name) == name.casefold()
+    )
+    if exclude_id is not None:
+        statement = statement.where(CustomFieldDefinition.id != exclude_id)
+    if db.scalar(statement) is not None:
+        raise CustomFieldConflictError("Реквизит с таким названием уже существует")
+
+
 def create_definition(db: Session, payload: CustomFieldDefinitionCreate) -> CustomFieldDefinition:
     _validate_unit(db, payload.unit_id)
+    _assert_unique_name(db, payload.name)
     data = payload.model_dump()
     if not data.get("code"):
         base = re.sub(r"[^a-z0-9]+", "_", payload.name.casefold()).strip("_") or "field"
@@ -69,7 +85,7 @@ def create_definition(db: Session, payload: CustomFieldDefinitionCreate) -> Cust
         db.commit()
     except IntegrityError as error:
         db.rollback()
-        raise CustomFieldConflictError("Реквизит с таким кодом уже существует") from error
+        raise CustomFieldConflictError("Реквизит с таким кодом или названием уже существует") from error
     db.refresh(field)
     return field
 
@@ -78,6 +94,8 @@ def update_definition(db: Session, field_id: int, payload: CustomFieldDefinition
     field = get_definition(db, field_id)
     changes = payload.model_dump(exclude_unset=True)
     _validate_unit(db, changes.get("unit_id", field.unit_id))
+    if "name" in changes and changes["name"] is not None:
+        _assert_unique_name(db, changes["name"], exclude_id=field_id)
     if "is_active" in changes and changes["is_active"] is False:
         changes["is_active"] = False
     for name, value in changes.items():

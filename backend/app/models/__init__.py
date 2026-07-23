@@ -1,10 +1,15 @@
 from app.models.import_run import ImportRun, ImportStatus
 from app.models.source import Source
 from app.models.sport_event import SportEvent
-from app.models.material import Material
 from app.models.nomenclature import Nomenclature, NomenclatureCategory, NomenclatureType, UnitCategory, UnitOfMeasure
-from app.models.custom_fields import CategoryField, CustomFieldDataType, CustomFieldDefinition, CustomFieldOption, NomenclatureFieldValue
-from app.models.characteristics import CategoryCharacteristic, CharacteristicDefinition, CharacteristicOption, NomenclatureCharacteristic, NomenclatureVariant
+from app.models.characteristics import (
+    CategoryCharacteristic,
+    CharacteristicDefinition,
+    CharacteristicOption,
+    NomenclatureCharacteristic,
+    NomenclatureCharacteristicValue,
+    NomenclatureVariant,
+)
 from app.models.sales import (
     Client,
     Organization,
@@ -17,12 +22,10 @@ from app.models.sales import (
     LeadResult,
     LeadStatus,
     LeadStage,
-    LeadStage,
     LeadTask,
     LeadTaskStatus,
     SalesOrder,
     SalesOrderItem,
-    SalesOrderItemVariantSnapshot,
     SalesOrderItemVariantSnapshot,
     SalesOrderStatus,
     SalesUser,
@@ -40,6 +43,7 @@ from app.models.product_model import (
     ProductModelVersionState,
     NomenclatureProductModel,
 )
+from app.models.product_type import ProductType
 from app.models.sewing_operation import SewingOperation
 from app.models.size_grid import SizeGrid, SizeGridRow, SizeGridSizeType
 
@@ -49,21 +53,16 @@ __all__ = [
     "SportEvent",
     "ImportRun",
     "ImportStatus",
-    "Material",
     "Nomenclature",
     "NomenclatureCategory",
     "NomenclatureType",
     "UnitCategory",
     "UnitOfMeasure",
-    "CustomFieldDataType",
-    "CustomFieldDefinition",
-    "CustomFieldOption",
-    "CategoryField",
-    "NomenclatureFieldValue",
     "CharacteristicDefinition",
     "CharacteristicOption",
     "CategoryCharacteristic",
     "NomenclatureCharacteristic",
+    "NomenclatureCharacteristicValue",
     "NomenclatureVariant",
     "Client",
     "Organization",
@@ -75,7 +74,6 @@ __all__ = [
     "LeadRejectionReason",
     "LeadResult",
     "LeadStatus",
-    "LeadStage",
     "LeadStage",
     "LeadTask",
     "LeadTaskStatus",
@@ -93,11 +91,11 @@ __all__ = [
     "ProductModelVersion",
     "ProductModelVersionState",
     "NomenclatureProductModel",
+    "ProductType",
     "SewingOperation",
     "SizeGrid",
     "SizeGridRow",
     "SizeGridSizeType",
-    "SalesOrderItemVariantSnapshot",
     "SalesOrderStatus",
     "SalesUser",
 ]

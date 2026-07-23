@@ -19,6 +19,7 @@ import {
 const emptyDraft: SewingOperationCreateDraft = {
   name: "",
   cost: "",
+  duration_seconds: "0",
 };
 
 type SewingOperationCreateDrawerProps = {
@@ -67,6 +68,7 @@ export function SewingOperationCreateDrawer({
       const result: SewingOperationActionResult = await createSewingOperation({
         name: draft.name,
         cost: draft.cost,
+        duration_seconds: draft.duration_seconds,
       });
       if (result.ok) {
         setDraft(emptyDraft);
@@ -87,7 +89,7 @@ export function SewingOperationCreateDrawer({
     <CreateDrawer
       open={open}
       title="Новая операция пошива"
-      description="Плоский справочник: наименование и стоимость."
+      description="Плоский справочник: наименование, стоимость и время выполнения."
       onClose={handleClose}
       variant="overlay"
     >
@@ -116,6 +118,18 @@ export function SewingOperationCreateDrawer({
                   onChange={(event) => update("cost", event.target.value)}
                   disabled={saving}
                   placeholder="0,00"
+                />
+              </Field>
+              <Field label="Время выполнения операции, сек" required>
+                <Input
+                  required
+                  inputMode="numeric"
+                  value={draft.duration_seconds}
+                  onChange={(event) =>
+                    update("duration_seconds", event.target.value)
+                  }
+                  disabled={saving}
+                  placeholder="0"
                 />
               </Field>
             </div>

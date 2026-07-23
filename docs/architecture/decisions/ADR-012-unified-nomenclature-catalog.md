@@ -1,6 +1,6 @@
 # ADR-012 — Unified nomenclature catalog (materials are a type, not a second directory)
 
-**Status:** принято (архитектурное решение; миграция кода не выполнена)  
+**Status:** принято; cutover `4.6.1`–`4.6.4` shipped (`2026-07-23`)  
 **Date:** `2026-07-21`  
 **Roadmap:** Stage 4 § 4.6
 
@@ -31,8 +31,8 @@
 ## Последствия
 
 - Меню «Материалы» со временем становится фильтром/ярлыком номенклатуры или удаляется.
-- Заказы, спецификации и 1С опираются на один `article` / `nomenclature_id`.
+- Заказы, спецификации и 1С опираются на `nomenclature_id` (и при необходимости `ProductModel.article` / variant article); поле `Nomenclature.article` снято (`4.7.11` / B3).
 - Склад проектируется отдельно от карточки справочника.
 
 **Связанные решения:** ADR-003, ADR-004, ADR-006.  
-**Evidence / next:** `docs/roadmap/roadmap.md` § 4.6.
+**Evidence / next:** `docs/architecture/materials-nomenclature-migration-plan.md`; roadmap `4.6.4` deletes legacy materials surface.

@@ -1,10 +1,10 @@
 # Sport-Lead — Project Structure Checklist
 
 **Code:** `SL-PROJECT-STRUCTURE-v1`
-**Updated:** `2026-07-22` (Stage 6 catalog closed; order-item model/assembly binding → `3.2.5`)
+**Updated:** `2026-07-23` (canonical sync: `4.8` honesty, product types `6.1.14–16`, sewing `6.3.8`, ADR-016 tech-cards)
 **Project version:** `v0.9.0`
 **Git branch:** `feature/v0.8.1-nomenclature-core`
-**Git commit:** `f3023c2`
+**Git commit:** `0980f34`
 
 ## Rules
 
@@ -65,18 +65,20 @@
 
 ## 5. Nomenclature Core
 
-- [x] Persistent nomenclature CRUD, card, search, active flag, article, and base price
+- [x] Persistent nomenclature CRUD, card, search, active flag, and base price — `Nomenclature.article` removed (`4.7.11` / B3; garment article on ProductModel)
 - [x] Nomenclature types and category hierarchy
 - [x] Units-of-measure directory and `storage_unit_id` link
-- [x] Typed custom fields with category inheritance and effective schema
-- [x] Separate workspace and editable card for nomenclature
-- [x] Direct free assignment of custom fields to a nomenclature card
+- [x] Typed fields with category inheritance and effective schema — historical `CustomField*`; SoT unified into characteristics (`4.8` / ADR-015; Alembic `f7a8b9c0d123`)
+- [x] Separate workspace and editable card for nomenclature — create uses `CreateDrawer` fullscreen (`4.7.9` / B2; field order visual `4.7.10`)
+- [ ] Nomenclature card free-assignment UI fully on characteristics names (no `CustomField*` shims) — `4.8.6` remainder
 - [ ] Audit history, archive flow, bulk editing, import, and export
 
 ## 6. Nomenclature Characteristics, Variants, and Media
 
-- [x] Product-characteristics directory with typed kinds, options, and color HEX values
+- [x] Product-characteristics directory with typed kinds, options, and color HEX values — expanded kinds + absorbed custom fields (`4.8` / ADR-015)
 - [x] Category and nomenclature characteristic assignments
+- [x] Characteristic DELETE with usage guards + operations-journal stub (`4.8.3`)
+- [x] Characteristic detail card layout (`4.8.4`) — owner confirmed composition; appearance/content polish deferred
 - [x] Persistent nomenclature variants with unique combinations and articles
 - [x] Sales-order item variant selection with stored characteristic snapshot
 - [x] Image media upload, storage, primary image, sorting, and deletion in the card
@@ -85,9 +87,10 @@
 
 ## 7. Materials
 
-- [x] Persistent material model and CRUD API (legacy; see ADR-012)
-- [ ] Persistent materials workspace on backend data — superseded by nomenclature filter (`4.6.3`) unless interim
-- [ ] Relation between materials and the common nomenclature contour — `ADR-012` / roadmap `4.6` (migrate into `Nomenclature` type `MATERIAL`)
+- [x] Persistent material model and CRUD API (legacy; see ADR-012) — removed in `4.6.4`
+- [x] Materials as nomenclature type `MATERIAL` — data migration + nav removed (`4.6.1`–`4.6.3`); Alembic `z6a7b8c9d012`
+- [x] Relation between materials and the common nomenclature contour — `ADR-012` / `materials-nomenclature-migration-plan.md`
+- [x] Delete legacy materials API/UI/table (`4.6.4`) — drop `a1b2c3d4e567`
 - [ ] Suppliers, procurement prices, batches, stock balances, and consumption norms (stock balances must not live on the nomenclature card)
 
 ## 8. База лекал (Models / Size grids / Sewing ops), Specifications, and Routings
@@ -95,11 +98,13 @@
 - [x] Size distribution inside sales-order items
 - [x] Product-model domain contract — `ADR-014` + `product-model-domain.md` (`6.1.1`)
 - [x] Product-model DB + API (create/list/update/status/versions) — `product_models` / `product_model_versions` (`6.1.2`–`6.1.6`)
-- [x] Product-model list UI owner visual — `DS-PT-02-CATALOG` etalon `/settings/catalogs/product-models` (`6.1.7.5`; directories/sections/categories)
+- [x] Product-model list UI owner visual — `DS-PT-02-CATALOG` etalon `/settings/catalogs/product-models` (`6.1.7.5`; toolbar sequence B1/`6.1.7.6`; directories/sections/categories)
 - [x] Product-model card UI owner visual — `DS-PT-08-CATALOG` etalon `/settings/catalogs/product-models/[id]` (`6.1.8.5`; requisites polish `6.1.10.5`)
 - [x] Product-model create / edit UI and PRODUCT whitelist — create/edit visual OK; requisites polish `6.1.10.5`; whitelist API+UI `6.1.11` shipped
+- [x] Product types directory + model link + list column/filter — `ProductType` (`6.1.14`–`6.1.16`); Alembic `y5z6a7b8c901` / `a1b2c3d4e515`
 - [x] Assembly variants API + model-card UI (sewing-ops picker) — `AssemblyVariantsBlock` + copy-on-pick (`6.1.12` / `6.3.6`); owner visual OK `6.1.12.6` (`2026-07-22`)
 - [x] Sewing operations flat catalog API + PT-02 list UI — `sewing_operations` / `/settings/catalogs/sewing_operations` (`6.3.1–5`; owner visual OK `6.3.4.5` / `6.3.5.4` / `6.4.3.3`); PatternSet withdrawn
+- [x] Sewing operation normative duration (`duration_seconds`) + assembly-line snapshot — `6.3.8`; Alembic `d5e6f7a8b901`
 - [x] Dedicated size-grid directory and measurements — Mosmade men 18 + women 14; list/card visual OK (`6.2.4.5` / `6.2.5.4` / `6.4.3.2`); Stage-6 read-only; write/edit → `17.1.2.4`; model link `6.2.7` shipped (`ProductModel.size_grid_id`)
 - [x] Pattern-base owner visual checkpoint — models / grids / sewing ops / PRODUCT available-models (`6.4.3`); Stage 6 catalog closed
 - [ ] Order-item model + assembly-variant selection — Stage `3.2.5` (moved from former `6.1.13`); smoke `3.2.6`
@@ -108,7 +113,7 @@
 
 ## 9. Technical cards (Технические карты)
 
-- [ ] Domain contract: one technical card per manufacturable sales order line; unit lines inside the card (ADR-015)
+- [ ] Domain contract: one technical card per manufacturable sales order line; unit lines inside the card (**ADR-016**; ADR-015 = unified characteristics)
 - [ ] Links to model, sewing operations, materials, routing; stage execution and order manufacturing completeness
 
 ## 10. Design, Production, Warehouse, Procurement, and Shipping

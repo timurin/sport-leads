@@ -7,6 +7,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 class SewingOperationBase(BaseModel):
     name: str = Field(min_length=1, max_length=255)
     cost: Decimal = Field(ge=0, max_digits=14, decimal_places=2)
+    duration_seconds: int = Field(default=0, ge=0)
 
     @field_validator("name", mode="before")
     @classmethod
@@ -21,6 +22,7 @@ class SewingOperationCreate(SewingOperationBase):
 class SewingOperationUpdate(BaseModel):
     name: str | None = Field(default=None, min_length=1, max_length=255)
     cost: Decimal | None = Field(default=None, ge=0, max_digits=14, decimal_places=2)
+    duration_seconds: int | None = Field(default=None, ge=0)
 
     @field_validator("name", mode="before")
     @classmethod

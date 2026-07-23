@@ -22,7 +22,7 @@
 | Field | Type | Rules |
 |---|---|---|
 | `id` | PK | Surrogate key |
-| `article` | string | **Globally unique** among product models; trim; non-empty. Independent from `Nomenclature.article`. |
+| `article` | string | **Globally unique** among product models; trim; non-empty. Garment commercial article lives here (not on `Nomenclature`; field removed `4.7.11`). |
 | `name` | string | Non-empty display name |
 | `size_type` | enum | Derived from linked `SizeGrid.size_type` when a grid is selected; stored for filters |
 | `description` | text, nullable | Free text |
@@ -115,9 +115,9 @@ No separate lead-model master. Reuse the same `ProductModel` catalog when lead c
 
 Spec copies assembly operation lines from the **order-item assembly-variant snapshot**. Spec does not live-edit `ProductModel` / `AssemblyVariant` master.
 
-### 5.5 Technical card (Stage 9 / ADR-015)
+### 5.5 Technical card (Stage 9 / ADR-016)
 
-TC links or snapshots model / assembly variant / sewing operations per future ADR-015. Domain constraint from this contract: TC must not become a second pattern-base master.
+TC links or snapshots model / assembly variant / sewing operations per future ADR-016 (ADR-015 = unified characteristics). Domain constraint from this contract: TC must not become a second pattern-base master.
 
 ### 5.6 Stage 8 shop routing
 

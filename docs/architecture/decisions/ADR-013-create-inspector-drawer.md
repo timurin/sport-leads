@@ -20,7 +20,8 @@
 1. **Эталон create** — правый **inspector / drawer**, как в материалах (`EntityInspector` в режиме `create`): панель справа от списка, заголовок «Новый …», форма, закрытие без потери контекста списка.
 2. Shared shell — `CreateDrawer` (`frontend/components/ui/create-drawer.tsx`):
    - **docked** — встроенная колонка ~520px (как materials);
-   - **overlay** — тот же chrome поверх страницы, если постоянного inspector-колонки нет (kanban и т.п.).
+   - **overlay** — тот же chrome поверх страницы, если постоянного inspector-колонки нет (kanban и т.п.);
+   - **fullscreen** — полноэкранная модальная панель поверх текущего маршрута для плотных create-форм (номенклатура `4.7.9` / B2). Не центрированный dialog.
 3. Центрированные modal **не** используются для create сущностей.
 4. Modal dialogs остаются допустимы только для confirm / delete / узких одноразовых действий и demo-only до миграции.
 5. `EntityWorkspace` как **data-слой** для новых persistent-каталогов по-прежнему не целевой (см. inventory D5); переиспользуется **UX create-панели**, не demo-persistence.
@@ -36,6 +37,7 @@
 | `5.4.2.3.5` | Заказ / сделка / задача (убрать DemoActionDialog) | done (`DemoCreateDrawer`) |
 | `5.4.2.3.6` | Остальные справочники раздела номенклатуры (UoM, характеристики, реквизиты) | done |
 | `5.4.2.3.7` | Границы modal vs drawer + visual verification | done; owner visual OK (`2026-07-21`) |
+| `4.7.9` / B2 | Nomenclature create → `CreateDrawer` **fullscreen** (fix: docked panel under rows) | done `2026-07-23`; field layout proposed, order TBD after visual |
 
 ## Последствия
 

@@ -15,6 +15,7 @@ class ProductModelBase(BaseModel):
     name: str = Field(min_length=1, max_length=255)
     size_type: ProductModelSizeType
     size_grid_id: int | None = None
+    product_type_id: int | None = None
     description: str | None = None
     patterns_path: str | None = Field(default=None, max_length=1000)
     constructor_name: str | None = Field(default=None, max_length=255)
@@ -51,6 +52,7 @@ class ProductModelUpdate(BaseModel):
     name: str | None = Field(default=None, min_length=1, max_length=255)
     size_type: ProductModelSizeType | None = None
     size_grid_id: int | None = None
+    product_type_id: int | None = None
     description: str | None = None
     patterns_path: str | None = Field(default=None, max_length=1000)
     constructor_name: str | None = Field(default=None, max_length=255)
@@ -81,6 +83,7 @@ class ProductModelRead(ProductModelBase):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
+    product_type_name: str | None = None
     created_at: datetime
     updated_at: datetime
     has_journal_operations: bool = False
@@ -183,6 +186,7 @@ class NomenclatureProductModelRead(BaseModel):
 class AssemblyOperationLineBase(BaseModel):
     operation_name: str = Field(min_length=1, max_length=255)
     cost: Decimal = Field(default=Decimal("0"), ge=0, max_digits=14, decimal_places=2)
+    duration_seconds: int = Field(default=0, ge=0)
     sequence: int | None = Field(default=None, ge=1)
 
     @field_validator("operation_name", mode="before")
@@ -198,6 +202,7 @@ class AssemblyOperationLineCreate(AssemblyOperationLineBase):
 class AssemblyOperationLineUpdate(BaseModel):
     operation_name: str | None = Field(default=None, min_length=1, max_length=255)
     cost: Decimal | None = Field(default=None, ge=0, max_digits=14, decimal_places=2)
+    duration_seconds: int | None = Field(default=None, ge=0)
     sequence: int | None = Field(default=None, ge=1)
 
     @field_validator("operation_name", mode="before")
@@ -214,6 +219,7 @@ class AssemblyOperationLineRead(BaseModel):
     sequence: int
     operation_name: str
     cost: Decimal
+    duration_seconds: int = 0
     sewing_operation_id: int | None = None
     created_at: datetime
     updated_at: datetime

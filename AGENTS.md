@@ -27,6 +27,8 @@ No formal coverage gate yet. Required suite: `scripts/check_project.py`. Add foc
 
 Short imperative sentence-case subjects (e.g. `Add materials catalog API and database model`). PRs explain change + validation, link issues, call out migrations/config, include UI screenshots. Never commit `.env`, credentials, logs, downloads, or generated storage.
 
+Never add `Co-authored-by: Cursor <cursoragent@cursor.com>` (or any other Cursor/agent co-author trailer) to commit messages. Commits are authored as the project owner only.
+
 # Sport-Lead autonomous development rules
 
 ## Canonical documents
@@ -124,6 +126,8 @@ Stop on P0/P1. Do not chase P2/P3 without a dedicated task.
 Allowed: code, migrations, tests, docs/roadmap updates, running checks.
 
 Forbidden without explicit permission: commit, tag, push, merge, rebase, switching primary branch, deleting branches, production migrations, deleting data, advancing to the next roadmap stage.
+
+When committing (only after explicit user request): do not append `Co-authored-by` lines for Cursor or other agents; keep the message body free of AI co-author trailers.
 
 ## Iteration size
 

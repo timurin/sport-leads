@@ -45,7 +45,11 @@ def create_sewing_operation(db: Session, payload: SewingOperationCreate) -> Sewi
     if repo.get_sewing_operation_by_name(db, payload.name) is not None:
         raise SewingOperationConflictError("Операция с таким наименованием уже существует")
 
-    row = SewingOperation(name=payload.name, cost=payload.cost)
+    row = SewingOperation(
+        name=payload.name,
+        cost=payload.cost,
+        duration_seconds=payload.duration_seconds,
+    )
     try:
         repo.add_sewing_operation(db, row)
         db.commit()
@@ -82,6 +86,14 @@ def update_sewing_operation(
         if cost < 0:
             raise SewingOperationValidationError("Стоимость не может быть отрицательной")
         changes["cost"] = cost
+
+    if "duration_seconds" in changes and changes["duration_seconds"] is not None:
+        duration = int(changes["duration_seconds"])
+        if duration < 0:
+            raise SewingOperationValidationError(
+                "Время выполнения не может быть отрицательным"
+            )
+        changes["duration_seconds"] = duration
 
     repo.apply_sewing_operation_updates(row, changes)
     try:

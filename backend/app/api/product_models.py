@@ -81,9 +81,14 @@ router = APIRouter(prefix="/product-models", tags=["Product models"])
 
 
 def _model_read(db: Session, row: ProductModel) -> ProductModelRead:
+    product_type_name = None
+    if row.product_type_id is not None:
+        linked = row.product_type
+        product_type_name = linked.name if linked is not None else None
     return ProductModelRead.model_validate(row).model_copy(
         update={
             "has_journal_operations": product_model_has_journal_operations(db, row.id),
+            "product_type_name": product_type_name,
         }
     )
 
@@ -108,6 +113,7 @@ def read_product_models(
     search: str | None = Query(default=None, max_length=255),
     status_filter: ProductModelStatus | None = Query(default=None, alias="status"),
     size_type: ProductModelSizeType | None = None,
+    product_type_id: int | None = None,
     limit: int = Query(default=100, ge=1, le=500),
     offset: int = Query(default=0, ge=0),
     db: Session = Depends(get_db),
@@ -117,6 +123,7 @@ def read_product_models(
         search=search,
         status=status_filter,
         size_type=size_type,
+        product_type_id=product_type_id,
         limit=limit,
         offset=offset,
     )

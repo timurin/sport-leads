@@ -1,20 +1,6 @@
-import { Suspense } from "react";
+import { redirect } from "next/navigation";
 
-import { CustomFieldsWorkspace } from "@/components/settings/custom-fields-workspace";
-import { getCustomFieldDefinitions, getNomenclatureCategories } from "@/lib/nomenclature";
-
-export default async function CustomFieldsPage() {
-  const [fields, categories] = await Promise.all([
-    getCustomFieldDefinitions(),
-    getNomenclatureCategories(),
-  ]);
-  return (
-    <Suspense
-      fallback={
-        <div className="p-6 text-sm text-slate-500">Загрузка реквизитов…</div>
-      }
-    >
-      <CustomFieldsWorkspace fields={fields} categories={categories} />
-    </Suspense>
-  );
+/** Former «Дополнительные реквизиты» catalog — unified into product-characteristics (4.8.5). */
+export default function CustomFieldsRedirectPage() {
+  redirect("/settings/catalogs/product-characteristics");
 }

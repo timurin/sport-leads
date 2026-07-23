@@ -14,13 +14,15 @@ type CreateDrawerProps = {
   /**
    * docked — right column in a workspace split (materials / EntityInspector).
    * overlay — fixed right panel + backdrop when no inspector column exists.
+   * fullscreen — full-viewport modal over the current page (dense create forms).
    */
-  variant?: "docked" | "overlay";
+  variant?: "docked" | "overlay" | "fullscreen";
 };
 
 /**
  * Platform create shell (ADR-013).
- * Visual match: EntityInspector create mode in materials EntityWorkspace.
+ * Visual match: EntityInspector create mode in materials EntityWorkspace;
+ * fullscreen extends the shell for dense catalog creates (nomenclature).
  */
 export function CreateDrawer({
   open,
@@ -43,8 +45,47 @@ export function CreateDrawer({
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [open, onClose]);
 
+  useEffect(() => {
+    if (!open || variant !== "fullscreen") {
+      return;
+    }
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previous;
+    };
+  }, [open, variant]);
+
   if (!open) {
     return null;
+  }
+
+  if (variant === "fullscreen") {
+    return (
+      <div
+        className="fixed inset-0 z-portal-modal-2 flex flex-col bg-portal-surface"
+        role="dialog"
+        aria-modal="true"
+        aria-label={title}
+      >
+        <header className="flex shrink-0 items-center justify-between border-b border-portal-border px-portal-6 py-portal-5">
+          <div className="min-w-0">
+            <h2 className="text-portal-page font-semibold text-portal-text">
+              {title}
+            </h2>
+            {description ? (
+              <p className="mt-1 text-portal-body text-portal-muted">
+                {description}
+              </p>
+            ) : null}
+          </div>
+          <IconButton label="Закрыть" onClick={onClose}>
+            <X size={19} aria-hidden="true" />
+          </IconButton>
+        </header>
+        <div className="min-h-0 flex-1 overflow-hidden">{children}</div>
+      </div>
+    );
   }
 
   const panel = (

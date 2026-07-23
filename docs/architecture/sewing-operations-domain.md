@@ -19,6 +19,7 @@
 | `id` | PK | Surrogate key |
 | `name` | string | Required; trim; non-empty; **globally unique** |
 | `cost` | `Numeric(14,2)` | Required; `≥ 0`; money-safe `Decimal` |
+| `duration_seconds` | `Integer` | Required; `≥ 0`; normative execution time in seconds (`6.3.8`) |
 | `created_at` / `updated_at` | timestamptz | Timezone-aware |
 
 No status, versions, files, or nesting.
@@ -27,7 +28,7 @@ No status, versions, files, or nesting.
 
 | Concept | Relation |
 |---|---|
-| `AssemblyOperationLine` | Copy-on-pick from catalog: snapshot `operation_name` + `cost`; optional `sewing_operation_id` (`6.3.6`). Catalog price changes do not rewrite existing variant lines. |
+| `AssemblyOperationLine` | Copy-on-pick from catalog: snapshot `operation_name` + `cost` + `duration_seconds`; optional `sewing_operation_id` (`6.3.6`). Catalog price/time changes do not rewrite existing variant lines. |
 | `ProductModel` | No `pattern_set_id`; sewing ops are **not** children of a model |
 | Stage 8 shop routing | Separate execution contour; does not replace this catalog |
 

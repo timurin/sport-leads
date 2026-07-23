@@ -164,10 +164,10 @@
         </div>
       </div>
       <div class="meta-list">
-        <div class="chip">Updated: 2026-07-22 (Stage 18 Administration + print forms)</div>
+        <div class="chip">Updated: 2026-07-23 (canonical sync: boundary + 4.8 honesty + ADR-016)</div>
         <div class="chip">Version: v0.9.0</div>
         <div class="chip">Branch: feature/v0.8.1-nomenclature-core</div>
-        <div class="chip">Commit: c9bee2b</div>
+        <div class="chip">Commit: 0980f34</div>
       </div>
       <div class="sidebar-note" style="margin:18px 0;">
         <strong style="color:var(--text)">Legend</strong>
@@ -658,7 +658,7 @@
             items: [
               {
                 code: "4.1.1",
-                title: "v0.8.1 persistent nomenclature CRUD, card, search, article, activity, and base price",
+                title: "v0.8.1 persistent nomenclature CRUD, card, search, activity, and base price (article removed in 4.7.11)",
                 done: true
               },
               {
@@ -683,7 +683,7 @@
               },
               {
                 code: "4.2.3",
-                title: "v0.8.4 typed custom fields with category inheritance",
+                title: "v0.8.4 typed custom fields with category inheritance — historical; SoT superseded by ADR-015 / 4.8",
                 done: true
               }
             ]
@@ -698,7 +698,7 @@
               },
               {
                 code: "4.3.2",
-                title: "v0.8.8h direct free assignment of custom fields in the card",
+                title: "v0.8.8h direct free assignment of custom fields in the card — historical; values via characteristics API (4.8.6)",
                 done: true
               },
               {
@@ -764,8 +764,8 @@
               {
                 code: "4.6.1",
                 title: "Approve migration plan from materials rows to nomenclatures with type MATERIAL",
-                done: false,
-                goal: "ADR-012: single nomenclature master; materials is a type/filter, not a second catalog.",
+                done: true,
+                goal: "ADR-012 / 2026-07-23: materials are a nomenclature type, not a second catalog.",
                 dependencies: [
                   "ADR-012",
                   "4.2.1"
@@ -774,22 +774,139 @@
               {
                 code: "4.6.2",
                 title: "Migrate data, preserve articles, and stop dual write paths",
-                done: false
+                done: true
               },
               {
                 code: "4.6.3",
-                title: "Point Materials navigation/UI at nomenclature filtered by MATERIAL",
-                done: false
+                title: "Remove Materials nav entry; materials are filtered nomenclature type only",
+                done: true
               },
               {
                 code: "4.6.4",
-                title: "Deprecate /materials API and materials table after cutover",
-                done: false
+                title: "Delete /materials API, frontend routes/components, and materials table/data after cutover",
+                done: true,
+                note: "v0.9.0; drop a1b2c3d4e567 (guarded); API/model removed; depends on cutover z6a7b8c9d012"
               },
               {
                 code: "4.6.5",
                 title: "Keep balances/min stock for warehouse register; do not copy onto Nomenclature",
                 done: false
+              }
+            ]
+          },
+          {
+            title: "4.7 — Nomenclature UI parity with product-models",
+            items: [
+              {
+                code: "4.7.1",
+                title: "Align nomenclature list with product-models: shared toolbar + row list",
+                done: true,
+                goal: "Match DS-PT-02-CATALOG chrome from /settings/catalogs/product-models",
+                note: "v0.8.1 — PT-02 toolbar + DataTable rows in nomenclature-workspace.tsx"
+              },
+              {
+                code: "4.7.2",
+                title: "Remove left category tree block from nomenclature workspace",
+                done: true,
+                note: "v0.8.1 — TreeListSplit/CategoryTree removed"
+              },
+              {
+                code: "4.7.3",
+                title: "Align nomenclature card with product-models card chrome/layout — `v0.8.1`; DS-PT-08-CATALOG; VersionedWorkspace + CatalogVersionedCardLayout; evidence: nomenclature-card.tsx",
+                done: true,
+                goal: "Match DS-PT-08-CATALOG from /settings/catalogs/product-models/[id]"
+              },
+              {
+                code: "4.7.4",
+                title: "Map backend nomenclature fields into card requisites by domain logic — `v0.8.1`; category_id/storage_unit_id bind; custom fields separate; existing PATCH",
+                done: true
+              },
+              {
+                code: "4.7.5",
+                title: "Port materials quick-preview right panel into nomenclature list route",
+                done: true
+              },
+              {
+                code: "4.7.6",
+                title: "Card «Дополнительные реквизиты»: add form with Название + Значение autocomplete",
+                done: true,
+                note: "2026-07-23 — NomenclatureAddCustomFieldForm; evidence: nomenclature-card.tsx"
+              },
+              {
+                code: "4.7.7",
+                title: "Expose «Дополнительные реквизиты» in Settings → Номенклатура nav",
+                done: true,
+                note: "2026-07-23 — superseded by 4.8.5 (nav removed; redirect → product-characteristics); DS-SHELL-01/02 preserved"
+              },
+              {
+                code: "4.7.8",
+                title: "Unique custom-field name + auto-fill on card add; icon confirm/cancel",
+                done: true,
+                note: "2026-07-23 — Alembic b2c3d4e5f678; _assert_unique_name; nomenclature-add-custom-field-form"
+              },
+              {
+                code: "4.7.9 / B2",
+                title: "Nomenclature create fullscreen over list — CreateDrawer fullscreen; proposed layout Identity→Classification→Commercial→Optional",
+                done: true,
+                note: "2026-07-23 — create-drawer.tsx + nomenclature-create-panels.tsx; ADR-013 updated; field order TBD 4.7.10"
+              },
+              {
+                code: "4.7.10",
+                title: "Owner visual: confirm nomenclature create field order/rules after 4.7.9 proposal",
+                done: false
+              },
+              {
+                code: "4.7.11 / B3",
+                title: "Drop Nomenclature.article — identity via id+name; ProductModel/variant articles kept; Alembic e6f7a8b9c012",
+                done: true,
+                note: "2026-07-23 — also fixed duplicate sewing duration revision → d5e6f7a8b901; ADR-012/014"
+              }
+            ]
+          },
+          {
+            title: "4.8 — Unify characteristics catalog (absorb custom fields)",
+            items: [
+              {
+                code: "4.8.1",
+                title: "ADR-015 + roadmap/HTML microtasks",
+                done: true,
+                note: "2026-07-23 — ADR-015-unified-characteristics-catalog.md"
+              },
+              {
+                code: "4.8.2",
+                title: "Expand Characteristic* schema; migrate CustomField* data; drop custom tables",
+                done: true,
+                note: "2026-07-23 — Alembic f7a8b9c0d123; /custom-fields unmounted; residual orphan custom_fields.py / materials.py (cleanup with 4.8.7)"
+              },
+              {
+                code: "4.8.3",
+                title: "DELETE definition/option + usage guards + journal stub hook",
+                done: true,
+                note: "2026-07-23 — characteristic_operations_journal.py + usage blocks in characteristics API"
+              },
+              {
+                code: "4.8.4",
+                title: "Characteristic detail card: main info + values inline CRUD; owner visual",
+                done: true,
+                note: "2026-07-23 — characteristic-card.tsx; layout confirmed; appearance/content polish deferred to follow-up chat"
+              },
+              {
+                code: "4.8.5",
+                title: "Remove Дополнительные реквизиты nav; expand create kinds; redirect /custom-fields",
+                done: true,
+                note: "2026-07-23 — navigation.ts (product-characteristics only); redirect page; DS-SHELL-01/02 preserved"
+              },
+              {
+                code: "4.8.6",
+                title: "Nomenclature card unified block on characteristics API",
+                done: false,
+                note: "values API path exists; residual CustomField* names/compat shims in card form"
+              },
+              {
+                code: "4.8.7",
+                title: "Regression tests + project-structure / erp-check sync",
+                done: false,
+                note: "canonical docs synced 2026-07-23; residual orphan custom_fields.py / materials.py cleanup + focused 4.8 regression suite"
               }
             ]
           }
@@ -1327,7 +1444,7 @@
                   },
                   {
                     code: "5.5.4.4",
-                    title: "Verify on Nomenclature Workspace",
+                    title: "Verify on Nomenclature Workspace — historical PT-04 tree check; tree later removed (4.7.2); list now PT-02",
                     done: true
                   }
                 ]
@@ -1635,7 +1752,7 @@
                   },
                   {
                     code: "6.0.1.4",
-                    title: "Documentation checkpoint — `v0.9.0`; ADR-014 accepted; Stage 9 tech-card ADR reserved as ADR-015",
+                    title: "Documentation checkpoint — `v0.9.0`; ADR-014 accepted; Stage 9 tech-card ADR reserved as ADR-016 (ADR-015 = unified characteristics)",
                     done: true
                   }
                 ]
@@ -1931,6 +2048,11 @@
                     code: "6.1.7.5",
                     title: "Visual verification — `v0.9.0`; owner OK 2026-07-22",
                     done: true
+                  },
+                  {
+                    code: "6.1.7.6 / B1",
+                    title: "Restore DS-PT-02-CATALOG toolbar sequence — Search → Reset search → Filter → Reset filter → Print; Print toggles row checkboxes; filters only in popover; Create in end — `v0.9.0`; product-models-workspace.tsx; pt-02-catalog-list.md",
+                    done: true
                   }
                 ]
               },
@@ -2131,6 +2253,83 @@
                   {
                     code: "6.1.13.moved",
                     title: "Moved to Stage 3.2.5 (order-item model + assembly variant) — Stage 6 catalog ends at 6.1.12",
+                    done: true
+                  }
+                ]
+              },
+              {
+                code: "6.1.14",
+                title: "Тип изделия (product type) directory",
+                goal: "Pattern-base directory for garment/product type, separate from nomenclature type.",
+                dependencies: [
+                  "6.0.2",
+                  "6.1.3"
+                ],
+                microtasks: [
+                  {
+                    code: "6.1.14.1",
+                    title: "Domain + CRUD model/API for product types (name, active, sort)",
+                    done: true
+                  },
+                  {
+                    code: "6.1.14.2",
+                    title: "Settings nav under База лекал + list UI (PT-02 catalog)",
+                    done: true
+                  },
+                  {
+                    code: "6.1.14.3",
+                    title: "Migration, schemas, regression tests",
+                    done: true
+                  }
+                ]
+              },
+              {
+                code: "6.1.15",
+                title: "Product type on model card requisites",
+                goal: "Nullable product_type_id under Путь к лекалам, 1-column span in Основные реквизиты.",
+                dependencies: [
+                  "6.1.14",
+                  "6.1.10.6"
+                ],
+                microtasks: [
+                  {
+                    code: "6.1.15.1",
+                    title: "Add nullable product_type_id FK + migration/schemas/API",
+                    done: true
+                  },
+                  {
+                    code: "6.1.15.2",
+                    title: "Card UI: select under patterns_path, 1-col grid span",
+                    done: true
+                  },
+                  {
+                    code: "6.1.15.3",
+                    title: "Regression tests",
+                    done: true
+                  }
+                ]
+              },
+              {
+                code: "6.1.16",
+                title: "Product type on product-models list",
+                goal: "Show Тип изделия on /settings/catalogs/product-models list.",
+                dependencies: [
+                  "6.1.15"
+                ],
+                microtasks: [
+                  {
+                    code: "6.1.16.1",
+                    title: "Include product type in list API/DTO",
+                    done: true
+                  },
+                  {
+                    code: "6.1.16.2",
+                    title: "Render on product-models workspace rows",
+                    done: true
+                  },
+                  {
+                    code: "6.1.16.3",
+                    title: "Visual smoke — list/card wired (product_type column + filter); owner visual OK pending",
                     done: true
                   }
                 ]
@@ -2561,6 +2760,34 @@
                   {
                     code: "6.3.6.4",
                     title: "Regression tests — `v0.9.0`; test_assembly_variant_from_sewing_operations_catalog",
+                    done: true
+                  }
+                ]
+              },
+              {
+                code: "6.3.8",
+                title: "Operation execution time (duration seconds)",
+                goal: "Add duration_seconds to sewing-operations catalog; snapshot on assembly lines; show on list and model card totals.",
+                dependencies: ["6.3.6"],
+                microtasks: [
+                  {
+                    code: "6.3.8.1",
+                    title: "Add duration_seconds to SewingOperation + Alembic d5e6f7a8b901",
+                    done: true
+                  },
+                  {
+                    code: "6.3.8.2",
+                    title: "Snapshot duration_seconds on AssemblyOperationLine (copy-on-pick)",
+                    done: true
+                  },
+                  {
+                    code: "6.3.8.3",
+                    title: "List/create/edit UI + model card per-line time and assembly duration total",
+                    done: true
+                  },
+                  {
+                    code: "6.3.8.4",
+                    title: "Regression tests — sewing ops + assembly variants + frontend unit",
                     done: true
                   }
                 ]
@@ -3041,7 +3268,7 @@
                   "3.2.4",
                   "4.2.1",
                   "ADR-004",
-                  "ADR-015"
+                  "ADR-016"
                 ],
                 microtasks: [
                   {
@@ -3066,7 +3293,7 @@
                   },
                   {
                     code: "9.1.1.5",
-                    title: "Documentation checkpoint (ADR-015)",
+                    title: "Documentation checkpoint (ADR-016)",
                     done: false
                   }
                 ]

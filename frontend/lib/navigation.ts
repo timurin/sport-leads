@@ -272,11 +272,6 @@ export const appSections: AppSection[] = [
         title: "Справочники",
         children: [
           {
-            id: "materials",
-            title: "Материалы",
-            href: "/settings/catalogs/materials",
-          },
-          {
             id: "cities",
             title: "Города",
             href: "/settings/catalogs/cities",
@@ -353,6 +348,11 @@ export const appSections: AppSection[] = [
             id: "product-models",
             title: "Модели изделий",
             href: "/settings/catalogs/product-models",
+          },
+          {
+            id: "product-types",
+            title: "Тип изделия",
+            href: "/settings/catalogs/product-types",
           },
           {
             id: "size-grids",

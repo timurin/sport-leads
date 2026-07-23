@@ -63,7 +63,6 @@ def test_nomenclature_available_models_whitelist_rules() -> None:
             product = client.post(
                 "/nomenclatures",
                 json={
-                    "article": "PROD-AVL-1",
                     "name": "Форма PRODUCT",
                     "category": "Форма",
                     "nomenclature_type": "PRODUCT",
@@ -75,7 +74,6 @@ def test_nomenclature_available_models_whitelist_rules() -> None:
             service = client.post(
                 "/nomenclatures",
                 json={
-                    "article": "SRV-AVL-1",
                     "name": "Услуга",
                     "category": "Услуги",
                     "nomenclature_type": "SERVICE",

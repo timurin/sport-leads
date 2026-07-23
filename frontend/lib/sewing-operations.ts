@@ -2,6 +2,7 @@ export type SewingOperation = {
   id: number;
   name: string;
   cost: string;
+  duration_seconds: number;
   created_at: string;
   updated_at: string;
 };
@@ -9,6 +10,7 @@ export type SewingOperation = {
 export type SewingOperationCreateDraft = {
   name: string;
   cost: string;
+  duration_seconds: string;
 };
 
 export type SewingOperationListParams = {
@@ -37,14 +39,61 @@ export function formatSewingCost(value: string | number): string {
   });
 }
 
+/** ASCII cost string for edit inputs (avoids locale NBSP from formatSewingCost). */
+export function toSewingCostInput(value: string | number | null | undefined): string {
+  if (value == null || value === "") return "0.00";
+  const amount =
+    typeof value === "number" ? value : Number(String(value).replace(",", "."));
+  if (!Number.isFinite(amount) || amount < 0) return "0.00";
+  return amount.toFixed(2);
+}
+
 /** Normalize user cost input to API decimal string, or null if invalid. */
 export function parseSewingCostInput(raw: string): string | null {
-  const normalized = raw.trim().replace(/\s/g, "").replace(",", ".");
+  const normalized = String(raw ?? "")
+    .trim()
+    .replace(/[\s\u00a0\u202f]/g, "")
+    .replace(",", ".");
   if (!normalized) return null;
   if (!/^\d+(\.\d{1,2})?$/.test(normalized)) return null;
   const amount = Number(normalized);
   if (!Number.isFinite(amount) || amount < 0) return null;
   return amount.toFixed(2);
+}
+
+/** Normalize duration (seconds) input, or null if invalid. */
+export function parseDurationSecondsInput(raw: string): number | null {
+  const normalized = String(raw ?? "")
+    .trim()
+    .replace(/[\s\u00a0\u202f]/g, "");
+  if (!normalized) return null;
+  if (!/^\d+$/.test(normalized)) return null;
+  const value = Number(normalized);
+  if (!Number.isSafeInteger(value) || value < 0) return null;
+  return value;
+}
+
+function pluralRu(n: number, one: string, few: string, many: string): string {
+  const abs = Math.abs(n) % 100;
+  const last = abs % 10;
+  if (abs > 10 && abs < 20) return many;
+  if (last === 1) return one;
+  if (last >= 2 && last <= 4) return few;
+  return many;
+}
+
+/** «XX минут XX секунд» from total seconds. */
+export function formatDurationMinutesSeconds(totalSeconds: number): string {
+  const sec = Math.max(0, Math.floor(Number(totalSeconds) || 0));
+  const minutes = Math.floor(sec / 60);
+  const seconds = sec % 60;
+  return `${minutes} ${pluralRu(minutes, "минута", "минуты", "минут")} ${seconds} ${pluralRu(seconds, "секунда", "секунды", "секунд")}`;
+}
+
+/** Compact line label, e.g. `125 с`. */
+export function formatDurationSecondsLabel(totalSeconds: number): string {
+  const sec = Math.max(0, Math.floor(Number(totalSeconds) || 0));
+  return `${sec} с`;
 }
 
 export function validateSewingOperationDraft(
@@ -58,6 +107,9 @@ export function validateSewingOperationDraft(
   }
   if (parseSewingCostInput(draft.cost) == null) {
     return "Укажите стоимость (число ≥ 0)";
+  }
+  if (parseDurationSecondsInput(draft.duration_seconds) == null) {
+    return "Укажите время выполнения в секундах (целое ≥ 0)";
   }
   return null;
 }

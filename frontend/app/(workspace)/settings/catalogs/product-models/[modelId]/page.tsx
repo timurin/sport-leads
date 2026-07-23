@@ -13,6 +13,7 @@ import {
   toProductModelVersionViews,
 } from "@/lib/product-models";
 import { getSewingOperations } from "@/lib/sewing-operations";
+import { getProductTypes } from "@/lib/product-types";
 import { getSizeGrids } from "@/lib/size-grids";
 
 type ProductModelRouteProps = {
@@ -42,15 +43,23 @@ export default async function ProductModelRoute({
     notFound();
   }
 
-  const [versions, media, history, assemblyVariants, sewingOperations, sizeGrids] =
-    await Promise.all([
-      getProductModelVersions(id),
-      getProductModelMedia(id),
-      getProductModelHistory(id),
-      getProductModelAssemblyVariants(id),
-      getSewingOperations({ limit: 500 }),
-      getSizeGrids(),
-    ]);
+  const [
+    versions,
+    media,
+    history,
+    assemblyVariants,
+    sewingOperations,
+    sizeGrids,
+    productTypes,
+  ] = await Promise.all([
+    getProductModelVersions(id),
+    getProductModelMedia(id),
+    getProductModelHistory(id),
+    getProductModelAssemblyVariants(id),
+    getSewingOperations({ limit: 500 }),
+    getSizeGrids(),
+    getProductTypes(),
+  ]);
 
   return (
     <ProductModelPersistentCard
@@ -61,6 +70,7 @@ export default async function ProductModelRoute({
       assemblyVariants={assemblyVariants}
       sewingOperations={sewingOperations}
       sizeGrids={sizeGrids}
+      productTypes={productTypes}
       initialEditing={initialEditing}
     />
   );

@@ -88,7 +88,6 @@ class NomenclatureCategoryRead(NomenclatureCategoryBase):
 
 
 class NomenclatureBase(BaseModel):
-    article: str = Field(min_length=1, max_length=100)
     name: str = Field(min_length=1, max_length=255)
     short_name: str | None = Field(default=None, max_length=100)
     description: str | None = None
@@ -96,12 +95,12 @@ class NomenclatureBase(BaseModel):
     category_id: int | None = None
     storage_unit_id: int | None = None
     nomenclature_type: NomenclatureType = NomenclatureType.PRODUCT
-    unit: str = Field(default="С€С‚", min_length=1, max_length=30)
+    unit: str = Field(default="шт", min_length=1, max_length=30)
     base_price: Decimal = Field(default=Decimal("0"), ge=0, max_digits=14, decimal_places=2)
     currency: str = Field(default="RUB", min_length=3, max_length=3, pattern=r"^[A-Z]{3}$")
     is_active: bool = True
 
-    @field_validator("article", "name", "short_name", "category", "unit", "currency", mode="before")
+    @field_validator("name", "short_name", "category", "unit", "currency", mode="before")
     @classmethod
     def strip_text(cls, value: object) -> object:
         if isinstance(value, str):
@@ -114,7 +113,6 @@ class NomenclatureCreate(NomenclatureBase):
 
 
 class NomenclatureUpdate(BaseModel):
-    article: str | None = Field(default=None, min_length=1, max_length=100)
     name: str | None = Field(default=None, min_length=1, max_length=255)
     short_name: str | None = Field(default=None, max_length=100)
     description: str | None = None
@@ -127,7 +125,7 @@ class NomenclatureUpdate(BaseModel):
     currency: str | None = Field(default=None, min_length=3, max_length=3, pattern=r"^[A-Z]{3}$")
     is_active: bool | None = None
 
-    @field_validator("article", "name", "short_name", "category", "unit", "currency", mode="before")
+    @field_validator("name", "short_name", "category", "unit", "currency", mode="before")
     @classmethod
     def strip_text(cls, value: object) -> object:
         if isinstance(value, str):

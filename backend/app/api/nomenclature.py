@@ -10,7 +10,7 @@ from app.schemas.product_model import (
     NomenclatureProductModelReorder,
 )
 from app.services.nomenclature import (
-    NomenclatureArticleConflictError,
+    NomenclatureConflictError,
     NomenclatureCategoryConflictError,
     NomenclatureCategoryNotFoundError,
     NomenclatureCategoryRuleError,
@@ -138,7 +138,7 @@ def read_one_nomenclature(nomenclature_id: int, db: Session = Depends(get_db)) -
 def create_one_nomenclature(payload: NomenclatureCreate, db: Session = Depends(get_db)) -> Nomenclature:
     try:
         return create_nomenclature(db, payload)
-    except NomenclatureArticleConflictError as error:
+    except NomenclatureConflictError as error:
         raise HTTPException(status_code=409, detail=str(error)) from error
     except (NomenclatureCategoryNotFoundError, NomenclatureCategoryRuleError, UnitOfMeasureNotFoundError, UnitOfMeasureRuleError) as error:
         raise HTTPException(status_code=422, detail=str(error)) from error
@@ -150,7 +150,7 @@ def update_one_nomenclature(nomenclature_id: int, payload: NomenclatureUpdate, d
         return update_nomenclature(db, nomenclature_id, payload)
     except NomenclatureNotFoundError as error:
         raise HTTPException(status_code=404, detail=str(error)) from error
-    except NomenclatureArticleConflictError as error:
+    except NomenclatureConflictError as error:
         raise HTTPException(status_code=409, detail=str(error)) from error
     except (NomenclatureCategoryNotFoundError, NomenclatureCategoryRuleError, UnitOfMeasureNotFoundError, UnitOfMeasureRuleError) as error:
         raise HTTPException(status_code=422, detail=str(error)) from error

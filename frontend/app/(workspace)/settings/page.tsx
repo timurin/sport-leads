@@ -1,5 +1,4 @@
 import {
-  Boxes,
   Building2,
   Factory,
   FolderCog,
@@ -7,6 +6,7 @@ import {
   Package,
   Ruler,
   Settings2,
+  Shirt,
   Users,
   Warehouse,
 } from "lucide-react";
@@ -19,12 +19,6 @@ const settingsGroups = [
       "Основные данные для работы всех модулей ERP",
     icon: FolderCog,
     items: [
-      {
-        title: "Материалы",
-        description: "Ткани, фурнитура и расходные материалы",
-        href: "/settings/catalogs/materials",
-        icon: Boxes,
-      },
       {
         title: "Города",
         description: "География клиентов, заказов и доставки",
@@ -105,6 +99,37 @@ const settingsGroups = [
         title: "Тип номенклатуры",
         description: "Системные типы: продукция, товары, материалы, услуги",
         href: "/settings/catalogs/nomenclature-types",
+        icon: Settings2,
+      },
+    ],
+  },
+  {
+    title: "База лекал",
+    description: "Модели, типы изделий, размерные сетки и операции пошива",
+    icon: Shirt,
+    items: [
+      {
+        title: "Модели изделий",
+        description: "Карточки моделей и варианты сборки",
+        href: "/settings/catalogs/product-models",
+        icon: Shirt,
+      },
+      {
+        title: "Тип изделия",
+        description: "Футболка, шорты и другие типы изделий",
+        href: "/settings/catalogs/product-types",
+        icon: Settings2,
+      },
+      {
+        title: "Размерные сетки",
+        description: "Сетки размеров для моделей",
+        href: "/settings/catalogs/size-grids",
+        icon: Ruler,
+      },
+      {
+        title: "Операции пошива",
+        description: "Справочник операций и стоимостей",
+        href: "/settings/catalogs/sewing_operations",
         icon: Settings2,
       },
     ],

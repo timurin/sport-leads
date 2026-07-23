@@ -11,15 +11,13 @@ export type NomenclatureCreateKind =
   | "nomenclature"
   | "unit"
   | "category"
-  | "characteristic"
-  | "customField";
+  | "characteristic";
 
 export const NOMENCLATURE_CREATE_KINDS: NomenclatureCreateKind[] = [
   "nomenclature",
   "unit",
   "category",
   "characteristic",
-  "customField",
 ];
 
 export function parseNomenclatureCreateKind(
@@ -29,8 +27,7 @@ export function parseNomenclatureCreateKind(
     value === "nomenclature" ||
     value === "unit" ||
     value === "category" ||
-    value === "characteristic" ||
-    value === "customField"
+    value === "characteristic"
   ) {
     return value;
   }
@@ -42,15 +39,13 @@ const SECTION_LABELS: Record<NomenclatureCreateKind, string> = {
   unit: "Единицу измерения",
   category: "Категорию",
   characteristic: "Характеристику",
-  customField: "Реквизит",
 };
 
 const SECTION_DESCRIPTIONS: Record<NomenclatureCreateKind, string> = {
   nomenclature: "Карточка товара, материала, услуги",
   unit: "Базовая единица хранения",
   category: "Группа в дереве номенклатуры",
-  characteristic: "Цвет, размер и другие свойства",
-  customField: "Дополнительное поле карточки",
+  characteristic: "Свойство, реквизит или измерение варианта",
 };
 
 type NomenclatureSectionCreateMenuProps = {

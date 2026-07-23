@@ -79,12 +79,10 @@ class NomenclatureCategory(Base):
 class Nomenclature(Base):
     __tablename__ = "nomenclatures"
     __table_args__ = (
-        UniqueConstraint("article", name="uq_nomenclatures_article"),
         CheckConstraint("nomenclature_type IN ('SERVICE', 'PRODUCT', 'GOODS', 'MATERIAL')", name="ck_nomenclatures_type"),
     )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    article: Mapped[str] = mapped_column(String(100), nullable=False, index=True)
     name: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
     short_name: Mapped[str | None] = mapped_column(String(100), nullable=True)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)

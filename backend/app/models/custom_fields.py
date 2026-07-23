@@ -4,7 +4,7 @@ from datetime import date, datetime
 from decimal import Decimal
 from enum import Enum
 
-from sqlalchemy import Boolean, CheckConstraint, Date, DateTime, ForeignKey, Integer, Numeric, String, Text, UniqueConstraint, func, Table, Column
+from sqlalchemy import Boolean, CheckConstraint, Date, DateTime, ForeignKey, Index, Integer, Numeric, String, Text, UniqueConstraint, func, Table, Column, text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database.base import Base
@@ -41,6 +41,11 @@ class CustomFieldDefinition(Base):
     __tablename__ = "custom_field_definitions"
     __table_args__ = (
         UniqueConstraint("code", name="uq_custom_field_definitions_code"),
+        Index(
+            "uq_custom_field_definitions_name_lower",
+            text("lower(name)"),
+            unique=True,
+        ),
         CheckConstraint("data_type IN ('STRING', 'TEXT', 'INTEGER', 'DECIMAL', 'BOOLEAN', 'DATE', 'SINGLE_SELECT', 'MULTI_SELECT', 'COLOR')", name="ck_custom_field_definitions_data_type"),
     )
 

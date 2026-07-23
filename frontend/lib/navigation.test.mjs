@@ -37,6 +37,7 @@ test("settings navigation exposes pattern-base catalogs", () => {
     patternBase.children.map((item) => ({ id: item.id, href: item.href })),
     [
       { id: "product-models", href: "/settings/catalogs/product-models" },
+      { id: "product-types", href: "/settings/catalogs/product-types" },
       { id: "size-grids", href: "/settings/catalogs/size-grids" },
       {
         id: "sewing-operations",
@@ -44,4 +45,14 @@ test("settings navigation exposes pattern-base catalogs", () => {
       },
     ],
   );
+});
+
+test("settings navigation no longer exposes standalone materials catalog", () => {
+  const settings = appSections.find((section) => section.id === "settings");
+  assert.ok(settings);
+  const hrefs = settings.topNavigation.flatMap((item) => [
+    item.href,
+    ...(item.children?.map((child) => child.href) ?? []),
+  ]);
+  assert.equal(hrefs.includes("/settings/catalogs/materials"), false);
 });

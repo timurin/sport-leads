@@ -23,6 +23,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.database.base import Base
 
 if TYPE_CHECKING:
+    from app.models.product_type import ProductType
     from app.models.size_grid import SizeGrid
 
 
@@ -74,6 +75,11 @@ class ProductModel(Base):
     )
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
     patterns_path: Mapped[str | None] = mapped_column(String(1000), nullable=True)
+    product_type_id: Mapped[int | None] = mapped_column(
+        ForeignKey("product_types.id", ondelete="RESTRICT"),
+        nullable=True,
+        index=True,
+    )
     constructor_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
     patterns_created_on: Mapped[date | None] = mapped_column(Date, nullable=True)
     cover_image_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
@@ -98,6 +104,7 @@ class ProductModel(Base):
     )
 
     size_grid: Mapped[SizeGrid | None] = relationship("SizeGrid")
+    product_type: Mapped[ProductType | None] = relationship("ProductType")
     versions: Mapped[list[ProductModelVersion]] = relationship(
         back_populates="product_model",
         cascade="all, delete-orphan",
@@ -329,8 +336,8 @@ class AssemblyVariant(Base):
 class AssemblyOperationLine(Base):
     """Ordered operation row inside an assembly variant.
 
-    Copy-on-pick from `SewingOperation`: snapshot `operation_name` + `cost`;
-    optional `sewing_operation_id` for catalog traceability (`6.3.6`).
+    Copy-on-pick from `SewingOperation`: snapshot `operation_name` + `cost` +
+    `duration_seconds`; optional `sewing_operation_id` for catalog traceability (`6.3.6`).
     """
 
     __tablename__ = "assembly_operation_lines"
@@ -348,6 +355,10 @@ class AssemblyOperationLine(Base):
             "cost >= 0",
             name="ck_assembly_operation_lines_cost",
         ),
+        CheckConstraint(
+            "duration_seconds >= 0",
+            name="ck_assembly_operation_lines_duration_seconds",
+        ),
     )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -359,6 +370,7 @@ class AssemblyOperationLine(Base):
     sequence: Mapped[int] = mapped_column(Integer, nullable=False)
     operation_name: Mapped[str] = mapped_column(String(255), nullable=False)
     cost: Mapped[Decimal] = mapped_column(Numeric(14, 2), nullable=False, default=Decimal("0"))
+    duration_seconds: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     sewing_operation_id: Mapped[int | None] = mapped_column(
         ForeignKey("sewing_operations.id", ondelete="SET NULL"),
         nullable=True,

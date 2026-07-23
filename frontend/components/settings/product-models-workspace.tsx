@@ -26,7 +26,7 @@ import {
   DataTableRow,
 } from "@/components/ui/data-table";
 import { EmptyState } from "@/components/ui/empty-state";
-import { Input } from "@/components/ui/form-controls";
+import { Checkbox, Input, Select } from "@/components/ui/form-controls";
 import { ImageLightbox } from "@/components/ui/image-lightbox";
 import { ListTotals } from "@/components/ui/list-pagination";
 import { PageToolbar } from "@/components/ui/page-header";
@@ -41,6 +41,7 @@ import {
   type ProductModel,
   type ProductModelStatus,
 } from "@/lib/product-models";
+import type { ProductType } from "@/lib/product-types";
 import type { SizeGridListItem } from "@/lib/size-grids";
 
 const ROW_ICON_LINK =
@@ -87,10 +88,12 @@ function CoverThumb({
 export function ProductModelsWorkspace({
   models,
   sizeGrids,
+  productTypes = [],
   costByModelId = {},
 }: {
   models: ProductModel[];
   sizeGrids: SizeGridListItem[];
+  productTypes?: ProductType[];
   /** Precomputed «от–до» labels from assembly variant totals. */
   costByModelId?: Record<number, string>;
 }) {
@@ -98,7 +101,12 @@ export function ProductModelsWorkspace({
   const [created, setCreated] = useState<ProductModel[]>([]);
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<"" | ProductModelStatus>("");
+  const [productTypeFilter, setProductTypeFilter] = useState<number | null>(
+    null,
+  );
   const [filterOpen, setFilterOpen] = useState(false);
+  const [printSelectMode, setPrintSelectMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(() => new Set());
   const [lightbox, setLightbox] = useState<{ src: string; alt: string } | null>(
     null,
   );
@@ -106,6 +114,11 @@ export function ProductModelsWorkspace({
   const [rowError, setRowError] = useState<string | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
   const filterRef = useRef<HTMLDivElement>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const rows = useMemo(() => {
     const knownIds = new Set(models.map((model) => model.id));
@@ -118,9 +131,12 @@ export function ProductModelsWorkspace({
       filterProductModels(rows, {
         search: query,
         status: statusFilter,
+        productTypeId: productTypeFilter,
       }),
-    [rows, query, statusFilter],
+    [rows, query, statusFilter, productTypeFilter],
   );
+
+  const filtersActive = Boolean(statusFilter) || productTypeFilter != null;
 
   useEffect(() => {
     if (!filterOpen) return;
@@ -171,7 +187,48 @@ export function ProductModelsWorkspace({
     }
   };
 
+  const clearFilters = () => {
+    setStatusFilter("");
+    setProductTypeFilter(null);
+    setFilterOpen(false);
+  };
+
+  const toggleSelected = (modelId: number) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(modelId)) next.delete(modelId);
+      else next.add(modelId);
+      return next;
+    });
+  };
+
+  const allFilteredSelected =
+    filtered.length > 0 && filtered.every((model) => selectedIds.has(model.id));
+
+  const toggleSelectAllFiltered = () => {
+    setSelectedIds((prev) => {
+      if (filtered.length === 0) return prev;
+      if (filtered.every((model) => prev.has(model.id))) {
+        const next = new Set(prev);
+        for (const model of filtered) next.delete(model.id);
+        return next;
+      }
+      const next = new Set(prev);
+      for (const model of filtered) next.add(model.id);
+      return next;
+    });
+  };
+
   const onPrint = () => {
+    if (!printSelectMode) {
+      setPrintSelectMode(true);
+      return;
+    }
+    if (selectedIds.size === 0) {
+      setPrintSelectMode(false);
+      setSelectedIds(new Set());
+      return;
+    }
     window.alert(
       "Печать будет доступна после настройки шаблона в Администрирование → Печатные формы.",
     );
@@ -228,98 +285,114 @@ export function ProductModelsWorkspace({
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               placeholder="Поиск по артикулу или названию"
-              className="min-w-0 w-full flex-1"
+              size="compact"
+              className="min-w-0 flex-1 basis-0"
               aria-label="Поиск моделей изделий"
             />
-            <IconButton
-              label="Сбросить поиск"
-              variant="secondary"
-              disabled={!query}
-              onClick={() => setQuery("")}
+            <div
+              className="flex shrink-0 items-center gap-1"
+              role="group"
+              aria-label="Действия списка"
             >
-              <X className="size-4" aria-hidden="true" />
-            </IconButton>
-            <div className="relative shrink-0" ref={filterRef}>
               <IconButton
-                label="Фильтр по состоянию"
-                variant={statusFilter ? "primary" : "secondary"}
-                aria-expanded={filterOpen}
-                aria-haspopup="menu"
-                onClick={() => setFilterOpen((open) => !open)}
+                label="Сбросить поиск"
+                variant="secondary"
+                disabled={!query}
+                onClick={() => setQuery("")}
               >
-                <Filter className="size-4" aria-hidden="true" />
+                <X className="size-4" aria-hidden="true" />
               </IconButton>
-              {filterOpen ? (
-                <div
-                  role="menu"
-                  aria-label="Фильтр по состоянию"
-                  className="absolute right-0 z-20 mt-1 min-w-[12rem] rounded-portal-md border border-portal-border bg-portal-surface p-1 shadow-portal-card"
+              <div className="relative" ref={filterRef}>
+                <IconButton
+                  label="Фильтр"
+                  variant={filtersActive ? "primary" : "secondary"}
+                  aria-expanded={filterOpen}
+                  aria-haspopup="dialog"
+                  onClick={() => setFilterOpen((open) => !open)}
                 >
-                  <button
-                    type="button"
-                    role="menuitemradio"
-                    aria-checked={statusFilter === ""}
-                    className={[
-                      "flex w-full items-center rounded-portal-sm px-portal-3 py-2 text-left text-portal-body",
-                      statusFilter === ""
-                        ? "bg-portal-primary-soft font-medium text-portal-primary"
-                        : "text-portal-text hover:bg-portal-state-hover",
-                    ].join(" ")}
-                    onClick={() => {
-                      setStatusFilter("");
-                      setFilterOpen(false);
-                    }}
+                  <Filter className="size-4" aria-hidden="true" />
+                </IconButton>
+                {filterOpen ? (
+                  <div
+                    role="dialog"
+                    aria-label="Фильтр моделей"
+                    className="absolute right-0 z-20 mt-1 w-[min(100vw-2rem,16rem)] space-y-portal-3 rounded-portal-md border border-portal-border bg-portal-surface p-portal-3 shadow-portal-card"
                   >
-                    Все состояния
-                  </button>
-                  {PRODUCT_MODEL_STATUS_FILTER_ITEMS.map((item) => (
-                    <button
-                      key={item.id}
-                      type="button"
-                      role="menuitemradio"
-                      aria-checked={statusFilter === item.id}
-                      className={[
-                        "flex w-full items-center rounded-portal-sm px-portal-3 py-2 text-left text-portal-body",
-                        statusFilter === item.id
-                          ? "bg-portal-primary-soft font-medium text-portal-primary"
-                          : "text-portal-text hover:bg-portal-state-hover",
-                      ].join(" ")}
-                      onClick={() => {
-                        setStatusFilter(item.id);
-                        setFilterOpen(false);
-                      }}
+                    <Select
+                      value={statusFilter}
+                      size="compact"
+                      aria-label="Фильтр по состоянию"
+                      onChange={(event) =>
+                        setStatusFilter(
+                          event.target.value as "" | ProductModelStatus,
+                        )
+                      }
                     >
-                      {item.label}
-                    </button>
-                  ))}
-                </div>
-              ) : null}
+                      <option value="">Все состояния</option>
+                      {PRODUCT_MODEL_STATUS_FILTER_ITEMS.map((item) => (
+                        <option key={item.id} value={item.id}>
+                          {item.label}
+                        </option>
+                      ))}
+                    </Select>
+                    {productTypes.length > 0 ? (
+                      <Select
+                        value={
+                          productTypeFilter == null
+                            ? ""
+                            : String(productTypeFilter)
+                        }
+                        size="compact"
+                        aria-label="Фильтр по типу изделия"
+                        onChange={(event) => {
+                          const raw = event.target.value;
+                          setProductTypeFilter(raw ? Number(raw) : null);
+                        }}
+                      >
+                        <option value="">Все типы</option>
+                        {productTypes.map((row) => (
+                          <option key={row.id} value={row.id}>
+                            {row.name}
+                          </option>
+                        ))}
+                      </Select>
+                    ) : null}
+                  </div>
+                ) : null}
+              </div>
+              <IconButton
+                label="Сбросить фильтр"
+                variant="secondary"
+                disabled={!filtersActive}
+                onClick={clearFilters}
+              >
+                <FilterX className="size-4" aria-hidden="true" />
+              </IconButton>
+              <IconButton
+                label={
+                  printSelectMode
+                    ? selectedIds.size > 0
+                      ? `Печать (${selectedIds.size})`
+                      : "Выйти из режима печати"
+                    : "Печать"
+                }
+                variant={printSelectMode ? "primary" : "secondary"}
+                aria-pressed={printSelectMode}
+                onClick={onPrint}
+              >
+                <Printer className="size-4" aria-hidden="true" />
+              </IconButton>
             </div>
-            <IconButton
-              label="Сбросить фильтр"
-              variant="secondary"
-              disabled={!statusFilter}
-              onClick={() => setStatusFilter("")}
-            >
-              <FilterX className="size-4" aria-hidden="true" />
-            </IconButton>
           </div>
         }
         end={
-          <div className="flex flex-wrap items-center gap-1">
+          <div className="!w-auto shrink-0">
             <IconButton
               label="Создать модель"
               variant="primary"
               onClick={() => setCreateOpen(true)}
             >
               <Plus className="size-4" aria-hidden="true" />
-            </IconButton>
-            <IconButton
-              label="Распечатать"
-              variant="secondary"
-              onClick={onPrint}
-            >
-              <Printer className="size-4" aria-hidden="true" />
             </IconButton>
           </div>
         }
@@ -340,9 +413,19 @@ export function ProductModelsWorkspace({
             <DataTable minWidthClassName="min-w-[860px]">
               <DataTableHead>
                 <tr>
+                  {printSelectMode ? (
+                    <DataTableHeaderCell className="w-10">
+                      <Checkbox
+                        checked={allFilteredSelected}
+                        aria-label="Выбрать все модели"
+                        onChange={toggleSelectAllFiltered}
+                      />
+                    </DataTableHeaderCell>
+                  ) : null}
                   <DataTableHeaderCell>Фото</DataTableHeaderCell>
                   <DataTableHeaderCell>Артикул</DataTableHeaderCell>
                   <DataTableHeaderCell>Название</DataTableHeaderCell>
+                  <DataTableHeaderCell>Тип изделия</DataTableHeaderCell>
                   <DataTableHeaderCell>Размерная сетка</DataTableHeaderCell>
                   <DataTableHeaderCell>Статус</DataTableHeaderCell>
                   <DataTableHeaderCell>Стоимость от–до</DataTableHeaderCell>
@@ -358,9 +441,24 @@ export function ProductModelsWorkspace({
                   const gridLabel = grid
                     ? `${grid.name} · ${PRODUCT_MODEL_SIZE_TYPE_LABELS[grid.size_type]}`
                     : PRODUCT_MODEL_SIZE_TYPE_LABELS[model.size_type];
+                  const productTypeLabel =
+                    model.product_type_name?.trim() ||
+                    productTypes.find((row) => row.id === model.product_type_id)
+                      ?.name ||
+                    "—";
+                  const checked = selectedIds.has(model.id);
 
                   return (
                     <DataTableRow key={model.id}>
+                      {printSelectMode ? (
+                        <DataTableCell>
+                          <Checkbox
+                            checked={checked}
+                            aria-label={`Выбрать ${model.name}`}
+                            onChange={() => toggleSelected(model.id)}
+                          />
+                        </DataTableCell>
+                      ) : null}
                       <DataTableCell>
                         <CoverThumb model={model} onOpen={openLightbox} />
                       </DataTableCell>
@@ -380,6 +478,7 @@ export function ProductModelsWorkspace({
                           {model.name}
                         </Link>
                       </DataTableCell>
+                      <DataTableCell>{productTypeLabel}</DataTableCell>
                       <DataTableCell>{gridLabel}</DataTableCell>
                       <DataTableCell>
                         <StatusBadge
@@ -412,6 +511,7 @@ export function ProductModelsWorkspace({
           </DataTableFrame>
         </div>
 
+        {mounted ? (
         <div className="min-w-0 space-y-portal-3 border-b border-portal-border bg-portal-surface-secondary p-portal-3 md:hidden">
           {filtered.length === 0 ? (
             <EmptyState
@@ -430,6 +530,11 @@ export function ProductModelsWorkspace({
               const gridLabel = grid
                 ? `${grid.name} · ${PRODUCT_MODEL_SIZE_TYPE_LABELS[grid.size_type]}`
                 : PRODUCT_MODEL_SIZE_TYPE_LABELS[model.size_type];
+              const productTypeLabel =
+                model.product_type_name?.trim() ||
+                productTypes.find((row) => row.id === model.product_type_id)
+                  ?.name ||
+                "—";
 
               return (
                 <article
@@ -438,6 +543,14 @@ export function ProductModelsWorkspace({
                 >
                   <div className="flex min-w-0 items-start justify-between gap-portal-3">
                     <div className="flex min-w-0 flex-1 items-start gap-portal-3">
+                      {printSelectMode ? (
+                        <Checkbox
+                          checked={selectedIds.has(model.id)}
+                          aria-label={`Выбрать ${model.name}`}
+                          onChange={() => toggleSelected(model.id)}
+                          className="mt-1 shrink-0"
+                        />
+                      ) : null}
                       <CoverThumb model={model} onOpen={openLightbox} />
                       <div className="min-w-0 flex-1 space-y-portal-2">
                         <h3 className="truncate text-portal-body font-semibold text-portal-text">
@@ -449,7 +562,7 @@ export function ProductModelsWorkspace({
                           </Link>
                         </h3>
                         <p className="truncate text-portal-caption text-portal-muted">
-                          {model.article} · {gridLabel}
+                          {model.article} · {productTypeLabel} · {gridLabel}
                         </p>
                         <p className="text-portal-caption text-portal-muted">
                           Стоимость от–до: {costLabel(model.id)}
@@ -469,6 +582,7 @@ export function ProductModelsWorkspace({
             })
           )}
         </div>
+        ) : null}
 
         <ListTotals primary={`Всего: ${filtered.length} моделей`} />
       </section>

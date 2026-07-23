@@ -47,6 +47,7 @@ import {
   type ProductModelVersionView,
 } from "@/lib/product-models";
 import type { SewingOperation } from "@/lib/sewing-operations";
+import type { ProductType } from "@/lib/product-types";
 import type { SizeGridListItem } from "@/lib/size-grids";
 
 const COLUMN_GAP = "gap-[14px]";
@@ -62,6 +63,7 @@ export function ProductModelPersistentCard({
   assemblyVariants,
   sewingOperations,
   sizeGrids,
+  productTypes,
   initialEditing = false,
 }: {
   model: ProductModel;
@@ -72,6 +74,7 @@ export function ProductModelPersistentCard({
   assemblyVariants: AssemblyVariant[];
   sewingOperations: SewingOperation[];
   sizeGrids: SizeGridListItem[];
+  productTypes: ProductType[];
   initialEditing?: boolean;
 }) {
   const router = useRouter();
@@ -116,6 +119,24 @@ export function ProductModelPersistentCard({
     if (gridId == null) return null;
     return sizeGrids.find((grid) => grid.id === gridId) ?? null;
   }, [current.size_grid_id, draft, editing, sizeGrids]);
+  const linkedProductType = useMemo(() => {
+    const typeId =
+      editing && draft ? draft.product_type_id : current.product_type_id;
+    if (typeId == null) return null;
+    return productTypes.find((row) => row.id === typeId) ?? null;
+  }, [current.product_type_id, draft, editing, productTypes]);
+  const productTypeOptions = useMemo(() => {
+    const active = productTypes.filter((row) => row.is_active);
+    if (
+      linkedProductType &&
+      !active.some((row) => row.id === linkedProductType.id)
+    ) {
+      return [...active, linkedProductType].sort(
+        (a, b) => a.sort_order - b.sort_order || a.name.localeCompare(b.name, "ru"),
+      );
+    }
+    return active;
+  }, [linkedProductType, productTypes]);
   const historySummary =
     history.length === 0
       ? "Записей пока нет"
@@ -289,6 +310,7 @@ export function ProductModelPersistentCard({
         patterns_path: draft.patterns_path || null,
         constructor_name: draft.constructor_name || null,
         patterns_created_on: draft.patterns_created_on || null,
+        product_type_id: draft.product_type_id,
       });
       setCurrent(updated);
       setEditing(false);
@@ -646,6 +668,34 @@ export function ProductModelPersistentCard({
                         />
                       </Field>
                     </div>
+                    <div className="grid min-w-0 gap-portal-3 min-[1300px]:grid-cols-2 min-[1700px]:grid-cols-4">
+                      <Field label="Тип изделия" className="min-w-0">
+                        <Select
+                          value={
+                            draft.product_type_id == null
+                              ? ""
+                              : String(draft.product_type_id)
+                          }
+                          size="compact"
+                          disabled={busy}
+                          onChange={(event) => {
+                            const raw = event.target.value;
+                            setDraft({
+                              ...draft,
+                              product_type_id: raw ? Number(raw) : null,
+                            });
+                          }}
+                          aria-label="Тип изделия"
+                        >
+                          <option value="">Не указан</option>
+                          {productTypeOptions.map((row) => (
+                            <option key={row.id} value={row.id}>
+                              {row.name}
+                            </option>
+                          ))}
+                        </Select>
+                      </Field>
+                    </div>
                   </div>
                 ) : (
                   <div className="grid min-w-0 gap-portal-4">
@@ -772,6 +822,22 @@ export function ProductModelPersistentCard({
                         ) : (
                           <p className="mt-1 text-portal-body text-portal-muted">
                             Не указана
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="grid min-w-0 gap-portal-3 min-[1300px]:grid-cols-2 min-[1700px]:grid-cols-4">
+                      <div className="min-w-0 border-l-2 border-portal-border pl-portal-3">
+                        <p className="text-portal-caption font-medium text-portal-muted">
+                          Тип изделия
+                        </p>
+                        {linkedProductType || current.product_type_name?.trim() ? (
+                          <p className="mt-1 text-portal-body font-semibold text-portal-text">
+                            {linkedProductType?.name ?? current.product_type_name}
+                          </p>
+                        ) : (
+                          <p className="mt-1 text-portal-body text-portal-muted">
+                            Не указан
                           </p>
                         )}
                       </div>

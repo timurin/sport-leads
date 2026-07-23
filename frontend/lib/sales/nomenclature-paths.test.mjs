@@ -17,26 +17,30 @@ test("uses the canonical characteristics API prefix without duplicate segments",
   );
 });
 
-test("nomenclature card keeps isolated async editing contracts for all blocks", async () => {
+test("nomenclature card keeps PT-08 chrome and isolated async editing contracts", async () => {
   const cardPath = fileURLToPath(new URL("../../components/settings/nomenclature-card.tsx", import.meta.url));
   const source = await readFile(cardPath, "utf8");
   for (const marker of [
-    "updateNomenclature",
+    "VersionedWorkspace",
+    "CatalogVersionedCardLayout",
+    "updateNomenclatureRequisites",
     "saveNomenclatureCustomField",
     "assignNomenclatureCharacteristic",
+    "Основные реквизиты",
+    "Дополнительные реквизиты",
+    "NomenclatureMediaCarousel",
     "Редактировать",
-    "Сохранить",
     "Отмена",
     "Сохранение…",
     "Сохранено",
     "Ошибка сохранения",
     "router.refresh()",
-    "lg:col-start-1",
-    "lg:col-start-2",
-    "contents",
+    "category_id",
+    "storage_unit_id",
   ]) {
     assert.ok(source.includes(marker), `missing editing marker: ${marker}`);
   }
+  assert.equal(source.includes("lg:col-start-1"), false, "legacy 65/35 grid must be removed");
 });
 
 test("nomenclature media gallery keeps upload and media management contracts", async () => {

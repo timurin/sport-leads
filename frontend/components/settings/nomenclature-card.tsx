@@ -2,83 +2,1202 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
-import type { FormEvent, ReactNode } from "react";
-import { assignNomenclatureCustomField, createAndAssignNomenclatureCustomField, removeNomenclatureCustomField, saveNomenclatureCustomField } from "@/app/(workspace)/settings/catalogs/custom-fields/custom-fields-actions";
-import { assignNomenclatureCharacteristic, createCharacteristicOption, generateNomenclatureVariants } from "@/app/(workspace)/settings/catalogs/nomenclature/characteristics-actions";
-import { updateNomenclature } from "@/app/(workspace)/settings/catalogs/nomenclature/nomenclature-actions";
-import { NomenclatureMediaGallery } from "@/components/settings/nomenclature-media-gallery";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type FormEvent,
+  type MouseEvent,
+  type ReactNode,
+} from "react";
+import { ChevronDown, Plus, Save } from "lucide-react";
+
+import {
+  removeNomenclatureCustomField,
+  saveNomenclatureCustomField,
+} from "@/app/(workspace)/settings/catalogs/custom-fields/custom-fields-actions";
+import {
+  deleteNomenclatureMedia,
+  updateNomenclatureMedia,
+  uploadNomenclatureMedia,
+} from "@/app/(workspace)/settings/catalogs/nomenclature/characteristics-actions";
+import { updateNomenclatureRequisites } from "@/app/(workspace)/settings/catalogs/nomenclature/nomenclature-actions";
+import { CatalogVersionedCardLayout } from "@/components/entity/catalog-versioned-card-layout";
+import { VersionedWorkspace } from "@/components/entity/versioned-workspace";
+import { NomenclatureAddCustomFieldForm } from "@/components/settings/nomenclature-add-custom-field-form";
+import { NomenclatureAvailableModelsBlock } from "@/components/settings/nomenclature-available-models-block";
+import { NomenclatureMediaCarousel } from "@/components/settings/nomenclature-media-carousel";
+import { ProductModelToolbarActions } from "@/components/settings/product-model-toolbar-actions";
+import { EntityHeader } from "@/components/ui/entity-header";
+import { IconButton } from "@/components/ui/button";
+import { Field, Input, Select, Textarea } from "@/components/ui/form-controls";
+import { ImageLightbox } from "@/components/ui/image-lightbox";
+import { SectionCard } from "@/components/ui/section-card";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { checkboxClassName, controlClassName } from "@/lib/design-system/control-styles";
-import type { CategoryCharacteristic, CharacteristicDefinition, CharacteristicOption, CustomFieldDefinition, CustomFieldOption, Nomenclature, NomenclatureCategory, NomenclatureCharacteristic, NomenclatureFieldValue, NomenclatureMedia, NomenclatureType, NomenclatureVariant, UnitOfMeasure } from "@/lib/nomenclature";
+import {
+  NOMENCLATURE_CURRENCY_OPTIONS,
+  NOMENCLATURE_IMAGE_RULE,
+  NOMENCLATURE_TYPE_LABELS,
+  NOMENCLATURE_TYPE_OPTIONS,
+  categoryPathLabel,
+  isNomenclatureRequisitesDirty,
+  nomenclatureStatusLabel,
+  nomenclatureStatusTone,
+  resolveNomenclatureCategoryLabel,
+  resolveNomenclatureUnitSymbol,
+  toNomenclatureRequisitesDraft,
+  validateNomenclatureImageFile,
+  validateNomenclatureRequisitesDraft,
+  type CharacteristicDefinition,
+  type CustomFieldOption,
+  type Nomenclature,
+  type NomenclatureAvailableModel,
+  type NomenclatureCategory,
+  type NomenclatureFieldValue,
+  type NomenclatureMedia,
+  type NomenclatureRequisitesDraft,
+  type NomenclatureType,
+  type UnitOfMeasure,
+} from "@/lib/nomenclature";
+import type { ProductModel } from "@/lib/product-models";
+
+const COLUMN_GAP = "gap-[14px]";
+const DIRTY_LEAVE_MESSAGE =
+  "Есть несохранённые изменения. Уйти без сохранения?";
 
 type SaveStatus = "idle" | "saving" | "saved" | "error";
-type Action = (formData: FormData) => Promise<void>;
-const typeLabels: Record<NomenclatureType, string> = { SERVICE: "Услуга", PRODUCT: "Продукция", GOODS: "Товар", MATERIAL: "Материал" };
-const typeOptions = Object.entries(typeLabels) as [NomenclatureType, string][];
 
-function categoryPath(categoryId: number | null, categories: NomenclatureCategory[]): string {
-  const category = categories.find((item) => item.id === categoryId);
-  return category ? `${category.parent_id ? `${categoryPath(category.parent_id, categories)} / ` : ""}${category.name}` : "Без категории";
+function RequisiteRead({
+  label,
+  accent = false,
+  children,
+  className = "",
+}: {
+  label: string;
+  accent?: boolean;
+  children: ReactNode;
+  className?: string;
+}) {
+  return (
+    <div
+      className={[
+        "min-w-0 border-l-2 pl-portal-3",
+        accent ? "border-portal-primary/40" : "border-portal-border",
+        className,
+      ].join(" ")}
+    >
+      <p className="text-portal-caption font-medium text-portal-muted">{label}</p>
+      <div className="mt-1 text-portal-body font-semibold text-portal-text">
+        {children}
+      </div>
+    </div>
+  );
 }
 
-function nomenclatureMediaUrl(contentUrl: string): string {
-  return contentUrl.startsWith("http") ? contentUrl : `${(process.env.NEXT_PUBLIC_SPORT_LEADS_API_URL ?? "http://127.0.0.1:8000").replace(/\/$/, "")}${contentUrl}`;
-}
-
-function Card({ title, children, action, className = "" }: { title: string; children: ReactNode; action?: ReactNode; className?: string }) {
-  return <section className={`rounded-[14px] border border-[#dfe5ef] bg-white p-4 shadow-[0_1px_2px_rgba(16,24,40,.05),0_4px_14px_rgba(16,24,40,.04)] ${className}`}><div className="mb-3.5 flex items-center justify-between gap-3"><h2 className="text-[17px] font-semibold">{title}</h2>{action}</div>{children}</section>;
-}
-
-function BlockActions({ editing, dirty, status, formId, onEdit, onCancel }: { editing: boolean; dirty: boolean; status: SaveStatus; formId?: string; onEdit: () => void; onCancel: () => void }) {
-  if (!editing) return <button type="button" onClick={onEdit} className="rounded-lg border border-[#dfe5ef] bg-white px-3 py-2 text-xs font-bold">✎ Редактировать</button>;
-  return <div className="flex flex-wrap items-center justify-end gap-2"><span className="text-xs text-slate-500">{status === "saving" ? "Сохранение…" : status === "saved" ? "Сохранено" : status === "error" ? "Ошибка сохранения" : dirty ? "Есть несохранённые изменения" : ""}</span><button type="button" onClick={onCancel} disabled={status === "saving"} className="rounded-lg border border-[#dfe5ef] bg-white px-3 py-2 text-xs font-bold disabled:opacity-50">Отмена</button><button type="submit" form={formId} disabled={status === "saving"} className="rounded-lg border border-[#1f5eff] bg-[#1f5eff] px-3 py-2 text-xs font-bold text-white disabled:opacity-50">{status === "saving" ? "Сохранение…" : "Сохранить"}</button></div>;
-}
-
-function FieldValue({ itemId, field, options, editing, onSave, onRemove }: { itemId: number; field: NomenclatureFieldValue; options: CustomFieldOption[]; editing: boolean; onSave: (formData: FormData) => Promise<void>; onRemove: (formData: FormData) => Promise<void> }) {
+function fieldDisplayValue(
+  field: NomenclatureFieldValue,
+  options: CustomFieldOption[],
+): string {
   const value = field.value;
-  const submit = async (event: FormEvent<HTMLFormElement>) => { event.preventDefault(); await onSave(new FormData(event.currentTarget)); };
-  if (!editing) return <div className="grid grid-cols-[minmax(180px,1fr)_2fr_1fr] gap-4 border-b border-slate-100 py-2 text-sm last:border-0"><span className="text-slate-500">{field.name}{field.is_required ? " *" : ""}</span><span className="font-medium">{Array.isArray(value) ? value.join(", ") : value === null || value === "" ? "Не указано" : String(value)}</span><span className="text-slate-400">—</span></div>;
-  const common = controlClassName({ size: "compact" });
-  let control: ReactNode;
-  if (field.data_type === "BOOLEAN") control = <input type="checkbox" name="value" defaultChecked={value === true} className={checkboxClassName()} />;
-  else if (field.data_type === "TEXT") control = <textarea name="value" defaultValue={typeof value === "string" ? value : ""} className={`${common} min-h-[72px]`} />;
-  else if (field.data_type === "SINGLE_SELECT") control = <select name="value" defaultValue={value === null ? "" : String(value)} className={common}><option value="">Не выбрано</option>{options.filter((option) => option.is_active).map((option) => <option key={option.id} value={option.id}>{option.label}</option>)}</select>;
-  else control = <input name="value" defaultValue={value === null ? "" : String(value)} type={field.data_type === "INTEGER" || field.data_type === "DECIMAL" ? "number" : field.data_type === "DATE" ? "date" : "text"} className={common} />;
-  return <form onSubmit={submit} className="grid grid-cols-[minmax(180px,1fr)_2fr_auto] items-center gap-4 border-b border-slate-100 py-2 last:border-0"><input type="hidden" name="nomenclature_id" value={itemId}/><input type="hidden" name="field_definition_id" value={field.field_definition_id}/><input type="hidden" name="data_type" value={field.data_type}/><span className="text-xs text-slate-600">{field.name}{field.is_required ? " *" : ""}</span>{control}<div className="flex gap-1"><button className="rounded-lg border border-[#dfe5ef] px-3 py-2 text-xs font-bold">Сохранить</button>{field.source_category_id === null && <button type="button" formAction={onRemove} className="rounded-lg border border-red-200 px-3 py-2 text-xs font-bold text-red-700">Удалить</button>}</div></form>;
+  const fieldKind = field.kind ?? field.data_type ?? "STRING";
+  if (Array.isArray(value)) return value.join(", ");
+  if (value === null || value === "") return "Не указано";
+  if (
+    (fieldKind === "LIST" ||
+      fieldKind === "MULTI_SELECT" ||
+      fieldKind === "COLOR") &&
+    options.length
+  ) {
+    const match = options.find((option) => String(option.id) === String(value));
+    return match?.label ?? String(value);
+  }
+  return String(value);
 }
 
-export function NomenclatureCard({ item: initialItem, categories, units, fields, fieldOptions, characteristicDefinitions, categoryCharacteristics, nomenclatureCharacteristics, variants, characteristicOptions, media, definitions }: { item: Nomenclature; categories: NomenclatureCategory[]; units: UnitOfMeasure[]; fields: NomenclatureFieldValue[]; fieldOptions: Record<number, CustomFieldOption[]>; characteristicDefinitions: CharacteristicDefinition[]; categoryCharacteristics: CategoryCharacteristic[]; nomenclatureCharacteristics: NomenclatureCharacteristic[]; variants: NomenclatureVariant[]; characteristicOptions: Record<number, CharacteristicOption[]>; media: NomenclatureMedia[]; definitions: CustomFieldDefinition[] }) {
-  const [savedItem, setSavedItem] = useState<Partial<Nomenclature>>({});
-  const item = { ...initialItem, ...savedItem };
-  const [activeTab, setActiveTab] = useState("main");
-  const [mainEditing, setMainEditing] = useState(false);
+function FieldValueRow({
+  itemId,
+  field,
+  options,
+  editing,
+  onRemove,
+}: {
+  itemId: number;
+  field: NomenclatureFieldValue;
+  options: CustomFieldOption[];
+  editing: boolean;
+  onRemove: (formData: FormData) => Promise<void>;
+}) {
+  const value = field.value;
+  if (!editing) {
+    return (
+      <div className="grid grid-cols-[minmax(120px,1fr)_2fr] gap-portal-3 border-b border-portal-border py-portal-2 text-portal-body last:border-0">
+        <span className="text-portal-muted">
+          {field.name}
+          {field.is_required ? " *" : ""}
+        </span>
+        <span className="font-medium text-portal-text">
+          {fieldDisplayValue(field, options)}
+        </span>
+      </div>
+    );
+  }
+  const fieldKind = field.kind ?? field.data_type ?? "STRING";
+  const characteristicId =
+    field.characteristic_id ?? field.field_definition_id ?? 0;
+  const common = controlClassName({ size: "compact" });
+  const valueName = `value_${characteristicId}`;
+  let control: ReactNode;
+  if (fieldKind === "BOOLEAN") {
+    control = (
+      <input
+        type="checkbox"
+        name={valueName}
+        defaultChecked={value === true}
+        className={checkboxClassName()}
+      />
+    );
+  } else if (fieldKind === "TEXT") {
+    control = (
+      <textarea
+        name={valueName}
+        defaultValue={typeof value === "string" ? value : ""}
+        className={`${common} min-h-[72px]`}
+      />
+    );
+  } else if (
+    fieldKind === "LIST" ||
+    fieldKind === "MULTI_SELECT" ||
+    fieldKind === "COLOR"
+  ) {
+    control = (
+      <select
+        name={valueName}
+        defaultValue={value === null ? "" : String(value)}
+        className={common}
+      >
+        <option value="">Не выбрано</option>
+        {options
+          .filter((option) => option.is_active)
+          .map((option) => (
+            <option key={option.id} value={option.id}>
+              {option.label}
+            </option>
+          ))}
+      </select>
+    );
+  } else {
+    control = (
+      <input
+        name={valueName}
+        defaultValue={value === null ? "" : String(value)}
+        type={
+          fieldKind === "INTEGER" || fieldKind === "DECIMAL"
+            ? "number"
+            : fieldKind === "DATE"
+              ? "date"
+              : "text"
+        }
+        className={common}
+      />
+    );
+  }
+  return (
+    <div className="grid grid-cols-[minmax(120px,1fr)_2fr_auto] items-center gap-portal-3 border-b border-portal-border py-portal-2 last:border-0">
+      <input type="hidden" name={`kind_${characteristicId}`} value={fieldKind} />
+      <span className="text-portal-caption text-portal-muted">
+        {field.name}
+        {field.is_required ? " *" : ""}
+      </span>
+      {control}
+      <div className="flex justify-end">
+        {field.source_category_id === null ? (
+          <button
+            type="button"
+            className="rounded-portal-md border border-portal-danger/30 px-portal-3 py-1.5 text-portal-caption font-medium text-portal-danger"
+            onClick={() => {
+              const data = new FormData();
+              data.set("nomenclature_id", String(itemId));
+              data.set("characteristic_id", String(characteristicId));
+              data.set("field_definition_id", String(characteristicId));
+              void onRemove(data);
+            }}
+          >
+            Удалить
+          </button>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+/** PT-08 + DS-PT-08-CATALOG nomenclature card (`4.7.3` / `4.7.4`). */
+export function NomenclatureCard({
+  item: initialItem,
+  categories,
+  units,
+  fields,
+  fieldOptions,
+  usedValuesById = {},
+  characteristicDefinitions,
+  media,
+  availableModels = [],
+  activeModels = [],
+  initialEditing = false,
+}: {
+  item: Nomenclature;
+  categories: NomenclatureCategory[];
+  units: UnitOfMeasure[];
+  fields: NomenclatureFieldValue[];
+  fieldOptions: Record<number, CustomFieldOption[]>;
+  usedValuesById?: Record<number, string[]>;
+  characteristicDefinitions: CharacteristicDefinition[];
+  media: NomenclatureMedia[];
+  availableModels?: NomenclatureAvailableModel[];
+  activeModels?: ProductModel[];
+  initialEditing?: boolean;
+}) {
+  const router = useRouter();
+  const fieldsFormRef = useRef<HTMLFormElement>(null);
+  const [trackedItem, setTrackedItem] = useState(initialItem);
+  const [current, setCurrent] = useState(initialItem);
+  const [trackedMedia, setTrackedMedia] = useState(media);
+  const [items, setItems] = useState(media);
+  const [previewSrc, setPreviewSrc] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [warning, setWarning] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [editing, setEditing] = useState(initialEditing);
+  const [draft, setDraft] = useState<NomenclatureRequisitesDraft | null>(() =>
+    initialEditing ? toNomenclatureRequisitesDraft(initialItem) : null,
+  );
+
+  const [fieldsOpen, setFieldsOpen] = useState(true);
   const [fieldsEditing, setFieldsEditing] = useState(false);
-  const [characteristicsEditing, setCharacteristicsEditing] = useState(false);
-  const [mediaEditing, setMediaEditing] = useState(false);
-  const [mainDirty, setMainDirty] = useState(false);
-  const [fieldsDirty, setFieldsDirty] = useState(false);
-  const [mainStatus, setMainStatus] = useState<SaveStatus>("idle");
   const [fieldsStatus, setFieldsStatus] = useState<SaveStatus>("idle");
-  const [characteristicsStatus, setCharacteristicsStatus] = useState<SaveStatus>("idle");
-  const [mediaStatus, setMediaStatus] = useState<SaveStatus>("idle");
   const [fieldState, setFieldState] = useState(fields);
   const [addingField, setAddingField] = useState(false);
-  const [fieldSearch, setFieldSearch] = useState("");
-  const router = useRouter();
-  const definedIds = new Set(nomenclatureCharacteristics.map((assignment) => assignment.characteristic_id));
-  const rowIds = [...new Set([...categoryCharacteristics.map((row) => row.characteristic_id), ...nomenclatureCharacteristics.map((assignment) => assignment.characteristic_id)])];
-  const rows = rowIds.map((id) => categoryCharacteristics.find((row) => row.characteristic_id === id) ?? { characteristic_id: id, is_required: false });
-  void variants;
-  const dirty = mainDirty || fieldsDirty;
-  const selectTab = (tab: string) => { if (dirty && !window.confirm("Есть несохранённые изменения. Перейти без сохранения?")) return; setActiveTab(tab); };
-  const saveMain = async (event: FormEvent<HTMLFormElement>) => { event.preventDefault(); setMainStatus("saving"); try { const data = new FormData(event.currentTarget); await updateNomenclature(data); setSavedItem({ article: String(data.get("article")), name: String(data.get("name")), short_name: String(data.get("short_name") ?? "") || null, description: String(data.get("description") ?? "") || null, category: String(data.get("category")), category_id: data.get("category_id") ? Number(data.get("category_id")) : null, nomenclature_type: String(data.get("nomenclature_type")) as NomenclatureType, unit: String(data.get("unit")), storage_unit_id: data.get("storage_unit_id") ? Number(data.get("storage_unit_id")) : null, basePrice: String(data.get("base_price")), currency: String(data.get("currency")), is_active: data.get("is_active") === "true" }); setMainDirty(false); setMainEditing(false); setMainStatus("saved"); } catch { setMainStatus("error"); } };
-  const saveField = async (data: FormData) => { setFieldsStatus("saving"); try { await saveNomenclatureCustomField(data); const id = Number(data.get("field_definition_id")); setFieldState((current) => current.map((field) => field.field_definition_id === id ? { ...field, value: data.get("value") } : field)); setFieldsDirty(false); setFieldsStatus("saved"); } catch { setFieldsStatus("error"); throw new Error("Не удалось сохранить реквизит"); } };
-  const characteristicAction = (action: Action) => async (event: FormEvent<HTMLFormElement>) => { event.preventDefault(); setCharacteristicsStatus("saving"); try { await action(new FormData(event.currentTarget)); setCharacteristicsStatus("saved"); router.refresh(); } catch { setCharacteristicsStatus("error"); } };
-  const visible = (tab: string) => activeTab === tab ? "" : "hidden";
-  const input = controlClassName({ size: "compact" });
-  const imageMedia = media.filter((entry) => entry.mime_type.startsWith("image/"));
-  const assignedFieldIds = new Set(fieldState.map((field) => field.field_definition_id));
-  const matchingDefinitions = definitions.filter((field) => field.is_active && !assignedFieldIds.has(field.id) && (field.name.toLocaleLowerCase().includes(fieldSearch.toLocaleLowerCase()) || field.code.toLocaleLowerCase().includes(fieldSearch.toLocaleLowerCase())));
-  const [selectedMedia, setSelectedMedia] = useState<NomenclatureMedia | null>(null);
-  return <>{selectedMedia && <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#101828]/80 p-4" role="dialog" aria-modal="true" aria-label={selectedMedia.alt_text ?? selectedMedia.filename} onClick={() => setSelectedMedia(null)}><div className="relative max-h-[90vh] max-w-[90vw] rounded-xl bg-white p-2" onClick={(event) => event.stopPropagation()}><button type="button" onClick={() => setSelectedMedia(null)} aria-label="Закрыть изображение" className="absolute right-2 top-2 z-10 rounded-full bg-[#101828]/75 px-3 py-1 text-lg font-bold text-white">×</button><img src={nomenclatureMediaUrl(selectedMedia.content_url)} alt={selectedMedia.alt_text ?? selectedMedia.filename} className="max-h-[86vh] max-w-[86vw] object-contain" /></div></div>}<div data-active-tab={activeTab} className="min-w-0 bg-[#f6f8fc] px-3 py-4 text-[#101828] sm:px-6 sm:py-5"><Link href="/settings/catalogs/nomenclature" className="font-bold text-[#175cd3]">← Назад к номенклатуре</Link><header className="mt-3 flex flex-col justify-between gap-4 sm:flex-row sm:items-start"><div><div className="flex flex-wrap items-center gap-3"><h1 className="text-[24px] font-bold sm:text-[27px]">{item.name}</h1><span className="rounded-full bg-[#eaf7ee] px-2.5 py-1 text-xs font-bold text-[#16803a]">{item.is_active ? "Активна" : "Архив"}</span></div><p className="mt-1 text-sm text-[#667085]">{item.article} · {typeLabels[item.nomenclature_type]} · {categoryPath(item.category_id, categories)}</p></div><div className="nomenclature-card-header-actions mt-3 flex items-center justify-end gap-2 sm:mt-0"><button type="button" aria-label="Меню карточки" className="h-10 w-10 rounded-lg border border-[#dfe5ef] bg-white px-3 py-2 text-lg font-bold">⋮</button><BlockActions editing={mainEditing} dirty={mainDirty} status={mainStatus} formId="nomenclature-main-form" onEdit={() => { setMainEditing(true); setMainStatus("idle"); }} onCancel={() => { setMainEditing(false); setMainDirty(false); setMainStatus("idle"); }} /></div></header><nav className="my-5 flex gap-6 overflow-x-auto border-b border-[#dfe5ef]" aria-label="Разделы карточки">{[["main", "Основное"], ["fields", "Реквизиты"], ["characteristics", "Характеристики и варианты"], ["media", "Изображения и файлы"], ["history", "История"]].map(([tab, label]) => <button key={tab} type="button" onClick={() => selectTab(tab)} className={`whitespace-nowrap border-b-2 py-2.5 ${activeTab === tab ? "border-[#1f5eff] font-extrabold text-[#1f5eff]" : "border-transparent text-[#344054]"}`}>{label}</button>)}</nav><div className="grid items-start gap-[14px] lg:grid-cols-[minmax(0,65fr)_minmax(0,35fr)]"><div className="contents"><Card title="Основная информация" className={`${visible("main")} lg:col-start-1`} action={<BlockActions editing={mainEditing} dirty={mainDirty} status={mainStatus} formId="nomenclature-main-form" onEdit={() => { setMainEditing(true); setMainStatus("idle"); }} onCancel={() => { setMainEditing(false); setMainDirty(false); setMainStatus("idle"); }} />}><div>{mainEditing ? <form id="nomenclature-main-form" onSubmit={saveMain} onChange={() => setMainDirty(true)} className="grid gap-3 sm:grid-cols-2"><input type="hidden" name="id" value={item.id}/>{[["name", "Наименование", item.name], ["short_name", "Наименование для печати", item.short_name ?? ""], ["article", "Артикул", item.article], ["category", "Категория", item.category], ["unit", "Единица измерения", item.unit]].map(([name, label, value]) => <label key={name} className="grid gap-1.5"><span className="text-xs text-[#475467]">{label}</span><input name={name} defaultValue={value} required={name !== "short_name"} className={input}/></label>)}<label className="grid gap-1.5"><span className="text-xs text-[#475467]">Тип номенклатуры</span><select name="nomenclature_type" defaultValue={item.nomenclature_type} className={input}>{typeOptions.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label><label className="grid gap-1.5"><span className="text-xs text-[#475467]">Категория ID</span><select name="category_id" defaultValue={item.category_id ?? ""} className={input}><option value="">Без категории</option>{categories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}</select></label><label className="grid gap-1.5"><span className="text-xs text-[#475467]">Единица хранения</span><select name="storage_unit_id" defaultValue={item.storage_unit_id ?? ""} className={input}><option value="">Legacy единица</option>{units.filter((unit) => unit.is_active).map((unit) => <option key={unit.id} value={unit.id}>{unit.symbol} — {unit.name}</option>)}</select></label><label className="grid gap-1.5 sm:col-span-2"><span className="text-xs text-[#475467]">Цена без НДС</span><div className="grid grid-cols-[1fr_110px] gap-2"><input name="base_price" defaultValue={item.basePrice} type="number" min="0" step="0.01" required className={input}/><select name="currency" defaultValue={item.currency} className={input}><option>RUB</option><option>USD</option><option>EUR</option></select></div></label><label className="grid gap-1.5 sm:col-span-2"><span className="text-xs text-[#475467]">Описание</span><textarea name="description" defaultValue={item.description ?? ""} className={`${input} min-h-[72px]`}/></label><label className="flex items-center gap-2 text-sm sm:col-span-2"><input type="checkbox" name="is_active" defaultChecked={item.is_active} value="true"/> Активна</label></form> : <dl className="grid gap-3 text-sm sm:grid-cols-2"><div><dt className="text-[#667085]">Наименование</dt><dd className="font-medium">{item.name}</dd></div><div><dt className="text-[#667085]">Наименование для печати</dt><dd className="font-medium">{item.short_name || "—"}</dd></div><div><dt className="text-[#667085]">Артикул</dt><dd className="font-medium">{item.article}</dd></div><div><dt className="text-[#667085]">Тип номенклатуры</dt><dd className="font-medium">{typeLabels[item.nomenclature_type]}</dd></div><div><dt className="text-[#667085]">Категория</dt><dd className="font-medium">{categoryPath(item.category_id, categories)}</dd></div><div><dt className="text-[#667085]">Единица хранения</dt><dd className="font-medium">{units.find((unit) => unit.id === item.storage_unit_id)?.symbol ?? item.unit}</dd></div><div><dt className="text-[#667085]">Цена без НДС</dt><dd className="font-medium">{item.basePrice} {item.currency}</dd></div><div className="sm:col-span-2"><dt className="text-[#667085]">Описание</dt><dd className="whitespace-pre-wrap font-medium">{item.description || "—"}</dd></div></dl>}</div></Card><Card title="Реквизиты" className={`${activeTab === "main" || activeTab === "fields" ? "" : "hidden"} lg:col-start-1`} action={<BlockActions editing={fieldsEditing} dirty={fieldsDirty} status={fieldsStatus} onEdit={() => { setFieldsEditing(true); setFieldsStatus("idle"); }} onCancel={() => { setFieldsEditing(false); setFieldsDirty(false); setFieldsStatus("idle"); }} />}><div onChange={() => setFieldsDirty(true)}><div className="mb-3"><button type="button" onClick={() => { setAddingField((current) => !current); setFieldSearch(""); }} className="rounded-lg border border-[#dfe5ef] bg-white px-3 py-2 text-xs font-bold">+ Добавить реквизит</button>{addingField && <div className="mt-2 grid gap-2 rounded-lg border border-dashed border-[#cfd7e6] bg-[#f8fafc] p-3"><input value={fieldSearch} onChange={(event) => setFieldSearch(event.target.value)} placeholder="Поиск по названию или коду" className={input}/>{matchingDefinitions.slice(0, 6).map((field) => <form key={field.id} action={assignNomenclatureCustomField}><input type="hidden" name="nomenclature_id" value={item.id}/><input type="hidden" name="field_definition_id" value={field.id}/><button className="text-left text-sm text-[#175cd3]">{field.name} <span className="text-xs text-[#667085]">({field.code})</span></button></form>)}{fieldSearch.trim() && !matchingDefinitions.length && <form action={createAndAssignNomenclatureCustomField} className="grid gap-2 sm:grid-cols-[1fr_1fr_auto]"><input type="hidden" name="nomenclature_id" value={item.id}/><input name="name" value={fieldSearch} onChange={(event) => setFieldSearch(event.target.value)} required className={input}/><input name="code" required pattern="[a-z0-9][a-z0-9_-]*" placeholder="Код" className={input}/><select name="data_type" defaultValue="STRING" className={input}>{[["STRING", "Строка"], ["TEXT", "Текст"], ["INTEGER", "Целое"], ["DECIMAL", "Decimal"], ["BOOLEAN", "Да/нет"], ["DATE", "Дата"], ["SINGLE_SELECT", "Один вариант"], ["MULTI_SELECT", "Несколько вариантов"], ["COLOR", "Цвет"]].map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select><button className="rounded-lg bg-[#1f5eff] px-3 py-2 text-xs font-bold text-white sm:col-span-3">Создать и назначить</button></form>}</div>}</div>{fieldState.length ? fieldState.map((field) => <FieldValue key={field.field_definition_id} itemId={item.id} field={field} options={fieldOptions[field.field_definition_id] ?? []} editing={fieldsEditing} onSave={saveField} onRemove={removeNomenclatureCustomField}/>) : <p className="text-sm text-[#667085]">Для категории дополнительные реквизиты не назначены.</p>}</div></Card><Card title="Характеристики и варианты" className={`${activeTab === "main" || activeTab === "characteristics" ? "" : "hidden"} lg:col-start-1`} action={<BlockActions editing={characteristicsEditing} dirty={characteristicsStatus !== "idle"} status={characteristicsStatus} onEdit={() => { setCharacteristicsEditing(true); setCharacteristicsStatus("idle"); }} onCancel={() => { setCharacteristicsEditing(false); setCharacteristicsStatus("idle"); }} />}><div className="grid gap-3"><div className={`flex flex-wrap gap-2 ${characteristicsEditing ? "" : "hidden"}`}><form onSubmit={characteristicAction(assignNomenclatureCharacteristic)} className="flex flex-wrap gap-2"><input type="hidden" name="nomenclature_id" value={item.id}/><select name="characteristic_id" required className={`${input} w-auto`}><option value="">Добавить характеристику</option>{categoryCharacteristics.filter((row) => !definedIds.has(row.characteristic_id)).map((row) => <option key={row.characteristic_id} value={row.characteristic_id}>{characteristicDefinitions.find((definition) => definition.id === row.characteristic_id)?.name}</option>)}</select><button className="rounded-lg border border-[#dfe5ef] px-3 py-2 text-xs font-bold">Назначить</button></form><form onSubmit={characteristicAction(createCharacteristicOption)} className="flex flex-wrap gap-2"><input type="hidden" name="nomenclature_id" value={item.id}/><select name="characteristic_id" className={`${input} w-auto`}>{characteristicDefinitions.filter((definition) => definition.is_active).map((definition) => <option key={definition.id} value={definition.id}>{definition.name}</option>)}</select><input name="code" placeholder="Код значения" required className={`${input} w-28`}/><input name="label" placeholder="Значение" required className={`${input} w-32`}/><button className="rounded-lg border border-[#dfe5ef] px-3 py-2 text-xs font-bold">Добавить значение</button></form><form onSubmit={characteristicAction(generateNomenclatureVariants)} className="flex gap-2"><input type="hidden" name="nomenclature_id" value={item.id}/><input name="article_prefix" placeholder="Префикс артикула" required className={`${input} w-36`}/><button className="rounded-lg border border-[#1f5eff] bg-[#1f5eff] px-3 py-2 text-xs font-bold text-white">Сгенерировать варианты</button></form></div><div className="overflow-x-auto"><table className="w-full min-w-[640px] border-collapse text-left text-[13px]"><thead><tr className="bg-[#f8fafc] text-[#475467]"><th className="p-2">Характеристика</th><th className="p-2">Тип</th><th className="p-2">Значения</th><th className="p-2">Обязательная</th><th className="p-2">Действия</th></tr></thead><tbody>{rows.map((row) => { const definition = characteristicDefinitions.find((candidate) => candidate.id === row.characteristic_id); const options = characteristicOptions[row.characteristic_id] ?? []; return <tr key={row.characteristic_id} className="border-b border-slate-100"><td className="p-2 font-semibold text-[#175cd3]">{definition?.name ?? `Характеристика #${row.characteristic_id}`}</td><td className="p-2">Список</td><td className="p-2"><div className="flex flex-wrap gap-1.5">{options.filter((option) => option.is_active).map((option) => <span key={option.id} className="rounded-full bg-[#f1f4f9] px-2 py-1 text-xs">{option.label}</span>)}{!options.some((option) => option.is_active) && <span className="text-[#667085]">Значения ещё не заведены</span>}</div></td><td className="p-2">{row.is_required ? <span className="text-[#16803a]">Да</span> : "Нет"}</td><td className="p-2">—</td></tr>; })}</tbody></table></div>{!rows.length && <p className="text-sm text-[#667085]">Характеристики не назначены.</p>}</div></Card></div><div className="contents"><div className={`${visible("media")} lg:col-start-2 lg:row-start-1`}><NomenclatureMediaGallery itemId={item.id} media={media} editing={mediaEditing}/></div><Card title="Карточка" className={`${visible("main")} lg:col-start-2 lg:row-start-1`}><div className="grid gap-2.5 text-sm text-[#344054]">{imageMedia.length > 0 && <div className="mb-3 flex max-w-full snap-x gap-2 overflow-x-auto pb-1">{imageMedia.map((entry) => <button key={entry.id} type="button" onClick={() => setSelectedMedia(entry)} className="overflow-hidden rounded-lg border border-[#dfe5ef] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#1f5eff]"><img src={nomenclatureMediaUrl(entry.content_url)} alt={entry.alt_text ?? entry.filename} className="h-auto w-[130px] max-w-none object-contain" /></button>)}</div>}<div>Создано: {new Date(item.created_at).toLocaleString("ru-RU")}</div><div>Изменено: {new Date(item.updated_at).toLocaleString("ru-RU")}</div><div className="font-bold text-[#101828]">{item.is_active ? "Позиция доступна для использования" : "Позиция находится в архиве"}</div><div>ID: {item.id}</div></div></Card><div className={`${activeTab === "main" || activeTab === "history" ? "" : "hidden"} lg:col-start-2 lg:row-start-2`}><Card title="История изменений"><div className="grid gap-3 text-sm"><div className="grid grid-cols-[18px_1fr] gap-2"><span className="mt-1 h-2.5 w-2.5 rounded-full bg-[#3974ff] shadow-[0_0_0_4px_#edf3ff]"/><div><b>Карточка создана</b><div className="text-xs text-[#667085]">{new Date(item.created_at).toLocaleString("ru-RU")}</div></div></div><div className="grid grid-cols-[18px_1fr] gap-2"><span className="mt-1 h-2.5 w-2.5 rounded-full bg-[#3974ff] shadow-[0_0_0_4px_#edf3ff]"/><div><b>Последнее изменение карточки</b><div className="text-xs text-[#667085]">{new Date(item.updated_at).toLocaleString("ru-RU")}</div></div></div></div></Card></div><div className={`${visible("media")} lg:col-start-2 lg:row-start-2 rounded-[14px] border border-[#dfe5ef] bg-white p-4`}><BlockActions editing={mediaEditing} dirty={false} status={mediaStatus} onEdit={() => { setMediaEditing(true); setMediaStatus("idle"); }} onCancel={() => { setMediaEditing(false); setMediaStatus("idle"); }} /></div></div></div><div className="fixed bottom-0 left-0 right-0 z-20 flex gap-2 border-t border-[#dfe5ef] bg-white p-2.5 sm:hidden"><button type="button" onClick={() => setMainEditing(false)} className="flex-1 rounded-lg border border-[#dfe5ef] bg-white px-3 py-2 text-xs font-bold">Отмена</button><button type="submit" form="nomenclature-main-form" className="flex-1 rounded-lg border border-[#1f5eff] bg-[#1f5eff] px-3 py-2 text-xs font-bold text-white">Сохранить</button></div></div></>;
+
+  if (initialItem.id !== trackedItem.id) {
+    setTrackedItem(initialItem);
+    setCurrent(initialItem);
+    setEditing(false);
+    setDraft(null);
+    setActionError(null);
+    setFieldState(fields);
+    setFieldsEditing(false);
+    setAddingField(false);
+  } else if (initialItem !== trackedItem && !editing) {
+    setTrackedItem(initialItem);
+    setCurrent(initialItem);
+  }
+
+  if (media !== trackedMedia) {
+    setTrackedMedia(media);
+    setItems(media);
+  }
+
+  const dirty =
+    editing && draft != null && isNomenclatureRequisitesDirty(current, draft);
+  const typeValue =
+    editing && draft ? draft.nomenclature_type : current.nomenclature_type;
+  const compatibleCategories = useMemo(
+    () =>
+      categories.filter(
+        (category) =>
+          category.is_active && category.nomenclature_type === typeValue,
+      ),
+    [categories, typeValue],
+  );
+  const storageUnitLabel =
+    units.find((unit) => unit.id === current.storage_unit_id)?.symbol ??
+    current.unit;
+  const historyEntries = [
+    { id: "created", label: "Карточка создана", at: current.created_at },
+    { id: "updated", label: "Последнее изменение", at: current.updated_at },
+  ];
+  const historySummary = `${historyEntries.length} записи`;
+  const assignedFieldIds = new Set(
+    fieldState.map(
+      (field) => field.characteristic_id ?? field.field_definition_id ?? 0,
+    ),
+  );
+
+  useEffect(() => {
+    if (!dirty) return;
+    const onBeforeUnload = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = "";
+    };
+    window.addEventListener("beforeunload", onBeforeUnload);
+    return () => window.removeEventListener("beforeunload", onBeforeUnload);
+  }, [dirty]);
+
+  const startEdit = () => {
+    setEditing(true);
+    setDraft(toNomenclatureRequisitesDraft(current));
+    setActionError(null);
+  };
+
+  const cancelEdit = () => {
+    if (
+      draft &&
+      isNomenclatureRequisitesDirty(current, draft) &&
+      !window.confirm(DIRTY_LEAVE_MESSAGE)
+    ) {
+      return;
+    }
+    setEditing(false);
+    setDraft(null);
+    setActionError(null);
+  };
+
+  const onSave = async () => {
+    if (!draft) return;
+    const validationError = validateNomenclatureRequisitesDraft(draft);
+    if (validationError) {
+      setActionError(validationError);
+      return;
+    }
+    setBusy(true);
+    setActionError(null);
+    try {
+      const updated = await updateNomenclatureRequisites(current.id, {
+        ...draft,
+        category: resolveNomenclatureCategoryLabel(
+          draft.category_id,
+          categories,
+          current.category,
+        ),
+        unit: resolveNomenclatureUnitSymbol(
+          draft.storage_unit_id,
+          units,
+          current.unit,
+        ),
+      });
+      setCurrent(updated);
+      setTrackedItem(updated);
+      setEditing(false);
+      setDraft(null);
+      router.refresh();
+    } catch (caught) {
+      setActionError(
+        caught instanceof Error ? caught.message : "Не удалось сохранить",
+      );
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const onArchive = async () => {
+    if (!current.is_active) return;
+    if (!window.confirm(`Архивировать «${current.name}»?`)) return;
+    setBusy(true);
+    setActionError(null);
+    try {
+      const base = toNomenclatureRequisitesDraft(current);
+      const updated = await updateNomenclatureRequisites(current.id, {
+        ...base,
+        is_active: false,
+        category: resolveNomenclatureCategoryLabel(
+          current.category_id,
+          categories,
+          current.category,
+        ),
+        unit: resolveNomenclatureUnitSymbol(
+          current.storage_unit_id,
+          units,
+          current.unit,
+        ),
+      });
+      setCurrent(updated);
+      setTrackedItem(updated);
+      setEditing(false);
+      setDraft(null);
+      router.refresh();
+    } catch (caught) {
+      setActionError(
+        caught instanceof Error ? caught.message : "Не удалось архивировать",
+      );
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const onStatusChange = async (next: string) => {
+    if (busy) return;
+    const nextActive = next === "active";
+    if (nextActive === current.is_active) return;
+    if (
+      !nextActive &&
+      !window.confirm(`Перевести «${current.name}» в архив?`)
+    ) {
+      return;
+    }
+    setBusy(true);
+    setActionError(null);
+    try {
+      const base = toNomenclatureRequisitesDraft(current);
+      const updated = await updateNomenclatureRequisites(current.id, {
+        ...base,
+        is_active: nextActive,
+        category: resolveNomenclatureCategoryLabel(
+          current.category_id,
+          categories,
+          current.category,
+        ),
+        unit: resolveNomenclatureUnitSymbol(
+          current.storage_unit_id,
+          units,
+          current.unit,
+        ),
+      });
+      setCurrent(updated);
+      setTrackedItem(updated);
+      if (draft) setDraft({ ...draft, is_active: nextActive });
+      router.refresh();
+    } catch (caught) {
+      setActionError(
+        caught instanceof Error ? caught.message : "Не удалось сменить статус",
+      );
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const onBackToList = (event: MouseEvent<HTMLAnchorElement>) => {
+    if (dirty && !window.confirm(DIRTY_LEAVE_MESSAGE)) {
+      event.preventDefault();
+    }
+  };
+
+  const onCopy = () => {
+    window.alert("Копирование номенклатуры будет доступно в следующей итерации.");
+  };
+
+  const onPrint = () => {
+    window.alert(
+      "Печать будет доступна после настройки шаблона в Администрирование → Печатные формы.",
+    );
+  };
+
+  const uploadFiles = async (files: File[]) => {
+    for (const file of files) {
+      const ruleError = validateNomenclatureImageFile(file);
+      if (ruleError) {
+        setWarning(ruleError);
+        return;
+      }
+    }
+    setBusy(true);
+    setWarning(null);
+    try {
+      const created: NomenclatureMedia[] = [];
+      for (const [index, file] of files.entries()) {
+        const data = new FormData();
+        data.append("nomenclature_id", String(current.id));
+        data.append("file", file);
+        data.append("is_primary", String(items.length === 0 && index === 0));
+        data.append("sort_order", String(items.length + index));
+        created.push(await uploadNomenclatureMedia(data));
+      }
+      setItems((currentItems) => [...currentItems, ...created]);
+      router.refresh();
+    } catch (caught) {
+      setWarning(
+        caught instanceof Error ? caught.message : "Не удалось загрузить изображение",
+      );
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const onDeleteMedia = async (item: NomenclatureMedia) => {
+    if (!window.confirm(`Удалить фото «${item.filename}»?`)) return;
+    setBusy(true);
+    setWarning(null);
+    try {
+      const data = new FormData();
+      data.append("nomenclature_id", String(current.id));
+      data.append("media_id", String(item.id));
+      await deleteNomenclatureMedia(data);
+      setItems((currentItems) => currentItems.filter((row) => row.id !== item.id));
+      router.refresh();
+    } catch (caught) {
+      setWarning(
+        caught instanceof Error ? caught.message : "Не удалось удалить изображение",
+      );
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const onSetPrimary = async (item: NomenclatureMedia) => {
+    if (item.is_primary) return;
+    setBusy(true);
+    setWarning(null);
+    try {
+      const data = new FormData();
+      data.append("nomenclature_id", String(current.id));
+      data.append("media_id", String(item.id));
+      data.append("sort_order", String(item.sort_order));
+      data.append("is_primary", "true");
+      data.append("alt_text", item.alt_text ?? "");
+      await updateNomenclatureMedia(data);
+      setItems((currentItems) =>
+        currentItems.map((row) => ({
+          ...row,
+          is_primary: row.id === item.id,
+        })),
+      );
+      router.refresh();
+    } catch (caught) {
+      setWarning(
+        caught instanceof Error
+          ? caught.message
+          : "Не удалось назначить основное фото",
+      );
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const onReplaceMedia = async (item: NomenclatureMedia, file: File) => {
+    const ruleError = validateNomenclatureImageFile(file);
+    if (ruleError) {
+      setWarning(ruleError);
+      return;
+    }
+    setBusy(true);
+    setWarning(null);
+    try {
+      const uploadData = new FormData();
+      uploadData.append("nomenclature_id", String(current.id));
+      uploadData.append("file", file);
+      uploadData.append("is_primary", String(item.is_primary));
+      uploadData.append("sort_order", String(item.sort_order));
+      const created = await uploadNomenclatureMedia(uploadData);
+      const deleteData = new FormData();
+      deleteData.append("nomenclature_id", String(current.id));
+      deleteData.append("media_id", String(item.id));
+      await deleteNomenclatureMedia(deleteData);
+      setItems((currentItems) =>
+        currentItems.map((row) => {
+          if (row.id === item.id) return created;
+          if (created.is_primary) return { ...row, is_primary: false };
+          return row;
+        }),
+      );
+      router.refresh();
+    } catch (caught) {
+      const message =
+        caught instanceof Error ? caught.message : "Не удалось заменить изображение";
+      setWarning(
+        message.includes("10 МБ") || message.includes("JPEG")
+          ? NOMENCLATURE_IMAGE_RULE
+          : message,
+      );
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const removeField = async (data: FormData) => {
+    setFieldsStatus("saving");
+    try {
+      await removeNomenclatureCustomField(data);
+      const id = Number(
+        data.get("characteristic_id") ?? data.get("field_definition_id"),
+      );
+      setFieldState((currentFields) =>
+        currentFields.filter(
+          (field) =>
+            (field.characteristic_id ?? field.field_definition_id) !== id,
+        ),
+      );
+      setFieldsStatus("saved");
+      router.refresh();
+    } catch {
+      setFieldsStatus("error");
+      setActionError("Не удалось удалить характеристику");
+    }
+  };
+
+  const saveAllFields = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setFieldsStatus("saving");
+    try {
+      const formData = new FormData(event.currentTarget);
+      const nextFields: NomenclatureFieldValue[] = [];
+      for (const field of fieldState) {
+        const id = field.characteristic_id ?? field.field_definition_id ?? 0;
+        const kind = field.kind ?? field.data_type ?? "STRING";
+        const raw =
+          kind === "BOOLEAN"
+            ? formData.get(`value_${id}`) != null
+              ? "true"
+              : "false"
+            : String(formData.get(`value_${id}`) ?? "");
+        const row = new FormData();
+        row.set("nomenclature_id", String(current.id));
+        row.set("characteristic_id", String(id));
+        row.set("field_definition_id", String(id));
+        row.set("kind", kind);
+        row.set("data_type", kind);
+        row.set("value", raw);
+        await saveNomenclatureCustomField(row);
+        nextFields.push({
+          ...field,
+          value:
+            kind === "BOOLEAN"
+              ? raw === "true"
+              : kind === "INTEGER" || kind === "LIST" || kind === "COLOR"
+                ? raw === ""
+                  ? null
+                  : Number(raw)
+                : raw === ""
+                  ? null
+                  : raw,
+        });
+      }
+      setFieldState(nextFields);
+      setFieldsEditing(false);
+      setFieldsStatus("saved");
+      router.refresh();
+    } catch {
+      setFieldsStatus("error");
+      setActionError("Не удалось сохранить характеристики");
+    }
+  };
+
+  const onFieldsSaveClick = () => {
+    setFieldsOpen(true);
+    if (!fieldsEditing) {
+      setFieldsEditing(true);
+      setAddingField(false);
+      setFieldsStatus("idle");
+      return;
+    }
+    fieldsFormRef.current?.requestSubmit();
+  };
+
+  useEffect(() => {
+    if (!fieldsEditing && !addingField) {
+      setFieldState(fields);
+    }
+  }, [fields, fieldsEditing, addingField]);
+
+  return (
+    <>
+      {previewSrc ? (
+        <ImageLightbox
+          src={previewSrc}
+          alt={`Фото: ${current.name}`}
+          onClose={() => setPreviewSrc(null)}
+        />
+      ) : null}
+
+      <VersionedWorkspace
+        header={
+          <div className="rounded-portal-lg border border-portal-border bg-portal-surface p-portal-4 shadow-portal-card sm:p-portal-5">
+            <EntityHeader
+              eyebrow={
+                <Link
+                  href="/settings/catalogs/nomenclature"
+                  onClick={onBackToList}
+                  className="inline-flex items-center gap-1.5 font-medium text-portal-primary hover:underline"
+                >
+                  ← Номенклатура
+                </Link>
+              }
+              title={editing && draft ? draft.name || current.name : current.name}
+              status={
+                <StatusBadge
+                  size="compact"
+                  tone={nomenclatureStatusTone(current.is_active)}
+                >
+                  {nomenclatureStatusLabel(current.is_active)}
+                </StatusBadge>
+              }
+              description={
+                editing
+                  ? dirty
+                    ? "Редактирование · есть несохранённые изменения"
+                    : "Редактирование основных реквизитов"
+                  : `${NOMENCLATURE_TYPE_LABELS[current.nomenclature_type]} · ${categoryPathLabel(current.category_id, categories)}`
+              }
+              actions={
+                <div className="flex flex-col items-stretch gap-1 sm:items-end">
+                  <ProductModelToolbarActions
+                    disabled={busy}
+                    editing={editing}
+                    canArchive={current.is_active}
+                    canSave={Boolean(dirty)}
+                    onEdit={startEdit}
+                    onCancel={cancelEdit}
+                    onArchive={onArchive}
+                    onSave={onSave}
+                    onCopy={onCopy}
+                    onPrint={onPrint}
+                  />
+                  {actionError ? (
+                    <p className="text-portal-caption text-portal-danger" role="alert">
+                      {actionError}
+                    </p>
+                  ) : null}
+                </div>
+              }
+            />
+          </div>
+        }
+      >
+        <CatalogVersionedCardLayout
+          gapClassName={COLUMN_GAP}
+          main={
+            <>
+              <SectionCard title="Основные реквизиты" size="compact">
+                {editing && draft ? (
+                  <div className="grid min-w-0 gap-portal-4">
+                    <div className="grid min-w-0 gap-portal-3 min-[1300px]:grid-cols-2 min-[1700px]:grid-cols-4">
+                      <Field label="Наименование" className="order-1 min-w-0">
+                        <Input
+                          value={draft.name}
+                          size="compact"
+                          onChange={(event) =>
+                            setDraft({ ...draft, name: event.target.value })
+                          }
+                          aria-label="Наименование"
+                        />
+                      </Field>
+                      <Field
+                        label="Тип номенклатуры"
+                        className="order-2 min-w-0 min-[1700px]:order-3"
+                      >
+                        <Select
+                          value={draft.nomenclature_type}
+                          size="compact"
+                          disabled={busy}
+                          onChange={(event) => {
+                            const nextType = event.target
+                              .value as NomenclatureType;
+                            const stillValid =
+                              draft.category_id != null &&
+                              categories.some(
+                                (category) =>
+                                  category.id === draft.category_id &&
+                                  category.nomenclature_type === nextType,
+                              );
+                            setDraft({
+                              ...draft,
+                              nomenclature_type: nextType,
+                              category_id: stillValid ? draft.category_id : null,
+                            });
+                          }}
+                          aria-label="Тип номенклатуры"
+                        >
+                          {NOMENCLATURE_TYPE_OPTIONS.map(([value, label]) => (
+                            <option key={value} value={value}>
+                              {label}
+                            </option>
+                          ))}
+                        </Select>
+                      </Field>
+                      <Field
+                        label="Состояние"
+                        className="order-3 min-w-0 min-[1700px]:order-2"
+                      >
+                        <Select
+                          value={current.is_active ? "active" : "archived"}
+                          disabled={busy}
+                          size="compact"
+                          onChange={(event) =>
+                            void onStatusChange(event.target.value)
+                          }
+                          aria-label="Состояние"
+                        >
+                          <option value="active">Активна</option>
+                          <option value="archived">Архив</option>
+                        </Select>
+                      </Field>
+                    </div>
+                    <div className="grid min-w-0 gap-portal-3 min-[1300px]:grid-cols-2 min-[1700px]:grid-cols-4">
+                      <Field label="Наименование для печати" className="min-w-0">
+                        <Input
+                          value={draft.short_name}
+                          size="compact"
+                          onChange={(event) =>
+                            setDraft({
+                              ...draft,
+                              short_name: event.target.value,
+                            })
+                          }
+                          aria-label="Наименование для печати"
+                        />
+                      </Field>
+                      <Field label="Категория" className="min-w-0">
+                        <Select
+                          value={
+                            draft.category_id == null
+                              ? ""
+                              : String(draft.category_id)
+                          }
+                          size="compact"
+                          disabled={busy}
+                          onChange={(event) => {
+                            const raw = event.target.value;
+                            setDraft({
+                              ...draft,
+                              category_id: raw === "" ? null : Number(raw),
+                            });
+                          }}
+                          aria-label="Категория"
+                        >
+                          <option value="">Без категории</option>
+                          {compatibleCategories.map((category) => (
+                            <option key={category.id} value={category.id}>
+                              {categoryPathLabel(category.id, categories)}
+                            </option>
+                          ))}
+                        </Select>
+                      </Field>
+                      <Field label="Единица хранения" className="min-w-0">
+                        <Select
+                          value={
+                            draft.storage_unit_id == null
+                              ? ""
+                              : String(draft.storage_unit_id)
+                          }
+                          size="compact"
+                          disabled={busy}
+                          onChange={(event) => {
+                            const raw = event.target.value;
+                            setDraft({
+                              ...draft,
+                              storage_unit_id: raw === "" ? null : Number(raw),
+                            });
+                          }}
+                          aria-label="Единица хранения"
+                        >
+                          <option value="">Не выбрана</option>
+                          {units
+                            .filter((unit) => unit.is_active)
+                            .map((unit) => (
+                              <option key={unit.id} value={unit.id}>
+                                {unit.symbol} — {unit.name}
+                              </option>
+                            ))}
+                        </Select>
+                      </Field>
+                      <Field label="Цена без НДС" className="min-w-0">
+                        <div className="grid grid-cols-[1fr_110px] gap-2">
+                          <Input
+                            value={draft.base_price}
+                            size="compact"
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            onChange={(event) =>
+                              setDraft({
+                                ...draft,
+                                base_price: event.target.value,
+                              })
+                            }
+                            aria-label="Цена без НДС"
+                          />
+                          <Select
+                            value={draft.currency}
+                            size="compact"
+                            onChange={(event) =>
+                              setDraft({
+                                ...draft,
+                                currency: event.target.value,
+                              })
+                            }
+                            aria-label="Валюта"
+                          >
+                            {NOMENCLATURE_CURRENCY_OPTIONS.map((code) => (
+                              <option key={code} value={code}>
+                                {code}
+                              </option>
+                            ))}
+                          </Select>
+                        </div>
+                      </Field>
+                    </div>
+                    <Field label="Описание" className="min-w-0">
+                      <Textarea
+                        value={draft.description}
+                        size="compact"
+                        rows={4}
+                        onChange={(event) =>
+                          setDraft({
+                            ...draft,
+                            description: event.target.value,
+                          })
+                        }
+                        aria-label="Описание"
+                      />
+                    </Field>
+                  </div>
+                ) : (
+                  <div className="grid min-w-0 gap-portal-4">
+                    <div className="grid min-w-0 gap-portal-3 min-[1300px]:grid-cols-2 min-[1700px]:grid-cols-4">
+                      <RequisiteRead label="Наименование" accent className="order-1">
+                        {current.name}
+                      </RequisiteRead>
+                      <RequisiteRead
+                        label="Тип номенклатуры"
+                        className="order-2 min-[1700px]:order-3"
+                      >
+                        {NOMENCLATURE_TYPE_LABELS[current.nomenclature_type]}
+                      </RequisiteRead>
+                      <RequisiteRead
+                        label="Состояние"
+                        className="order-3 min-[1700px]:order-2"
+                      >
+                        <StatusBadge
+                          tone={nomenclatureStatusTone(current.is_active)}
+                          size="compact"
+                          dot
+                        >
+                          {nomenclatureStatusLabel(current.is_active)}
+                        </StatusBadge>
+                      </RequisiteRead>
+                    </div>
+                    <div className="grid min-w-0 gap-portal-3 min-[1300px]:grid-cols-2 min-[1700px]:grid-cols-4">
+                      <RequisiteRead label="Наименование для печати">
+                        {current.short_name?.trim() ? (
+                          current.short_name
+                        ) : (
+                          <span className="font-normal text-portal-muted">
+                            Не указано
+                          </span>
+                        )}
+                      </RequisiteRead>
+                      <RequisiteRead label="Категория">
+                        {categoryPathLabel(current.category_id, categories)}
+                      </RequisiteRead>
+                      <RequisiteRead label="Единица хранения">
+                        {storageUnitLabel}
+                      </RequisiteRead>
+                      <RequisiteRead label="Цена без НДС">
+                        {current.basePrice} {current.currency}
+                      </RequisiteRead>
+                    </div>
+                    <RequisiteRead label="Описание" accent>
+                      {current.description?.trim() ? (
+                        <span className="whitespace-pre-wrap font-semibold leading-relaxed">
+                          {current.description}
+                        </span>
+                      ) : (
+                        <span className="font-normal leading-relaxed text-portal-muted">
+                          Описание пока не заполнено
+                        </span>
+                      )}
+                    </RequisiteRead>
+                  </div>
+                )}
+              </SectionCard>
+
+              <div
+                className={`grid min-w-0 grid-cols-1 ${COLUMN_GAP} lg:grid-cols-2`}
+              >
+                <SectionCard
+                  title="Характеристики номенклатуры"
+                  size="compact"
+                  className="min-w-0"
+                  collapsed={!fieldsOpen}
+                  description={
+                    fieldsStatus === "saving"
+                      ? "Сохранение…"
+                      : fieldsStatus === "saved"
+                        ? "Сохранено"
+                        : fieldsStatus === "error"
+                          ? "Ошибка сохранения"
+                          : undefined
+                  }
+                  actions={
+                    <div className="flex items-center gap-1">
+                      <IconButton
+                        label="Добавить характеристику"
+                        title="Добавить"
+                        variant="secondary"
+                        onClick={() => {
+                          setFieldsOpen(true);
+                          setAddingField((open) => !open);
+                          setFieldsEditing(false);
+                          setFieldsStatus("idle");
+                        }}
+                      >
+                        <Plus className="size-4" aria-hidden="true" />
+                      </IconButton>
+                      <IconButton
+                        label="Сохранить характеристики"
+                        title="Сохранить"
+                        variant="primary"
+                        disabled={fieldsStatus === "saving"}
+                        onClick={onFieldsSaveClick}
+                      >
+                        <Save className="size-4" aria-hidden="true" />
+                      </IconButton>
+                      <IconButton
+                        label={fieldsOpen ? "Свернуть" : "Развернуть"}
+                        title={fieldsOpen ? "Свернуть" : "Развернуть"}
+                        variant="secondary"
+                        aria-expanded={fieldsOpen}
+                        onClick={() => setFieldsOpen((open) => !open)}
+                      >
+                        <ChevronDown
+                          className={[
+                            "size-4 transition-transform",
+                            fieldsOpen ? "rotate-180" : "",
+                          ].join(" ")}
+                          aria-hidden="true"
+                        />
+                      </IconButton>
+                    </div>
+                  }
+                >
+                  <div>
+                    {addingField ? (
+                      <div className="mb-portal-3">
+                        <NomenclatureAddCustomFieldForm
+                          nomenclatureId={current.id}
+                          definitions={characteristicDefinitions}
+                          assignedIds={assignedFieldIds}
+                          fieldOptions={fieldOptions}
+                          usedValuesById={usedValuesById}
+                          onCancel={() => setAddingField(false)}
+                          onSaved={() => {
+                            setAddingField(false);
+                            setFieldsStatus("saved");
+                            router.refresh();
+                          }}
+                          onError={(message) => {
+                            setFieldsStatus("error");
+                            setActionError(message);
+                          }}
+                        />
+                      </div>
+                    ) : null}
+                    {fieldState.length ? (
+                      <form ref={fieldsFormRef} onSubmit={saveAllFields}>
+                        {fieldState.map((field) => (
+                          <FieldValueRow
+                            key={
+                              field.characteristic_id ??
+                              field.field_definition_id
+                            }
+                            itemId={current.id}
+                            field={field}
+                            options={
+                              fieldOptions[
+                                field.characteristic_id ??
+                                  field.field_definition_id ??
+                                  0
+                              ] ?? []
+                            }
+                            editing={fieldsEditing}
+                            onRemove={removeField}
+                          />
+                        ))}
+                      </form>
+                    ) : (
+                      <p className="text-portal-body text-portal-muted">
+                        Характеристики пока не назначены.
+                      </p>
+                    )}
+                  </div>
+                </SectionCard>
+
+                {current.nomenclature_type === "PRODUCT" ? (
+                  <NomenclatureAvailableModelsBlock
+                    nomenclatureId={current.id}
+                    links={availableModels}
+                    activeModels={activeModels}
+                    className="min-w-0"
+                  />
+                ) : (
+                  <div className="hidden min-w-0 lg:block" aria-hidden="true" />
+                )}
+              </div>
+
+              <SectionCard
+                title="История изменений"
+                description={historySummary}
+                size="compact"
+                collapsed={!historyOpen}
+                actions={
+                  <div className="flex items-center gap-1">
+                    <IconButton
+                      label={historyOpen ? "Свернуть" : "Развернуть"}
+                      title={historyOpen ? "Свернуть" : "Развернуть"}
+                      variant="secondary"
+                      aria-expanded={historyOpen}
+                      onClick={() => setHistoryOpen((open) => !open)}
+                    >
+                      <ChevronDown
+                        className={[
+                          "size-4 transition-transform",
+                          historyOpen ? "rotate-180" : "",
+                        ].join(" ")}
+                        aria-hidden="true"
+                      />
+                    </IconButton>
+                  </div>
+                }
+              >
+                <ul className="grid gap-portal-2">
+                  {historyEntries.map((entry) => (
+                    <li
+                      key={entry.id}
+                      className="rounded-portal-md border border-portal-border bg-portal-surface-secondary px-portal-3 py-portal-2"
+                    >
+                      <p className="text-portal-body text-portal-text">
+                        {entry.label}
+                      </p>
+                      <p className="mt-1 text-portal-caption text-portal-muted">
+                        {new Date(entry.at).toLocaleString("ru-RU")}
+                      </p>
+                    </li>
+                  ))}
+                </ul>
+              </SectionCard>
+            </>
+          }
+          media={
+            <SectionCard
+              title="Карточка"
+              size="compact"
+              className="w-full min-[1900px]:w-[300px]"
+            >
+              <div className="grid gap-portal-3 text-portal-body text-portal-text">
+                <NomenclatureMediaCarousel
+                  items={items.filter((entry) =>
+                    entry.mime_type.startsWith("image/"),
+                  )}
+                  busy={busy}
+                  onExpand={setPreviewSrc}
+                  onSetPrimary={onSetPrimary}
+                  onDelete={onDeleteMedia}
+                  onReplace={onReplaceMedia}
+                  onAdd={uploadFiles}
+                />
+                {warning ? (
+                  <p
+                    className="text-center text-portal-caption text-portal-danger"
+                    role="alert"
+                  >
+                    {warning}
+                  </p>
+                ) : null}
+              </div>
+            </SectionCard>
+          }
+        />
+      </VersionedWorkspace>
+    </>
+  );
 }

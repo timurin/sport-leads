@@ -1,4 +1,10 @@
-import type { ReactNode, ThHTMLAttributes, TdHTMLAttributes, TableHTMLAttributes } from "react";
+import type {
+  HTMLAttributes,
+  ReactNode,
+  ThHTMLAttributes,
+  TdHTMLAttributes,
+  TableHTMLAttributes,
+} from "react";
 
 type DataTableProps = TableHTMLAttributes<HTMLTableElement> & {
   children: ReactNode;
@@ -128,11 +134,17 @@ export function DataTableCell({
 export function DataTableRow({
   children,
   className = "",
-}: {
+  ...props
+}: HTMLAttributes<HTMLTableRowElement> & {
   children: ReactNode;
   className?: string;
 }) {
   return (
-    <tr className={`hover:bg-portal-primary-soft/40 ${className}`}>{children}</tr>
+    <tr
+      {...props}
+      className={`hover:bg-portal-primary-soft/40 ${className}`}
+    >
+      {children}
+    </tr>
   );
 }

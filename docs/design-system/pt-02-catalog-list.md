@@ -29,8 +29,12 @@ AppShell
   └── [data-app-shell-main]
         └── PageLayout (full-bleed catalog strip)
               ├── PageToolbar
-              │     ├── start → full-width search (`Input`)
-              │     └── end   → icon cluster (primary `Plus` create · `FilterX` reset · domain toolbar icons)
+              │     ├── start → search (`Input`, flex-1) + icon cluster in fixed order:
+              │     │            1. Reset search (`X`)
+              │     │            2. Filter (`Filter` → popover with domain filters)
+              │     │            3. Reset filter (`FilterX`)
+              │     │            4. Print (`Printer` → toggles row selection checkboxes)
+              │     └── end   → primary create (`Plus` / `IconButton variant="primary"`)
               ├── Data region
               │     ├── md+: DataTableFrame + DataTable
               │     └── <md: row cards
@@ -38,21 +42,23 @@ AppShell
               └── ListTotals
 ```
 
-No separate `FilterToolbar` strip unless a domain task explicitly adds compact filters.  
+No separate `FilterToolbar` strip unless a domain task explicitly adds compact filters.
 No right-rail inspector / quick-preview on catalog lists.
+Do **not** place compact `Select`/filter controls inline between the icon cluster buttons — filters belong in the Filter popover.
 
 ## `DS-PT-02-CATALOG` rules
 
-1. Search lives in `PageToolbar` and uses **maximum available width** (`flex-1` / `w-full`).
-2. Reset is an **icon** in the toolbar action cluster (`FilterX`), not a text button in a filter strip.
-3. Create is a **primary blue icon** (`Plus` / `IconButton variant="primary"`) opening `CreateDrawer` (ADR-013) — not a text «Создать» button.
-4. Optional type/status filters: if present, compact controls **below** toolbar, right-aligned — not beside search.
-5. Table columns (etalon order): selection checkbox → photo/thumb → primary keys (article/code) → name → domain attrs → status → optional cost/range placeholder → actions.
-6. Row actions: icon **Edit** (inline row edit) + icon **Open** (navigate to card). Edit does **not** navigate away.
-7. Mass selection via leading checkbox (header = select all filtered).
-8. Mobile `&lt;md`: card stack with the same fields/actions; no page horizontal scroll.
-9. Totals via `ListTotals` only — do not duplicate «найдено» next to search.
-10. Platform Shell `DS-SHELL-01` / `DS-SHELL-02` unchanged.
+1. Search lives in `PageToolbar`, height `compact` (matches `IconButton`), and is the **only** flexing control: `min-w-0 flex-1 basis-0` — it shrinks with viewport width. Do **not** use `w-full` on search beside icons (it compresses buttons).
+2. Toolbar **start** icon order is locked: Reset search → Filter → Reset filter → Print. Icons sit in a `shrink-0` cluster at fixed `size-portal-control-icon` — never scale down with the row. Do not reorder or insert controls between these icons.
+3. Reset search clears the search query only (`X`); Reset filter clears popover filters only (`FilterX`) — not a text button in a filter strip.
+4. Create is a **primary blue icon** (`Plus` / `IconButton variant="primary"`) in toolbar **end**, opening `CreateDrawer` (ADR-013) — not a text «Создать» button.
+5. Domain filters (status, type, …) live inside the Filter popover — not beside search and not between toolbar icons.
+6. Print activates mass-select mode: leading row checkboxes appear (header = select all filtered). Second Print with a selection is the print action (registry Stage 18); Print with empty selection exits the mode.
+7. Table columns (etalon order): selection checkbox (print mode) → photo/thumb → primary keys (article/code) → name → domain attrs → status → optional cost/range placeholder → actions.
+8. Row actions: icon **Copy** / domain actions + icon **Open** (navigate to card).
+9. Mobile `&lt;md`: card stack with the same fields/actions (checkbox when print mode); no page horizontal scroll.
+10. Totals via `ListTotals` only — do not duplicate «найдено» next to search.
+11. Platform Shell `DS-SHELL-01` / `DS-SHELL-02` unchanged.
 
 ## Reference consumers
 

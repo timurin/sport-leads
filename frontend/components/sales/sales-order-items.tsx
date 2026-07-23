@@ -26,7 +26,7 @@ function NomenclaturePicker({
   const matches = items
     .filter((item) =>
       item.is_active
-      && `${item.article} ${item.name}`.toLowerCase().includes(query.toLowerCase()),
+      && item.name.toLowerCase().includes(query.toLowerCase()),
     )
     .slice(0, 8);
   const options =
@@ -71,7 +71,7 @@ function NomenclaturePicker({
             setOpen(false);
           }
         }}
-        placeholder="Номенклатура: артикул или название"
+        placeholder="Номенклатура: название"
         aria-label="Номенклатура"
       />
       {open ? (

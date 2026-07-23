@@ -2,6 +2,14 @@
 
 import { revalidatePath } from "next/cache";
 
+import {
+  fromApiNomenclature,
+  type ApiNomenclature,
+  type Nomenclature,
+  type NomenclatureRequisitesDraft,
+  type NomenclatureType,
+} from "@/lib/nomenclature";
+
 const apiBaseUrl = () => (process.env.SPORT_LEADS_API_URL ?? "http://127.0.0.1:8000").replace(/\/$/, "");
 const text = (formData: FormData, name: string) => String(formData.get(name) ?? "").trim();
 
@@ -16,15 +24,18 @@ async function mutate(path: string, method: string, body: Record<string, unknown
     const payload = await response.json().catch(() => null) as { detail?: string } | null;
     throw new Error(payload?.detail ?? `Backend вернул ${response.status}.`);
   }
+  if (response.status === 204) return null;
+  const contentType = response.headers.get("content-type") ?? "";
+  if (!contentType.includes("application/json")) return null;
+  return (await response.json()) as ApiNomenclature;
 }
 
 export async function createNomenclature(formData: FormData) {
   await mutate("", "POST", {
-    article: text(formData, "article"),
     name: text(formData, "name"),
     short_name: text(formData, "short_name") || null,
     description: text(formData, "description") || null,
-    category: text(formData, "category"),
+    category: text(formData, "category") || "Без категории",
     category_id: formData.get("category_id") ? Number(formData.get("category_id")) : null,
     nomenclature_type: text(formData, "nomenclature_type") || "PRODUCT",
     unit: text(formData, "unit") || "шт",
@@ -38,7 +49,6 @@ export async function createNomenclature(formData: FormData) {
 export async function updateNomenclature(formData: FormData) {
   const id = text(formData, "id");
   await mutate(`/${id}`, "PATCH", {
-    article: text(formData, "article"),
     name: text(formData, "name"),
     short_name: text(formData, "short_name") || null,
     description: text(formData, "description") || null,
@@ -52,6 +62,36 @@ export async function updateNomenclature(formData: FormData) {
     is_active: formData.get("is_active") === "true",
   });
   revalidatePath("/settings/catalogs/nomenclature");
+  revalidatePath(`/settings/catalogs/nomenclature/${id}`);
+}
+
+/** PT-08 card requisites save — returns persisted row (no FormData free-text category/unit). */
+export async function updateNomenclatureRequisites(
+  nomenclatureId: number,
+  draft: NomenclatureRequisitesDraft & {
+    category: string;
+    unit: string;
+  },
+): Promise<Nomenclature> {
+  const updated = await mutate(`/${nomenclatureId}`, "PATCH", {
+    name: draft.name.trim(),
+    short_name: draft.short_name.trim() || null,
+    description: draft.description.trim() || null,
+    category: draft.category.trim() || "Без категории",
+    category_id: draft.category_id,
+    nomenclature_type: draft.nomenclature_type as NomenclatureType,
+    unit: draft.unit.trim() || "шт",
+    storage_unit_id: draft.storage_unit_id,
+    base_price: draft.base_price.trim() || "0",
+    currency: draft.currency.trim() || "RUB",
+    is_active: draft.is_active,
+  });
+  if (!updated) {
+    throw new Error("Backend не вернул карточку номенклатуры.");
+  }
+  revalidatePath("/settings/catalogs/nomenclature");
+  revalidatePath(`/settings/catalogs/nomenclature/${nomenclatureId}`);
+  return fromApiNomenclature(updated);
 }
 
 export async function createUnitOfMeasure(formData: FormData) {

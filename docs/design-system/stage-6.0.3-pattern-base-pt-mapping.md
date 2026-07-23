@@ -42,8 +42,8 @@ Required when filling `6.1.7` / `6.2.4` / `6.3.4` and future directory lists:
 | Slot | Decision |
 |---|---|
 | Frame | `PageLayout` full-bleed strip (catalog list chrome) |
-| Toolbar | `PageToolbar`: full-width search + icon actions (`FilterX` + domain icons) |
-| Filters | Optional compact row **below** toolbar, right-aligned — not beside search |
+| Toolbar | `PageToolbar`: search + fixed icon order (Reset search → Filter → Reset filter → Print); create `Plus` in `end`. Filters only inside Filter popover — never inline between icons. Print toggles row checkboxes. |
+| Filters | Inside Filter popover only (not a strip beside search, not Select between icons) |
 | Desktop | `DataTableFrame` + `DataTable` (checkbox · photo · keys · attrs · status · cost? · actions) |
 | Row actions | Inline edit icon + Open icon (edit stays in-row) |
 | Mobile `&lt;md` | row cards |

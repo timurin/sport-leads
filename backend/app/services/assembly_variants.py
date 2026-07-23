@@ -109,6 +109,7 @@ def _append_sewing_operation_lines(
             sequence=start_sequence + offset,
             operation_name=operation.name,
             cost=operation.cost,
+            duration_seconds=operation.duration_seconds,
             sewing_operation_id=operation.id,
         )
         repo.add_operation_line(db, line)
@@ -184,6 +185,7 @@ def create_assembly_variant(
                 sequence=line_sequence,
                 operation_name=line_payload.operation_name,
                 cost=line_payload.cost,
+                duration_seconds=line_payload.duration_seconds,
                 sewing_operation_id=line_payload.sewing_operation_id,
             )
             repo.add_operation_line(db, line)
@@ -321,6 +323,7 @@ def copy_assembly_variant(
                     sequence=index,
                     operation_name=line.operation_name,
                     cost=line.cost,
+                    duration_seconds=line.duration_seconds,
                     sewing_operation_id=line.sewing_operation_id,
                 ),
             )
@@ -370,6 +373,7 @@ def add_operation_line(
         sequence=sequence,
         operation_name=payload.operation_name,
         cost=payload.cost,
+        duration_seconds=payload.duration_seconds,
         sewing_operation_id=payload.sewing_operation_id,
     )
     try:

@@ -7,12 +7,14 @@ import {
   getProductModelAssemblyVariants,
   getProductModels,
 } from "@/lib/product-models";
+import { getProductTypes } from "@/lib/product-types";
 import { getSizeGrids } from "@/lib/size-grids";
 
 export default async function ProductModelsListPage() {
-  const [models, sizeGrids] = await Promise.all([
+  const [models, sizeGrids, productTypes] = await Promise.all([
     getProductModels(),
     getSizeGrids(),
+    getProductTypes(),
   ]);
 
   const costEntries = await Promise.all(
@@ -39,6 +41,7 @@ export default async function ProductModelsListPage() {
         <ProductModelsWorkspace
           models={models}
           sizeGrids={sizeGrids}
+          productTypes={productTypes}
           costByModelId={costByModelId}
         />
       </Suspense>

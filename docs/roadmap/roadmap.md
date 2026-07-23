@@ -1,10 +1,10 @@
 # Sport-Lead — Global Roadmap
 
 **Code:** `SL-ROADMAP-v1`
-**Updated:** `2026-07-22` (dashboard pattern-model sales analysis `1.1.5`; Stage 6 catalog close; order-item binding → `3.2.5`)
+**Updated:** `2026-07-23` (canonical sync: boundary + `4.8` honesty + ADR-016 tech-cards reserve; B3 `4.7.11`; sewing `6.3.8`)
 **Project version:** `v0.9.0`
 **Git branch:** `feature/v0.8.1-nomenclature-core`
-**Git commit:** `bc63397`
+**Git commit:** `0980f34`
 
 **Canonical files:**
 - roadmap: `docs/roadmap/roadmap.md`
@@ -24,11 +24,15 @@
 
 Current confirmed contour:
 
-`CRM -> Sales orders -> Nomenclature`
+`CRM → Sales orders → Nomenclature (core) + Pattern-base catalog (Stage 6 closed)`
 
-Next detailed contour:
+Active Stage 4 work:
 
-`База лекал (catalog closed) → Order-item model/assembly binding (3.2.5) → Specifications → Routings → Технические карты → … → Администрирование`
+`4.7.10` (owner visual create) → `4.8.6` (nomenclature card unify / compat cleanup) → `4.8.7` (orphan cleanup + focused regression); appearance polish of characteristic card → follow-up chat
+
+Next commercial contour:
+
+`Order-item model/assembly binding (3.2.5) → smoke (3.2.6) → Specifications → Routings → Технические карты → … → Администрирование`
 
 ## Stage 0 — Platform and Infrastructure
 
@@ -189,19 +193,19 @@ Completion criteria:
 
 ### 4.1 — Persistent core
 
-- [x] 4.1.1 — `v0.8.1` persistent nomenclature CRUD, card, search, article, activity, and base price
+- [x] 4.1.1 — `v0.8.1` persistent nomenclature CRUD, card, search, activity, and base price (`Nomenclature.article` later removed in `4.7.11`)
 - [x] 4.1.2 — Nullable order-item link with independent commercial snapshot
 
 ### 4.2 — Classification and typed fields
 
 - [x] 4.2.1 — `v0.8.2` nomenclature types and category hierarchy
 - [x] 4.2.2 — `v0.8.3` units-of-measure directory and `storage_unit_id`
-- [x] 4.2.3 — `v0.8.4` typed custom fields with category inheritance
+- [x] 4.2.3 — `v0.8.4` typed custom fields with category inheritance — historical; SoT superseded by ADR-015 / `4.8`
 
 ### 4.3 — Workspace and card
 
 - [x] 4.3.1 — `v0.8.5` separate workspace and editable card
-- [x] 4.3.2 — `v0.8.8h` direct free assignment of custom fields in the card
+- [x] 4.3.2 — `v0.8.8h` direct free assignment of custom fields in the card — historical; card values now via characteristics API (`4.8.6`)
 - [ ] 4.3.3 — Audit history, archive flow, and bulk operations
 
 ### 4.4 — Characteristics, variants, and media
@@ -220,13 +224,54 @@ Completion criteria:
 
 ### 4.6 — Unified catalog (materials consolidation)
 
-Decision (`ADR-012`): one nomenclature master catalog with types; standalone `materials` directory is legacy and must not remain a second source of truth. Stock balances stay outside the nomenclature card.
+Decision (`ADR-012`, owner `2026-07-23`): **materials are a nomenclature type** (`MATERIAL`), not a separate directory. Standalone `materials` catalog/API/table must be removed after cutover. Stock balances stay outside the nomenclature card.
 
-- [ ] 4.6.1 — Approve migration plan from `materials` rows to `nomenclatures` with type `MATERIAL`
-- [ ] 4.6.2 — Migrate data, preserve articles, and stop dual write paths
-- [ ] 4.6.3 — Point Materials navigation/UI at nomenclature filtered by `MATERIAL` (or remove the duplicate menu)
-- [ ] 4.6.4 — Deprecate `/materials` API and `materials` table after cutover
+- [x] 4.6.1 — Approve migration plan from `materials` rows to `nomenclatures` with type `MATERIAL` — `2026-07-23`; evidence: `docs/architecture/materials-nomenclature-migration-plan.md`
+- [x] 4.6.2 — Migrate data, preserve articles, and stop dual write paths — `2026-07-23`; Alembic `z6a7b8c9d012`; dual-write stopped by removing `/materials` write surface in `4.6.4`
+- [x] 4.6.3 — Remove Materials nav entry; materials are filtered nomenclature type only (no separate menu) — `2026-07-23`; `frontend/lib/navigation.ts`
+- [x] 4.6.4 — Delete `/materials` API, frontend routes/components, and `materials` table/data after cutover — `v0.9.0`; evidence: drop migration `a1b2c3d4e567` (guarded), API/model/schemas removed; UI/nav leftovers cleared; stock stays out of Nomenclature (`4.6.5`); residual: depends on sibling cutover `z6a7b8c9d012` having run first
 - [ ] 4.6.5 — Keep balances/min stock for warehouse register work; do not copy them onto `Nomenclature`
+
+### 4.7 — Nomenclature UI parity with product-models (canonical catalog templates)
+
+Owner ask (`2026-07-23`): `/settings/catalogs/nomenclature` list+card must match `/settings/catalogs/product-models` templates (`DS-PT-02-CATALOG` / `DS-PT-08-CATALOG`).
+
+Dependencies:
+- 5.6.5 / 6.0.3.5 (canonical product-model templates)
+- 4.3.1
+
+- [x] 4.7.1 — Align nomenclature list with product-models: shared toolbar + row list (not card tiles) — `v0.8.1`; evidence: `frontend/components/settings/nomenclature-workspace.tsx` (PT-02 toolbar + DataTable rows)
+- [x] 4.7.2 — Remove left category tree block from nomenclature workspace — `v0.8.1`; evidence: `frontend/components/settings/nomenclature-workspace.tsx` (TreeListSplit/CategoryTree removed)
+- [x] 4.7.3 — Align nomenclature card (`/settings/catalogs/nomenclature/[id]`) with product-models card chrome/layout — `v0.8.1`; `DS-PT-08-CATALOG`; `VersionedWorkspace` + `CatalogVersionedCardLayout`; evidence: `nomenclature-card.tsx`, `nomenclature-media-carousel.tsx`; shell contracts preserved
+- [x] 4.7.4 — Map backend nomenclature fields into card requisites by domain logic (remap schema/UI if needed) — `v0.8.1`; core fields in «Основные реквизиты» via `category_id`/`storage_unit_id` (legacy `category`/`unit` derived); custom fields → «Дополнительные реквизиты»; no demo data; existing PATCH API
+- [x] 4.7.5 — Port materials quick-preview right panel into nomenclature list route, then drop materials-only preview — `2026-07-23`; `NomenclatureInspector` on list; materials nav removed (`4.6.3`); legacy materials surface deleted in `4.6.4`
+- [x] 4.7.6 — Card «Дополнительные реквизиты»: add form with Название + Значение and autocomplete against existing definitions/options — `2026-07-23`; `NomenclatureAddCustomFieldForm`; evidence: `nomenclature-card.tsx`, `nomenclature-add-custom-field-form.tsx`
+- [x] 4.7.7 — Expose «Дополнительные реквизиты» as Settings → Номенклатура directory (`/settings/catalogs/custom-fields`) — `2026-07-23`; **superseded by `4.8.5`** (nav removed; redirect → product-characteristics); DS-SHELL-01/02 visual contracts preserved
+- [x] 4.7.8 — Unique custom-field `name` (case-insensitive) + card form auto-fill existing name; icon confirm/cancel — `2026-07-23`; Alembic `b2c3d4e5f678`; service `_assert_unique_name`; evidence: `nomenclature-add-custom-field-form.tsx`, `test_lead_conversion.py`
+- [x] 4.7.9 / **B2** — Nomenclature create panel fullscreen over list (fix: docked `CreateDrawer` rendered under rows) — `2026-07-23`; `CreateDrawer` variant `fullscreen`; evidence: `create-drawer.tsx`, `nomenclature-create-panels.tsx`, `nomenclature-workspace.tsx`; ADR-013 updated
+- [ ] 4.7.10 — Owner visual: confirm nomenclature create field order/rules after `4.7.9` proposal (Identity → Classification → Commercial → Optional; legacy category/unit derived hidden)
+- [x] 4.7.11 / **B3** — Drop `Nomenclature.article` (артикул актуален на `ProductModel` / variant; номенклатура идентифицируется `id`+name) — `2026-07-23`; Alembic `e6f7a8b9c012` (after sewing duration rev fix `d5e6f7a8b901`); evidence: model/schemas/services/API/UI; ADR-012/014 notes; variant + product-model articles unchanged
+
+### 4.8 — Unify characteristics catalog (absorb custom fields)
+
+Owner ask (`2026-07-23`): «Дополнительные реквизиты» дублируют характеристики — оставить один справочник; карточку `/product-characteristics/[id]` с inline CRUD значений; удаление только без использования / журнала (`18.4` stub). ADR-015.
+
+- [x] 4.8.1 — ADR-015 + roadmap/HTML microtasks — `2026-07-23`; `ADR-015-unified-characteristics-catalog.md`
+- [x] 4.8.2 — Expand `Characteristic*` schema; migrate `CustomField*` data; drop custom tables — `2026-07-23`; Alembic `f7a8b9c0d123`; `/custom-fields` API unmounted; residual: orphan `custom_fields.py` / legacy `materials.py` modules on disk (cleanup with `4.8.7`)
+- [x] 4.8.3 — DELETE definition/option + usage guards + journal stub hook — `2026-07-23`; `characteristic_operations_journal.py`; usage blocks in `characteristics` API
+- [x] 4.8.4 — Characteristic detail card: main info (name/code/type) + values inline edit/save/delete; owner visual — `2026-07-23`; `characteristic-card.tsx`; **layout confirmed by owner**; appearance/content polish deferred to follow-up chat
+- [x] 4.8.5 — Remove «Дополнительные реквизиты» nav; expand create kinds; redirect `/custom-fields` — `2026-07-23`; `navigation.ts` (product-characteristics only); redirect page
+- [ ] 4.8.6 — Nomenclature card: unified block on characteristics API; remove custom-fields UI — values API path exists; residual `CustomField*` names/compat shims in card form (`nomenclature-add-custom-field-form.tsx`, `custom-fields-actions.ts`)
+- [ ] 4.8.7 — Regression tests + project-structure / erp-check sync — canonical docs synced `2026-07-23`; residual: orphan `custom_fields.py` / `materials.py` cleanup + focused 4.8 regression suite
+
+### Proposed create field layout (`4.7.9`, pending `4.7.10`)
+
+```
+Идентификация:  Наименование* → Тип
+Классификация:  Категория + Единица хранения
+Коммерция:      Базовая цена (+ валюта)
+Дополнительно:  Наименование для печати → Описание
+```
 
 ## Stage 5 — Design System and Platform Templates
 
@@ -377,7 +422,7 @@ Microtasks:
 - [x] 5.5.4.1 — Define template contract — `v0.9.0`; `DS-PT-04`; evidence: `docs/design-system/pt-04-tree-list.md`
 - [x] 5.5.4.2 — Standardize tree and content panes — `v0.9.0`; `TreePane` / `TreeListSplit` / `TreeListContent`; flush strip+table; collapsible dock
 - [x] 5.5.4.3 — Add responsive tree drawer — `v0.9.0`; R5; docked/collapsible `lg+`, left drawer `<lg` via toolbar «Группы»
-- [x] 5.5.4.4 — Verify on Nomenclature Workspace — owner visual OK (`2026-07-22`); collapsible tree + flush list chrome
+- [x] 5.5.4.4 — Verify on Nomenclature Workspace — owner visual OK (`2026-07-22`); historical PT-04 tree check; tree later removed from nomenclature list (`4.7.2`); list now PT-02 row workspace
 
 #### 5.5.5 — PT-05 Simple Entity Card
 
@@ -478,7 +523,7 @@ Microtasks:
 - [x] 6.0.1.1 — Document module boundaries and shared terminology (ADR package): ProductModel, SizeGrid, PatternSet, AssemblyVariant, AssemblyOperationLine; rule `1 model = 1 size_type = 1 article` — `v0.9.0`; evidence: `docs/architecture/decisions/ADR-014-pattern-base-product-models-boundary.md`
 - [x] 6.0.1.2 — Define cross-links: PRODUCT «доступные модели лекал», order-item selection chain, specification copy of assembly operations, Stage 8 shop-routing boundary — `v0.9.0`; ADR-014 §§ 3–4
 - [x] 6.0.1.3 — Define empty available-models policy and MVP operation lines (inline name+cost vs shared operations catalog) — `v0.9.0`; ADR-014 §§ 5–6 (empty whitelist → model optional; non-empty → required; MVP lines = inline name+cost)
-- [x] 6.0.1.4 — Documentation checkpoint — `v0.9.0`; ADR-014 accepted; Stage 9 tech-card ADR reserved as ADR-015; task: `docs/tasks/v0.9.0-stage-6.0.1-pattern-base-adr.md`
+- [x] 6.0.1.4 — Documentation checkpoint — `v0.9.0`; ADR-014 accepted; Stage 9 tech-card ADR reserved as **ADR-016** (ADR-015 = unified characteristics catalog); task: `docs/tasks/v0.9.0-stage-6.0.1-pattern-base-adr.md`
 
 Completion criteria:
 - ADR(s) approved; no parallel master for model/pattern/assembly-variant data;
@@ -652,12 +697,14 @@ Microtasks:
 - [x] 6.1.7.3 — Add workspace UI with loading and error states — `v0.9.0`; `ProductModelsWorkspace` + segment loading/error
 - [x] 6.1.7.4 — Add frontend regression tests — `v0.9.0`; `frontend/lib/product-models.test.mjs`
 - [x] 6.1.7.5 — Visual verification — `v0.9.0`; owner OK `2026-07-22`
+- [x] 6.1.7.6 / **B1** — Restore `DS-PT-02-CATALOG` toolbar sequence after product-type filter regression — `v0.9.0`; owner ask `2026-07-23`; locked order: **Search → Reset search → Filter → Reset filter → Print**; Print toggles leading row checkboxes; domain filters (status/type) only in Filter popover; Create (`Plus`) stays in toolbar `end`; evidence: `product-models-workspace.tsx`, `docs/design-system/pt-02-catalog-list.md`
 
 Completion criteria:
 - workspace opens through a real route;
 - list data comes from API;
 - loading and error states are explicit;
-- route remains the catalog-list template reference for directories / sections / categories.
+- route remains the catalog-list template reference for directories / sections / categories;
+- toolbar icon order matches `DS-PT-02-CATALOG` (B1 / `6.1.7.6`).
 
 #### 6.1.8 — Product-model card route
 
@@ -765,6 +812,47 @@ Completion criteria:
 - Stage 8 shop routings are not required for this MVP package.
 
 > Moved `2026-07-22`: former **`6.1.13`** (use model + assembly variant in sales-order items) → Stage **`3.2.5`**. Pattern-base Stage 6 stops at catalog masters + PRODUCT whitelist UI; commercial line selection is Заказ покупателя.
+
+#### 6.1.14 — Тип изделия (product type) directory
+
+Goal:
+Add pattern-base directory **Тип изделия** (product/garment type), separate from nomenclature type.
+
+Dependencies:
+- 6.0.2
+- 6.1.3
+
+Microtasks:
+- [x] 6.1.14.1 — Domain + CRUD model/API for product types (name, active, sort) — `v0.9.0`; `ProductType` + `/product-types`
+- [x] 6.1.14.2 — Settings nav under База лекал + list UI (PT-02 catalog) — `v0.9.0`; `/settings/catalogs/product-types`; DS-SHELL-01/02 visual contracts preserved (nav data only)
+- [x] 6.1.14.3 — Migration, schemas, regression tests — `v0.9.0`; Alembic `y5z6a7b8c901`; `backend/tests/test_product_types.py`
+
+#### 6.1.15 — Product type on model card requisites
+
+Goal:
+Link product model → product type; place field in «Основные реквизиты» under «Путь к лекалам», width 1 column.
+
+Dependencies:
+- 6.1.14
+- 6.1.10.6
+
+Microtasks:
+- [x] 6.1.15.1 — Add nullable `product_type_id` FK + migration/schemas/API — `a1b2c3d4e515`; DTO includes `product_type_name`; iter `2026-07-23`
+- [x] 6.1.15.2 — Card UI: select under `patterns_path`, 1-col grid span — `product-model-persistent-card.tsx`
+- [x] 6.1.15.3 — Regression tests — `test_product_models.py::test_product_model_product_type_link_and_list_filter`
+
+#### 6.1.16 — Product type on product-models list
+
+Goal:
+Show Тип изделия on `/settings/catalogs/product-models` list (column and/or filter).
+
+Dependencies:
+- 6.1.15
+
+Microtasks:
+- [x] 6.1.16.1 — Include product type in list API/DTO — `product_type_id` + `product_type_name`; list filter `product_type_id`
+- [x] 6.1.16.2 — Render on product-models workspace rows — column + type filter select
+- [x] 6.1.16.3 — Visual smoke — list/card wired (`product_type` column + filter); owner visual OK pending (not a separate reopen — note only)
 
 ### 6.2 — Размерные сетки (Size Grids)
 
@@ -1023,6 +1111,20 @@ Microtasks:
 
 Completion criteria:
 - managers can reuse catalog rows without breaking existing inline snapshots.
+
+#### 6.3.8 — Operation execution time (duration seconds)
+
+Goal:
+Add normative **время выполнения операции** (`duration_seconds`) to the sewing-operations catalog; snapshot onto assembly lines; show on list rows and model assembly totals.
+
+Dependencies:
+- 6.3.6
+
+Microtasks:
+- [x] 6.3.8.1 — Add `duration_seconds` to `SewingOperation` + Alembic — `2026-07-23`; `d5e6f7a8b901`
+- [x] 6.3.8.2 — Snapshot `duration_seconds` on `AssemblyOperationLine` (copy-on-pick) — `2026-07-23`
+- [x] 6.3.8.3 — List/create/edit UI + model card per-line time and «Время сборки 1 изделия …» total — `2026-07-23`; evidence: `sewing-operations-workspace.tsx`, `assembly-variants-block.tsx`
+- [x] 6.3.8.4 — Regression tests — `2026-07-23`; `test_sewing_operations.py`, `test_assembly_variants.py`, `sewing-operations.test.mjs`
 
 #### 6.3.7 — PatternSet withdrawal checkpoint
 
@@ -1318,7 +1420,7 @@ Dependencies:
 - 7.2.3
 - 8.2.3
 - ADR-004
-- ADR-015 (domain contract — to be created; ADR-014 is pattern-base)
+- ADR-016 (tech-card domain contract — to be created; ADR-014 is pattern-base; ADR-015 is unified characteristics)
 
 ### 9.1 — Domain and architecture
 
@@ -1332,7 +1434,7 @@ Microtasks:
 - [ ] 9.1.1.2 — Define unit lines matrix: N rows = order line quantity (size, personalization, number, …)
 - [ ] 9.1.1.3 — Snapshot vs live link policy for model, assembly variant, patterns, materials, routing template
 - [ ] 9.1.1.4 — Order manufacturing completeness: all technical cards in terminal state
-- [ ] 9.1.1.5 — Documentation checkpoint (ADR-015)
+- [ ] 9.1.1.5 — Documentation checkpoint (ADR-016)
 
 Completion criteria:
 - one technical card per manufacturable order line is the single agreed rule;

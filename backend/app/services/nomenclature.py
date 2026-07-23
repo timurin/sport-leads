@@ -17,7 +17,7 @@ class NomenclatureNotFoundError(RuntimeError):
     pass
 
 
-class NomenclatureArticleConflictError(RuntimeError):
+class NomenclatureConflictError(RuntimeError):
     pass
 
 
@@ -104,7 +104,7 @@ def list_nomenclature(db: Session, search: str | None, is_active: bool | None, l
     statement = select(Nomenclature)
     if search and search.strip():
         pattern = f"%{search.strip()}%"
-        statement = statement.where(or_(Nomenclature.name.ilike(pattern), Nomenclature.article.ilike(pattern), Nomenclature.category.ilike(pattern)))
+        statement = statement.where(or_(Nomenclature.name.ilike(pattern), Nomenclature.category.ilike(pattern)))
     if is_active is not None:
         statement = statement.where(Nomenclature.is_active == is_active)
     statement = statement.order_by(Nomenclature.is_active.desc(), func.lower(Nomenclature.name), Nomenclature.id).offset(offset).limit(limit)
@@ -199,7 +199,7 @@ def create_nomenclature(db: Session, payload: NomenclatureCreate) -> Nomenclatur
         db.commit()
     except IntegrityError as error:
         db.rollback()
-        raise NomenclatureArticleConflictError("Номенклатура с таким артикулом уже существует") from error
+        raise NomenclatureConflictError("Не удалось сохранить номенклатуру") from error
     db.refresh(item)
     return item
 
@@ -221,6 +221,6 @@ def update_nomenclature(db: Session, nomenclature_id: int, payload: Nomenclature
         db.commit()
     except IntegrityError as error:
         db.rollback()
-        raise NomenclatureArticleConflictError("Номенклатура с таким артикулом уже существует") from error
+        raise NomenclatureConflictError("Не удалось сохранить номенклатуру") from error
     db.refresh(item)
     return item

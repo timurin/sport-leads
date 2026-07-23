@@ -6,12 +6,12 @@ import { fromApiNomenclature, nomenclatureLabel } from "../nomenclature.ts";
 test("maps Decimal base price and preserves nomenclature fields", () => {
   const item = fromApiNomenclature({
     id: 7,
-    article: "FORM-001",
     name: "Футбольная форма",
     short_name: "Форма",
     description: null,
     category: "Форма",
     category_id: null,
+    storage_unit_id: null,
     nomenclature_type: "PRODUCT",
     unit: "шт",
     base_price: "12500",
@@ -21,8 +21,8 @@ test("maps Decimal base price and preserves nomenclature fields", () => {
     updated_at: "2026-07-18T10:00:00Z",
   });
 
-  assert.equal(item.article, "FORM-001");
+  assert.equal(item.name, "Футбольная форма");
   assert.equal(item.basePrice, "12500.00");
   assert.equal(item.is_active, true);
-  assert.equal(nomenclatureLabel(item), "FORM-001 — Футбольная форма");
+  assert.equal(nomenclatureLabel(item), "Футбольная форма");
 });

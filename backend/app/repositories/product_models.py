@@ -18,6 +18,7 @@ def list_product_models(
     search: str | None = None,
     status: ProductModelStatus | None = None,
     size_type: ProductModelSizeType | None = None,
+    product_type_id: int | None = None,
     limit: int = 100,
     offset: int = 0,
 ) -> list[ProductModel]:
@@ -34,6 +35,8 @@ def list_product_models(
         statement = statement.where(ProductModel.status == status)
     if size_type is not None:
         statement = statement.where(ProductModel.size_type == size_type)
+    if product_type_id is not None:
+        statement = statement.where(ProductModel.product_type_id == product_type_id)
     statement = statement.order_by(
         func.lower(ProductModel.article),
         ProductModel.id,

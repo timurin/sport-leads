@@ -1,6 +1,5 @@
 export type ApiNomenclature = {
   id: number;
-  article: string;
   name: string;
   short_name: string | null;
   description: string | null;
@@ -35,31 +34,286 @@ export type NomenclatureCategory = ApiNomenclatureCategory;
 
 export type Nomenclature = ApiNomenclature & { basePrice: string };
 
+export const NOMENCLATURE_TYPE_LABELS: Record<NomenclatureType, string> = {
+  SERVICE: "Услуга",
+  PRODUCT: "Продукция",
+  GOODS: "Товар",
+  MATERIAL: "Материал",
+};
+
+export const NOMENCLATURE_TYPE_OPTIONS = Object.entries(
+  NOMENCLATURE_TYPE_LABELS,
+) as [NomenclatureType, string][];
+
+export const NOMENCLATURE_CURRENCY_OPTIONS = ["RUB", "USD", "EUR"] as const;
+
+export const NOMENCLATURE_IMAGE_ACCEPT = "image/jpeg,image/png,image/webp";
+export const NOMENCLATURE_IMAGE_RULE =
+  "Только JPEG / PNG / WebP, не больше 10 МБ.";
+
+/** Core card requisites draft — maps 1:1 to backend Nomenclature fields. */
+export type NomenclatureRequisitesDraft = {
+  name: string;
+  short_name: string;
+  description: string;
+  category_id: number | null;
+  storage_unit_id: number | null;
+  nomenclature_type: NomenclatureType;
+  base_price: string;
+  currency: string;
+  is_active: boolean;
+};
+
+export function nomenclatureStatusTone(
+  isActive: boolean,
+): "success" | "neutral" {
+  return isActive ? "success" : "neutral";
+}
+
+export function nomenclatureStatusLabel(isActive: boolean): string {
+  return isActive ? "Активна" : "Архив";
+}
+
+export function categoryPathLabel(
+  categoryId: number | null,
+  categories: NomenclatureCategory[],
+): string {
+  const category = categories.find((item) => item.id === categoryId);
+  if (!category) return "Без категории";
+  const parent = category.parent_id
+    ? `${categoryPathLabel(category.parent_id, categories)} / `
+    : "";
+  return `${parent}${category.name}`;
+}
+
+/** Legacy `category` string for PATCH — derived from `category_id`, never free-typed. */
+export function resolveNomenclatureCategoryLabel(
+  categoryId: number | null,
+  categories: NomenclatureCategory[],
+  fallback: string,
+): string {
+  if (categoryId == null) {
+    const trimmed = fallback.trim();
+    return trimmed || "Без категории";
+  }
+  const category = categories.find((item) => item.id === categoryId);
+  return category?.name ?? (fallback.trim() || "Без категории");
+}
+
+/** Legacy `unit` string for PATCH — derived from `storage_unit_id`. */
+export function resolveNomenclatureUnitSymbol(
+  storageUnitId: number | null,
+  units: UnitOfMeasure[],
+  fallback: string,
+): string {
+  if (storageUnitId == null) {
+    const trimmed = fallback.trim();
+    return trimmed || "шт";
+  }
+  const unit = units.find((item) => item.id === storageUnitId);
+  return unit?.symbol ?? (fallback.trim() || "шт");
+}
+
+export function toNomenclatureRequisitesDraft(
+  item: Nomenclature,
+): NomenclatureRequisitesDraft {
+  return {
+    name: item.name,
+    short_name: item.short_name ?? "",
+    description: item.description ?? "",
+    category_id: item.category_id,
+    storage_unit_id: item.storage_unit_id,
+    nomenclature_type: item.nomenclature_type,
+    base_price: item.basePrice,
+    currency: item.currency,
+    is_active: item.is_active,
+  };
+}
+
+export function isNomenclatureRequisitesDirty(
+  item: Nomenclature,
+  draft: NomenclatureRequisitesDraft,
+): boolean {
+  return (
+    draft.name !== item.name ||
+    draft.short_name !== (item.short_name ?? "") ||
+    draft.description !== (item.description ?? "") ||
+    draft.category_id !== item.category_id ||
+    draft.storage_unit_id !== item.storage_unit_id ||
+    draft.nomenclature_type !== item.nomenclature_type ||
+    draft.base_price !== item.basePrice ||
+    draft.currency !== item.currency ||
+    draft.is_active !== item.is_active
+  );
+}
+
+export function validateNomenclatureRequisitesDraft(
+  draft: NomenclatureRequisitesDraft,
+): string | null {
+  if (!draft.name.trim()) return "Укажите наименование";
+  if (draft.name.trim().length > 255) {
+    return "Наименование не длиннее 255 символов";
+  }
+  if (draft.short_name.trim().length > 100) {
+    return "Наименование для печати не длиннее 100 символов";
+  }
+  const price = Number(draft.base_price);
+  if (!Number.isFinite(price) || price < 0) {
+    return "Укажите корректную цену без НДС";
+  }
+  if (!/^[A-Z]{3}$/.test(draft.currency.trim())) {
+    return "Валюта должна быть кодом из 3 латинских букв";
+  }
+  return null;
+}
+
+export function validateNomenclatureImageFile(file: File): string | null {
+  const allowed = ["image/jpeg", "image/png", "image/webp"];
+  if (!allowed.includes(file.type)) return NOMENCLATURE_IMAGE_RULE;
+  if (file.size > 10 * 1024 * 1024) return NOMENCLATURE_IMAGE_RULE;
+  return null;
+}
+
+export function nomenclatureMediaUrl(contentUrl: string): string {
+  if (
+    contentUrl.startsWith("http://") ||
+    contentUrl.startsWith("https://") ||
+    contentUrl.startsWith("blob:")
+  ) {
+    return contentUrl;
+  }
+  const base = (
+    process.env.NEXT_PUBLIC_SPORT_LEADS_API_URL ?? "http://127.0.0.1:8000"
+  ).replace(/\/$/, "");
+  return `${base}${contentUrl.startsWith("/") ? contentUrl : `/${contentUrl}`}`;
+}
+
 export type UnitCategory = "QUANTITY" | "LENGTH" | "AREA" | "MASS" | "TIME" | "SERVICE";
 export type UnitOfMeasure = {
   id: number; code: string; name: string; symbol: string; unit_category: UnitCategory;
   precision: number; is_active: boolean; is_system: boolean; created_at: string; updated_at: string;
 };
 
-export type CustomFieldDataType = "STRING" | "TEXT" | "INTEGER" | "DECIMAL" | "BOOLEAN" | "DATE" | "SINGLE_SELECT" | "MULTI_SELECT" | "COLOR";
-export type CustomFieldDefinition = { id: number; code: string; name: string; description: string | null; data_type: CustomFieldDataType; unit_id: number | null; is_searchable: boolean; is_filterable: boolean; is_visible: boolean; is_active: boolean; is_system: boolean; created_at: string; updated_at: string };
-export type CategoryField = { id: number; category_id: number; field_definition_id: number; is_required: boolean; inherit: boolean; is_visible: boolean; sort_order: number; default_value: unknown; source_category_id: number; inherited: boolean };
-export type CustomFieldOption = { id: number; field_definition_id: number; code: string; label: string; sort_order: number; is_active: boolean; created_at: string; updated_at: string };
-export type NomenclatureFieldValue = { field_definition_id: number; code: string; name: string; data_type: CustomFieldDataType; value: unknown; is_required: boolean; inherited: boolean; source_category_id: number };
-export type CharacteristicKind = "COLOR" | "LIST";
-export type CharacteristicDefinition = { id: number; code: string; name: string; kind: CharacteristicKind; is_active: boolean; created_at: string; updated_at: string };
-export type CharacteristicOption = { id: number; characteristic_id: number; code: string; label: string; hex_value: string | null; sort_order: number; is_active: boolean; created_at: string; updated_at: string };
-export type CategoryCharacteristic = { id: number; category_id: number; characteristic_id: number; is_required: boolean; inherit: boolean; sort_order: number; inherited: boolean; source_category_id: number; created_at: string; updated_at: string };
-export type NomenclatureCharacteristic = { id: number; nomenclature_id: number; characteristic_id: number; created_at: string; updated_at: string };
-export type NomenclatureVariant = { id: number; nomenclature_id: number; article: string; name: string; is_active: boolean; option_ids: number[]; options: CharacteristicOption[]; created_at: string; updated_at: string };
-export type NomenclatureMedia = { id: number; nomenclature_id: number; filename: string; mime_type: string; file_size: number; alt_text: string | null; sort_order: number; is_primary: boolean; created_at: string; updated_at: string; content_url: string };
+export type CharacteristicKind =
+  | "STRING"
+  | "TEXT"
+  | "INTEGER"
+  | "DECIMAL"
+  | "BOOLEAN"
+  | "DATE"
+  | "LIST"
+  | "MULTI_SELECT"
+  | "COLOR";
+
+export type CharacteristicDefinition = {
+  id: number;
+  code: string;
+  name: string;
+  kind: CharacteristicKind;
+  description: string | null;
+  unit_id: number | null;
+  is_variant_dimension: boolean;
+  is_searchable: boolean;
+  is_filterable: boolean;
+  is_visible: boolean;
+  is_active: boolean;
+  is_system: boolean;
+  can_delete?: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+export type CharacteristicOption = {
+  id: number;
+  characteristic_id: number;
+  code: string;
+  label: string;
+  hex_value: string | null;
+  sort_order: number;
+  is_active: boolean;
+  can_delete?: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+export type CategoryCharacteristic = {
+  id: number;
+  category_id: number;
+  characteristic_id: number;
+  is_required: boolean;
+  inherit: boolean;
+  is_visible: boolean;
+  sort_order: number;
+  default_value: unknown;
+  inherited: boolean;
+  source_category_id: number;
+  created_at: string;
+  updated_at: string;
+};
+
+export type NomenclatureCharacteristic = {
+  id: number;
+  nomenclature_id: number;
+  characteristic_id: number;
+  created_at: string;
+  updated_at: string;
+};
+
+export type NomenclatureCharacteristicValue = {
+  characteristic_id: number;
+  code: string;
+  name: string;
+  kind: CharacteristicKind;
+  value: unknown;
+  default_value: unknown;
+  is_required: boolean;
+  is_visible: boolean;
+  inherited: boolean;
+  source_category_id: number | null;
+};
+
+export type NomenclatureVariant = {
+  id: number;
+  nomenclature_id: number;
+  article: string;
+  name: string;
+  is_active: boolean;
+  option_ids: number[];
+  options: CharacteristicOption[];
+  created_at: string;
+  updated_at: string;
+};
+
+export type NomenclatureMedia = {
+  id: number;
+  nomenclature_id: number;
+  filename: string;
+  mime_type: string;
+  file_size: number;
+  alt_text: string | null;
+  sort_order: number;
+  is_primary: boolean;
+  created_at: string;
+  updated_at: string;
+  content_url: string;
+};
+
+/** @deprecated Use Characteristic* — kept as aliases during UI migration */
+export type CustomFieldDataType = CharacteristicKind;
+export type CustomFieldDefinition = CharacteristicDefinition & { data_type?: CharacteristicKind };
+export type CustomFieldOption = CharacteristicOption & { field_definition_id?: number };
+export type CategoryField = CategoryCharacteristic & { field_definition_id?: number };
+export type NomenclatureFieldValue = NomenclatureCharacteristicValue & {
+  field_definition_id?: number;
+  data_type?: CharacteristicKind;
+};
 
 export function fromApiNomenclature(item: ApiNomenclature): Nomenclature {
   return { ...item, basePrice: Number(item.base_price).toFixed(2) };
 }
 
 export function nomenclatureLabel(item: Nomenclature): string {
-  return `${item.article} — ${item.name}`;
+  return item.name;
 }
 
 export async function getNomenclature(): Promise<Nomenclature[]> {
@@ -101,58 +355,139 @@ export async function getUnitsOfMeasure(): Promise<UnitOfMeasure[]> {
   return await response.json() as UnitOfMeasure[];
 }
 
-export async function getCustomFieldDefinitions(): Promise<CustomFieldDefinition[]> {
-  const apiUrl = (process.env.SPORT_LEADS_API_URL ?? "http://127.0.0.1:8000").replace(/\/$/, "");
-  const response = await fetch(`${apiUrl}/custom-fields`, { cache: "no-store" });
-  if (!response.ok) throw new Error(`Не удалось загрузить реквизиты (${response.status}).`);
-  return await response.json() as CustomFieldDefinition[];
-}
-
-export async function getCategoryFields(categoryId: number): Promise<CategoryField[]> {
-  const apiUrl = (process.env.SPORT_LEADS_API_URL ?? "http://127.0.0.1:8000").replace(/\/$/, "");
-  const response = await fetch(`${apiUrl}/custom-fields/categories/${categoryId}/fields`, { cache: "no-store" });
-  if (!response.ok) throw new Error(`Не удалось загрузить реквизиты категории (${response.status}).`);
-  return await response.json() as CategoryField[];
-}
-
-export async function getCustomFieldOptions(fieldId: number): Promise<CustomFieldOption[]> {
-  const apiUrl = (process.env.SPORT_LEADS_API_URL ?? "http://127.0.0.1:8000").replace(/\/$/, "");
-  const response = await fetch(`${apiUrl}/custom-fields/${fieldId}/options`, { cache: "no-store" });
-  if (!response.ok) throw new Error(`Не удалось загрузить варианты реквизита (${response.status}).`);
-  return await response.json() as CustomFieldOption[];
-}
-
-export async function getNomenclatureFieldValues(nomenclatureId: number): Promise<NomenclatureFieldValue[]> {
-  const apiUrl = (process.env.SPORT_LEADS_API_URL ?? "http://127.0.0.1:8000").replace(/\/$/, "");
-  const response = await fetch(`${apiUrl}/custom-fields/nomenclatures/${nomenclatureId}/fields`, { cache: "no-store" });
-  if (!response.ok) throw new Error(`Не удалось загрузить реквизиты номенклатуры (${response.status}).`);
-  return await response.json() as NomenclatureFieldValue[];
-}
-
 function apiBaseUrl(): string {
   return (process.env.SPORT_LEADS_API_URL ?? "http://127.0.0.1:8000").replace(/\/$/, "");
 }
 
 export function characteristicsApiPath(path: string): string {
   const normalized = path.startsWith("/") ? path : `/${path}`;
-  return normalized === "/characteristics" || normalized.startsWith("/characteristics/") ? normalized : `/characteristics${normalized}`;
+  return normalized === "/characteristics" ||
+    normalized.startsWith("/characteristics/")
+    ? normalized
+    : `/characteristics${normalized}`;
 }
 
 async function getCharacteristicApi<T>(path: string): Promise<T> {
-  const apiUrl = (process.env.SPORT_LEADS_API_URL ?? "http://127.0.0.1:8000").replace(/\/$/, "");
-  const response = await fetch(`${apiUrl}${characteristicsApiPath(path)}`, { cache: "no-store" });
-  if (!response.ok) throw new Error(`Не удалось загрузить характеристики (${response.status}).`);
-  return await response.json() as T;
+  const response = await fetch(`${apiBaseUrl()}${characteristicsApiPath(path)}`, {
+    cache: "no-store",
+  });
+  if (!response.ok) {
+    throw new Error(`Не удалось загрузить характеристики (${response.status}).`);
+  }
+  return (await response.json()) as T;
 }
-export const getCharacteristicDefinitions = () => getCharacteristicApi<CharacteristicDefinition[]>("/definitions");
-export const getCategoryCharacteristics = (id: number) => getCharacteristicApi<CategoryCharacteristic[]>(`/categories/${id}`);
-export const getNomenclatureCharacteristics = (id: number) => getCharacteristicApi<NomenclatureCharacteristic[]>(`/nomenclatures/${id}`);
-export const getNomenclatureVariants = (id: number) => getCharacteristicApi<NomenclatureVariant[]>(`/nomenclatures/${id}/variants`);
-export const getCharacteristicOptions = (id: number) => getCharacteristicApi<CharacteristicOption[]>(`/definitions/${id}/options`);
+
+export async function getCharacteristicDefinitions(): Promise<CharacteristicDefinition[]> {
+  return getCharacteristicApi<CharacteristicDefinition[]>("/definitions");
+}
+
+export async function getCategoryCharacteristics(
+  id: number,
+): Promise<CategoryCharacteristic[]> {
+  return getCharacteristicApi<CategoryCharacteristic[]>(`/categories/${id}`);
+}
+
+export async function getNomenclatureCharacteristics(
+  id: number,
+): Promise<NomenclatureCharacteristic[]> {
+  return getCharacteristicApi<NomenclatureCharacteristic[]>(
+    `/nomenclatures/${id}`,
+  );
+}
+
+export async function getNomenclatureVariants(
+  id: number,
+): Promise<NomenclatureVariant[]> {
+  return getCharacteristicApi<NomenclatureVariant[]>(
+    `/nomenclatures/${id}/variants`,
+  );
+}
+
+export async function getCharacteristicOptions(
+  id: number,
+): Promise<CharacteristicOption[]> {
+  return getCharacteristicApi<CharacteristicOption[]>(
+    `/definitions/${id}/options`,
+  );
+}
+
+export async function getCharacteristicUsedValues(
+  id: number,
+): Promise<string[]> {
+  return getCharacteristicApi<string[]>(`/definitions/${id}/used-values`);
+}
+
+export async function getNomenclatureCharacteristicValues(
+  nomenclatureId: number,
+): Promise<NomenclatureCharacteristicValue[]> {
+  return getCharacteristicApi<NomenclatureCharacteristicValue[]>(
+    `/nomenclatures/${nomenclatureId}/values`,
+  );
+}
+
+/** @deprecated Use getCharacteristicDefinitions / getNomenclatureCharacteristicValues */
+export async function getCustomFieldDefinitions(): Promise<CustomFieldDefinition[]> {
+  const rows = await getCharacteristicDefinitions();
+  return rows
+    .filter((row) => !row.is_variant_dimension)
+    .map((row) => ({ ...row, data_type: row.kind }));
+}
+
+/** Exact active name match against the characteristics handbook. */
+export function findCharacteristicByName<
+  T extends { id: number; name: string; is_active: boolean },
+>(definitions: T[], name: string): T | null {
+  const needle = name.trim().toLocaleLowerCase("ru");
+  if (!needle) return null;
+  const matches = definitions
+    .filter(
+      (field) =>
+        field.is_active && field.name.toLocaleLowerCase("ru") === needle,
+    )
+    .sort((left, right) => left.id - right.id);
+  return matches[0] ?? null;
+}
+
+export async function getCategoryFields(
+  categoryId: number,
+): Promise<CategoryField[]> {
+  const rows = await getCategoryCharacteristics(categoryId);
+  return rows.map((row) => ({
+    ...row,
+    field_definition_id: row.characteristic_id,
+  }));
+}
+
+export async function getCustomFieldOptions(
+  fieldId: number,
+): Promise<CustomFieldOption[]> {
+  const rows = await getCharacteristicOptions(fieldId);
+  return rows.map((row) => ({
+    ...row,
+    field_definition_id: row.characteristic_id,
+  }));
+}
+
+export async function getNomenclatureFieldValues(
+  nomenclatureId: number,
+): Promise<NomenclatureFieldValue[]> {
+  const rows = await getNomenclatureCharacteristicValues(nomenclatureId);
+  return rows.map((row) => ({
+    ...row,
+    field_definition_id: row.characteristic_id,
+    data_type: row.kind,
+    source_category_id: row.source_category_id ?? 0,
+  }));
+}
+
 export async function getNomenclatureMedia(id: number): Promise<NomenclatureMedia[]> {
-  const response = await fetch(`${apiBaseUrl()}/nomenclatures/${id}/media`, { cache: "no-store" });
-  if (!response.ok) throw new Error(`Не удалось загрузить media номенклатуры (${response.status}).`);
-  return await response.json() as NomenclatureMedia[];
+  const response = await fetch(`${apiBaseUrl()}/nomenclatures/${id}/media`, {
+    cache: "no-store",
+  });
+  if (!response.ok) {
+    throw new Error(`Не удалось загрузить media номенклатуры (${response.status}).`);
+  }
+  return (await response.json()) as NomenclatureMedia[];
 }
 
 export type NomenclatureAvailableModel = {

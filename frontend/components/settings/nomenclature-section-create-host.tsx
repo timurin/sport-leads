@@ -10,20 +10,22 @@ import {
   type NomenclatureCreateKind,
 } from "@/components/settings/nomenclature-section-create-menu";
 import { PageToolbar } from "@/components/ui/page-header";
-import type { NomenclatureCategory } from "@/lib/nomenclature";
+import type { NomenclatureCategory, UnitOfMeasure } from "@/lib/nomenclature";
 
 type NomenclatureSectionCreateHostProps = {
   categories?: NomenclatureCategory[];
+  units?: UnitOfMeasure[];
   toolbarStart?: ReactNode;
   children: ReactNode;
 };
 
 /**
- * Page shell: toolbar create menu + docked CreateDrawer (materials pattern).
+ * Page shell: toolbar create menu + fullscreen CreateDrawer (ADR-013 / 4.7.9).
  * Children may include a left EditDrawer beside the list.
  */
 export function NomenclatureSectionCreateHost({
   categories = [],
+  units = [],
   toolbarStart,
   children,
 }: NomenclatureSectionCreateHostProps) {
@@ -43,7 +45,9 @@ export function NomenclatureSectionCreateHost({
         <NomenclatureCreatePanels
           kind={createKind}
           categories={categories}
+          units={units}
           onClose={() => setCreateKind(null)}
+          variant="fullscreen"
         />
       </div>
     </div>

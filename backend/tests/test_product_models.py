@@ -737,3 +737,74 @@ def test_product_model_size_grid_link_api() -> None:
             assert to_draft.json()["status"] == "draft"
     finally:
         app.dependency_overrides.clear()
+
+
+def test_product_model_product_type_link_and_list_filter() -> None:
+    factory = _session_factory()
+
+    def override_get_db():
+        with factory() as db:
+            yield db
+
+    app.dependency_overrides[get_db] = override_get_db
+    try:
+        with TestClient(app) as client:
+            product_type = client.post(
+                "/product-types",
+                json={"name": "Футболка", "is_active": True, "sort_order": 1},
+            )
+            assert product_type.status_code == 201, product_type.text
+            product_type_id = product_type.json()["id"]
+
+            other_type = client.post(
+                "/product-types",
+                json={"name": "Шорты", "is_active": True, "sort_order": 2},
+            )
+            assert other_type.status_code == 201, other_type.text
+            other_type_id = other_type.json()["id"]
+
+            created = client.post(
+                "/product-models",
+                json={
+                    "article": "PT-213",
+                    "name": "Модель с типом",
+                    "size_type": "men",
+                    "product_type_id": product_type_id,
+                },
+            )
+            assert created.status_code == 201, created.text
+            body = created.json()
+            assert body["product_type_id"] == product_type_id
+            assert body["product_type_name"] == "Футболка"
+            model_id = body["id"]
+
+            missing = client.patch(
+                f"/product-models/{model_id}",
+                json={"product_type_id": 999999},
+            )
+            assert missing.status_code == 422
+
+            switched = client.patch(
+                f"/product-models/{model_id}",
+                json={"product_type_id": other_type_id},
+            )
+            assert switched.status_code == 200, switched.text
+            assert switched.json()["product_type_id"] == other_type_id
+            assert switched.json()["product_type_name"] == "Шорты"
+
+            listed = client.get(
+                "/product-models",
+                params={"product_type_id": other_type_id},
+            )
+            assert listed.status_code == 200
+            assert [row["id"] for row in listed.json()] == [model_id]
+
+            cleared = client.patch(
+                f"/product-models/{model_id}",
+                json={"product_type_id": None},
+            )
+            assert cleared.status_code == 200, cleared.text
+            assert cleared.json()["product_type_id"] is None
+            assert cleared.json()["product_type_name"] is None
+    finally:
+        app.dependency_overrides.clear()
