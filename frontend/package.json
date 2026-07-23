@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "node --test --experimental-strip-types components/kanban/*.test.mjs lib/sales/*.test.mjs lib/product-models.test.mjs lib/navigation.test.mjs"
+    "test": "node --test --experimental-strip-types components/kanban/*.test.mjs lib/sales/*.test.mjs lib/product-models.test.mjs lib/navigation.test.mjs lib/nomenclature-category-tree.test.mjs lib/nomenclature-category-resolve.test.mjs"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

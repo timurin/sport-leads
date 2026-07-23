@@ -31,7 +31,7 @@ export function validateProductTypeDraft(
   draft: ProductTypeDraft,
 ): string | null {
   if (!draft.name.trim()) {
-    return "Укажите наименование типа изделия";
+    return "Укажите наименование вида изделия";
   }
   if (draft.name.trim().length > 255) {
     return "Наименование не длиннее 255 символов";
@@ -78,7 +78,7 @@ export async function getProductTypes(
   });
   if (!response.ok) {
     throw new Error(
-      `Не удалось загрузить типы изделий (${response.status}).`,
+      `Не удалось загрузить виды изделий (${response.status}).`,
     );
   }
   return (await response.json()) as ProductType[];

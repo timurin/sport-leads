@@ -343,13 +343,13 @@ export function ProductModelsWorkspace({
                             : String(productTypeFilter)
                         }
                         size="compact"
-                        aria-label="Фильтр по типу изделия"
+                        aria-label="Фильтр по виду изделия"
                         onChange={(event) => {
                           const raw = event.target.value;
                           setProductTypeFilter(raw ? Number(raw) : null);
                         }}
                       >
-                        <option value="">Все типы</option>
+                        <option value="">Все виды</option>
                         {productTypes.map((row) => (
                           <option key={row.id} value={row.id}>
                             {row.name}
@@ -425,7 +425,7 @@ export function ProductModelsWorkspace({
                   <DataTableHeaderCell>Фото</DataTableHeaderCell>
                   <DataTableHeaderCell>Артикул</DataTableHeaderCell>
                   <DataTableHeaderCell>Название</DataTableHeaderCell>
-                  <DataTableHeaderCell>Тип изделия</DataTableHeaderCell>
+                  <DataTableHeaderCell>Вид изделия</DataTableHeaderCell>
                   <DataTableHeaderCell>Размерная сетка</DataTableHeaderCell>
                   <DataTableHeaderCell>Статус</DataTableHeaderCell>
                   <DataTableHeaderCell>Стоимость от–до</DataTableHeaderCell>

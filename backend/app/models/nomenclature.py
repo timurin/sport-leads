@@ -3,11 +3,15 @@ from __future__ import annotations
 from datetime import datetime
 from decimal import Decimal
 from enum import Enum
+from typing import TYPE_CHECKING
 
 from sqlalchemy import Boolean, CheckConstraint, DateTime, ForeignKey, Integer, Numeric, String, Text, UniqueConstraint, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database.base import Base
+
+if TYPE_CHECKING:
+    from app.models.product_type import ProductType
 
 
 class NomenclatureType(str, Enum):
@@ -91,7 +95,12 @@ class Nomenclature(Base):
         ForeignKey("nomenclature_categories.id", ondelete="SET NULL"), nullable=True, index=True
     )
     nomenclature_type: Mapped[NomenclatureType] = mapped_column(String(20), nullable=False, default=NomenclatureType.PRODUCT, index=True)
-    unit: Mapped[str] = mapped_column(String(30), nullable=False, default="С€С‚")
+    product_type_id: Mapped[int | None] = mapped_column(
+        ForeignKey("product_types.id", ondelete="RESTRICT"),
+        nullable=True,
+        index=True,
+    )
+    unit: Mapped[str] = mapped_column(String(30), nullable=False, default="шт")
     base_price: Mapped[Decimal] = mapped_column(Numeric(14, 2), nullable=False, default=Decimal("0"))
     currency: Mapped[str] = mapped_column(String(3), nullable=False, default="RUB")
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True, index=True)
@@ -101,3 +110,4 @@ class Nomenclature(Base):
     category_relation: Mapped[NomenclatureCategory | None] = relationship(back_populates="nomenclatures", foreign_keys=[category_id])
     storage_unit_id: Mapped[int | None] = mapped_column(ForeignKey("units_of_measure.id", ondelete="RESTRICT"), nullable=True, index=True)
     storage_unit: Mapped[UnitOfMeasure | None] = relationship(back_populates="nomenclatures", foreign_keys=[storage_unit_id])
+    product_type: Mapped[ProductType | None] = relationship("ProductType")

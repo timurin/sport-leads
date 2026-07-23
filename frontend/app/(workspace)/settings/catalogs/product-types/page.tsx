@@ -12,7 +12,7 @@ export default async function ProductTypesListPage() {
       <Suspense
         fallback={
           <div className="p-portal-6 text-portal-body text-portal-muted">
-            Загрузка типов изделий…
+            Загрузка видов изделий…
           </div>
         }
       >

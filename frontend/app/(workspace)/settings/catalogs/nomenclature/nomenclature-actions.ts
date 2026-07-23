@@ -13,6 +13,20 @@ import {
 const apiBaseUrl = () => (process.env.SPORT_LEADS_API_URL ?? "http://127.0.0.1:8000").replace(/\/$/, "");
 const text = (formData: FormData, name: string) => String(formData.get(name) ?? "").trim();
 
+async function readDetail(response: Response): Promise<string> {
+  const payload = (await response.json().catch(() => null)) as
+    | { detail?: string | Array<{ msg?: string }> }
+    | null;
+  if (typeof payload?.detail === "string") return payload.detail;
+  if (Array.isArray(payload?.detail) && payload.detail.length > 0) {
+    return (
+      payload.detail.map((item) => item.msg).filter(Boolean).join("; ") ||
+      `Backend вернул ${response.status}.`
+    );
+  }
+  return `Backend вернул ${response.status}.`;
+}
+
 async function mutate(path: string, method: string, body: Record<string, unknown>) {
   const response = await fetch(`${apiBaseUrl()}/nomenclatures${path}`, {
     method,
@@ -21,8 +35,7 @@ async function mutate(path: string, method: string, body: Record<string, unknown
     cache: "no-store",
   });
   if (!response.ok) {
-    const payload = await response.json().catch(() => null) as { detail?: string } | null;
-    throw new Error(payload?.detail ?? `Backend вернул ${response.status}.`);
+    throw new Error(await readDetail(response));
   }
   if (response.status === 204) return null;
   const contentType = response.headers.get("content-type") ?? "";
@@ -80,6 +93,8 @@ export async function updateNomenclatureRequisites(
     category: draft.category.trim() || "Без категории",
     category_id: draft.category_id,
     nomenclature_type: draft.nomenclature_type as NomenclatureType,
+    product_type_id:
+      draft.nomenclature_type === "PRODUCT" ? draft.product_type_id : null,
     unit: draft.unit.trim() || "шт",
     storage_unit_id: draft.storage_unit_id,
     base_price: draft.base_price.trim() || "0",
@@ -144,20 +159,6 @@ export async function updateNomenclatureCategory(formData: FormData) {
   });
   revalidatePath("/settings/catalogs/nomenclature");
   revalidatePath("/settings/catalogs/nomenclature-categories");
-}
-
-async function readDetail(response: Response): Promise<string> {
-  const payload = (await response.json().catch(() => null)) as
-    | { detail?: string | Array<{ msg?: string }> }
-    | null;
-  if (typeof payload?.detail === "string") return payload.detail;
-  if (Array.isArray(payload?.detail) && payload.detail.length > 0) {
-    return (
-      payload.detail.map((item) => item.msg).filter(Boolean).join("; ") ||
-      `Backend вернул ${response.status}.`
-    );
-  }
-  return `Backend вернул ${response.status}.`;
 }
 
 function revalidateNomenclatureCard(nomenclatureId: number) {

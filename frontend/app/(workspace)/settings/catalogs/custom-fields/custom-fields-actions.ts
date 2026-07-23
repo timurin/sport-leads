@@ -59,12 +59,24 @@ export async function assignCustomFieldToCategory(formData: FormData) {
   await assignCategoryCharacteristic(data);
 }
 
-export const saveNomenclatureCustomField = saveNomenclatureCharacteristicValue;
-export const assignNomenclatureCustomField =
-  assignNomenclatureCharacteristicValue;
-export const addNomenclatureCustomFieldWithValue =
-  addNomenclatureCharacteristicWithValue;
-export const createAndAssignNomenclatureCustomField =
-  addNomenclatureCharacteristicWithValue;
-export const removeNomenclatureCustomField =
-  removeNomenclatureCharacteristicValue;
+export async function saveNomenclatureCustomField(formData: FormData) {
+  await saveNomenclatureCharacteristicValue(formData);
+}
+
+export async function assignNomenclatureCustomField(formData: FormData) {
+  await assignNomenclatureCharacteristicValue(formData);
+}
+
+export async function addNomenclatureCustomFieldWithValue(formData: FormData) {
+  await addNomenclatureCharacteristicWithValue(formData);
+}
+
+export async function createAndAssignNomenclatureCustomField(
+  formData: FormData,
+) {
+  await addNomenclatureCharacteristicWithValue(formData);
+}
+
+export async function removeNomenclatureCustomField(formData: FormData) {
+  await removeNomenclatureCharacteristicValue(formData);
+}

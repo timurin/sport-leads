@@ -13,6 +13,7 @@ import {
   getUnitsOfMeasure,
 } from "@/lib/nomenclature";
 import { getProductModels } from "@/lib/product-models";
+import { getProductTypes } from "@/lib/product-types";
 
 type NomenclatureCardPageProps = {
   params: Promise<{ nomenclatureId: string }>;
@@ -61,12 +62,13 @@ export default async function NomenclatureCardPage({
   );
 
   const isProduct = item.nomenclature_type === "PRODUCT";
-  const [availableModels, activeModels] = isProduct
-    ? await Promise.all([
-        getNomenclatureAvailableModels(item.id),
-        getProductModels({ status: "active", limit: 500 }),
-      ])
-    : [[], []];
+  const [availableModels, activeModels, productTypes] = await Promise.all([
+    isProduct ? getNomenclatureAvailableModels(item.id) : Promise.resolve([]),
+    isProduct
+      ? getProductModels({ status: "active", limit: 500 })
+      : Promise.resolve([]),
+    getProductTypes(),
+  ]);
 
   return (
     <NomenclatureCard
@@ -80,6 +82,7 @@ export default async function NomenclatureCardPage({
       media={media}
       availableModels={availableModels}
       activeModels={activeModels}
+      productTypes={productTypes}
       initialEditing={initialEditing}
     />
   );

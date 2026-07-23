@@ -69,14 +69,14 @@ export function ProductTypeCreateDrawer({
       if (result.ok) {
         setDraft(emptyDraft);
         setSaving(false);
-        pushToast("Тип изделия создан", "success");
+        pushToast("Вид изделия создан", "success");
         onCreated?.(result.productType);
         onClose();
         return;
       }
       setError(result.message);
     } catch {
-      setError("Не удалось связаться с API. Тип изделия не создан.");
+      setError("Не удалось связаться с API. Вид изделия не создан.");
     }
     setSaving(false);
   }
@@ -84,7 +84,7 @@ export function ProductTypeCreateDrawer({
   return (
     <CreateDrawer
       open={open}
-      title="Новый тип изделия"
+      title="Новый вид изделия"
       description="Справочник базы лекал: наименование, активность и порядок."
       onClose={handleClose}
       variant="overlay"

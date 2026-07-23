@@ -50,7 +50,7 @@ def _to_read(
 def _require_product_nomenclature(item: Nomenclature) -> None:
     if item.nomenclature_type != NomenclatureType.PRODUCT:
         raise NomenclatureProductModelRuleError(
-            "Список доступных моделей лекал допустим только для номенклатуры типа PRODUCT"
+            "Список моделей изделий допустим только для номенклатуры типа PRODUCT"
         )
 
 
@@ -72,17 +72,26 @@ def add_available_product_model(
     item = get_nomenclature(db, nomenclature_id)
     _require_product_nomenclature(item)
 
+    if item.product_type_id is None:
+        raise NomenclatureProductModelRuleError(
+            "Сначала выберите вид изделия на карточке номенклатуры"
+        )
+
     model = product_model_repo.get_product_model(db, payload.product_model_id)
     if model is None:
         raise NomenclatureProductModelNotFoundError("Модель изделия не найдена")
     if model.status != ProductModelStatus.ACTIVE:
         raise NomenclatureProductModelRuleError(
-            "В whitelist можно добавить только активную модель изделия"
+            "В список можно добавить только активную модель изделия"
+        )
+    if model.product_type_id != item.product_type_id:
+        raise NomenclatureProductModelRuleError(
+            "Модель изделия должна совпадать с видом изделия номенклатуры"
         )
 
     if repo.get_link(db, nomenclature_id, payload.product_model_id) is not None:
         raise NomenclatureProductModelConflictError(
-            "Модель уже есть в списке доступных для этой номенклатуры"
+            "Модель уже есть в списке моделей изделий этой номенклатуры"
         )
 
     sort_order = (
@@ -100,7 +109,7 @@ def add_available_product_model(
     except IntegrityError as error:
         db.rollback()
         raise NomenclatureProductModelConflictError(
-            "Модель уже есть в списке доступных для этой номенклатуры"
+            "Модель уже есть в списке моделей изделий этой номенклатуры"
         ) from error
 
     return _to_read(link, model)

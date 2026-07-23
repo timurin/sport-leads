@@ -2,7 +2,6 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
 from app.database.session import get_db
-from app.models.nomenclature import Nomenclature
 from app.schemas.nomenclature import NomenclatureCategoryCreate, NomenclatureCategoryRead, NomenclatureCategoryUpdate, NomenclatureCreate, NomenclatureRead, NomenclatureUpdate, UnitOfMeasureCreate, UnitOfMeasureRead, UnitOfMeasureUpdate
 from app.schemas.product_model import (
     NomenclatureProductModelCreate,
@@ -15,12 +14,14 @@ from app.services.nomenclature import (
     NomenclatureCategoryNotFoundError,
     NomenclatureCategoryRuleError,
     NomenclatureNotFoundError,
+    NomenclatureRuleError,
     create_category,
     create_nomenclature,
     get_category,
     get_nomenclature,
     list_categories,
     list_nomenclature,
+    to_nomenclature_read,
     update_category,
     update_nomenclature,
     create_unit,
@@ -122,37 +123,49 @@ def read_nomenclature(
     limit: int = Query(default=100, ge=1, le=500),
     offset: int = Query(default=0, ge=0),
     db: Session = Depends(get_db),
-) -> list[Nomenclature]:
-    return list_nomenclature(db, search, is_active, limit, offset)
+) -> list[NomenclatureRead]:
+    return [to_nomenclature_read(row) for row in list_nomenclature(db, search, is_active, limit, offset)]
 
 
 @router.get("/{nomenclature_id}", response_model=NomenclatureRead)
-def read_one_nomenclature(nomenclature_id: int, db: Session = Depends(get_db)) -> Nomenclature:
+def read_one_nomenclature(nomenclature_id: int, db: Session = Depends(get_db)) -> NomenclatureRead:
     try:
-        return get_nomenclature(db, nomenclature_id)
+        return to_nomenclature_read(get_nomenclature(db, nomenclature_id))
     except NomenclatureNotFoundError as error:
         raise HTTPException(status_code=404, detail=str(error)) from error
 
 
 @router.post("", response_model=NomenclatureRead, status_code=status.HTTP_201_CREATED)
-def create_one_nomenclature(payload: NomenclatureCreate, db: Session = Depends(get_db)) -> Nomenclature:
+def create_one_nomenclature(payload: NomenclatureCreate, db: Session = Depends(get_db)) -> NomenclatureRead:
     try:
-        return create_nomenclature(db, payload)
+        return to_nomenclature_read(create_nomenclature(db, payload))
     except NomenclatureConflictError as error:
         raise HTTPException(status_code=409, detail=str(error)) from error
-    except (NomenclatureCategoryNotFoundError, NomenclatureCategoryRuleError, UnitOfMeasureNotFoundError, UnitOfMeasureRuleError) as error:
+    except (
+        NomenclatureCategoryNotFoundError,
+        NomenclatureCategoryRuleError,
+        NomenclatureRuleError,
+        UnitOfMeasureNotFoundError,
+        UnitOfMeasureRuleError,
+    ) as error:
         raise HTTPException(status_code=422, detail=str(error)) from error
 
 
 @router.patch("/{nomenclature_id}", response_model=NomenclatureRead)
-def update_one_nomenclature(nomenclature_id: int, payload: NomenclatureUpdate, db: Session = Depends(get_db)) -> Nomenclature:
+def update_one_nomenclature(nomenclature_id: int, payload: NomenclatureUpdate, db: Session = Depends(get_db)) -> NomenclatureRead:
     try:
-        return update_nomenclature(db, nomenclature_id, payload)
+        return to_nomenclature_read(update_nomenclature(db, nomenclature_id, payload))
     except NomenclatureNotFoundError as error:
         raise HTTPException(status_code=404, detail=str(error)) from error
     except NomenclatureConflictError as error:
         raise HTTPException(status_code=409, detail=str(error)) from error
-    except (NomenclatureCategoryNotFoundError, NomenclatureCategoryRuleError, UnitOfMeasureNotFoundError, UnitOfMeasureRuleError) as error:
+    except (
+        NomenclatureCategoryNotFoundError,
+        NomenclatureCategoryRuleError,
+        NomenclatureRuleError,
+        UnitOfMeasureNotFoundError,
+        UnitOfMeasureRuleError,
+    ) as error:
         raise HTTPException(status_code=422, detail=str(error)) from error
 
 

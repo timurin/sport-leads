@@ -669,7 +669,7 @@ export function ProductModelPersistentCard({
                       </Field>
                     </div>
                     <div className="grid min-w-0 gap-portal-3 min-[1300px]:grid-cols-2 min-[1700px]:grid-cols-4">
-                      <Field label="Тип изделия" className="min-w-0">
+                      <Field label="Вид изделия" className="min-w-0">
                         <Select
                           value={
                             draft.product_type_id == null
@@ -685,7 +685,7 @@ export function ProductModelPersistentCard({
                               product_type_id: raw ? Number(raw) : null,
                             });
                           }}
-                          aria-label="Тип изделия"
+                          aria-label="Вид изделия"
                         >
                           <option value="">Не указан</option>
                           {productTypeOptions.map((row) => (
@@ -829,7 +829,7 @@ export function ProductModelPersistentCard({
                     <div className="grid min-w-0 gap-portal-3 min-[1300px]:grid-cols-2 min-[1700px]:grid-cols-4">
                       <div className="min-w-0 border-l-2 border-portal-border pl-portal-3">
                         <p className="text-portal-caption font-medium text-portal-muted">
-                          Тип изделия
+                          Вид изделия
                         </p>
                         {linkedProductType || current.product_type_name?.trim() ? (
                           <p className="mt-1 text-portal-body font-semibold text-portal-text">

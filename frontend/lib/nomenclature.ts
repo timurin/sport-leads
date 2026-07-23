@@ -7,6 +7,8 @@ export type ApiNomenclature = {
   category_id: number | null;
   storage_unit_id: number | null;
   nomenclature_type: NomenclatureType;
+  product_type_id: number | null;
+  product_type_name?: string | null;
   unit: string;
   base_price: number | string;
   currency: string;
@@ -59,6 +61,7 @@ export type NomenclatureRequisitesDraft = {
   category_id: number | null;
   storage_unit_id: number | null;
   nomenclature_type: NomenclatureType;
+  product_type_id: number | null;
   base_price: string;
   currency: string;
   is_active: boolean;
@@ -84,6 +87,53 @@ export function categoryPathLabel(
     ? `${categoryPathLabel(category.parent_id, categories)} / `
     : "";
   return `${parent}${category.name}`;
+}
+
+/**
+ * Resolve `category_id` from catalog. Prefer explicit id; otherwise match
+ * legacy `category` name. Type is not a hard filter (ADR-006 / 4.9.1); when
+ * several names collide, prefer active then same nomenclature type.
+ */
+export function resolveNomenclatureCategoryId(
+  categoryId: number | null,
+  categoryLabel: string,
+  categories: NomenclatureCategory[],
+  nomenclatureType: NomenclatureType,
+): number | null {
+  if (categoryId != null) {
+    const byId = categories.find((row) => row.id === categoryId);
+    if (byId) return byId.id;
+  }
+  const needle = categoryLabel.trim().toLocaleLowerCase("ru");
+  if (!needle || needle === "без категории") return null;
+  const matches = categories
+    .filter((row) => row.name.toLocaleLowerCase("ru") === needle)
+    .sort((left, right) => {
+      if (left.is_active !== right.is_active) {
+        return left.is_active ? -1 : 1;
+      }
+      const leftType = left.nomenclature_type === nomenclatureType ? 0 : 1;
+      const rightType = right.nomenclature_type === nomenclatureType ? 0 : 1;
+      if (leftType !== rightType) {
+        return leftType - rightType;
+      }
+      return left.id - right.id;
+    });
+  return matches[0]?.id ?? null;
+}
+
+/** Display label for card: path from id, else legacy string, else «Без категории». */
+export function categoryDisplayLabel(
+  categoryId: number | null,
+  categories: NomenclatureCategory[],
+  fallback = "",
+): string {
+  if (categoryId != null) {
+    const path = categoryPathLabel(categoryId, categories);
+    if (path !== "Без категории") return path;
+  }
+  const trimmed = fallback.trim();
+  return trimmed || "Без категории";
 }
 
 /** Legacy `category` string for PATCH — derived from `category_id`, never free-typed. */
@@ -116,14 +166,21 @@ export function resolveNomenclatureUnitSymbol(
 
 export function toNomenclatureRequisitesDraft(
   item: Nomenclature,
+  categories: NomenclatureCategory[] = [],
 ): NomenclatureRequisitesDraft {
   return {
     name: item.name,
     short_name: item.short_name ?? "",
     description: item.description ?? "",
-    category_id: item.category_id,
+    category_id: resolveNomenclatureCategoryId(
+      item.category_id,
+      item.category,
+      categories,
+      item.nomenclature_type,
+    ),
     storage_unit_id: item.storage_unit_id,
     nomenclature_type: item.nomenclature_type,
+    product_type_id: item.product_type_id ?? null,
     base_price: item.basePrice,
     currency: item.currency,
     is_active: item.is_active,
@@ -141,6 +198,7 @@ export function isNomenclatureRequisitesDirty(
     draft.category_id !== item.category_id ||
     draft.storage_unit_id !== item.storage_unit_id ||
     draft.nomenclature_type !== item.nomenclature_type ||
+    draft.product_type_id !== (item.product_type_id ?? null) ||
     draft.base_price !== item.basePrice ||
     draft.currency !== item.currency ||
     draft.is_active !== item.is_active
@@ -309,7 +367,11 @@ export type NomenclatureFieldValue = NomenclatureCharacteristicValue & {
 };
 
 export function fromApiNomenclature(item: ApiNomenclature): Nomenclature {
-  return { ...item, basePrice: Number(item.base_price).toFixed(2) };
+  return {
+    ...item,
+    product_type_id: item.product_type_id ?? null,
+    basePrice: Number(item.base_price).toFixed(2),
+  };
 }
 
 export function nomenclatureLabel(item: Nomenclature): string {

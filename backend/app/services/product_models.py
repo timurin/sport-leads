@@ -92,7 +92,7 @@ def _validate_product_type_link(db: Session, product_type_id: int | None) -> Non
     if product_type_id is None:
         return
     if product_types_repo.get_product_type(db, product_type_id) is None:
-        raise ProductModelValidationError("Тип изделия не найден")
+        raise ProductModelValidationError("Вид изделия не найден")
 
 
 def list_product_models(

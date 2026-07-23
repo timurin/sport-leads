@@ -28,6 +28,11 @@ import type {
   UnitCategory,
   UnitOfMeasure,
 } from "@/lib/nomenclature";
+import { buildCategoryTreeRows } from "@/lib/nomenclature-category-tree";
+
+function actionErrorMessage(caught: unknown): string {
+  return caught instanceof Error ? caught.message : "Не удалось сохранить.";
+}
 
 const typeLabels: Record<NomenclatureType, string> = {
   SERVICE: "Услуга",
@@ -135,19 +140,31 @@ export function NomenclatureCreatePanels({
 
       {kind === "unit" ? (
         <CreateForm action={createUnitOfMeasure} onCancel={onClose}>
-          <Field label="Код" required>
+          <Field
+            label="Код"
+            required
+            help="Только латиница A–Z, цифры, _ и -: например PCS, KG, M2 (не «шт»)"
+          >
             <Input
               name="code"
               required
               pattern="[A-Z0-9][A-Z0-9_-]*"
+              title="Латиница A-Z, цифры, _ и -"
+              placeholder="PCS"
               autoFocus
+              style={{ textTransform: "uppercase" }}
+              onInput={(event) => {
+                const target = event.currentTarget;
+                const next = target.value.toUpperCase();
+                if (target.value !== next) target.value = next;
+              }}
             />
           </Field>
           <Field label="Наименование" required>
             <Input name="name" required />
           </Field>
           <Field label="Обозначение" required>
-            <Input name="symbol" required />
+            <Input name="symbol" required placeholder="шт." />
           </Field>
           <Field label="Категория">
             <Select name="unit_category" defaultValue="QUANTITY">
@@ -224,14 +241,12 @@ function NomenclatureCreateForm({
   const [categoryId, setCategoryId] = useState("");
   const [storageUnitId, setStorageUnitId] = useState("");
 
-  const typeCategories = useMemo(
+  const activeCategoryRows = useMemo(
     () =>
-      categories.filter(
-        (category) =>
-          category.is_active &&
-          category.nomenclature_type === nomenclatureType,
+      buildCategoryTreeRows(
+        categories.filter((category) => category.is_active),
       ),
-    [categories, nomenclatureType],
+    [categories],
   );
 
   const activeUnits = useMemo(
@@ -240,20 +255,41 @@ function NomenclatureCreateForm({
   );
 
   const legacyCategory =
-    typeCategories.find((category) => String(category.id) === categoryId)
-      ?.name ?? "Без категории";
+    categories.find((category) => String(category.id) === categoryId)?.name ??
+    "Без категории";
 
   const legacyUnit =
     activeUnits.find((unit) => String(unit.id) === storageUnitId)?.symbol ??
     "шт";
 
+  const [error, setError] = useState("");
+  const [pending, setPending] = useState(false);
+
+  async function submit(formData: FormData) {
+    setPending(true);
+    setError("");
+    try {
+      await createNomenclature(formData);
+      onCancel();
+    } catch (caught) {
+      setError(actionErrorMessage(caught));
+    } finally {
+      setPending(false);
+    }
+  }
+
   return (
-    <form action={createNomenclature} className="flex h-full min-h-0 flex-col">
+    <form action={submit} className="flex h-full min-h-0 flex-col">
       <input type="hidden" name="category" value={legacyCategory} />
       <input type="hidden" name="unit" value={legacyUnit} />
 
       <div className="min-h-0 flex-1 overflow-y-auto">
         <div className="mx-auto w-full max-w-5xl space-y-portal-6 p-portal-6">
+          {error ? (
+            <p className="rounded-portal-md border border-portal-danger/30 bg-portal-danger/5 px-portal-3 py-portal-2 text-portal-caption text-portal-danger">
+              {error}
+            </p>
+          ) : null}
           <FormSection title="Идентификация">
             <div className="grid gap-portal-4 md:grid-cols-2">
               <Field
@@ -261,16 +297,16 @@ function NomenclatureCreateForm({
                 required
                 className="md:col-span-2"
               >
-                <Input name="name" required autoFocus />
+                <Input name="name" required autoFocus disabled={pending} />
               </Field>
               <Field label="Тип">
                 <Select
                   name="nomenclature_type"
                   value={nomenclatureType}
+                  disabled={pending}
                   onChange={(event) => {
                     const next = event.target.value as NomenclatureType;
                     setNomenclatureType(next);
-                    setCategoryId("");
                   }}
                 >
                   {typeOptions.map(([value, label]) => (
@@ -289,12 +325,13 @@ function NomenclatureCreateForm({
                 <Select
                   name="category_id"
                   value={categoryId}
+                  disabled={pending}
                   onChange={(event) => setCategoryId(event.target.value)}
                 >
                   <option value="">Без категории</option>
-                  {typeCategories.map((category) => (
-                    <option key={category.id} value={category.id}>
-                      {category.name}
+                  {activeCategoryRows.map((row) => (
+                    <option key={row.category.id} value={row.category.id}>
+                      {row.outline} — {row.category.name}
                     </option>
                   ))}
                 </Select>
@@ -303,6 +340,7 @@ function NomenclatureCreateForm({
                 <Select
                   name="storage_unit_id"
                   value={storageUnitId}
+                  disabled={pending}
                   onChange={(event) => setStorageUnitId(event.target.value)}
                 >
                   <option value="">Не выбрана</option>
@@ -323,6 +361,7 @@ function NomenclatureCreateForm({
                 currencyName="currency"
                 defaultValue="0"
                 defaultCurrency="RUB"
+                disabled={pending}
               />
             </Field>
           </FormSection>
@@ -330,10 +369,10 @@ function NomenclatureCreateForm({
           <FormSection title="Дополнительно">
             <div className="grid gap-portal-4">
               <Field label="Наименование для печати">
-                <Input name="short_name" />
+                <Input name="short_name" disabled={pending} />
               </Field>
               <Field label="Описание">
-                <Textarea name="description" rows={4} />
+                <Textarea name="description" rows={4} disabled={pending} />
               </Field>
             </div>
           </FormSection>
@@ -341,11 +380,11 @@ function NomenclatureCreateForm({
       </div>
 
       <footer className="flex shrink-0 items-center justify-end gap-portal-2 border-t border-portal-border bg-portal-surface px-portal-6 py-portal-4">
-        <Button type="button" onClick={onCancel}>
+        <Button type="button" onClick={onCancel} disabled={pending}>
           Отмена
         </Button>
-        <Button type="submit" variant="primary">
-          Сохранить
+        <Button type="submit" variant="primary" disabled={pending}>
+          {pending ? "Сохранение…" : "Сохранить"}
         </Button>
       </footer>
     </form>
@@ -378,17 +417,42 @@ function CreateForm({
   onCancel: () => void;
   children: ReactNode;
 }) {
+  const [error, setError] = useState("");
+  const [pending, setPending] = useState(false);
+
+  async function submit(formData: FormData) {
+    setPending(true);
+    setError("");
+    try {
+      await action(formData);
+      onCancel();
+    } catch (caught) {
+      setError(actionErrorMessage(caught));
+    } finally {
+      setPending(false);
+    }
+  }
+
   return (
-    <form action={action} className="flex h-full min-h-0 flex-col">
+    <form action={submit} className="flex h-full min-h-0 flex-col">
       <div className="min-h-0 flex-1 space-y-portal-5 overflow-y-auto p-portal-6">
-        <div className="mx-auto w-full max-w-xl space-y-portal-4">{children}</div>
+        <div className="mx-auto w-full max-w-xl space-y-portal-4">
+          {error ? (
+            <p className="rounded-portal-md border border-portal-danger/30 bg-portal-danger/5 px-portal-3 py-portal-2 text-portal-caption text-portal-danger">
+              {error}
+            </p>
+          ) : null}
+          <fieldset disabled={pending} className="min-w-0 space-y-portal-4 border-0 p-0">
+            {children}
+          </fieldset>
+        </div>
       </div>
       <footer className="flex shrink-0 items-center justify-end gap-portal-2 border-t border-portal-border bg-portal-surface px-portal-6 py-portal-4">
-        <Button type="button" onClick={onCancel}>
+        <Button type="button" onClick={onCancel} disabled={pending}>
           Отмена
         </Button>
-        <Button type="submit" variant="primary">
-          Сохранить
+        <Button type="submit" variant="primary" disabled={pending}>
+          {pending ? "Сохранение…" : "Сохранить"}
         </Button>
       </footer>
     </form>

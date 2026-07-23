@@ -95,6 +95,7 @@ class NomenclatureBase(BaseModel):
     category_id: int | None = None
     storage_unit_id: int | None = None
     nomenclature_type: NomenclatureType = NomenclatureType.PRODUCT
+    product_type_id: int | None = None
     unit: str = Field(default="шт", min_length=1, max_length=30)
     base_price: Decimal = Field(default=Decimal("0"), ge=0, max_digits=14, decimal_places=2)
     currency: str = Field(default="RUB", min_length=3, max_length=3, pattern=r"^[A-Z]{3}$")
@@ -120,6 +121,7 @@ class NomenclatureUpdate(BaseModel):
     category_id: int | None = None
     storage_unit_id: int | None = None
     nomenclature_type: NomenclatureType | None = None
+    product_type_id: int | None = None
     unit: str | None = Field(default=None, min_length=1, max_length=30)
     base_price: Decimal | None = Field(default=None, ge=0, max_digits=14, decimal_places=2)
     currency: str | None = Field(default=None, min_length=3, max_length=3, pattern=r"^[A-Z]{3}$")
@@ -137,5 +139,6 @@ class NomenclatureRead(NomenclatureBase):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
+    product_type_name: str | None = None
     created_at: datetime
     updated_at: datetime

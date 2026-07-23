@@ -107,7 +107,7 @@ export function ProductTypesWorkspace({
   };
 
   const onDelete = async (row: ProductType) => {
-    if (!window.confirm(`Удалить тип изделия «${row.name}»?`)) return;
+    if (!window.confirm(`Удалить вид изделия «${row.name}»?`)) return;
     setSaving(true);
     setRowError(null);
     try {
@@ -121,14 +121,14 @@ export function ProductTypesWorkspace({
       if (editingId === row.id) cancelEdit();
       router.refresh();
     } catch {
-      setRowError("Не удалось удалить тип изделия.");
+      setRowError("Не удалось удалить вид изделия.");
     }
     setSaving(false);
   };
 
   const emptyDescription =
     rows.length === 0
-      ? "Каталог пуст. Создайте первый тип через кнопку «+»."
+      ? "Каталог пуст. Создайте первый вид через кнопку «+»."
       : "Измените поисковый запрос или сбросьте фильтры.";
 
   const handleCreated = (productType: ProductType) => {
@@ -154,13 +154,13 @@ export function ProductTypesWorkspace({
             onChange={(event) => setQuery(event.target.value)}
             placeholder="Поиск по наименованию"
             className="min-w-0 w-full flex-1"
-            aria-label="Поиск типов изделий"
+            aria-label="Поиск видов изделий"
           />
         }
         end={
           <div className="flex flex-wrap items-center gap-1">
             <IconButton
-              label="Создать тип изделия"
+              label="Создать вид изделия"
               variant="primary"
               onClick={() => setCreateOpen(true)}
             >
@@ -410,13 +410,13 @@ export function ProductTypesWorkspace({
 
         {filtered.length === 0 ? (
           <EmptyState
-            title="Типы изделий не найдены"
+            title="Виды изделий не найдены"
             description={emptyDescription}
           />
         ) : null}
       </section>
 
-      <ListTotals primary={`Всего: ${filtered.length} типов`} />
+      <ListTotals primary={`Всего: ${filtered.length} видов`} />
     </div>
   );
 }

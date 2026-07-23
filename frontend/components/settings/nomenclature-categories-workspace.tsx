@@ -1,11 +1,11 @@
 "use client";
 
-import Link from "next/link";
+import { ChevronDown, ChevronRight } from "lucide-react";
 import { useMemo, useState } from "react";
 
 import { updateNomenclatureCategory } from "@/app/(workspace)/settings/catalogs/nomenclature/nomenclature-actions";
 import { NomenclatureSectionCreateHost } from "@/components/settings/nomenclature-section-create-host";
-import { Button } from "@/components/ui/button";
+import { Button, IconButton } from "@/components/ui/button";
 import {
   DataTable,
   DataTableBody,
@@ -21,39 +21,18 @@ import { FilterToolbar } from "@/components/ui/filter-toolbar";
 import { Checkbox, Field, Input, Select } from "@/components/ui/form-controls";
 import { ListTotals } from "@/components/ui/list-pagination";
 import { StatusBadge } from "@/components/ui/status-badge";
-import type {
-  NomenclatureCategory,
-  NomenclatureType,
+import {
+  NOMENCLATURE_TYPE_LABELS,
+  NOMENCLATURE_TYPE_OPTIONS,
+  type NomenclatureCategory,
 } from "@/lib/nomenclature";
+import {
+  buildCategoryTreeRows,
+  categoryPathFromMap,
+  filterCategoryTreeRows,
+} from "@/lib/nomenclature-category-tree";
 
-const typeLabels: Record<NomenclatureType, string> = {
-  SERVICE: "Услуга",
-  PRODUCT: "Продукция",
-  GOODS: "Товар",
-  MATERIAL: "Материал",
-};
-const typeOptions = Object.entries(typeLabels) as [NomenclatureType, string][];
-
-function categoryPath(
-  category: NomenclatureCategory,
-  byId: Map<number, NomenclatureCategory>,
-): string {
-  const parts: string[] = [category.name];
-  let parentId = category.parent_id;
-
-  while (parentId != null) {
-    const parent = byId.get(parentId);
-    if (!parent) {
-      break;
-    }
-    parts.unshift(parent.name);
-    parentId = parent.parent_id;
-  }
-
-  return parts.join(" / ");
-}
-
-/** PT-02 nomenclature catalog list (`DS-PT-02`) + left edit drawer. */
+/** Indented tree-table for categories directory (`4.9.2`). */
 export function NomenclatureCategoriesWorkspace({
   categories,
 }: {
@@ -61,34 +40,37 @@ export function NomenclatureCategoriesWorkspace({
 }) {
   const [query, setQuery] = useState("");
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [collapsedIds, setCollapsedIds] = useState<Set<number>>(() => new Set());
+
   const byId = useMemo(
     () => new Map(categories.map((category) => [category.id, category])),
     [categories],
   );
 
-  const rows = useMemo(() => {
-    const sorted = [...categories].sort((left, right) => {
-      const pathCompare = categoryPath(left, byId).localeCompare(
-        categoryPath(right, byId),
-        "ru",
-      );
-      if (pathCompare !== 0) {
-        return pathCompare;
+  const treeRows = useMemo(
+    () => buildCategoryTreeRows(categories),
+    [categories],
+  );
+
+  const filteredRows = useMemo(
+    () => filterCategoryTreeRows(treeRows, query),
+    [query, treeRows],
+  );
+
+  const visibleRows = useMemo(() => {
+    const hidden = new Set<number>();
+    for (const row of filteredRows) {
+      let parentId = row.category.parent_id;
+      while (parentId != null) {
+        if (collapsedIds.has(parentId) || hidden.has(parentId)) {
+          hidden.add(row.category.id);
+          break;
+        }
+        parentId = byId.get(parentId)?.parent_id ?? null;
       }
-      return left.sort_order - right.sort_order;
-    });
-    const normalized = query.trim().toLocaleLowerCase("ru");
-    if (!normalized) {
-      return sorted;
     }
-    return sorted.filter((category) => {
-      const path = categoryPath(category, byId).toLocaleLowerCase("ru");
-      return (
-        path.includes(normalized) ||
-        category.code.toLocaleLowerCase("ru").includes(normalized)
-      );
-    });
-  }, [byId, categories, query]);
+    return filteredRows.filter((row) => !hidden.has(row.category.id));
+  }, [byId, collapsedIds, filteredRows]);
 
   const editing = categories.find((item) => item.id === editingId) ?? null;
   const closeEdit = () => setEditingId(null);
@@ -98,12 +80,24 @@ export function NomenclatureCategoriesWorkspace({
     closeEdit();
   };
 
+  const toggleCollapsed = (id: number) => {
+    setCollapsedIds((current) => {
+      const next = new Set(current);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
   return (
     <NomenclatureSectionCreateHost
       categories={categories}
       toolbarStart={
         <p className="text-portal-body text-portal-muted">
-          Найдено: {rows.length}
+          Найдено: {filteredRows.length}
         </p>
       }
     >
@@ -137,7 +131,7 @@ export function NomenclatureCategoriesWorkspace({
                   name="nomenclature_type"
                   defaultValue={editing.nomenclature_type}
                 >
-                  {typeOptions.map(([value, label]) => (
+                  {NOMENCLATURE_TYPE_OPTIONS.map(([value, label]) => (
                     <option key={value} value={value}>
                       {label}
                     </option>
@@ -150,11 +144,11 @@ export function NomenclatureCategoriesWorkspace({
                   defaultValue={editing.parent_id ?? ""}
                 >
                   <option value="">Корневая группа</option>
-                  {categories
-                    .filter((category) => category.id !== editing.id)
-                    .map((category) => (
-                      <option key={category.id} value={category.id}>
-                        {categoryPath(category, byId)}
+                  {treeRows
+                    .filter((row) => row.category.id !== editing.id)
+                    .map((row) => (
+                      <option key={row.category.id} value={row.category.id}>
+                        {row.outline} — {categoryPathFromMap(row.category, byId)}
                       </option>
                     ))}
                 </Select>
@@ -188,7 +182,7 @@ export function NomenclatureCategoriesWorkspace({
             <Input
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              placeholder="Поиск по коду или пути"
+              placeholder="Поиск по номеру, коду или названию"
               className="min-w-0 w-full md:min-w-56 md:flex-1"
               aria-label="Поиск категорий"
             />
@@ -203,63 +197,98 @@ export function NomenclatureCategoriesWorkspace({
           </FilterToolbar>
 
           <DataTableFrame className="rounded-none border-x-0 border-b-0 shadow-none">
-            <DataTable minWidthClassName="min-w-[640px]">
+            <DataTable minWidthClassName="min-w-[720px]">
               <DataTableHead>
                 <tr>
+                  <DataTableHeaderCell className="w-24">№</DataTableHeaderCell>
+                  <DataTableHeaderCell>Категория</DataTableHeaderCell>
                   <DataTableHeaderCell>Код</DataTableHeaderCell>
-                  <DataTableHeaderCell>Путь</DataTableHeaderCell>
                   <DataTableHeaderCell>Тип</DataTableHeaderCell>
-                  <DataTableHeaderCell>Порядок</DataTableHeaderCell>
                   <DataTableHeaderCell>Статус</DataTableHeaderCell>
                   <DataTableHeaderCell>Действие</DataTableHeaderCell>
                 </tr>
               </DataTableHead>
               <DataTableBody>
-                {rows.map((category) => (
-                  <DataTableRow
-                    key={category.id}
-                    className={
-                      editingId === category.id
-                        ? "bg-portal-primary-soft/50"
-                        : undefined
-                    }
-                  >
-                    <DataTableCell className="font-medium">
-                      {category.code}
-                    </DataTableCell>
-                    <DataTableCell>
-                      <button
-                        type="button"
-                        className="text-left font-medium text-portal-text hover:text-portal-primary"
-                        onClick={() => setEditingId(category.id)}
-                      >
-                        {categoryPath(category, byId)}
-                      </button>
-                    </DataTableCell>
-                    <DataTableCell>{category.nomenclature_type}</DataTableCell>
-                    <DataTableCell>{category.sort_order}</DataTableCell>
-                    <DataTableCell>
-                      <StatusBadge
-                        size="compact"
-                        tone={category.is_active ? "success" : "neutral"}
-                      >
-                        {category.is_active ? "Активна" : "Отключена"}
-                      </StatusBadge>
-                    </DataTableCell>
-                    <DataTableCell>
-                      <Button
-                        type="button"
-                        size="compact"
-                        onClick={() => setEditingId(category.id)}
-                      >
-                        Изменить
-                      </Button>
-                    </DataTableCell>
-                  </DataTableRow>
-                ))}
+                {visibleRows.map((row) => {
+                  const { category, depth, outline, hasChildren } = row;
+                  const collapsed = collapsedIds.has(category.id);
+                  return (
+                    <DataTableRow
+                      key={category.id}
+                      className={
+                        editingId === category.id
+                          ? "bg-portal-primary-soft/50"
+                          : undefined
+                      }
+                    >
+                      <DataTableCell className="font-medium tabular-nums text-portal-muted">
+                        {outline}
+                      </DataTableCell>
+                      <DataTableCell>
+                        <div
+                          className="flex min-w-0 items-center gap-portal-1"
+                          style={{ paddingLeft: `${depth * 16}px` }}
+                        >
+                          {hasChildren ? (
+                            <IconButton
+                              label={
+                                collapsed
+                                  ? `Развернуть ${category.name}`
+                                  : `Свернуть ${category.name}`
+                              }
+                              onClick={() => toggleCollapsed(category.id)}
+                              className="shrink-0"
+                            >
+                              {collapsed ? (
+                                <ChevronRight size={16} aria-hidden="true" />
+                              ) : (
+                                <ChevronDown size={16} aria-hidden="true" />
+                              )}
+                            </IconButton>
+                          ) : (
+                            <span
+                              className="inline-block w-8 shrink-0"
+                              aria-hidden="true"
+                            />
+                          )}
+                          <button
+                            type="button"
+                            className="min-w-0 truncate text-left font-medium text-portal-text hover:text-portal-primary"
+                            onClick={() => setEditingId(category.id)}
+                          >
+                            {category.name}
+                          </button>
+                        </div>
+                      </DataTableCell>
+                      <DataTableCell className="font-medium">
+                        {category.code}
+                      </DataTableCell>
+                      <DataTableCell>
+                        {NOMENCLATURE_TYPE_LABELS[category.nomenclature_type]}
+                      </DataTableCell>
+                      <DataTableCell>
+                        <StatusBadge
+                          size="compact"
+                          tone={category.is_active ? "success" : "neutral"}
+                        >
+                          {category.is_active ? "Активна" : "Отключена"}
+                        </StatusBadge>
+                      </DataTableCell>
+                      <DataTableCell>
+                        <Button
+                          type="button"
+                          size="compact"
+                          onClick={() => setEditingId(category.id)}
+                        >
+                          Изменить
+                        </Button>
+                      </DataTableCell>
+                    </DataTableRow>
+                  );
+                })}
               </DataTableBody>
             </DataTable>
-            {rows.length === 0 ? (
+            {visibleRows.length === 0 ? (
               <div className="p-portal-6">
                 <EmptyState
                   title="Категории не найдены"
@@ -269,17 +298,7 @@ export function NomenclatureCategoriesWorkspace({
               </div>
             ) : null}
           </DataTableFrame>
-          <ListTotals primary={`Всего: ${rows.length} категорий`} />
-          <p className="border-t border-portal-border px-portal-4 py-portal-3 text-portal-body text-portal-muted lg:px-portal-6">
-            Дерево категорий также доступно в{" "}
-            <Link
-              href="/settings/catalogs/nomenclature"
-              className="font-semibold text-portal-primary hover:underline"
-            >
-              рабочем месте номенклатуры
-            </Link>
-            .
-          </p>
+          <ListTotals primary={`Всего: ${filteredRows.length} категорий`} />
         </div>
       </div>
     </NomenclatureSectionCreateHost>

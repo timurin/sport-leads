@@ -351,7 +351,7 @@ export const appSections: AppSection[] = [
           },
           {
             id: "product-types",
-            title: "Тип изделия",
+            title: "Вид изделия",
             href: "/settings/catalogs/product-types",
           },
           {

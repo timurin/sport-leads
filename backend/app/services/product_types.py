@@ -34,7 +34,7 @@ def list_product_types(
 def get_product_type(db: Session, product_type_id: int) -> ProductType:
     row = repo.get_product_type(db, product_type_id)
     if row is None:
-        raise ProductTypeNotFoundError("Тип изделия не найден")
+        raise ProductTypeNotFoundError("Вид изделия не найден")
     return row
 
 
@@ -49,7 +49,7 @@ def create_product_type(db: Session, payload: ProductTypeCreate) -> ProductType:
         db.commit()
     except IntegrityError as error:
         db.rollback()
-        raise ProductTypeConflictError("Тип изделия с таким названием уже существует") from error
+        raise ProductTypeConflictError("Вид изделия с таким названием уже существует") from error
     db.refresh(row)
     return row
 
@@ -68,7 +68,7 @@ def update_product_type(
         db.commit()
     except IntegrityError as error:
         db.rollback()
-        raise ProductTypeConflictError("Тип изделия с таким названием уже существует") from error
+        raise ProductTypeConflictError("Вид изделия с таким названием уже существует") from error
     db.refresh(row)
     return row
 

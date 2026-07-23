@@ -36,15 +36,18 @@ import { ImageLightbox } from "@/components/ui/image-lightbox";
 import { SectionCard } from "@/components/ui/section-card";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { checkboxClassName, controlClassName } from "@/lib/design-system/control-styles";
+import { buildCategoryTreeRows } from "@/lib/nomenclature-category-tree";
 import {
   NOMENCLATURE_CURRENCY_OPTIONS,
   NOMENCLATURE_IMAGE_RULE,
   NOMENCLATURE_TYPE_LABELS,
   NOMENCLATURE_TYPE_OPTIONS,
   categoryPathLabel,
+  categoryDisplayLabel,
   isNomenclatureRequisitesDirty,
   nomenclatureStatusLabel,
   nomenclatureStatusTone,
+  resolveNomenclatureCategoryId,
   resolveNomenclatureCategoryLabel,
   resolveNomenclatureUnitSymbol,
   toNomenclatureRequisitesDraft,
@@ -62,6 +65,7 @@ import {
   type UnitOfMeasure,
 } from "@/lib/nomenclature";
 import type { ProductModel } from "@/lib/product-models";
+import type { ProductType } from "@/lib/product-types";
 
 const COLUMN_GAP = "gap-[14px]";
 const DIRTY_LEAVE_MESSAGE =
@@ -244,6 +248,7 @@ export function NomenclatureCard({
   media,
   availableModels = [],
   activeModels = [],
+  productTypes = [],
   initialEditing = false,
 }: {
   item: Nomenclature;
@@ -256,6 +261,7 @@ export function NomenclatureCard({
   media: NomenclatureMedia[];
   availableModels?: NomenclatureAvailableModel[];
   activeModels?: ProductModel[];
+  productTypes?: ProductType[];
   initialEditing?: boolean;
 }) {
   const router = useRouter();
@@ -271,7 +277,9 @@ export function NomenclatureCard({
   const [historyOpen, setHistoryOpen] = useState(false);
   const [editing, setEditing] = useState(initialEditing);
   const [draft, setDraft] = useState<NomenclatureRequisitesDraft | null>(() =>
-    initialEditing ? toNomenclatureRequisitesDraft(initialItem) : null,
+    initialEditing
+      ? toNomenclatureRequisitesDraft(initialItem, categories)
+      : null,
   );
 
   const [fieldsOpen, setFieldsOpen] = useState(true);
@@ -303,14 +311,54 @@ export function NomenclatureCard({
     editing && draft != null && isNomenclatureRequisitesDirty(current, draft);
   const typeValue =
     editing && draft ? draft.nomenclature_type : current.nomenclature_type;
-  const compatibleCategories = useMemo(
-    () =>
-      categories.filter(
-        (category) =>
-          category.is_active && category.nomenclature_type === typeValue,
-      ),
-    [categories, typeValue],
+  const compatibleCategories = useMemo(() => {
+    const active = categories.filter((category) => category.is_active);
+    const selectedId =
+      editing && draft
+        ? draft.category_id
+        : resolveNomenclatureCategoryId(
+            current.category_id,
+            current.category,
+            categories,
+            typeValue,
+          );
+    if (
+      selectedId != null &&
+      !active.some((category) => category.id === selectedId)
+    ) {
+      const orphan = categories.find((category) => category.id === selectedId);
+      if (orphan) {
+        return [...active, orphan].sort(
+          (left, right) =>
+            left.sort_order - right.sort_order ||
+            left.name.localeCompare(right.name, "ru"),
+        );
+      }
+    }
+    return active;
+  }, [categories, current.category, current.category_id, draft, editing, typeValue]);
+  const categorySelectRows = useMemo(
+    () => buildCategoryTreeRows(compatibleCategories),
+    [compatibleCategories],
   );
+  const linkedProductType = useMemo(() => {
+    const id =
+      editing && draft ? draft.product_type_id : current.product_type_id;
+    if (id == null) return null;
+    return productTypes.find((row) => row.id === id) ?? null;
+  }, [current.product_type_id, draft, editing, productTypes]);
+  const productTypeOptions = useMemo(() => {
+    const active = productTypes.filter((row) => row.is_active);
+    if (
+      linkedProductType &&
+      !active.some((row) => row.id === linkedProductType.id)
+    ) {
+      return [...active, linkedProductType].sort(
+        (a, b) => a.sort_order - b.sort_order || a.name.localeCompare(b.name, "ru"),
+      );
+    }
+    return active;
+  }, [linkedProductType, productTypes]);
   const storageUnitLabel =
     units.find((unit) => unit.id === current.storage_unit_id)?.symbol ??
     current.unit;
@@ -337,7 +385,7 @@ export function NomenclatureCard({
 
   const startEdit = () => {
     setEditing(true);
-    setDraft(toNomenclatureRequisitesDraft(current));
+    setDraft(toNomenclatureRequisitesDraft(current, categories));
     setActionError(null);
   };
 
@@ -397,12 +445,12 @@ export function NomenclatureCard({
     setBusy(true);
     setActionError(null);
     try {
-      const base = toNomenclatureRequisitesDraft(current);
+      const base = toNomenclatureRequisitesDraft(current, categories);
       const updated = await updateNomenclatureRequisites(current.id, {
         ...base,
         is_active: false,
         category: resolveNomenclatureCategoryLabel(
-          current.category_id,
+          base.category_id,
           categories,
           current.category,
         ),
@@ -439,12 +487,12 @@ export function NomenclatureCard({
     setBusy(true);
     setActionError(null);
     try {
-      const base = toNomenclatureRequisitesDraft(current);
+      const base = toNomenclatureRequisitesDraft(current, categories);
       const updated = await updateNomenclatureRequisites(current.id, {
         ...base,
         is_active: nextActive,
         category: resolveNomenclatureCategoryLabel(
-          current.category_id,
+          base.category_id,
           categories,
           current.category,
         ),
@@ -726,7 +774,7 @@ export function NomenclatureCard({
                   ? dirty
                     ? "Редактирование · есть несохранённые изменения"
                     : "Редактирование основных реквизитов"
-                  : `${NOMENCLATURE_TYPE_LABELS[current.nomenclature_type]} · ${categoryPathLabel(current.category_id, categories)}`
+                  : `${NOMENCLATURE_TYPE_LABELS[current.nomenclature_type]} · ${categoryDisplayLabel(current.category_id, categories, current.category)}`
               }
               actions={
                 <div className="flex flex-col items-stretch gap-1 sm:items-end">
@@ -782,17 +830,13 @@ export function NomenclatureCard({
                           onChange={(event) => {
                             const nextType = event.target
                               .value as NomenclatureType;
-                            const stillValid =
-                              draft.category_id != null &&
-                              categories.some(
-                                (category) =>
-                                  category.id === draft.category_id &&
-                                  category.nomenclature_type === nextType,
-                              );
                             setDraft({
                               ...draft,
                               nomenclature_type: nextType,
-                              category_id: stillValid ? draft.category_id : null,
+                              product_type_id:
+                                nextType === "PRODUCT"
+                                  ? draft.product_type_id
+                                  : null,
                             });
                           }}
                           aria-label="Тип номенклатуры"
@@ -819,6 +863,35 @@ export function NomenclatureCard({
                         >
                           <option value="active">Активна</option>
                           <option value="archived">Архив</option>
+                        </Select>
+                      </Field>
+                      <Field
+                        label="Вид изделия"
+                        className="order-4 min-w-0"
+                      >
+                        <Select
+                          value={
+                            draft.product_type_id == null
+                              ? ""
+                              : String(draft.product_type_id)
+                          }
+                          size="compact"
+                          disabled={busy || draft.nomenclature_type !== "PRODUCT"}
+                          onChange={(event) => {
+                            const raw = event.target.value;
+                            setDraft({
+                              ...draft,
+                              product_type_id: raw === "" ? null : Number(raw),
+                            });
+                          }}
+                          aria-label="Вид изделия"
+                        >
+                          <option value="">Не выбран</option>
+                          {productTypeOptions.map((row) => (
+                            <option key={row.id} value={row.id}>
+                              {row.name}
+                            </option>
+                          ))}
                         </Select>
                       </Field>
                     </div>
@@ -855,12 +928,22 @@ export function NomenclatureCard({
                           aria-label="Категория"
                         >
                           <option value="">Без категории</option>
-                          {compatibleCategories.map((category) => (
-                            <option key={category.id} value={category.id}>
-                              {categoryPathLabel(category.id, categories)}
+                          {categorySelectRows.map((row) => (
+                            <option
+                              key={row.category.id}
+                              value={row.category.id}
+                            >
+                              {row.outline} —{" "}
+                              {categoryPathLabel(row.category.id, categories)}
                             </option>
                           ))}
                         </Select>
+                        {compatibleCategories.length === 0 ? (
+                          <p className="mt-1 text-portal-caption text-portal-muted">
+                            Нет активных категорий. Создайте в справочнике
+                            «Категории номенклатуры».
+                          </p>
+                        ) : null}
                       </Field>
                       <Field label="Единица хранения" className="min-w-0">
                         <Select
@@ -965,6 +1048,19 @@ export function NomenclatureCard({
                           {nomenclatureStatusLabel(current.is_active)}
                         </StatusBadge>
                       </RequisiteRead>
+                      <RequisiteRead label="Вид изделия" className="order-4">
+                        {current.nomenclature_type === "PRODUCT" &&
+                        (linkedProductType ||
+                          current.product_type_name?.trim()) ? (
+                          linkedProductType?.name ?? current.product_type_name
+                        ) : (
+                          <span className="font-normal text-portal-muted">
+                            {current.nomenclature_type === "PRODUCT"
+                              ? "Не выбран"
+                              : "—"}
+                          </span>
+                        )}
+                      </RequisiteRead>
                     </div>
                     <div className="grid min-w-0 gap-portal-3 min-[1300px]:grid-cols-2 min-[1700px]:grid-cols-4">
                       <RequisiteRead label="Наименование для печати">
@@ -977,7 +1073,11 @@ export function NomenclatureCard({
                         )}
                       </RequisiteRead>
                       <RequisiteRead label="Категория">
-                        {categoryPathLabel(current.category_id, categories)}
+                        {categoryDisplayLabel(
+                          current.category_id,
+                          categories,
+                          current.category,
+                        )}
                       </RequisiteRead>
                       <RequisiteRead label="Единица хранения">
                         {storageUnitLabel}
@@ -1115,6 +1215,11 @@ export function NomenclatureCard({
                 {current.nomenclature_type === "PRODUCT" ? (
                   <NomenclatureAvailableModelsBlock
                     nomenclatureId={current.id}
+                    productTypeId={
+                      editing && draft
+                        ? draft.product_type_id
+                        : (current.product_type_id ?? null)
+                    }
                     links={availableModels}
                     activeModels={activeModels}
                     className="min-w-0"

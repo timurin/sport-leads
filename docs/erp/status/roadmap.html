@@ -164,7 +164,7 @@
         </div>
       </div>
       <div class="meta-list">
-        <div class="chip">Updated: 2026-07-23 (canonical sync: boundary + 4.8 honesty + ADR-016)</div>
+        <div class="chip">Updated: 2026-07-23 (insert Stage 4.9 Categories catalog UX; keep closed 4.7.2; boundary + 4.8 honesty + ADR-016)</div>
         <div class="chip">Version: v0.9.0</div>
         <div class="chip">Branch: feature/v0.8.1-nomenclature-core</div>
         <div class="chip">Commit: 0980f34</div>
@@ -808,7 +808,7 @@
                 code: "4.7.2",
                 title: "Remove left category tree block from nomenclature workspace",
                 done: true,
-                note: "v0.8.1 — TreeListSplit/CategoryTree removed"
+                note: "v0.8.1 — TreeListSplit/CategoryTree removed; category tree UX → 4.9 (directory only)"
               },
               {
                 code: "4.7.3",
@@ -907,6 +907,40 @@
                 title: "Regression tests + project-structure / erp-check sync",
                 done: false,
                 note: "canonical docs synced 2026-07-23; residual orphan custom_fields.py / materials.py cleanup + focused 4.8 regression suite"
+              }
+            ]
+          },
+          {
+            title: "4.9 — Categories catalog UX (warehouse tree)",
+            goal: "Owner ask (2026-07-23): category = warehouse/catalog hierarchy; nomenclature type is accounting/card behavior and must NOT restrict category. Fix type↔category binding defect; tree UX on nomenclature-categories directory only — do not restore tree on nomenclature list (closed 4.7.2). Dependencies: 4.2.1, 4.7.2, 5.5.4/DS-PT-04, ADR-006 amend in 4.9.1.",
+            items: [
+              {
+                code: "4.9.1",
+                title: "Decouple category from nomenclature type: amend ADR-006; remove UI type filter; remove backend type-match validation; any type in any category; regression tests",
+                done: true,
+                note: "2026-07-23 — ADR-006 amendment; service/UI decoupled; test_nomenclature_category_type_decouple.py"
+              },
+              {
+                code: "4.9.2",
+                title: "Tree UI on /settings/catalogs/nomenclature-categories: numbering 1 / 1.1 / 1.1.2; indented tree-table + collapse; EditDrawer/create kept",
+                done: true,
+                note: "2026-07-23 — nomenclature-category-tree.ts + nomenclature-categories-workspace.tsx; PT-04 split deferred (directory is the tree)"
+              },
+              {
+                code: "4.9.3",
+                title: "Tree CRUD: create child under selected node, edit parent, reorder/sort_order, soft deactivate; cycle-safe parent changes",
+                done: false
+              },
+              {
+                code: "4.9.4",
+                title: "Nomenclature card + create: category select shows all active categories (path or number label), no type filter; persist category_id",
+                done: true,
+                note: "2026-07-23 — outline labels; type change keeps category_id"
+              },
+              {
+                code: "4.9.5",
+                title: "Owner visual: categories tree + card/create category picker",
+                done: false
               }
             ]
           }

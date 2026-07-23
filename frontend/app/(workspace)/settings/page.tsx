@@ -105,7 +105,7 @@ const settingsGroups = [
   },
   {
     title: "База лекал",
-    description: "Модели, типы изделий, размерные сетки и операции пошива",
+    description: "Модели, виды изделий, размерные сетки и операции пошива",
     icon: Shirt,
     items: [
       {
@@ -115,8 +115,8 @@ const settingsGroups = [
         icon: Shirt,
       },
       {
-        title: "Тип изделия",
-        description: "Футболка, шорты и другие типы изделий",
+        title: "Вид изделия",
+        description: "Футболка, шорты и другие виды изделий",
         href: "/settings/catalogs/product-types",
         icon: Settings2,
       },

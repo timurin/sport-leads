@@ -24,14 +24,17 @@ import {
 
 type NomenclatureAvailableModelsBlockProps = {
   nomenclatureId: number;
+  /** Вид изделия from «Основные реквизиты» (`product_type_id`). */
+  productTypeId: number | null;
   links: NomenclatureAvailableModel[];
   activeModels: ProductModel[];
   className?: string;
 };
 
-/** PRODUCT whitelist «доступные модели лекал» (`6.1.11` / ADR-014). */
+/** PRODUCT «Модели изделий» — models of the same Вид изделия (`6.1.11` / ADR-014). */
 export function NomenclatureAvailableModelsBlock({
   nomenclatureId,
+  productTypeId,
   links,
   activeModels,
   className = "",
@@ -43,16 +46,30 @@ export function NomenclatureAvailableModelsBlock({
   const [open, setOpen] = useState(true);
   const [adding, setAdding] = useState(false);
 
+  const hasProductType = productTypeId != null;
   const linkedIds = useMemo(
     () => new Set(links.map((link) => link.product_model_id)),
     [links],
   );
+
+  /** Active models whose Вид изделия matches requisites. */
+  const matchingModels = useMemo(() => {
+    if (!hasProductType) return [];
+    return activeModels
+      .filter((model) => model.product_type_id === productTypeId)
+      .sort((a, b) => a.article.localeCompare(b.article, "ru"));
+  }, [activeModels, hasProductType, productTypeId]);
+
   const options = useMemo(
-    () => activeModels.filter((model) => !linkedIds.has(model.id)),
-    [activeModels, linkedIds],
+    () => matchingModels.filter((model) => !linkedIds.has(model.id)),
+    [linkedIds, matchingModels],
   );
 
   const onAdd = async () => {
+    if (!hasProductType) {
+      setError("Сначала выберите вид изделия в основных реквизитах");
+      return;
+    }
     const productModelId = Number(selectedId);
     if (!Number.isFinite(productModelId) || productModelId <= 0) {
       setError("Выберите модель");
@@ -91,22 +108,24 @@ export function NomenclatureAvailableModelsBlock({
 
   return (
     <SectionCard
-      title="Доступные лекала"
+      title="Модели изделий"
       size="compact"
       className={className}
       collapsed={!open}
       description={
         open
-          ? "Whitelist моделей для выбора в заказе (ADR-014)."
+          ? hasProductType
+            ? `Модели вида изделия из основных реквизитов (${matchingModels.length}).`
+            : "Сначала укажите вид изделия в основных реквизитах."
           : undefined
       }
       actions={
         <div className="flex items-center gap-1">
           <IconButton
-            label="Добавить лекало"
+            label="Добавить в whitelist заказа"
             title="Добавить"
             variant="secondary"
-            disabled={busy}
+            disabled={busy || !hasProductType || options.length === 0}
             onClick={() => {
               setOpen(true);
               setAdding((value) => !value);
@@ -119,7 +138,7 @@ export function NomenclatureAvailableModelsBlock({
             label="Сохранить"
             title="Сохранить"
             variant="primary"
-            disabled={busy || !adding || !selectedId}
+            disabled={busy || !adding || !selectedId || !hasProductType}
             onClick={() => void onAdd()}
           >
             <Save className="size-4" aria-hidden="true" />
@@ -142,11 +161,19 @@ export function NomenclatureAvailableModelsBlock({
         </div>
       }
     >
-      {adding ? (
+      {!hasProductType ? (
+        <EmptyState
+          title="Вид изделия не выбран"
+          description="Выберите вид изделия в блоке «Основные реквизиты» — здесь появятся модели этого вида."
+          size="compact"
+        />
+      ) : null}
+
+      {hasProductType && adding ? (
         <div className="mb-portal-4 flex flex-wrap items-end gap-2">
           <label className="min-w-[180px] flex-1">
             <span className="mb-1 block text-portal-caption font-medium text-portal-muted">
-              Модель
+              В whitelist заказа
             </span>
             <Select
               value={selectedId}
@@ -159,8 +186,8 @@ export function NomenclatureAvailableModelsBlock({
             >
               <option value="">
                 {options.length === 0
-                  ? "Нет доступных активных моделей"
-                  : "Выберите или найдите модель"}
+                  ? "Все модели этого вида уже в whitelist"
+                  : "Выберите модель"}
               </option>
               {options.map((model) => (
                 <option key={model.id} value={model.id}>
@@ -192,50 +219,60 @@ export function NomenclatureAvailableModelsBlock({
         </p>
       ) : null}
 
-      {links.length === 0 ? (
+      {hasProductType && matchingModels.length === 0 ? (
         <EmptyState
-          title="Список пуст"
-          description="Пока модели не привязаны — в заказе выбор модели остаётся опциональным."
+          title="Нет моделей этого вида"
+          description="В базе лекал нет активных моделей с выбранным видом изделия."
           size="compact"
         />
-      ) : (
+      ) : null}
+
+      {hasProductType && matchingModels.length > 0 ? (
         <ul className="divide-y divide-portal-border rounded-portal-md border border-portal-border">
-          {links.map((link) => (
-            <li
-              key={link.id}
-              className="flex flex-wrap items-center justify-between gap-3 px-portal-3 py-portal-2"
-            >
-              <div className="min-w-0">
-                <Link
-                  href={`/settings/catalogs/product-models/${link.product_model_id}`}
-                  className="font-semibold text-portal-primary hover:underline"
-                >
-                  {link.article} — {link.name}
-                </Link>
-                <p className="mt-0.5 text-portal-caption text-portal-muted">
-                  {PRODUCT_MODEL_SIZE_TYPE_LABELS[link.size_type]}
-                </p>
-              </div>
-              <div className="flex items-center gap-2">
-                <StatusBadge
-                  size="compact"
-                  tone={productModelStatusTone(link.status)}
-                >
-                  {PRODUCT_MODEL_STATUS_LABELS[link.status]}
-                </StatusBadge>
-                <Button
-                  type="button"
-                  size="compact"
-                  disabled={busy}
-                  onClick={() => void onRemove(link.product_model_id)}
-                >
-                  Убрать
-                </Button>
-              </div>
-            </li>
-          ))}
+          {matchingModels.map((model) => {
+            const linked = linkedIds.has(model.id);
+            return (
+              <li
+                key={model.id}
+                className="flex flex-wrap items-center justify-between gap-3 px-portal-3 py-portal-2"
+              >
+                <div className="min-w-0">
+                  <Link
+                    href={`/settings/catalogs/product-models/${model.id}`}
+                    className="font-semibold text-portal-primary hover:underline"
+                  >
+                    {model.article} — {model.name}
+                  </Link>
+                  <p className="mt-0.5 text-portal-caption text-portal-muted">
+                    {PRODUCT_MODEL_SIZE_TYPE_LABELS[model.size_type]}
+                    {model.product_type_name
+                      ? ` · ${model.product_type_name}`
+                      : ""}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <StatusBadge
+                    size="compact"
+                    tone={productModelStatusTone(model.status)}
+                  >
+                    {PRODUCT_MODEL_STATUS_LABELS[model.status]}
+                  </StatusBadge>
+                  {linked ? (
+                    <Button
+                      type="button"
+                      size="compact"
+                      disabled={busy}
+                      onClick={() => void onRemove(model.id)}
+                    >
+                      Убрать
+                    </Button>
+                  ) : null}
+                </div>
+              </li>
+            );
+          })}
         </ul>
-      )}
+      ) : null}
     </SectionCard>
   );
 }

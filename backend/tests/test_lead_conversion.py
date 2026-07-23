@@ -672,7 +672,7 @@ def test_nomenclature_crud_search_and_order_item_link_preserve_snapshot(
     assert client.post(
         "/nomenclatures/categories",
         json={"name": "Услуги", "code": "services", "nomenclature_type": "SERVICE", "parent_id": category_id},
-    ).status_code == 422
+    ).status_code == 201
 
     created = client.post(
         "/nomenclatures",
@@ -694,10 +694,13 @@ def test_nomenclature_crud_search_and_order_item_link_preserve_snapshot(
     assert nomenclature["category_id"] == category_id
     assert nomenclature["nomenclature_type"] == "PRODUCT"
     nomenclature_id = nomenclature["id"]
-    assert client.post(
+    service_row = client.post(
         "/nomenclatures",
         json={"name": "Услуга", "category": "Услуги", "category_id": category_id, "nomenclature_type": "SERVICE"},
-    ).status_code == 422
+    )
+    assert service_row.status_code == 201
+    assert service_row.json()["category_id"] == category_id
+    assert service_row.json()["nomenclature_type"] == "SERVICE"
     assert client.get("/nomenclatures", params={"search": "Футбольная"}).json()[0]["id"] == nomenclature_id
 
     lead_id = add_lead(session_factory)
@@ -711,7 +714,9 @@ def test_nomenclature_crud_search_and_order_item_link_preserve_snapshot(
 
     renamed = client.patch(f"/nomenclatures/{nomenclature_id}", json={"name": "Форма обновлённая", "is_active": False})
     assert renamed.status_code == 200
-    assert client.get("/nomenclatures", params={"is_active": True}).json() == []
+    active_ids = {row["id"] for row in client.get("/nomenclatures", params={"is_active": True}).json()}
+    assert nomenclature_id not in active_ids
+    assert service_row.json()["id"] in active_ids
     assert client.get(f"/orders/{order_id}").json()["items"][0]["snapshot_name"] == "Футбольная форма"
     replacement = client.post("/nomenclatures", json={"name": "Форма 2", "category": "Форма"})
     assert replacement.status_code == 201

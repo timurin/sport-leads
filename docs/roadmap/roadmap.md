@@ -1,7 +1,7 @@
 # Sport-Lead — Global Roadmap
 
 **Code:** `SL-ROADMAP-v1`
-**Updated:** `2026-07-23` (canonical sync: boundary + `4.8` honesty + ADR-016 tech-cards reserve; B3 `4.7.11`; sewing `6.3.8`)
+**Updated:** `2026-07-23` (insert Stage `4.9` Categories catalog UX; keep closed `4.7.2`; boundary + `4.8` honesty + ADR-016; B3 `4.7.11`; sewing `6.3.8`)
 **Project version:** `v0.9.0`
 **Git branch:** `feature/v0.8.1-nomenclature-core`
 **Git commit:** `0980f34`
@@ -241,7 +241,7 @@ Dependencies:
 - 4.3.1
 
 - [x] 4.7.1 — Align nomenclature list with product-models: shared toolbar + row list (not card tiles) — `v0.8.1`; evidence: `frontend/components/settings/nomenclature-workspace.tsx` (PT-02 toolbar + DataTable rows)
-- [x] 4.7.2 — Remove left category tree block from nomenclature workspace — `v0.8.1`; evidence: `frontend/components/settings/nomenclature-workspace.tsx` (TreeListSplit/CategoryTree removed)
+- [x] 4.7.2 — Remove left category tree block from nomenclature workspace — `v0.8.1`; evidence: `frontend/components/settings/nomenclature-workspace.tsx` (TreeListSplit/CategoryTree removed); category tree UX → 4.9 (directory only)
 - [x] 4.7.3 — Align nomenclature card (`/settings/catalogs/nomenclature/[id]`) with product-models card chrome/layout — `v0.8.1`; `DS-PT-08-CATALOG`; `VersionedWorkspace` + `CatalogVersionedCardLayout`; evidence: `nomenclature-card.tsx`, `nomenclature-media-carousel.tsx`; shell contracts preserved
 - [x] 4.7.4 — Map backend nomenclature fields into card requisites by domain logic (remap schema/UI if needed) — `v0.8.1`; core fields in «Основные реквизиты» via `category_id`/`storage_unit_id` (legacy `category`/`unit` derived); custom fields → «Дополнительные реквизиты»; no demo data; existing PATCH API
 - [x] 4.7.5 — Port materials quick-preview right panel into nomenclature list route, then drop materials-only preview — `2026-07-23`; `NomenclatureInspector` on list; materials nav removed (`4.6.3`); legacy materials surface deleted in `4.6.4`
@@ -263,6 +263,22 @@ Owner ask (`2026-07-23`): «Дополнительные реквизиты» д
 - [x] 4.8.5 — Remove «Дополнительные реквизиты» nav; expand create kinds; redirect `/custom-fields` — `2026-07-23`; `navigation.ts` (product-characteristics only); redirect page
 - [ ] 4.8.6 — Nomenclature card: unified block on characteristics API; remove custom-fields UI — values API path exists; residual `CustomField*` names/compat shims in card form (`nomenclature-add-custom-field-form.tsx`, `custom-fields-actions.ts`)
 - [ ] 4.8.7 — Regression tests + project-structure / erp-check sync — canonical docs synced `2026-07-23`; residual: orphan `custom_fields.py` / `materials.py` cleanup + focused 4.8 regression suite
+
+### 4.9 — Categories catalog UX (warehouse tree)
+
+Owner ask (`2026-07-23`): nomenclature **category** = warehouse/catalog hierarchy; **nomenclature type** (`SERVICE|PRODUCT|GOODS|MATERIAL`) is accounting/card behavior and must NOT restrict which category a row can use. Decoupling shipped in `4.9.1`. Category directory (`4.9.2`): indented tree-table at `/settings/catalogs/nomenclature-categories` with outline numbers `1 / 1.1 / 1.1.2`. **Do not** restore category tree on `/settings/catalogs/nomenclature` list — closed `4.7.2` remains: TreeListSplit/CategoryTree removed from nomenclature workspace; list stays PT-02.
+
+Dependencies:
+- 4.2.1 (category hierarchy data model — already done)
+- 4.7.2 (tree stays OFF nomenclature list — constraint)
+- 5.5.4 / DS-PT-04 (`TreeListSplit` / `TreePane` primitives — reuse, do not fork second tree chrome)
+- ADR-006 (nomenclature types/categories) — amend or successor ADR as needed in 4.9.1
+
+- [x] 4.9.1 — Decouple category from nomenclature type: amend ADR-006 (or short ADR note); remove UI filter of categories by type; remove backend type-match validation (`NomenclatureCategoryRuleError` / equivalent); any nomenclature type may sit in any category; regression tests — `2026-07-23`; ADR-006 amendment; service no longer matches types; card/create show all active categories; evidence: `test_nomenclature_category_type_decouple.py`, `nomenclature-category-resolve.test.mjs`
+- [x] 4.9.2 — Tree UI on `/settings/catalogs/nomenclature-categories`: hierarchical display with numbering/path like `1`, `1.1`, `1.1.2`, `2`, `2.1` (from `sort_order` + depth or explicit display codes); reuse DS-PT-04 primitives (`TreePane` / `TreeListSplit`) or indented tree-table within PT-02 — prefer PT-04 if it fits directory CRUD; keep EditDrawer/create patterns already used — `2026-07-23`; indented tree-table + collapse (directory *is* the tree; PT-04 split deferred); evidence: `nomenclature-category-tree.ts`, `nomenclature-categories-workspace.tsx`, `nomenclature-category-tree.test.mjs`
+- [ ] 4.9.3 — Tree CRUD: create child under selected node, edit parent, reorder/`sort_order`, soft deactivate; cycle-safe parent changes
+- [x] 4.9.4 — Nomenclature card + create: category select shows all active categories (path or number label), no type filter; persist `category_id` correctly — `2026-07-23`; outline labels via `buildCategoryTreeRows`; type change no longer clears category; evidence: `nomenclature-card.tsx`, `nomenclature-create-panels.tsx`
+- [ ] 4.9.5 — Owner visual: categories tree + card/create category picker
 
 ### Proposed create field layout (`4.7.9`, pending `4.7.10`)
 
