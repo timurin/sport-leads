@@ -126,3 +126,94 @@ export function filterCategoryTreeRows(
 
   return rows.filter((row) => matchIds.has(row.category.id));
 }
+
+/** Self + all descendants — invalid parents when editing `categoryId`. */
+export function collectCategoryDescendantIds(
+  categories: NomenclatureCategory[],
+  categoryId: number,
+): Set<number> {
+  const childrenByParent = new Map<number, number[]>();
+  for (const category of categories) {
+    if (category.parent_id == null) continue;
+    const bucket = childrenByParent.get(category.parent_id);
+    if (bucket) {
+      bucket.push(category.id);
+    } else {
+      childrenByParent.set(category.parent_id, [category.id]);
+    }
+  }
+
+  const blocked = new Set<number>([categoryId]);
+  const stack = [categoryId];
+  while (stack.length) {
+    const current = stack.pop()!;
+    for (const childId of childrenByParent.get(current) ?? []) {
+      if (blocked.has(childId)) continue;
+      blocked.add(childId);
+      stack.push(childId);
+    }
+  }
+  return blocked;
+}
+
+export function parentCategoryOptions(
+  rows: CategoryTreeRow[],
+  excludeCategoryId?: number | null,
+  categories?: NomenclatureCategory[],
+): CategoryTreeRow[] {
+  if (excludeCategoryId == null) {
+    return rows;
+  }
+  const source = categories ?? rows.map((row) => row.category);
+  const blocked = collectCategoryDescendantIds(source, excludeCategoryId);
+  return rows.filter((row) => !blocked.has(row.category.id));
+}
+
+export function nextChildSortOrder(
+  categories: NomenclatureCategory[],
+  parentId: number | null,
+): number {
+  const siblings = categories.filter(
+    (category) => category.parent_id === parentId,
+  );
+  if (siblings.length === 0) return 0;
+  return Math.max(...siblings.map((category) => category.sort_order)) + 1;
+}
+
+/**
+ * After swapping `categoryId` with neighbor in `direction`, return dense
+ * `sort_order` 0..n-1 for all siblings under the same parent.
+ */
+export function planSiblingReorder(
+  siblings: NomenclatureCategory[],
+  categoryId: number,
+  direction: -1 | 1,
+): { id: number; sort_order: number }[] | null {
+  const sorted = [...siblings].sort(compareSiblings);
+  const index = sorted.findIndex((item) => item.id === categoryId);
+  const nextIndex = index + direction;
+  if (index < 0 || nextIndex < 0 || nextIndex >= sorted.length) {
+    return null;
+  }
+  const reordered = [...sorted];
+  const swap = reordered[index]!;
+  reordered[index] = reordered[nextIndex]!;
+  reordered[nextIndex] = swap;
+  return reordered.map((item, order) => ({
+    id: item.id,
+    sort_order: order,
+  }));
+}
+
+export function canMoveCategorySibling(
+  categories: NomenclatureCategory[],
+  categoryId: number,
+  direction: -1 | 1,
+): boolean {
+  const target = categories.find((item) => item.id === categoryId);
+  if (!target) return false;
+  const siblings = categories.filter(
+    (item) => item.parent_id === target.parent_id,
+  );
+  return planSiblingReorder(siblings, categoryId, direction) != null;
+}

@@ -24,13 +24,15 @@ test("nomenclature card keeps PT-08 chrome and isolated async editing contracts"
     "VersionedWorkspace",
     "CatalogVersionedCardLayout",
     "updateNomenclatureRequisites",
-    "saveNomenclatureCustomField",
-    "assignNomenclatureCharacteristic",
+    "saveNomenclatureCharacteristicValue",
+    "removeNomenclatureCharacteristicValue",
     "Основные реквизиты",
-    "Дополнительные реквизиты",
+    "Характеристики номенклатуры",
+    "NomenclatureAddCharacteristicForm",
     "NomenclatureMediaCarousel",
-    "Редактировать",
-    "Отмена",
+    "ProductModelToolbarActions",
+    "onEdit={startEdit}",
+    "onCancel={cancelEdit}",
     "Сохранение…",
     "Сохранено",
     "Ошибка сохранения",
@@ -41,6 +43,26 @@ test("nomenclature card keeps PT-08 chrome and isolated async editing contracts"
     assert.ok(source.includes(marker), `missing editing marker: ${marker}`);
   }
   assert.equal(source.includes("lg:col-start-1"), false, "legacy 65/35 grid must be removed");
+  assert.equal(
+    source.includes("saveNomenclatureCustomField"),
+    false,
+    "custom-field save shim must be removed",
+  );
+  assert.equal(
+    source.includes("custom-fields-actions"),
+    false,
+    "custom-fields-actions import must be removed",
+  );
+  assert.equal(
+    source.includes("Дополнительные реквизиты"),
+    false,
+    "legacy custom-fields block title must be removed",
+  );
+  assert.equal(
+    source.includes("NomenclatureAddCustomFieldForm"),
+    false,
+    "legacy add-custom-field form must be removed",
+  );
 });
 
 test("nomenclature media gallery keeps upload and media management contracts", async () => {

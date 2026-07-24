@@ -848,12 +848,13 @@
                 code: "4.7.9 / B2",
                 title: "Nomenclature create fullscreen over list — CreateDrawer fullscreen; proposed layout Identity→Classification→Commercial→Optional",
                 done: true,
-                note: "2026-07-23 — create-drawer.tsx + nomenclature-create-panels.tsx; ADR-013 updated; field order TBD 4.7.10"
+                note: "2026-07-23 — create-drawer.tsx + nomenclature-create-panels.tsx; ADR-013 updated; field order confirmed in 4.7.10"
               },
               {
                 code: "4.7.10",
-                title: "Owner visual: confirm nomenclature create field order/rules after 4.7.9 proposal",
-                done: false
+                title: "Owner visual: confirm nomenclature create field order/rules after 4.7.9 — block1 50/50 name+price | type+category+unit; block2 optional",
+                done: true,
+                note: "2026-07-24 — nomenclature-create-panels.tsx; owner OK"
               },
               {
                 code: "4.7.11 / B3",
@@ -876,7 +877,7 @@
                 code: "4.8.2",
                 title: "Expand Characteristic* schema; migrate CustomField* data; drop custom tables",
                 done: true,
-                note: "2026-07-23 — Alembic f7a8b9c0d123; /custom-fields unmounted; residual orphan custom_fields.py / materials.py (cleanup with 4.8.7)"
+                note: "2026-07-23 — Alembic f7a8b9c0d123; /custom-fields unmounted; orphan modules removed in 4.8.7"
               },
               {
                 code: "4.8.3",
@@ -898,15 +899,15 @@
               },
               {
                 code: "4.8.6",
-                title: "Nomenclature card unified block on characteristics API",
-                done: false,
-                note: "values API path exists; residual CustomField* names/compat shims in card form"
+                title: "Nomenclature card unified block on characteristics API; remove CustomField* shims",
+                done: true,
+                note: "2026-07-24 — NomenclatureAddCharacteristicForm; deleted custom-fields-actions.ts; card uses characteristics-actions; CustomField* aliases dropped"
               },
               {
                 code: "4.8.7",
-                title: "Regression tests + project-structure / erp-check sync",
-                done: false,
-                note: "canonical docs synced 2026-07-23; residual orphan custom_fields.py / materials.py cleanup + focused 4.8 regression suite"
+                title: "Regression tests + project-structure / erp-check sync; orphan custom_fields cleanup",
+                done: true,
+                note: "2026-07-24 — deleted custom_fields api/models/schemas/services; test_characteristics_catalog_4_8.py; materials sources already gone"
               }
             ]
           },
@@ -929,7 +930,8 @@
               {
                 code: "4.9.3",
                 title: "Tree CRUD: create child under selected node, edit parent, reorder/sort_order, soft deactivate; cycle-safe parent changes",
-                done: false
+                done: true,
+                note: "2026-07-24 — create-child + ↑/↓ reorder; parent excludes descendants; soft deactivate EditDrawer; nomenclature-categories-workspace.tsx"
               },
               {
                 code: "4.9.4",

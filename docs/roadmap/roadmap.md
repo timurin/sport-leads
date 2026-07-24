@@ -1,7 +1,7 @@
 # Sport-Lead — Global Roadmap
 
 **Code:** `SL-ROADMAP-v1`
-**Updated:** `2026-07-23` (insert Stage `4.9` Categories catalog UX; keep closed `4.7.2`; boundary + `4.8` honesty + ADR-016; B3 `4.7.11`; sewing `6.3.8`)
+**Updated:** `2026-07-24` (close `4.9.3` categories tree CRUD; prior `4.8.7` / `4.8.6` / `4.7.10`)
 **Project version:** `v0.9.0`
 **Git branch:** `feature/v0.8.1-nomenclature-core`
 **Git commit:** `0980f34`
@@ -28,7 +28,7 @@ Current confirmed contour:
 
 Active Stage 4 work:
 
-`4.7.10` (owner visual create) → `4.8.6` (nomenclature card unify / compat cleanup) → `4.8.7` (orphan cleanup + focused regression); appearance polish of characteristic card → follow-up chat
+owner visual `4.9.5` (categories tree + card/create picker); warehouse balances note `4.6.5`; appearance polish of characteristic card → follow-up chat
 
 Next commercial contour:
 
@@ -249,7 +249,7 @@ Dependencies:
 - [x] 4.7.7 — Expose «Дополнительные реквизиты» as Settings → Номенклатура directory (`/settings/catalogs/custom-fields`) — `2026-07-23`; **superseded by `4.8.5`** (nav removed; redirect → product-characteristics); DS-SHELL-01/02 visual contracts preserved
 - [x] 4.7.8 — Unique custom-field `name` (case-insensitive) + card form auto-fill existing name; icon confirm/cancel — `2026-07-23`; Alembic `b2c3d4e5f678`; service `_assert_unique_name`; evidence: `nomenclature-add-custom-field-form.tsx`, `test_lead_conversion.py`
 - [x] 4.7.9 / **B2** — Nomenclature create panel fullscreen over list (fix: docked `CreateDrawer` rendered under rows) — `2026-07-23`; `CreateDrawer` variant `fullscreen`; evidence: `create-drawer.tsx`, `nomenclature-create-panels.tsx`, `nomenclature-workspace.tsx`; ADR-013 updated
-- [ ] 4.7.10 — Owner visual: confirm nomenclature create field order/rules after `4.7.9` proposal (Identity → Classification → Commercial → Optional; legacy category/unit derived hidden)
+- [x] 4.7.10 — Owner visual: confirm nomenclature create field order/rules after `4.7.9` — `2026-07-24`; block1 50/50 name+price | type+category+unit; block2 optional unchanged; legacy category/unit derived hidden; evidence: `nomenclature-create-panels.tsx`, task `docs/tasks/v0.9.0-stage-4.7.10-nomenclature-create-visual.md`
 - [x] 4.7.11 / **B3** — Drop `Nomenclature.article` (артикул актуален на `ProductModel` / variant; номенклатура идентифицируется `id`+name) — `2026-07-23`; Alembic `e6f7a8b9c012` (after sewing duration rev fix `d5e6f7a8b901`); evidence: model/schemas/services/API/UI; ADR-012/014 notes; variant + product-model articles unchanged
 
 ### 4.8 — Unify characteristics catalog (absorb custom fields)
@@ -257,12 +257,12 @@ Dependencies:
 Owner ask (`2026-07-23`): «Дополнительные реквизиты» дублируют характеристики — оставить один справочник; карточку `/product-characteristics/[id]` с inline CRUD значений; удаление только без использования / журнала (`18.4` stub). ADR-015.
 
 - [x] 4.8.1 — ADR-015 + roadmap/HTML microtasks — `2026-07-23`; `ADR-015-unified-characteristics-catalog.md`
-- [x] 4.8.2 — Expand `Characteristic*` schema; migrate `CustomField*` data; drop custom tables — `2026-07-23`; Alembic `f7a8b9c0d123`; `/custom-fields` API unmounted; residual: orphan `custom_fields.py` / legacy `materials.py` modules on disk (cleanup with `4.8.7`)
+- [x] 4.8.2 — Expand `Characteristic*` schema; migrate `CustomField*` data; drop custom tables — `2026-07-23`; Alembic `f7a8b9c0d123`; `/custom-fields` API unmounted; orphan modules removed in `4.8.7`
 - [x] 4.8.3 — DELETE definition/option + usage guards + journal stub hook — `2026-07-23`; `characteristic_operations_journal.py`; usage blocks in `characteristics` API
 - [x] 4.8.4 — Characteristic detail card: main info (name/code/type) + values inline edit/save/delete; owner visual — `2026-07-23`; `characteristic-card.tsx`; **layout confirmed by owner**; appearance/content polish deferred to follow-up chat
 - [x] 4.8.5 — Remove «Дополнительные реквизиты» nav; expand create kinds; redirect `/custom-fields` — `2026-07-23`; `navigation.ts` (product-characteristics only); redirect page
-- [ ] 4.8.6 — Nomenclature card: unified block on characteristics API; remove custom-fields UI — values API path exists; residual `CustomField*` names/compat shims in card form (`nomenclature-add-custom-field-form.tsx`, `custom-fields-actions.ts`)
-- [ ] 4.8.7 — Regression tests + project-structure / erp-check sync — canonical docs synced `2026-07-23`; residual: orphan `custom_fields.py` / `materials.py` cleanup + focused 4.8 regression suite
+- [x] 4.8.6 — Nomenclature card: unified block on characteristics API; remove custom-fields UI — `2026-07-24`; card/form → `characteristics-actions`; `NomenclatureAddCharacteristicForm`; deleted `custom-fields-actions.ts` + dead workspace; dropped `CustomField*` aliases; redirect `/custom-fields` kept; evidence: `nomenclature-card.tsx`, `nomenclature-add-characteristic-form.tsx`, `nomenclature-paths.test.mjs`
+- [x] 4.8.7 — Regression tests + project-structure / erp-check sync — `2026-07-24`; deleted orphan `custom_fields` api/models/schemas/services; materials sources already gone (stale `.pyc` cleared); focused suite `test_characteristics_catalog_4_8.py` (unmount + definition DELETE guards + journal stub); evidence: pytest 5 passed with materials unmount check
 
 ### 4.9 — Categories catalog UX (warehouse tree)
 
@@ -276,17 +276,17 @@ Dependencies:
 
 - [x] 4.9.1 — Decouple category from nomenclature type: amend ADR-006 (or short ADR note); remove UI filter of categories by type; remove backend type-match validation (`NomenclatureCategoryRuleError` / equivalent); any nomenclature type may sit in any category; regression tests — `2026-07-23`; ADR-006 amendment; service no longer matches types; card/create show all active categories; evidence: `test_nomenclature_category_type_decouple.py`, `nomenclature-category-resolve.test.mjs`
 - [x] 4.9.2 — Tree UI on `/settings/catalogs/nomenclature-categories`: hierarchical display with numbering/path like `1`, `1.1`, `1.1.2`, `2`, `2.1` (from `sort_order` + depth or explicit display codes); reuse DS-PT-04 primitives (`TreePane` / `TreeListSplit`) or indented tree-table within PT-02 — prefer PT-04 if it fits directory CRUD; keep EditDrawer/create patterns already used — `2026-07-23`; indented tree-table + collapse (directory *is* the tree; PT-04 split deferred); evidence: `nomenclature-category-tree.ts`, `nomenclature-categories-workspace.tsx`, `nomenclature-category-tree.test.mjs`
-- [ ] 4.9.3 — Tree CRUD: create child under selected node, edit parent, reorder/`sort_order`, soft deactivate; cycle-safe parent changes
+- [x] 4.9.3 — Tree CRUD: create child under selected node, edit parent, reorder/`sort_order`, soft deactivate; cycle-safe parent changes — `2026-07-24`; create-child + ↑/↓ sibling reorder; parent select excludes descendants; soft deactivate via EditDrawer; evidence: `nomenclature-categories-workspace.tsx`, `nomenclature-category-tree.ts`, `test_nomenclature_category_type_decouple.py`
 - [x] 4.9.4 — Nomenclature card + create: category select shows all active categories (path or number label), no type filter; persist `category_id` correctly — `2026-07-23`; outline labels via `buildCategoryTreeRows`; type change no longer clears category; evidence: `nomenclature-card.tsx`, `nomenclature-create-panels.tsx`
 - [ ] 4.9.5 — Owner visual: categories tree + card/create category picker
 
-### Proposed create field layout (`4.7.9`, pending `4.7.10`)
+### Confirmed create field layout (`4.7.10`)
 
 ```
-Идентификация:  Наименование* → Тип
-Классификация:  Категория + Единица хранения
-Коммерция:      Базовая цена (+ валюта)
-Дополнительно:  Наименование для печати → Описание
+Блок 1 (50/50):
+  left:  Наименование* → Базовая цена (+ валюта)
+  right: Тип → Категория → Ед. хранения
+Блок 2: Наименование для печати → Описание
 ```
 
 ## Stage 5 — Design System and Platform Templates

@@ -119,3 +119,62 @@ def test_category_cycle_still_rejected(client: TestClient) -> None:
         json={"parent_id": b_id},
     )
     assert loop.status_code == 422
+
+
+def test_category_self_parent_rejected(client: TestClient) -> None:
+    created = client.post(
+        "/nomenclatures/categories",
+        json={"name": "Self", "code": "self-parent", "nomenclature_type": "PRODUCT"},
+    )
+    assert created.status_code == 201
+    category_id = created.json()["id"]
+    assert (
+        client.patch(
+            f"/nomenclatures/categories/{category_id}",
+            json={"parent_id": category_id},
+        ).status_code
+        == 422
+    )
+
+
+def test_category_soft_deactivate_and_sort_order(client: TestClient) -> None:
+    first = client.post(
+        "/nomenclatures/categories",
+        json={
+            "name": "First",
+            "code": "sort-first",
+            "nomenclature_type": "PRODUCT",
+            "sort_order": 0,
+        },
+    )
+    second = client.post(
+        "/nomenclatures/categories",
+        json={
+            "name": "Second",
+            "code": "sort-second",
+            "nomenclature_type": "PRODUCT",
+            "sort_order": 1,
+        },
+    )
+    assert first.status_code == 201
+    assert second.status_code == 201
+    first_id = first.json()["id"]
+    second_id = second.json()["id"]
+
+    swapped = client.patch(
+        f"/nomenclatures/categories/{first_id}",
+        json={"sort_order": 5},
+    )
+    assert swapped.status_code == 200
+    assert swapped.json()["sort_order"] == 5
+
+    deactivated = client.patch(
+        f"/nomenclatures/categories/{second_id}",
+        json={"is_active": False},
+    )
+    assert deactivated.status_code == 200
+    assert deactivated.json()["is_active"] is False
+
+    active_only = client.get("/nomenclatures/categories", params={"is_active": True})
+    assert active_only.status_code == 200
+    assert all(item["id"] != second_id for item in active_only.json())

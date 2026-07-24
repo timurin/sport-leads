@@ -137,8 +137,13 @@ export async function updateUnitOfMeasure(formData: FormData) {
 }
 
 export async function createNomenclatureCategory(formData: FormData) {
+  const parentRaw = formData.get("parent_id");
+  const parentId =
+    parentRaw != null && String(parentRaw).trim() !== ""
+      ? Number(parentRaw)
+      : null;
   await mutate("/categories", "POST", {
-    parent_id: formData.get("parent_id") ? Number(formData.get("parent_id")) : null,
+    parent_id: parentId,
     name: text(formData, "name"),
     code: text(formData, "code"),
     description: text(formData, "description") || null,
@@ -157,6 +162,39 @@ export async function updateNomenclatureCategory(formData: FormData) {
     nomenclature_type: text(formData, "nomenclature_type") || "PRODUCT", sort_order: Number(formData.get("sort_order") ?? 0),
     is_active: formData.get("is_active") === "true",
   });
+  revalidatePath("/settings/catalogs/nomenclature");
+  revalidatePath("/settings/catalogs/nomenclature-categories");
+}
+
+/** Sibling ↑/↓ reorder — dense sort_order 0..n-1 under the same parent. */
+export async function reorderNomenclatureCategorySibling(
+  categoryId: number,
+  direction: -1 | 1,
+) {
+  const { getNomenclatureCategories } = await import("@/lib/nomenclature");
+  const { planSiblingReorder } = await import(
+    "@/lib/nomenclature-category-tree"
+  );
+  const categories = await getNomenclatureCategories();
+  const target = categories.find((item) => item.id === categoryId);
+  if (!target) {
+    throw new Error("Категория не найдена.");
+  }
+  const siblings = categories.filter(
+    (item) => item.parent_id === target.parent_id,
+  );
+  const plan = planSiblingReorder(siblings, categoryId, direction);
+  if (!plan) {
+    return;
+  }
+  const byId = new Map(siblings.map((item) => [item.id, item] as const));
+  for (const row of plan) {
+    const current = byId.get(row.id);
+    if (!current || current.sort_order === row.sort_order) continue;
+    await mutate(`/categories/${row.id}`, "PATCH", {
+      sort_order: row.sort_order,
+    });
+  }
   revalidatePath("/settings/catalogs/nomenclature");
   revalidatePath("/settings/catalogs/nomenclature-categories");
 }

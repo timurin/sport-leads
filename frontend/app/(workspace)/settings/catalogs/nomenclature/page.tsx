@@ -4,7 +4,7 @@ import { NomenclatureWorkspace } from "@/components/settings/nomenclature-worksp
 import {
   getNomenclature,
   getNomenclatureCategories,
-  getNomenclatureFieldValues,
+  getNomenclatureCharacteristicValues,
   getNomenclatureMedia,
   getUnitsOfMeasure,
   nomenclatureMediaUrl,
@@ -20,7 +20,10 @@ export default async function NomenclaturePage() {
     Promise.all(
       items.map(
         async (item) =>
-          [item.id, await getNomenclatureFieldValues(item.id)] as const,
+          [
+            item.id,
+            await getNomenclatureCharacteristicValues(item.id),
+          ] as const,
       ),
     ),
     Promise.all(

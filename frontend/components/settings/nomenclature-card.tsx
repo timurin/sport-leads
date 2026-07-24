@@ -14,18 +14,16 @@ import {
 import { ChevronDown, Plus, Save } from "lucide-react";
 
 import {
-  removeNomenclatureCustomField,
-  saveNomenclatureCustomField,
-} from "@/app/(workspace)/settings/catalogs/custom-fields/custom-fields-actions";
-import {
   deleteNomenclatureMedia,
+  removeNomenclatureCharacteristicValue,
+  saveNomenclatureCharacteristicValue,
   updateNomenclatureMedia,
   uploadNomenclatureMedia,
 } from "@/app/(workspace)/settings/catalogs/nomenclature/characteristics-actions";
 import { updateNomenclatureRequisites } from "@/app/(workspace)/settings/catalogs/nomenclature/nomenclature-actions";
 import { CatalogVersionedCardLayout } from "@/components/entity/catalog-versioned-card-layout";
 import { VersionedWorkspace } from "@/components/entity/versioned-workspace";
-import { NomenclatureAddCustomFieldForm } from "@/components/settings/nomenclature-add-custom-field-form";
+import { NomenclatureAddCharacteristicForm } from "@/components/settings/nomenclature-add-characteristic-form";
 import { NomenclatureAvailableModelsBlock } from "@/components/settings/nomenclature-available-models-block";
 import { NomenclatureMediaCarousel } from "@/components/settings/nomenclature-media-carousel";
 import { ProductModelToolbarActions } from "@/components/settings/product-model-toolbar-actions";
@@ -54,11 +52,11 @@ import {
   validateNomenclatureImageFile,
   validateNomenclatureRequisitesDraft,
   type CharacteristicDefinition,
-  type CustomFieldOption,
+  type CharacteristicOption,
   type Nomenclature,
   type NomenclatureAvailableModel,
   type NomenclatureCategory,
-  type NomenclatureFieldValue,
+  type NomenclatureCharacteristicValue,
   type NomenclatureMedia,
   type NomenclatureRequisitesDraft,
   type NomenclatureType,
@@ -101,11 +99,11 @@ function RequisiteRead({
 }
 
 function fieldDisplayValue(
-  field: NomenclatureFieldValue,
-  options: CustomFieldOption[],
+  field: NomenclatureCharacteristicValue,
+  options: CharacteristicOption[],
 ): string {
   const value = field.value;
-  const fieldKind = field.kind ?? field.data_type ?? "STRING";
+  const fieldKind = field.kind ?? "STRING";
   if (Array.isArray(value)) return value.join(", ");
   if (value === null || value === "") return "Не указано";
   if (
@@ -128,8 +126,8 @@ function FieldValueRow({
   onRemove,
 }: {
   itemId: number;
-  field: NomenclatureFieldValue;
-  options: CustomFieldOption[];
+  field: NomenclatureCharacteristicValue;
+  options: CharacteristicOption[];
   editing: boolean;
   onRemove: (formData: FormData) => Promise<void>;
 }) {
@@ -147,9 +145,8 @@ function FieldValueRow({
       </div>
     );
   }
-  const fieldKind = field.kind ?? field.data_type ?? "STRING";
-  const characteristicId =
-    field.characteristic_id ?? field.field_definition_id ?? 0;
+  const fieldKind = field.kind ?? "STRING";
+  const characteristicId = field.characteristic_id;
   const common = controlClassName({ size: "compact" });
   const valueName = `value_${characteristicId}`;
   let control: ReactNode;
@@ -224,7 +221,6 @@ function FieldValueRow({
               const data = new FormData();
               data.set("nomenclature_id", String(itemId));
               data.set("characteristic_id", String(characteristicId));
-              data.set("field_definition_id", String(characteristicId));
               void onRemove(data);
             }}
           >
@@ -254,8 +250,8 @@ export function NomenclatureCard({
   item: Nomenclature;
   categories: NomenclatureCategory[];
   units: UnitOfMeasure[];
-  fields: NomenclatureFieldValue[];
-  fieldOptions: Record<number, CustomFieldOption[]>;
+  fields: NomenclatureCharacteristicValue[];
+  fieldOptions: Record<number, CharacteristicOption[]>;
   usedValuesById?: Record<number, string[]>;
   characteristicDefinitions: CharacteristicDefinition[];
   media: NomenclatureMedia[];
@@ -368,9 +364,7 @@ export function NomenclatureCard({
   ];
   const historySummary = `${historyEntries.length} записи`;
   const assignedFieldIds = new Set(
-    fieldState.map(
-      (field) => field.characteristic_id ?? field.field_definition_id ?? 0,
-    ),
+    fieldState.map((field) => field.characteristic_id),
   );
 
   useEffect(() => {
@@ -655,15 +649,10 @@ export function NomenclatureCard({
   const removeField = async (data: FormData) => {
     setFieldsStatus("saving");
     try {
-      await removeNomenclatureCustomField(data);
-      const id = Number(
-        data.get("characteristic_id") ?? data.get("field_definition_id"),
-      );
+      await removeNomenclatureCharacteristicValue(data);
+      const id = Number(data.get("characteristic_id"));
       setFieldState((currentFields) =>
-        currentFields.filter(
-          (field) =>
-            (field.characteristic_id ?? field.field_definition_id) !== id,
-        ),
+        currentFields.filter((field) => field.characteristic_id !== id),
       );
       setFieldsStatus("saved");
       router.refresh();
@@ -678,10 +667,10 @@ export function NomenclatureCard({
     setFieldsStatus("saving");
     try {
       const formData = new FormData(event.currentTarget);
-      const nextFields: NomenclatureFieldValue[] = [];
+      const nextFields: NomenclatureCharacteristicValue[] = [];
       for (const field of fieldState) {
-        const id = field.characteristic_id ?? field.field_definition_id ?? 0;
-        const kind = field.kind ?? field.data_type ?? "STRING";
+        const id = field.characteristic_id;
+        const kind = field.kind ?? "STRING";
         const raw =
           kind === "BOOLEAN"
             ? formData.get(`value_${id}`) != null
@@ -691,11 +680,9 @@ export function NomenclatureCard({
         const row = new FormData();
         row.set("nomenclature_id", String(current.id));
         row.set("characteristic_id", String(id));
-        row.set("field_definition_id", String(id));
         row.set("kind", kind);
-        row.set("data_type", kind);
         row.set("value", raw);
-        await saveNomenclatureCustomField(row);
+        await saveNomenclatureCharacteristicValue(row);
         nextFields.push({
           ...field,
           value:
@@ -1163,7 +1150,7 @@ export function NomenclatureCard({
                   <div>
                     {addingField ? (
                       <div className="mb-portal-3">
-                        <NomenclatureAddCustomFieldForm
+                        <NomenclatureAddCharacteristicForm
                           nomenclatureId={current.id}
                           definitions={characteristicDefinitions}
                           assignedIds={assignedFieldIds}
@@ -1186,18 +1173,11 @@ export function NomenclatureCard({
                       <form ref={fieldsFormRef} onSubmit={saveAllFields}>
                         {fieldState.map((field) => (
                           <FieldValueRow
-                            key={
-                              field.characteristic_id ??
-                              field.field_definition_id
-                            }
+                            key={field.characteristic_id}
                             itemId={current.id}
                             field={field}
                             options={
-                              fieldOptions[
-                                field.characteristic_id ??
-                                  field.field_definition_id ??
-                                  0
-                              ] ?? []
+                              fieldOptions[field.characteristic_id] ?? []
                             }
                             editing={fieldsEditing}
                             onRemove={removeField}

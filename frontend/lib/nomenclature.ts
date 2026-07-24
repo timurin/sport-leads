@@ -356,16 +356,6 @@ export type NomenclatureMedia = {
   content_url: string;
 };
 
-/** @deprecated Use Characteristic* — kept as aliases during UI migration */
-export type CustomFieldDataType = CharacteristicKind;
-export type CustomFieldDefinition = CharacteristicDefinition & { data_type?: CharacteristicKind };
-export type CustomFieldOption = CharacteristicOption & { field_definition_id?: number };
-export type CategoryField = CategoryCharacteristic & { field_definition_id?: number };
-export type NomenclatureFieldValue = NomenclatureCharacteristicValue & {
-  field_definition_id?: number;
-  data_type?: CharacteristicKind;
-};
-
 export function fromApiNomenclature(item: ApiNomenclature): Nomenclature {
   return {
     ...item,
@@ -487,14 +477,6 @@ export async function getNomenclatureCharacteristicValues(
   );
 }
 
-/** @deprecated Use getCharacteristicDefinitions / getNomenclatureCharacteristicValues */
-export async function getCustomFieldDefinitions(): Promise<CustomFieldDefinition[]> {
-  const rows = await getCharacteristicDefinitions();
-  return rows
-    .filter((row) => !row.is_variant_dimension)
-    .map((row) => ({ ...row, data_type: row.kind }));
-}
-
 /** Exact active name match against the characteristics handbook. */
 export function findCharacteristicByName<
   T extends { id: number; name: string; is_active: boolean },
@@ -508,38 +490,6 @@ export function findCharacteristicByName<
     )
     .sort((left, right) => left.id - right.id);
   return matches[0] ?? null;
-}
-
-export async function getCategoryFields(
-  categoryId: number,
-): Promise<CategoryField[]> {
-  const rows = await getCategoryCharacteristics(categoryId);
-  return rows.map((row) => ({
-    ...row,
-    field_definition_id: row.characteristic_id,
-  }));
-}
-
-export async function getCustomFieldOptions(
-  fieldId: number,
-): Promise<CustomFieldOption[]> {
-  const rows = await getCharacteristicOptions(fieldId);
-  return rows.map((row) => ({
-    ...row,
-    field_definition_id: row.characteristic_id,
-  }));
-}
-
-export async function getNomenclatureFieldValues(
-  nomenclatureId: number,
-): Promise<NomenclatureFieldValue[]> {
-  const rows = await getNomenclatureCharacteristicValues(nomenclatureId);
-  return rows.map((row) => ({
-    ...row,
-    field_definition_id: row.characteristic_id,
-    data_type: row.kind,
-    source_category_id: row.source_category_id ?? 0,
-  }));
 }
 
 export async function getNomenclatureMedia(id: number): Promise<NomenclatureMedia[]> {

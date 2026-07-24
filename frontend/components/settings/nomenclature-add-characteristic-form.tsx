@@ -3,12 +3,12 @@
 import { Check, X } from "lucide-react";
 import { useEffect, useId, useMemo, useState } from "react";
 
-import { addNomenclatureCustomFieldWithValue } from "@/app/(workspace)/settings/catalogs/custom-fields/custom-fields-actions";
+import { addNomenclatureCharacteristicWithValue } from "@/app/(workspace)/settings/catalogs/nomenclature/characteristics-actions";
 import { IconButton } from "@/components/ui/button";
 import { controlClassName } from "@/lib/design-system/control-styles";
 import type {
   CharacteristicDefinition,
-  CustomFieldOption,
+  CharacteristicOption,
 } from "@/lib/nomenclature";
 import { findCharacteristicByName } from "@/lib/nomenclature";
 
@@ -18,12 +18,12 @@ type ValueSuggestion = {
   payload: string;
 };
 
-type NomenclatureAddCustomFieldFormProps = {
+type NomenclatureAddCharacteristicFormProps = {
   nomenclatureId: number;
   /** Full characteristics handbook (including variant dimensions). */
   definitions: CharacteristicDefinition[];
   assignedIds: Set<number>;
-  fieldOptions: Record<number, CustomFieldOption[]>;
+  fieldOptions: Record<number, CharacteristicOption[]>;
   /** Distinct labels already used / catalog options per characteristic id. */
   usedValuesById?: Record<number, string[]>;
   onCancel: () => void;
@@ -33,12 +33,12 @@ type NomenclatureAddCustomFieldFormProps = {
 
 function pickValuePayload(
   definition: CharacteristicDefinition | null,
-  options: CustomFieldOption[],
+  options: CharacteristicOption[],
   typedValue: string,
-): { dataType: string; value: string } {
+): { kind: string; value: string } {
   const trimmed = typedValue.trim();
   if (!definition) {
-    return { dataType: "STRING", value: trimmed };
+    return { kind: "STRING", value: trimmed };
   }
   const kind = definition.kind ?? "STRING";
   if (kind === "LIST" || kind === "MULTI_SELECT" || kind === "COLOR") {
@@ -53,12 +53,12 @@ function pickValuePayload(
               trimmed.toLocaleLowerCase("ru")),
       ) ?? null;
     return {
-      dataType: kind,
+      kind,
       value: match ? String(match.id) : trimmed,
     };
   }
   return {
-    dataType: kind,
+    kind,
     value: trimmed,
   };
 }
@@ -77,7 +77,7 @@ function findValueSuggestion(
 }
 
 /** Add row: Name + Value with autocomplete against catalog definitions/options. */
-export function NomenclatureAddCustomFieldForm({
+export function NomenclatureAddCharacteristicForm({
   nomenclatureId,
   definitions,
   assignedIds,
@@ -86,7 +86,7 @@ export function NomenclatureAddCustomFieldForm({
   onCancel,
   onSaved,
   onError,
-}: NomenclatureAddCustomFieldFormProps) {
+}: NomenclatureAddCharacteristicFormProps) {
   const input = controlClassName({ size: "compact" });
   const nameListId = useId();
   const valueListId = useId();
@@ -231,12 +231,11 @@ export function NomenclatureAddCustomFieldForm({
       data.append("nomenclature_id", String(nomenclatureId));
       data.append("name", existing?.name ?? trimmedName);
       data.append("value", payload.value);
-      data.append("data_type", payload.dataType);
+      data.append("kind", payload.kind);
       if (definition) {
-        data.append("field_definition_id", String(definition.id));
         data.append("characteristic_id", String(definition.id));
       }
-      await addNomenclatureCustomFieldWithValue(data);
+      await addNomenclatureCharacteristicWithValue(data);
       onSaved();
     } catch (caught) {
       onError(

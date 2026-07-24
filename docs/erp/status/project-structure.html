@@ -573,11 +573,12 @@
         title: "5. Nomenclature Core",
         items: [
           { text: "Persistent nomenclature CRUD, card, search, active flag, and base price — Nomenclature.article removed (4.7.11 / B3; garment article on ProductModel)", done: true },
-          { text: "Nomenclature types and category hierarchy", done: true },
+          { text: "Nomenclature types and category hierarchy — tree directory CRUD (4.9.3: create child, parent edit with descendant exclusion, up/down reorder, soft deactivate)", done: true },
           { text: "Units-of-measure directory and `storage_unit_id` link", done: true },
-          { text: "Typed fields with category inheritance and effective schema — historical CustomField*; SoT unified into characteristics (4.8 / ADR-015; Alembic f7a8b9c0d123)", done: true },
-          { text: "Separate workspace and editable card for nomenclature — create uses CreateDrawer fullscreen (4.7.9 / B2; field order visual 4.7.10)", done: true },
-          { text: "Nomenclature card free-assignment UI fully on characteristics names (no CustomField* shims) — 4.8.6 remainder", done: false },
+          { text: "Typed fields with category inheritance and effective schema — historical CustomField*; SoT unified into characteristics (4.8 / ADR-015; Alembic f7a8b9c0d123); orphan custom_fields modules removed (4.8.7)", done: true },
+          { text: "Separate workspace and editable card for nomenclature — create uses CreateDrawer fullscreen (4.7.9 / B2); create field order owner OK (4.7.10, 50/50 name+price | type+category+unit)", done: true },
+          { text: "Nomenclature card free-assignment UI on characteristics names (no CustomField* shims) — 4.8.6", done: true },
+          { text: "Stage 4.8 residual: focused regression for unmounted /custom-fields + definition DELETE guards — 4.8.7", done: true },
           { text: "Audit history, archive flow, bulk editing, import, and export", done: false }
         ]
       },

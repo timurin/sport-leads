@@ -28,7 +28,7 @@ import type {
   UnitCategory,
   UnitOfMeasure,
 } from "@/lib/nomenclature";
-import { buildCategoryTreeRows } from "@/lib/nomenclature-category-tree";
+import { buildCategoryTreeRows, nextChildSortOrder } from "@/lib/nomenclature-category-tree";
 
 function actionErrorMessage(caught: unknown): string {
   return caught instanceof Error ? caught.message : "Не удалось сохранить.";
@@ -77,6 +77,8 @@ type NomenclatureCreatePanelsProps = {
   onClose: () => void;
   /** Default fullscreen so create sits above the list (ADR-013 / 4.7.9). */
   variant?: "docked" | "overlay" | "fullscreen";
+  /** Prefill parent when creating a category under a selected node (`4.9.3`). */
+  categoryDefaultParentId?: number | null;
 };
 
 export function NomenclatureCreatePanels({
@@ -85,8 +87,24 @@ export function NomenclatureCreatePanels({
   units = [],
   onClose,
   variant = "fullscreen",
+  categoryDefaultParentId = null,
 }: NomenclatureCreatePanelsProps) {
   const open = kind != null;
+  const categoryTreeRows = useMemo(
+    () => buildCategoryTreeRows(categories.filter((row) => row.is_active)),
+    [categories],
+  );
+  const categoryParentId =
+    kind === "category" && categoryDefaultParentId != null
+      ? String(categoryDefaultParentId)
+      : "";
+  const categorySortOrder =
+    kind === "category"
+      ? nextChildSortOrder(
+          categories,
+          categoryDefaultParentId != null ? categoryDefaultParentId : null,
+        )
+      : 0;
 
   return (
     <CreateDrawer
@@ -94,8 +112,10 @@ export function NomenclatureCreatePanels({
       title={kind ? TITLES[kind] : ""}
       description={
         kind === "nomenclature"
-          ? "Заполните обязательные поля. Раскладку уточним после визуальной проверки."
-          : undefined
+          ? "Заполните обязательные поля."
+          : kind === "category" && categoryDefaultParentId != null
+            ? "Дочерняя категория под выбранным узлом."
+            : undefined
       }
       onClose={onClose}
       variant={variant}
@@ -110,6 +130,7 @@ export function NomenclatureCreatePanels({
 
       {kind === "category" ? (
         <CreateForm action={createNomenclatureCategory} onCancel={onClose}>
+          <input type="hidden" name="sort_order" value={categorySortOrder} />
           <Field label="Название" required>
             <Input name="name" required autoFocus />
           </Field>
@@ -126,11 +147,11 @@ export function NomenclatureCreatePanels({
             </Select>
           </Field>
           <Field label="Родительская группа">
-            <Select name="parent_id" defaultValue="">
+            <Select name="parent_id" defaultValue={categoryParentId} key={categoryParentId}>
               <option value="">Корневая группа</option>
-              {categories.map((category) => (
-                <option key={category.id} value={category.id}>
-                  {category.name}
+              {categoryTreeRows.map((row) => (
+                <option key={row.category.id} value={row.category.id}>
+                  {row.outline} — {row.category.name}
                 </option>
               ))}
             </Select>
@@ -220,11 +241,11 @@ export function NomenclatureCreatePanels({
 }
 
 /**
- * Proposed create layout (owner may reorder after visual check):
- * 1. Identity — name (full), type (half)
- * 2. Classification — category + storage unit
- * 3. Commercial — base price
- * 4. Optional — short name, description
+ * Create layout (owner 4.7.10):
+ * Block 1 — 50/50:
+ *   left: name, base price
+ *   right: type, category, storage unit
+ * Block 2 — optional: short name, description (unchanged)
  * Legacy category/unit strings are derived (hidden), not edited.
  */
 function NomenclatureCreateForm({
@@ -290,80 +311,72 @@ function NomenclatureCreateForm({
               {error}
             </p>
           ) : null}
-          <FormSection title="Идентификация">
-            <div className="grid gap-portal-4 md:grid-cols-2">
-              <Field
-                label="Наименование"
-                required
-                className="md:col-span-2"
-              >
-                <Input name="name" required autoFocus disabled={pending} />
-              </Field>
-              <Field label="Тип">
-                <Select
-                  name="nomenclature_type"
-                  value={nomenclatureType}
-                  disabled={pending}
-                  onChange={(event) => {
-                    const next = event.target.value as NomenclatureType;
-                    setNomenclatureType(next);
-                  }}
-                >
-                  {typeOptions.map(([value, label]) => (
-                    <option key={value} value={value}>
-                      {label}
-                    </option>
-                  ))}
-                </Select>
-              </Field>
+          <FormSection>
+            <div className="grid gap-portal-4 md:grid-cols-2 md:items-start">
+              <div className="space-y-portal-4">
+                <Field label="Наименование" required>
+                  <Input name="name" required autoFocus disabled={pending} />
+                </Field>
+                <Field label="Базовая цена" help="Сумма и валюта">
+                  <MoneyInput
+                    name="base_price"
+                    currencyName="currency"
+                    defaultValue="0"
+                    defaultCurrency="RUB"
+                    disabled={pending}
+                  />
+                </Field>
+              </div>
+              <div className="space-y-portal-4">
+                <Field label="Тип">
+                  <Select
+                    name="nomenclature_type"
+                    value={nomenclatureType}
+                    disabled={pending}
+                    onChange={(event) => {
+                      const next = event.target.value as NomenclatureType;
+                      setNomenclatureType(next);
+                    }}
+                  >
+                    {typeOptions.map(([value, label]) => (
+                      <option key={value} value={value}>
+                        {label}
+                      </option>
+                    ))}
+                  </Select>
+                </Field>
+                <Field label="Категория">
+                  <Select
+                    name="category_id"
+                    value={categoryId}
+                    disabled={pending}
+                    onChange={(event) => setCategoryId(event.target.value)}
+                  >
+                    <option value="">Без категории</option>
+                    {activeCategoryRows.map((row) => (
+                      <option key={row.category.id} value={row.category.id}>
+                        {row.outline} — {row.category.name}
+                      </option>
+                    ))}
+                  </Select>
+                </Field>
+                <Field label="Ед. хранения">
+                  <Select
+                    name="storage_unit_id"
+                    value={storageUnitId}
+                    disabled={pending}
+                    onChange={(event) => setStorageUnitId(event.target.value)}
+                  >
+                    <option value="">Не выбрана</option>
+                    {activeUnits.map((unit) => (
+                      <option key={unit.id} value={unit.id}>
+                        {unit.name} ({unit.symbol})
+                      </option>
+                    ))}
+                  </Select>
+                </Field>
+              </div>
             </div>
-          </FormSection>
-
-          <FormSection title="Классификация">
-            <div className="grid gap-portal-4 md:grid-cols-2">
-              <Field label="Категория">
-                <Select
-                  name="category_id"
-                  value={categoryId}
-                  disabled={pending}
-                  onChange={(event) => setCategoryId(event.target.value)}
-                >
-                  <option value="">Без категории</option>
-                  {activeCategoryRows.map((row) => (
-                    <option key={row.category.id} value={row.category.id}>
-                      {row.outline} — {row.category.name}
-                    </option>
-                  ))}
-                </Select>
-              </Field>
-              <Field label="Единица хранения">
-                <Select
-                  name="storage_unit_id"
-                  value={storageUnitId}
-                  disabled={pending}
-                  onChange={(event) => setStorageUnitId(event.target.value)}
-                >
-                  <option value="">Не выбрана</option>
-                  {activeUnits.map((unit) => (
-                    <option key={unit.id} value={unit.id}>
-                      {unit.name} ({unit.symbol})
-                    </option>
-                  ))}
-                </Select>
-              </Field>
-            </div>
-          </FormSection>
-
-          <FormSection title="Коммерция">
-            <Field label="Базовая цена" help="Сумма и валюта">
-              <MoneyInput
-                name="base_price"
-                currencyName="currency"
-                defaultValue="0"
-                defaultCurrency="RUB"
-                disabled={pending}
-              />
-            </Field>
           </FormSection>
 
           <FormSection title="Дополнительно">
@@ -395,14 +408,16 @@ function FormSection({
   title,
   children,
 }: {
-  title: string;
+  title?: string;
   children: ReactNode;
 }) {
   return (
     <section className="rounded-portal-lg border border-portal-border bg-portal-surface p-portal-5">
-      <h3 className="mb-portal-4 text-portal-body font-semibold text-portal-text">
-        {title}
-      </h3>
+      {title ? (
+        <h3 className="mb-portal-4 text-portal-body font-semibold text-portal-text">
+          {title}
+        </h3>
+      ) : null}
       {children}
     </section>
   );

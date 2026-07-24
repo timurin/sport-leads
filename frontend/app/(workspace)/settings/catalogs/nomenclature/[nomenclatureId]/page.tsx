@@ -8,7 +8,7 @@ import {
   getNomenclatureAvailableModels,
   getNomenclatureCategories,
   getNomenclatureById,
-  getNomenclatureFieldValues,
+  getNomenclatureCharacteristicValues,
   getNomenclatureMedia,
   getUnitsOfMeasure,
 } from "@/lib/nomenclature";
@@ -35,7 +35,7 @@ export default async function NomenclatureCardPage({
     await Promise.all([
       getNomenclatureCategories(),
       getUnitsOfMeasure(),
-      getNomenclatureFieldValues(item.id),
+      getNomenclatureCharacteristicValues(item.id),
       getCharacteristicDefinitions(),
       getNomenclatureMedia(item.id),
     ]);

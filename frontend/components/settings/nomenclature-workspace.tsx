@@ -31,7 +31,7 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import type {
   Nomenclature,
   NomenclatureCategory,
-  NomenclatureFieldValue,
+  NomenclatureCharacteristicValue,
   NomenclatureType,
   UnitOfMeasure,
 } from "@/lib/nomenclature";
@@ -71,7 +71,7 @@ export function NomenclatureWorkspace({
   items: Nomenclature[];
   categories: NomenclatureCategory[];
   units: UnitOfMeasure[];
-  fieldValues: Record<number, NomenclatureFieldValue[]>;
+  fieldValues: Record<number, NomenclatureCharacteristicValue[]>;
   coverUrls?: Record<number, string | null>;
 }) {
   const searchParams = useSearchParams();

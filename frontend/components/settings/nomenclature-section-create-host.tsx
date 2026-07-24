@@ -17,6 +17,11 @@ type NomenclatureSectionCreateHostProps = {
   units?: UnitOfMeasure[];
   toolbarStart?: ReactNode;
   children: ReactNode;
+  /** Prefill category create parent (`4.9.3`). */
+  categoryDefaultParentId?: number | null;
+  /** Controlled create drawer (optional). */
+  createKind?: NomenclatureCreateKind | null;
+  onCreateKindChange?: (kind: NomenclatureCreateKind | null) => void;
 };
 
 /**
@@ -28,11 +33,23 @@ export function NomenclatureSectionCreateHost({
   units = [],
   toolbarStart,
   children,
+  categoryDefaultParentId = null,
+  createKind: controlledKind,
+  onCreateKindChange,
 }: NomenclatureSectionCreateHostProps) {
   const searchParams = useSearchParams();
-  const [createKind, setCreateKind] = useState<NomenclatureCreateKind | null>(
+  const [internalKind, setInternalKind] = useState<NomenclatureCreateKind | null>(
     () => parseNomenclatureCreateKind(searchParams.get("create")),
   );
+  const isControlled = onCreateKindChange != null;
+  const createKind = isControlled ? (controlledKind ?? null) : internalKind;
+  const setCreateKind = (kind: NomenclatureCreateKind | null) => {
+    if (isControlled) {
+      onCreateKindChange(kind);
+    } else {
+      setInternalKind(kind);
+    }
+  };
 
   return (
     <div className="flex min-h-0 min-w-0 flex-1 flex-col">
@@ -46,6 +63,7 @@ export function NomenclatureSectionCreateHost({
           kind={createKind}
           categories={categories}
           units={units}
+          categoryDefaultParentId={categoryDefaultParentId}
           onClose={() => setCreateKind(null)}
           variant="fullscreen"
         />

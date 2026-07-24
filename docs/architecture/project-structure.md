@@ -1,7 +1,7 @@
 # Sport-Lead — Project Structure Checklist
 
 **Code:** `SL-PROJECT-STRUCTURE-v1`
-**Updated:** `2026-07-23` (canonical sync: `4.8` honesty, product types `6.1.14–16`, sewing `6.3.8`, ADR-016 tech-cards)
+**Updated:** `2026-07-24` (close `4.9.3` categories tree CRUD; `4.8.7` orphan cleanup; `4.8.6` card unify)
 **Project version:** `v0.9.0`
 **Git branch:** `feature/v0.8.1-nomenclature-core`
 **Git commit:** `0980f34`
@@ -66,11 +66,12 @@
 ## 5. Nomenclature Core
 
 - [x] Persistent nomenclature CRUD, card, search, active flag, and base price — `Nomenclature.article` removed (`4.7.11` / B3; garment article on ProductModel)
-- [x] Nomenclature types and category hierarchy
+- [x] Nomenclature types and category hierarchy — tree directory CRUD (`4.9.3`: create child, parent edit with descendant exclusion, ↑/↓ reorder, soft deactivate)
 - [x] Units-of-measure directory and `storage_unit_id` link
-- [x] Typed fields with category inheritance and effective schema — historical `CustomField*`; SoT unified into characteristics (`4.8` / ADR-015; Alembic `f7a8b9c0d123`)
-- [x] Separate workspace and editable card for nomenclature — create uses `CreateDrawer` fullscreen (`4.7.9` / B2; field order visual `4.7.10`)
-- [ ] Nomenclature card free-assignment UI fully on characteristics names (no `CustomField*` shims) — `4.8.6` remainder
+- [x] Typed fields with category inheritance and effective schema — historical `CustomField*`; SoT unified into characteristics (`4.8` / ADR-015; Alembic `f7a8b9c0d123`); orphan `custom_fields` modules removed (`4.8.7`)
+- [x] Separate workspace and editable card for nomenclature — create uses `CreateDrawer` fullscreen (`4.7.9` / B2); create field order owner OK (`4.7.10`, 50/50 name+price | type+category+unit)
+- [x] Nomenclature card free-assignment UI on characteristics names (no `CustomField*` shims) — `4.8.6`
+- [x] Stage `4.8` residual: focused regression for unmounted `/custom-fields` + definition DELETE guards — `4.8.7` (`test_characteristics_catalog_4_8.py`)
 - [ ] Audit history, archive flow, bulk editing, import, and export
 
 ## 6. Nomenclature Characteristics, Variants, and Media
