@@ -9,7 +9,7 @@ export default function NomenclatureNotFound() {
       description="Карточка с указанным идентификатором не существует или была удалена."
       action={
         <Link
-          href="/settings/catalogs/nomenclature"
+          href="/warehouse/stock"
           className="text-portal-body font-semibold text-portal-primary hover:underline"
         >
           К списку номенклатуры

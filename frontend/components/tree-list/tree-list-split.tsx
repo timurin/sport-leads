@@ -62,7 +62,7 @@ export function TreeListSplit({
         </div>
       ) : null}
 
-      <div data-tree-list-content className="min-w-0 flex-1 bg-portal-surface">
+      <div data-tree-list-content className="flex min-h-0 min-w-0 flex-1 flex-col bg-portal-surface">
         {children}
       </div>
 

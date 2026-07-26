@@ -13,6 +13,11 @@ import {
   textareaClassName,
   type ControlSize,
 } from "@/lib/design-system/control-styles";
+import {
+  PLATFORM_CURRENCY_CODES,
+  PLATFORM_DEFAULT_CURRENCY,
+  currencyOptionLabel,
+} from "@/lib/money";
 
 type FieldProps = {
   label: ReactNode;
@@ -261,7 +266,8 @@ type MoneyInputProps = {
   currencyName?: string;
   defaultValue?: string | number;
   defaultCurrency?: string;
-  currencyOptions?: string[];
+  /** ISO codes; labels use symbols (`DS-MONEY-01`). Defaults to platform list. */
+  currencyOptions?: readonly string[];
   min?: string | number;
   step?: string | number;
   required?: boolean;
@@ -272,13 +278,13 @@ type MoneyInputProps = {
   className?: string;
 };
 
-/** Number amount + currency select/text (`5.4.1.4`). */
+/** Number amount + currency select (`5.4.1.4`, `DS-MONEY-01`). */
 export function MoneyInput({
   name = "amount",
   currencyName = "currency",
   defaultValue = "0",
-  defaultCurrency = "RUB",
-  currencyOptions,
+  defaultCurrency = PLATFORM_DEFAULT_CURRENCY,
+  currencyOptions = PLATFORM_CURRENCY_CODES,
   min = 0,
   step = "0.01",
   required,
@@ -288,6 +294,9 @@ export function MoneyInput({
   readOnly,
   className = "",
 }: MoneyInputProps) {
+  const options =
+    currencyOptions.length > 0 ? currencyOptions : PLATFORM_CURRENCY_CODES;
+
   return (
     <div
       data-form-control="money"
@@ -305,32 +314,20 @@ export function MoneyInput({
         disabled={disabled}
         readOnly={readOnly}
       />
-      {currencyOptions && currencyOptions.length > 0 ? (
-        <Select
-          name={currencyName}
-          defaultValue={defaultCurrency}
-          size={size}
-          invalid={invalid}
-          disabled={disabled}
-        >
-          {currencyOptions.map((code) => (
-            <option key={code} value={code}>
-              {code}
-            </option>
-          ))}
-        </Select>
-      ) : (
-        <Input
-          name={currencyName}
-          defaultValue={defaultCurrency}
-          maxLength={3}
-          size={size}
-          invalid={invalid}
-          disabled={disabled}
-          readOnly={readOnly}
-          aria-label="Валюта"
-        />
-      )}
+      <Select
+        name={currencyName}
+        defaultValue={defaultCurrency}
+        size={size}
+        invalid={invalid}
+        disabled={disabled}
+        aria-label="Валюта"
+      >
+        {options.map((code) => (
+          <option key={code} value={code}>
+            {currencyOptionLabel(code)}
+          </option>
+        ))}
+      </Select>
     </div>
   );
 }

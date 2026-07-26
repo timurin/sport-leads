@@ -35,6 +35,7 @@ import type {
   NomenclatureType,
   UnitOfMeasure,
 } from "@/lib/nomenclature";
+import { formatAmountWithCurrency } from "@/lib/money";
 
 const ROW_ICON_LINK =
   "portal-focus-ring inline-flex size-portal-control-icon shrink-0 items-center justify-center rounded-portal-md border border-portal-border bg-portal-surface text-portal-muted hover:bg-portal-state-hover hover:text-portal-text";
@@ -362,7 +363,7 @@ export function NomenclatureWorkspace({
                           </DataTableCell>
                           <DataTableCell>{unitLabel(item)}</DataTableCell>
                           <DataTableCell>
-                            {item.basePrice} {item.currency}
+                            {formatAmountWithCurrency(item.basePrice, item.currency)}
                           </DataTableCell>
                           <DataTableCell>
                             <StatusBadge
@@ -435,7 +436,7 @@ export function NomenclatureWorkspace({
                           </p>
                           <p className="text-portal-caption text-portal-muted">
                             {categoryName(item.category_id, categories)} ·{" "}
-                            {item.basePrice} {item.currency}
+                            {formatAmountWithCurrency(item.basePrice, item.currency)}
                           </p>
                           <div>{rowActions(item)}</div>
                         </div>

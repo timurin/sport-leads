@@ -15,6 +15,7 @@ from app.services.nomenclature import (
     NomenclatureCategoryRuleError,
     NomenclatureNotFoundError,
     NomenclatureRuleError,
+    copy_nomenclature,
     create_category,
     create_nomenclature,
     get_category,
@@ -139,6 +140,29 @@ def read_one_nomenclature(nomenclature_id: int, db: Session = Depends(get_db)) -
 def create_one_nomenclature(payload: NomenclatureCreate, db: Session = Depends(get_db)) -> NomenclatureRead:
     try:
         return to_nomenclature_read(create_nomenclature(db, payload))
+    except NomenclatureConflictError as error:
+        raise HTTPException(status_code=409, detail=str(error)) from error
+    except (
+        NomenclatureCategoryNotFoundError,
+        NomenclatureCategoryRuleError,
+        NomenclatureRuleError,
+        UnitOfMeasureNotFoundError,
+        UnitOfMeasureRuleError,
+    ) as error:
+        raise HTTPException(status_code=422, detail=str(error)) from error
+
+
+@router.post(
+    "/{nomenclature_id}/copy",
+    response_model=NomenclatureRead,
+    status_code=status.HTTP_201_CREATED,
+    operation_id="copy_nomenclature",
+)
+def copy_one_nomenclature(nomenclature_id: int, db: Session = Depends(get_db)) -> NomenclatureRead:
+    try:
+        return to_nomenclature_read(copy_nomenclature(db, nomenclature_id))
+    except NomenclatureNotFoundError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
     except NomenclatureConflictError as error:
         raise HTTPException(status_code=409, detail=str(error)) from error
     except (

@@ -37,6 +37,12 @@ const settingsGroups = [
         href: "/settings/catalogs/contractors",
         icon: Building2,
       },
+      {
+        title: "Ставки НДС",
+        description: "Справочник ставок для заказов покупателя",
+        href: "/settings/catalogs/vat-rates",
+        icon: Settings2,
+      },
     ],
   },
   {
@@ -68,13 +74,13 @@ const settingsGroups = [
   {
     title: "Номенклатура",
     description:
-      "Справочник изделий, категорий, типов, характеристик и единиц измерения",
+      "Единицы, типы и характеристики; каталог и категории — Склад → Номенклатура",
     icon: Package,
     items: [
       {
         title: "Номенклатура",
-        description: "Готовые изделия и их коммерческие карточки",
-        href: "/settings/catalogs/nomenclature",
+        description: "Каталог на складе: дерево категорий, список и создание",
+        href: "/warehouse/stock",
         icon: Package,
       },
       {
@@ -82,12 +88,6 @@ const settingsGroups = [
         description: "Штуки, комплекты, метры и килограммы",
         href: "/settings/catalogs/units-of-measure",
         icon: Ruler,
-      },
-      {
-        title: "Категории номенклатуры",
-        description: "Иерархия групп и классификация каталога",
-        href: "/settings/catalogs/nomenclature-categories",
-        icon: FolderCog,
       },
       {
         title: "Характеристики номенклатуры",

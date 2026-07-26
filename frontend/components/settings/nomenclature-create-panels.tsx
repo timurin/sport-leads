@@ -21,12 +21,13 @@ import {
   Select,
   Textarea,
 } from "@/components/ui/form-controls";
-import type {
-  CharacteristicKind,
-  NomenclatureCategory,
-  NomenclatureType,
-  UnitCategory,
-  UnitOfMeasure,
+import {
+  NOMENCLATURE_CURRENCY_OPTIONS,
+  type CharacteristicKind,
+  type NomenclatureCategory,
+  type NomenclatureType,
+  type UnitCategory,
+  type UnitOfMeasure,
 } from "@/lib/nomenclature";
 import { buildCategoryTreeRows, nextChildSortOrder } from "@/lib/nomenclature-category-tree";
 
@@ -323,6 +324,7 @@ function NomenclatureCreateForm({
                     currencyName="currency"
                     defaultValue="0"
                     defaultCurrency="RUB"
+                    currencyOptions={NOMENCLATURE_CURRENCY_OPTIONS}
                     disabled={pending}
                   />
                 </Field>

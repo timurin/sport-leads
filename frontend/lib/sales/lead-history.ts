@@ -6,6 +6,7 @@ export type ApiLeadEventType =
   | "lead_converted"
   | "lead_rejected"
   | "order_created"
+  | "order_status_changed"
   | "comment_added"
   | "task_created"
   | "task_completed";
@@ -26,6 +27,7 @@ const eventPresentation: Record<ApiLeadEventType, { type: LeadActivityType; titl
   lead_converted: { type: "lead_closed", title: "Лид конвертирован" },
   lead_rejected: { type: "lead_closed", title: "Лид отклонён" },
   order_created: { type: "order_created", title: "Создан заказ" },
+  order_status_changed: { type: "status_changed", title: "Статус заказа изменён" },
   comment_added: { type: "comment_added", title: "Добавлен комментарий" },
   task_created: { type: "task_created", title: "Создана задача" },
   task_completed: { type: "task_completed", title: "Задача завершена" },

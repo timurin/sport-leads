@@ -5,20 +5,67 @@ import { fromApiSalesOrder, fromApiSalesOrderEvent } from "./order-details.ts";
 
 test("maps persisted order details and preserves nullable fields", () => {
   const order = fromApiSalesOrder({
-    id: 41, number: "SO-2026-000041", lead_id: 9, client_id: 3, organization_id: 2, organization_name: "ООО Спорт Лига", status: "new",
-    responsible_id: null, responsible_name: null, client_name: null, title: "Форма для команды",
-    description: null, product_category: null, sport: null, quantity: null, amount: null,
-    desired_date: null, source: null, created_at: "2026-07-18T10:00:00Z", updated_at: "2026-07-18T10:00:00Z",
-    items: [{ id: 7, order_id: 42, position: 1, snapshot_name: "Матчевка", size_range: "S-L", personalization: "Капитан", color: "Синий", unit: "шт", quantity: "2", unit_price: "1500", gross_amount: "3000", discount_percent: "10", discount_amount: "300", line_amount: "2700", created_at: "2026-07-18T10:00:00Z", updated_at: "2026-07-18T10:00:00Z" }],
+    id: 41,
+    number: "SO-2026-000041",
+    lead_id: 9,
+    client_id: 3,
+    organization_id: 2,
+    organization_name: "ООО Спорт Лига",
+    status: "new",
+    responsible_id: null,
+    responsible_name: null,
+    client_name: null,
+    title: "Форма для команды",
+    description: null,
+    product_category: null,
+    sport: null,
+    quantity: null,
+    amount: null,
+    desired_date: null,
+    source: null,
+    created_at: "2026-07-18T10:00:00Z",
+    updated_at: "2026-07-18T10:00:00Z",
+    items: [{
+      id: 7,
+      order_id: 42,
+      nomenclature_id: null,
+      nomenclature_variant_id: null,
+      product_model_id: null,
+      product_model_article: null,
+      product_model_name: null,
+      vat_rate_id: null,
+      vat_rate_percent: null,
+      variant_snapshots: [],
+      position: 1,
+      snapshot_name: "Матчевка",
+      size_range: "S-L",
+      personalization: "Капитан",
+      color: "Синий",
+      unit: "шт",
+      quantity: "2",
+      unit_price: "1500",
+      gross_amount: "3000",
+      discount_percent: "10",
+      discount_amount: "300",
+      line_amount: "2700",
+      created_at: "2026-07-18T10:00:00Z",
+      updated_at: "2026-07-18T10:00:00Z",
+    }],
   });
 
   assert.equal(order.sourceLeadHref, "/sales/leads/9");
+  assert.equal(order.leadId, "9");
+  assert.equal(order.statusCode, "new");
   assert.equal(order.clientName, "Клиент #3");
   assert.equal(order.organizationName, "ООО Спорт Лига");
   assert.equal(order.items[0].grossAmount, "3 000,00 ₽");
   assert.equal(order.items[0].discountPercent, "10");
   assert.equal(order.items[0].discountAmount, "300,00 ₽");
   assert.equal(order.items[0].lineAmount, "2 700,00 ₽");
+  assert.equal(order.items[0].unitPriceValue, "1500");
+  assert.equal(order.items[0].lineAmountValue, "2700");
+  assert.equal(order.items[0].vatRateId, null);
+  assert.equal(order.items[0].productModelId, null);
   assert.equal(order.items[0].sizeRange, "S-L");
   assert.equal(order.items[0].personalization, "Капитан");
   assert.equal(order.items[0].color, "Синий");
@@ -26,15 +73,33 @@ test("maps persisted order details and preserves nullable fields", () => {
   assert.equal(order.amount, "Не указана");
   assert.equal(order.description, "Описание пока не добавлено.");
   assert.equal(order.status, "Новый");
+  assert.equal(order.itemCount, 1);
 });
 
-test("maps persisted order status history events", () => {
-  const event = fromApiSalesOrderEvent({
-    id: 7, event_type: "order_status_changed", actor_id: null,
-    message: "Order status changed: new → production", created_at: "2026-07-18T10:05:00Z",
+test("maps lead and order history events through shared activity mapping", () => {
+  const statusEvent = fromApiSalesOrderEvent({
+    id: 7,
+    lead_id: 9,
+    order_id: 41,
+    event_type: "order_status_changed",
+    actor_id: null,
+    message: "Order status changed: new → production",
+    created_at: "2026-07-18T10:05:00Z",
   });
+  assert.equal(statusEvent.id, "backend-event-7");
+  assert.equal(statusEvent.title, "Статус заказа изменён");
+  assert.equal(statusEvent.message, "Order status changed: new → production");
 
-  assert.equal(event.id, "order-event-7");
-  assert.equal(event.title, "Статус заказа изменён");
-  assert.equal(event.message, "Order status changed: new → production");
+  const leadEvent = fromApiSalesOrderEvent({
+    id: 3,
+    lead_id: 9,
+    order_id: null,
+    event_type: "lead_created",
+    actor_id: 2,
+    message: "Lead created",
+    created_at: "2026-07-17T09:00:00Z",
+  });
+  assert.equal(leadEvent.id, "backend-event-3");
+  assert.equal(leadEvent.title, "Лид создан");
+  assert.equal(leadEvent.message, "Lead created");
 });

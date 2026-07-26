@@ -1,10 +1,9 @@
 # Sport-Lead — Global Roadmap
 
 **Code:** `SL-ROADMAP-v1`
-**Updated:** `2026-07-26` (roadmap `4.10` warehouse nomenclature browser; prior `4.9.5`)
+**Updated:** `2026-07-26` (`4.10.7` owner visual OK — closes warehouse nomenclature `4.10`)
 **Project version:** `v0.9.0`
 **Git branch:** `feature/v0.8.1-nomenclature-core`
-**Git commit:** `0980f34`
 
 **Canonical files:**
 - roadmap: `docs/roadmap/roadmap.md`
@@ -28,7 +27,7 @@ Current confirmed contour:
 
 Active Stage 4 work:
 
-warehouse nomenclature browser `4.10` (nav rename + PT-04 tree+list on `/warehouse/stock`); warehouse balances register note `4.6.5` (≠ browse UI); appearance polish of characteristic card → follow-up chat
+UNF-style primary warehouse nomenclature `4.10` (Склад → Номенклатура on `/warehouse/stock`: PT-04 tree+list absorbs categories; settings list/categories redirect); stock register MVP `4.6.5` (balance column from ledger, not on `Nomenclature` card); closed `4.7.2` remains historical for settings-only list; appearance polish of characteristic card → follow-up chat
 
 Next commercial contour:
 
@@ -230,7 +229,25 @@ Decision (`ADR-012`, owner `2026-07-23`): **materials are a nomenclature type** 
 - [x] 4.6.2 — Migrate data, preserve articles, and stop dual write paths — `2026-07-23`; Alembic `z6a7b8c9d012`; dual-write stopped by removing `/materials` write surface in `4.6.4`
 - [x] 4.6.3 — Remove Materials nav entry; materials are filtered nomenclature type only (no separate menu) — `2026-07-23`; `frontend/lib/navigation.ts`
 - [x] 4.6.4 — Delete `/materials` API, frontend routes/components, and `materials` table/data after cutover — `v0.9.0`; evidence: drop migration `a1b2c3d4e567` (guarded), API/model/schemas removed; UI/nav leftovers cleared; stock stays out of Nomenclature (`4.6.5`); residual: depends on sibling cutover `z6a7b8c9d012` having run first
-- [ ] 4.6.5 — Keep balances/min stock for warehouse register work; do not copy them onto `Nomenclature`
+
+#### 4.6.5 — Stock register MVP (balances via movements; not on `Nomenclature`)
+
+> Owner / УНФ (`2026-07-26`): колонка «Остаток» на списке номенклатуры считается из **регистра проводок**, не хранится на карточке `Nomenclature` (`ADR-012`). Полные склады/ячейки/партии/документы движений — Stage 12; этот блок — минимальный регистр по `nomenclature_id` для колонки и фильтра на `4.10`.
+
+Goal:
+MVP ledger: post stock movements, project balance per nomenclature; wire list column/filter on warehouse nomenclature workspace. Never copy balance/min-stock onto `Nomenclature` row.
+
+Dependencies:
+- 4.6.4 (materials gone; stock not on master card)
+- ADR-012
+- 4.10.3 (list surface for column; can stub zero until API)
+
+- [ ] 4.6.5.1 — ADR/note: register model (movement lines + balance projection); boundary vs `Nomenclature` / Stage 12
+- [ ] 4.6.5.2 — Migration: movement/ledger tables (Decimal qty; `nomenclature_id`; direction/type; timezone-aware `posted_at`); optional single default warehouse stub if needed for later FK
+- [ ] 4.6.5.3 — Services + API: post movement, read balance by nomenclature (and list balances for list page) — note: empty `GET /stock/balances` stub shipped with `4.10.6`; fill from ledger here
+- [x] 4.6.5.4 — Wire column «Остаток» + filter «все / с остатком» on warehouse nomenclature list (`4.10`) — `v0.9.0` via `4.10.6` (zeros until register posts)
+- [ ] 4.6.5.5 — Regression tests (post in/out → balance; never write balance onto `Nomenclature` row)
+- [ ] 4.6.5.6 — Docs sync: erp-check / project-structure when register ships; Stage 12 remains for warehouses/bins/lots/full documents
 
 ### 4.7 — Nomenclature UI parity with product-models (canonical catalog templates)
 
@@ -241,7 +258,7 @@ Dependencies:
 - 4.3.1
 
 - [x] 4.7.1 — Align nomenclature list with product-models: shared toolbar + row list (not card tiles) — `v0.8.1`; evidence: `frontend/components/settings/nomenclature-workspace.tsx` (PT-02 toolbar + DataTable rows)
-- [x] 4.7.2 — Remove left category tree block from nomenclature workspace — `v0.8.1`; evidence: `frontend/components/settings/nomenclature-workspace.tsx` (TreeListSplit/CategoryTree removed); category tree UX → 4.9 (directory only)
+- [x] 4.7.2 — Remove left category tree block from nomenclature workspace — `v0.8.1`; evidence: `frontend/components/settings/nomenclature-workspace.tsx` (TreeListSplit/CategoryTree removed); category tree UX → 4.9 (directory only); **amendment `2026-07-26`:** primary tree+list lives on warehouse `4.10` (UNF); do not restore tree on settings list PT-02
 - [x] 4.7.3 — Align nomenclature card (`/settings/catalogs/nomenclature/[id]`) with product-models card chrome/layout — `v0.8.1`; `DS-PT-08-CATALOG`; `VersionedWorkspace` + `CatalogVersionedCardLayout`; evidence: `nomenclature-card.tsx`, `nomenclature-media-carousel.tsx`; shell contracts preserved
 - [x] 4.7.4 — Map backend nomenclature fields into card requisites by domain logic (remap schema/UI if needed) — `v0.8.1`; core fields in «Основные реквизиты» via `category_id`/`storage_unit_id` (legacy `category`/`unit` derived); custom fields → «Дополнительные реквизиты»; no demo data; existing PATCH API
 - [x] 4.7.5 — Port materials quick-preview right panel into nomenclature list route, then drop materials-only preview — `2026-07-23`; `NomenclatureInspector` on list; materials nav removed (`4.6.3`); legacy materials surface deleted in `4.6.4`
@@ -266,7 +283,7 @@ Owner ask (`2026-07-23`): «Дополнительные реквизиты» д
 
 ### 4.9 — Categories catalog UX (warehouse tree)
 
-Owner ask (`2026-07-23`): nomenclature **category** = warehouse/catalog hierarchy; **nomenclature type** (`SERVICE|PRODUCT|GOODS|MATERIAL`) is accounting/card behavior and must NOT restrict which category a row can use. Decoupling shipped in `4.9.1`. Category directory (`4.9.2`): indented tree-table at `/settings/catalogs/nomenclature-categories` with outline numbers `1 / 1.1 / 1.1.2`. **Do not** restore category tree on `/settings/catalogs/nomenclature` list — closed `4.7.2` remains: TreeListSplit/CategoryTree removed from nomenclature workspace; list stays PT-02.
+Owner ask (`2026-07-23`): nomenclature **category** = warehouse/catalog hierarchy; **nomenclature type** (`SERVICE|PRODUCT|GOODS|MATERIAL`) is accounting/card behavior and must NOT restrict which category a row can use. Decoupling shipped in `4.9.1`. Category directory (`4.9.2`): indented tree-table at `/settings/catalogs/nomenclature-categories` with outline numbers `1 / 1.1 / 1.1.2`. **Do not** restore category tree on `/settings/catalogs/nomenclature` list — closed `4.7.2` remains. **Follow-up `4.10` (UNF):** primary tree+list + category CRUD moves to Склад → Номенклатура; this directory is absorbed (redirect/remove).
 
 Dependencies:
 - 4.2.1 (category hierarchy data model — already done)
@@ -280,22 +297,26 @@ Dependencies:
 - [x] 4.9.4 — Nomenclature card + create: category select shows all active categories (path or number label), no type filter; persist `category_id` correctly — `2026-07-23`; outline labels via `buildCategoryTreeRows`; type change no longer clears category; evidence: `nomenclature-card.tsx`, `nomenclature-create-panels.tsx`
 - [x] 4.9.5 — Owner visual: categories tree + card/create category picker — `2026-07-26`; owner OK; default collapsed folders, hide №/code, Pencil/Plus actions, expand on parent click, Windows-like nesting; card/create picker already shipped in `4.9.4`; evidence: `nomenclature-categories-workspace.tsx`, `nomenclature-category-tree.ts`, task `docs/tasks/v0.9.0-stage-4.9.5-categories-tree-owner-visual.md`
 
-### 4.10 — Warehouse nomenclature browser (tree + list)
+### 4.10 — Warehouse nomenclature (UNF-style unified PT-04)
 
-Owner ask (`2026-07-26`): в разделе Склад пункт «Остатки» переименовать в «Номенклатура» (href остаётся `/warehouse/stock`). Страница — PT-04 tree+list: слева дерево категорий (reuse `4.9` tree lib / folder UX), справа вся номенклатура с фильтром «выбранный узел + потомки», create на странице (reuse settings create panels). Settings flat list (`/settings/catalogs/nomenclature`) остаётся PT-02 без дерева (`4.7.2`). Category directory CRUD остаётся на `/settings/catalogs/nomenclature-categories`. Складской регистр qty/min stock — отдельно (`4.6.5` / Stage 12); отдельный nav «Остатки» **не** возвращать.
+Owner ask (`2026-07-26`, UNF reference): primary UX «всё в одном месте» — **Склад → Номенклатура** (`/warehouse/stock`, title rename from «Остатки»). One `DS-PT-04` workspace: left category tree + list (name / unit / price / **Остаток** from register) + create + inspector. Filter: selected category **node ∪ descendants**; type chips. Category CRUD moves into this tree (absorb settings categories directory). Settings list `/settings/catalogs/nomenclature` → redirect here; card stays `/settings/catalogs/nomenclature/[id]`; UoM / types / characteristics stay in Settings. Balance column from `4.6.5` register — never fields on `Nomenclature`. Separate nav «Остатки» **не** возвращать. Not a pixel clone of 1C chrome (no Sell/Buy/cart/analogues in this block).
+
+Amendment to closed `4.7.2`: tree stays OFF settings PT-02 list; **primary** tree+list is this warehouse page.
 
 Dependencies:
-- 4.7.1–4.7.2 (list chrome; tree stays OFF settings list)
+- 4.7.1 / 4.7.5 (list chrome / inspector)
 - 4.9.2 / 4.9.5 (category tree lib + folder UX)
 - 5.5.4 / DS-PT-04 (`TreeListSplit` / `TreePane` / `TreeListContent`)
-- ADR-012 (balances not on `Nomenclature` card)
+- ADR-012
+- 4.6.5.3+ for live balance column (`4.10.6` may show zero until register posts)
 
-- [ ] 4.10.1 — Nav rename: in `frontend/lib/navigation.ts` title «Остатки» → «Номенклатура»; href stays `/warehouse/stock`; DS-SHELL-01/02 visual contracts preserved (no shell chrome changes)
-- [ ] 4.10.2 — Route + page shell: create `frontend/app/(workspace)/warehouse/stock/page.tsx` (+ loading/error by catalog page pattern); load via existing `getNomenclature` / `getNomenclatureCategories` / units / media from `frontend/lib/nomenclature.ts`
-- [ ] 4.10.3 — Workspace PT-04: new component (e.g. `warehouse-nomenclature-workspace.tsx`); `TreeListSplit` + `TreePane` + `TreeListContent`; left = category tree from `nomenclature-category-tree.ts` / folder UX `4.9.5`; right = table/filters/inspector patterned on `nomenclature-workspace.tsx`
-- [ ] 4.10.4 — Filter rule: selected category → rows with `category_id` in {node ∪ descendants}; modes «все» / «без категории»
-- [ ] 4.10.5 — Create on warehouse page: reuse `NomenclatureCreatePanels` / section create menu; row open → `/settings/catalogs/nomenclature/[id]`
-- [ ] 4.10.6 — Tests (nav title, tree filter descendants, empty) + owner visual PT-04 (lg docked / <lg drawer); note: `4.6.5` register remains open and is not this page
+- [x] 4.10.1 — Nav: title «Остатки» → «Номенклатура»; href stays `/warehouse/stock`; DS-SHELL-01/02 visual contracts preserved — `v0.9.0`; evidence: `frontend/lib/navigation.ts`, `frontend/lib/navigation.test.mjs`
+- [x] 4.10.2 — Route shell: `frontend/app/(workspace)/warehouse/stock/page.tsx` (+ loading/error); load nomenclature, categories, units, media via `frontend/lib/nomenclature.ts` — `v0.9.0`; evidence: `warehouse/stock/{page,loading,error}.tsx`, `lib/warehouse-nomenclature.ts`, shell component; PT-04 workspace → `4.10.3`
+- [x] 4.10.3 — Unified PT-04 workspace: TreePane categories (reuse `nomenclature-category-tree` / folder UX `4.9.5`) + list/filters/inspector (from `nomenclature-workspace`); filter node∪descendants; type chips; create via `NomenclatureCreatePanels`; row open → settings card — `v0.9.0`; evidence: `warehouse-nomenclature-workspace.tsx`, `nomenclature-category-folder-tree.tsx`, `filterByCategoryListScope`; category CRUD in tree → `4.10.4`
+- [x] 4.10.4 — Category CRUD in tree (create child / edit / reorder / soft deactivate) — move UX from categories directory into this pane — `v0.9.0`; evidence: `nomenclature-category-folder-tree.tsx` (Pencil/Plus/↑↓), EditDrawer + soft deactivate in `warehouse-nomenclature-workspace.tsx`, actions revalidate `/warehouse/stock`
+- [x] 4.10.5 — Nav cleanup: remove or redirect Settings «Категории номенклатуры»; redirect Settings «Номенклатура» list → `/warehouse/stock`; card URL unchanged — `v0.9.0`; evidence: redirects on list + categories pages; nav/settings hub cleaned; card `/settings/catalogs/nomenclature/[id]` + back links → warehouse
+- [x] 4.10.6 — Balance column + stock filter wired to `4.6.5` API (empty/zero until register posts); no fake demo balances — `v0.9.0`; evidence: `GET /stock/balances` empty stub, `stock-balances.ts` / filter helpers, column «Остаток» + chips «Все / С остатком»; live qty → `4.6.5.2`–`4.6.5.3`
+- [x] 4.10.7 — Tests (nav, redirects, tree filter, create, balance column contract) + owner visual vs UNF layout intent (PT-04, portal DS — not 1C chrome clone) — `v0.9.0`; owner visual OK (`2026-07-26`); evidence: `navigation.test.mjs`, `nomenclature-category-tree.test.mjs` (`filterByCategoryListScope`), `stock-balances-filter.test.mjs`, `test_stock_balances.py`, redirects settings list/categories → `/warehouse/stock`, create via `NomenclatureCreatePanels`; active-nav longest-match fix; `DS-SHELL-01`/`DS-SHELL-02` visual contracts preserved
 
 ### Confirmed create field layout (`4.7.10`)
 
@@ -1656,14 +1677,16 @@ Completion criteria:
 
 ## Stage 12 — Warehouse
 
+> Structure note (`2026-07-26`): MVP register/balance column owned by `4.6.5` + `4.10.6`. This stage adds warehouses/bins/lots and full movement documents on top of that MVP.
+
 ### 12.1 — Storage structure
 
 - [ ] 12.1.1 — Warehouses and bins
-- [ ] 12.1.2 — Lots and balances
+- [ ] 12.1.2 — Lots and balances — extends `4.6.5` MVP (multi-warehouse / lots); list column already from register
 
 ### 12.2 — Movements
 
-- [ ] 12.2.1 — Receipts, issues, reserves, and transfers
+- [ ] 12.2.1 — Receipts, issues, reserves, and transfers — full documents; MVP post-movement API starts in `4.6.5.3`
 - [ ] 12.2.2 — Inventory and finished-goods flow
 
 ## Stage 13 — Procurement

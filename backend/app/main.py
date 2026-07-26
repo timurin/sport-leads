@@ -22,6 +22,8 @@ from app.api.product_models import router as product_models_router
 from app.api.product_types import router as product_types_router
 from app.api.sewing_operations import router as sewing_operations_router
 from app.api.size_grids import router as size_grids_router
+from app.api.vat_rates import router as vat_rates_router
+from app.api.stock import router as stock_router
 from app.config.settings import settings
 from app.database.session import engine
 from app.logging_config import configure_logging
@@ -79,6 +81,8 @@ app.include_router(product_models_router)
 app.include_router(product_types_router)
 app.include_router(sewing_operations_router)
 app.include_router(size_grids_router)
+app.include_router(vat_rates_router)
+app.include_router(stock_router)
 
 
 @app.get("/")

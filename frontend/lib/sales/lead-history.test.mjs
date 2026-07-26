@@ -36,3 +36,15 @@ test("keeps persisted rejection and status events distinct", () => {
     actor_id: null, message: "No budget", created_at: "2026-07-18T11:00:00Z",
   }).type, "lead_closed");
 });
+
+test("maps order status history events", () => {
+  assert.equal(fromApiLeadEvent({
+    id: 8,
+    lead_id: 7,
+    order_id: 41,
+    event_type: "order_status_changed",
+    actor_id: null,
+    message: "new → production",
+    created_at: "2026-07-18T12:00:00Z",
+  }).title, "Статус заказа изменён");
+});

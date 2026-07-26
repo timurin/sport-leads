@@ -46,6 +46,7 @@ from app.models.product_model import (
 from app.models.product_type import ProductType
 from app.models.sewing_operation import SewingOperation
 from app.models.size_grid import SizeGrid, SizeGridRow, SizeGridSizeType
+from app.models.vat_rate import VatRate
 
 
 __all__ = [
@@ -96,6 +97,7 @@ __all__ = [
     "SizeGrid",
     "SizeGridRow",
     "SizeGridSizeType",
+    "VatRate",
     "SalesOrderStatus",
     "SalesUser",
 ]

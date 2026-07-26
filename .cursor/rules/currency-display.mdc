@@ -1,0 +1,12 @@
+---
+description: Display money with currency symbols; never show literal RUB in UI
+globs: frontend/**/*.{ts,tsx}
+alwaysApply: false
+---
+
+# Currency display (`DS-MONEY-01`)
+
+- Storage/API: ISO codes (`RUB`, …).
+- UI: never print the literal `RUB` — use **`₽`** via `currencySymbol` / `formatAmountWithCurrency` from `frontend/lib/money.ts`.
+- Selects: `value` stays ISO; option label uses `currencyOptionLabel`.
+- Canonical doc: `docs/design-system/currency-display.md`.

@@ -52,6 +52,7 @@ type NomenclatureSectionCreateMenuProps = {
   /** Opens CreateDrawer on the current page (ADR-013). Required for consistent UX. */
   onSelect: (kind: NomenclatureCreateKind) => void;
   label?: string;
+  size?: "compact" | "default";
 };
 
 /**
@@ -61,6 +62,7 @@ type NomenclatureSectionCreateMenuProps = {
 export function NomenclatureSectionCreateMenu({
   onSelect,
   label = "Создать",
+  size = "default",
 }: NomenclatureSectionCreateMenuProps) {
   const items: CreateMenuItem[] = useMemo(
     () =>
@@ -73,5 +75,5 @@ export function NomenclatureSectionCreateMenu({
     [onSelect],
   );
 
-  return <CreateMenu label={label} items={items} />;
+  return <CreateMenu label={label} items={items} size={size} />;
 }

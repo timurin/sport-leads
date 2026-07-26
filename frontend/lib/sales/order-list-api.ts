@@ -24,7 +24,7 @@ export type ApiSalesOrder = {
   updated_at: string;
 };
 
-const statusPresentation: Record<OrderStatus, { title: string; accentClass: string; label: string }> = {
+export const orderStatusPresentation: Record<OrderStatus, { title: string; accentClass: string; label: string }> = {
   new: { title: "Новый", accentClass: "bg-blue-500", label: "Новый" },
   confirmed: { title: "Подтверждён", accentClass: "bg-cyan-500", label: "Подтверждён" },
   production: { title: "В производстве", accentClass: "bg-violet-500", label: "В производстве" },
@@ -34,7 +34,18 @@ const statusPresentation: Record<OrderStatus, { title: string; accentClass: stri
   cancelled: { title: "Отменён", accentClass: "bg-slate-400", label: "Отменён" },
 };
 
-const statusOrder: OrderStatus[] = ["new", "confirmed", "production", "ready", "shipped", "completed", "cancelled"];
+/** Workflow statuses shown on the order card stage rail (cancelled is an exit action). */
+export const orderWorkflowStatuses: OrderStatus[] = [
+  "new",
+  "confirmed",
+  "production",
+  "ready",
+  "shipped",
+  "completed",
+];
+
+const statusOrder: OrderStatus[] = [...orderWorkflowStatuses, "cancelled"];
+const statusPresentation = orderStatusPresentation;
 
 function formatAmount(amount: ApiSalesOrder["amount"]) {
   if (amount === null) return "—";

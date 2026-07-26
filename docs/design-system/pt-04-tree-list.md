@@ -79,9 +79,8 @@ Additional:
 
 ## Reference consumers
 
-- `/settings/catalogs/nomenclature` — **PT-04 reference** (`NomenclatureWorkspace`)
-
-Secondary (migrate later): other catalog trees if introduced — reuse `TreeListSplit` / `TreePane`.
+- `/warehouse/stock` — primary UNF nomenclature PT-04 (`WarehouseNomenclatureWorkspace`, `4.10.3`)
+- `/settings/catalogs/nomenclature` — historical PT-02 list (tree removed `4.7.2`; primary tree+list is warehouse)
 
 ## Verification (owner)
 

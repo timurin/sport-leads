@@ -23,7 +23,7 @@ export default function NomenclatureCardError({
       reset={reset}
       secondaryAction={
         <Link
-          href="/settings/catalogs/nomenclature"
+          href="/warehouse/stock"
           className="inline-flex h-portal-control-default items-center justify-center rounded-portal-md border border-portal-border bg-portal-surface px-portal-4 text-portal-body font-medium text-portal-text hover:bg-portal-state-hover"
         >
           К списку номенклатуры

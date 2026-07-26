@@ -161,7 +161,7 @@ export const appSections: AppSection[] = [
       },
       {
         id: "stock",
-        title: "Остатки",
+        title: "Номенклатура",
         href: "/warehouse/stock",
       },
       {
@@ -286,6 +286,11 @@ export const appSections: AppSection[] = [
             title: "Контрагенты",
             href: "/settings/catalogs/contractors",
           },
+          {
+            id: "vat-rates",
+            title: "Ставки НДС",
+            href: "/settings/catalogs/vat-rates",
+          },
         ],
       },
       {
@@ -314,19 +319,9 @@ export const appSections: AppSection[] = [
         title: "Номенклатура",
         children: [
           {
-            id: "nomenclature-list",
-            title: "Номенклатура",
-            href: "/settings/catalogs/nomenclature",
-          },
-          {
             id: "units",
             title: "Единицы измерения",
             href: "/settings/catalogs/units-of-measure",
-          },
-          {
-            id: "nomenclature-categories",
-            title: "Категории номенклатуры",
-            href: "/settings/catalogs/nomenclature-categories",
           },
           {
             id: "nomenclature-characteristics",
@@ -397,12 +392,49 @@ export function getSectionByPathname(
   );
 }
 
+function collectNavigationHrefs(): string[] {
+  const hrefs: string[] = [];
+
+  for (const section of appSections) {
+    hrefs.push(section.href);
+    for (const group of section.topNavigation) {
+      if (group.href) {
+        hrefs.push(group.href);
+      }
+      for (const child of group.children ?? []) {
+        hrefs.push(child.href);
+      }
+    }
+  }
+
+  return hrefs;
+}
+
+const navigationHrefs = collectNavigationHrefs();
+
+function pathMatchesHref(pathname: string, href: string): boolean {
+  return pathname === href || pathname.startsWith(`${href}/`);
+}
+
+/**
+ * Active nav item: exact or nested under `href`, but only the
+ * longest registered navigation href wins (avoids `/warehouse`
+ * lighting up on `/warehouse/stock`).
+ */
 export function isNavigationPathActive(
   pathname: string,
   href: string,
 ): boolean {
-  return (
-    pathname === href ||
-    pathname.startsWith(`${href}/`)
+  if (!pathMatchesHref(pathname, href)) {
+    return false;
+  }
+
+  const betterMatch = navigationHrefs.some(
+    (other) =>
+      other !== href &&
+      other.length > href.length &&
+      pathMatchesHref(pathname, other),
   );
+
+  return !betterMatch;
 }

@@ -19,10 +19,10 @@ export type OrderStatusActionResult = {
   message: string;
 };
 
-export async function updateOrderStatus(
-  move: KanbanMove<OrderStatus>,
+export async function setOrderStatus(
+  orderId: string,
+  status: OrderStatus,
 ): Promise<OrderStatusActionResult> {
-  const { cardId: orderId, targetColumnId: status } = move;
   if (!/^\d+$/.test(orderId) || !orderStatuses.includes(status)) {
     return { ok: false, message: "Не удалось изменить статус заказа." };
   }
@@ -35,4 +35,10 @@ export async function updateOrderStatus(
   } catch {
     return { ok: false, message: "Не удалось связаться с backend." };
   }
+}
+
+export async function updateOrderStatus(
+  move: KanbanMove<OrderStatus>,
+): Promise<OrderStatusActionResult> {
+  return setOrderStatus(move.cardId, move.targetColumnId);
 }

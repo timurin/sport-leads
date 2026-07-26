@@ -3,11 +3,11 @@
 import { Check, X } from "lucide-react";
 import { useEffect, useId, useMemo, useState } from "react";
 
-import { addNomenclatureCharacteristicWithValue } from "@/app/(workspace)/settings/catalogs/nomenclature/characteristics-actions";
 import { IconButton } from "@/components/ui/button";
 import { controlClassName } from "@/lib/design-system/control-styles";
 import type {
   CharacteristicDefinition,
+  CharacteristicKind,
   CharacteristicOption,
 } from "@/lib/nomenclature";
 import { findCharacteristicByName } from "@/lib/nomenclature";
@@ -18,8 +18,14 @@ type ValueSuggestion = {
   payload: string;
 };
 
+export type NomenclatureCharacteristicDraft = {
+  definition: CharacteristicDefinition | null;
+  name: string;
+  kind: CharacteristicKind;
+  value: string;
+};
+
 type NomenclatureAddCharacteristicFormProps = {
-  nomenclatureId: number;
   /** Full characteristics handbook (including variant dimensions). */
   definitions: CharacteristicDefinition[];
   assignedIds: Set<number>;
@@ -27,7 +33,8 @@ type NomenclatureAddCharacteristicFormProps = {
   /** Distinct labels already used / catalog options per characteristic id. */
   usedValuesById?: Record<number, string[]>;
   onCancel: () => void;
-  onSaved: () => void;
+  /** Local draft only — parent persists on explicit Save. */
+  onAdd: (draft: NomenclatureCharacteristicDraft) => void;
   onError: (message: string) => void;
 };
 
@@ -35,7 +42,7 @@ function pickValuePayload(
   definition: CharacteristicDefinition | null,
   options: CharacteristicOption[],
   typedValue: string,
-): { kind: string; value: string } {
+): { kind: CharacteristicKind; value: string } {
   const trimmed = typedValue.trim();
   if (!definition) {
     return { kind: "STRING", value: trimmed };
@@ -76,15 +83,14 @@ function findValueSuggestion(
   );
 }
 
-/** Add row: Name + Value with autocomplete against catalog definitions/options. */
+/** Add row: Name + Value with autocomplete. Confirms into local draft only. */
 export function NomenclatureAddCharacteristicForm({
-  nomenclatureId,
   definitions,
   assignedIds,
   fieldOptions,
   usedValuesById = {},
   onCancel,
-  onSaved,
+  onAdd,
   onError,
 }: NomenclatureAddCharacteristicFormProps) {
   const input = controlClassName({ size: "compact" });
@@ -96,7 +102,6 @@ export function NomenclatureAddCharacteristicForm({
   const [valueOpen, setValueOpen] = useState(false);
   const [nameActive, setNameActive] = useState(0);
   const [valueActive, setValueActive] = useState(0);
-  const [saving, setSaving] = useState(false);
 
   const catalogMatch = useMemo(
     () => findCharacteristicByName(definitions, name),
@@ -205,7 +210,7 @@ export function NomenclatureAddCharacteristicForm({
     }
   };
 
-  const submit = async (event: React.FormEvent<HTMLFormElement>) => {
+  const submit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const trimmedName = name.trim();
     if (!trimmedName) {
@@ -217,35 +222,20 @@ export function NomenclatureAddCharacteristicForm({
       onError("Эта характеристика уже добавлена на карточку");
       return;
     }
-    setSaving(true);
-    try {
-      const definition =
-        existing && !assignedIds.has(existing.id) ? existing : null;
-      const exactValue = findValueSuggestion(valueSuggestions, value);
-      const payload = pickValuePayload(
-        definition,
-        options,
-        exactValue?.payload ?? value,
-      );
-      const data = new FormData();
-      data.append("nomenclature_id", String(nomenclatureId));
-      data.append("name", existing?.name ?? trimmedName);
-      data.append("value", payload.value);
-      data.append("kind", payload.kind);
-      if (definition) {
-        data.append("characteristic_id", String(definition.id));
-      }
-      await addNomenclatureCharacteristicWithValue(data);
-      onSaved();
-    } catch (caught) {
-      onError(
-        caught instanceof Error
-          ? caught.message
-          : "Не удалось добавить характеристику",
-      );
-    } finally {
-      setSaving(false);
-    }
+    const definition =
+      existing && !assignedIds.has(existing.id) ? existing : null;
+    const exactValue = findValueSuggestion(valueSuggestions, value);
+    const payload = pickValuePayload(
+      definition,
+      options,
+      exactValue?.payload ?? value,
+    );
+    onAdd({
+      definition,
+      name: existing?.name ?? trimmedName,
+      kind: payload.kind,
+      value: payload.value,
+    });
   };
 
   const nameExpanded = nameOpen && nameSuggestions.length > 0;
@@ -259,7 +249,7 @@ export function NomenclatureAddCharacteristicForm({
     } else if (matchedDefinition) {
       nameHint = `Подставлен: ${matchedDefinition.name}`;
     } else if (!nameOpen) {
-      nameHint = "Будет создана новая характеристика";
+      nameHint = "Будет создана новая характеристика при сохранении";
     }
   }
 
@@ -459,10 +449,10 @@ export function NomenclatureAddCharacteristicForm({
         <div className="flex shrink-0 items-center gap-1">
           <IconButton
             type="submit"
-            label="Добавить"
+            label="Добавить в черновик"
             title="Добавить"
             variant="primary"
-            disabled={saving || submitBlocked}
+            disabled={submitBlocked}
           >
             <Check className="size-4" aria-hidden="true" />
           </IconButton>
@@ -471,7 +461,6 @@ export function NomenclatureAddCharacteristicForm({
             label="Отмена"
             title="Отмена"
             variant="secondary"
-            disabled={saving}
             onClick={onCancel}
           >
             <X className="size-4" aria-hidden="true" />

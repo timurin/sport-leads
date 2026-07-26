@@ -1,4 +1,4 @@
-import type { OrderStatus } from "@/types/sales";
+import type { LeadContact, LeadCustomer, LeadMessage, OrderStatus } from "@/types/sales";
 
 export type ApiSalesOrderDetails = {
   id: number;
@@ -29,7 +29,19 @@ export type ApiSalesOrderItem = {
   order_id: number;
   nomenclature_id: number | null;
   nomenclature_variant_id: number | null;
-  variant_snapshots: { characteristic_id: number; characteristic_code: string; characteristic_name: string; option_id: number; option_code: string; option_label: string }[];
+  product_model_id: number | null;
+  product_model_article: string | null;
+  product_model_name: string | null;
+  vat_rate_id: number | null;
+  vat_rate_percent: number | string | null;
+  variant_snapshots: {
+    characteristic_id: number;
+    characteristic_code: string;
+    characteristic_name: string;
+    option_id: number;
+    option_code: string;
+    option_label: string;
+  }[];
   position: number;
   snapshot_name: string;
   size_range: string | null;
@@ -46,9 +58,21 @@ export type ApiSalesOrderItem = {
   updated_at: string;
 };
 
+/** Same event contract as lead history; order `/history` returns lead ∪ order events. */
 export type ApiSalesOrderEvent = {
   id: number;
-  event_type: "lead_converted" | "order_created" | "order_status_changed";
+  lead_id: number;
+  order_id: number | null;
+  event_type:
+    | "lead_created"
+    | "lead_status_changed"
+    | "lead_converted"
+    | "lead_rejected"
+    | "order_created"
+    | "order_status_changed"
+    | "comment_added"
+    | "task_created"
+    | "task_completed";
   actor_id: number | null;
   message: string | null;
   created_at: string;
@@ -77,16 +101,32 @@ const dateFormatter = new Intl.DateTimeFormat("ru-RU", {
   timeZone: "UTC",
 });
 
+const historyTitles: Record<ApiSalesOrderEvent["event_type"], string> = {
+  lead_created: "Лид создан",
+  lead_status_changed: "Статус лида обновлён",
+  lead_converted: "Лид конвертирован",
+  lead_rejected: "Лид отклонён",
+  order_created: "Заказ создан",
+  order_status_changed: "Статус заказа изменён",
+  comment_added: "Добавлен комментарий",
+  task_created: "Создана задача",
+  task_completed: "Задача завершена",
+};
+
 export type SalesOrderDetails = {
   id: string;
   number: string;
   title: string;
   status: string;
+  statusCode: OrderStatus;
+  leadId: string;
   clientName: string;
   organizationName: string;
   responsibleName: string;
   amount: string;
   createdAt: string;
+  createdAtIso: string;
+  updatedAtIso: string;
   desiredDate: string;
   source: string;
   sourceLeadHref: string;
@@ -94,6 +134,7 @@ export type SalesOrderDetails = {
   productCategory: string;
   sport: string;
   quantity: string;
+  itemCount: number;
   items: SalesOrderItem[];
 };
 
@@ -101,6 +142,11 @@ export type SalesOrderItem = {
   id: number;
   nomenclatureId: number | null;
   nomenclatureVariantId: number | null;
+  productModelId: number | null;
+  productModelArticle: string;
+  productModelName: string;
+  vatRateId: number | null;
+  vatRatePercent: string;
   variantSnapshots: ApiSalesOrderItem["variant_snapshots"];
   snapshotName: string;
   sizeRange: string;
@@ -109,10 +155,12 @@ export type SalesOrderItem = {
   unit: string;
   quantity: string;
   unitPrice: string;
+  unitPriceValue: string;
   grossAmount: string;
   discountPercent: string;
   discountAmount: string;
   lineAmount: string;
+  lineAmountValue: string;
 };
 
 export type SalesOrderHistoryItem = {
@@ -122,19 +170,19 @@ export type SalesOrderHistoryItem = {
   occurredAt: string;
 };
 
-const historyTitles: Record<ApiSalesOrderEvent["event_type"], string> = {
-  lead_converted: "Лид конвертирован",
-  order_created: "Заказ создан",
-  order_status_changed: "Статус заказа изменён",
+export type SalesOrderSourceLead = {
+  id: string;
+  contactName: string;
+  customer: LeadCustomer;
+  messages: LeadMessage[];
+  primaryContact?: LeadContact;
 };
 
-export function fromApiSalesOrderEvent(event: ApiSalesOrderEvent): SalesOrderHistoryItem {
-  return {
-    id: `order-event-${event.id}`,
-    title: historyTitles[event.event_type],
-    message: event.message ?? "Изменение сохранено в истории заказа.",
-    occurredAt: event.created_at,
-  };
+function formatCurrency(value: number | string | null): string {
+  if (value === null) return "Не указана";
+  const amount = Number(value);
+  if (!Number.isFinite(amount)) return "Не указана";
+  return currencyFormatter.format(amount);
 }
 
 function formatDate(value: string | null): string {
@@ -143,18 +191,31 @@ function formatDate(value: string | null): string {
   return Number.isNaN(date.getTime()) ? "Не указана" : dateFormatter.format(date);
 }
 
+export function fromApiSalesOrderEvent(event: ApiSalesOrderEvent): SalesOrderHistoryItem {
+  return {
+    id: `backend-event-${event.id}`,
+    title: historyTitles[event.event_type],
+    message: event.message ?? "Изменение сохранено в истории заказа.",
+    occurredAt: event.created_at,
+  };
+}
+
 export function fromApiSalesOrder(order: ApiSalesOrderDetails): SalesOrderDetails {
-  const amount = order.amount === null ? "Не указана" : currencyFormatter.format(Number(order.amount));
+  const items = order.items ?? [];
   return {
     id: String(order.id),
     number: order.number,
     title: order.title || "Заказ без наименования",
     status: statusLabels[order.status],
+    statusCode: order.status,
+    leadId: String(order.lead_id),
     clientName: order.client_name ?? `Клиент #${order.client_id}`,
     organizationName: order.organization_name ?? "Организация не назначена",
     responsibleName: order.responsible_name ?? (order.responsible_id === null ? "Не назначен" : `Сотрудник #${order.responsible_id}`),
-    amount: Number.isFinite(Number(order.amount)) ? amount : "Не указана",
+    amount: formatCurrency(order.amount),
     createdAt: formatDate(order.created_at),
+    createdAtIso: order.created_at,
+    updatedAtIso: order.updated_at,
     desiredDate: formatDate(order.desired_date),
     source: order.source ?? "Не указан",
     sourceLeadHref: `/sales/leads/${order.lead_id}`,
@@ -162,10 +223,16 @@ export function fromApiSalesOrder(order: ApiSalesOrderDetails): SalesOrderDetail
     productCategory: order.product_category ?? "Не указана",
     sport: order.sport ?? "Не указан",
     quantity: order.quantity === null ? "Не указано" : `${order.quantity} ед.`,
-    items: (order.items ?? []).map((item) => ({
+    itemCount: items.length,
+    items: items.map((item) => ({
       id: item.id,
       nomenclatureId: item.nomenclature_id,
       nomenclatureVariantId: item.nomenclature_variant_id,
+      productModelId: item.product_model_id ?? null,
+      productModelArticle: item.product_model_article ?? "",
+      productModelName: item.product_model_name ?? "",
+      vatRateId: item.vat_rate_id ?? null,
+      vatRatePercent: item.vat_rate_percent == null ? "" : String(item.vat_rate_percent),
       variantSnapshots: item.variant_snapshots ?? [],
       snapshotName: item.snapshot_name,
       sizeRange: item.size_range ?? "",
@@ -173,11 +240,13 @@ export function fromApiSalesOrder(order: ApiSalesOrderDetails): SalesOrderDetail
       color: item.color ?? "",
       unit: item.unit,
       quantity: String(item.quantity),
-      unitPrice: currencyFormatter.format(Number(item.unit_price)),
-      grossAmount: currencyFormatter.format(Number(item.gross_amount)),
+      unitPrice: formatCurrency(item.unit_price),
+      unitPriceValue: String(item.unit_price),
+      grossAmount: formatCurrency(item.gross_amount),
       discountPercent: item.discount_percent === null ? "" : String(item.discount_percent),
-      discountAmount: currencyFormatter.format(Number(item.discount_amount)),
-      lineAmount: currencyFormatter.format(Number(item.line_amount)),
+      discountAmount: formatCurrency(item.discount_amount),
+      lineAmount: formatCurrency(item.line_amount),
+      lineAmountValue: String(item.line_amount),
     })),
   };
 }
@@ -199,7 +268,7 @@ export async function getOrderDetails(orderId: string): Promise<OrderDetailsResu
 }
 
 export type OrderHistoryResult =
-  | { kind: "found"; history: SalesOrderHistoryItem[] }
+  | { kind: "found"; events: ApiSalesOrderEvent[]; history: SalesOrderHistoryItem[] }
   | { kind: "not-found" }
   | { kind: "error"; message: string };
 
@@ -212,5 +281,9 @@ export async function getOrderHistory(orderId: string): Promise<OrderHistoryResu
     return { kind: "error", message: `Не удалось загрузить историю заказа из backend (${response.status}).` };
   }
   const events = await response.json() as ApiSalesOrderEvent[];
-  return { kind: "found", history: events.map(fromApiSalesOrderEvent) };
+  return {
+    kind: "found",
+    events,
+    history: events.map(fromApiSalesOrderEvent),
+  };
 }

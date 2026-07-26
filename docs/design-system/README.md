@@ -48,6 +48,7 @@
 - `docs/design-system/layout-scrolling-audit.md` — AppShell, widths, scroll/sticky rules (`5.1.3.*`)
 - `docs/design-system/component-inventory.md` — инвентарь shared/domain UI (`5.1.2.*`)
 - `docs/design-system/shell-contracts.md` — защищённые контракты `DS-SHELL-01` / `DS-SHELL-02`
+- `docs/design-system/currency-display.md` — `DS-MONEY-01`: в UI `₽`, не `RUB`; ISO в API
 - `docs/design-system/page-design-checklist.md`, `visual-rules.md`, `responsive-rules.md`
 - HTML page references: `docs/design/`
 - Platform templates `PT-01`–`PT-08` — Stage 5 **complete** (`2026-07-22`); Stage `5.6`–`5.8` closed; CRM/ERP data logic continues in Stages 1+ / 6+

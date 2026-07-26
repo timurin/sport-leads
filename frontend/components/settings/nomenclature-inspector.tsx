@@ -17,6 +17,7 @@ import type {
   NomenclatureType,
   UnitOfMeasure,
 } from "@/lib/nomenclature";
+import { formatAmountWithCurrency } from "@/lib/money";
 
 const TYPE_LABELS: Record<NomenclatureType, string> = {
   SERVICE: "Услуга",
@@ -127,7 +128,7 @@ export function NomenclatureInspector({
     {
       id: "price",
       label: "Базовая цена",
-      value: `${item.basePrice} ${item.currency}`,
+      value: formatAmountWithCurrency(item.basePrice, item.currency),
     },
     {
       id: "short_name",

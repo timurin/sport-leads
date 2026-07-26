@@ -57,6 +57,20 @@ export async function createNomenclature(formData: FormData) {
     currency: text(formData, "currency") || "RUB",
   });
   revalidatePath("/settings/catalogs/nomenclature");
+  revalidatePath("/warehouse/stock");
+}
+
+/** Duplicate nomenclature master card (`POST /nomenclatures/{id}/copy`). */
+export async function copyNomenclature(nomenclatureId: number): Promise<Nomenclature> {
+  const created = await mutate(`/${nomenclatureId}/copy`, "POST", {});
+  if (!created) {
+    throw new Error("Backend не вернул скопированную номенклатуру.");
+  }
+  const item = fromApiNomenclature(created);
+  revalidatePath("/settings/catalogs/nomenclature");
+  revalidatePath("/warehouse/stock");
+  revalidatePath(`/settings/catalogs/nomenclature/${item.id}`);
+  return item;
 }
 
 export async function updateNomenclature(formData: FormData) {
@@ -76,6 +90,7 @@ export async function updateNomenclature(formData: FormData) {
   });
   revalidatePath("/settings/catalogs/nomenclature");
   revalidatePath(`/settings/catalogs/nomenclature/${id}`);
+  revalidatePath("/warehouse/stock");
 }
 
 /** PT-08 card requisites save — returns persisted row (no FormData free-text category/unit). */
@@ -152,6 +167,7 @@ export async function createNomenclatureCategory(formData: FormData) {
   });
   revalidatePath("/settings/catalogs/nomenclature");
   revalidatePath("/settings/catalogs/nomenclature-categories");
+  revalidatePath("/warehouse/stock");
 }
 
 export async function updateNomenclatureCategory(formData: FormData) {
@@ -164,6 +180,7 @@ export async function updateNomenclatureCategory(formData: FormData) {
   });
   revalidatePath("/settings/catalogs/nomenclature");
   revalidatePath("/settings/catalogs/nomenclature-categories");
+  revalidatePath("/warehouse/stock");
 }
 
 /** Sibling ↑/↓ reorder — dense sort_order 0..n-1 under the same parent. */
@@ -197,6 +214,7 @@ export async function reorderNomenclatureCategorySibling(
   }
   revalidatePath("/settings/catalogs/nomenclature");
   revalidatePath("/settings/catalogs/nomenclature-categories");
+  revalidatePath("/warehouse/stock");
 }
 
 function revalidateNomenclatureCard(nomenclatureId: number) {

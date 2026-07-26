@@ -27,10 +27,12 @@ type CreateMenuProps = {
   items: CreateMenuItem[];
   align?: "start" | "end";
   className?: string;
+  /** Match toolbar neighbors (e.g. compact «Категории» on warehouse). */
+  size?: "compact" | "default";
 };
 
 const primaryLinkClass = [
-  "portal-focus-ring inline-flex h-portal-control-default shrink-0 items-center justify-center gap-portal-2",
+  "portal-focus-ring inline-flex shrink-0 items-center justify-center gap-portal-2",
   "rounded-portal-md bg-portal-primary px-portal-4 text-portal-body font-medium text-portal-primary-on",
   "transition-colors duration-[var(--portal-motion-normal)] ease-[var(--portal-motion-ease)]",
   "hover:bg-portal-primary-hover",
@@ -45,10 +47,13 @@ export function CreateMenu({
   items,
   align = "end",
   className = "",
+  size = "default",
 }: CreateMenuProps) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const menuId = useId();
+  const heightClass =
+    size === "compact" ? "h-portal-control-compact" : "h-portal-control-default";
 
   useEffect(() => {
     if (!open) {
@@ -89,7 +94,10 @@ export function CreateMenu({
 
     if (item.href) {
       return (
-        <Link href={item.href} className={[primaryLinkClass, className].join(" ")}>
+        <Link
+          href={item.href}
+          className={[primaryLinkClass, heightClass, className].join(" ")}
+        >
           <Plus size={17} aria-hidden="true" />
           {label}
         </Link>
@@ -97,7 +105,13 @@ export function CreateMenu({
     }
 
     return (
-      <Button type="button" variant="primary" onClick={item.onSelect} className={className}>
+      <Button
+        type="button"
+        variant="primary"
+        size={size}
+        onClick={item.onSelect}
+        className={className}
+      >
         {content}
       </Button>
     );
@@ -108,6 +122,7 @@ export function CreateMenu({
       <Button
         type="button"
         variant="primary"
+        size={size}
         aria-haspopup="menu"
         aria-expanded={open}
         aria-controls={menuId}

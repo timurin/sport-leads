@@ -23,6 +23,7 @@
 - Отступы — шкала 4 px (`docs/design-system/spacing-tokens.md`): `portal-space-1…12`, utilities `p-portal-*` / `gap-portal-*`.
 - PageContent: compact `3→4`, default `4→6`, spacious `5→8` (в шагах шкалы).
 - Высоты контролов: compact 32 / default 40 / spacious 44 (`h-portal-control-*`, `docs/design-system/component-size-tokens.md`).
+- Деньги: в UI символ валюты (`₽` для RUB), не литерал `RUB` — `docs/design-system/currency-display.md` (`DS-MONEY-01`).
 
 ## Действия и состояния
 

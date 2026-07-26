@@ -11,19 +11,23 @@ import {
   type MouseEvent,
   type ReactNode,
 } from "react";
-import { ChevronDown, Plus, Save } from "lucide-react";
+import { ChevronDown, Pencil, Plus, Save, X } from "lucide-react";
 
 import {
+  addNomenclatureCharacteristicWithValue,
   deleteNomenclatureMedia,
   removeNomenclatureCharacteristicValue,
   saveNomenclatureCharacteristicValue,
   updateNomenclatureMedia,
   uploadNomenclatureMedia,
 } from "@/app/(workspace)/settings/catalogs/nomenclature/characteristics-actions";
-import { updateNomenclatureRequisites } from "@/app/(workspace)/settings/catalogs/nomenclature/nomenclature-actions";
+import { copyNomenclature, updateNomenclatureRequisites } from "@/app/(workspace)/settings/catalogs/nomenclature/nomenclature-actions";
 import { CatalogVersionedCardLayout } from "@/components/entity/catalog-versioned-card-layout";
 import { VersionedWorkspace } from "@/components/entity/versioned-workspace";
-import { NomenclatureAddCharacteristicForm } from "@/components/settings/nomenclature-add-characteristic-form";
+import {
+  NomenclatureAddCharacteristicForm,
+  type NomenclatureCharacteristicDraft,
+} from "@/components/settings/nomenclature-add-characteristic-form";
 import { NomenclatureAvailableModelsBlock } from "@/components/settings/nomenclature-available-models-block";
 import { NomenclatureMediaCarousel } from "@/components/settings/nomenclature-media-carousel";
 import { ProductModelToolbarActions } from "@/components/settings/product-model-toolbar-actions";
@@ -34,6 +38,7 @@ import { ImageLightbox } from "@/components/ui/image-lightbox";
 import { SectionCard } from "@/components/ui/section-card";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { checkboxClassName, controlClassName } from "@/lib/design-system/control-styles";
+import { currencyOptionLabel, formatAmountWithCurrency } from "@/lib/money";
 import { buildCategoryTreeRows } from "@/lib/nomenclature-category-tree";
 import {
   NOMENCLATURE_CURRENCY_OPTIONS,
@@ -68,8 +73,20 @@ import type { ProductType } from "@/lib/product-types";
 const COLUMN_GAP = "gap-[14px]";
 const DIRTY_LEAVE_MESSAGE =
   "Есть несохранённые изменения. Уйти без сохранения?";
+const UNSAVED_FIELDS_MESSAGE = "Данные не сохранены";
 
 type SaveStatus = "idle" | "saving" | "saved" | "error";
+
+function parseFieldValue(
+  kind: NomenclatureCharacteristicValue["kind"],
+  raw: string,
+): unknown {
+  if (kind === "BOOLEAN") return raw === "true";
+  if (kind === "INTEGER" || kind === "LIST" || kind === "COLOR") {
+    return raw === "" ? null : Number(raw);
+  }
+  return raw === "" ? null : raw;
+}
 
 function RequisiteRead({
   label,
@@ -124,12 +141,14 @@ function FieldValueRow({
   options,
   editing,
   onRemove,
+  onDirty,
 }: {
   itemId: number;
   field: NomenclatureCharacteristicValue;
   options: CharacteristicOption[];
   editing: boolean;
-  onRemove: (formData: FormData) => Promise<void>;
+  onRemove: (formData: FormData) => void;
+  onDirty: () => void;
 }) {
   const value = field.value;
   if (!editing) {
@@ -157,6 +176,7 @@ function FieldValueRow({
         name={valueName}
         defaultChecked={value === true}
         className={checkboxClassName()}
+        onChange={onDirty}
       />
     );
   } else if (fieldKind === "TEXT") {
@@ -165,6 +185,7 @@ function FieldValueRow({
         name={valueName}
         defaultValue={typeof value === "string" ? value : ""}
         className={`${common} min-h-[72px]`}
+        onChange={onDirty}
       />
     );
   } else if (
@@ -177,6 +198,7 @@ function FieldValueRow({
         name={valueName}
         defaultValue={value === null ? "" : String(value)}
         className={common}
+        onChange={onDirty}
       >
         <option value="">Не выбрано</option>
         {options
@@ -201,6 +223,7 @@ function FieldValueRow({
               : "text"
         }
         className={common}
+        onChange={onDirty}
       />
     );
   }
@@ -221,7 +244,7 @@ function FieldValueRow({
               const data = new FormData();
               data.set("nomenclature_id", String(itemId));
               data.set("characteristic_id", String(characteristicId));
-              void onRemove(data);
+              onRemove(data);
             }}
           >
             Удалить
@@ -262,6 +285,7 @@ export function NomenclatureCard({
 }) {
   const router = useRouter();
   const fieldsFormRef = useRef<HTMLFormElement>(null);
+  const tempCharacteristicIdRef = useRef(-1);
   const [trackedItem, setTrackedItem] = useState(initialItem);
   const [current, setCurrent] = useState(initialItem);
   const [trackedMedia, setTrackedMedia] = useState(media);
@@ -280,7 +304,9 @@ export function NomenclatureCard({
 
   const [fieldsOpen, setFieldsOpen] = useState(true);
   const [fieldsEditing, setFieldsEditing] = useState(false);
+  const [fieldsDirty, setFieldsDirty] = useState(false);
   const [fieldsStatus, setFieldsStatus] = useState<SaveStatus>("idle");
+  const [pendingFieldsSave, setPendingFieldsSave] = useState(false);
   const [fieldState, setFieldState] = useState(fields);
   const [addingField, setAddingField] = useState(false);
 
@@ -292,6 +318,7 @@ export function NomenclatureCard({
     setActionError(null);
     setFieldState(fields);
     setFieldsEditing(false);
+    setFieldsDirty(false);
     setAddingField(false);
   } else if (initialItem !== trackedItem && !editing) {
     setTrackedItem(initialItem);
@@ -368,14 +395,14 @@ export function NomenclatureCard({
   );
 
   useEffect(() => {
-    if (!dirty) return;
+    if (!dirty && !fieldsDirty) return;
     const onBeforeUnload = (event: BeforeUnloadEvent) => {
       event.preventDefault();
       event.returnValue = "";
     };
     window.addEventListener("beforeunload", onBeforeUnload);
     return () => window.removeEventListener("beforeunload", onBeforeUnload);
-  }, [dirty]);
+  }, [dirty, fieldsDirty]);
 
   const startEdit = () => {
     setEditing(true);
@@ -510,13 +537,46 @@ export function NomenclatureCard({
   };
 
   const onBackToList = (event: MouseEvent<HTMLAnchorElement>) => {
+    if (fieldsDirty) {
+      setFieldsStatus("error");
+      setActionError(UNSAVED_FIELDS_MESSAGE);
+      if (!window.confirm(DIRTY_LEAVE_MESSAGE)) {
+        event.preventDefault();
+        return;
+      }
+      discardFieldsDraft();
+    }
     if (dirty && !window.confirm(DIRTY_LEAVE_MESSAGE)) {
       event.preventDefault();
     }
   };
 
-  const onCopy = () => {
-    window.alert("Копирование номенклатуры будет доступно в следующей итерации.");
+  const onCopy = async () => {
+    if (fieldsDirty) {
+      setFieldsStatus("error");
+      setActionError(UNSAVED_FIELDS_MESSAGE);
+      if (!window.confirm(DIRTY_LEAVE_MESSAGE)) {
+        return;
+      }
+      discardFieldsDraft();
+    }
+    if (dirty && !window.confirm(DIRTY_LEAVE_MESSAGE)) {
+      return;
+    }
+    setBusy(true);
+    setWarning(null);
+    try {
+      const created = await copyNomenclature(current.id);
+      router.push(`/settings/catalogs/nomenclature/${created.id}`);
+      router.refresh();
+    } catch (caught) {
+      setWarning(
+        caught instanceof Error
+          ? caught.message
+          : "Не удалось скопировать номенклатуру",
+      );
+      setBusy(false);
+    }
   };
 
   const onPrint = () => {
@@ -646,27 +706,90 @@ export function NomenclatureCard({
     }
   };
 
-  const removeField = async (data: FormData) => {
-    setFieldsStatus("saving");
-    try {
-      await removeNomenclatureCharacteristicValue(data);
-      const id = Number(data.get("characteristic_id"));
-      setFieldState((currentFields) =>
-        currentFields.filter((field) => field.characteristic_id !== id),
-      );
-      setFieldsStatus("saved");
-      router.refresh();
-    } catch {
-      setFieldsStatus("error");
-      setActionError("Не удалось удалить характеристику");
-    }
+  const markFieldsDirty = () => {
+    setFieldsDirty(true);
+    setFieldsStatus("idle");
+    setActionError(null);
   };
 
-  const saveAllFields = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const discardFieldsDraft = () => {
+    setFieldState(fields);
+    setFieldsEditing(false);
+    setFieldsDirty(false);
+    setAddingField(false);
+    setFieldsStatus("idle");
+  };
+
+  const guardUnsavedFields = (): boolean => {
+    if (!fieldsDirty) return true;
+    setFieldsStatus("error");
+    setActionError(UNSAVED_FIELDS_MESSAGE);
+    if (!window.confirm(DIRTY_LEAVE_MESSAGE)) {
+      return false;
+    }
+    discardFieldsDraft();
+    return true;
+  };
+
+  const removeField = (data: FormData) => {
+    const id = Number(data.get("characteristic_id"));
+    setFieldState((currentFields) =>
+      currentFields.filter((field) => field.characteristic_id !== id),
+    );
+    setFieldsEditing(true);
+    markFieldsDirty();
+  };
+
+  const addFieldDraft = (draftField: NomenclatureCharacteristicDraft) => {
+    const characteristicId =
+      draftField.definition?.id ?? tempCharacteristicIdRef.current--;
+    if (
+      fieldState.some((field) => field.characteristic_id === characteristicId)
+    ) {
+      setFieldsStatus("error");
+      setActionError("Эта характеристика уже добавлена на карточку");
+      return;
+    }
+    const kind = draftField.kind ?? "STRING";
+    setFieldState((currentFields) => [
+      ...currentFields,
+      {
+        characteristic_id: characteristicId,
+        code: draftField.definition?.code ?? "",
+        name: draftField.name,
+        kind,
+        value: parseFieldValue(kind, draftField.value),
+        default_value: null,
+        is_required: false,
+        is_visible: true,
+        inherited: false,
+        source_category_id: null,
+      },
+    ]);
+    setAddingField(false);
+    setFieldsEditing(true);
+    markFieldsDirty();
+  };
+
+  const persistFields = async (formData: FormData) => {
     setFieldsStatus("saving");
+    setActionError(null);
     try {
-      const formData = new FormData(event.currentTarget);
+      const baselineIds = new Set(
+        fields.map((field) => field.characteristic_id),
+      );
+      const currentIds = new Set(
+        fieldState.map((field) => field.characteristic_id),
+      );
+
+      for (const field of fields) {
+        if (currentIds.has(field.characteristic_id)) continue;
+        const row = new FormData();
+        row.set("nomenclature_id", String(current.id));
+        row.set("characteristic_id", String(field.characteristic_id));
+        await removeNomenclatureCharacteristicValue(row);
+      }
+
       const nextFields: NomenclatureCharacteristicValue[] = [];
       for (const field of fieldState) {
         const id = field.characteristic_id;
@@ -677,52 +800,107 @@ export function NomenclatureCard({
               ? "true"
               : "false"
             : String(formData.get(`value_${id}`) ?? "");
-        const row = new FormData();
-        row.set("nomenclature_id", String(current.id));
-        row.set("characteristic_id", String(id));
-        row.set("kind", kind);
-        row.set("value", raw);
-        await saveNomenclatureCharacteristicValue(row);
+        const isNewAssignment = id < 0 || !baselineIds.has(id);
+        if (isNewAssignment) {
+          const row = new FormData();
+          row.set("nomenclature_id", String(current.id));
+          row.set("name", field.name);
+          row.set("kind", kind);
+          row.set("value", raw);
+          if (id > 0) {
+            row.set("characteristic_id", String(id));
+          }
+          await addNomenclatureCharacteristicWithValue(row);
+        } else {
+          const row = new FormData();
+          row.set("nomenclature_id", String(current.id));
+          row.set("characteristic_id", String(id));
+          row.set("kind", kind);
+          row.set("value", raw);
+          await saveNomenclatureCharacteristicValue(row);
+        }
         nextFields.push({
           ...field,
-          value:
-            kind === "BOOLEAN"
-              ? raw === "true"
-              : kind === "INTEGER" || kind === "LIST" || kind === "COLOR"
-                ? raw === ""
-                  ? null
-                  : Number(raw)
-                : raw === ""
-                  ? null
-                  : raw,
+          value: parseFieldValue(kind, raw),
         });
       }
       setFieldState(nextFields);
       setFieldsEditing(false);
+      setFieldsDirty(false);
       setFieldsStatus("saved");
       router.refresh();
-    } catch {
+    } catch (caught) {
       setFieldsStatus("error");
-      setActionError("Не удалось сохранить характеристики");
+      setActionError(
+        caught instanceof Error
+          ? caught.message
+          : "Не удалось сохранить характеристики",
+      );
     }
+  };
+
+  const saveAllFields = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    await persistFields(new FormData(event.currentTarget));
+  };
+
+  const startFieldsEdit = () => {
+    setFieldsOpen(true);
+    setAddingField(false);
+    setFieldsEditing(true);
+    setFieldsStatus("idle");
+    setActionError(null);
+  };
+
+  const cancelFieldsEdit = () => {
+    if (fieldsDirty) {
+      setFieldsStatus("error");
+      setActionError(UNSAVED_FIELDS_MESSAGE);
+      if (!window.confirm(DIRTY_LEAVE_MESSAGE)) {
+        return;
+      }
+    }
+    discardFieldsDraft();
+    setActionError(null);
   };
 
   const onFieldsSaveClick = () => {
+    if (!fieldsEditing || !fieldsDirty || fieldsStatus === "saving") return;
     setFieldsOpen(true);
-    if (!fieldsEditing) {
-      setFieldsEditing(true);
-      setAddingField(false);
-      setFieldsStatus("idle");
+    // SectionCard unmounts the body when collapsed — submit after open if needed.
+    if (fieldsFormRef.current) {
+      fieldsFormRef.current.requestSubmit();
       return;
     }
-    fieldsFormRef.current?.requestSubmit();
+    if (fieldState.length === 0) {
+      void persistFields(new FormData());
+      return;
+    }
+    setPendingFieldsSave(true);
+  };
+
+  const onFieldsCollapseToggle = () => {
+    if (fieldsOpen && (fieldsEditing || fieldsDirty || addingField)) {
+      if (!guardUnsavedFields()) return;
+    }
+    setFieldsOpen((open) => !open);
   };
 
   useEffect(() => {
-    if (!fieldsEditing && !addingField) {
+    if (!fieldsEditing && !addingField && !fieldsDirty) {
       setFieldState(fields);
     }
-  }, [fields, fieldsEditing, addingField]);
+  }, [fields, fieldsEditing, addingField, fieldsDirty]);
+
+  useEffect(() => {
+    if (!pendingFieldsSave || !fieldsOpen || !fieldsEditing) return;
+    if (!fieldsFormRef.current) {
+      setPendingFieldsSave(false);
+      return;
+    }
+    setPendingFieldsSave(false);
+    fieldsFormRef.current.requestSubmit();
+  }, [pendingFieldsSave, fieldsOpen, fieldsEditing, fieldState.length]);
 
   return (
     <>
@@ -740,7 +918,7 @@ export function NomenclatureCard({
             <EntityHeader
               eyebrow={
                 <Link
-                  href="/settings/catalogs/nomenclature"
+                  href="/warehouse/stock"
                   onClick={onBackToList}
                   className="inline-flex items-center gap-1.5 font-medium text-portal-primary hover:underline"
                 >
@@ -989,7 +1167,7 @@ export function NomenclatureCard({
                           >
                             {NOMENCLATURE_CURRENCY_OPTIONS.map((code) => (
                               <option key={code} value={code}>
-                                {code}
+                                {currencyOptionLabel(code)}
                               </option>
                             ))}
                           </Select>
@@ -1070,7 +1248,7 @@ export function NomenclatureCard({
                         {storageUnitLabel}
                       </RequisiteRead>
                       <RequisiteRead label="Цена без НДС">
-                        {current.basePrice} {current.currency}
+                        {formatAmountWithCurrency(current.basePrice, current.currency)}
                       </RequisiteRead>
                     </div>
                     <RequisiteRead label="Описание" accent>
@@ -1102,8 +1280,12 @@ export function NomenclatureCard({
                       : fieldsStatus === "saved"
                         ? "Сохранено"
                         : fieldsStatus === "error"
-                          ? "Ошибка сохранения"
-                          : undefined
+                          ? actionError === UNSAVED_FIELDS_MESSAGE
+                            ? UNSAVED_FIELDS_MESSAGE
+                            : actionError ?? "Ошибка сохранения"
+                          : fieldsDirty
+                            ? UNSAVED_FIELDS_MESSAGE
+                            : undefined
                   }
                   actions={
                     <div className="flex items-center gap-1">
@@ -1111,20 +1293,50 @@ export function NomenclatureCard({
                         label="Добавить характеристику"
                         title="Добавить"
                         variant="secondary"
+                        disabled={fieldsStatus === "saving"}
                         onClick={() => {
                           setFieldsOpen(true);
                           setAddingField((open) => !open);
-                          setFieldsEditing(false);
                           setFieldsStatus("idle");
+                          if (actionError === UNSAVED_FIELDS_MESSAGE) {
+                            setActionError(null);
+                          }
                         }}
                       >
                         <Plus className="size-4" aria-hidden="true" />
                       </IconButton>
+                      {fieldsEditing ? (
+                        <IconButton
+                          label="Отменить редактирование характеристик"
+                          title="Отменить"
+                          variant="secondary"
+                          disabled={fieldsStatus === "saving"}
+                          onClick={cancelFieldsEdit}
+                        >
+                          <X className="size-4" aria-hidden="true" />
+                        </IconButton>
+                      ) : (
+                        <IconButton
+                          label="Редактировать характеристики"
+                          title="Редактировать"
+                          variant="secondary"
+                          disabled={
+                            fieldState.length === 0 || fieldsStatus === "saving"
+                          }
+                          onClick={startFieldsEdit}
+                        >
+                          <Pencil className="size-4" aria-hidden="true" />
+                        </IconButton>
+                      )}
                       <IconButton
                         label="Сохранить характеристики"
                         title="Сохранить"
-                        variant="primary"
-                        disabled={fieldsStatus === "saving"}
+                        variant={fieldsDirty ? "primary" : "secondary"}
+                        disabled={
+                          !fieldsEditing ||
+                          !fieldsDirty ||
+                          fieldsStatus === "saving"
+                        }
                         onClick={onFieldsSaveClick}
                       >
                         <Save className="size-4" aria-hidden="true" />
@@ -1134,7 +1346,7 @@ export function NomenclatureCard({
                         title={fieldsOpen ? "Свернуть" : "Развернуть"}
                         variant="secondary"
                         aria-expanded={fieldsOpen}
-                        onClick={() => setFieldsOpen((open) => !open)}
+                        onClick={onFieldsCollapseToggle}
                       >
                         <ChevronDown
                           className={[
@@ -1151,17 +1363,12 @@ export function NomenclatureCard({
                     {addingField ? (
                       <div className="mb-portal-3">
                         <NomenclatureAddCharacteristicForm
-                          nomenclatureId={current.id}
                           definitions={characteristicDefinitions}
                           assignedIds={assignedFieldIds}
                           fieldOptions={fieldOptions}
                           usedValuesById={usedValuesById}
                           onCancel={() => setAddingField(false)}
-                          onSaved={() => {
-                            setAddingField(false);
-                            setFieldsStatus("saved");
-                            router.refresh();
-                          }}
+                          onAdd={addFieldDraft}
                           onError={(message) => {
                             setFieldsStatus("error");
                             setActionError(message);
@@ -1169,7 +1376,7 @@ export function NomenclatureCard({
                         />
                       </div>
                     ) : null}
-                    {fieldState.length ? (
+                    {fieldState.length || (fieldsEditing && fieldsDirty) ? (
                       <form ref={fieldsFormRef} onSubmit={saveAllFields}>
                         {fieldState.map((field) => (
                           <FieldValueRow
@@ -1181,8 +1388,15 @@ export function NomenclatureCard({
                             }
                             editing={fieldsEditing}
                             onRemove={removeField}
+                            onDirty={markFieldsDirty}
                           />
                         ))}
+                        {!fieldState.length ? (
+                          <p className="text-portal-body text-portal-muted">
+                            Все характеристики удалены из черновика. Нажмите
+                            «Сохранить», чтобы применить, или «Отменить».
+                          </p>
+                        ) : null}
                       </form>
                     ) : (
                       <p className="text-portal-body text-portal-muted">

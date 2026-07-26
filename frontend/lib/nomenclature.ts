@@ -47,7 +47,7 @@ export const NOMENCLATURE_TYPE_OPTIONS = Object.entries(
   NOMENCLATURE_TYPE_LABELS,
 ) as [NomenclatureType, string][];
 
-export const NOMENCLATURE_CURRENCY_OPTIONS = ["RUB", "USD", "EUR"] as const;
+export { PLATFORM_CURRENCY_CODES as NOMENCLATURE_CURRENCY_OPTIONS } from "@/lib/money";
 
 export const NOMENCLATURE_IMAGE_ACCEPT = "image/jpeg,image/png,image/webp";
 export const NOMENCLATURE_IMAGE_RULE =

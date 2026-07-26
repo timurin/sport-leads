@@ -7,7 +7,9 @@ from sqlalchemy.orm import Session
 
 from app.models.nomenclature import Nomenclature
 from app.models.characteristics import NomenclatureVariant
+from app.models.product_model import ProductModel
 from app.models.sales import SalesOrder, SalesOrderItem, SalesOrderItemVariantSnapshot
+from app.models.vat_rate import VatRate
 from app.services.characteristics import CharacteristicError, variant_snapshot_rows
 from app.schemas.sales import SalesOrderItemCreate, SalesOrderItemUpdate
 
@@ -44,6 +46,36 @@ def _recalculate_order(order: SalesOrder) -> None:
 def _validate_nomenclature(db: Session, nomenclature_id: int | None) -> None:
     if nomenclature_id is not None and db.get(Nomenclature, nomenclature_id) is None:
         raise SalesOrderItemError("Nomenclature not found")
+
+
+def _resolve_vat_rate(
+    db: Session,
+    vat_rate_id: int | None,
+) -> tuple[int | None, Decimal | None]:
+    if vat_rate_id is None:
+        return None, None
+    rate = db.get(VatRate, vat_rate_id)
+    if rate is None or not rate.is_active:
+        raise SalesOrderItemError("VAT rate not found")
+    return rate.id, rate.rate_percent
+
+
+def _resolve_product_model(
+    db: Session,
+    product_model_id: int | None,
+    article: str | None,
+    name: str | None,
+) -> tuple[int | None, str | None, str | None]:
+    if product_model_id is None:
+        return None, None, None
+    model = db.get(ProductModel, product_model_id)
+    if model is None:
+        raise SalesOrderItemError("Product model not found")
+    return (
+        model.id,
+        (article.strip() if article else None) or model.article,
+        (name.strip() if name else None) or model.name,
+    )
 
 
 def _validate_variant(
@@ -85,12 +117,24 @@ def create_sales_order_item(
     order = _get_order(db, order_id)
     _validate_nomenclature(db, payload.nomenclature_id)
     _validate_variant(db, payload.nomenclature_id, payload.nomenclature_variant_id)
+    vat_rate_id, vat_rate_percent = _resolve_vat_rate(db, payload.vat_rate_id)
+    product_model_id, product_model_article, product_model_name = _resolve_product_model(
+        db,
+        payload.product_model_id,
+        payload.product_model_article,
+        payload.product_model_name,
+    )
     position = max((item.position for item in order.items), default=0) + 1
     item = SalesOrderItem(
         order=order,
         position=position,
         nomenclature_id=payload.nomenclature_id,
         nomenclature_variant_id=payload.nomenclature_variant_id,
+        product_model_id=product_model_id,
+        product_model_article=product_model_article,
+        product_model_name=product_model_name,
+        vat_rate_id=vat_rate_id,
+        vat_rate_percent=vat_rate_percent,
         snapshot_name=payload.snapshot_name.strip(),
         size_range=payload.size_range.strip() if payload.size_range else None,
         personalization=payload.personalization.strip() if payload.personalization else None,
@@ -153,6 +197,15 @@ def update_sales_order_item(
         if field_name in changes:
             value = changes[field_name]
             setattr(item, field_name, value.strip() if isinstance(value, str) and value else value)
+    if "vat_rate_id" in changes:
+        item.vat_rate_id, item.vat_rate_percent = _resolve_vat_rate(db, changes["vat_rate_id"])
+    if "product_model_id" in changes or "product_model_article" in changes or "product_model_name" in changes:
+        model_id = changes["product_model_id"] if "product_model_id" in changes else item.product_model_id
+        article = changes["product_model_article"] if "product_model_article" in changes else item.product_model_article
+        name = changes["product_model_name"] if "product_model_name" in changes else item.product_model_name
+        item.product_model_id, item.product_model_article, item.product_model_name = _resolve_product_model(
+            db, model_id, article, name
+        )
     if "nomenclature_id" in changes and "nomenclature_variant_id" not in changes:
         _validate_variant(db, item.nomenclature_id, item.nomenclature_variant_id)
     _, item.discount_amount, item.line_amount = calculate_sales_order_item_totals(

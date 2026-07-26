@@ -17,7 +17,7 @@ Unify **form controls** across the platform (especially nomenclature + catalogs)
 | `5.4.1.1` | `Input` + `Textarea` + `controlClassName` |
 | `5.4.1.2` | `Select`; combobox pattern = `CityAutocomplete` on same chrome |
 | `5.4.1.3` | `Checkbox`, `Radio`, `Switch` |
-| `5.4.1.4` | `DateInput`, `MoneyInput` |
+| `5.4.1.4` | `DateInput`, `MoneyInput` (currency labels via `DS-MONEY-01` / `currency-display.md`) |
 | `5.4.1.5` | `Field` help/error + `aria-invalid` / `invalid` prop |
 | `5.4.1.6` | Disabled + read-only styles (opacity / secondary surface) |
 

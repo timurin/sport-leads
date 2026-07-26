@@ -50,7 +50,7 @@ Almost all product pages live under `(workspace)` and therefore use Platform She
 | `/settings/organizations` | `frontend/app/(workspace)/settings/organizations/page.tsx` | `(workspace)` | settings | List/Table Workspace | `EntityWorkspace` | demo | no | no | not dedicated | likely | risk | risk |
 | `/settings/organizations/employees` | `frontend/app/(workspace)/settings/organizations/employees/page.tsx` | `(workspace)` | settings | List/Table Workspace | `EntityWorkspace` | demo | no | no | not dedicated | likely | risk | risk |
 | `/settings/catalogs/materials` | `frontend/app/(workspace)/settings/catalogs/materials/page.tsx` | `(workspace)` | settings | List/Table Workspace | `EntityWorkspace` | demo | no | no | not dedicated | likely | risk | risk |
-| `/settings/catalogs/nomenclature` | `frontend/app/(workspace)/settings/catalogs/nomenclature/page.tsx` | `(workspace)` | settings | Tree + List Workspace | `NomenclatureWorkspace` | persistent | no | no | count UI only | likely | risk | risk |
+| `/settings/catalogs/nomenclature` | `frontend/app/(workspace)/settings/catalogs/nomenclature/page.tsx` | `(workspace)` | settings | redirect → `/warehouse/stock` (`4.10.5`) | — | — | — | — | — | — | — | — |
 | `/settings/catalogs/nomenclature/[nomenclatureId]` | `frontend/app/(workspace)/settings/catalogs/nomenclature/[nomenclatureId]/page.tsx` | `(workspace)` | settings | Complex Entity Card | `NomenclatureCard` | persistent | no | no | `notFound()` | likely | likely | likely |
 | `/settings/catalogs/custom-fields` | `frontend/app/(workspace)/settings/catalogs/custom-fields/page.tsx` | `(workspace)` | settings | Settings Page | `CustomFieldsWorkspace` | persistent | no | no | not dedicated | likely | risk | risk |
 | `/settings/catalogs/product-characteristics` | `frontend/app/(workspace)/settings/catalogs/product-characteristics/page.tsx` | `(workspace)` | settings | List/Table Workspace | `ProductCharacteristicsWorkspace` | persistent | no | no | not dedicated | likely | risk | risk |
@@ -136,7 +136,7 @@ Detailed matrix: § Persistent versus demo/local audit (`5.1.1.3`). Summary:
 | Leads Kanban | `/sales/leads` | `…/sales/leads/page.tsx` | persistent | **reference** | PT-03 | `5.6.2` migrated; `5.5.3 visual OK` |
 | Lead Card | `/sales/leads/[leadId]` | `…/sales/leads/[leadId]/page.tsx` | mixed | **reference** | PT-06 | `5.6.3` migrated; data/composition → Stage 1 |
 | Customer Order Card | `/sales/orders/[orderId]` | `…/sales/orders/[orderId]/page.tsx` | persistent | **reference** | PT-07 | Persistent document card with segment boundaries |
-| Nomenclature Workspace | `/settings/catalogs/nomenclature` | `…/nomenclature/page.tsx` | persistent | **reference** | PT-04 | Only tree+list workspace |
+| Nomenclature Workspace | `/warehouse/stock` | `…/warehouse/stock/page.tsx` | persistent | **reference** | PT-04 | UNF primary (`4.10.3`+); settings list redirects |
 | Nomenclature Card | `/settings/catalogs/nomenclature/[nomenclatureId]` | `…/nomenclature/[nomenclatureId]/page.tsx` | persistent | **reference** | PT-06 | Aligns with HTML ref; needs loading/error siblings |
 | Organizations | `/settings/organizations` | `…/organizations/page.tsx` | demo | provisional → migrate | PT-02 | EntityWorkspace demo |
 | Employees | `/settings/organizations/employees` | `…/employees/page.tsx` | demo | provisional → migrate | PT-02 | EntityWorkspace demo |
@@ -171,7 +171,7 @@ Detailed matrix: § Persistent versus demo/local audit (`5.1.1.3`). Summary:
 | PT-02 | `/sales/clients` (`DS-PT-02` CRM reference; demo) | blank EntityWorkspace empties |
 | PT-02-CATALOG | `/settings/catalogs/product-models` (`DS-PT-02-CATALOG` etalon for directories / sections / categories) | Clients list chrome |
 | PT-03 | `/sales/leads` (`DS-PT-03` reference) | demo tasks/deals only as secondary |
-| PT-04 | `/settings/catalogs/nomenclature` | — |
+| PT-04 | `/warehouse/stock` | settings list redirects (`4.10.5`) |
 | PT-05 | `/settings/catalogs/product-characteristics/[id]` (`DS-PT-05` reference) | local sidebar (removed); EntityWorkspace inspector |
 | PT-06 | `/sales/leads/[leadId]` (`DS-PT-06` reference) | — |
 | PT-07 | `/sales/orders/[orderId]` | — |
@@ -206,7 +206,7 @@ Whole modules are nav-only today:
 - Dashboard: `/dashboard/activity`, `/dashboard/analytics`
 - Sales reports: `/sales/reports/funnel`, `/sales/reports/managers`, `/sales/reports/dynamics`
 - Production: `/production`, `/production/orders`, `/production/tasks`, `/production/stages/*`
-- Warehouse: `/warehouse`, `/warehouse/stock`, `/warehouse/movements`, `/warehouse/inventory`
+- Warehouse: `/warehouse`, `/warehouse/movements`, `/warehouse/inventory` (`/warehouse/stock` — PT-04 nomenclature workspace `4.10.3`; category CRUD/redirects/balance → `4.10.4`–`4.10.6`)
 - Purchases: `/purchases`, `/purchases/orders`, `/purchases/suppliers`
 - Finance: `/finance`, `/finance/payments`, `/finance/reports/*`
 - Analytics: `/analytics`, `/analytics/sales`, `/analytics/production`
@@ -215,7 +215,7 @@ Whole modules are nav-only today:
 ## Pages without matching nav entry
 
 - `/sales/deals`
-- `/settings/catalogs/nomenclature` and nomenclature card
+- `/settings/catalogs/nomenclature` (redirect → `/warehouse/stock`, `4.10.5`) and nomenclature card
 - Dynamic detail routes for leads, orders, and characteristics (expected)
 
 ## Pages requiring future template migration

@@ -376,6 +376,15 @@ class SalesOrderItem(Base):
     nomenclature_variant_id: Mapped[int | None] = mapped_column(
         ForeignKey("nomenclature_variants.id", ondelete="SET NULL"), nullable=True, index=True
     )
+    product_model_id: Mapped[int | None] = mapped_column(
+        ForeignKey("product_models.id", ondelete="SET NULL"), nullable=True, index=True
+    )
+    product_model_article: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    product_model_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    vat_rate_id: Mapped[int | None] = mapped_column(
+        ForeignKey("vat_rates.id", ondelete="SET NULL"), nullable=True, index=True
+    )
+    vat_rate_percent: Mapped[Decimal | None] = mapped_column(Numeric(5, 2), nullable=True)
     position: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
     snapshot_name: Mapped[str] = mapped_column(String(255), nullable=False)
     size_range: Mapped[str | None] = mapped_column(String(255), nullable=True)

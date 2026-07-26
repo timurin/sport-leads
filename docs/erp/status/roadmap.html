@@ -164,7 +164,7 @@
         </div>
       </div>
       <div class="meta-list">
-        <div class="chip">Updated: 2026-07-26 (roadmap 4.10 warehouse nomenclature browser; prior 4.9.5)</div>
+        <div class="chip">Updated: 2026-07-26 (UNF rewrite 4.10 + expand stock register 4.6.5)</div>
         <div class="chip">Version: v0.9.0</div>
         <div class="chip">Branch: feature/v0.8.1-nomenclature-core</div>
         <div class="chip">Commit: 0980f34</div>
@@ -789,8 +789,43 @@
               },
               {
                 code: "4.6.5",
-                title: "Keep balances/min stock for warehouse register; do not copy onto Nomenclature",
-                done: false
+                title: "Stock register MVP (balances via movements; not on Nomenclature)",
+                done: false,
+                goal: "Owner/UNF 2026-07-26: column Остаток from movement register, never on Nomenclature card (ADR-012). Full warehouses/bins/lots/docs → Stage 12. MVP ledger by nomenclature_id for 4.10 list column/filter.",
+                microtasks: [
+                  {
+                    code: "4.6.5.1",
+                    title: "ADR/note: register model (movement lines + balance projection); boundary vs Nomenclature / Stage 12",
+                    done: false
+                  },
+                  {
+                    code: "4.6.5.2",
+                    title: "Migration: movement/ledger tables (Decimal qty; nomenclature_id; direction/type; timezone-aware posted_at)",
+                    done: false
+                  },
+                  {
+                    code: "4.6.5.3",
+                    title: "Services + API: post movement; read balance by nomenclature; list balances for list page",
+                    done: false,
+                    note: "Empty GET /stock/balances stub shipped with 4.10.6; fill from ledger here"
+                  },
+                  {
+                    code: "4.6.5.4",
+                    title: "Wire column Остаток + filter все / с остатком on warehouse nomenclature list (4.10)",
+                    done: true,
+                    note: "2026-07-26 — v0.9.0 via 4.10.6 (zeros until register posts)"
+                  },
+                  {
+                    code: "4.6.5.5",
+                    title: "Regression tests (post in/out → balance; never write balance onto Nomenclature row)",
+                    done: false
+                  },
+                  {
+                    code: "4.6.5.6",
+                    title: "Docs sync when register ships; Stage 12 remains for warehouses/bins/lots/full documents",
+                    done: false
+                  }
+                ]
               }
             ]
           },
@@ -808,7 +843,7 @@
                 code: "4.7.2",
                 title: "Remove left category tree block from nomenclature workspace",
                 done: true,
-                note: "v0.8.1 — TreeListSplit/CategoryTree removed; category tree UX → 4.9 (directory only)"
+                note: "v0.8.1 — TreeListSplit/CategoryTree removed; category tree UX → 4.9; amendment 2026-07-26: primary tree+list on warehouse 4.10 (UNF); do not restore tree on settings PT-02"
               },
               {
                 code: "4.7.3",
@@ -948,38 +983,50 @@
             ]
           },
           {
-            title: "4.10 — Warehouse nomenclature browser (tree + list)",
-            goal: "Owner ask (2026-07-26): Склад nav «Остатки» → «Номенклатура» (href stays /warehouse/stock). PT-04 tree+list: left category tree (reuse 4.9), right all nomenclature filtered by selected node + descendants, create on page. Settings flat list stays PT-02 without tree (4.7.2). Qty register stays 4.6.5 / Stage 12; do not restore separate «Остатки» nav. Dependencies: 4.7.1–4.7.2, 4.9.2/4.9.5, 5.5.4/DS-PT-04, ADR-012.",
+            title: "4.10 — Warehouse nomenclature (UNF-style unified PT-04)",
+            goal: "Owner/UNF 2026-07-26: primary Склад → Номенклатура (/warehouse/stock). One DS-PT-04: left category tree + list (Остаток from 4.6.5 register) + create + inspector; filter node∪descendants; type chips; absorb settings categories directory; redirect settings nomenclature list here; card stays settings; no separate Остатки nav; not 1C chrome clone. Amendment 4.7.2: tree OFF settings PT-02; primary tree+list is warehouse. Dependencies: 4.7.1/4.7.5, 4.9.2/4.9.5, DS-PT-04, ADR-012, 4.6.5.3+ for live balance.",
             items: [
               {
                 code: "4.10.1",
-                title: "Nav rename: Остатки → Номенклатура; href stays /warehouse/stock; DS-SHELL-01/02 preserved",
-                done: false
+                title: "Nav: Остатки → Номенклатура; href stays /warehouse/stock; DS-SHELL-01/02 preserved",
+                done: true,
+                note: "2026-07-26 — v0.9.0; warehouse topNav stock title → Номенклатура; href /warehouse/stock unchanged; DS-SHELL-01/02 preserved (nav data only)"
               },
               {
                 code: "4.10.2",
-                title: "Route + page shell: warehouse/stock/page.tsx (+ loading/error); load via getNomenclature / categories / units / media",
-                done: false
+                title: "Route shell warehouse/stock/page.tsx (+ loading/error); load nomenclature, categories, units, media",
+                done: true,
+                note: "2026-07-26 — v0.9.0; page/loading/error + loadWarehouseNomenclatureCatalog via nomenclature.ts; shell until 4.10.3 PT-04"
               },
               {
                 code: "4.10.3",
-                title: "Workspace PT-04: TreeListSplit + TreePane + TreeListContent; left category tree; right list/filters/inspector",
-                done: false
+                title: "Unified PT-04 workspace: TreePane categories + list/filters/inspector; filter node∪descendants; type chips; create; row → settings card",
+                done: true,
+                note: "2026-07-26 — v0.9.0; WarehouseNomenclatureWorkspace + folder tree; filterByCategoryListScope; type chips; create panels; inspector; row → settings card; category CRUD → 4.10.4"
               },
               {
                 code: "4.10.4",
-                title: "Filter rule: selected category → category_id in {node ∪ descendants}; modes все / без категории",
-                done: false
+                title: "Category CRUD in tree (create child / edit / reorder / soft deactivate) — absorb categories directory",
+                done: true,
+                note: "2026-07-26 — v0.9.0; tree Pencil/Plus/↑↓ + EditDrawer soft deactivate; create child via NomenclatureCreatePanels; revalidate /warehouse/stock; settings categories redirect → 4.10.5"
               },
               {
                 code: "4.10.5",
-                title: "Create on warehouse page: reuse NomenclatureCreatePanels; row open → settings nomenclature card",
-                done: false
+                title: "Nav cleanup: redirect/remove Settings Категории; redirect Settings Номенклатура list → /warehouse/stock; card URL unchanged",
+                done: true,
+                note: "2026-07-26 — v0.9.0; list + categories → redirect /warehouse/stock; settings nav/hub drop list+categories; card [id] kept; back links → warehouse"
               },
               {
                 code: "4.10.6",
-                title: "Tests (nav title, tree filter descendants, empty) + owner visual PT-04; 4.6.5 register remains open",
-                done: false
+                title: "Balance column + stock filter wired to 4.6.5 API (zero until register posts); no fake demo balances",
+                done: true,
+                note: "2026-07-26 — v0.9.0; GET /stock/balances empty stub; column Остаток + Все/С остатком; live qty waits 4.6.5.2–.3"
+              },
+              {
+                code: "4.10.7",
+                title: "Tests (nav, redirects, tree filter, create, balance contract) + owner visual vs UNF intent (PT-04 portal DS)",
+                done: true,
+                note: "2026-07-26 — v0.9.0; owner visual OK; nav/tree/balance tests; settings redirects; create panels; longest-match active nav; DS-SHELL-01/02 preserved"
               }
             ]
           }
@@ -3695,6 +3742,7 @@
       },
       {
         title: "Stage 12 — Warehouse",
+        goal: "Structure note 2026-07-26: MVP register/balance column owned by 4.6.5 + 4.10.6. This stage adds warehouses/bins/lots and full movement documents on top of that MVP.",
         blocks: [
           {
             title: "12.1 — Storage structure",
@@ -3706,7 +3754,7 @@
               },
               {
                 code: "12.1.2",
-                title: "Lots and balances",
+                title: "Lots and balances — extends 4.6.5 MVP (multi-warehouse / lots); list column already from register",
                 done: false
               }
             ]
@@ -3716,7 +3764,7 @@
             items: [
               {
                 code: "12.2.1",
-                title: "Receipts, issues, reserves, and transfers",
+                title: "Receipts, issues, reserves, and transfers — full documents; MVP post-movement API starts in 4.6.5.3",
                 done: false
               },
               {

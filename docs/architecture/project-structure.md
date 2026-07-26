@@ -1,10 +1,9 @@
 # Sport-Lead — Project Structure Checklist
 
 **Code:** `SL-PROJECT-STRUCTURE-v1`
-**Updated:** `2026-07-26` (close `4.9.5` categories tree owner visual; prior `4.9.3` / `4.8.7`)
+**Updated:** `2026-07-26` (`4.10.7` owner visual OK; closes UNF warehouse nomenclature `4.10`)
 **Project version:** `v0.9.0`
 **Git branch:** `feature/v0.8.1-nomenclature-core`
-**Git commit:** `0980f34`
 
 ## Rules
 
@@ -121,6 +120,7 @@
 
 - [ ] Design approvals and versioned layouts
 - [ ] Production orders, batches, fact operations, scrap, and output
+- [x] Warehouse nomenclature PT-04 `/warehouse/stock` — tree CRUD + list + settings redirects + остаток column/filter + owner visual OK (`4.10.1`–`4.10.7`); live ledger → `4.6.5`
 - [ ] Warehouse movements, reserves, inventory, and finished-goods flow
 - [ ] Procurement requests, supplier orders, receipts, and returns
 - [ ] Shipping documents, delivery tracking, and confirmation of receipt

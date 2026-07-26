@@ -256,6 +256,61 @@ def create_nomenclature(db: Session, payload: NomenclatureCreate) -> Nomenclatur
     return item
 
 
+def _next_nomenclature_copy_name(db: Session, source_name: str) -> str:
+    base = f"{source_name} (копия)"
+    existing = set(
+        db.scalars(
+            select(Nomenclature.name).where(Nomenclature.name.ilike(f"{base}%"))
+        ).all()
+    )
+    if base not in existing:
+        return base
+    suffix = 2
+    while f"{base} {suffix}" in existing:
+        suffix += 1
+    return f"{base} {suffix}"
+
+
+def copy_nomenclature(db: Session, nomenclature_id: int) -> Nomenclature:
+    """Duplicate master card fields (not media / characteristics / variants)."""
+    source = get_nomenclature(db, nomenclature_id)
+    validate_storage_unit(db, source.storage_unit_id, allow_inactive=True)
+    _validate_nomenclature_category(db, source.category_id)
+    product_type_id = (
+        source.product_type_id
+        if source.nomenclature_type == NomenclatureType.PRODUCT
+        else None
+    )
+    _validate_product_type_link(
+        db,
+        product_type_id,
+        nomenclature_type=source.nomenclature_type,
+        require_active=False,
+    )
+    item = Nomenclature(
+        name=_next_nomenclature_copy_name(db, source.name),
+        short_name=source.short_name,
+        description=source.description,
+        category=source.category,
+        category_id=source.category_id,
+        nomenclature_type=source.nomenclature_type,
+        product_type_id=product_type_id,
+        unit=source.unit,
+        storage_unit_id=source.storage_unit_id,
+        base_price=source.base_price,
+        currency=source.currency,
+        is_active=True,
+    )
+    db.add(item)
+    try:
+        db.commit()
+    except IntegrityError as error:
+        db.rollback()
+        raise NomenclatureConflictError("Не удалось скопировать номенклатуру") from error
+    db.refresh(item)
+    return item
+
+
 def update_nomenclature(db: Session, nomenclature_id: int, payload: NomenclatureUpdate) -> Nomenclature:
     item = get_nomenclature(db, nomenclature_id)
     changes = payload.model_dump(exclude_unset=True)

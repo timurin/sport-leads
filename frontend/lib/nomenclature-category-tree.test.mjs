@@ -5,6 +5,7 @@ import {
   buildCategoryTreeRows,
   canMoveCategorySibling,
   collectCategoryDescendantIds,
+  filterByCategoryListScope,
   filterCategoryTreeRows,
   nextChildSortOrder,
   parentCategoryOptions,
@@ -118,6 +119,38 @@ test("planSiblingReorder swaps and densifies sort_order", () => {
     { id: 12, sort_order: 2 },
   ]);
   assert.equal(nextChildSortOrder(siblings, null), 6);
+});
+
+test("filterByCategoryListScope keeps node and descendants", () => {
+  const categories = [
+    cat({ id: 1, parent_id: null, name: "A", code: "a", sort_order: 0 }),
+    cat({ id: 2, parent_id: 1, name: "A1", code: "a1", sort_order: 0 }),
+    cat({ id: 3, parent_id: 2, name: "A1a", code: "a1a", sort_order: 0 }),
+    cat({ id: 4, parent_id: null, name: "B", code: "b", sort_order: 1 }),
+  ];
+  const items = [
+    { id: 10, category_id: 1 },
+    { id: 11, category_id: 2 },
+    { id: 12, category_id: 3 },
+    { id: 13, category_id: 4 },
+    { id: 14, category_id: null },
+  ];
+  assert.deepEqual(
+    filterByCategoryListScope(items, categories, { categoryId: 1 }).map(
+      (row) => row.id,
+    ),
+    [10, 11, 12],
+  );
+  assert.deepEqual(
+    filterByCategoryListScope(items, categories, "uncategorized").map(
+      (row) => row.id,
+    ),
+    [14],
+  );
+  assert.equal(
+    filterByCategoryListScope(items, categories, "all").length,
+    5,
+  );
 });
 
 test("visibleCategoryTreeRows defaults to roots when nothing expanded", () => {

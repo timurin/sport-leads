@@ -1,0 +1,37 @@
+---
+description: Check and clear hung Sport-Lead backend/frontend terminal and port sessions before starting or restarting local servers.
+alwaysApply: true
+---
+
+# Dev server sessions
+
+## Ports
+
+- Backend: `127.0.0.1:8000` (`uvicorn app.main:app`)
+- Frontend: `127.0.0.1:3000` (`next dev` / `node`)
+
+## Before start or restart
+
+1. Run `powershell -File scripts/dev-servers.ps1 -Action status`.
+2. Inspect Cursor terminal metadata (`terminals/*.txt` headers: pid, cwd, last command, active command) for duplicate `uvicorn` / `npm run dev`.
+3. Treat as **hung** when any of:
+   - port listens but HTTP ready check fails for >15s;
+   - terminal marks an active command whose PID is dead;
+   - two listeners fight for the same port;
+   - process is orphaned (no matching healthy Cursor terminal).
+4. Clear hung/orphan Sport-Lead listeners with:
+   ```powershell
+   powershell -File scripts/dev-servers.ps1 -Action stop
+   ```
+5. Only then start via `scripts/dev-servers.ps1 -Action start` (or the start-dev-stack skill).
+
+## Kill policy
+
+- Kill only listeners on **8000** / **3000** owned by `python`/`uvicorn`/`node`/`next` for this repo.
+- Do **not** `taskkill /F` broad process names system-wide.
+- Do **not** `git reset --hard`, `git clean -fd`, or delete unknown files.
+- Prefer the script over ad-hoc kills.
+
+## After cleanup
+
+Confirm ports free, then start. Report what was stopped (PIDs/ports) and final ready URLs.

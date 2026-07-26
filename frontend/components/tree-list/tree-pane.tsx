@@ -16,6 +16,8 @@ type TreePaneProps = {
   /** card — bordered panel; dock — flush side column (materials-like) */
   variant?: TreePaneVariant;
   onClose?: () => void;
+  /** Optional controls in the header (before close), e.g. category CRUD icons */
+  headerActions?: ReactNode;
 };
 
 /**
@@ -31,6 +33,7 @@ export function TreePane({
   label = "Дерево групп",
   variant = "dock",
   onClose,
+  headerActions,
 }: TreePaneProps) {
   const surface =
     variant === "dock"
@@ -46,24 +49,36 @@ export function TreePane({
     >
       <div
         className={[
-          "flex items-center justify-between gap-portal-2",
+          "flex flex-col gap-portal-2",
           variant === "dock"
             ? "border-b border-portal-border px-portal-4 py-portal-3"
             : "mb-portal-2",
         ].join(" ")}
       >
-        <div className="flex min-w-0 items-center gap-portal-2">
-          <h3 className="text-portal-body font-semibold text-portal-text">
-            {title}
-          </h3>
-          {count !== undefined ? (
-            <span className="text-portal-caption text-portal-muted">{count}</span>
+        <div className="flex items-center justify-between gap-portal-2">
+          <div className="flex min-w-0 flex-1 items-center gap-portal-2">
+            <h3 className="shrink-0 text-portal-body font-semibold text-portal-text">
+              {title}
+            </h3>
+            {count !== undefined ? (
+              <span className="shrink-0 text-portal-caption text-portal-muted">
+                {count}
+              </span>
+            ) : null}
+          </div>
+          {onClose ? (
+            <IconButton label="Скрыть дерево групп" onClick={onClose}>
+              <X size={19} aria-hidden="true" />
+            </IconButton>
           ) : null}
         </div>
-        {onClose ? (
-          <IconButton label="Скрыть дерево групп" onClick={onClose}>
-            <X size={19} aria-hidden="true" />
-          </IconButton>
+        {headerActions ? (
+          <div
+            className="flex min-w-0 items-center gap-0.5"
+            data-tree-pane-header-actions
+          >
+            {headerActions}
+          </div>
         ) : null}
       </div>
       <div

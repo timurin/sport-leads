@@ -127,6 +127,33 @@ export function filterCategoryTreeRows(
   return rows.filter((row) => matchIds.has(row.category.id));
 }
 
+/**
+ * List filter scope for warehouse nomenclature (`4.10.3`):
+ * - `all` — no category constraint
+ * - `uncategorized` — `category_id` is null
+ * - `{ categoryId }` — item in selected node ∪ descendants
+ */
+export type CategoryListScope = "all" | "uncategorized" | { categoryId: number };
+
+export function filterByCategoryListScope<
+  T extends { category_id: number | null },
+>(
+  items: T[],
+  categories: NomenclatureCategory[],
+  scope: CategoryListScope,
+): T[] {
+  if (scope === "all") {
+    return items;
+  }
+  if (scope === "uncategorized") {
+    return items.filter((item) => item.category_id == null);
+  }
+  const allowed = collectCategoryDescendantIds(categories, scope.categoryId);
+  return items.filter(
+    (item) => item.category_id != null && allowed.has(item.category_id),
+  );
+}
+
 /** Self + all descendants — invalid parents when editing `categoryId`. */
 export function collectCategoryDescendantIds(
   categories: NomenclatureCategory[],
