@@ -89,7 +89,7 @@ Nomenclature (PRODUCT)
 
 - **Stage 7:** при формировании спецификации **копируются** строки операций/стоимостей из snapshot выбранного `AssemblyVariant` позиции (не live-edit master модели).
 - **Stage 8:** цеховые маршруты, участки, нормы времени исполнения — отдельный контур; не место заново изобретать менеджерские пакеты сборки.
-- **Stage 9:** техническая карта ссылается на модель / вариант / операции по своему ADR (планируется как **ADR-016**; ADR-015 = unified characteristics).
+- **Stage 9:** техническая карта — **ADR-016** (принято `2026-07-26`); ADR-015 = unified characteristics.
 
 `SalesOrderItem` хранит nullable связи + denormalized snapshot (как у номенклатуры/вариантов): model id/article/`size_type`; variant id/name/total; при необходимости — снимок строк операций. Правки справочника не переписывают старые заказы и уже сформированные спецификации.
 
@@ -125,7 +125,7 @@ Nomenclature (PRODUCT)
 - Карточка PRODUCT получает блок «Доступные модели лекал» (`6.1.11`).
 - Карточка модели получает блок вариантов сборки (`6.1.12`).
 - Stage 8 не дублирует менеджерские assembly packages.
-- Планируемый ADR технических карт — **ADR-016** (ADR-015 reserved for unified characteristics catalog).
+- Планируемый ADR технических карт — **ADR-016** (принято `2026-07-26`; ADR-015 = unified characteristics catalog).
 
 **Связанные решения:** ADR-004, ADR-006, ADR-010, ADR-012.  
 **Evidence:** `docs/architecture/sewing-operations-domain.md` (`6.3.1`); `docs/roadmap/roadmap.md` § `6.3`.

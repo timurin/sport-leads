@@ -16,6 +16,7 @@ class ProductModelBase(BaseModel):
     size_type: ProductModelSizeType
     size_grid_id: int | None = None
     product_type_id: int | None = None
+    default_routing_template_id: int | None = None
     description: str | None = None
     patterns_path: str | None = Field(default=None, max_length=1000)
     constructor_name: str | None = Field(default=None, max_length=255)
@@ -53,6 +54,7 @@ class ProductModelUpdate(BaseModel):
     size_type: ProductModelSizeType | None = None
     size_grid_id: int | None = None
     product_type_id: int | None = None
+    default_routing_template_id: int | None = None
     description: str | None = None
     patterns_path: str | None = Field(default=None, max_length=1000)
     constructor_name: str | None = Field(default=None, max_length=255)

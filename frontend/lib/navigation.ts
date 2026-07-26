@@ -111,6 +111,11 @@ export const appSections: AppSection[] = [
         href: "/production",
       },
       {
+        id: "production-tech-cards",
+        title: "Техкарты",
+        href: "/production/tech-cards",
+      },
+      {
         id: "production-orders",
         title: "Заказы",
         href: "/production/orders",
@@ -360,6 +365,27 @@ export const appSections: AppSection[] = [
             href: "/settings/catalogs/sewing_operations",
           },
         ],
+      },
+      {
+        id: "production-catalogs",
+        title: "Производство",
+        children: [
+          {
+            id: "tech-operations",
+            title: "Тех операции",
+            href: "/settings/catalogs/tech-operations",
+          },
+          {
+            id: "shop-routings",
+            title: "Маршруты",
+            href: "/settings/catalogs/routings",
+          },
+        ],
+      },
+      {
+        id: "tech-cards",
+        title: "Техкарты",
+        href: "/settings/catalogs/tech-cards",
       },
       {
         id: "users",

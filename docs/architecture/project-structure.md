@@ -1,7 +1,7 @@
 # Sport-Lead — Project Structure Checklist
 
 **Code:** `SL-PROJECT-STRUCTURE-v1`
-**Updated:** `2026-07-26` (`3.5` order card UX code; owner visual `3.5.9` pending; prior `4.10.7`)
+**Updated:** `2026-07-26` (`8.3`/`11.3`–`11.10` planned in roadmap; prior `9.4.1` / `9.5` / Stage 8 MVP)
 **Project version:** `v0.9.0`
 **Git branch:** `feature/v0.8.1-nomenclature-core`
 
@@ -110,18 +110,29 @@
 - [x] Dedicated size-grid directory and measurements — Mosmade men 18 + women 14; list/card visual OK (`6.2.4.5` / `6.2.5.4` / `6.4.3.2`); Stage-6 read-only; write/edit → `17.1.2.4`; model link `6.2.7` shipped (`ProductModel.size_grid_id`)
 - [x] Pattern-base owner visual checkpoint — models / grids / sewing ops / PRODUCT available-models (`6.4.3`); Stage 6 catalog closed
 - [ ] Order-item model + assembly-variant selection — Stage `3.2.5` (moved from former `6.1.13`); smoke `3.2.6`
-- [ ] Specifications and bill-of-materials contour
-- [ ] Routing, operations, equipment, work centers, and quality checkpoints
+- [ ] Specifications and bill-of-materials contour — Stage 7 **plan+fact report document** from filled TC + execution (ADR-004; not hard dep of Stage 8/9; Documents = link registry later)
+- [x] Routing, operations, work centers, QC flags; shop TechOperation catalog (`8.1.3`) + routings UI (`8.2`) — `v0.9.0`; ADR-017; migration `l3m4n5o6p789`; owner visual `8.2.2.6` pending (re-check after `8.3`)
+- [ ] ProductionStage (цех) catalog + routing/ops bind (`8.3`) — Дизайн→Раскрой→Печать→Пошив→ВТО→ОТК→Упаковка; WorkCenter = оборудование
 
 ## 9. Technical cards (Технические карты)
 
-- [ ] Domain contract: one technical card per manufacturable sales order line; unit lines inside the card (**ADR-016**; ADR-015 = unified characteristics)
-- [ ] Links to model, sewing operations, materials, routing; stage execution and order manufacturing completeness
+- [x] Domain contract: one technical card per manufacturable sales order line; unit lines inside the card (**ADR-016** accepted `2026-07-26`; amend Excel/print + Spec↔ТК: composition SoT on TC; Spec outbound Stage 7)
+- [x] Persistence DB core `9.1.2` (`technical_cards` + composition / unit / `TechnicalCardOperationLine` / stage results; soft `tech_operation_id` until `8.1.3`; migration `k2l3m4n5o678`)
+- [x] Generate from order `9.2.1` (preview / generate / cancel draft / sync unit lines; eligible = PRODUCT; **no Spec required**)
+- [x] Composition on card `9.3.1` (model/pattern/material lines SoT; soft Spec version stamp optional until Stage 7 outbound)
+- [x] Unit lines API `9.3.2` (patch / bulk / replace / import / reset-defaults)
+- [x] Operation volumes API `9.3.3` (replace/patch/prefill soft until `8.1.3`; no demo)
+- [x] Order ↔ tech cards UI `9.4.1` (gap `#4` closed; owner visual `9.4.1.4` OK)
+- [x] Stage machine / routing execution `9.2.2` — start/complete/rollback + gates; evidence `test_technical_cards_9_2_2.py`
+- [x] Production list + document UI `9.4.2` — PT-02/07; global `GET /technical-cards`; owner visual `9.4.2.7` pending
+- [x] Order manufacturing completeness (`9.5`) — service + READY+/status gates; evidence `test_technical_cards_9_5_1.py`; full `3.4.2` docs reuse helper
+- [x] Placement: Production + Settings tech-cards nav (`9.0.1`/`9.0.2`); UI contract `9.0.3` (`SL-TECH-CARDS-UI-v1`); order gap `#4` plan `9.0.4` + ship `9.4.1`; settings page `9.6`; print A4×2 `18.3.8` still open
 
 ## 10. Design, Production, Warehouse, Procurement, and Shipping
 
-- [ ] Design approvals and versioned layouts
-- [ ] Production orders, batches, fact operations, scrap, and output
+- [ ] Design approvals and versioned layouts (Stage 10 client-facing; shop Дизайн = `11.4`)
+- [ ] Production orders, batches, aggregate fact (`11.1`–`11.2`)
+- [ ] Shop-floor modules platform + per-цех UIs (`11.3`–`11.10`) — fact on technical card
 - [x] Warehouse nomenclature PT-04 `/warehouse/stock` — tree CRUD + list + settings redirects + остаток column/filter + owner visual OK (`4.10.1`–`4.10.7`); live ledger → `4.6.5`
 - [ ] Warehouse movements, reserves, inventory, and finished-goods flow
 - [ ] Procurement requests, supplier orders, receipts, and returns

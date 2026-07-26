@@ -62,20 +62,22 @@
 ## Технологическая подготовка
 
 - `[ ]` операционные узлы;
-- `[ ]` технологические операции;
+- `[~]` технологические операции — Stage `8.1.3` **shipped** (`tech_operations` + seed 5; settings UI); строки объёмов на ТК — `9.3.3` (≠ SewingOperation Stage `6.3`); привязка ops → цех planned in `8.3`;
 - `[ ]` нормативы модели и времени;
-- `[ ]` подготовка и версионирование спецификации;
-- `[ ]` запрет запуска без утверждённой версии.
+- `[ ]` подготовка и версионирование спецификации — Stage 7 **документ-отчёт план+факт** from filled TC + execution (ADR-004/016 amend `2026-07-26`; не hard dep generate ТК; не отдельный модуль);
+- `[ ]` запрет запуска партии без утверждённой версии Spec (где применимо; ТК исполняется по snapshot маршрута Stage 8);
 
 ## Производство
 
-- `[ ]` технические карты: один документ на производимую позицию заказа, строки поштучных характеристик, маршрут участков, готовность заказа по всем ТК; roadmap `9.*` (domain ADR reserved as **ADR-016**; ADR-015 = unified characteristics);
+- `[~]` технические карты: domain **ADR-016**; DB `9.1.2`; generate `9.2.1`; composition/unit/op-volume; order UI `9.4.1` (owner visual OK); stage machine `9.2.2`; **list/document `9.4.2` shipped** (owner visual `9.4.2.7` pending); settings `9.6`; print A4×2 → `18.3.8`;
+- `[~]` shop routings / work centers — ADR-017; migration `l3m4n5o6p789`; API + settings UI; owner visual `8.2.2.6` pending (re-check after `8.3`);
+- `[ ]` **ProductionStage (цех) catalog** — Stage `8.3` (Дизайн→…→Упаковка); routing = sequence of цехов; WorkCenter = оборудование;
+- `[ ]` **shop-floor modules** — Stage `11.3` platform + `11.4`–`11.10` (Дизайн, Раскрой, Печать, Пошив, ВТО, ОТК, Упаковка) — fact on TC;
 - `[ ]` production batches;
-- `[ ]` batch specification formation and version approval;
-- `[ ]` printing, cutting, sewing and QC;
-- `[ ]` actual consumption, operations, output, scrap, performers and deviations.
+- `[ ]` batch specification formation (plan+fact report document from filled TC / ADR-004);
+- `[ ]` actual consumption, operations, output, scrap, performers and deviations (aggregate `11.2`; detailed in shop modules).
 
-Цепочка: партия → утверждённая спецификация → печать → раскрой → пошив → ОТК → фактический расход → выпуск. Спецификация — плановый состав, производственный факт — отдельный контур.
+Цепочка (ADR-004 amend): заказ → ТК (технология/состав) → партия → исполнение → спецификация как **сводный отчёт план+факт** → 1С. Spec — документ, не модуль; сырой факт остаётся в своих контурах. **Документы** = реестр ссылок на документы в родителях (не контур на каждый тип).
 
 ## Ресурсы, склад, закупки и финансы
 
@@ -98,4 +100,4 @@ Patch v0.8.8h confirmed: backend-generated unique codes, typed save/reload, scop
 
 `v0.8.8i-product-characteristics-directory` confirmed: the existing characteristic model/API now supports `kind`, color HEX values, generated codes, system Color/Size records and safe deactivation. Migration `i9j0k1l2m345` has upgrade/downgrade; the settings directory and regression checks are implemented. Nomenclature card layout and variant snapshot logic are unchanged.
 
-Canonical sync `2026-07-26`: Stage `3.5` order card UX + field-link map in progress (owner visual `3.5.9` pending); `3.2.5.7` closed via `order-card-field-links.md`. Same day: `4.10` closed (`4.10.1`–`4.10.7`, owner visual OK); live stock register remains `4.6.5.*`. Prior `2026-07-24`: `4.8` closed through `4.8.7`; appearance polish of characteristic card remains follow-up. Prior `2026-07-23` sync covered product types `6.1.14`–`6.1.16`, sewing `6.3.8`, ADR-016 tech-card reserve, and warehouse `4.6.5`.
+Canonical sync `2026-07-26`: Roadmap planned **`8.3` ProductionStage** + **`11.3`–`11.10` shop modules** (docs). Prior: `9.4.1.4` OK; `9.5.1`; `9.4.2`. Next code: `8.3` or visuals `8.2.2.6`/`9.4.2.7` / settings `9.6`.

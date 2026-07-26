@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "node --test --experimental-strip-types components/kanban/*.test.mjs lib/sales/*.test.mjs lib/product-models.test.mjs lib/navigation.test.mjs lib/nomenclature-category-tree.test.mjs lib/nomenclature-category-resolve.test.mjs lib/money.test.mjs lib/stock-balances-filter.test.mjs lib/warehouse-nomenclature.test.mjs lib/warehouse-stock-routes.test.mjs"
+    "test": "node --test --experimental-strip-types components/kanban/*.test.mjs lib/sales/*.test.mjs lib/production/*.test.mjs lib/product-models.test.mjs lib/navigation.test.mjs lib/nomenclature-category-tree.test.mjs lib/nomenclature-category-resolve.test.mjs lib/money.test.mjs lib/stock-balances-filter.test.mjs lib/warehouse-nomenclature.test.mjs lib/warehouse-stock-routes.test.mjs"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

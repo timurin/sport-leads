@@ -31,9 +31,15 @@ test("info mode keeps only requisites and metrics", () => {
   });
 });
 
-test("items, communication, documents and techCards modes are exclusive", () => {
-  assert.equal(getOrderCardSectionVisibility("items").items, true);
-  assert.equal(getOrderCardSectionVisibility("items").info, false);
+test("items mode keeps Товары and line-adjacent tech cards strip", () => {
+  const visibility = getOrderCardSectionVisibility("items");
+  assert.equal(visibility.items, true);
+  assert.equal(visibility.techCards, true);
+  assert.equal(visibility.info, false);
+  assert.equal(visibility.documents, false);
+});
+
+test("communication, documents and techCards modes stay exclusive", () => {
   assert.equal(getOrderCardSectionVisibility("communication").communication, true);
   assert.equal(getOrderCardSectionVisibility("documents").documents, true);
   assert.equal(getOrderCardSectionVisibility("documents").techCards, false);

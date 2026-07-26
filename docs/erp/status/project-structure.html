@@ -624,22 +624,31 @@
           { text: "Dedicated size-grid directory and measurements — Mosmade men 18 + women 14; list/card visual OK (6.2.4.5 / 6.2.5.4 / 6.4.3.2); Stage-6 read-only; write/edit → 17.1.2.4; model link 6.2.7 shipped (ProductModel.size_grid_id)", done: true },
           { text: "Pattern-base owner visual checkpoint — models / grids / sewing ops / PRODUCT available-models (6.4.3); Stage 6 catalog closed", done: true },
           { text: "Order-item model + assembly-variant selection — Stage 3.2.5 (moved from former 6.1.13); smoke 3.2.6", done: false },
-          { text: "Specifications and bill-of-materials contour", done: false },
-          { text: "Routing, operations, equipment, work centers, and quality checkpoints", done: false }
+          { text: "Specifications — Stage 7 plan+fact report document from filled TC + execution (ADR-004; Documents = link registry later)", done: false },
+          { text: "Routing, operations, work centers, QC; shop TechOperation (8.1.3) + routings UI (8.2) shipped; owner visual 8.2.2.6 pending after 8.3", done: true },
+          { text: "ProductionStage (цех) catalog + routing/ops bind (8.3) — Дизайн→…→Упаковка; WorkCenter = оборудование", done: false }
         ]
       },
       {
         title: "9. Technical cards (Технические карты)",
         items: [
-          { text: "Domain contract: one technical card per manufacturable sales order line; unit lines inside the card (ADR-016; ADR-015 = unified characteristics)", done: false },
-          { text: "Links to model, sewing operations, materials, routing; stage execution and order manufacturing completeness", done: false }
+          { text: "Domain contract: one technical card per manufacturable sales order line; unit lines inside the card (ADR-016 accepted 2026-07-26; amend Excel/print align — numbering orderNo-cardSeq, op-volume lines; ADR-015 = unified characteristics)", done: true },
+          { text: "Persistence DB core 9.1.2 (technical_cards + composition / unit / TechnicalCardOperationLine / stage results; soft tech_operation_id until 8.1.3; migration k2l3m4n5o678)", done: true },
+          { text: "Generate from order 9.2.1 (preview / generate / cancel draft / sync unit lines; eligible = PRODUCT)", done: true },
+          { text: "Composition on card 9.3.1 (model/pattern/material lines + soft Spec version apply until Stage 7)", done: true },
+          { text: "Unit lines API 9.3.2 (patch / bulk / replace / import / reset-defaults)", done: true },
+          { text: "Operation volumes API 9.3.3 (replace/patch/prefill soft until 8.1.3; no demo)", done: true },
+          { text: "Order ↔ tech cards UI 9.4.1 (gap #4 closed; owner visual 9.4.1.4 OK)", done: true },
+          { text: "Stage machine / order manufacturing completeness / full list-document UI (9.2.2, 9.4.2, 9.5 shipped; owner visual 9.4.1.4 OK; 9.4.2.7 pending)", done: true },
+          { text: "Placement: Production + Settings tech-cards nav (9.0.1/9.0.2); UI contract 9.0.3 (SL-TECH-CARDS-UI-v1); order gap #4 plan 9.0.4 + ship 9.4.1; settings page 9.6; print A4×2 18.3.8 still open", done: true }
         ]
       },
       {
         title: "10. Design, Production, Warehouse, Procurement, and Shipping",
         items: [
-          { text: "Design approvals and versioned layouts", done: false },
-          { text: "Production orders, batches, fact operations, scrap, and output", done: false },
+          { text: "Design approvals and versioned layouts (Stage 10 client-facing; shop Дизайн = 11.4)", done: false },
+          { text: "Production orders, batches, aggregate fact (11.1–11.2)", done: false },
+          { text: "Shop-floor modules platform + per-цех UIs (11.3–11.10) — fact on technical card", done: false },
           { text: "Warehouse nomenclature PT-04 /warehouse/stock — tree CRUD + list + settings redirects + остаток column/filter + owner visual OK (4.10.1–4.10.7); live ledger → 4.6.5", done: true },
           { text: "Warehouse movements, reserves, inventory, and finished-goods flow", done: false },
           { text: "Procurement requests, supplier orders, receipts, and returns", done: false },

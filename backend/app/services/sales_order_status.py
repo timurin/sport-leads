@@ -2,6 +2,10 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.models.sales import LeadEvent, LeadEventType, SalesOrder, SalesOrderStatus
+from app.services.order_manufacturing_completeness import (
+    OrderManufacturingIncompleteError,
+    require_manufacturing_complete_for_status,
+)
 
 
 class SalesOrderNotFoundError(RuntimeError):
@@ -20,6 +24,16 @@ _STATUS_ORDER = {
     SalesOrderStatus.SHIPPED: 4,
     SalesOrderStatus.COMPLETED: 5,
 }
+
+# Production-complete gates for Stage 3.4.2 / 9.5: READY+ means shop work done.
+# Reserve / payment / shipping docs in 3.4.2 must reuse the same helper.
+_REQUIRES_MANUFACTURING_COMPLETE = frozenset(
+    {
+        SalesOrderStatus.READY,
+        SalesOrderStatus.SHIPPED,
+        SalesOrderStatus.COMPLETED,
+    }
+)
 
 
 def update_sales_order_status(
@@ -47,6 +61,14 @@ def update_sales_order_status(
         raise InvalidSalesOrderStatusTransition(
             f"Cannot change status from {current_status.value} to {status.value}"
         )
+
+    if status in _REQUIRES_MANUFACTURING_COMPLETE:
+        try:
+            require_manufacturing_complete_for_status(
+                db, order_id, target_label=status.value
+            )
+        except OrderManufacturingIncompleteError as error:
+            raise InvalidSalesOrderStatusTransition(str(error)) from error
 
     order.status = status
     db.add(

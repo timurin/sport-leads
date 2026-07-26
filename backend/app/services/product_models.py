@@ -95,6 +95,20 @@ def _validate_product_type_link(db: Session, product_type_id: int | None) -> Non
         raise ProductModelValidationError("Вид изделия не найден")
 
 
+def _validate_routing_template_link(
+    db: Session, routing_template_id: int | None
+) -> None:
+    if routing_template_id is None:
+        return
+    from app.repositories import shop_routings as shop_routings_repo
+
+    template = shop_routings_repo.get_routing_template(db, routing_template_id)
+    if template is None:
+        raise ProductModelValidationError("Маршрут не найден")
+    if not template.is_active:
+        raise ProductModelValidationError("Нельзя назначить неактивный маршрут")
+
+
 def list_product_models(
     db: Session,
     search: str | None = None,
@@ -138,6 +152,7 @@ def create_product_model(db: Session, payload: ProductModelCreate) -> ProductMod
         _validate_size_grid_link(db, size_type=size_type, size_grid_id=None)
 
     _validate_product_type_link(db, payload.product_type_id)
+    _validate_routing_template_link(db, payload.default_routing_template_id)
 
     row = ProductModel(
         article=payload.article,
@@ -145,6 +160,7 @@ def create_product_model(db: Session, payload: ProductModelCreate) -> ProductMod
         size_type=size_type,
         size_grid_id=size_grid_id,
         product_type_id=payload.product_type_id,
+        default_routing_template_id=payload.default_routing_template_id,
         description=payload.description,
         patterns_path=payload.patterns_path,
         constructor_name=payload.constructor_name,
@@ -221,6 +237,8 @@ def update_product_model(db: Session, model_id: int, payload: ProductModelUpdate
 
     if "product_type_id" in changes:
         _validate_product_type_link(db, changes["product_type_id"])
+    if "default_routing_template_id" in changes:
+        _validate_routing_template_link(db, changes["default_routing_template_id"])
 
     repo.apply_product_model_updates(row, changes)
     summary = ", ".join(sorted(changes.keys()))
@@ -311,6 +329,7 @@ def copy_product_model(db: Session, model_id: int) -> ProductModel:
         size_type=source.size_type,
         size_grid_id=source.size_grid_id,
         product_type_id=source.product_type_id,
+        default_routing_template_id=source.default_routing_template_id,
         description=source.description,
         patterns_path=source.patterns_path,
         constructor_name=source.constructor_name,

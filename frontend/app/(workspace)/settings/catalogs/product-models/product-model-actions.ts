@@ -55,6 +55,7 @@ export type ProductModelRequisitesInput = {
   description: string | null;
   size_grid_id?: number | null;
   product_type_id?: number | null;
+  default_routing_template_id?: number | null;
   patterns_path?: string | null;
   constructor_name?: string | null;
   patterns_created_on?: string | null;
@@ -115,6 +116,9 @@ export async function updateProductModelRequisites(
         : {}),
       ...(payload.product_type_id !== undefined
         ? { product_type_id: payload.product_type_id }
+        : {}),
+      ...(payload.default_routing_template_id !== undefined
+        ? { default_routing_template_id: payload.default_routing_template_id }
         : {}),
       ...(payload.patterns_path !== undefined
         ? { patterns_path: payload.patterns_path?.trim() || null }

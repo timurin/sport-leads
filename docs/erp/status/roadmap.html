@@ -3095,33 +3095,35 @@
               {
                 code: "7.1.1",
                 title: "Specification architecture",
-                goal: "Define specification scope, versioning, and planning role before production start. Specification copies assembly operation lines from the order-item assembly-variant snapshot (not a live edit of the model master).",
+                goal: "Define Spec as plan+fact report document for 1С (from filled TC + execution; Spec↔ТК fix) — not a prerequisite for TC generate. Documents = link registry later.",
                 dependencies: [
                   "6.1.1",
                   "6.1.12",
                   "3.2.5",
-                  "6.3.7",
-                  "ADR-004"
+                  "6.3.5",
+                  "9.3.1",
+                  "ADR-004",
+                  "ADR-016"
                 ],
                 microtasks: [
                   {
                     code: "7.1.1.1",
-                    title: "Define specification entities and version lifecycle",
+                    title: "Define specification entities and version lifecycle (from TC / batch; plan draft vs plan+fact)",
                     done: false
                   },
                   {
                     code: "7.1.1.2",
-                    title: "Define material, accessory, norm, and substitute scope",
+                    title: "Define material/norm scope from TC composition (+ fact consumption binding)",
                     done: false
                   },
                   {
                     code: "7.1.1.3",
-                    title: "Define copy contract: assembly operations/costs from order-item variant snapshot into specification lines",
+                    title: "Define copy/read contract: TC plan + execution fact (ops/time/performers)",
                     done: false
                   },
                   {
                     code: "7.1.1.4",
-                    title: "Documentation checkpoint",
+                    title: "Documentation checkpoint (Documents = link index; no per-type contour)",
                     done: false
                   }
                 ]
@@ -3184,7 +3186,7 @@
               {
                 code: "7.2.2",
                 title: "Specification workspace and card",
-                goal: "Users can manage specifications in a dedicated frontend flow.",
+                goal: "Users can open Spec document (plan+fact blocks) on parent context; interim list OK until Documents filter. Rights-gated edit.",
                 dependencies: [
                   "7.2.1"
                 ],
@@ -3196,12 +3198,12 @@
                   },
                   {
                     code: "7.2.2.2",
-                    title: "Add workspace/list route",
+                    title: "Add workspace/list route (interim; later Documents filter)",
                     done: false
                   },
                   {
                     code: "7.2.2.3",
-                    title: "Add detail card and edit forms",
+                    title: "Add detail card (plan+fact blocks; rights-gated edit)",
                     done: false
                   },
                   {
@@ -3223,27 +3225,28 @@
               },
               {
                 code: "7.2.3",
-                title: "Link specifications to order context and product models",
-                goal: "Specification is formed for an order context: materials/norms plus a copied assembly-operation package from the selected model variant; model master remains unchanged when the specification is edited later.",
+                title: "Link specifications to technical card / order context",
+                goal: "Spec document from filled TC (plan) + execution fact; soft-link on TC optional after approve — not required for generate. Documents lists a link only.",
                 dependencies: [
                   "6.1.6",
                   "3.2.5",
+                  "9.3.1",
                   "7.2.1"
                 ],
                 microtasks: [
                   {
                     code: "7.2.3.1",
-                    title: "Add backend relation fields (order item / model / variant references as approved)",
+                    title: "Add backend relation fields (technical_card / order item / model / variant / batch)",
                     done: false
                   },
                   {
                     code: "7.2.3.2",
-                    title: "Add migration and schemas for specification operation lines (snapshot)",
+                    title: "Add migration and schemas for Spec material + operation (+ fact) lines",
                     done: false
                   },
                   {
                     code: "7.2.3.3",
-                    title: "Add service: copy assembly operations from order-item variant snapshot on specification create",
+                    title: "Add service: create Spec from TC plan; refresh fact blocks from execution",
                     done: false
                   },
                   {
@@ -3253,12 +3256,12 @@
                   },
                   {
                     code: "7.2.3.5",
-                    title: "Add workspace/card integration showing copied operations",
+                    title: "Add workspace/card integration showing plan+fact blocks",
                     done: false
                   },
                   {
                     code: "7.2.3.6",
-                    title: "Add regression tests (copy immutability vs later model-variant edits)",
+                    title: "Add regression tests (immutability vs later TC/model edits after Spec approve)",
                     done: false
                   }
                 ]
@@ -3269,6 +3272,7 @@
       },
       {
         title: "Stage 8 — Routings",
+        note: "Boundary amended 2026-07-26: ProductionStage (цех) ≠ TechOperation ≠ WorkCenter(equipment). Routing = sequence of цехов. Shop execution modules → Stage 11.3–11.10. Spec Stage 7 not hard dep. Planned 8.3 domain amend.",
         blocks: [
           {
             title: "8.1 — Domain and persistence",
@@ -3276,27 +3280,27 @@
               {
                 code: "8.1.1",
                 title: "Routing architecture",
-                goal: "Define shop-routing scope, work centers, quality checkpoints, and how they relate to Stage 6 assembly variants and Stage 7 specification snapshots for planned manufacturing.",
+                goal: "Define shop-routing scope, work centers, quality checkpoints vs Stage 6 assembly variants and Stage 9 TC snapshot (Spec outbound later).",
                 dependencies: [
                   "6.1.1",
                   "6.1.12",
-                  "7.2.3",
-                  "ADR-004"
+                  "ADR-004",
+                  "ADR-016"
                 ],
                 microtasks: [
                   {
                     code: "8.1.1.1",
-                    title: "Define routing entities and sequencing rules (distinct from AssemblyVariant)",
+                    title: "Define routing entities and sequencing rules (distinct from AssemblyVariant); stages reference TechOperation (8.1.3)",
                     done: false
                   },
                   {
                     code: "8.1.1.2",
-                    title: "Define links to models/assembly variants, specifications, and future production fact",
+                    title: "Define links to ProductModel default routing, TC snapshot / stage results, future production fact",
                     done: false
                   },
                   {
                     code: "8.1.1.3",
-                    title: "Documentation checkpoint",
+                    title: "Documentation checkpoint (ADR-017)",
                     done: false
                   }
                 ]
@@ -3322,6 +3326,42 @@
                   {
                     code: "8.1.2.3",
                     title: "Add schemas and backend regression tests",
+                    done: false
+                  }
+                ]
+              },
+              {
+                code: "8.1.3",
+                title: "Shop tech operations catalog (Тех операции)",
+                goal: "Flat TechOperation catalog with volume units for planned volumes on technical cards — distinct from Stage 6 SewingOperation (cost).",
+                dependencies: [
+                  "8.1.1",
+                  "ADR-014"
+                ],
+                microtasks: [
+                  {
+                    code: "8.1.3.1",
+                    title: "Domain: name, code, volume_unit (linear_meters|pieces), default stage kind; boundary vs SewingOperation",
+                    done: false
+                  },
+                  {
+                    code: "8.1.3.2",
+                    title: "Seed MVP: Сублимация, Термоперенос (м.п.); Пошив, ВТО, Упаковка (шт)",
+                    done: false
+                  },
+                  {
+                    code: "8.1.3.3",
+                    title: "DB + migration + schemas + API CRUD (settings/catalog; not Sewing ops UI)",
+                    done: false
+                  },
+                  {
+                    code: "8.1.3.4",
+                    title: "Bind TechOperation into routing template stage lines",
+                    done: false
+                  },
+                  {
+                    code: "8.1.3.5",
+                    title: "Regression tests + docs checkpoint",
                     done: false
                   }
                 ]
@@ -3392,7 +3432,8 @@
                   {
                     code: "8.2.2.6",
                     title: "Visual verification",
-                    done: false
+                    done: false,
+                    note: "owner pass pending; re-check after 8.3 routing UI"
                   }
                 ]
               },
@@ -3438,12 +3479,97 @@
                 ]
               }
             ]
+          },
+          {
+            title: "8.3 — Production stages (цеха) domain amend",
+            items: [
+              {
+                code: "8.3",
+                title: "ProductionStage catalog + routing/ops bind",
+                goal: "Separate цех (ProductionStage) from TechOperation and WorkCenter. Routing lines reference цеха; ops belong to цех; WorkCenter = equipment. Seed: Дизайн → Раскрой → Печать → Пошив → ВТО → ОТК → Упаковка. Unblocks 11.3–11.10.",
+                dependencies: [
+                  "8.2.1",
+                  "8.2.2",
+                  "8.2.3",
+                  "ADR-017"
+                ],
+                microtasks: [
+                  {
+                    code: "8.3.1",
+                    title: "Amend ADR-017: ProductionStage; TechOperation.production_stage_id; routing → production_stage_id",
+                    done: false
+                  },
+                  {
+                    code: "8.3.2",
+                    title: "Migration + seed 7 цехов; backfill routing / TC snapshots",
+                    done: false
+                  },
+                  {
+                    code: "8.3.3",
+                    title: "API + settings UI цехов; TechOperation bind; routing step = цех select; WorkCenter = Оборудование",
+                    done: false
+                  },
+                  {
+                    code: "8.3.4",
+                    title: "Wire generate / stage_results / op-volume prefill on production stage id",
+                    done: false
+                  },
+                  {
+                    code: "8.3.5",
+                    title: "Tests + docs; owner visual routings after amend (closes or supersedes 8.2.2.6)",
+                    done: false
+                  }
+                ]
+              }
+            ]
           }
         ]
       },
       {
         title: "Stage 9 — Технические карты (Technical Cards)",
+        note: "Owner ask 2026-07-26: Техкарты. Gates by цех (8.3 soft). Shop modules 11.3–11.10 — not full PT-07. 9.2.2+9.4.2+9.5.1 shipped; 9.4.1.4 OK. Planned 8.3; visuals 8.2.2.6/9.4.2.7; next 8.3 or 9.6.",
         blocks: [
+          {
+            title: "9.0 — Placement microtasks",
+            items: [
+              {
+                code: "9.0",
+                title: "Nav + settings placement and UI contract checkpoint",
+                goal: "Production tech-cards list/document routes; Administration tech-cards settings; UI contract confirmed before first UI build.",
+                dependencies: [
+                  "5.5.2",
+                  "5.5.7",
+                  "0.1.3"
+                ],
+                microtasks: [
+                  {
+                    code: "9.0.1",
+                    title: "Nav: Производство → Техкарты (/production/tech-cards); DS-SHELL-01/02 preserved",
+                    done: true,
+                    note: "v0.9.0 — navigation.ts + navigation.test.mjs; task v0.9.0-stage-9.0.1-production-tech-cards-nav.md"
+                  },
+                  {
+                    code: "9.0.2",
+                    title: "Settings nav: Администрирование → Техкарты (/settings/catalogs/tech-cards)",
+                    done: true,
+                    note: "v0.9.0 — navigation.ts + settings hub; task v0.9.0-stage-9.0.2-settings-tech-cards-nav.md"
+                  },
+                  {
+                    code: "9.0.3",
+                    title: "UI contract checkpoint: list / filters / toolbar / header / document / settings",
+                    done: true,
+                    note: "v0.9.0 — SL-TECH-CARDS-UI-v1; Excel/print align amend 2026-07-26 (hyphen numbering, op-volume block)"
+                  },
+                  {
+                    code: "9.0.4",
+                    title: "Order field-link gap #4 wiring plan in order-card-field-links.md → 9.4.1",
+                    done: true,
+                    note: "v0.9.0 — order-card-field-links.md § Gap #4; task v0.9.0-stage-9.0.4-order-tech-card-wiring.md"
+                  }
+                ]
+              }
+            ]
+          },
           {
             title: "9.1 — Domain and architecture",
             items: [
@@ -3460,58 +3586,67 @@
                 microtasks: [
                   {
                     code: "9.1.1.1",
-                    title: "Define eligible nomenclature types, one card per order line, numbering order/cardSeq",
-                    done: false
+                    title: "Define eligible nomenclature types, one card per order line, numbering orderNo-cardSeq",
+                    done: true,
+                    note: "v0.9.0 — ADR-016 §1; eligible PRODUCT MVP; hyphen amend 2026-07-26"
                   },
                   {
                     code: "9.1.1.2",
                     title: "Define unit lines matrix (quantity rows: size, personalization, number, …)",
-                    done: false
+                    done: true,
+                    note: "v0.9.0 — ADR-016 §2"
                   },
                   {
                     code: "9.1.1.3",
-                    title: "Snapshot vs live link policy for model, assembly variant, patterns, materials, routing",
-                    done: false
+                    title: "Snapshot vs live link policy for model, assembly, materials, routing, TechOperation volumes",
+                    done: true,
+                    note: "v0.9.0 — ADR-016 §3 (Excel/print align amend)"
                   },
                   {
                     code: "9.1.1.4",
                     title: "Order manufacturing completeness when all technical cards are terminal",
-                    done: false
+                    done: true,
+                    note: "v0.9.0 — ADR-016 §4"
                   },
                   {
                     code: "9.1.1.5",
                     title: "Documentation checkpoint (ADR-016)",
-                    done: false
+                    done: true,
+                    note: "v0.9.0 — ADR-016; amend task v0.9.0-tech-card-excel-roadmap-align.md"
                   }
                 ]
               },
               {
                 code: "9.1.2",
                 title: "Database core",
-                goal: "Persistent storage for header, composition, unit lines, and stage results.",
+                goal: "Persistent storage for header, composition, unit lines, operation volume lines, and stage results.",
                 dependencies: [
                   "9.1.1"
                 ],
                 microtasks: [
                   {
                     code: "9.1.2.1",
-                    title: "Add SQLAlchemy entities",
-                    done: false
+                    title: "Add SQLAlchemy entities (incl. TechnicalCardOperationLine)",
+                    done: true,
+                    note: "v0.9.0 — backend/app/models/technical_card.py; soft tech_operation_id until 8.1.3"
                   },
                   {
                     code: "9.1.2.2",
                     title: "Add Alembic migration",
-                    done: false
+                    done: true,
+                    note: "v0.9.0 — k2l3m4n5o678_add_technical_cards.py"
                   },
                   {
                     code: "9.1.2.3",
                     title: "Add Pydantic schemas",
-                    done: false
+                    done: true,
+                    note: "v0.9.0 — backend/app/schemas/technical_card.py"
                   },
                   {
                     code: "9.1.2.4",
                     title: "Add backend regression tests",
-                    done: false
+                    done: true,
+                    note: "v0.9.0 — tests/test_technical_cards_9_1_2.py (4 passed); task v0.9.0-stage-9.1.2-tech-card-db-core.md"
                   }
                 ]
               }
@@ -3531,22 +3666,26 @@
                   {
                     code: "9.2.1.1",
                     title: "Service create/prefill from templates",
-                    done: false
+                    done: true,
+                    note: "v0.9.0 — services/technical_cards.py; Spec/routing/op-volume empty until 7/8/8.1.3"
                   },
                   {
                     code: "9.2.1.2",
                     title: "Sync unit lines with order line quantity",
-                    done: false
+                    done: true,
+                    note: "v0.9.0 — sync_unit_lines"
                   },
                   {
                     code: "9.2.1.3",
                     title: "API generate, preview, cancel draft",
-                    done: false
+                    done: true,
+                    note: "v0.9.0 — api/technical_cards.py"
                   },
                   {
                     code: "9.2.1.4",
                     title: "Regression tests",
-                    done: false
+                    done: true,
+                    note: "v0.9.0 — tests/test_technical_cards_9_2_1.py (3 passed); task v0.9.0-stage-9.2.1-tech-card-generate.md"
                   }
                 ]
               },
@@ -3566,7 +3705,7 @@
                   },
                   {
                     code: "9.2.2.2",
-                    title: "Stage gates",
+                    title: "Stage gates (op-volume rows do not bypass gate)",
                     done: false
                   },
                   {
@@ -3601,17 +3740,20 @@
                   {
                     code: "9.3.1.1",
                     title: "Persist model, pattern, material lines",
-                    done: false
+                    done: true,
+                    note: "v0.9.0 — composition replace + PATTERN seed from patterns_path"
                   },
                   {
                     code: "9.3.1.2",
                     title: "Apply approved specification version",
-                    done: false
+                    done: true,
+                    note: "v0.9.0 — soft explicit snapshot + version stamp until Stage 7"
                   },
                   {
                     code: "9.3.1.3",
                     title: "API and regression tests",
-                    done: false
+                    done: true,
+                    note: "v0.9.0 — tests/test_technical_cards_9_3_1.py; task v0.9.0-stage-9.3.1-tech-card-composition.md"
                   }
                 ]
               },
@@ -3625,22 +3767,61 @@
                   {
                     code: "9.3.2.1",
                     title: "Define unit line fields and validation",
-                    done: false
+                    done: true,
+                    note: "v0.9.0 — size, personalization, print_number, color, notes"
                   },
                   {
                     code: "9.3.2.2",
                     title: "Defaults from order line vs per-row edit",
-                    done: false
+                    done: true,
+                    note: "v0.9.0 — reset-defaults + generate/sync defaults"
                   },
                   {
                     code: "9.3.2.3",
                     title: "API and bulk edit/import hooks",
-                    done: false
+                    done: true,
+                    note: "v0.9.0 — unit-lines list/patch/put/bulk/import/reset"
                   },
                   {
                     code: "9.3.2.4",
                     title: "Regression tests",
-                    done: false
+                    done: true,
+                    note: "v0.9.0 — tests/test_technical_cards_9_3_2.py; task v0.9.0-stage-9.3.2-tech-card-unit-lines.md"
+                  }
+                ]
+              },
+              {
+                code: "9.3.3",
+                title: "Operation volumes on card",
+                goal: "TechOperation volume rows snapshotted from Stage 8; manager edits volumes; bound to stages. Prefill empty OK until 8.1.3 ships (no demo).",
+                dependencies: [
+                  "9.2.1",
+                  "8.1.3"
+                ],
+                microtasks: [
+                  {
+                    code: "9.3.3.1",
+                    title: "Persist op-volume lines (snapshot name/unit, volume Decimal, stage binding)",
+                    done: true,
+                    note: "v0.9.0 — model from 9.1.2 + replace API"
+                  },
+                  {
+                    code: "9.3.3.2",
+                    title: "Prefill from routing/TechOperation on generate; manager adjusts volumes",
+                    done: true,
+                    note: "v0.9.0 — soft empty until tech_operations table; no demo"
+                  },
+                  {
+                    code: "9.3.3.3",
+                    title: "API + validation (unit matches catalog; stage order stable)",
+                    done: true,
+                    note: "v0.9.0 — draft replace; volume patch; unique stage_order"
+                  },
+                  {
+                    code: "9.3.3.4",
+                    title: "Regression tests",
+                    done: true,
+                    note: "v0.9.0 — tests/test_technical_cards_9_3_3.py; task v0.9.0-stage-9.3.3-tech-card-op-volumes.md"
                   }
                 ]
               }
@@ -3651,53 +3832,84 @@
             items: [
               {
                 code: "9.4.1",
-                title: "Sales order integration",
+                title: "Sales order integration (field-link gap #4)",
+                goal: "Order card links/status for technical cards; closes order-card-field-links.md gap #4.",
                 dependencies: [
-                  "9.2.1"
+                  "9.0.4",
+                  "9.2.1",
+                  "3.5"
                 ],
                 microtasks: [
                   {
                     code: "9.4.1.1",
-                    title: "Order tab: technical cards per line",
-                    done: false
+                    title: "Order detail: per-line technical card link + status summary",
+                    done: true,
+                    note: "v0.9.0 — sales-order-tech-cards-panel.tsx + order-tech-cards.ts; items mode shows strip"
                   },
                   {
                     code: "9.4.1.2",
-                    title: "Generate and open list actions",
-                    done: false
+                    title: "Actions: generate cards; open list filtered by orderId",
+                    done: true,
+                    note: "v0.9.0 — order-tech-card-actions.ts; /production/tech-cards?orderId= stub"
                   },
                   {
                     code: "9.4.1.3",
-                    title: "Visual verification",
-                    done: false
+                    title: "Update order-card-field-links.md gap #4 evidence when shipped",
+                    done: true,
+                    note: "v0.9.0 — order-card-field-links.md § Gap #4 shipped"
+                  },
+                  {
+                    code: "9.4.1.4",
+                    title: "Visual verification on order card host",
+                    done: true,
+                    note: "v0.9.0 — owner OK 2026-07-26; DS-SHELL-01/02 preserved; task v0.9.0-stage-9.4.1-order-tech-cards-ui.md"
                   }
                 ]
               },
               {
                 code: "9.4.2",
                 title: "Technical card list and document card",
+                goal: "PT-02 list + PT-07 document per Stage 9 UI contract.",
                 dependencies: [
+                  "9.0.1",
+                  "9.0.3",
                   "9.2.2",
-                  "9.3.2"
+                  "9.3.2",
+                  "9.3.3"
                 ],
                 microtasks: [
                   {
                     code: "9.4.2.1",
-                    title: "List route with filters",
+                    title: "List route /production/tech-cards (PT-02 columns)",
                     done: false
                   },
                   {
                     code: "9.4.2.2",
-                    title: "Document card with unit lines and stage timeline",
+                    title: "Filters: status, stage, order, period",
                     done: false
                   },
                   {
                     code: "9.4.2.3",
-                    title: "Stage actions UI",
+                    title: "Toolbar: search / filter / print; generate-from-order",
                     done: false
                   },
                   {
                     code: "9.4.2.4",
+                    title: "Document route /production/tech-cards/[id] header (PT-07)",
+                    done: false
+                  },
+                  {
+                    code: "9.4.2.5",
+                    title: "Document body: composition + unit lines + Операции/объёмы + stage timeline + history",
+                    done: false
+                  },
+                  {
+                    code: "9.4.2.6",
+                    title: "Stage actions UI; loading and error states",
+                    done: false
+                  },
+                  {
+                    code: "9.4.2.7",
                     title: "Frontend regression tests and visual verification",
                     done: false
                   }
@@ -3719,16 +3931,61 @@
                   {
                     code: "9.5.1.1",
                     title: "Service: order completeness from technical cards",
-                    done: false
+                    done: true,
+                    note: "v0.9.0 — order_manufacturing_completeness + GET .../manufacturing-completeness"
                   },
                   {
                     code: "9.5.1.2",
                     title: "Integrate with order execution workflow",
-                    done: false
+                    done: true,
+                    note: "v0.9.0 — READY/SHIPPED/COMPLETED gated; 3.4.2 reuses helper"
                   },
                   {
                     code: "9.5.1.3",
                     title: "Documentation and regression tests",
+                    done: true,
+                    note: "v0.9.0 — test_technical_cards_9_5_1.py (3 passed)"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            title: "9.6 — Administration settings (Техкарты)",
+            items: [
+              {
+                code: "9.6",
+                title: "Administration → Техкарты settings",
+                goal: "Eligible types, numbering, default unit-line fields, stage label binding; not Stage 18 platform directories.",
+                dependencies: [
+                  "9.0.2",
+                  "9.1.1",
+                  "8.2.3"
+                ],
+                microtasks: [
+                  {
+                    code: "9.6.1",
+                    title: "Domain settings: eligible types, numbering orderNo-cardSeq default, unit-line fields; no TechOperation CRUD (8.1.3)",
+                    done: false
+                  },
+                  {
+                    code: "9.6.2",
+                    title: "Persist settings (model/migration/schemas per ADR-016)",
+                    done: false
+                  },
+                  {
+                    code: "9.6.3",
+                    title: "Settings UI at /settings/catalogs/tech-cards",
+                    done: false
+                  },
+                  {
+                    code: "9.6.4",
+                    title: "Wire generate/prefill to settings defaults",
+                    done: false
+                  },
+                  {
+                    code: "9.6.5",
+                    title: "Regression tests + docs checkpoint",
                     done: false
                   }
                 ]
@@ -3739,6 +3996,7 @@
       },
       {
         title: "Stage 10 — Design and Approval",
+        note: "Client-facing design/approval. Shop-floor Дизайн execution on TC = 11.4 (not duplicate).",
         blocks: [
           {
             title: "10.1 — Design assets and comments",
@@ -3774,6 +4032,7 @@
       },
       {
         title: "Stage 11 — Production",
+        note: "11.1 planning; 11.2 aggregate fact; 11.3–11.10 shop modules per цех (Дизайн→Раскрой→Печать→Пошив→ВТО→ОТК→Упаковка). Each module writes fact on TC; deps 8.3, 9.2.2, 9.4.2.",
         blocks: [
           {
             title: "11.1 — Production planning",
@@ -3785,7 +4044,7 @@
               },
               {
                 code: "11.1.2",
-                title: "Planning and work-center assignment",
+                title: "Planning and equipment / WorkCenter assignment (not цех)",
                 done: false
               }
             ]
@@ -3795,13 +4054,336 @@
             items: [
               {
                 code: "11.2.1",
-                title: "Operations, performers, output, and scrap",
+                title: "Aggregated operations/performers/output/scrap; detailed per-цех in 11.4–11.10",
                 done: false
               },
               {
                 code: "11.2.2",
-                title: "Quality control and released finished goods",
+                title: "Quality control release and finished goods (complements 11.9 ОТК)",
                 done: false
+              }
+            ]
+          },
+          {
+            title: "11.3 — Shop module platform (shared)",
+            items: [
+              {
+                code: "11.3",
+                title: "Shared shell for цеховые модули",
+                goal: "Nav, TC queue by current ProductionStage, open TC, enforce 9.2.2 gates.",
+                dependencies: [
+                  "8.3",
+                  "9.2.2",
+                  "9.4.2"
+                ],
+                microtasks: [
+                  {
+                    code: "11.3.1",
+                    title: "Contract: shop module vs TC vs Stage 10 client design",
+                    done: false
+                  },
+                  {
+                    code: "11.3.2",
+                    title: "Nav placeholders under Производство (DS-SHELL data only)",
+                    done: false
+                  },
+                  {
+                    code: "11.3.3",
+                    title: "Shared queue / list shell by current stage",
+                    done: false
+                  },
+                  {
+                    code: "11.3.4",
+                    title: "Open TC + stage context; no gate bypass",
+                    done: false
+                  },
+                  {
+                    code: "11.3.5",
+                    title: "Tests + docs checkpoint",
+                    done: false
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            title: "11.4 — Shop module: Дизайн",
+            items: [
+              {
+                code: "11.4",
+                title: "Цех Дизайн on technical card",
+                dependencies: [
+                  "11.3",
+                  "8.3"
+                ],
+                microtasks: [
+                  {
+                    code: "11.4.1",
+                    title: "Domain fact fields",
+                    done: false
+                  },
+                  {
+                    code: "11.4.2",
+                    title: "API write fact on TC",
+                    done: false
+                  },
+                  {
+                    code: "11.4.3",
+                    title: "UI workspace",
+                    done: false
+                  },
+                  {
+                    code: "11.4.4",
+                    title: "Bind when current stage = Дизайн",
+                    done: false
+                  },
+                  {
+                    code: "11.4.5",
+                    title: "Tests + owner visual",
+                    done: false
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            title: "11.5 — Shop module: Раскрой",
+            items: [
+              {
+                code: "11.5",
+                title: "Цех Раскрой on technical card",
+                dependencies: [
+                  "11.3",
+                  "8.3"
+                ],
+                microtasks: [
+                  {
+                    code: "11.5.1",
+                    title: "Domain fact fields",
+                    done: false
+                  },
+                  {
+                    code: "11.5.2",
+                    title: "API write fact on TC",
+                    done: false
+                  },
+                  {
+                    code: "11.5.3",
+                    title: "UI workspace",
+                    done: false
+                  },
+                  {
+                    code: "11.5.4",
+                    title: "Bind when current stage = Раскрой",
+                    done: false
+                  },
+                  {
+                    code: "11.5.5",
+                    title: "Tests + owner visual",
+                    done: false
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            title: "11.6 — Shop module: Печать",
+            items: [
+              {
+                code: "11.6",
+                title: "Цех Печать on technical card (ops + equipment)",
+                dependencies: [
+                  "11.3",
+                  "8.3",
+                  "8.1.3"
+                ],
+                microtasks: [
+                  {
+                    code: "11.6.1",
+                    title: "Domain fact fields (op, WorkCenter, volumes)",
+                    done: false
+                  },
+                  {
+                    code: "11.6.2",
+                    title: "API write fact on TC",
+                    done: false
+                  },
+                  {
+                    code: "11.6.3",
+                    title: "UI workspace",
+                    done: false
+                  },
+                  {
+                    code: "11.6.4",
+                    title: "Bind when current stage = Печать",
+                    done: false
+                  },
+                  {
+                    code: "11.6.5",
+                    title: "Tests + owner visual",
+                    done: false
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            title: "11.7 — Shop module: Пошив",
+            items: [
+              {
+                code: "11.7",
+                title: "Цех Пошив on technical card",
+                dependencies: [
+                  "11.3",
+                  "8.3"
+                ],
+                microtasks: [
+                  {
+                    code: "11.7.1",
+                    title: "Domain fact fields",
+                    done: false
+                  },
+                  {
+                    code: "11.7.2",
+                    title: "API write fact on TC",
+                    done: false
+                  },
+                  {
+                    code: "11.7.3",
+                    title: "UI workspace",
+                    done: false
+                  },
+                  {
+                    code: "11.7.4",
+                    title: "Bind when current stage = Пошив",
+                    done: false
+                  },
+                  {
+                    code: "11.7.5",
+                    title: "Tests + owner visual",
+                    done: false
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            title: "11.8 — Shop module: ВТО",
+            items: [
+              {
+                code: "11.8",
+                title: "Цех ВТО on technical card",
+                dependencies: [
+                  "11.3",
+                  "8.3"
+                ],
+                microtasks: [
+                  {
+                    code: "11.8.1",
+                    title: "Domain fact fields",
+                    done: false
+                  },
+                  {
+                    code: "11.8.2",
+                    title: "API write fact on TC",
+                    done: false
+                  },
+                  {
+                    code: "11.8.3",
+                    title: "UI workspace",
+                    done: false
+                  },
+                  {
+                    code: "11.8.4",
+                    title: "Bind when current stage = ВТО",
+                    done: false
+                  },
+                  {
+                    code: "11.8.5",
+                    title: "Tests + owner visual",
+                    done: false
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            title: "11.9 — Shop module: ОТК",
+            items: [
+              {
+                code: "11.9",
+                title: "Цех ОТК on technical card",
+                dependencies: [
+                  "11.3",
+                  "8.3"
+                ],
+                microtasks: [
+                  {
+                    code: "11.9.1",
+                    title: "Domain fact fields (pass/fail, scrap)",
+                    done: false
+                  },
+                  {
+                    code: "11.9.2",
+                    title: "API write fact on TC",
+                    done: false
+                  },
+                  {
+                    code: "11.9.3",
+                    title: "UI workspace",
+                    done: false
+                  },
+                  {
+                    code: "11.9.4",
+                    title: "Bind when current stage = ОТК",
+                    done: false
+                  },
+                  {
+                    code: "11.9.5",
+                    title: "Tests + owner visual",
+                    done: false
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            title: "11.10 — Shop module: Упаковка",
+            items: [
+              {
+                code: "11.10",
+                title: "Цех Упаковка on technical card",
+                dependencies: [
+                  "11.3",
+                  "8.3"
+                ],
+                microtasks: [
+                  {
+                    code: "11.10.1",
+                    title: "Domain fact fields",
+                    done: false
+                  },
+                  {
+                    code: "11.10.2",
+                    title: "API write fact on TC",
+                    done: false
+                  },
+                  {
+                    code: "11.10.3",
+                    title: "UI workspace",
+                    done: false
+                  },
+                  {
+                    code: "11.10.4",
+                    title: "Bind when current stage = Упаковка",
+                    done: false
+                  },
+                  {
+                    code: "11.10.5",
+                    title: "Tests + owner visual",
+                    done: false
+                  }
+                ]
               }
             ]
           }
@@ -4187,6 +4769,11 @@
               {
                 code: "18.3.7",
                 title: "Documentation checkpoint (ADR or domain note) and regression tests",
+                done: false
+              },
+              {
+                code: "18.3.8",
+                title: "Technical card print «Техкарта A4 ×2» (Side1 header+mockup+sizes; Side2 materials+op volumes); Excel = print visual SoT",
                 done: false
               }
             ]

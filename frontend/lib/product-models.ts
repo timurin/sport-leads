@@ -10,6 +10,7 @@ export type ProductModel = {
   size_grid_id: number | null;
   product_type_id: number | null;
   product_type_name?: string | null;
+  default_routing_template_id: number | null;
   description: string | null;
   patterns_path: string | null;
   constructor_name: string | null;
@@ -137,6 +138,7 @@ export type ProductModelRequisitesDraft = ProductModelCreateDraft & {
   /** `YYYY-MM-DD` or empty string when unset. */
   patterns_created_on: string;
   product_type_id: number | null;
+  default_routing_template_id: number | null;
 };
 
 export const MODEL_OPERATIONS_WARNING =
@@ -154,6 +156,7 @@ export function toProductModelRequisitesDraft(
     | "constructor_name"
     | "patterns_created_on"
     | "product_type_id"
+    | "default_routing_template_id"
   >,
 ): ProductModelRequisitesDraft {
   return {
@@ -166,6 +169,7 @@ export function toProductModelRequisitesDraft(
     constructor_name: model.constructor_name ?? "",
     patterns_created_on: model.patterns_created_on ?? "",
     product_type_id: model.product_type_id,
+    default_routing_template_id: model.default_routing_template_id,
   };
 }
 
@@ -182,6 +186,7 @@ export function isProductModelRequisitesDirty(
     | "constructor_name"
     | "patterns_created_on"
     | "product_type_id"
+    | "default_routing_template_id"
   >,
   draft: ProductModelRequisitesDraft,
 ): boolean {
@@ -194,7 +199,8 @@ export function isProductModelRequisitesDirty(
     draft.patterns_path !== (model.patterns_path ?? "") ||
     draft.constructor_name !== (model.constructor_name ?? "") ||
     draft.patterns_created_on !== (model.patterns_created_on ?? "") ||
-    draft.product_type_id !== model.product_type_id
+    draft.product_type_id !== model.product_type_id ||
+    draft.default_routing_template_id !== model.default_routing_template_id
   );
 }
 

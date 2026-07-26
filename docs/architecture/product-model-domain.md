@@ -113,7 +113,7 @@ No separate lead-model master. Reuse the same `ProductModel` catalog when lead c
 
 ### 5.4 Specification (Stage 7)
 
-Spec copies assembly operation lines from the **order-item assembly-variant snapshot**. Spec does not live-edit `ProductModel` / `AssemblyVariant` master.
+Spec is a **document report** (plan + fact in one form) for 1С batch cost reporting. Plan blocks copy/read assembly and composition from the **order-item / TC snapshots**. Fact blocks bind execution (materials spent, ops done, time, performers). Spec does not live-edit `ProductModel` / `AssemblyVariant` master. Documents registry lists a link only (ADR-004).
 
 ### 5.5 Technical card (Stage 9 / ADR-016)
 

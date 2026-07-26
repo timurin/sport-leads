@@ -1,5 +1,6 @@
 import {
   Building2,
+  ClipboardList,
   Factory,
   FolderCog,
   MapPin,
@@ -131,6 +132,39 @@ const settingsGroups = [
         description: "Справочник операций и стоимостей",
         href: "/settings/catalogs/sewing_operations",
         icon: Settings2,
+      },
+    ],
+  },
+  {
+    title: "Производство",
+    description: "Технологические операции и маршруты производства",
+    icon: Factory,
+    items: [
+      {
+        title: "Тех операции",
+        description: "Справочник операций для маршрутов и техкарт",
+        href: "/settings/catalogs/tech-operations",
+        icon: Settings2,
+      },
+      {
+        title: "Маршруты",
+        description: "Шаблоны маршрутов с этапами и рабочими центрами",
+        href: "/settings/catalogs/routings",
+        icon: Settings2,
+      },
+    ],
+  },
+  {
+    title: "Техкарты",
+    description:
+      "Параметры технических карт производства (нумерация, поля поштучных строк, привязка участков)",
+    icon: ClipboardList,
+    items: [
+      {
+        title: "Техкарты",
+        description: "Настройки раздела технических карт",
+        href: "/settings/catalogs/tech-cards",
+        icon: ClipboardList,
       },
     ],
   },

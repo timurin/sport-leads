@@ -80,6 +80,11 @@ class ProductModel(Base):
         nullable=True,
         index=True,
     )
+    default_routing_template_id: Mapped[int | None] = mapped_column(
+        ForeignKey("shop_routing_templates.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
     constructor_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
     patterns_created_on: Mapped[date | None] = mapped_column(Date, nullable=True)
     cover_image_url: Mapped[str | None] = mapped_column(String(500), nullable=True)

@@ -12,6 +12,7 @@ import {
   parseProductModelRouteId,
   toProductModelVersionViews,
 } from "@/lib/product-models";
+import { getShopRoutings } from "@/lib/shop-routings";
 import { getSewingOperations } from "@/lib/sewing-operations";
 import { getProductTypes } from "@/lib/product-types";
 import { getSizeGrids } from "@/lib/size-grids";
@@ -51,6 +52,7 @@ export default async function ProductModelRoute({
     sewingOperations,
     sizeGrids,
     productTypes,
+    shopRoutings,
   ] = await Promise.all([
     getProductModelVersions(id),
     getProductModelMedia(id),
@@ -59,6 +61,7 @@ export default async function ProductModelRoute({
     getSewingOperations({ limit: 500 }),
     getSizeGrids(),
     getProductTypes(),
+    getShopRoutings({ active_only: true, limit: 500 }),
   ]);
 
   return (
@@ -71,6 +74,7 @@ export default async function ProductModelRoute({
       sewingOperations={sewingOperations}
       sizeGrids={sizeGrids}
       productTypes={productTypes}
+      shopRoutings={shopRoutings}
       initialEditing={initialEditing}
     />
   );

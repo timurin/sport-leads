@@ -47,6 +47,7 @@ import {
   type ProductModelVersionView,
 } from "@/lib/product-models";
 import type { SewingOperation } from "@/lib/sewing-operations";
+import type { ShopRoutingTemplate } from "@/lib/shop-routings";
 import type { ProductType } from "@/lib/product-types";
 import type { SizeGridListItem } from "@/lib/size-grids";
 
@@ -64,6 +65,7 @@ export function ProductModelPersistentCard({
   sewingOperations,
   sizeGrids,
   productTypes,
+  shopRoutings,
   initialEditing = false,
 }: {
   model: ProductModel;
@@ -75,6 +77,7 @@ export function ProductModelPersistentCard({
   sewingOperations: SewingOperation[];
   sizeGrids: SizeGridListItem[];
   productTypes: ProductType[];
+  shopRoutings: ShopRoutingTemplate[];
   initialEditing?: boolean;
 }) {
   const router = useRouter();
@@ -137,6 +140,31 @@ export function ProductModelPersistentCard({
     }
     return active;
   }, [linkedProductType, productTypes]);
+  const linkedDefaultRouting = useMemo(() => {
+    const routingId =
+      editing && draft
+        ? draft.default_routing_template_id
+        : current.default_routing_template_id;
+    if (routingId == null) return null;
+    return shopRoutings.find((row) => row.id === routingId) ?? null;
+  }, [
+    current.default_routing_template_id,
+    draft,
+    editing,
+    shopRoutings,
+  ]);
+  const shopRoutingOptions = useMemo(() => {
+    const active = shopRoutings.filter((row) => row.is_active);
+    if (
+      linkedDefaultRouting &&
+      !active.some((row) => row.id === linkedDefaultRouting.id)
+    ) {
+      return [...active, linkedDefaultRouting].sort((a, b) =>
+        a.name.localeCompare(b.name, "ru"),
+      );
+    }
+    return active;
+  }, [linkedDefaultRouting, shopRoutings]);
   const historySummary =
     history.length === 0
       ? "Записей пока нет"
@@ -311,6 +339,7 @@ export function ProductModelPersistentCard({
         constructor_name: draft.constructor_name || null,
         patterns_created_on: draft.patterns_created_on || null,
         product_type_id: draft.product_type_id,
+        default_routing_template_id: draft.default_routing_template_id,
       });
       setCurrent(updated);
       setEditing(false);
@@ -695,6 +724,32 @@ export function ProductModelPersistentCard({
                           ))}
                         </Select>
                       </Field>
+                      <Field label="Маршрут по умолчанию" className="min-w-0">
+                        <Select
+                          value={
+                            draft.default_routing_template_id == null
+                              ? ""
+                              : String(draft.default_routing_template_id)
+                          }
+                          size="compact"
+                          disabled={busy}
+                          onChange={(event) => {
+                            const raw = event.target.value;
+                            setDraft({
+                              ...draft,
+                              default_routing_template_id: raw ? Number(raw) : null,
+                            });
+                          }}
+                          aria-label="Маршрут по умолчанию"
+                        >
+                          <option value="">Не указан</option>
+                          {shopRoutingOptions.map((row) => (
+                            <option key={row.id} value={row.id}>
+                              {row.name}
+                            </option>
+                          ))}
+                        </Select>
+                      </Field>
                     </div>
                   </div>
                 ) : (
@@ -834,6 +889,25 @@ export function ProductModelPersistentCard({
                         {linkedProductType || current.product_type_name?.trim() ? (
                           <p className="mt-1 text-portal-body font-semibold text-portal-text">
                             {linkedProductType?.name ?? current.product_type_name}
+                          </p>
+                        ) : (
+                          <p className="mt-1 text-portal-body text-portal-muted">
+                            Не указан
+                          </p>
+                        )}
+                      </div>
+                      <div className="min-w-0 border-l-2 border-portal-border pl-portal-3">
+                        <p className="text-portal-caption font-medium text-portal-muted">
+                          Маршрут по умолчанию
+                        </p>
+                        {linkedDefaultRouting ? (
+                          <p className="mt-1 text-portal-body font-semibold text-portal-text">
+                            <Link
+                              href={`/settings/catalogs/routings/${linkedDefaultRouting.id}`}
+                              className="text-portal-primary hover:underline"
+                            >
+                              {linkedDefaultRouting.name}
+                            </Link>
                           </p>
                         ) : (
                           <p className="mt-1 text-portal-body text-portal-muted">

@@ -54,7 +54,9 @@ export function getOrderCardSectionVisibility(mode: OrderCardViewMode): OrderCar
       comments: false,
       tasks: false,
       communication: false,
-      ...hiddenExtras,
+      documents: false,
+      // Gap #4: line-adjacent tech-card strip next to Товары (`9.4.1.1`)
+      techCards: true,
     };
   }
   if (mode === "communication") {
