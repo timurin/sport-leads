@@ -217,3 +217,30 @@ export function canMoveCategorySibling(
   );
   return planSiblingReorder(siblings, categoryId, direction) != null;
 }
+
+/**
+ * Windows-like folder tree: only show a row when every ancestor is expanded.
+ * Default `expandedIds` empty → only root folders visible.
+ */
+export function visibleCategoryTreeRows(
+  rows: CategoryTreeRow[],
+  expandedIds: ReadonlySet<number>,
+): CategoryTreeRow[] {
+  const byId = new Map(
+    rows.map((row) => [row.category.id, row.category] as const),
+  );
+  const hidden = new Set<number>();
+
+  for (const row of rows) {
+    let parentId = row.category.parent_id;
+    while (parentId != null) {
+      if (!expandedIds.has(parentId) || hidden.has(parentId)) {
+        hidden.add(row.category.id);
+        break;
+      }
+      parentId = byId.get(parentId)?.parent_id ?? null;
+    }
+  }
+
+  return rows.filter((row) => !hidden.has(row.category.id));
+}

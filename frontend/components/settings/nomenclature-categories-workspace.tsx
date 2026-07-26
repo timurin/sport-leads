@@ -5,6 +5,9 @@ import {
   ArrowUp,
   ChevronDown,
   ChevronRight,
+  Folder,
+  FolderOpen,
+  Pencil,
   Plus,
 } from "lucide-react";
 import { useMemo, useState, useTransition } from "react";
@@ -43,9 +46,10 @@ import {
   categoryPathFromMap,
   filterCategoryTreeRows,
   parentCategoryOptions,
+  visibleCategoryTreeRows,
 } from "@/lib/nomenclature-category-tree";
 
-/** Indented tree-table + CRUD for categories directory (`4.9.2` / `4.9.3`). */
+/** Indented folder tree + CRUD for categories directory (`4.9.2` / `4.9.3` / `4.9.5`). */
 export function NomenclatureCategoriesWorkspace({
   categories,
 }: {
@@ -60,7 +64,8 @@ export function NomenclatureCategoriesWorkspace({
     null,
   );
   const [createParentId, setCreateParentId] = useState<number | null>(null);
-  const [collapsedIds, setCollapsedIds] = useState<Set<number>>(
+  /** Empty by default → all folders collapsed (roots only). */
+  const [expandedIds, setExpandedIds] = useState<Set<number>>(
     () => new Set(),
   );
   const [actionError, setActionError] = useState<string | null>(null);
@@ -80,20 +85,24 @@ export function NomenclatureCategoriesWorkspace({
     [query, treeRows],
   );
 
-  const visibleRows = useMemo(() => {
-    const hidden = new Set<number>();
+  const effectiveExpandedIds = useMemo(() => {
+    if (!query.trim()) {
+      return expandedIds;
+    }
+    // Search keeps ancestors in filteredRows — open folders on that path.
+    const next = new Set(expandedIds);
     for (const row of filteredRows) {
-      let parentId = row.category.parent_id;
-      while (parentId != null) {
-        if (collapsedIds.has(parentId) || hidden.has(parentId)) {
-          hidden.add(row.category.id);
-          break;
-        }
-        parentId = byId.get(parentId)?.parent_id ?? null;
+      if (row.hasChildren) {
+        next.add(row.category.id);
       }
     }
-    return filteredRows.filter((row) => !hidden.has(row.category.id));
-  }, [byId, collapsedIds, filteredRows]);
+    return next;
+  }, [expandedIds, filteredRows, query]);
+
+  const visibleRows = useMemo(
+    () => visibleCategoryTreeRows(filteredRows, effectiveExpandedIds),
+    [effectiveExpandedIds, filteredRows],
+  );
 
   const editing = categories.find((item) => item.id === editingId) ?? null;
   const parentOptions = useMemo(
@@ -111,8 +120,8 @@ export function NomenclatureCategoriesWorkspace({
     closeEdit();
   };
 
-  const toggleCollapsed = (id: number) => {
-    setCollapsedIds((current) => {
+  const toggleExpanded = (id: number) => {
+    setExpandedIds((current) => {
       const next = new Set(current);
       if (next.has(id)) {
         next.delete(id);
@@ -127,6 +136,11 @@ export function NomenclatureCategoriesWorkspace({
     setSelectedId(parentId);
     setCreateParentId(parentId);
     setCreateKind("category");
+    setExpandedIds((current) => {
+      const next = new Set(current);
+      next.add(parentId);
+      return next;
+    });
   };
 
   const onCreateKindChange = (kind: NomenclatureCreateKind | null) => {
@@ -258,7 +272,7 @@ export function NomenclatureCategoriesWorkspace({
             <Input
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              placeholder="Поиск по номеру, коду или названию"
+              placeholder="Поиск по названию"
               className="min-w-0 w-full md:min-w-56 md:flex-1"
               aria-label="Поиск категорий"
             />
@@ -279,24 +293,24 @@ export function NomenclatureCategoriesWorkspace({
           ) : null}
 
           <DataTableFrame className="rounded-none border-x-0 border-b-0 shadow-none">
-            <DataTable minWidthClassName="min-w-[820px]">
+            <DataTable minWidthClassName="min-w-[640px]">
               <DataTableHead>
                 <tr>
-                  <DataTableHeaderCell className="w-24">№</DataTableHeaderCell>
                   <DataTableHeaderCell>Категория</DataTableHeaderCell>
-                  <DataTableHeaderCell>Код</DataTableHeaderCell>
                   <DataTableHeaderCell>Тип</DataTableHeaderCell>
                   <DataTableHeaderCell>Статус</DataTableHeaderCell>
-                  <DataTableHeaderCell className="w-40">
+                  <DataTableHeaderCell className="w-28">
                     Порядок
                   </DataTableHeaderCell>
-                  <DataTableHeaderCell>Действие</DataTableHeaderCell>
+                  <DataTableHeaderCell className="w-28">
+                    Действие
+                  </DataTableHeaderCell>
                 </tr>
               </DataTableHead>
               <DataTableBody>
                 {visibleRows.map((row) => {
-                  const { category, depth, outline, hasChildren } = row;
-                  const collapsed = collapsedIds.has(category.id);
+                  const { category, depth, hasChildren } = row;
+                  const expanded = effectiveExpandedIds.has(category.id);
                   const selected = selectedId === category.id;
                   const canUp = canMoveCategorySibling(
                     categories,
@@ -317,9 +331,6 @@ export function NomenclatureCategoriesWorkspace({
                           : undefined
                       }
                     >
-                      <DataTableCell className="font-medium tabular-nums text-portal-muted">
-                        {outline}
-                      </DataTableCell>
                       <DataTableCell>
                         <div
                           className="flex min-w-0 items-center gap-portal-1"
@@ -328,17 +339,17 @@ export function NomenclatureCategoriesWorkspace({
                           {hasChildren ? (
                             <IconButton
                               label={
-                                collapsed
-                                  ? `Развернуть ${category.name}`
-                                  : `Свернуть ${category.name}`
+                                expanded
+                                  ? `Свернуть ${category.name}`
+                                  : `Развернуть ${category.name}`
                               }
-                              onClick={() => toggleCollapsed(category.id)}
+                              onClick={() => toggleExpanded(category.id)}
                               className="shrink-0"
                             >
-                              {collapsed ? (
-                                <ChevronRight size={16} aria-hidden="true" />
-                              ) : (
+                              {expanded ? (
                                 <ChevronDown size={16} aria-hidden="true" />
+                              ) : (
+                                <ChevronRight size={16} aria-hidden="true" />
                               )}
                             </IconButton>
                           ) : (
@@ -349,18 +360,51 @@ export function NomenclatureCategoriesWorkspace({
                           )}
                           <button
                             type="button"
+                            className="inline-flex shrink-0 text-portal-muted hover:text-portal-primary"
+                            aria-label={
+                              hasChildren
+                                ? expanded
+                                  ? `Свернуть папку ${category.name}`
+                                  : `Открыть папку ${category.name}`
+                                : `Папка ${category.name}`
+                            }
+                            disabled={!hasChildren}
+                            onClick={() => {
+                              setSelectedId(category.id);
+                              if (hasChildren) {
+                                toggleExpanded(category.id);
+                              }
+                            }}
+                          >
+                            {hasChildren && expanded ? (
+                              <FolderOpen
+                                size={16}
+                                className="text-portal-primary"
+                                aria-hidden="true"
+                              />
+                            ) : (
+                              <Folder size={16} aria-hidden="true" />
+                            )}
+                          </button>
+                          <button
+                            type="button"
                             className="min-w-0 truncate text-left font-medium text-portal-text hover:text-portal-primary"
                             onClick={() => {
                               setSelectedId(category.id);
-                              setEditingId(category.id);
+                              if (hasChildren) {
+                                toggleExpanded(category.id);
+                              }
+                            }}
+                            onDoubleClick={() => {
+                              setSelectedId(category.id);
+                              if (!hasChildren) {
+                                setEditingId(category.id);
+                              }
                             }}
                           >
                             {category.name}
                           </button>
                         </div>
-                      </DataTableCell>
-                      <DataTableCell className="font-medium">
-                        {category.code}
                       </DataTableCell>
                       <DataTableCell>
                         {NOMENCLATURE_TYPE_LABELS[category.nomenclature_type]}
@@ -394,25 +438,24 @@ export function NomenclatureCategoriesWorkspace({
                         </div>
                       </DataTableCell>
                       <DataTableCell>
-                        <div className="flex flex-wrap gap-portal-1">
-                          <Button
-                            type="button"
-                            size="compact"
+                        <div className="flex items-center gap-portal-1">
+                          <IconButton
+                            label={`Изменить: ${category.name}`}
+                            title="Изменить"
                             onClick={() => {
                               setSelectedId(category.id);
                               setEditingId(category.id);
                             }}
                           >
-                            Изменить
-                          </Button>
-                          <Button
-                            type="button"
-                            size="compact"
-                            variant="secondary"
+                            <Pencil size={16} aria-hidden="true" />
+                          </IconButton>
+                          <IconButton
+                            label={`Добавить дочернюю к ${category.name}`}
+                            title="Добавить"
                             onClick={() => openCreateChild(category.id)}
                           >
-                            Дочерняя
-                          </Button>
+                            <Plus size={16} aria-hidden="true" />
+                          </IconButton>
                         </div>
                       </DataTableCell>
                     </DataTableRow>

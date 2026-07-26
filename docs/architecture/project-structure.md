@@ -1,7 +1,7 @@
 # Sport-Lead — Project Structure Checklist
 
 **Code:** `SL-PROJECT-STRUCTURE-v1`
-**Updated:** `2026-07-24` (close `4.9.3` categories tree CRUD; `4.8.7` orphan cleanup; `4.8.6` card unify)
+**Updated:** `2026-07-26` (close `4.9.5` categories tree owner visual; prior `4.9.3` / `4.8.7`)
 **Project version:** `v0.9.0`
 **Git branch:** `feature/v0.8.1-nomenclature-core`
 **Git commit:** `0980f34`
@@ -66,7 +66,7 @@
 ## 5. Nomenclature Core
 
 - [x] Persistent nomenclature CRUD, card, search, active flag, and base price — `Nomenclature.article` removed (`4.7.11` / B3; garment article on ProductModel)
-- [x] Nomenclature types and category hierarchy — tree directory CRUD (`4.9.3`: create child, parent edit with descendant exclusion, ↑/↓ reorder, soft deactivate)
+- [x] Nomenclature types and category hierarchy — tree directory CRUD (`4.9.3`) + owner visual OK (`4.9.5`: default collapsed folders, hide №/code, icon actions, expand on parent name click)
 - [x] Units-of-measure directory and `storage_unit_id` link
 - [x] Typed fields with category inheritance and effective schema — historical `CustomField*`; SoT unified into characteristics (`4.8` / ADR-015; Alembic `f7a8b9c0d123`); orphan `custom_fields` modules removed (`4.8.7`)
 - [x] Separate workspace and editable card for nomenclature — create uses `CreateDrawer` fullscreen (`4.7.9` / B2); create field order owner OK (`4.7.10`, 50/50 name+price | type+category+unit)

@@ -9,6 +9,7 @@ import {
   nextChildSortOrder,
   parentCategoryOptions,
   planSiblingReorder,
+  visibleCategoryTreeRows,
 } from "./nomenclature-category-tree.ts";
 
 function cat(partial) {
@@ -117,4 +118,29 @@ test("planSiblingReorder swaps and densifies sort_order", () => {
     { id: 12, sort_order: 2 },
   ]);
   assert.equal(nextChildSortOrder(siblings, null), 6);
+});
+
+test("visibleCategoryTreeRows defaults to roots when nothing expanded", () => {
+  const categories = [
+    cat({ id: 1, parent_id: null, name: "A", code: "a", sort_order: 0 }),
+    cat({ id: 2, parent_id: 1, name: "A1", code: "a1", sort_order: 0 }),
+    cat({ id: 3, parent_id: 2, name: "A1a", code: "a1a", sort_order: 0 }),
+    cat({ id: 4, parent_id: null, name: "B", code: "b", sort_order: 1 }),
+  ];
+  const rows = buildCategoryTreeRows(categories);
+  const rootsOnly = visibleCategoryTreeRows(rows, new Set());
+  assert.deepEqual(
+    rootsOnly.map((row) => row.category.code),
+    ["a", "b"],
+  );
+  const openA = visibleCategoryTreeRows(rows, new Set([1]));
+  assert.deepEqual(
+    openA.map((row) => row.category.code),
+    ["a", "a1", "b"],
+  );
+  const openDeep = visibleCategoryTreeRows(rows, new Set([1, 2]));
+  assert.deepEqual(
+    openDeep.map((row) => row.category.code),
+    ["a", "a1", "a1a", "b"],
+  );
 });

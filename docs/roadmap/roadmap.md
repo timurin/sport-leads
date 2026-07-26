@@ -1,7 +1,7 @@
 # Sport-Lead — Global Roadmap
 
 **Code:** `SL-ROADMAP-v1`
-**Updated:** `2026-07-24` (close `4.9.3` categories tree CRUD; prior `4.8.7` / `4.8.6` / `4.7.10`)
+**Updated:** `2026-07-26` (close `4.9.5` categories tree owner visual; prior `4.9.3` / `4.8.7`)
 **Project version:** `v0.9.0`
 **Git branch:** `feature/v0.8.1-nomenclature-core`
 **Git commit:** `0980f34`
@@ -28,7 +28,7 @@ Current confirmed contour:
 
 Active Stage 4 work:
 
-owner visual `4.9.5` (categories tree + card/create picker); warehouse balances note `4.6.5`; appearance polish of characteristic card → follow-up chat
+warehouse balances note `4.6.5`; appearance polish of characteristic card → follow-up chat
 
 Next commercial contour:
 
@@ -278,7 +278,7 @@ Dependencies:
 - [x] 4.9.2 — Tree UI on `/settings/catalogs/nomenclature-categories`: hierarchical display with numbering/path like `1`, `1.1`, `1.1.2`, `2`, `2.1` (from `sort_order` + depth or explicit display codes); reuse DS-PT-04 primitives (`TreePane` / `TreeListSplit`) or indented tree-table within PT-02 — prefer PT-04 if it fits directory CRUD; keep EditDrawer/create patterns already used — `2026-07-23`; indented tree-table + collapse (directory *is* the tree; PT-04 split deferred); evidence: `nomenclature-category-tree.ts`, `nomenclature-categories-workspace.tsx`, `nomenclature-category-tree.test.mjs`
 - [x] 4.9.3 — Tree CRUD: create child under selected node, edit parent, reorder/`sort_order`, soft deactivate; cycle-safe parent changes — `2026-07-24`; create-child + ↑/↓ sibling reorder; parent select excludes descendants; soft deactivate via EditDrawer; evidence: `nomenclature-categories-workspace.tsx`, `nomenclature-category-tree.ts`, `test_nomenclature_category_type_decouple.py`
 - [x] 4.9.4 — Nomenclature card + create: category select shows all active categories (path or number label), no type filter; persist `category_id` correctly — `2026-07-23`; outline labels via `buildCategoryTreeRows`; type change no longer clears category; evidence: `nomenclature-card.tsx`, `nomenclature-create-panels.tsx`
-- [ ] 4.9.5 — Owner visual: categories tree + card/create category picker
+- [x] 4.9.5 — Owner visual: categories tree + card/create category picker — `2026-07-26`; owner OK; default collapsed folders, hide №/code, Pencil/Plus actions, expand on parent click, Windows-like nesting; card/create picker already shipped in `4.9.4`; evidence: `nomenclature-categories-workspace.tsx`, `nomenclature-category-tree.ts`, task `docs/tasks/v0.9.0-stage-4.9.5-categories-tree-owner-visual.md`
 
 ### Confirmed create field layout (`4.7.10`)
 
