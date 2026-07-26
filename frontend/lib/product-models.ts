@@ -518,9 +518,15 @@ export function sumAssemblyVariantDurationSeconds(
 
 export async function getProductModelAssemblyVariants(
   modelId: number,
+  options?: { activeOnly?: boolean },
 ): Promise<AssemblyVariant[]> {
+  const params = new URLSearchParams();
+  if (options?.activeOnly) {
+    params.set("active_only", "true");
+  }
+  const query = params.toString();
   const response = await fetch(
-    `${apiBaseUrl()}/product-models/${modelId}/assembly-variants`,
+    `${apiBaseUrl()}/product-models/${modelId}/assembly-variants${query ? `?${query}` : ""}`,
     { cache: "no-store" },
   );
   if (!response.ok) {

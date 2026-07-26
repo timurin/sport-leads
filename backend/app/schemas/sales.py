@@ -331,6 +331,14 @@ class SalesOrderItemVariantSnapshotRead(SalesSchema):
     option_label: str
 
 
+class SalesOrderItemAssemblyOperationSnapshotRead(SalesSchema):
+    sequence: int
+    operation_name: str
+    cost: Decimal
+    duration_seconds: int
+    sewing_operation_id: int | None = None
+
+
 class SalesOrderItemRead(SalesSchema):
     id: int
     order_id: int
@@ -339,6 +347,10 @@ class SalesOrderItemRead(SalesSchema):
     product_model_id: int | None = None
     product_model_article: str | None = None
     product_model_name: str | None = None
+    product_model_size_type: str | None = None
+    assembly_variant_id: int | None = None
+    assembly_variant_name: str | None = None
+    assembly_variant_total_cost: Decimal | None = None
     vat_rate_id: int | None = None
     vat_rate_percent: Decimal | None = None
     position: int
@@ -356,6 +368,9 @@ class SalesOrderItemRead(SalesSchema):
     created_at: datetime
     updated_at: datetime
     variant_snapshots: list[SalesOrderItemVariantSnapshotRead] = Field(default_factory=list)
+    assembly_operation_snapshots: list[SalesOrderItemAssemblyOperationSnapshotRead] = Field(
+        default_factory=list
+    )
 
 
 class SalesOrderItemCreate(BaseModel):
@@ -364,6 +379,7 @@ class SalesOrderItemCreate(BaseModel):
     product_model_id: int | None = None
     product_model_article: str | None = Field(default=None, max_length=100)
     product_model_name: str | None = Field(default=None, max_length=255)
+    assembly_variant_id: int | None = None
     vat_rate_id: int | None = None
     snapshot_name: str = Field(min_length=1, max_length=255)
     size_range: str | None = Field(default=None, max_length=255)
@@ -381,6 +397,7 @@ class SalesOrderItemUpdate(BaseModel):
     product_model_id: int | None = None
     product_model_article: str | None = Field(default=None, max_length=100)
     product_model_name: str | None = Field(default=None, max_length=255)
+    assembly_variant_id: int | None = None
     vat_rate_id: int | None = None
     snapshot_name: str | None = Field(default=None, min_length=1, max_length=255)
     size_range: str | None = Field(default=None, max_length=255)

@@ -10,6 +10,7 @@ import {
   MoreVertical,
   Plus,
   RefreshCw,
+  Save,
   Search,
   Trash2,
   X,
@@ -23,17 +24,26 @@ import {
   updateOrderItemPayload,
   type OrderItemPayload,
 } from "@/app/(workspace)/sales/orders/[orderId]/order-item-actions";
+import {
+  loadNomenclatureAvailableModels,
+  loadProductModelActiveAssemblyVariants,
+} from "@/app/(workspace)/sales/orders/[orderId]/order-item-catalog-actions";
+import { NomenclaturePickModal } from "@/components/sales/nomenclature-pick-modal";
 import { Button } from "@/components/ui/button";
 import { CompactTabs } from "@/components/ui/compact-tabs";
 import { Input, Select } from "@/components/ui/form-controls";
 import { ListTotals } from "@/components/ui/list-pagination";
 import { SectionCard } from "@/components/ui/section-card";
 import {
-  getNomenclatureAvailableModels,
   nomenclatureLabel,
   type Nomenclature,
   type NomenclatureAvailableModel,
+  type NomenclatureCategory,
 } from "@/lib/nomenclature";
+import {
+  formatAssemblyCost,
+  type AssemblyVariant,
+} from "@/lib/product-models";
 import type { SalesOrderItem } from "@/lib/sales/order-details";
 import {
   calculateInclusiveVatAmount,
@@ -51,6 +61,8 @@ type DraftRow = {
   productModelId: number | null;
   productModelArticle: string;
   productModelName: string;
+  assemblyVariantId: number | null;
+  assemblyVariantName: string;
   vatRateId: number | null;
   vatRatePercent: number;
   snapshotName: string;
@@ -95,6 +107,8 @@ function toDraft(item: SalesOrderItem, index: number, rates: VatRate[]): DraftRo
     productModelId: item.productModelId,
     productModelArticle: item.productModelArticle,
     productModelName: item.productModelName,
+    assemblyVariantId: item.assemblyVariantId,
+    assemblyVariantName: item.assemblyVariantName,
     vatRateId,
     vatRatePercent: item.vatRatePercent
       ? Number(item.vatRatePercent)
@@ -107,131 +121,59 @@ function toDraft(item: SalesOrderItem, index: number, rates: VatRate[]): DraftRo
   };
 }
 
-function NomenclatureCellPicker({
+function NomenclatureCellField({
   items,
   value,
   disabled,
-  onChange,
+  onOpen,
 }: {
   items: Nomenclature[];
   value: number | null;
   disabled?: boolean;
-  onChange: (item: Nomenclature | null) => void;
+  onOpen: () => void;
 }) {
   const selected = items.find((item) => item.id === value) ?? null;
-  const [query, setQuery] = useState(selected ? nomenclatureLabel(selected) : "");
-  const [open, setOpen] = useState(false);
-  const [activeIndex, setActiveIndex] = useState(0);
-
-  useEffect(() => {
-    setQuery(selected ? nomenclatureLabel(selected) : "");
-  }, [selected]);
-
-  const matches = items
-    .filter((item) => item.is_active && item.name.toLowerCase().includes(query.toLowerCase()))
-    .slice(0, 8);
-  const options =
-    selected && !selected.is_active && !matches.some((item) => item.id === selected.id)
-      ? [selected, ...matches]
-      : matches;
-
-  function choose(item: Nomenclature | null) {
-    onChange(item);
-    setQuery(item ? nomenclatureLabel(item) : "");
-    setOpen(false);
-    setActiveIndex(0);
-  }
+  const label = selected ? nomenclatureLabel(selected) : "";
 
   return (
-    <div className="relative min-w-[10rem]">
-      <Input
-        size="compact"
-        value={query}
-        disabled={disabled}
-        onChange={(event) => {
-          setQuery(event.target.value);
-          setOpen(true);
-          setActiveIndex(0);
-        }}
-        onFocus={() => setOpen(true)}
-        onBlur={() => {
-          window.setTimeout(() => setOpen(false), 120);
-        }}
-        onKeyDown={(event) => {
-          if (event.key === "ArrowDown") {
-            event.preventDefault();
-            setActiveIndex((index) => Math.min(index + 1, options.length - 1));
-          }
-          if (event.key === "ArrowUp") {
-            event.preventDefault();
-            setActiveIndex((index) => Math.max(index - 1, 0));
-          }
-          if (event.key === "Enter" && options[activeIndex]) {
-            event.preventDefault();
-            choose(options[activeIndex]);
-          }
-          if (event.key === "Escape") setOpen(false);
-        }}
-        placeholder="Номенклатура"
-        aria-label="Номенклатура"
-        className="min-w-[10rem]"
-        onClick={(event) => event.stopPropagation()}
-      />
-      {open && !disabled ? (
-        <div className="absolute z-portal-dropdown mt-1 max-h-56 w-full overflow-auto rounded-portal-md border border-portal-border bg-portal-surface p-portal-1 shadow-portal-overlay">
-          {options.length === 0 ? (
-            <p className="px-portal-2 py-portal-1 text-portal-meta text-portal-muted">
-              Активная номенклатура не найдена
-            </p>
-          ) : (
-            options.map((item, index) => (
-              <button
-                key={item.id}
-                type="button"
-                onMouseDown={(event) => event.preventDefault()}
-                onClick={() => choose(item)}
-                className={[
-                  "block w-full rounded-portal-sm px-portal-2 py-portal-1 text-left text-portal-meta",
-                  index === activeIndex
-                    ? "bg-portal-primary-soft text-portal-primary"
-                    : "text-portal-text hover:bg-portal-state-hover",
-                ].join(" ")}
-              >
-                {nomenclatureLabel(item)}
-                {item.is_active ? "" : " (архив)"}
-              </button>
-            ))
-          )}
-          {value !== null ? (
-            <button
-              type="button"
-              onMouseDown={(event) => event.preventDefault()}
-              onClick={() => choose(null)}
-              className="mt-portal-1 w-full border-t border-portal-border px-portal-2 py-portal-1 text-left text-portal-meta text-portal-muted"
-            >
-              Очистить связь
-            </button>
-          ) : null}
-        </div>
-      ) : null}
-    </div>
+    <button
+      type="button"
+      disabled={disabled}
+      onClick={(event) => {
+        event.stopPropagation();
+        onOpen();
+      }}
+      aria-label="Выбрать номенклатуру"
+      title={label || "Выбрать номенклатуру"}
+      className={[
+        "flex min-h-8 min-w-[10rem] w-full items-center rounded-portal-md border border-portal-border bg-portal-surface px-portal-2 text-left text-portal-meta transition-colors",
+        disabled
+          ? "cursor-not-allowed opacity-60"
+          : "hover:border-portal-primary hover:bg-portal-surface-secondary",
+        label ? "text-portal-text" : "text-portal-muted",
+      ].join(" ")}
+    >
+      <span className="truncate">{label || "Номенклатура…"}</span>
+    </button>
   );
 }
 
 /**
- * UNF-style order items grid with nomenclature / product model / editable price / VAT directory.
- * Visual chrome from `3.2.7`; persistence via order-item API (`3.2.7.3` slice + `3.3.2` VAT).
+ * UNF-style order items grid with nomenclature / product model / assembly variant / price / VAT.
+ * Visual chrome from `3.2.7`; persistence via order-item API (`3.2.5.4` model+assembly + `3.3.2` VAT).
  */
 export function SalesOrderItemsUnfDemo({
   orderId,
   items,
   nomenclature,
+  nomenclatureCategories,
   vatRates,
   documentTotal,
 }: {
   orderId: string;
   items: SalesOrderItem[];
   nomenclature: Nomenclature[];
+  nomenclatureCategories: NomenclatureCategory[];
   vatRates: VatRate[];
   documentTotal: string;
 }) {
@@ -247,8 +189,14 @@ export function SalesOrderItemsUnfDemo({
   const [activeRowId, setActiveRowId] = useState<number | null>(items[0]?.id ?? null);
   const [search, setSearch] = useState("");
   const [message, setMessage] = useState<string | null>(null);
+  const [nomenclaturePickerRowId, setNomenclaturePickerRowId] = useState<number | null>(
+    null,
+  );
   const [modelsByNomenclature, setModelsByNomenclature] = useState<
     Record<number, NomenclatureAvailableModel[]>
+  >({});
+  const [variantsByModel, setVariantsByModel] = useState<
+    Record<number, AssemblyVariant[]>
   >({});
 
   useEffect(() => {
@@ -281,6 +229,20 @@ export function SalesOrderItemsUnfDemo({
     [rows],
   );
 
+  const modelIdsKey = useMemo(
+    () =>
+      [
+        ...new Set(
+          rows
+            .map((row) => row.productModelId)
+            .filter((id): id is number => id !== null),
+        ),
+      ]
+        .sort((a, b) => a - b)
+        .join(","),
+    [rows],
+  );
+
   useEffect(() => {
     if (!nomenclatureIdsKey) return;
     const ids = nomenclatureIdsKey.split(",").map(Number);
@@ -292,7 +254,7 @@ export function SalesOrderItemsUnfDemo({
           return current;
         });
         try {
-          const models = await getNomenclatureAvailableModels(nomenclatureId);
+          const models = await loadNomenclatureAvailableModels(nomenclatureId);
           if (!cancelled) {
             setModelsByNomenclature((current) =>
               current[nomenclatureId] ? current : { ...current, [nomenclatureId]: models },
@@ -312,6 +274,34 @@ export function SalesOrderItemsUnfDemo({
       cancelled = true;
     };
   }, [nomenclatureIdsKey]);
+
+  useEffect(() => {
+    if (!modelIdsKey) return;
+    const ids = modelIdsKey.split(",").map(Number);
+    let cancelled = false;
+    async function loadVariants() {
+      for (const modelId of ids) {
+        try {
+          const variants = await loadProductModelActiveAssemblyVariants(modelId);
+          if (!cancelled) {
+            setVariantsByModel((current) =>
+              current[modelId] ? current : { ...current, [modelId]: variants },
+            );
+          }
+        } catch {
+          if (!cancelled) {
+            setVariantsByModel((current) =>
+              current[modelId] ? current : { ...current, [modelId]: [] },
+            );
+          }
+        }
+      }
+    }
+    void loadVariants();
+    return () => {
+      cancelled = true;
+    };
+  }, [modelIdsKey]);
   const activeVatRates = useMemo(
     () => vatRates.filter((rate) => rate.is_active),
     [vatRates],
@@ -334,6 +324,7 @@ export function SalesOrderItemsUnfDemo({
       (nom?.name.toLowerCase().includes(q) ?? false)
       || row.snapshotName.toLowerCase().includes(q)
       || characteristic.toLowerCase().includes(q)
+      || row.assemblyVariantName.toLowerCase().includes(q)
     );
   });
 
@@ -365,12 +356,26 @@ export function SalesOrderItemsUnfDemo({
       product_model_id: row.productModelId,
       product_model_article: row.productModelArticle || null,
       product_model_name: row.productModelName || null,
+      assembly_variant_id: row.assemblyVariantId,
       vat_rate_id: row.vatRateId,
       snapshot_name: row.snapshotName.trim() || "Новая позиция",
       unit: row.unit || "шт",
       quantity: String(Math.max(parseDecimal(row.quantity), 0.001)),
       unit_price: String(Math.max(parseDecimal(row.unitPrice), 0)),
     };
+  }
+
+  function assemblyVariantsForModel(modelId: number | null): AssemblyVariant[] {
+    if (modelId === null) return [];
+    return variantsByModel[modelId] ?? [];
+  }
+
+  function variantSelectionError(row: DraftRow): string | null {
+    const variants = assemblyVariantsForModel(row.productModelId);
+    if (row.productModelId !== null && variants.length >= 1 && row.assemblyVariantId === null) {
+      return "Выберите вариант сборки для модели изделия.";
+    }
+    return null;
   }
 
   function runSave(action: () => Promise<{ ok: boolean; message: string }>) {
@@ -382,23 +387,34 @@ export function SalesOrderItemsUnfDemo({
   }
 
   function patchRow(rowId: number, patch: Partial<DraftRow>, persist = true) {
-    const current = rows.find((row) => row.id === rowId);
-    if (!current) return;
-    const updated: DraftRow = { ...current, ...patch };
-    const qty = Math.max(parseDecimal(updated.quantity), 0);
-    const price = Math.max(parseDecimal(updated.unitPrice), 0);
-    updated.lineAmount = Math.round(qty * price * 100) / 100;
-    setRows((all) => all.map((row) => (row.id === rowId ? updated : row)));
-    if (persist) {
-      runSave(() => updateOrderItemPayload(orderId, rowId, payloadFromRow(updated)));
+    let updated: DraftRow | null = null;
+    setRows((all) => {
+      const current = all.find((row) => row.id === rowId);
+      if (!current) return all;
+      const next: DraftRow = { ...current, ...patch };
+      const qty = Math.max(parseDecimal(next.quantity), 0);
+      const price = Math.max(parseDecimal(next.unitPrice), 0);
+      next.lineAmount = Math.round(qty * price * 100) / 100;
+      updated = next;
+      return all.map((row) => (row.id === rowId ? next : row));
+    });
+    if (!persist || updated === null) return;
+    const snapshot = updated;
+    const error = variantSelectionError(snapshot);
+    if (error) {
+      setMessage(error);
+      return;
     }
+    runSave(() => updateOrderItemPayload(orderId, rowId, payloadFromRow(snapshot)));
   }
+
   function addRow() {
     const vatRateId = defaultVatRateId(activeVatRates);
     runSave(() =>
       createOrderItemPayload(orderId, {
         nomenclature_id: null,
         product_model_id: null,
+        assembly_variant_id: null,
         vat_rate_id: vatRateId,
         snapshot_name: "Новая позиция",
         unit: "шт",
@@ -410,9 +426,54 @@ export function SalesOrderItemsUnfDemo({
     setSearch("");
   }
 
+  /** Persist all draft rows (nomenclature, model, assembly, qty, price, VAT). */
+  function saveAllRows() {
+    if (rows.length === 0) {
+      setMessage("Нет строк для сохранения.");
+      return;
+    }
+    for (const row of rows) {
+      const error = variantSelectionError(row);
+      if (error) {
+        setMessage(`Строка ${row.position}: ${error}`);
+        setActiveRowId(row.id);
+        return;
+      }
+      if (row.nomenclatureId !== null) {
+        const models = (modelsByNomenclature[row.nomenclatureId] ?? []).filter(
+          (entry) => entry.status === "active",
+        );
+        if (models.length >= 1 && row.productModelId === null) {
+          setMessage(`Строка ${row.position}: выберите модель изделия.`);
+          setActiveRowId(row.id);
+          return;
+        }
+      }
+    }
+    startTransition(async () => {
+      let lastMessage = "Позиции заказа сохранены.";
+      for (const row of rows) {
+        const result = await updateOrderItemPayload(orderId, row.id, payloadFromRow(row));
+        lastMessage = result.message;
+        if (!result.ok) {
+          setMessage(`Строка ${row.position}: ${result.message}`);
+          setActiveRowId(row.id);
+          return;
+        }
+      }
+      setMessage(lastMessage);
+      router.refresh();
+    });
+  }
+
   function copySelected() {
     const source = rows.find((row) => row.id === selectedIds[0]);
     if (!source) return;
+    const error = variantSelectionError(source);
+    if (error) {
+      setMessage(error);
+      return;
+    }
     runSave(() => createOrderItemPayload(orderId, payloadFromRow(source)));
   }
 
@@ -436,24 +497,69 @@ export function SalesOrderItemsUnfDemo({
 
   async function ensureModels(nomenclatureId: number) {
     if (modelsByNomenclature[nomenclatureId]) return modelsByNomenclature[nomenclatureId];
-    const models = await getNomenclatureAvailableModels(nomenclatureId);
+    const models = await loadNomenclatureAvailableModels(nomenclatureId);
     setModelsByNomenclature((current) => ({ ...current, [nomenclatureId]: models }));
     return models;
   }
 
+  async function ensureVariants(modelId: number): Promise<AssemblyVariant[]> {
+    if (variantsByModel[modelId]) return variantsByModel[modelId];
+    const variants = await loadProductModelActiveAssemblyVariants(modelId);
+    setVariantsByModel((current) => ({ ...current, [modelId]: variants }));
+    return variants;
+  }
+
   function onNomenclatureChange(row: DraftRow, entry: Nomenclature | null) {
-    if (entry) {
-      void ensureModels(entry.id);
-    }
-    patchRow(row.id, {
-      nomenclatureId: entry?.id ?? null,
-      snapshotName: entry?.name ?? row.snapshotName,
-      unit: entry?.unit ?? row.unit,
-      unitPrice: entry ? entry.basePrice : row.unitPrice,
-      productModelId: null,
+    const clearedModels = {
+      productModelId: null as number | null,
       productModelArticle: "",
       productModelName: "",
-    });
+      assemblyVariantId: null as number | null,
+      assemblyVariantName: "",
+    };
+    if (!entry) {
+      patchRow(
+        row.id,
+        {
+          nomenclatureId: null,
+          ...clearedModels,
+        },
+        true,
+      );
+      return;
+    }
+    void ensureModels(entry.id);
+    patchRow(
+      row.id,
+      {
+        nomenclatureId: entry.id,
+        snapshotName: entry.name,
+        unit: entry.unit,
+        unitPrice: entry.basePrice,
+        ...clearedModels,
+      },
+      false,
+    );
+    void (async () => {
+      const models = await ensureModels(entry.id);
+      const activeModels = models.filter((model) => model.status === "active");
+      // Empty whitelist → model optional; persist nomenclature now.
+      if (activeModels.length === 0) {
+        patchRow(
+          row.id,
+          {
+            nomenclatureId: entry.id,
+            snapshotName: entry.name,
+            unit: entry.unit,
+            unitPrice: entry.basePrice,
+            ...clearedModels,
+          },
+          true,
+        );
+      } else {
+        setMessage("Выберите модель изделия для номенклатуры.");
+      }
+    })();
   }
 
   function onModelChange(row: DraftRow, modelId: string) {
@@ -462,18 +568,81 @@ export function SalesOrderItemsUnfDemo({
         productModelId: null,
         productModelArticle: "",
         productModelName: "",
+        assemblyVariantId: null,
+        assemblyVariantName: "",
       });
       return;
     }
     const models = row.nomenclatureId
-      ? modelsByNomenclature[row.nomenclatureId] ?? []
+      ? (modelsByNomenclature[row.nomenclatureId] ?? []).filter(
+          (entry) => entry.status === "active",
+        )
       : [];
     const model = models.find((entry) => entry.product_model_id === Number(modelId));
-    if (!model) return;
+    if (!model) {
+      setMessage("Модель не найдена в списке доступных для этой номенклатуры.");
+      return;
+    }
+    const nextModelId = model.product_model_id;
+    patchRow(
+      row.id,
+      {
+        productModelId: nextModelId,
+        productModelArticle: model.article,
+        productModelName: model.name,
+        assemblyVariantId: null,
+        assemblyVariantName: "",
+      },
+      false,
+    );
+    void (async () => {
+      const variants = await ensureVariants(nextModelId);
+      if (variants.length === 0) {
+        patchRow(row.id, {
+          productModelId: nextModelId,
+          productModelArticle: model.article,
+          productModelName: model.name,
+          assemblyVariantId: null,
+          assemblyVariantName: "",
+        });
+        return;
+      }
+      if (variants.length === 1) {
+        const only = variants[0];
+        patchRow(row.id, {
+          productModelId: nextModelId,
+          productModelArticle: model.article,
+          productModelName: model.name,
+          assemblyVariantId: only.id,
+          assemblyVariantName: only.name,
+        });
+        return;
+      }
+      setMessage("Выберите вариант сборки для модели изделия.");
+    })();
+  }
+
+  function onAssemblyVariantChange(row: DraftRow, variantIdRaw: string) {
+    if (!variantIdRaw) {
+      const variants = assemblyVariantsForModel(row.productModelId);
+      if (variants.length >= 1) {
+        setMessage("Выберите вариант сборки для модели изделия.");
+        patchRow(
+          row.id,
+          { assemblyVariantId: null, assemblyVariantName: "" },
+          false,
+        );
+        return;
+      }
+      patchRow(row.id, { assemblyVariantId: null, assemblyVariantName: "" });
+      return;
+    }
+    const variants = assemblyVariantsForModel(row.productModelId);
+    const variant = variants.find((entry) => entry.id === Number(variantIdRaw));
+    if (!variant) return;
     patchRow(row.id, {
-      productModelId: model.product_model_id,
-      productModelArticle: model.article,
-      productModelName: model.name,
+      assemblyVariantId: variant.id,
+      assemblyVariantName: variant.name,
     });
   }
 
@@ -486,10 +655,11 @@ export function SalesOrderItemsUnfDemo({
   }
 
   return (
+    <>
     <SectionCard
       size="compact"
       title="Товарные позиции"
-      description="Номенклатура, модель лекала, цена и ставка НДС из справочника"
+      description="Номенклатура → модель → вариант сборки, цена и ставка НДС"
       className="overflow-hidden"
       footer={
         activeTab === "goods" ? (
@@ -534,6 +704,16 @@ export function SalesOrderItemsUnfDemo({
                   onClick={addRow}
                 >
                   <Plus size={14} />
+                </Button>
+                <Button
+                  type="button"
+                  size="compact"
+                  title="Сохранить позиции"
+                  aria-label="Сохранить позиции"
+                  disabled={isPending || rows.length === 0}
+                  onClick={saveAllRows}
+                >
+                  <Save size={14} />
                 </Button>
                 <Button
                   type="button"
@@ -639,7 +819,10 @@ export function SalesOrderItemsUnfDemo({
                       Номенклатура
                     </th>
                     <th className="sticky top-0 z-[1] min-w-[10rem] bg-portal-surface-secondary px-portal-2 py-2">
-                      Характеристика
+                      Модель изделия
+                    </th>
+                    <th className="sticky top-0 z-[1] min-w-[10rem] bg-portal-surface-secondary px-portal-2 py-2">
+                      Вариант сборки
                     </th>
                     <th className="sticky top-0 z-[1] min-w-[5.5rem] bg-portal-surface-secondary px-portal-2 py-2 text-right">
                       Количество
@@ -666,7 +849,7 @@ export function SalesOrderItemsUnfDemo({
                   {visibleRows.length === 0 ? (
                     <tr>
                       <td
-                        colSpan={11}
+                        colSpan={12}
                         className="px-portal-4 py-portal-8 text-center text-portal-body text-portal-muted"
                       >
                         Нет позиций. Нажмите «+», чтобы добавить строку.
@@ -676,9 +859,13 @@ export function SalesOrderItemsUnfDemo({
                     visibleRows.map((row) => {
                       const selected = selectedIds.includes(row.id);
                       const active = activeRowId === row.id;
-                      const models = row.nomenclatureId
-                        ? modelsByNomenclature[row.nomenclatureId] ?? []
-                        : [];
+                      const models = (
+                        row.nomenclatureId
+                          ? modelsByNomenclature[row.nomenclatureId] ?? []
+                          : []
+                      ).filter((model) => model.status === "active");
+                      const assemblyVariants = assemblyVariantsForModel(row.productModelId);
+                      const variantRequired = assemblyVariants.length >= 1;
                       const vatAmount = calculateInclusiveVatAmount(
                         row.lineAmount,
                         row.vatRatePercent,
@@ -709,11 +896,11 @@ export function SalesOrderItemsUnfDemo({
                             {row.position}
                           </td>
                           <td className="min-w-[11rem] px-portal-2 py-1.5">
-                            <NomenclatureCellPicker
+                            <NomenclatureCellField
                               items={nomenclature}
                               value={row.nomenclatureId}
                               disabled={isPending}
-                              onChange={(entry) => onNomenclatureChange(row, entry)}
+                              onOpen={() => setNomenclaturePickerRowId(row.id)}
                             />
                           </td>
                           <td className="min-w-[10rem] px-portal-2 py-1.5">
@@ -721,7 +908,7 @@ export function SalesOrderItemsUnfDemo({
                               size="compact"
                               value={row.productModelId ?? ""}
                               disabled={isPending || row.nomenclatureId === null}
-                              aria-label={`Характеристика (модель) строки ${row.position}`}
+                              aria-label={`Модель изделия строки ${row.position}`}
                               className="min-w-[9rem]"
                               onClick={(event) => event.stopPropagation()}
                               onChange={(event) => onModelChange(row, event.target.value)}
@@ -736,6 +923,47 @@ export function SalesOrderItemsUnfDemo({
                                 </option>
                               ))}
                             </Select>
+                          </td>
+                          <td className="min-w-[10rem] px-portal-2 py-1.5">
+                            {row.productModelId === null ? (
+                              <span className="text-portal-muted">—</span>
+                            ) : (
+                              <Select
+                                size="compact"
+                                value={row.assemblyVariantId ?? ""}
+                                disabled={isPending}
+                                required={variantRequired}
+                                aria-required={variantRequired}
+                                aria-label={`Вариант сборки строки ${row.position}`}
+                                className="min-w-[9rem]"
+                                onClick={(event) => event.stopPropagation()}
+                                onChange={(event) =>
+                                  onAssemblyVariantChange(row, event.target.value)
+                                }
+                              >
+                                <option value="">
+                                  {variantRequired ? "Выберите вариант…" : "Без варианта"}
+                                </option>
+                                {assemblyVariants.map((variant) => (
+                                  <option key={variant.id} value={variant.id}>
+                                    {variant.name}
+                                    {variant.total_cost
+                                      ? ` (${formatAssemblyCost(variant.total_cost)} ₽)`
+                                      : ""}
+                                  </option>
+                                ))}
+                                {row.assemblyVariantId
+                                  && !assemblyVariants.some(
+                                    (variant) => variant.id === row.assemblyVariantId,
+                                  )
+                                  ? (
+                                    <option value={row.assemblyVariantId}>
+                                      {row.assemblyVariantName || `Вариант #${row.assemblyVariantId}`}
+                                    </option>
+                                  )
+                                  : null}
+                              </Select>
+                            )}
                           </td>
                           <td className="px-portal-2 py-1.5 text-right">
                             <Input
@@ -816,5 +1044,24 @@ export function SalesOrderItemsUnfDemo({
         )}
       </div>
     </SectionCard>
+    <NomenclaturePickModal
+      open={nomenclaturePickerRowId !== null}
+      items={nomenclature}
+      categories={nomenclatureCategories}
+      value={
+        nomenclaturePickerRowId === null
+          ? null
+          : rows.find((row) => row.id === nomenclaturePickerRowId)?.nomenclatureId ?? null
+      }
+      onClose={() => setNomenclaturePickerRowId(null)}
+      onSelect={(entry) => {
+        const rowId = nomenclaturePickerRowId;
+        if (rowId === null) return;
+        const row = rows.find((item) => item.id === rowId);
+        if (!row) return;
+        onNomenclatureChange(row, entry);
+      }}
+    />
+    </>
   );
 }

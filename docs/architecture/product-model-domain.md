@@ -100,11 +100,11 @@ Rules:
 
 ### 5.2 Sales order item (`3.2.5`, former `6.1.13`)
 
-Order line selects `product_model_id` from PRODUCT available-models whitelist, then `assembly_variant_id` of that model. Snapshots store article / size_type / variant name / total (and optional operation lines). Owned by **Sales Orders**, not Stage 6 catalog.
+Order line selects `product_model_id` from PRODUCT available-models whitelist, then `assembly_variant_id` of that model. Snapshots store article / size_type / name / variant name / total and **MVP operation-line child snapshots**. Owned by **Sales Orders**, not Stage 6 catalog.
 
-Chain: nomenclature → model ∈ whitelist → autofill `article` + `size_type` → assembly variant ∈ model.
+Chain: nomenclature → model ∈ whitelist → autofill `article` + `size_type` (+ name) → assembly variant ∈ model.
 
-Persist: nullable FKs + snapshots (`model_article`, `size_type`, variant name/total, optional operation lines).  
+**Canonical contract:** `docs/architecture/order-item-model-assembly.md` (`SL-ORDER-ITEM-MODEL-ASSEMBLY-v1`, `3.2.5.1`).  
 Manual lines without nomenclature: out of this contour.
 
 ### 5.3 Lead
@@ -136,7 +136,7 @@ Shop routings may later reference a model/variant for execution; they must not d
 
 - SQLAlchemy / Alembic / API implementation details beyond field contracts
 - Size-grid entity schemas (`6.2.*`); sewing operations (`6.3.*` / `sewing-operations-domain.md`)
-- Order-item snapshot persistence (`3.2.5`, former `6.1.13`)
+- Order-item snapshot persistence implementation (`3.2.5.2+`); strategy locked in `order-item-model-assembly.md` (`3.2.5.1`)
 - UI feature fill beyond already shipped shells
 
 ## 8. Checkpoint (`6.1.1.5`)

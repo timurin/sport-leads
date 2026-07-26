@@ -537,7 +537,7 @@
               {
                 code: "3.2.5",
                 title: "Product model and assembly variant on order items — moved from former 6.1.13 (2026-07-22)",
-                goal: "After nomenclature selection, manager picks a model from the PRODUCT whitelist; size_type and model article autofill; then picks an assembly variant. Snapshots keep old orders stable. Stage 6 owns catalog; Stage 3 owns order-line selection.",
+                goal: "After nomenclature selection, manager picks a model from the PRODUCT whitelist; size_type and model article autofill; then picks an assembly variant. UI shows assembly-variant field only after model (hidden without model; options = active variants of that model). When model has ≥1 active variant, variant is required (not soft-optional) for Stage 7 Spec / Stage 9 TC snapshot copy. Snapshots keep old orders stable. Price/VAT stay separate. Stage 6 owns catalog; Stage 3 owns order-line selection.",
                 dependencies: [
                   "3.2.4",
                   "6.1.11",
@@ -547,33 +547,33 @@
                 microtasks: [
                   {
                     code: "3.2.5.1",
-                    title: "Define order-item relation + snapshot strategy (model id/article/size_type; variant id/name/total; optional operation-line snapshot)",
-                    done: false
+                    title: "Define order-item relation + snapshot strategy (model id/article/size_type; variant id/name/total; operation-line child snapshot) — `v0.9.0`; evidence: docs/architecture/order-item-model-assembly.md (SL-ORDER-ITEM-MODEL-ASSEMBLY-v1)",
+                    done: true
                   },
                   {
                     code: "3.2.5.2",
-                    title: "Add nullable storage and migration",
-                    done: false
+                    title: "Add nullable storage and migration — `v0.9.0`; Alembic j1k2l3m4n567; SalesOrderItem + SalesOrderItemAssemblyOperationSnapshot",
+                    done: true
                   },
                   {
                     code: "3.2.5.3",
-                    title: "Add schemas and service rules: model ∈ available list; variant ∈ selected model; require model when whitelist non-empty (per ADR-014)",
-                    done: false
+                    title: "Add schemas and service rules: model ∈ available list; variant ∈ selected model; require model when whitelist non-empty; require assembly variant when selected model has ≥1 active variant (per ADR-014; Spec/TC dependency) — `v0.9.0`; server snapshot fill; smoke: tests/test_order_item_model_assembly.py",
+                    done: true
                   },
                   {
                     code: "3.2.5.4",
-                    title: "Add frontend selection flow in order item forms",
-                    done: false
+                    title: "Add frontend selection flow in order item forms: after model — assembly-variant field (hidden without model; options = active variants of selected model); variant required when model has ≥1 active variant (Spec/TC dependency) — `v0.9.0`; sales-order-items-unf-demo.tsx; payload assembly_variant_id; mapper + order-details.test.mjs",
+                    done: true
                   },
                   {
                     code: "3.2.5.5",
-                    title: "Add regression tests (whitelist filter; foreign model/variant rejected; snapshot immutability)",
-                    done: false
+                    title: "Add regression tests (whitelist filter; foreign model/variant rejected; snapshot immutability) — `v0.9.0`; backend/tests/test_order_item_model_assembly.py (5 cases incl. catalog-edit immutability)",
+                    done: true
                   },
                   {
                     code: "3.2.5.6",
-                    title: "Visual verification",
-                    done: false
+                    title: "Visual verification — includes nomenclature pick modal (category tree + list, adaptive) on order-item field — `v0.9.0`; owner OK 2026-07-26",
+                    done: true
                   },
                   {
                     code: "3.2.5.7",

@@ -17,7 +17,7 @@ import { MetricCard, SectionCard } from "@/components/ui/section-card";
 import { mockCurrentUser, salesManagers } from "@/lib/demo-data/sales";
 import { getNotePermissions, isInternalNote, sortLeadActivities } from "@/lib/sales/lead-activity";
 import { formatAttachmentSize, leadMessageChannelLabels } from "@/lib/sales/lead-message";
-import type { Nomenclature } from "@/lib/nomenclature";
+import type { Nomenclature, NomenclatureCategory } from "@/lib/nomenclature";
 import type { SalesOrderDetails, SalesOrderSourceLead } from "@/lib/sales/order-details";
 import {
   orderStatusPresentation,
@@ -75,12 +75,14 @@ export function SalesOrderPage({
   activities: initialActivities,
   sourceLead,
   nomenclature,
+  nomenclatureCategories,
   vatRates,
 }: {
   order: SalesOrderDetails;
   activities: LeadActivity[];
   sourceLead: SalesOrderSourceLead | null;
   nomenclature: Nomenclature[];
+  nomenclatureCategories: NomenclatureCategory[];
   vatRates: VatRate[];
 }) {
   const [order, setOrder] = useState(initialOrder);
@@ -348,6 +350,7 @@ export function SalesOrderPage({
                     orderId={order.id}
                     items={order.items}
                     nomenclature={nomenclature}
+                    nomenclatureCategories={nomenclatureCategories}
                     vatRates={vatRates}
                     documentTotal={order.amount}
                   />

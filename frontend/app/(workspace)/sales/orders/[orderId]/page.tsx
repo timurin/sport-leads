@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 
 import { SalesOrderPage } from "@/components/sales/sales-order-page";
-import { getNomenclature } from "@/lib/nomenclature";
+import { getNomenclature, getNomenclatureCategories } from "@/lib/nomenclature";
 import { getLeadDetails } from "@/lib/sales/lead-details";
 import { fromApiLeadEvent } from "@/lib/sales/lead-history";
 import {
@@ -17,12 +17,14 @@ type OrderRouteProps = {
 
 export default async function OrderRoute({ params }: OrderRouteProps) {
   const { orderId } = await params;
-  const [result, historyResult, nomenclature, vatRates] = await Promise.all([
-    getOrderDetails(orderId),
-    getOrderHistory(orderId),
-    getNomenclature(),
-    getVatRates({ is_active: true }),
-  ]);
+  const [result, historyResult, nomenclature, nomenclatureCategories, vatRates] =
+    await Promise.all([
+      getOrderDetails(orderId),
+      getOrderHistory(orderId),
+      getNomenclature(),
+      getNomenclatureCategories(),
+      getVatRates({ is_active: true }),
+    ]);
   if (result.kind === "not-found") notFound();
   if (result.kind === "error") throw new Error(result.message);
   if (historyResult.kind === "not-found") notFound();
@@ -45,6 +47,7 @@ export default async function OrderRoute({ params }: OrderRouteProps) {
       activities={historyResult.events.map(fromApiLeadEvent)}
       sourceLead={sourceLead}
       nomenclature={nomenclature}
+      nomenclatureCategories={nomenclatureCategories}
       vatRates={vatRates}
     />
   );

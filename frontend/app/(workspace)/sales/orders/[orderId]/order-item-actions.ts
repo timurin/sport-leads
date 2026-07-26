@@ -10,6 +10,7 @@ export type OrderItemPayload = {
   product_model_id?: number | null;
   product_model_article?: string | null;
   product_model_name?: string | null;
+  assembly_variant_id?: number | null;
   vat_rate_id?: number | null;
   snapshot_name: string;
   size_range?: string | null;
@@ -48,6 +49,7 @@ function toBody(payload: OrderItemPayload): Record<string, unknown> {
     product_model_id: payload.product_model_id ?? null,
     product_model_article: payload.product_model_article ?? null,
     product_model_name: payload.product_model_name ?? null,
+    assembly_variant_id: payload.assembly_variant_id ?? null,
     vat_rate_id: payload.vat_rate_id ?? null,
     snapshot_name: payload.snapshot_name,
     size_range: payload.size_range ?? null,
@@ -67,6 +69,9 @@ export async function createOrderItem(orderId: string, formData: FormData) {
     product_model_id: formData.get("product_model_id") ? Number(formData.get("product_model_id")) : null,
     product_model_article: String(formData.get("product_model_article") ?? "").trim() || null,
     product_model_name: String(formData.get("product_model_name") ?? "").trim() || null,
+    assembly_variant_id: formData.get("assembly_variant_id")
+      ? Number(formData.get("assembly_variant_id"))
+      : null,
     vat_rate_id: formData.get("vat_rate_id") ? Number(formData.get("vat_rate_id")) : null,
     snapshot_name: String(formData.get("snapshot_name") ?? ""),
     size_range: String(formData.get("size_range") ?? "").trim() || null,
@@ -90,6 +95,9 @@ export async function updateOrderItem(orderId: string, itemId: number, formData:
     product_model_id: formData.get("product_model_id") ? Number(formData.get("product_model_id")) : null,
     product_model_article: String(formData.get("product_model_article") ?? "").trim() || null,
     product_model_name: String(formData.get("product_model_name") ?? "").trim() || null,
+    assembly_variant_id: formData.get("assembly_variant_id")
+      ? Number(formData.get("assembly_variant_id"))
+      : null,
     vat_rate_id: formData.get("vat_rate_id") ? Number(formData.get("vat_rate_id")) : null,
     snapshot_name: String(formData.get("snapshot_name") ?? ""),
     size_range: String(formData.get("size_range") ?? "").trim() || null,

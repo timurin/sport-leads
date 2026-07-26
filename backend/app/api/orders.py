@@ -58,10 +58,29 @@ def serialize_item(item: SalesOrderItem) -> dict[str, object]:
         **{column.name: getattr(item, column.name) for column in SalesOrderItem.__table__.columns},
         "gross_amount": gross_amount,
         "variant_snapshots": [
-            {column.name: getattr(snapshot, column.name) for column in snapshot.__table__.columns if column.name != "id" and column.name != "order_item_id"}
+            {
+                column.name: getattr(snapshot, column.name)
+                for column in snapshot.__table__.columns
+                if column.name not in {"id", "order_item_id"}
+            }
             for snapshot in item.variant_snapshots
         ],
+        "assembly_operation_snapshots": [
+            {
+                column.name: getattr(snapshot, column.name)
+                for column in snapshot.__table__.columns
+                if column.name not in {"id", "order_item_id"}
+            }
+            for snapshot in item.assembly_operation_snapshots
+        ],
     }
+
+
+def _item_error_status(error: SalesOrderItemError) -> int:
+    detail = str(error)
+    if detail in {"Order not found", "Order item not found"}:
+        return 404
+    return 400
 
 
 @router.get("", response_model=list[SalesOrderRead])
@@ -140,7 +159,7 @@ def create_order_item(
         db.commit()
     except SalesOrderItemError as error:
         db.rollback()
-        raise HTTPException(status_code=404, detail=str(error)) from error
+        raise HTTPException(status_code=_item_error_status(error), detail=str(error)) from error
     return serialize_item(item)
 
 
@@ -156,7 +175,7 @@ def update_order_item(
         db.commit()
     except SalesOrderItemError as error:
         db.rollback()
-        raise HTTPException(status_code=404, detail=str(error)) from error
+        raise HTTPException(status_code=_item_error_status(error), detail=str(error)) from error
     return serialize_item(item)
 
 
@@ -167,7 +186,7 @@ def delete_order_item(order_id: int, item_id: int, db: Session = Depends(get_db)
         db.commit()
     except SalesOrderItemError as error:
         db.rollback()
-        raise HTTPException(status_code=404, detail=str(error)) from error
+        raise HTTPException(status_code=_item_error_status(error), detail=str(error)) from error
 
 
 @router.patch("/{order_id}/status", response_model=SalesOrderRead)

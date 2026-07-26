@@ -33,6 +33,10 @@ test("maps persisted order details and preserves nullable fields", () => {
       product_model_id: null,
       product_model_article: null,
       product_model_name: null,
+      product_model_size_type: null,
+      assembly_variant_id: null,
+      assembly_variant_name: null,
+      assembly_variant_total_cost: null,
       vat_rate_id: null,
       vat_rate_percent: null,
       variant_snapshots: [],
@@ -66,6 +70,10 @@ test("maps persisted order details and preserves nullable fields", () => {
   assert.equal(order.items[0].lineAmountValue, "2700");
   assert.equal(order.items[0].vatRateId, null);
   assert.equal(order.items[0].productModelId, null);
+  assert.equal(order.items[0].productModelSizeType, "");
+  assert.equal(order.items[0].assemblyVariantId, null);
+  assert.equal(order.items[0].assemblyVariantName, "");
+  assert.equal(order.items[0].assemblyVariantTotalCost, "");
   assert.equal(order.items[0].sizeRange, "S-L");
   assert.equal(order.items[0].personalization, "Капитан");
   assert.equal(order.items[0].color, "Синий");
@@ -74,6 +82,67 @@ test("maps persisted order details and preserves nullable fields", () => {
   assert.equal(order.description, "Описание пока не добавлено.");
   assert.equal(order.status, "Новый");
   assert.equal(order.itemCount, 1);
+});
+
+test("maps assembly variant and size_type snapshots on order items", () => {
+  const order = fromApiSalesOrder({
+    id: 42,
+    number: "SO-2026-000042",
+    lead_id: 9,
+    client_id: 3,
+    organization_id: 2,
+    organization_name: "ООО Спорт Лига",
+    status: "new",
+    responsible_id: null,
+    responsible_name: null,
+    client_name: "Клиент",
+    title: "Форма",
+    description: null,
+    product_category: null,
+    sport: null,
+    quantity: null,
+    amount: "1000",
+    desired_date: null,
+    source: null,
+    created_at: "2026-07-18T10:00:00Z",
+    updated_at: "2026-07-18T10:00:00Z",
+    items: [{
+      id: 8,
+      order_id: 42,
+      nomenclature_id: 1,
+      nomenclature_variant_id: null,
+      product_model_id: 5,
+      product_model_article: "213",
+      product_model_name: "Футболка",
+      product_model_size_type: "men",
+      assembly_variant_id: 11,
+      assembly_variant_name: "С отстрочкой",
+      assembly_variant_total_cost: "450.00",
+      vat_rate_id: null,
+      vat_rate_percent: null,
+      variant_snapshots: [],
+      position: 1,
+      snapshot_name: "Футболка",
+      size_range: null,
+      personalization: null,
+      color: null,
+      unit: "шт",
+      quantity: "1",
+      unit_price: "1000",
+      gross_amount: "1000",
+      discount_percent: null,
+      discount_amount: "0",
+      line_amount: "1000",
+      created_at: "2026-07-18T10:00:00Z",
+      updated_at: "2026-07-18T10:00:00Z",
+    }],
+  });
+
+  assert.equal(order.items[0].productModelId, 5);
+  assert.equal(order.items[0].productModelSizeType, "men");
+  assert.equal(order.items[0].assemblyVariantId, 11);
+  assert.equal(order.items[0].assemblyVariantName, "С отстрочкой");
+  assert.equal(order.items[0].assemblyVariantTotalCost, "450.00");
 });
 
 test("maps lead and order history events through shared activity mapping", () => {

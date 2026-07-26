@@ -354,6 +354,12 @@ class SalesOrder(Base):
 
 
 class SalesOrderItem(Base):
+    """Commercial order line with optional pattern-model / assembly snapshots (`3.2.5`).
+
+    `variant_snapshots` = nomenclature characteristics (ADR-010).
+    `assembly_operation_snapshots` = sewing package lines (ADR-014 / SL-ORDER-ITEM-MODEL-ASSEMBLY-v1).
+    """
+
     __tablename__ = "sales_order_items"
     __table_args__ = (
         CheckConstraint("quantity > 0", name="ck_sales_order_items_quantity_positive"),
@@ -364,6 +370,14 @@ class SalesOrderItem(Base):
         ),
         CheckConstraint("discount_amount >= 0", name="ck_sales_order_items_discount_amount_nonnegative"),
         CheckConstraint("line_amount >= 0", name="ck_sales_order_items_line_amount_nonnegative"),
+        CheckConstraint(
+            "product_model_size_type IS NULL OR product_model_size_type IN ('men', 'women', 'kids')",
+            name="ck_sales_order_items_product_model_size_type",
+        ),
+        CheckConstraint(
+            "assembly_variant_total_cost IS NULL OR assembly_variant_total_cost >= 0",
+            name="ck_sales_order_items_assembly_variant_total_cost",
+        ),
     )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -381,6 +395,12 @@ class SalesOrderItem(Base):
     )
     product_model_article: Mapped[str | None] = mapped_column(String(100), nullable=True)
     product_model_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    product_model_size_type: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    assembly_variant_id: Mapped[int | None] = mapped_column(
+        ForeignKey("assembly_variants.id", ondelete="SET NULL"), nullable=True, index=True
+    )
+    assembly_variant_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    assembly_variant_total_cost: Mapped[Decimal | None] = mapped_column(Numeric(14, 2), nullable=True)
     vat_rate_id: Mapped[int | None] = mapped_column(
         ForeignKey("vat_rates.id", ondelete="SET NULL"), nullable=True, index=True
     )
@@ -406,6 +426,11 @@ class SalesOrderItem(Base):
     variant_snapshots: Mapped[list["SalesOrderItemVariantSnapshot"]] = relationship(
         back_populates="order_item", cascade="all, delete-orphan", order_by="SalesOrderItemVariantSnapshot.id"
     )
+    assembly_operation_snapshots: Mapped[list["SalesOrderItemAssemblyOperationSnapshot"]] = relationship(
+        back_populates="order_item",
+        cascade="all, delete-orphan",
+        order_by="SalesOrderItemAssemblyOperationSnapshot.sequence, SalesOrderItemAssemblyOperationSnapshot.id",
+    )
 
 
 class SalesOrderItemVariantSnapshot(Base):
@@ -421,6 +446,46 @@ class SalesOrderItemVariantSnapshot(Base):
     option_code: Mapped[str] = mapped_column(String(100), nullable=False)
     option_label: Mapped[str] = mapped_column(String(255), nullable=False)
     order_item: Mapped[SalesOrderItem] = relationship(back_populates="variant_snapshots")
+
+
+class SalesOrderItemAssemblyOperationSnapshot(Base):
+    """Immutable copy of assembly-variant operation lines at order-item selection (`3.2.5`)."""
+
+    __tablename__ = "sales_order_item_assembly_operation_snapshots"
+    __table_args__ = (
+        UniqueConstraint(
+            "order_item_id",
+            "sequence",
+            name="uq_sales_order_item_assembly_op_snapshot_sequence",
+        ),
+        CheckConstraint(
+            "sequence >= 1",
+            name="ck_sales_order_item_assembly_op_snapshot_sequence",
+        ),
+        CheckConstraint(
+            "cost >= 0",
+            name="ck_sales_order_item_assembly_op_snapshot_cost",
+        ),
+        CheckConstraint(
+            "duration_seconds >= 0",
+            name="ck_sales_order_item_assembly_op_snapshot_duration",
+        ),
+        Index("ix_soi_asm_op_snap_order_item_id", "order_item_id"),
+        Index("ix_soi_asm_op_snap_sewing_op_id", "sewing_operation_id"),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    order_item_id: Mapped[int] = mapped_column(
+        ForeignKey("sales_order_items.id", ondelete="CASCADE"), nullable=False
+    )
+    sequence: Mapped[int] = mapped_column(Integer, nullable=False)
+    operation_name: Mapped[str] = mapped_column(String(255), nullable=False)
+    cost: Mapped[Decimal] = mapped_column(Numeric(14, 2), nullable=False, default=Decimal("0"))
+    duration_seconds: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    sewing_operation_id: Mapped[int | None] = mapped_column(
+        ForeignKey("sewing_operations.id", ondelete="SET NULL"), nullable=True
+    )
+    order_item: Mapped[SalesOrderItem] = relationship(back_populates="assembly_operation_snapshots")
 
 
 class LeadEvent(Base):

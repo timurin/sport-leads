@@ -32,6 +32,10 @@ export type ApiSalesOrderItem = {
   product_model_id: number | null;
   product_model_article: string | null;
   product_model_name: string | null;
+  product_model_size_type: "men" | "women" | "kids" | null;
+  assembly_variant_id: number | null;
+  assembly_variant_name: string | null;
+  assembly_variant_total_cost: number | string | null;
   vat_rate_id: number | null;
   vat_rate_percent: number | string | null;
   variant_snapshots: {
@@ -145,6 +149,10 @@ export type SalesOrderItem = {
   productModelId: number | null;
   productModelArticle: string;
   productModelName: string;
+  productModelSizeType: "men" | "women" | "kids" | "";
+  assemblyVariantId: number | null;
+  assemblyVariantName: string;
+  assemblyVariantTotalCost: string;
   vatRateId: number | null;
   vatRatePercent: string;
   variantSnapshots: ApiSalesOrderItem["variant_snapshots"];
@@ -231,6 +239,13 @@ export function fromApiSalesOrder(order: ApiSalesOrderDetails): SalesOrderDetail
       productModelId: item.product_model_id ?? null,
       productModelArticle: item.product_model_article ?? "",
       productModelName: item.product_model_name ?? "",
+      productModelSizeType: item.product_model_size_type ?? "",
+      assemblyVariantId: item.assembly_variant_id ?? null,
+      assemblyVariantName: item.assembly_variant_name ?? "",
+      assemblyVariantTotalCost:
+        item.assembly_variant_total_cost == null
+          ? ""
+          : String(item.assembly_variant_total_cost),
       vatRateId: item.vat_rate_id ?? null,
       vatRatePercent: item.vat_rate_percent == null ? "" : String(item.vat_rate_percent),
       variantSnapshots: item.variant_snapshots ?? [],

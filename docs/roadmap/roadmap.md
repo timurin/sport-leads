@@ -132,7 +132,7 @@ Next commercial contour:
 > Moved from Stage `6.1.13` (`2026-07-22`): Stage 6 owns the pattern-base **catalog**; selection and snapshots live on the **sales-order item** (closer to Заказ покупателя than to nomenclature master / база лекал). Whitelist config stays on PRODUCT nomenclature card (`6.1.11`).
 
 Goal:
-After nomenclature selection, manager picks a model from the PRODUCT whitelist; size_type and model article autofill; then picks an assembly variant of that model. Snapshots keep old orders stable.
+After nomenclature selection, manager picks a model from the PRODUCT whitelist; size_type and model article autofill; then picks an assembly variant of that model. UI shows the assembly-variant field only after a model is selected (hidden without model; options = active variants of that model). When the selected model has ≥1 active assembly variant, the variant is **required** (not soft-optional) so Stage 7 specification and Stage 9 technical card can copy the assembly-operation snapshot. Snapshots keep old orders stable. Price/VAT stay separate commercial fields.
 
 Dependencies:
 - 3.2.4
@@ -141,17 +141,20 @@ Dependencies:
 - 6.2.7
 
 Microtasks:
-- [ ] 3.2.5.1 — Define order-item relation + snapshot strategy (model id/article/size_type; variant id/name/total; optional operation-line snapshot)
-- [ ] 3.2.5.2 — Add nullable storage and migration
-- [ ] 3.2.5.3 — Add schemas and service rules: model ∈ available list; variant ∈ selected model; require model when whitelist non-empty (per ADR-014)
-- [ ] 3.2.5.4 — Add frontend selection flow in order item forms
-- [ ] 3.2.5.5 — Add regression tests (whitelist filter; foreign model/variant rejected; snapshot immutability)
-- [ ] 3.2.5.6 — Visual verification
+- [x] 3.2.5.1 — Define order-item relation + snapshot strategy (model id/article/size_type; variant id/name/total; operation-line child snapshot) — `v0.9.0`; evidence: `docs/architecture/order-item-model-assembly.md` (`SL-ORDER-ITEM-MODEL-ASSEMBLY-v1`)
+- [x] 3.2.5.2 — Add nullable storage and migration — `v0.9.0`; Alembic `j1k2l3m4n567`; model: `SalesOrderItem` + `SalesOrderItemAssemblyOperationSnapshot`
+- [x] 3.2.5.3 — Add schemas and service rules: model ∈ available list; variant ∈ selected model; require model when whitelist non-empty; **require assembly variant when selected model has ≥1 active variant** (per ADR-014; Spec/TC dependency) — `v0.9.0`; server snapshot fill; smoke: `backend/tests/test_order_item_model_assembly.py`
+- [x] 3.2.5.4 — Add frontend selection flow in order item forms: after model — assembly-variant field (hidden without model; options = active variants of selected model); variant **required** when model has ≥1 active variant (Spec/TC dependency) — `v0.9.0`; `sales-order-items-unf-demo.tsx`; payload `assembly_variant_id`; mapper + `order-details.test.mjs`
+- [x] 3.2.5.5 — Add regression tests (whitelist filter; foreign model/variant rejected; snapshot immutability) — `v0.9.0`; `backend/tests/test_order_item_model_assembly.py` (5 cases incl. catalog-edit immutability)
+- [x] 3.2.5.6 — Visual verification — includes nomenclature pick modal (category tree + list, adaptive) on order-item field — `v0.9.0`; owner OK `2026-07-26`
 - [ ] 3.2.5.7 — Documentation checkpoint (lead reuse notes if applicable)
 
 Completion criteria:
 - order chain is nomenclature → available model → assembly variant;
 - autofill of size_type and model article works;
+- assembly-variant field hidden until model selected; options = active variants of that model;
+- variant required when selected model has ≥1 active variant (Stage 7 snapshot copy / Stage 9 TC need the assembly package);
+- if model has zero active variants, variant remains optional until variants are configured (ADR-014 §5);
 - backward-compatible nullable links; snapshots explicit.
 
 #### 3.2.6 — Order-item model selection smoke
