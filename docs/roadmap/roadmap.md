@@ -1,7 +1,7 @@
 # Sport-Lead — Global Roadmap
 
 **Code:** `SL-ROADMAP-v1`
-**Updated:** `2026-07-26` (close `4.9.5` categories tree owner visual; prior `4.9.3` / `4.8.7`)
+**Updated:** `2026-07-26` (roadmap `4.10` warehouse nomenclature browser; prior `4.9.5`)
 **Project version:** `v0.9.0`
 **Git branch:** `feature/v0.8.1-nomenclature-core`
 **Git commit:** `0980f34`
@@ -28,7 +28,7 @@ Current confirmed contour:
 
 Active Stage 4 work:
 
-warehouse balances note `4.6.5`; appearance polish of characteristic card → follow-up chat
+warehouse nomenclature browser `4.10` (nav rename + PT-04 tree+list on `/warehouse/stock`); warehouse balances register note `4.6.5` (≠ browse UI); appearance polish of characteristic card → follow-up chat
 
 Next commercial contour:
 
@@ -279,6 +279,23 @@ Dependencies:
 - [x] 4.9.3 — Tree CRUD: create child under selected node, edit parent, reorder/`sort_order`, soft deactivate; cycle-safe parent changes — `2026-07-24`; create-child + ↑/↓ sibling reorder; parent select excludes descendants; soft deactivate via EditDrawer; evidence: `nomenclature-categories-workspace.tsx`, `nomenclature-category-tree.ts`, `test_nomenclature_category_type_decouple.py`
 - [x] 4.9.4 — Nomenclature card + create: category select shows all active categories (path or number label), no type filter; persist `category_id` correctly — `2026-07-23`; outline labels via `buildCategoryTreeRows`; type change no longer clears category; evidence: `nomenclature-card.tsx`, `nomenclature-create-panels.tsx`
 - [x] 4.9.5 — Owner visual: categories tree + card/create category picker — `2026-07-26`; owner OK; default collapsed folders, hide №/code, Pencil/Plus actions, expand on parent click, Windows-like nesting; card/create picker already shipped in `4.9.4`; evidence: `nomenclature-categories-workspace.tsx`, `nomenclature-category-tree.ts`, task `docs/tasks/v0.9.0-stage-4.9.5-categories-tree-owner-visual.md`
+
+### 4.10 — Warehouse nomenclature browser (tree + list)
+
+Owner ask (`2026-07-26`): в разделе Склад пункт «Остатки» переименовать в «Номенклатура» (href остаётся `/warehouse/stock`). Страница — PT-04 tree+list: слева дерево категорий (reuse `4.9` tree lib / folder UX), справа вся номенклатура с фильтром «выбранный узел + потомки», create на странице (reuse settings create panels). Settings flat list (`/settings/catalogs/nomenclature`) остаётся PT-02 без дерева (`4.7.2`). Category directory CRUD остаётся на `/settings/catalogs/nomenclature-categories`. Складской регистр qty/min stock — отдельно (`4.6.5` / Stage 12); отдельный nav «Остатки» **не** возвращать.
+
+Dependencies:
+- 4.7.1–4.7.2 (list chrome; tree stays OFF settings list)
+- 4.9.2 / 4.9.5 (category tree lib + folder UX)
+- 5.5.4 / DS-PT-04 (`TreeListSplit` / `TreePane` / `TreeListContent`)
+- ADR-012 (balances not on `Nomenclature` card)
+
+- [ ] 4.10.1 — Nav rename: in `frontend/lib/navigation.ts` title «Остатки» → «Номенклатура»; href stays `/warehouse/stock`; DS-SHELL-01/02 visual contracts preserved (no shell chrome changes)
+- [ ] 4.10.2 — Route + page shell: create `frontend/app/(workspace)/warehouse/stock/page.tsx` (+ loading/error by catalog page pattern); load via existing `getNomenclature` / `getNomenclatureCategories` / units / media from `frontend/lib/nomenclature.ts`
+- [ ] 4.10.3 — Workspace PT-04: new component (e.g. `warehouse-nomenclature-workspace.tsx`); `TreeListSplit` + `TreePane` + `TreeListContent`; left = category tree from `nomenclature-category-tree.ts` / folder UX `4.9.5`; right = table/filters/inspector patterned on `nomenclature-workspace.tsx`
+- [ ] 4.10.4 — Filter rule: selected category → rows with `category_id` in {node ∪ descendants}; modes «все» / «без категории»
+- [ ] 4.10.5 — Create on warehouse page: reuse `NomenclatureCreatePanels` / section create menu; row open → `/settings/catalogs/nomenclature/[id]`
+- [ ] 4.10.6 — Tests (nav title, tree filter descendants, empty) + owner visual PT-04 (lg docked / <lg drawer); note: `4.6.5` register remains open and is not this page
 
 ### Confirmed create field layout (`4.7.10`)
 

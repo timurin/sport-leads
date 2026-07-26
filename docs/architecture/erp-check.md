@@ -50,7 +50,8 @@
 - `[x]` `v0.8.8h-nomenclature-free-custom-fields`: historical free-assignment contour on former `CustomField*`; **superseded by ADR-015 / `4.8`** (card values → `NomenclatureCharacteristicValue` / characteristics API);
 - `[x]` `4.8` / ADR-015: unified `Characteristic*` catalog — migration `f7a8b9c0d123`, `/custom-fields` API unmounted, DELETE + usage guards + `18.4` journal stub, nav redirect (`4.8.1`–`4.8.3`, `4.8.5`); detail card **layout confirmed** (`4.8.4`); nomenclature card UI on characteristics names (`4.8.6`); orphan `custom_fields` modules removed + focused regression (`4.8.7`); open: appearance/content polish of characteristic card (follow-up);
 - `[x]` отдельный `Material` catalog/API удалён после cutover (`4.6.4`); данные в `Nomenclature` type `MATERIAL` (`z6a7b8c9d012`); Materials nav removed (`4.6.3`);
-- `[~]` единая номенклатура готовых изделий, услуг, полуфабрикатов и комплектов (типы `PRODUCT`/`GOODS`/`SERVICE`/`MATERIAL`; materials cutover `4.6.1`–`4.6.4` done; warehouse balances → `4.6.5`);
+- `[~]` единая номенклатура готовых изделий, услуг, полуфабрикатов и комплектов (типы `PRODUCT`/`GOODS`/`SERVICE`/`MATERIAL`; materials cutover `4.6.1`–`4.6.4` done; warehouse browse UI planned `4.10`; warehouse balances register → `4.6.5`);
+- `[ ]` `4.10` — Склад → «Номенклатура» на `/warehouse/stock` (nav rename; PT-04 tree+list; filter узел+потомки; create on page); ≠ регистр остатков;
 - `[~]` модели и артикулы — Stage 6 catalog v1 closed (`6.1.1`–`6.1.16`, `6.2.*`, `6.3.*` incl. `6.3.8` duration, `6.4`); product types directory + model link shipped; order-item binding moved to Stage `3.2.5` / smoke `3.2.6` (open);
 - `[~]` размеры и изображения — SizeGrid Mosmade men+women + list/card visual OK; Stage-6 read-only; write/edit → `17.1.2.4`; model link `6.2.7` shipped;
 - `[x]` операции пошива (каталог) + связка со строками варианта — `6.3.1`–`6.3.6` shipped; normative `duration_seconds` + assembly-line snapshot `6.3.8` shipped; owner visual OK for catalog (`2026-07-22`);
@@ -76,7 +77,7 @@
 
 ## Ресурсы, склад, закупки и финансы
 
-- `[ ]` складской регистр остатков / min stock (`4.6.5`) — не на карточке `Nomenclature`; legacy `Material` entity removed (`4.6.4`);
+- `[ ]` складской регистр остатков / min stock (`4.6.5`) — не на карточке `Nomenclature`; legacy `Material` entity removed (`4.6.4`); browse UI номенклатуры по категориям — отдельно `4.10` (не закрывает этот пункт; отдельный nav «Остатки» не возвращать);
 - `[ ]` единицы измерения как единый справочник, склады, зоны, резервы, партии и инвентаризация;
 - `[ ]` фактическое списание и выпуск;
 - `[ ]` закупки, поставщики и заказы поставщикам;
@@ -95,4 +96,4 @@ Patch v0.8.8h confirmed: backend-generated unique codes, typed save/reload, scop
 
 `v0.8.8i-product-characteristics-directory` confirmed: the existing characteristic model/API now supports `kind`, color HEX values, generated codes, system Color/Size records and safe deactivation. Migration `i9j0k1l2m345` has upgrade/downgrade; the settings directory and regression checks are implemented. Nomenclature card layout and variant snapshot logic are unchanged.
 
-Canonical sync `2026-07-26`: `4.9.5` owner visual OK (categories folder tree UX). Prior `2026-07-24`: `4.8` closed through `4.8.7`; appearance polish of characteristic card remains follow-up. Prior `2026-07-23` sync covered product types `6.1.14`–`6.1.16`, sewing `6.3.8`, ADR-016 tech-card reserve, and warehouse `4.6.5`.
+Canonical sync `2026-07-26`: roadmap `4.10` warehouse nomenclature browser recorded (nav rename + PT-04 tree+list on `/warehouse/stock`; ≠ `4.6.5` register). Prior same day: `4.9.5` owner visual OK (categories folder tree UX). Prior `2026-07-24`: `4.8` closed through `4.8.7`; appearance polish of characteristic card remains follow-up. Prior `2026-07-23` sync covered product types `6.1.14`–`6.1.16`, sewing `6.3.8`, ADR-016 tech-card reserve, and warehouse `4.6.5`.

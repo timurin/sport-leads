@@ -164,7 +164,7 @@
         </div>
       </div>
       <div class="meta-list">
-        <div class="chip">Updated: 2026-07-26 (close 4.9.5 categories tree owner visual; prior 4.9.3 / 4.8.7)</div>
+        <div class="chip">Updated: 2026-07-26 (roadmap 4.10 warehouse nomenclature browser; prior 4.9.5)</div>
         <div class="chip">Version: v0.9.0</div>
         <div class="chip">Branch: feature/v0.8.1-nomenclature-core</div>
         <div class="chip">Commit: 0980f34</div>
@@ -944,6 +944,42 @@
                 title: "Owner visual: categories tree + card/create category picker",
                 done: true,
                 note: "2026-07-26 — owner OK; default collapsed folders, hide №/code, Pencil/Plus, expand on parent click; card/create picker via 4.9.4"
+              }
+            ]
+          },
+          {
+            title: "4.10 — Warehouse nomenclature browser (tree + list)",
+            goal: "Owner ask (2026-07-26): Склад nav «Остатки» → «Номенклатура» (href stays /warehouse/stock). PT-04 tree+list: left category tree (reuse 4.9), right all nomenclature filtered by selected node + descendants, create on page. Settings flat list stays PT-02 without tree (4.7.2). Qty register stays 4.6.5 / Stage 12; do not restore separate «Остатки» nav. Dependencies: 4.7.1–4.7.2, 4.9.2/4.9.5, 5.5.4/DS-PT-04, ADR-012.",
+            items: [
+              {
+                code: "4.10.1",
+                title: "Nav rename: Остатки → Номенклатура; href stays /warehouse/stock; DS-SHELL-01/02 preserved",
+                done: false
+              },
+              {
+                code: "4.10.2",
+                title: "Route + page shell: warehouse/stock/page.tsx (+ loading/error); load via getNomenclature / categories / units / media",
+                done: false
+              },
+              {
+                code: "4.10.3",
+                title: "Workspace PT-04: TreeListSplit + TreePane + TreeListContent; left category tree; right list/filters/inspector",
+                done: false
+              },
+              {
+                code: "4.10.4",
+                title: "Filter rule: selected category → category_id in {node ∪ descendants}; modes все / без категории",
+                done: false
+              },
+              {
+                code: "4.10.5",
+                title: "Create on warehouse page: reuse NomenclatureCreatePanels; row open → settings nomenclature card",
+                done: false
+              },
+              {
+                code: "4.10.6",
+                title: "Tests (nav title, tree filter descendants, empty) + owner visual PT-04; 4.6.5 register remains open",
+                done: false
               }
             ]
           }
