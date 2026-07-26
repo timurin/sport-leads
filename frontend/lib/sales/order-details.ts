@@ -1,4 +1,4 @@
-import type { LeadContact, LeadCustomer, LeadMessage, OrderStatus } from "@/types/sales";
+import type { LeadContact, LeadCustomer, LeadMessage, LeadTask, OrderStatus } from "@/types/sales";
 
 export type ApiSalesOrderDetails = {
   id: number;
@@ -124,8 +124,11 @@ export type SalesOrderDetails = {
   status: string;
   statusCode: OrderStatus;
   leadId: string;
+  clientId: string;
   clientName: string;
+  organizationId: string | null;
   organizationName: string;
+  responsibleId: string | null;
   responsibleName: string;
   amount: string;
   createdAt: string;
@@ -134,6 +137,8 @@ export type SalesOrderDetails = {
   desiredDate: string;
   source: string;
   sourceLeadHref: string;
+  clientHref: string;
+  organizationHref: string | null;
   description: string;
   productCategory: string;
   sport: string;
@@ -184,6 +189,8 @@ export type SalesOrderSourceLead = {
   customer: LeadCustomer;
   messages: LeadMessage[];
   primaryContact?: LeadContact;
+  tasks: LeadTask[];
+  taskReferenceAt: string;
 };
 
 function formatCurrency(value: number | string | null): string {
@@ -217,8 +224,11 @@ export function fromApiSalesOrder(order: ApiSalesOrderDetails): SalesOrderDetail
     status: statusLabels[order.status],
     statusCode: order.status,
     leadId: String(order.lead_id),
+    clientId: String(order.client_id),
     clientName: order.client_name ?? `Клиент #${order.client_id}`,
+    organizationId: order.organization_id === null ? null : String(order.organization_id),
     organizationName: order.organization_name ?? "Организация не назначена",
+    responsibleId: order.responsible_id === null ? null : String(order.responsible_id),
     responsibleName: order.responsible_name ?? (order.responsible_id === null ? "Не назначен" : `Сотрудник #${order.responsible_id}`),
     amount: formatCurrency(order.amount),
     createdAt: formatDate(order.created_at),
@@ -227,6 +237,8 @@ export function fromApiSalesOrder(order: ApiSalesOrderDetails): SalesOrderDetail
     desiredDate: formatDate(order.desired_date),
     source: order.source ?? "Не указан",
     sourceLeadHref: `/sales/leads/${order.lead_id}`,
+    clientHref: "/sales/clients",
+    organizationHref: order.organization_id === null ? null : "/settings/organizations",
     description: order.description ?? "Описание пока не добавлено.",
     productCategory: order.product_category ?? "Не указана",
     sport: order.sport ?? "Не указан",

@@ -21,6 +21,7 @@
 - `[~]` `Deal`, архивирование, полные активности, авторизация и права не завершены;
 - `[x]` `Organization` и связь `SalesOrder.organization_id`;
 - `[x]` `SalesOrder` list/detail, status workflow и history;
+- `[~]` order card UX `3.5`: compact header + view filters + field-link map shipped in code (`docs/architecture/order-card-field-links.md`); owner visual `3.5.9` pending; tasks panel reuses source-lead `LeadTask` (empty for API leads until `1.2.4`);
 - `[x]` `SalesOrderItem` CRUD, snapshot-наименование, размеры (`size_range`), персонализация (`personalization`), цвет (`color`), процентная скидка (`discount_percent`), вычисляемая сумма скидки (`discount_amount`) и пересчёт `line_amount`/суммы заказа через `Decimal/Numeric`; полный pytest, frontend tests, TypeScript, lint, production build, project check 9/9 и Alembic проходят;
 - `[!]` прежняя связь `SalesOrderItem → Material` была архитектурной ошибкой и удалена отдельным patch; `Material` не является номенклатурой заказа.
 
@@ -97,4 +98,4 @@ Patch v0.8.8h confirmed: backend-generated unique codes, typed save/reload, scop
 
 `v0.8.8i-product-characteristics-directory` confirmed: the existing characteristic model/API now supports `kind`, color HEX values, generated codes, system Color/Size records and safe deactivation. Migration `i9j0k1l2m345` has upgrade/downgrade; the settings directory and regression checks are implemented. Nomenclature card layout and variant snapshot logic are unchanged.
 
-Canonical sync `2026-07-26`: `4.10` closed (`4.10.1`–`4.10.7`, owner visual OK); live stock register remains `4.6.5.*`. Same day: UNF rewrite + expand `4.6.5` microtasks; Stage 12 notes link to MVP. Prior `2026-07-24`: `4.8` closed through `4.8.7`; appearance polish of characteristic card remains follow-up. Prior `2026-07-23` sync covered product types `6.1.14`–`6.1.16`, sewing `6.3.8`, ADR-016 tech-card reserve, and warehouse `4.6.5`.
+Canonical sync `2026-07-26`: Stage `3.5` order card UX + field-link map in progress (owner visual `3.5.9` pending); `3.2.5.7` closed via `order-card-field-links.md`. Same day: `4.10` closed (`4.10.1`–`4.10.7`, owner visual OK); live stock register remains `4.6.5.*`. Prior `2026-07-24`: `4.8` closed through `4.8.7`; appearance polish of characteristic card remains follow-up. Prior `2026-07-23` sync covered product types `6.1.14`–`6.1.16`, sewing `6.3.8`, ADR-016 tech-card reserve, and warehouse `4.6.5`.

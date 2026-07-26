@@ -1,7 +1,7 @@
 # Sport-Lead — Global Roadmap
 
 **Code:** `SL-ROADMAP-v1`
-**Updated:** `2026-07-26` (`4.10.7` owner visual OK — closes warehouse nomenclature `4.10`)
+**Updated:** `2026-07-26` (add Stage `3.5` order card UX + field links; prior `4.10.7` / `3.2.5.6`)
 **Project version:** `v0.9.0`
 **Git branch:** `feature/v0.8.1-nomenclature-core`
 
@@ -31,7 +31,13 @@ UNF-style primary warehouse nomenclature `4.10` (Склад → Номенкла
 
 Next commercial contour:
 
-`Order-item model/assembly binding (3.2.5) → smoke (3.2.6) → Specifications → Routings → Технические карты → … → Администрирование`
+`Order-item model/assembly (3.2.5) → Order card UX + field links (3.5) → smoke (3.2.6) → Specifications → Routings → Технические карты → … → Администрирование`
+
+Dedupe notes (Sales Orders):
+- Closed platform migrate `5.5.7` / `5.6.4` (PT-07) stays historical; **product layout revision** continues only in **`3.5`** (do not re-open PT-07 migrate).
+- Informal lead-like card task `docs/tasks/v0.9.0-order-card-lead-appearance.md` folded into **`3.5`** (no parallel `3.1.4`).
+- Item model/assembly `3.2.5` / smoke `3.2.6` stay separate from card chrome `3.5`.
+- Cross-ref: persistent comms `1.2.4`; client card `2.2.*`; employees `2.4.2`; tech-card tab `9.4.1`.
 
 ## Stage 0 — Platform and Infrastructure
 
@@ -147,7 +153,7 @@ Microtasks:
 - [x] 3.2.5.4 — Add frontend selection flow in order item forms: after model — assembly-variant field (hidden without model; options = active variants of selected model); variant **required** when model has ≥1 active variant (Spec/TC dependency) — `v0.9.0`; `sales-order-items-unf-demo.tsx`; payload `assembly_variant_id`; mapper + `order-details.test.mjs`
 - [x] 3.2.5.5 — Add regression tests (whitelist filter; foreign model/variant rejected; snapshot immutability) — `v0.9.0`; `backend/tests/test_order_item_model_assembly.py` (5 cases incl. catalog-edit immutability)
 - [x] 3.2.5.6 — Visual verification — includes nomenclature pick modal (category tree + list, adaptive) on order-item field — `v0.9.0`; owner OK `2026-07-26`
-- [ ] 3.2.5.7 — Documentation checkpoint (lead reuse notes if applicable)
+- [x] 3.2.5.7 — Documentation checkpoint (lead reuse notes if applicable) — `v0.9.0`; evidence: `docs/architecture/order-card-field-links.md` § Lead reuse notes
 
 Completion criteria:
 - order chain is nomenclature → available model → assembly variant;
@@ -190,6 +196,54 @@ Completion criteria:
 - [ ] 3.4.1 — Design and approval states in order flow
 - [ ] 3.4.2 — Reserve, production, shipping, payment, and closure workflow
 - [ ] 3.4.3 — Orders list route `loading.tsx` and surfaced network errors (no silent empty list) — gap: `ui-audit.md` § Registered follow-up bugs
+
+### 3.5 — Order card UX and platform links
+
+> Owner request `2026-07-26`: compact order card layout, view filters, field-link map. Prior lead-like chrome (`docs/tasks/v0.9.0-order-card-lead-appearance.md`) is the baseline; PT-07 migrate (`5.5.7` / `5.6.4`) remains closed. Execute after `3.2.5`, before smoke `3.2.6`.
+
+Goal:
+Compact header (stage rail above; no meta strip; no header «Написать»/«Статус»); merged requisites + source lead; metrics on the right; full-width history; comments left + order tasks beside; view filters Все / Сведения / Товары / Коммуникация; wire existing platform FKs; create new catalog/model only if a gap remains.
+
+Dependencies:
+- 3.1.3
+- 3.2.5
+- 5.6.4 (historical PT-07 baseline)
+
+Field-link schema (`3.5.1`):
+
+```mermaid
+flowchart LR
+  SalesOrder --> Lead
+  SalesOrder --> Client
+  SalesOrder --> Organization
+  SalesOrder --> SalesUser
+  SalesOrder --> SalesOrderItem
+  SalesOrderItem --> Nomenclature
+  SalesOrderItem --> ProductModel
+  SalesOrderItem --> AssemblyVariant
+  SalesOrderItem --> VatRate
+  Lead --> LeadEvent
+  Lead --> LeadTask
+  LeadEvent --> SalesOrder
+```
+
+Microtasks:
+- [x] 3.5.1 — Inventory fields on `/sales/orders/[id]` + platform link map — `v0.9.0`; evidence: `docs/architecture/order-card-field-links.md` (`SL-ORDER-CARD-FIELD-LINKS-v1`)
+- [x] 3.5.2 — Wire existing live links in UI (EntityLink: lead, clients list, organizations) — `v0.9.0`; `sales-order-page.tsx`
+- [x] 3.5.3 — Fill gaps via existing catalogs/models (tasks from source `LeadTask`; expose `client_id` / `organization_id` / `responsible_id`) — `v0.9.0`; `order-details.ts` + tasks panel
+- [x] 3.5.4 — Create directory/model/section only if gap remains — **not required**: lead-scoped `LeadTask` sufficient; no parallel Client API
+- [x] 3.5.5 — Compact header: remove meta strip; remove «Написать»/«Статус»; stage rail above header — `v0.9.0`; `sales-order-header.tsx`
+- [x] 3.5.6 — Body: merge «Основные сведения» + source lead/description; metrics right; history full width; comments left + «Задачи по заказу» — `v0.9.0`; `sales-order-page.tsx`
+- [x] 3.5.7 — View filters under header: Все / Сведения о заказе / Товары / Коммуникация — `v0.9.0`; `order-card-view-mode.ts`
+- [x] 3.5.8 — Regression tests (view modes, header, field id mapping) — `v0.9.0`; `order-card-view-mode.test.mjs` + `order-details.test.mjs`
+- [ ] 3.5.9 — Owner visual verification (desktop + mobile matrix)
+- [x] 3.5.10 — Docs checkpoint (erp-check / project-structure / PT-06-based order card note; PT-07 historical) — `v0.9.0`
+
+Completion criteria:
+- header compact; status only via stage rail;
+- view modes hide/show sections without breaking item persistence;
+- field-link schema documented; existing FKs surfaced;
+- no duplicate PT-07 migrate work; shell contracts preserved.
 
 ## Stage 4 — Nomenclature
 
@@ -505,7 +559,7 @@ Microtasks:
 - [x] 5.5.7.3 — Standardize tabular section — `v0.9.0`; `SalesOrderItems` → `SectionCard`; local `overflow-x-auto`
 - [x] 5.5.7.4 — Standardize totals and actions — `v0.9.0`; `ListTotals` footer; row save/delete unchanged
 - [x] 5.5.7.5 — Define responsive behaviour — `v0.9.0`; contract + stacked sections; line grid local scroll
-- [x] 5.5.7.6 — Verify on Customer Order Card — `v0.9.0`; owner **`5.5.7 visual OK`** (`2026-07-22`)
+- [x] 5.5.7.6 — Verify on Customer Order Card — `v0.9.0`; owner **`5.5.7 visual OK`** (`2026-07-22`); later product layout revision → Stage **`3.5`** (do not re-open)
 
 #### 5.5.8 — PT-08 Versioned Workspace
 
@@ -522,7 +576,7 @@ Microtasks:
 - [x] 5.6.1 — Migrate Sales Dashboard — `v0.9.0`; PT-01 alignment (`5.5.1.*`); demo banner; `ui-audit` → reference; prior **`5.5.1 visual OK`**
 - [x] 5.6.2 — Migrate Leads Kanban — `v0.9.0`; PT-03 (`LeadWorkspace`); `ui-audit`; prior **`5.5.3 visual OK`**
 - [x] 5.6.3 — Migrate Lead Card — `v0.9.0`; PT-06 (`LeadPage`); prior **`5.5.6 visual OK`**; data/composition → Stage 1
-- [x] 5.6.4 — Migrate Customer Order Card — `v0.9.0`; PT-07 (`SalesOrderPage`); prior **`5.5.7 visual OK`**
+- [x] 5.6.4 — Migrate Customer Order Card — `v0.9.0`; PT-07 (`SalesOrderPage`); prior **`5.5.7 visual OK`**; product layout revision → **`3.5`** (PT-06-like chrome; PT-07 contract remains historical)
 - [x] 5.6.5 — Migrate Nomenclature Workspace — `v0.9.0`; PT-04; prior **`5.5.4 visual OK`**
 - [x] 5.6.6 — Migrate Nomenclature Card — `v0.9.0`; PT-06 secondary + segment boundaries (`5.3.2.8`); HTML pixel parity optional later
 - [x] 5.6.7 — Create reference Model Card shell — `v0.9.0`; PT-08 demo `/settings/catalogs/product-models/demo-reference` (`5.5.8.5`)

@@ -1,44 +1,48 @@
 "use client";
 
 import { ExternalLink, Mail, MessageCircle, PhoneCall, Plus } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 
 import { ComplexEntityCard } from "@/components/entity/complex-entity-card";
-import { PageActions, PageContent, PageLayout, ResponsiveGrid } from "@/components/layout/page-layout";
+import { PageActions, PageContent, PageLayout } from "@/components/layout/page-layout";
 import { LeadActivityTimeline } from "@/components/sales/lead-activity-timeline";
 import { LeadCommunicationPanel, type LeadMessageDraft } from "@/components/sales/lead-communication-panel";
-import { SalesOrderItemsUnfDemo } from "@/components/sales/sales-order-items-unf-demo";
+import { SalesOrderDocumentsTree } from "@/components/sales/sales-order-documents-tree";
 import { SalesOrderHeader } from "@/components/sales/sales-order-header";
+import { SalesOrderItemsUnfDemo } from "@/components/sales/sales-order-items-unf-demo";
+import { SalesOrderMetrics } from "@/components/sales/sales-order-metrics";
+import { SalesOrderTechCardsPanel } from "@/components/sales/sales-order-tech-cards-panel";
 import { Button } from "@/components/ui/button";
-import { CompactTabs } from "@/components/ui/compact-tabs";
 import { DataList } from "@/components/ui/data-list";
+import { EmptyState } from "@/components/ui/empty-state";
 import { EntityLink } from "@/components/ui/entity-link";
-import { MetricCard, SectionCard } from "@/components/ui/section-card";
+import { SectionCard } from "@/components/ui/section-card";
 import { mockCurrentUser, salesManagers } from "@/lib/demo-data/sales";
 import { getNotePermissions, isInternalNote, sortLeadActivities } from "@/lib/sales/lead-activity";
 import { formatAttachmentSize, leadMessageChannelLabels } from "@/lib/sales/lead-message";
-import type { Nomenclature, NomenclatureCategory } from "@/lib/nomenclature";
-import type { SalesOrderDetails, SalesOrderSourceLead } from "@/lib/sales/order-details";
 import {
-  orderStatusPresentation,
-} from "@/lib/sales/order-list-api";
+  formatTaskDate,
+  getTaskTimingLabel,
+  leadTaskTypeLabels,
+  sortLeadTasks,
+} from "@/lib/sales/lead-task";
+import type { Nomenclature, NomenclatureCategory } from "@/lib/nomenclature";
+import { buildOrderCardMetrics } from "@/lib/sales/order-card-metrics";
+import {
+  getOrderCardSectionVisibility,
+  orderCardViewModeOptions,
+  type OrderCardViewMode,
+} from "@/lib/sales/order-card-view-mode";
+import type { SalesOrderDetails, SalesOrderSourceLead } from "@/lib/sales/order-details";
+import { orderStatusPresentation } from "@/lib/sales/order-list-api";
 import type { VatRate } from "@/lib/vat-rates";
-import type { LeadActivity, LeadMessage, OrderStatus } from "@/types/sales";
+import type { LeadActivity, LeadMessage, LeadTask, OrderStatus } from "@/types/sales";
 
 const dateFormatter = new Intl.DateTimeFormat("ru-RU", {
   dateStyle: "medium",
   timeStyle: "short",
   timeZone: "Europe/Moscow",
 });
-
-const workspaceTabs = [
-  { id: "communication", label: "Коммуникации" },
-  { id: "history", label: "История" },
-  { id: "notes", label: "Заметки" },
-  { id: "items", label: "Товары, услуги" },
-] as const;
-
-type WorkspaceTab = (typeof workspaceTabs)[number]["id"];
 
 function formatDate(value: string) {
   return dateFormatter.format(new Date(value));
@@ -69,7 +73,19 @@ function cloneMessages(messages: LeadMessage[]): LeadMessage[] {
   }));
 }
 
-/** PT-06 lead-like composition for customer order card (owner visual transfer from Lead Card). */
+function cloneTasks(tasks: LeadTask[]): LeadTask[] {
+  return tasks.map((task) => ({
+    ...task,
+    assignedTo: { ...task.assignedTo },
+    createdBy: { ...task.createdBy },
+  }));
+}
+
+function sectionClass(visible: boolean) {
+  return visible ? "block" : "hidden";
+}
+
+/** Stage 3.5 order card: compact header, view filters, PT-06-like body. */
 export function SalesOrderPage({
   order: initialOrder,
   activities: initialActivities,
@@ -88,11 +104,14 @@ export function SalesOrderPage({
   const [order, setOrder] = useState(initialOrder);
   const [activities, setActivities] = useState(() => cloneActivities(initialActivities));
   const [messages, setMessages] = useState(() => cloneMessages(sourceLead?.messages ?? []));
-  const [workspaceTab, setWorkspaceTab] = useState<WorkspaceTab>("communication");
+  const [tasks] = useState(() => cloneTasks(sourceLead?.tasks ?? []));
+  const [viewMode, setViewMode] = useState<OrderCardViewMode>("all");
+  const visibility = getOrderCardSectionVisibility(viewMode);
+  const taskReferenceAt = sourceLead?.taskReferenceAt ?? order.updatedAtIso;
 
-  useEffect(() => {
+  if (order.id !== initialOrder.id) {
     setOrder(initialOrder);
-  }, [initialOrder]);
+  }
 
   const primaryContact = sourceLead?.primaryContact
     ?? sourceLead?.customer.contacts.find((contact) => contact.isPrimary);
@@ -116,32 +135,22 @@ export function SalesOrderPage({
     || activity.type === "outgoing_call"
     || activity.type === "comment_added"
   )).length + messages.length;
-
-  function openWorkspaceSection(tab: WorkspaceTab) {
-    setWorkspaceTab(tab);
-    window.requestAnimationFrame(() => {
-      document.getElementById(`order-workspace-panel-${tab}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
-      document.getElementById(`order-workspace-tab-${tab}`)?.focus({ preventScroll: true });
-    });
-  }
-
-  function moveWorkspaceTab(event: React.KeyboardEvent<HTMLButtonElement>, currentTab: WorkspaceTab) {
-    const currentIndex = workspaceTabs.findIndex((tab) => tab.id === currentTab);
-    const targetIndex = event.key === "ArrowRight"
-      ? (currentIndex + 1) % workspaceTabs.length
-      : event.key === "ArrowLeft"
-        ? (currentIndex - 1 + workspaceTabs.length) % workspaceTabs.length
-        : event.key === "Home"
-          ? 0
-          : event.key === "End"
-            ? workspaceTabs.length - 1
-            : -1;
-    if (targetIndex < 0) return;
-    event.preventDefault();
-    const targetTab = workspaceTabs[targetIndex].id;
-    setWorkspaceTab(targetTab);
-    window.requestAnimationFrame(() => document.getElementById(`order-workspace-tab-${targetTab}`)?.focus());
-  }
+  const visibleTasks = useMemo(
+    () => sortLeadTasks(tasks, "open", taskReferenceAt).slice(0, 6),
+    [taskReferenceAt, tasks],
+  );
+  const openTasksCount = useMemo(
+    () => tasks.filter((task) => task.status === "open").length,
+    [tasks],
+  );
+  const metrics = useMemo(() => buildOrderCardMetrics({
+    order,
+    daysInWork,
+    lastActivityLabel: formatDate(lastActivityAt),
+    activityCount: activities.length,
+    communicationCount,
+    openTasksCount,
+  }), [activities.length, communicationCount, daysInWork, lastActivityAt, openTasksCount, order]);
 
   function addComment(text: string, mentionedUserIds: string[]) {
     const occurredAt = new Date().toISOString();
@@ -246,24 +255,61 @@ export function SalesOrderPage({
   return (
     <PageLayout>
       <div data-lead-workspace data-complex-entity-card-page data-order-workspace className="w-full min-w-0 bg-portal-page text-portal-text">
-        <SalesOrderHeader
-          order={order}
-          lastActivityAtLabel={formatDate(lastActivityAt)}
-          onWrite={() => openWorkspaceSection("communication")}
-          onStatusChange={handleStatusChange}
-        />
+        <SalesOrderHeader order={order} onStatusChange={handleStatusChange} />
 
         <PageContent size="compact" width="full" className="lead-page-container">
+          <div
+            className="mb-3 flex min-w-0 flex-wrap gap-2"
+            role="toolbar"
+            aria-label="Фильтры разделов заказа"
+          >
+            {orderCardViewModeOptions.map((option) => {
+              const active = viewMode === option.id;
+              return (
+                <Button
+                  key={option.id}
+                  type="button"
+                  variant={active ? "primary" : "secondary"}
+                  aria-pressed={active}
+                  onClick={() => setViewMode(option.id)}
+                  className="h-8 px-3 text-xs"
+                >
+                  {option.label}
+                </Button>
+              );
+            })}
+          </div>
+
           <ComplexEntityCard>
             <div className="lead-main-grid grid min-w-0 gap-4">
               <div className="lead-left-column min-w-0 space-y-3">
-                <ResponsiveGrid minItemWidth="large" gap="default" className="lead-reference-grid">
-                  <SectionCard title="Основные сведения" size="compact" className="min-w-0">
+                <div className={`grid min-w-0 gap-3 lg:grid-cols-2 ${sectionClass(visibility.info || visibility.metrics)}`}>
+                  <SectionCard
+                    title="Основные сведения"
+                    size="compact"
+                    className={`min-w-0 ${sectionClass(visibility.info)}`}
+                  >
                     <DataList
                       columns={2}
                       items={[
-                        { id: "client", label: "Клиент", value: order.clientName },
-                        { id: "organization", label: "Организация", value: order.organizationName },
+                        {
+                          id: "client",
+                          label: "Клиент",
+                          value: (
+                            <EntityLink href={order.clientHref} className="text-portal-body">
+                              {order.clientName}
+                            </EntityLink>
+                          ),
+                        },
+                        {
+                          id: "organization",
+                          label: "Организация",
+                          value: order.organizationHref ? (
+                            <EntityLink href={order.organizationHref} className="text-portal-body">
+                              {order.organizationName}
+                            </EntityLink>
+                          ) : order.organizationName,
+                        },
                         { id: "responsible", label: "Ответственный", value: order.responsibleName },
                         { id: "amount", label: "Сумма", value: order.amount },
                         { id: "desiredDate", label: "Желаемая дата", value: order.desiredDate },
@@ -273,78 +319,42 @@ export function SalesOrderPage({
                         { id: "quantity", label: "Количество", value: order.quantity },
                       ]}
                     />
+                    <div className="mt-4 border-t border-portal-border pt-3">
+                      <p className="text-[11px] font-medium uppercase tracking-wide text-slate-500">Исходный лид</p>
+                      <EntityLink href={order.sourceLeadHref} className="mt-1 inline-flex items-center gap-1 text-portal-body">
+                        Открыть исходный лид <ExternalLink size={15} aria-hidden="true" />
+                      </EntityLink>
+                      <p className="mt-3 whitespace-pre-wrap text-portal-body leading-6 text-portal-muted">
+                        {order.description}
+                      </p>
+                      {sourceLead ? (
+                        <dl className="mt-4 grid gap-3 sm:grid-cols-2">
+                          <div>
+                            <dt className="text-[11px] text-slate-500">Контакт лида</dt>
+                            <dd className="mt-1 text-sm font-semibold text-slate-900">{sourceLead.contactName}</dd>
+                          </div>
+                          <div>
+                            <dt className="text-[11px] text-slate-500">Сообщений в карточке</dt>
+                            <dd className="mt-1 text-sm font-semibold text-slate-900">{messages.length}</dd>
+                          </div>
+                        </dl>
+                      ) : null}
+                    </div>
                   </SectionCard>
+
                   <SectionCard
-                    title="Исходный лид и описание"
-                    description="Коммуникации с клиентом продолжаются в контексте исходного лида."
+                    title="Ключевые метрики заказа"
+                    description="Живые поля заказа + демо оплата/маржа/SLA до финансовых и производственных контуров."
                     size="compact"
-                    className="min-w-0"
+                    className={`min-w-0 ${sectionClass(visibility.metrics)}`}
                   >
-                    <EntityLink href={order.sourceLeadHref} className="text-portal-body">
-                      Открыть исходный лид <ExternalLink size={15} aria-hidden="true" />
-                    </EntityLink>
-                    <p className="mt-3 whitespace-pre-wrap text-portal-body leading-6 text-portal-muted">
-                      {order.description}
-                    </p>
-                    {sourceLead ? (
-                      <dl className="mt-4 grid gap-3 sm:grid-cols-2">
-                        <div>
-                          <dt className="text-[11px] text-slate-500">Контакт лида</dt>
-                          <dd className="mt-1 text-sm font-semibold text-slate-900">{sourceLead.contactName}</dd>
-                        </div>
-                        <div>
-                          <dt className="text-[11px] text-slate-500">Сообщений в карточке</dt>
-                          <dd className="mt-1 text-sm font-semibold text-slate-900">{messages.length}</dd>
-                        </div>
-                      </dl>
-                    ) : null}
+                    <SalesOrderMetrics metrics={metrics} />
                   </SectionCard>
-                </ResponsiveGrid>
-
-                <SectionCard title="Ключевые метрики заказа" size="compact">
-                  <ResponsiveGrid minItemWidth="small" gap="compact" className="lead-metrics-grid">
-                    <MetricCard label="Сумма заказа" value={order.amount} tone="success" size="compact" />
-                    <MetricCard label="Позиций" value={String(order.itemCount)} size="compact" />
-                    <MetricCard label="Последняя активность" value={formatDate(lastActivityAt)} size="compact" />
-                    <MetricCard label="Желаемая дата" value={order.desiredDate} size="compact" />
-                    <MetricCard label="Дней в работе" value={`${daysInWork} дн.`} detail={`с ${order.createdAt}`} size="compact" />
-                    <MetricCard
-                      label="Касания / события"
-                      value={String(activities.length)}
-                      detail={communicationCount ? `${communicationCount} коммуникаций` : "история лида и заказа"}
-                      size="compact"
-                    />
-                  </ResponsiveGrid>
-                </SectionCard>
-
-                <div className="lg:hidden">
-                  <CompactTabs
-                    label="Рабочие разделы заказа"
-                    size="compact"
-                    items={workspaceTabs.map(({ id, label }) => ({ id, label }))}
-                    value={workspaceTab}
-                    onChange={(id) => openWorkspaceSection(id as WorkspaceTab)}
-                  />
                 </div>
-
-                <nav id="order-workspace-sections-heading" className="sr-only" aria-label="Рабочие разделы заказа">
-                  {workspaceTabs.map(({ id, label }) => (
-                    <button
-                      key={id}
-                      id={`order-workspace-tab-${id}`}
-                      type="button"
-                      aria-current={workspaceTab === id ? "page" : undefined}
-                      onClick={() => openWorkspaceSection(id)}
-                      onKeyDown={(event) => moveWorkspaceTab(event, id)}
-                    >
-                      {label}
-                    </button>
-                  ))}
-                </nav>
 
                 <div
                   id="order-workspace-panel-items"
-                  className={`min-w-0 ${workspaceTab === "items" ? "block" : "hidden"} lg:block`}
+                  className={`min-w-0 ${sectionClass(visibility.items)}`}
                 >
                   <SalesOrderItemsUnfDemo
                     orderId={order.id}
@@ -356,27 +366,42 @@ export function SalesOrderPage({
                   />
                 </div>
 
-                <div className="lead-bottom-grid grid min-w-0 items-start gap-3">
-                  <div
-                    id="order-workspace-panel-history"
-                    className={`lead-history-card min-w-0 rounded-portal-lg border border-portal-border bg-portal-surface shadow-portal-card ${workspaceTab === "history" ? "block" : "hidden"} lg:block`}
-                  >
-                    <LeadActivityTimeline
-                      embedded
-                      compact
-                      mode="history"
-                      activities={activities}
-                      currentUser={mockCurrentUser}
-                      managers={salesManagers}
-                      onAddComment={addComment}
-                      onEditNote={editNote}
-                      onDeleteNote={deleteNote}
-                      onTogglePin={toggleNotePin}
-                    />
-                  </div>
+                <div
+                  id="order-workspace-panel-documents"
+                  className={`min-w-0 ${sectionClass(visibility.documents)}`}
+                >
+                  <SalesOrderDocumentsTree order={order} />
+                </div>
+
+                <div
+                  id="order-workspace-panel-tech-cards"
+                  className={`min-w-0 ${sectionClass(visibility.techCards)}`}
+                >
+                  <SalesOrderTechCardsPanel order={order} />
+                </div>
+
+                <div
+                  id="order-workspace-panel-history"
+                  className={`lead-history-card min-w-0 rounded-portal-lg border border-portal-border bg-portal-surface shadow-portal-card ${sectionClass(visibility.history)}`}
+                >
+                  <LeadActivityTimeline
+                    embedded
+                    compact
+                    mode="history"
+                    activities={activities}
+                    currentUser={mockCurrentUser}
+                    managers={salesManagers}
+                    onAddComment={addComment}
+                    onEditNote={editNote}
+                    onDeleteNote={deleteNote}
+                    onTogglePin={toggleNotePin}
+                  />
+                </div>
+
+                <div className={`grid min-w-0 gap-3 lg:grid-cols-2 ${sectionClass(visibility.comments || visibility.tasks)}`}>
                   <div
                     id="order-workspace-panel-notes"
-                    className={`lead-notes-card min-w-0 rounded-portal-lg border border-portal-border bg-portal-surface shadow-portal-card ${workspaceTab === "notes" ? "block" : "hidden"} lg:block`}
+                    className={`lead-notes-card min-w-0 rounded-portal-lg border border-portal-border bg-portal-surface shadow-portal-card ${sectionClass(visibility.comments)}`}
                   >
                     <LeadActivityTimeline
                       embedded
@@ -391,13 +416,44 @@ export function SalesOrderPage({
                       onTogglePin={toggleNotePin}
                     />
                   </div>
+
+                  <SectionCard
+                    title="Задачи по заказу"
+                    description="Задачи исходного лида (LeadTask). Управление — в карточке лида."
+                    size="compact"
+                    className={`min-w-0 ${sectionClass(visibility.tasks)}`}
+                  >
+                    {visibleTasks.length === 0 ? (
+                      <EmptyState
+                        title="Нет открытых задач"
+                        description="Для API-лидов задачи появятся после persistent tasks (1.2.4). Пока можно открыть исходный лид."
+                        action={(
+                          <EntityLink href={order.sourceLeadHref} className="inline-flex items-center gap-1 text-sm font-medium text-portal-primary">
+                            Открыть исходный лид <ExternalLink size={14} aria-hidden="true" />
+                          </EntityLink>
+                        )}
+                      />
+                    ) : (
+                      <ul className="divide-y divide-portal-border">
+                        {visibleTasks.map((task) => (
+                          <li key={task.id} className="py-3 first:pt-0 last:pb-0">
+                            <p className="text-xs font-medium text-slate-500">{leadTaskTypeLabels[task.type]}</p>
+                            <p className="mt-1 text-sm font-semibold text-slate-900">{task.title}</p>
+                            <p className="mt-1 text-xs text-slate-500">
+                              {formatTaskDate(task.dueAt)} · {getTaskTimingLabel(task, taskReferenceAt)} · {task.assignedTo.name}
+                            </p>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </SectionCard>
                 </div>
               </div>
 
               <aside
                 id="order-workspace-panel-communication"
                 data-lead-communication-column
-                className={`lead-communication-column min-w-0 self-start overflow-hidden rounded-portal-lg border border-portal-border bg-portal-surface shadow-portal-card ${workspaceTab === "communication" ? "block" : "hidden"} lg:block`}
+                className={`lead-communication-column min-w-0 self-start overflow-hidden rounded-portal-lg border border-portal-border bg-portal-surface shadow-portal-card ${sectionClass(visibility.communication)}`}
               >
                 <LeadCommunicationPanel
                   embedded
@@ -411,7 +467,9 @@ export function SalesOrderPage({
                       <dl className="mt-4 space-y-4">
                         <div>
                           <dt className="text-[11px] text-slate-500">Клиент заказа</dt>
-                          <dd className="mt-1 text-sm font-semibold text-slate-900">{order.clientName}</dd>
+                          <dd className="mt-1 text-sm font-semibold text-slate-900">
+                            <EntityLink href={order.clientHref}>{order.clientName}</EntityLink>
+                          </dd>
                         </div>
                         <div>
                           <dt className="text-[11px] text-slate-500">Основной контакт</dt>
@@ -459,14 +517,14 @@ export function SalesOrderPage({
                   <Button
                     type="button"
                     variant="primary"
-                    onClick={() => openWorkspaceSection("communication")}
+                    onClick={() => setViewMode("communication")}
                     className="h-9 basis-[calc(50%-0.25rem)] px-2 sm:basis-auto"
                   >
                     <MessageCircle size={15} /> Написать
                   </Button>
                   <Button
                     type="button"
-                    onClick={() => openWorkspaceSection("notes")}
+                    onClick={() => setViewMode("all")}
                     className="h-9 basis-[calc(50%-0.25rem)] px-2 sm:basis-auto"
                   >
                     <Plus size={15} /> Заметка
@@ -483,13 +541,6 @@ export function SalesOrderPage({
                       <PhoneCall size={15} /> Позвонить
                     </Button>
                   )}
-                  <Button
-                    type="button"
-                    onClick={() => openWorkspaceSection("history")}
-                    className="h-9 basis-[calc(50%-0.25rem)] px-2 sm:basis-auto"
-                  >
-                    История
-                  </Button>
                 </PageActions>
               </aside>
             </div>

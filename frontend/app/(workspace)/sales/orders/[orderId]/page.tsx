@@ -38,6 +38,8 @@ export default async function OrderRoute({ params }: OrderRouteProps) {
       customer: sourceLeadDetails.customer,
       messages: sourceLeadDetails.messages,
       primaryContact: sourceLeadDetails.customer.contacts.find((contact) => contact.isPrimary),
+      tasks: sourceLeadDetails.tasks,
+      taskReferenceAt: sourceLeadDetails.taskReferenceAt,
     }
     : null;
 

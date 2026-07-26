@@ -1,12 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowLeft, Check, Clipboard, Ellipsis, ExternalLink, MessageSquare } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Check, Clipboard, ExternalLink, Ellipsis } from "lucide-react";
 import { useEffect, useRef, useState, useTransition } from "react";
 
 import { setOrderStatus } from "@/app/(workspace)/sales/orders/order-status-actions";
-import { PageActions, PageContent } from "@/components/layout/page-layout";
-import { Button } from "@/components/ui/button";
+import { PageContent } from "@/components/layout/page-layout";
+import { IconButton } from "@/components/ui/button";
+import { EntityHeader } from "@/components/ui/entity-header";
 import { StatusBadge, type StatusBadgeTone } from "@/components/ui/status-badge";
 import type { SalesOrderDetails } from "@/lib/sales/order-details";
 import {
@@ -15,7 +17,7 @@ import {
 } from "@/lib/sales/order-list-api";
 import type { OrderStatus } from "@/types/sales";
 
-type OpenMenu = "status" | "more" | null;
+type OpenMenu = "more" | null;
 
 const statusTones: Record<string, StatusBadgeTone> = {
   "bg-blue-500": "primary",
@@ -27,31 +29,19 @@ const statusTones: Record<string, StatusBadgeTone> = {
   "bg-slate-400": "neutral",
 };
 
-function initials(name: string) {
-  return name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase())
-    .join("") || "—";
-}
-
 export function SalesOrderHeader({
   order,
-  lastActivityAtLabel,
-  onWrite,
   onStatusChange,
 }: {
   order: SalesOrderDetails;
-  lastActivityAtLabel: string;
-  onWrite: () => void;
   onStatusChange?: (status: OrderStatus) => void;
 }) {
+  const router = useRouter();
   const [pendingStatus, setPendingStatus] = useState<OrderStatus | null>(null);
   const [openMenu, setOpenMenu] = useState<OpenMenu>(null);
   const [notice, setNotice] = useState("");
   const [isPending, startTransition] = useTransition();
-  const headerRef = useRef<HTMLElement>(null);
+  const headerRef = useRef<HTMLDivElement>(null);
   const status = pendingStatus ?? order.statusCode;
   const isTerminal = status === "completed" || status === "cancelled";
   const currentIndex = orderWorkflowStatuses.indexOf(status);
@@ -107,151 +97,89 @@ export function SalesOrderHeader({
   }
 
   return (
-    <header
-      ref={headerRef}
-      data-complex-entity-header
-      data-document-header
-      className="border-b border-portal-border bg-portal-surface shadow-portal-sm"
-    >
-      <PageContent size="compact" width="full">
-        <div className="grid min-w-0 grid-cols-1 gap-3 md:grid-cols-[auto_minmax(0,1fr)_auto] md:items-start md:gap-x-3">
-          <Link
-            href="/sales/orders"
-            className="inline-flex h-9 w-fit items-center gap-1.5 rounded-[var(--portal-radius-md)] border border-portal-border bg-portal-surface px-3 text-sm font-medium text-portal-text hover:bg-portal-surface-secondary"
-          >
-            <ArrowLeft size={16} aria-hidden="true" />
-            К списку
-          </Link>
-          <div className="min-w-0 md:col-start-2 md:row-start-1">
-            <div className="flex min-w-0 flex-wrap items-center gap-2.5">
-              <h1 className="min-w-0 text-xl font-bold tracking-tight text-portal-text sm:text-[25px]">
-                Заказ {order.number}
-              </h1>
-              <StatusBadge tone={badgeTone} dot>
+    <div ref={headerRef} data-complex-entity-header data-document-header className="min-w-0">
+      <PageContent size="compact" width="full" className="space-y-portal-3">
+        <div className="rounded-portal-lg border border-portal-border bg-portal-surface p-portal-4 shadow-portal-card sm:p-portal-5">
+          <EntityHeader
+            size="compact"
+            eyebrow={
+              <Link
+                href="/sales/orders"
+                className="inline-flex items-center gap-1.5 font-medium text-portal-primary hover:underline"
+              >
+                ← Заказы
+              </Link>
+            }
+            title={`Заказ ${order.number}`}
+            status={(
+              <StatusBadge size="compact" tone={badgeTone} dot>
                 {orderStatusPresentation[status].label}
               </StatusBadge>
-            </div>
-            <p className="mt-1 break-words text-base font-medium text-portal-text sm:text-[17px]">
-              {order.title}
-            </p>
-          </div>
-          <PageActions className="md:col-start-3 md:row-start-1 md:justify-end">
-            <div className="relative">
-              <Button
-                type="button"
-                aria-haspopup="menu"
-                aria-expanded={openMenu === "more"}
-                aria-label="Дополнительные действия с заказом"
-                onClick={() => setOpenMenu((current) => (current === "more" ? null : "more"))}
-                className="h-9 px-3"
-              >
-                <Ellipsis size={17} /> Ещё
-              </Button>
-              {openMenu === "more" ? (
-                <div
-                  className="absolute right-0 z-30 mt-2 w-60 rounded-[var(--portal-radius-lg)] border border-portal-border bg-portal-surface p-2 text-left shadow-[var(--portal-shadow-overlay)]"
-                  role="menu"
+            )}
+            description={order.title}
+            actions={(
+              <div className="relative flex flex-wrap items-center gap-1">
+                <IconButton
+                  label="Открыть исходный лид"
+                  variant="secondary"
+                  onClick={() => router.push(order.sourceLeadHref)}
                 >
-                  <Link
-                    href={order.sourceLeadHref}
-                    role="menuitem"
-                    className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
-                    onClick={() => setOpenMenu(null)}
-                  >
-                    <ExternalLink size={15} /> Открыть исходный лид
-                  </Link>
-                  <button
-                    type="button"
-                    role="menuitem"
-                    onClick={copyLink}
-                    className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
-                  >
-                    <Clipboard size={15} /> Копировать ссылку
-                  </button>
-                </div>
-              ) : null}
-            </div>
-          </PageActions>
-        </div>
-
-        <div className="mt-2 flex min-w-0 flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-          <div className="flex min-w-0 flex-wrap items-center gap-x-5 gap-y-2 text-xs text-slate-500">
-            <span className="inline-flex items-center gap-2">
-              <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-slate-100 text-[10px] font-semibold text-slate-700">
-                {initials(order.responsibleName)}
-              </span>
-              <span>
-                <span className="text-slate-400">Ответственный:</span>{" "}
-                <b className="font-medium text-slate-700">{order.responsibleName}</b>
-              </span>
-            </span>
-            <span>
-              <span className="text-slate-400">Клиент:</span>{" "}
-              <b className="font-medium text-slate-700">{order.clientName}</b>
-            </span>
-            <span>
-              <span className="text-slate-400">Сумма:</span>{" "}
-              <b className="font-medium text-slate-700">{order.amount}</b>
-            </span>
-            <span>
-              <span className="text-slate-400">Активность:</span>{" "}
-              <b className="font-medium text-slate-700">{lastActivityAtLabel}</b>
-            </span>
-          </div>
-
-          <PageActions
-            className="w-full max-lg:grid max-lg:grid-cols-2 max-lg:gap-2 lg:w-auto lg:shrink-0"
-            align="end"
-          >
-            <Button type="button" variant="primary" onClick={onWrite} className="h-9 w-full px-3 lg:w-auto">
-              <MessageSquare size={16} /> Написать
-            </Button>
-            <div className="relative w-full max-lg:min-w-0 lg:w-auto">
-              <Button
-                type="button"
-                disabled={isPending}
-                aria-haspopup="menu"
-                aria-expanded={openMenu === "status"}
-                onClick={() => setOpenMenu((current) => (current === "status" ? null : "status"))}
-                className="h-9 w-full px-3 lg:w-auto"
-              >
-                Статус
-              </Button>
-              {openMenu === "status" ? (
-                <div
-                  className="absolute left-0 z-30 mt-2 w-64 max-w-[calc(100vw-2rem)] rounded-[var(--portal-radius-lg)] border border-portal-border bg-portal-surface p-2 text-left shadow-[var(--portal-shadow-overlay)] sm:left-auto sm:right-0"
-                  role="menu"
+                  <ExternalLink className="size-4" aria-hidden="true" />
+                </IconButton>
+                <IconButton
+                  label="Копировать ссылку"
+                  variant="secondary"
+                  onClick={copyLink}
                 >
-                  {[...orderWorkflowStatuses, "cancelled" as const].map((item) => (
+                  <Clipboard className="size-4" aria-hidden="true" />
+                </IconButton>
+                <IconButton
+                  label="Дополнительные действия"
+                  variant="secondary"
+                  aria-haspopup="menu"
+                  aria-expanded={openMenu === "more"}
+                  onClick={() => setOpenMenu((current) => (current === "more" ? null : "more"))}
+                >
+                  <Ellipsis className="size-4" aria-hidden="true" />
+                </IconButton>
+                {openMenu === "more" ? (
+                  <div
+                    className="absolute right-0 top-full z-30 mt-2 w-60 rounded-[var(--portal-radius-lg)] border border-portal-border bg-portal-surface p-2 text-left shadow-[var(--portal-shadow-overlay)]"
+                    role="menu"
+                  >
+                    <Link
+                      href={order.sourceLeadHref}
+                      role="menuitem"
+                      className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
+                      onClick={() => setOpenMenu(null)}
+                    >
+                      <ExternalLink size={15} /> Открыть исходный лид
+                    </Link>
                     <button
-                      key={item}
                       type="button"
                       role="menuitem"
-                      disabled={item === status || isPending}
-                      onClick={() => chooseStatus(item)}
-                      className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
+                      onClick={copyLink}
+                      className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                     >
-                      <span className={`size-2.5 rounded-full ${orderStatusPresentation[item].accentClass}`} />
-                      <span className="flex-1">{orderStatusPresentation[item].title}</span>
+                      <Clipboard size={15} /> Копировать ссылку
                     </button>
-                  ))}
-                </div>
-              ) : null}
-            </div>
-          </PageActions>
+                  </div>
+                ) : null}
+              </div>
+            )}
+          />
+          {notice ? (
+            <p className="mt-portal-3 text-portal-caption text-portal-muted" role="status" aria-live="polite">
+              {notice}
+            </p>
+          ) : null}
         </div>
 
-        {notice ? (
-          <p className="mt-2 text-sm text-slate-600" role="status" aria-live="polite">
-            {notice}
-          </p>
-        ) : null}
-
         <div
-          className="lead-stage-rail relative mt-3 min-w-0 overscroll-x-contain"
+          className="lead-stage-rail relative min-w-0 overflow-hidden rounded-portal-lg border border-portal-border bg-portal-surface overscroll-x-contain shadow-portal-sm"
           aria-label="Этапы заказа"
         >
-          <div className="flex w-max min-w-full snap-x snap-mandatory gap-0 pb-1 xl:w-full xl:snap-none">
+          <div className="flex w-max min-w-full snap-x snap-mandatory gap-0 xl:w-full xl:snap-none">
             {orderWorkflowStatuses.map((item, index) => {
               const isCurrent = item === status;
               const isDone = currentIndex >= 0 && index < currentIndex;
@@ -289,6 +217,6 @@ export function SalesOrderHeader({
           </div>
         </div>
       </PageContent>
-    </header>
+    </div>
   );
 }

@@ -577,8 +577,8 @@
                   },
                   {
                     code: "3.2.5.7",
-                    title: "Documentation checkpoint (lead reuse notes if applicable)",
-                    done: false
+                    title: "Documentation checkpoint (lead reuse notes) — `v0.9.0`; evidence: docs/architecture/order-card-field-links.md",
+                    done: true
                   }
                 ]
               },
@@ -645,6 +645,73 @@
                 code: "3.4.3",
                 title: "Orders list loading.tsx and surfaced network errors",
                 done: false
+              }
+            ]
+          },
+          {
+            title: "3.5 — Order card UX and platform links",
+            items: [
+              {
+                code: "3.5",
+                title: "Order card UX and platform links — after 3.2.5, before 3.2.6; PT-07 migrate 5.5.7/5.6.4 stays closed",
+                goal: "Compact header + stage rail above; merged requisites; metrics right; full-width history; comments + tasks; view filters; wire existing FKs.",
+                dependencies: [
+                  "3.1.3",
+                  "3.2.5",
+                  "5.6.4"
+                ],
+                microtasks: [
+                  {
+                    code: "3.5.1",
+                    title: "Inventory fields + platform link map — docs/architecture/order-card-field-links.md — v0.9.0",
+                    done: true
+                  },
+                  {
+                    code: "3.5.2",
+                    title: "Wire existing live links in UI (EntityLink where route exists) — v0.9.0",
+                    done: true
+                  },
+                  {
+                    code: "3.5.3",
+                    title: "Fill gaps via existing catalogs (LeadTask; expose client/org/responsible ids) — v0.9.0",
+                    done: true
+                  },
+                  {
+                    code: "3.5.4",
+                    title: "Create directory/model only if gap remains — not required; LeadTask sufficient",
+                    done: true
+                  },
+                  {
+                    code: "3.5.5",
+                    title: "Compact header: no meta strip; no Write/Status buttons; stage rail above — v0.9.0",
+                    done: true
+                  },
+                  {
+                    code: "3.5.6",
+                    title: "Body composition: merged info; metrics right; history full width; comments + tasks — v0.9.0",
+                    done: true
+                  },
+                  {
+                    code: "3.5.7",
+                    title: "View filters: Все / Сведения / Товары / Коммуникация — v0.9.0",
+                    done: true
+                  },
+                  {
+                    code: "3.5.8",
+                    title: "Regression tests (view modes, header, field id mapping) — v0.9.0",
+                    done: true
+                  },
+                  {
+                    code: "3.5.9",
+                    title: "Owner visual verification (desktop + mobile)",
+                    done: false
+                  },
+                  {
+                    code: "3.5.10",
+                    title: "Docs checkpoint (erp-check / project-structure / PT note) — v0.9.0",
+                    done: true
+                  }
+                ]
               }
             ]
           }

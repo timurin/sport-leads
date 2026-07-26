@@ -1,17 +1,12 @@
 "use client";
 
 import {
-  ArrowDown,
-  ArrowUp,
-  Clock3,
   Copy,
   Eye,
   FileSpreadsheet,
-  MoreVertical,
   Plus,
   RefreshCw,
   Save,
-  Search,
   Trash2,
   X,
 } from "lucide-react";
@@ -29,7 +24,7 @@ import {
   loadProductModelActiveAssemblyVariants,
 } from "@/app/(workspace)/sales/orders/[orderId]/order-item-catalog-actions";
 import { NomenclaturePickModal } from "@/components/sales/nomenclature-pick-modal";
-import { Button } from "@/components/ui/button";
+import { IconButton } from "@/components/ui/button";
 import { CompactTabs } from "@/components/ui/compact-tabs";
 import { Input, Select } from "@/components/ui/form-controls";
 import { ListTotals } from "@/components/ui/list-pagination";
@@ -183,10 +178,8 @@ export function SalesOrderItemsUnfDemo({
   const [rows, setRows] = useState<DraftRow[]>(() =>
     items.map((item, index) => toDraft(item, index, vatRates)),
   );
-  const [selectedIds, setSelectedIds] = useState<number[]>(() =>
-    items[0] ? [items[0].id] : [],
-  );
-  const [activeRowId, setActiveRowId] = useState<number | null>(items[0]?.id ?? null);
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
+  const [activeRowId, setActiveRowId] = useState<number | null>(null);
   const [search, setSearch] = useState("");
   const [message, setMessage] = useState<string | null>(null);
   const [nomenclaturePickerRowId, setNomenclaturePickerRowId] = useState<number | null>(
@@ -199,21 +192,35 @@ export function SalesOrderItemsUnfDemo({
     Record<number, AssemblyVariant[]>
   >({});
 
-  useEffect(() => {
+  const itemsSyncKey = useMemo(
+    () =>
+      `${items
+        .map(
+          (item) =>
+            [
+              item.id,
+              item.nomenclatureId,
+              item.productModelId,
+              item.assemblyVariantId,
+              item.vatRateId,
+              item.quantity,
+              item.unitPriceValue,
+              item.lineAmountValue,
+              item.snapshotName,
+            ].join(":"),
+        )
+        .join("|")}|vat:${vatRates.map((rate) => `${rate.id}:${rate.rate_percent}`).join(",")}`,
+    [items, vatRates],
+  );
+  const [syncedItemsKey, setSyncedItemsKey] = useState(itemsSyncKey);
+  if (syncedItemsKey !== itemsSyncKey) {
+    setSyncedItemsKey(itemsSyncKey);
     setRows(items.map((item, index) => toDraft(item, index, vatRates)));
-    if (items.length > 0) {
-      setSelectedIds((current) => {
-        const valid = current.filter((id) => items.some((item) => item.id === id));
-        return valid.length > 0 ? valid : [items[0].id];
-      });
-      setActiveRowId((current) =>
-        current && items.some((item) => item.id === current) ? current : items[0].id,
-      );
-    } else {
-      setSelectedIds([]);
-      setActiveRowId(null);
-    }
-  }, [items, vatRates]);
+    setSelectedIds((current) => current.filter((id) => items.some((item) => item.id === id)));
+    setActiveRowId((current) =>
+      current && items.some((item) => item.id === current) ? current : null,
+    );
+  }
 
   const nomenclatureIdsKey = useMemo(
     () =>
@@ -692,112 +699,76 @@ export function SalesOrderItemsUnfDemo({
           </p>
         ) : (
           <>
-            <div className="flex flex-col gap-portal-2 border-y border-portal-border bg-portal-surface-secondary px-portal-1 py-portal-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
-              <div className="flex min-w-0 flex-wrap items-center gap-portal-1">
-                <Button
-                  type="button"
+            <div
+              className="flex flex-col gap-portal-2 border-y border-portal-border bg-portal-surface px-portal-3 py-portal-2 sm:flex-row sm:items-center sm:justify-between"
+              role="toolbar"
+              aria-label="Действия табличной части"
+            >
+              <div className="flex min-w-0 flex-wrap items-center gap-1">
+                <IconButton
+                  label="Добавить строку"
                   variant="primary"
-                  size="compact"
-                  title="Добавить строку"
-                  aria-label="Добавить строку"
                   disabled={isPending}
                   onClick={addRow}
                 >
-                  <Plus size={14} />
-                </Button>
-                <Button
-                  type="button"
-                  size="compact"
-                  title="Сохранить позиции"
-                  aria-label="Сохранить позиции"
+                  <Plus className="size-4" aria-hidden="true" />
+                </IconButton>
+                <IconButton
+                  label="Сохранить позиции"
+                  variant="secondary"
                   disabled={isPending || rows.length === 0}
                   onClick={saveAllRows}
                 >
-                  <Save size={14} />
-                </Button>
-                <Button
-                  type="button"
-                  size="compact"
-                  title="Скопировать"
-                  aria-label="Скопировать"
+                  <Save className="size-4" aria-hidden="true" />
+                </IconButton>
+                <IconButton
+                  label="Скопировать выбранную строку"
+                  variant="secondary"
                   disabled={isPending || selectedIds.length === 0}
                   onClick={copySelected}
                 >
-                  <Copy size={14} />
-                </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="compact"
-                  title="Удалить"
-                  aria-label="Удалить"
+                  <Copy className="size-4" aria-hidden="true" />
+                </IconButton>
+                <IconButton
+                  label="Удалить выбранные"
+                  variant="secondary"
                   disabled={isPending || (selectedIds.length === 0 && activeRowId === null)}
                   onClick={deleteSelected}
-                  className="text-portal-danger hover:text-portal-danger"
                 >
-                  <X size={14} strokeWidth={2.5} />
-                </Button>
-                <span className="mx-portal-1 hidden h-5 w-px bg-portal-border sm:block" aria-hidden="true" />
-                <Button type="button" size="compact" disabled>
-                  Подобрать
-                </Button>
-                <Button type="button" size="compact" title="Настройка списка" aria-label="Настройка списка" disabled>
-                  <Eye size={14} />
-                </Button>
-                <Button
-                  type="button"
-                  size="compact"
-                  title="Обновить"
-                  aria-label="Обновить"
+                  <Trash2 className="size-4" aria-hidden="true" />
+                </IconButton>
+                <IconButton
+                  label="Обновить"
+                  variant="secondary"
                   disabled={isPending}
                   onClick={() => router.refresh()}
                 >
-                  <RefreshCw size={14} />
-                </Button>
-                <Button type="button" size="compact" title="Excel" aria-label="Excel" disabled>
-                  <FileSpreadsheet size={14} />
-                </Button>
-                <span className="mx-portal-1 hidden h-5 w-px bg-portal-border sm:block" aria-hidden="true" />
-                <Button type="button" size="compact" title="Вверх" aria-label="Переместить вверх" disabled>
-                  <ArrowUp size={14} />
-                </Button>
-                <Button type="button" size="compact" title="Вниз" aria-label="Переместить вниз" disabled>
-                  <ArrowDown size={14} />
-                </Button>
-                <Button
-                  type="button"
-                  size="compact"
-                  title="Удалить отмеченные"
-                  aria-label="Удалить отмеченные"
-                  disabled={isPending || selectedIds.length === 0}
-                  onClick={deleteSelected}
-                >
-                  <Trash2 size={14} />
-                </Button>
-                <Button type="button" size="compact" title="История" aria-label="История" disabled>
-                  <Clock3 size={14} />
-                </Button>
+                  <RefreshCw className="size-4" aria-hidden="true" />
+                </IconButton>
+                <IconButton label="Настройка списка" variant="secondary" disabled>
+                  <Eye className="size-4" aria-hidden="true" />
+                </IconButton>
+                <IconButton label="Excel" variant="secondary" disabled>
+                  <FileSpreadsheet className="size-4" aria-hidden="true" />
+                </IconButton>
               </div>
-              <div className="flex min-w-0 items-center gap-portal-1">
-                <label className="relative flex min-w-0 flex-1 items-center sm:w-48 sm:flex-none">
-                  <Search
-                    size={14}
-                    className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-portal-muted"
-                    aria-hidden="true"
-                  />
-                  <span className="sr-only">Поиск</span>
-                  <Input
-                    size="compact"
-                    value={search}
-                    onChange={(event) => setSearch(event.target.value)}
-                    placeholder="Поиск"
-                    aria-label="Поиск по позициям"
-                    className="pl-8"
-                  />
-                </label>
-                <Button type="button" size="compact" title="Ещё" aria-label="Ещё" disabled>
-                  <MoreVertical size={14} />
-                </Button>
+              <div className="flex min-w-0 w-full flex-1 items-center gap-1 sm:max-w-md sm:justify-end">
+                <Input
+                  size="compact"
+                  value={search}
+                  onChange={(event) => setSearch(event.target.value)}
+                  placeholder="Поиск по позициям"
+                  aria-label="Поиск по позициям"
+                  className="min-w-0 flex-1 basis-0"
+                />
+                <IconButton
+                  label="Сбросить поиск"
+                  variant="secondary"
+                  disabled={!search}
+                  onClick={() => setSearch("")}
+                >
+                  <X className="size-4" aria-hidden="true" />
+                </IconButton>
               </div>
             </div>
 

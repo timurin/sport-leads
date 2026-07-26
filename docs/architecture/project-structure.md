@@ -1,7 +1,7 @@
 # Sport-Lead — Project Structure Checklist
 
 **Code:** `SL-PROJECT-STRUCTURE-v1`
-**Updated:** `2026-07-26` (`4.10.7` owner visual OK; closes UNF warehouse nomenclature `4.10`)
+**Updated:** `2026-07-26` (`3.5` order card UX code; owner visual `3.5.9` pending; prior `4.10.7`)
 **Project version:** `v0.9.0`
 **Git branch:** `feature/v0.8.1-nomenclature-core`
 
@@ -55,6 +55,8 @@
 - [x] Persistent sales-order model, list, detail route, and status history
 - [x] Manual order creation and order creation from lead conversion
 - [x] Organization, client, contact, and responsible bindings in order data
+- [x] Order card field-link map and compact UX code (`3.5.1`–`3.5.8`, `3.5.10`) — evidence: `docs/architecture/order-card-field-links.md`, `sales-order-page.tsx`
+- [ ] Order card owner visual verification (`3.5.9`)
 - [x] Persistent order items with commercial snapshot fields
 - [x] Decimal/Numeric line totals and discount-percent recalculation
 - [x] Size distribution, color, and personalization snapshots
