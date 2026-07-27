@@ -29,12 +29,14 @@ import {
   type ShopRoutingTemplate,
   type WorkCenter,
 } from "@/lib/shop-routings";
+import type { ProductionStage } from "@/lib/production-stages";
 import type { TechOperation } from "@/lib/tech-operations";
 
 type ShopRoutingDetailWorkspaceProps = {
   routing: ShopRoutingTemplate;
   techOperations: TechOperation[];
   workCenters: WorkCenter[];
+  productionStages: ProductionStage[];
 };
 
 function nextStageOrder(stages: ShopRoutingStageDraft[]): number {
@@ -47,6 +49,7 @@ export function ShopRoutingDetailWorkspace({
   routing,
   techOperations,
   workCenters,
+  productionStages,
 }: ShopRoutingDetailWorkspaceProps) {
   const router = useRouter();
   const { push: pushToast } = useToast();
@@ -74,6 +77,17 @@ export function ShopRoutingDetailWorkspace({
       ),
     [workCenters],
   );
+  const productionStageOptions = useMemo(
+    () =>
+      [...productionStages]
+        .filter((stage) => stage.is_active)
+        .sort(
+          (a, b) =>
+            a.sort_order - b.sort_order ||
+            a.name.localeCompare(b.name, "ru"),
+        ),
+    [productionStages],
+  );
 
   const dirty =
     name !== routing.name ||
@@ -98,6 +112,7 @@ export function ShopRoutingDetailWorkspace({
       ...current,
       {
         stage_order: nextStageOrder(current),
+        production_stage_id: null,
         stage_label: "",
         tech_operation_id: null,
         work_center_id: null,
@@ -231,12 +246,12 @@ export function ShopRoutingDetailWorkspace({
             <DataTableHead>
               <tr>
                 <DataTableHeaderCell className="w-20">№</DataTableHeaderCell>
-                <DataTableHeaderCell>Этап</DataTableHeaderCell>
+                <DataTableHeaderCell>Цех</DataTableHeaderCell>
                 <DataTableHeaderCell className="w-52">
                   Тех операция
                 </DataTableHeaderCell>
                 <DataTableHeaderCell className="w-52">
-                  Рабочий центр
+                  Оборудование
                 </DataTableHeaderCell>
                 <DataTableHeaderCell className="w-28">ОТК</DataTableHeaderCell>
                 <DataTableHeaderCell className="w-16" />
@@ -261,14 +276,34 @@ export function ShopRoutingDetailWorkspace({
                     />
                   </DataTableCell>
                   <DataTableCell>
-                    <Input
-                      value={stage.stage_label}
-                      onChange={(event) =>
-                        updateStage(index, { stage_label: event.target.value })
+                    <Select
+                      value={
+                        stage.production_stage_id == null
+                          ? ""
+                          : String(stage.production_stage_id)
                       }
+                      onChange={(event) => {
+                        const stageId = event.target.value
+                          ? Number(event.target.value)
+                          : null;
+                        const selected = productionStageOptions.find(
+                          (item) => item.id === stageId,
+                        );
+                        updateStage(index, {
+                          production_stage_id: stageId,
+                          stage_label: selected?.name ?? "",
+                        });
+                      }}
                       disabled={saving}
-                      aria-label="Наименование этапа"
-                    />
+                      aria-label="Цех"
+                    >
+                      <option value="">Выберите цех</option>
+                      {productionStageOptions.map((productionStage) => (
+                        <option key={productionStage.id} value={productionStage.id}>
+                          {productionStage.name}
+                        </option>
+                      ))}
+                    </Select>
                   </DataTableCell>
                   <DataTableCell>
                     <Select
@@ -287,11 +322,18 @@ export function ShopRoutingDetailWorkspace({
                       aria-label="Тех операция"
                     >
                       <option value="">Не указана</option>
-                      {techOpOptions.map((operation) => (
+                      {techOpOptions
+                        .filter(
+                          (operation) =>
+                            operation.production_stage_id == null ||
+                            operation.production_stage_id ===
+                              stage.production_stage_id,
+                        )
+                        .map((operation) => (
                         <option key={operation.id} value={operation.id}>
                           {operation.name}
                         </option>
-                      ))}
+                        ))}
                     </Select>
                   </DataTableCell>
                   <DataTableCell>
@@ -308,14 +350,21 @@ export function ShopRoutingDetailWorkspace({
                         });
                       }}
                       disabled={saving}
-                      aria-label="Рабочий центр"
+                      aria-label="Оборудование"
                     >
                       <option value="">Не указан</option>
-                      {workCenterOptions.map((center) => (
+                      {workCenterOptions
+                        .filter(
+                          (center) =>
+                            center.production_stage_id == null ||
+                            center.production_stage_id ===
+                              stage.production_stage_id,
+                        )
+                        .map((center) => (
                         <option key={center.id} value={center.id}>
                           {center.name}
                         </option>
-                      ))}
+                        ))}
                     </Select>
                   </DataTableCell>
                   <DataTableCell>

@@ -70,6 +70,7 @@ class TechnicalCardOperationLineWrite(BaseModel):
     volume_unit: TechOperationVolumeUnit
     volume: Decimal = Field(default=Decimal("0"), ge=0, max_digits=14, decimal_places=3)
     stage_order: int | None = Field(default=None, ge=1)
+    production_stage_id: int | None = Field(default=None, ge=1)
     stage_label: str | None = Field(default=None, max_length=255)
 
     @field_validator("operation_name", "stage_label", mode="before")
@@ -89,6 +90,7 @@ class TechnicalCardOperationLineRead(TechnicalCardOperationLineWrite):
 
 class TechnicalCardStageResultWrite(BaseModel):
     stage_order: int = Field(ge=1)
+    production_stage_id: int | None = Field(default=None, ge=1)
     stage_label: str = Field(min_length=1, max_length=255)
     status: TechnicalCardStageResultStatus = TechnicalCardStageResultStatus.PENDING
     performer_name: str | None = Field(default=None, max_length=255)

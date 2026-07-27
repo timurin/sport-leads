@@ -40,7 +40,7 @@ Sources of truth:
 - `docs/architecture/erp-check.md` (`SL-ERP-CHECK-v1`) — ERP readiness
 - ADRs in `docs/architecture/decisions/`
 
-HTML under `docs/erp/status/` is a visual report only. Do not create parallel master documents. Roadmap document code ≠ app version.
+HTML under `docs/erp/status/` is a visual report only — twin of Markdown, never a parallel master. Updating MD checklists without the HTML twin in the same iteration is forbidden (see § canonical sync and `.cursor/rules/canonical-docs-html-twins.mdc`). Roadmap document code ≠ app version.
 
 Before each task read: this file, project-structure, erp-check, roadmap, related ADRs, `docs/releases/latest.md` if present, latest release doc, and the current task file if any.
 
@@ -93,13 +93,20 @@ Rules: no ORM objects from API; business rules in services; money via Decimal/Nu
 4. Close only the matching checkbox after successful applicable checks.
 5. Functional items close after all required microtasks (and user visual check if required).
 6. Bugs get `B1`, `B2`, …; unrelated refactor is forbidden.
-7. Update roadmap HTML with Markdown. Update project-structure (+ HTML) only when factual readiness changes.
+7. **MD + HTML twins are one atomic write (hard rule):**
+   - Source of truth is Markdown (`roadmap.md`, `project-structure.md`). HTML under `docs/erp/status/` is a visual twin only — never the master.
+   - Any change that touches a roadmap / project-structure checkbox, code, title, note, dependency, or new microtask **must** update the matching HTML twin in the **same iteration** before the report. No “HTML later”, no note-only HTML edit without `done` flags.
+   - Closing `- [x] CODE` in MD requires the HTML microtask with the same `code` to have `done: true` (and a short `note` when MD has evidence). Leaving MD `[ ]` requires HTML `done: false`.
+   - Adding a microtask in MD without adding the HTML object (or vice versa) is a **P1 process break** — fix before ending the iteration.
+   - Updating Stage notes / boundary text in MD requires the corresponding Stage `note` (or block title/goal) in HTML when that stage is shown in the twin.
+   - Project-structure checklist changes require `docs/erp/status/project-structure.html` in the same task (same atomic rule).
+   - Before ending an iteration that changed either twin: verify affected codes — MD `[x]`/`[ ]` ↔ HTML `done: true`/`false`. Report must include `HTML twin synced` or list remaining mismatches.
 8. Roadmap Markdown uses only `[x]` / `[ ]`. ERP-check may use `[x]` / `[~]` / `[ ]` / `[!]` / `[?]`.
 9. Do not renumber/reorder stages or merge items without permission; do not delete unfinished items.
 10. Beside updated items note iteration version, result, evidence files, tests, remaining limits.
-11. If unchanged: `Roadmap: changes not required.` / `Project structure checklist: changes not required.`
-12. After each iteration show: `git diff -- docs/roadmap/roadmap.md`, `project-structure.md`, `erp-check.md`.
-13. No commit until the user reviews code, tests, roadmap, and ERP-check.
+11. If unchanged: `Roadmap: changes not required.` / `Project structure checklist: changes not required.` Also say whether HTML twins were touched.
+12. After each iteration show: `git diff -- docs/roadmap/roadmap.md`, `docs/erp/status/roadmap.html`, `project-structure.md`, `docs/erp/status/project-structure.html`, `erp-check.md` (omit paths with no diff).
+13. No commit until the user reviews code, tests, roadmap, HTML twins, and ERP-check.
 14. If the user rejects the result, revert only this iteration’s changes.
 
 ## Checks
@@ -135,7 +142,7 @@ One iteration = one roadmap item, one finished result, limited scope, tests + re
 
 ## Report
 
-After each iteration list: selected roadmap item; why next; what shipped; files changed; models/contracts; migrations; check results; P0–P3; roadmap/ERP-check updates; remaining work; recommended next iteration. Then stop.
+After each iteration list: selected roadmap item; why next; what shipped; files changed; models/contracts; migrations; check results; P0–P3; roadmap/ERP-check updates; **HTML twin synced** (or mismatches fixed); remaining work; recommended next iteration. Then stop.
 
 ## Model selection
 

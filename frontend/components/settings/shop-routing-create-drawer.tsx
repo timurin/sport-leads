@@ -8,7 +8,7 @@ import {
 } from "@/app/(workspace)/settings/catalogs/routings/routing-actions";
 import { Button } from "@/components/ui/button";
 import { CreateDrawer } from "@/components/ui/create-drawer";
-import { Checkbox, Field, Input } from "@/components/ui/form-controls";
+import { Checkbox, Field, Input, Select } from "@/components/ui/form-controls";
 import { useToast } from "@/components/ui/toast";
 import {
   validateShopRoutingCreateDraft,
@@ -16,9 +16,11 @@ import {
   type ShopRoutingStageDraft,
   type ShopRoutingTemplate,
 } from "@/lib/shop-routings";
+import type { ProductionStage } from "@/lib/production-stages";
 
 const defaultStage = (): ShopRoutingStageDraft => ({
   stage_order: 1,
+  production_stage_id: null,
   stage_label: "",
   tech_operation_id: null,
   work_center_id: null,
@@ -36,6 +38,7 @@ type ShopRoutingCreateDrawerProps = {
   open: boolean;
   onClose: () => void;
   onCreated?: (routing: ShopRoutingTemplate) => void;
+  productionStages: ProductionStage[];
 };
 
 /** CreateDrawer host for shop routing templates. */
@@ -43,6 +46,7 @@ export function ShopRoutingCreateDrawer({
   open,
   onClose,
   onCreated,
+  productionStages,
 }: ShopRoutingCreateDrawerProps) {
   const { push: pushToast } = useToast();
   const [draft, setDraft] = useState<ShopRoutingCreateDraft>(emptyDraft);
@@ -89,7 +93,7 @@ export function ShopRoutingCreateDrawer({
     <CreateDrawer
       open={open}
       title="Новый маршрут"
-      description="Шаблон маршрута с хотя бы одним этапом. Детали этапов — в карточке маршрута."
+      description="Шаблон маршрута с хотя бы одним цехом. Детали этапов — в карточке маршрута."
       onClose={handleClose}
       variant="overlay"
     >
@@ -138,27 +142,51 @@ export function ShopRoutingCreateDrawer({
 
           <div className="border-t border-portal-border pt-portal-5">
             <h3 className="mb-portal-4 text-portal-body font-semibold text-portal-text">
-              Первый этап
+              Первый цех
             </h3>
             <div className="grid gap-portal-4">
-              <Field label="Наименование этапа" required>
-                <Input
+              <Field label="Цех" required>
+                <Select
                   required
-                  maxLength={255}
-                  value={stage.stage_label}
-                  onChange={(event) =>
+                  value={
+                    stage.production_stage_id == null
+                      ? ""
+                      : String(stage.production_stage_id)
+                  }
+                  onChange={(event) => {
+                    const productionStageId = event.target.value
+                      ? Number(event.target.value)
+                      : null;
+                    const selected = productionStages.find(
+                      (item) => item.id === productionStageId,
+                    );
                     setDraft((current) => ({
                       ...current,
                       stages: [
                         {
                           ...stage,
-                          stage_label: event.target.value,
+                          production_stage_id: productionStageId,
+                          stage_label: selected?.name ?? "",
                         },
                       ],
-                    }))
-                  }
+                    }));
+                  }}
                   disabled={saving}
-                />
+                >
+                  <option value="">Выберите цех</option>
+                  {productionStages
+                    .filter((item) => item.is_active)
+                    .sort(
+                      (a, b) =>
+                        a.sort_order - b.sort_order ||
+                        a.name.localeCompare(b.name, "ru"),
+                    )
+                    .map((productionStage) => (
+                      <option key={productionStage.id} value={productionStage.id}>
+                        {productionStage.name}
+                      </option>
+                    ))}
+                </Select>
               </Field>
               <Checkbox
                 checked={stage.is_quality_checkpoint}

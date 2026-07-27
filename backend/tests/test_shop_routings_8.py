@@ -91,12 +91,37 @@ def test_shop_routing_crud_and_stage_sequencing() -> None:
     app.dependency_overrides[get_db] = override_get_db
     try:
         with TestClient(app) as client:
+            print_stage = client.post(
+                "/production-stages",
+                json={"name": "Печать", "code": "print", "sort_order": 30},
+            )
+            assert print_stage.status_code == 201, print_stage.text
+            print_id = print_stage.json()["id"]
+            qc_stage = client.post(
+                "/production-stages",
+                json={"name": "ОТК", "code": "qc", "sort_order": 60},
+            )
+            assert qc_stage.status_code == 201
+            qc_id = qc_stage.json()["id"]
+            cut_stage = client.post(
+                "/production-stages",
+                json={"name": "Раскрой", "code": "cutting", "sort_order": 20},
+            )
+            pack_stage = client.post(
+                "/production-stages",
+                json={"name": "Упаковка", "code": "packaging", "sort_order": 70},
+            )
+            assert cut_stage.status_code == 201 and pack_stage.status_code == 201
+            cut_id = cut_stage.json()["id"]
+            pack_id = pack_stage.json()["id"]
+
             op = client.post(
                 "/tech-operations",
                 json={
                     "name": "Печать",
                     "code": "print",
                     "volume_unit": "linear_meters",
+                    "production_stage_id": print_id,
                 },
             )
             assert op.status_code == 201, op.text
@@ -104,7 +129,11 @@ def test_shop_routing_crud_and_stage_sequencing() -> None:
 
             wc = client.post(
                 "/work-centers",
-                json={"name": "Цех печати", "code": "print_shop"},
+                json={
+                    "name": "Принтер 1",
+                    "code": "print_shop",
+                    "production_stage_id": print_id,
+                },
             )
             assert wc.status_code == 201, wc.text
             wc_id = wc.json()["id"]
@@ -114,8 +143,8 @@ def test_shop_routing_crud_and_stage_sequencing() -> None:
                 json={
                     "name": "Bad route",
                     "stages": [
-                        {"stage_order": 1, "stage_label": "A"},
-                        {"stage_order": 3, "stage_label": "B"},
+                        {"stage_order": 1, "production_stage_id": print_id},
+                        {"stage_order": 3, "production_stage_id": qc_id},
                     ],
                 },
             )
@@ -135,13 +164,13 @@ def test_shop_routing_crud_and_stage_sequencing() -> None:
                     "stages": [
                         {
                             "stage_order": 1,
-                            "stage_label": "Печать",
+                            "production_stage_id": print_id,
                             "tech_operation_id": op_id,
                             "work_center_id": wc_id,
                         },
                         {
                             "stage_order": 2,
-                            "stage_label": "ОТК",
+                            "production_stage_id": qc_id,
                             "is_quality_checkpoint": True,
                         },
                     ],
@@ -153,6 +182,8 @@ def test_shop_routing_crud_and_stage_sequencing() -> None:
             assert body["code"] == "std"
             assert len(body["stage_lines"]) == 2
             assert body["stage_lines"][0]["tech_operation_id"] == op_id
+            assert body["stage_lines"][0]["production_stage_id"] == print_id
+            assert body["stage_lines"][0]["stage_label"] == "Печать"
             assert body["stage_lines"][1]["is_quality_checkpoint"] is True
             template_id = body["id"]
 
@@ -160,9 +191,13 @@ def test_shop_routing_crud_and_stage_sequencing() -> None:
                 f"/shop-routings/{template_id}",
                 json={
                     "stages": [
-                        {"stage_order": 1, "stage_label": "Раскрой"},
-                        {"stage_order": 2, "stage_label": "Печать", "tech_operation_id": op_id},
-                        {"stage_order": 3, "stage_label": "Упаковка"},
+                        {"stage_order": 1, "production_stage_id": cut_id},
+                        {
+                            "stage_order": 2,
+                            "production_stage_id": print_id,
+                            "tech_operation_id": op_id,
+                        },
+                        {"stage_order": 3, "production_stage_id": pack_id},
                     ]
                 },
             )

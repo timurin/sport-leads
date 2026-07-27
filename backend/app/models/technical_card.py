@@ -334,6 +334,11 @@ class TechnicalCardOperationLine(Base):
         Numeric(14, 3), nullable=False, default=Decimal("0")
     )
     stage_order: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    production_stage_id: Mapped[int | None] = mapped_column(
+        ForeignKey("production_stages.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
     stage_label: Mapped[str | None] = mapped_column(String(255), nullable=True)
 
     created_at: Mapped[datetime] = mapped_column(
@@ -383,6 +388,11 @@ class TechnicalCardStageResult(Base):
         nullable=False,
     )
     stage_order: Mapped[int] = mapped_column(Integer, nullable=False)
+    production_stage_id: Mapped[int | None] = mapped_column(
+        ForeignKey("production_stages.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
     stage_label: Mapped[str] = mapped_column(String(255), nullable=False)
     status: Mapped[TechnicalCardStageResultStatus] = mapped_column(
         String(20),

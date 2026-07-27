@@ -14,6 +14,7 @@ from app.database.session import get_db
 from app.main import app
 from app.models.nomenclature import Nomenclature, NomenclatureType
 from app.models.product_model import ProductModel, ProductModelSizeType, ProductModelStatus
+from app.models.production_stage import ProductionStage
 from app.models.sales import Lead, LeadTask, SalesUser
 from app.models.shop_routing import ShopRoutingStageLine, ShopRoutingTemplate
 from app.models.tech_operation import TechOperation
@@ -49,14 +50,21 @@ def _seed(db: Session) -> dict[str, int]:
         unit="м",
         base_price=Decimal("100.00"),
     )
+    print_stage = ProductionStage(
+        name="Печать", code="print", is_active=True, sort_order=30
+    )
+    db.add_all([product, material, print_stage])
+    db.flush()
+
     op = TechOperation(
         name="Печать",
         code="print",
         volume_unit=TechOperationVolumeUnit.LINEAR_METERS,
+        production_stage_id=print_stage.id,
         is_active=True,
         sort_order=1,
     )
-    db.add_all([product, material, op])
+    db.add(op)
     db.flush()
 
     template = ShopRoutingTemplate(
@@ -66,6 +74,7 @@ def _seed(db: Session) -> dict[str, int]:
         stage_lines=[
             ShopRoutingStageLine(
                 stage_order=1,
+                production_stage_id=print_stage.id,
                 stage_label="Печать",
                 tech_operation_id=op.id,
             ),

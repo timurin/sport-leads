@@ -32,12 +32,15 @@ import {
   type TechOperationDraft,
   type TechOperationVolumeUnit,
 } from "@/lib/tech-operations";
+import type { ProductionStage } from "@/lib/production-stages";
 
 /** PT-02 tech-operations catalog list (`DS-PT-02-CATALOG`, etalon sewing-operations). */
 export function TechOperationsWorkspace({
   operations,
+  productionStages,
 }: {
   operations: TechOperation[];
+  productionStages: ProductionStage[];
 }) {
   const router = useRouter();
   const [created, setCreated] = useState<TechOperation[]>([]);
@@ -76,6 +79,7 @@ export function TechOperationsWorkspace({
       name: row.name,
       code: row.code,
       volume_unit: row.volume_unit,
+      production_stage_id: row.production_stage_id,
       is_active: row.is_active,
     });
     setRowError(null);
@@ -146,6 +150,7 @@ export function TechOperationsWorkspace({
         open={createOpen}
         onClose={() => setCreateOpen(false)}
         onCreated={handleCreated}
+        productionStages={productionStages}
       />
 
       <PageToolbar
@@ -198,6 +203,7 @@ export function TechOperationsWorkspace({
                   <DataTableHeaderCell className="w-28">
                     Ед. объёма
                   </DataTableHeaderCell>
+                  <DataTableHeaderCell className="w-44">Цех</DataTableHeaderCell>
                   <DataTableHeaderCell className="w-28">Статус</DataTableHeaderCell>
                   <DataTableHeaderCell className="w-28">
                     Действия
@@ -272,6 +278,49 @@ export function TechOperationsWorkspace({
                           </Select>
                         ) : (
                           formatTechOperationVolumeUnit(row.volume_unit)
+                        )}
+                      </DataTableCell>
+                      <DataTableCell>
+                        {editing ? (
+                          <Select
+                            value={
+                              draft.production_stage_id == null
+                                ? ""
+                                : String(draft.production_stage_id)
+                            }
+                            onChange={(event) =>
+                              setDraft((prev) =>
+                                prev
+                                  ? {
+                                      ...prev,
+                                      production_stage_id: event.target.value
+                                        ? Number(event.target.value)
+                                        : null,
+                                    }
+                                  : prev,
+                              )
+                            }
+                            disabled={saving}
+                            aria-label="Цех"
+                          >
+                            <option value="">Не указан</option>
+                            {productionStages
+                              .filter((stage) => stage.is_active)
+                              .sort(
+                                (a, b) =>
+                                  a.sort_order - b.sort_order ||
+                                  a.name.localeCompare(b.name, "ru"),
+                              )
+                              .map((stage) => (
+                                <option key={stage.id} value={stage.id}>
+                                  {stage.name}
+                                </option>
+                              ))}
+                          </Select>
+                        ) : (
+                          productionStages.find(
+                            (stage) => stage.id === row.production_stage_id,
+                          )?.name ?? "—"
                         )}
                       </DataTableCell>
                       <DataTableCell>
@@ -398,6 +447,41 @@ export function TechOperationsWorkspace({
                         {TECH_OPERATION_VOLUME_UNIT_LABELS.linear_meters}
                       </option>
                     </Select>
+                    <Select
+                      value={
+                        draft.production_stage_id == null
+                          ? ""
+                          : String(draft.production_stage_id)
+                      }
+                      onChange={(event) =>
+                        setDraft((prev) =>
+                          prev
+                            ? {
+                                ...prev,
+                                production_stage_id: event.target.value
+                                  ? Number(event.target.value)
+                                  : null,
+                              }
+                            : prev,
+                        )
+                      }
+                      disabled={saving}
+                      aria-label="Цех"
+                    >
+                      <option value="">Не указан</option>
+                      {productionStages
+                        .filter((stage) => stage.is_active)
+                        .sort(
+                          (a, b) =>
+                            a.sort_order - b.sort_order ||
+                            a.name.localeCompare(b.name, "ru"),
+                        )
+                        .map((stage) => (
+                          <option key={stage.id} value={stage.id}>
+                            {stage.name}
+                          </option>
+                        ))}
+                    </Select>
                     <Checkbox
                       checked={draft.is_active}
                       onChange={(event) =>
@@ -433,7 +517,10 @@ export function TechOperationsWorkspace({
                     <div>
                       <p className="font-medium text-portal-text">{row.name}</p>
                       <p className="text-portal-caption text-portal-muted">
-                        {row.code} · {formatTechOperationVolumeUnit(row.volume_unit)}
+                        {row.code} · {formatTechOperationVolumeUnit(row.volume_unit)} ·{" "}
+                        {productionStages.find(
+                          (stage) => stage.id === row.production_stage_id,
+                        )?.name ?? "Цех не указан"}
                       </p>
                     </div>
                     <div className="flex gap-1">

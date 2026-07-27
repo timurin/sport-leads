@@ -371,6 +371,11 @@ export const appSections: AppSection[] = [
         title: "Производство",
         children: [
           {
+            id: "production-stages",
+            title: "Этапы",
+            href: "/settings/catalogs/production-stages",
+          },
+          {
             id: "tech-operations",
             title: "Тех операции",
             href: "/settings/catalogs/tech-operations",

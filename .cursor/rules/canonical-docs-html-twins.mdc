@@ -1,0 +1,50 @@
+---
+description: Enforce atomic Markdown + HTML twin sync for roadmap and project-structure status docs.
+globs: docs/roadmap/**,docs/erp/status/**,docs/architecture/project-structure.md,docs/architecture/erp-check.md,AGENTS.md
+alwaysApply: true
+---
+
+# Canonical docs ↔ HTML twins (hard)
+
+## Sources of truth
+
+| Canonical (master) | Visual twin (not master) |
+|---|---|
+| `docs/roadmap/roadmap.md` | `docs/erp/status/roadmap.html` |
+| `docs/architecture/project-structure.md` | `docs/erp/status/project-structure.html` |
+
+HTML under `docs/erp/status/` is a **report only**. Never invent progress only in HTML. Never leave MD updated and HTML stale.
+
+## Atomic write (same iteration)
+
+If you change **any** of: checkbox `[x]`/`[ ]`, microtask code, title, note/evidence, dependencies, stage/block note, new/removed microtask — you **must** update the HTML twin in the **same** edit pass before the iteration report.
+
+Forbidden:
+
+- Close MD `- [x] CODE` and leave HTML `done: false` (or missing `code`).
+- Flip HTML `done` without the matching MD checkbox.
+- Update only Stage/item **notes** in HTML while checkbox/`done` flags stay wrong.
+- Defer “HTML sync” to a follow-up iteration.
+- Add a microtask in one file only.
+
+## Mapping rules
+
+- Roadmap MD `- [x] CODE — …` ↔ HTML microtask `{ code: "CODE", done: true, note?: "…" }`.
+- Roadmap MD `- [ ] CODE — …` ↔ HTML `done: false`.
+- Same `CODE` string on both sides (e.g. `8.2.2.6`).
+- When MD has evidence after the em dash, HTML should carry a short `note` (version / path / task file).
+- Parent section headings in MD may lack a checkbox; progress lives on microtasks. Do not invent a fake parent `done` in HTML unless MD has a matching checkbox.
+- Allowed HTML-only stubs: archival markers with a clear suffix (e.g. `6.1.13.moved`) that are **not** progress checkboxes — do not use them to mark unfinished work done.
+
+## End-of-iteration gate
+
+Before reporting done on any roadmap/checklist change:
+
+1. Diff both MD and HTML twin paths.
+2. Spot-check every code you closed or reopened: MD state ≡ HTML `done`.
+3. In the report write **`HTML twin synced`** (name the files) or list mismatches and fix them first.
+4. Treat MD↔HTML desync of closed items as **P1 process** — stop and repair; do not advance the next microtask.
+
+## Related
+
+Full workflow: `AGENTS.md` § Roadmap, microtasks, and canonical sync.

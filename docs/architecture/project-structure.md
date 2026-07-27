@@ -11,7 +11,7 @@
 - `[ ]` marks a capability that is not finished or is still demo/local-only in a broader flow.
 - Partially implemented areas must be split into narrower checklist items instead of using `[~]`.
 - UI alone, API alone, model alone, or documentation alone is not enough to close a checkbox.
-- When this checklist changes, `docs/erp/status/project-structure.html` must be updated in the same task.
+- When this checklist changes, `docs/erp/status/project-structure.html` must be updated in the **same task** (atomic MD+HTML twin). Do not close MD checkboxes without the matching HTML `done` state.
 
 ## 1. Platform and System Core
 
@@ -111,8 +111,8 @@
 - [x] Pattern-base owner visual checkpoint — models / grids / sewing ops / PRODUCT available-models (`6.4.3`); Stage 6 catalog closed
 - [ ] Order-item model + assembly-variant selection — Stage `3.2.5` (moved from former `6.1.13`); smoke `3.2.6`
 - [ ] Specifications and bill-of-materials contour — Stage 7 **plan+fact report document** from filled TC + execution (ADR-004; not hard dep of Stage 8/9; Documents = link registry later)
-- [x] Routing, operations, work centers, QC flags; shop TechOperation catalog (`8.1.3`) + routings UI (`8.2`) — `v0.9.0`; ADR-017; migration `l3m4n5o6p789`; owner visual `8.2.2.6` pending (re-check after `8.3`)
-- [ ] ProductionStage (цех) catalog + routing/ops bind (`8.3`) — Дизайн→Раскрой→Печать→Пошив→ВТО→ОТК→Упаковка; WorkCenter = оборудование
+- [x] ProductionStage (цех) catalog + routing/ops bind (`8.3`) — Дизайн→Раскрой→Печать→Пошив→ВТО→ОТК→Упаковка; WorkCenter = оборудование; migration `m4n5o6p7q890`; owner visual routings pending
+- [x] Routing, operations, work centers, QC flags; shop TechOperation catalog (`8.1.3`) + routings UI (`8.2`) — `v0.9.0`; ADR-017 amend `8.3`; migration `l3m4n5o6p789`; owner visual `8.2.2.6` pending (re-check after `8.3`)
 
 ## 9. Technical cards (Технические карты)
 

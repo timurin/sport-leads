@@ -253,6 +253,7 @@ def _apply_routing_snapshot_from_model(db: Session, card: TechnicalCard) -> None
         card.stage_results.append(
             TechnicalCardStageResult(
                 stage_order=stage.stage_order,
+                production_stage_id=stage.production_stage_id,
                 stage_label=stage.stage_label,
                 status=TechnicalCardStageResultStatus.PENDING,
             )
@@ -272,6 +273,7 @@ def _apply_routing_snapshot_from_model(db: Session, card: TechnicalCard) -> None
                 volume_unit=op.volume_unit,
                 volume=Decimal("0"),
                 stage_order=stage.stage_order,
+                production_stage_id=stage.production_stage_id,
                 stage_label=stage.stage_label,
             )
         )

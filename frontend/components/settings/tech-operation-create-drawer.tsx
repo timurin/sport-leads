@@ -17,11 +17,13 @@ import {
   type TechOperationDraft,
   type TechOperationVolumeUnit,
 } from "@/lib/tech-operations";
+import type { ProductionStage } from "@/lib/production-stages";
 
 const emptyDraft: TechOperationDraft = {
   name: "",
   code: "",
   volume_unit: "pieces",
+  production_stage_id: null,
   is_active: true,
 };
 
@@ -29,6 +31,7 @@ type TechOperationCreateDrawerProps = {
   open: boolean;
   onClose: () => void;
   onCreated?: (operation: TechOperation) => void;
+  productionStages: ProductionStage[];
 };
 
 /** CreateDrawer host for tech operations (PT-02 catalog). */
@@ -36,6 +39,7 @@ export function TechOperationCreateDrawer({
   open,
   onClose,
   onCreated,
+  productionStages,
 }: TechOperationCreateDrawerProps) {
   const { push: pushToast } = useToast();
   const [draft, setDraft] = useState<TechOperationDraft>(emptyDraft);
@@ -135,6 +139,36 @@ export function TechOperationCreateDrawer({
                   <option value="linear_meters">
                     {TECH_OPERATION_VOLUME_UNIT_LABELS.linear_meters}
                   </option>
+                </Select>
+              </Field>
+              <Field label="Цех">
+                <Select
+                  value={
+                    draft.production_stage_id == null
+                      ? ""
+                      : String(draft.production_stage_id)
+                  }
+                  onChange={(event) =>
+                    update(
+                      "production_stage_id",
+                      event.target.value ? Number(event.target.value) : null,
+                    )
+                  }
+                  disabled={saving}
+                >
+                  <option value="">Не указан</option>
+                  {productionStages
+                    .filter((stage) => stage.is_active)
+                    .sort(
+                      (a, b) =>
+                        a.sort_order - b.sort_order ||
+                        a.name.localeCompare(b.name, "ru"),
+                    )
+                    .map((stage) => (
+                      <option key={stage.id} value={stage.id}>
+                        {stage.name}
+                      </option>
+                    ))}
                 </Select>
               </Field>
               <Checkbox

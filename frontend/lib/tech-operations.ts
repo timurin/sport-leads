@@ -5,6 +5,7 @@ export type TechOperation = {
   name: string;
   code: string;
   volume_unit: TechOperationVolumeUnit;
+  production_stage_id: number | null;
   is_active: boolean;
   sort_order: number;
   created_at: string;
@@ -15,6 +16,7 @@ export type TechOperationDraft = {
   name: string;
   code: string;
   volume_unit: TechOperationVolumeUnit;
+  production_stage_id: number | null;
   is_active: boolean;
 };
 

@@ -7,6 +7,7 @@ export type WorkCenter = {
   id: number;
   name: string;
   code: string;
+  production_stage_id: number | null;
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -16,6 +17,7 @@ export type ShopRoutingStageLine = {
   id: number;
   routing_template_id: number;
   stage_order: number;
+  production_stage_id: number | null;
   stage_label: string;
   tech_operation_id: number | null;
   work_center_id: number | null;
@@ -37,6 +39,7 @@ export type ShopRoutingTemplate = {
 
 export type ShopRoutingStageDraft = {
   stage_order: number;
+  production_stage_id: number | null;
   stage_label: string;
   tech_operation_id: number | null;
   work_center_id: number | null;
@@ -112,8 +115,8 @@ export function validateShopRoutingCreateDraft(
     return "Добавьте хотя бы один этап маршрута";
   }
   for (const stage of draft.stages) {
-    if (!stage.stage_label.trim()) {
-      return "У каждого этапа должно быть наименование";
+    if (stage.production_stage_id == null || stage.production_stage_id <= 0) {
+      return "Выберите цех для каждого этапа";
     }
     if (!Number.isSafeInteger(stage.stage_order) || stage.stage_order < 1) {
       return "Порядок этапа — целое число ≥ 1";
@@ -129,8 +132,8 @@ export function validateShopRoutingStages(
     return "Маршрут должен содержать хотя бы один этап";
   }
   for (const stage of stages) {
-    if (!stage.stage_label.trim()) {
-      return "У каждого этапа должно быть наименование";
+    if (stage.production_stage_id == null || stage.production_stage_id <= 0) {
+      return "Выберите цех для каждого этапа";
     }
     if (!Number.isSafeInteger(stage.stage_order) || stage.stage_order < 1) {
       return "Порядок этапа — целое число ≥ 1";
@@ -146,11 +149,24 @@ export function toShopRoutingStageDrafts(
     .sort((a, b) => a.stage_order - b.stage_order)
     .map((line) => ({
       stage_order: line.stage_order,
+      production_stage_id: line.production_stage_id,
       stage_label: line.stage_label,
       tech_operation_id: line.tech_operation_id,
       work_center_id: line.work_center_id,
       is_quality_checkpoint: line.is_quality_checkpoint,
     }));
+}
+
+/** Build create payload that duplicates a routing preset (unique name; code cleared). */
+export function buildShopRoutingCopyDraft(
+  source: ShopRoutingTemplate,
+): ShopRoutingCreateDraft {
+  return {
+    name: `${source.name} (копия)`,
+    code: "",
+    is_active: source.is_active,
+    stages: toShopRoutingStageDrafts(source),
+  };
 }
 
 export async function getShopRoutings(

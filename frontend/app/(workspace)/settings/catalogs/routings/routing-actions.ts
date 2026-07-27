@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import {
   validateShopRoutingCreateDraft,
   validateShopRoutingStages,
+  buildShopRoutingCopyDraft,
   type ShopRoutingCreateDraft,
   type ShopRoutingStageDraft,
   type ShopRoutingTemplate,
@@ -51,7 +52,8 @@ function revalidateRouting(templateId?: number) {
 function stagesPayload(stages: ShopRoutingStageDraft[]) {
   return stages.map((stage) => ({
     stage_order: stage.stage_order,
-    stage_label: stage.stage_label.trim(),
+    production_stage_id: stage.production_stage_id,
+    stage_label: stage.stage_label.trim() || null,
     tech_operation_id: stage.tech_operation_id,
     work_center_id: stage.work_center_id,
     is_quality_checkpoint: stage.is_quality_checkpoint,
@@ -135,4 +137,20 @@ export async function deleteShopRouting(
   }
   revalidateRouting(templateId);
   return { ok: true };
+}
+
+export async function copyShopRouting(
+  templateId: number,
+): Promise<ShopRoutingActionResult> {
+  const response = await fetch(`${apiBaseUrl()}/shop-routings/${templateId}`, {
+    cache: "no-store",
+  });
+  if (response.status === 404) {
+    return { ok: false, message: "Маршрут не найден" };
+  }
+  if (!response.ok) {
+    return { ok: false, message: await readError(response) };
+  }
+  const source = (await response.json()) as ShopRoutingTemplate;
+  return createShopRouting(buildShopRoutingCopyDraft(source));
 }

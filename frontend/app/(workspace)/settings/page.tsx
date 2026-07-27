@@ -137,9 +137,15 @@ const settingsGroups = [
   },
   {
     title: "Производство",
-    description: "Технологические операции и маршруты производства",
+    description: "Цеха, технологические операции и маршруты производства",
     icon: Factory,
     items: [
+      {
+        title: "Этапы",
+        description: "Справочник цехов для маршрутов и технологических операций",
+        href: "/settings/catalogs/production-stages",
+        icon: Factory,
+      },
       {
         title: "Тех операции",
         description: "Справочник операций для маршрутов и техкарт",

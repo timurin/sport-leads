@@ -1,4 +1,4 @@
-"""Shop routing templates, stage lines, and work centers (ADR-017 / Stage 8.1.2)."""
+"""Shop routing templates, stage lines, and work centers (ADR-017 / Stage 8.1.2 / amend 8.3)."""
 
 from __future__ import annotations
 
@@ -21,11 +21,12 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.database.base import Base
 
 if TYPE_CHECKING:
+    from app.models.production_stage import ProductionStage
     from app.models.tech_operation import TechOperation
 
 
 class WorkCenter(Base):
-    """Flat work-center / shop-area directory (MVP)."""
+    """Equipment / place inside a production stage (цех). Not the цех itself."""
 
     __tablename__ = "work_centers"
     __table_args__ = (
@@ -36,6 +37,11 @@ class WorkCenter(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     name: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
     code: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    production_stage_id: Mapped[int | None] = mapped_column(
+        ForeignKey("production_stages.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
     is_active: Mapped[bool] = mapped_column(
         Boolean, nullable=False, default=True, index=True
     )
@@ -51,9 +57,11 @@ class WorkCenter(Base):
         onupdate=func.now(),
     )
 
+    production_stage: Mapped[ProductionStage | None] = relationship()
+
 
 class ShopRoutingTemplate(Base):
-    """Named shop-floor routing preset (ordered stages)."""
+    """Named shop-floor routing preset (ordered цеха)."""
 
     __tablename__ = "shop_routing_templates"
     __table_args__ = (
@@ -88,7 +96,7 @@ class ShopRoutingTemplate(Base):
 
 
 class ShopRoutingStageLine(Base):
-    """Ordered stage within a shop routing template."""
+    """Ordered цех step within a shop routing template."""
 
     __tablename__ = "shop_routing_stage_lines"
     __table_args__ = (
@@ -110,6 +118,12 @@ class ShopRoutingStageLine(Base):
         index=True,
     )
     stage_order: Mapped[int] = mapped_column(Integer, nullable=False)
+    production_stage_id: Mapped[int | None] = mapped_column(
+        ForeignKey("production_stages.id", ondelete="RESTRICT"),
+        nullable=True,
+        index=True,
+    )
+    # Denormalized name of ProductionStage at save time.
     stage_label: Mapped[str] = mapped_column(String(255), nullable=False)
     tech_operation_id: Mapped[int | None] = mapped_column(
         ForeignKey("tech_operations.id", ondelete="SET NULL"),
@@ -139,5 +153,6 @@ class ShopRoutingStageLine(Base):
     routing_template: Mapped[ShopRoutingTemplate] = relationship(
         back_populates="stage_lines"
     )
+    production_stage: Mapped[ProductionStage | None] = relationship()
     tech_operation: Mapped[TechOperation | None] = relationship()
     work_center: Mapped[WorkCenter | None] = relationship()

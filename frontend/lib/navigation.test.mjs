@@ -57,6 +57,10 @@ test("settings navigation exposes production catalogs after pattern-base", () =>
     production.children.map((item) => ({ id: item.id, href: item.href })),
     [
       {
+        id: "production-stages",
+        href: "/settings/catalogs/production-stages",
+      },
+      {
         id: "tech-operations",
         href: "/settings/catalogs/tech-operations",
       },

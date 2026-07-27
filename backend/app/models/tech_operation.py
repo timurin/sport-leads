@@ -1,6 +1,6 @@
-"""Shop-floor TechOperation catalog (ADR-017 / Stage 8.1.3).
+"""Shop-floor TechOperation catalog (ADR-017 / Stage 8.1.3 / amend 8.3).
 
-Distinct from Stage 6 SewingOperation (name + cost).
+Distinct from Stage 6 SewingOperation (name + cost). Belongs to a ProductionStage.
 """
 
 from __future__ import annotations
@@ -11,19 +11,20 @@ from sqlalchemy import (
     Boolean,
     CheckConstraint,
     DateTime,
+    ForeignKey,
     Integer,
     String,
     UniqueConstraint,
     func,
 )
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database.base import Base
 from app.models.technical_card import TechOperationVolumeUnit
 
 
 class TechOperation(Base):
-    """Flat shop tech-operation with volume unit for TC op-volume prefill."""
+    """Shop tech-operation with volume unit; belongs to a production stage (цех)."""
 
     __tablename__ = "tech_operations"
     __table_args__ = (
@@ -46,6 +47,11 @@ class TechOperation(Base):
         String(20),
         nullable=False,
     )
+    production_stage_id: Mapped[int | None] = mapped_column(
+        ForeignKey("production_stages.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
     is_active: Mapped[bool] = mapped_column(
         Boolean, nullable=False, default=True, index=True
     )
@@ -61,3 +67,5 @@ class TechOperation(Base):
         server_default=func.now(),
         onupdate=func.now(),
     )
+
+    production_stage = relationship("ProductionStage")

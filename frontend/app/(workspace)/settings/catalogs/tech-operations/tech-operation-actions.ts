@@ -46,6 +46,7 @@ function payloadFromDraft(draft: TechOperationDraft): TechOperationDraft | null 
     name: draft.name.trim(),
     code: draft.code.trim(),
     volume_unit: draft.volume_unit,
+    production_stage_id: draft.production_stage_id,
     is_active: draft.is_active,
   };
 }

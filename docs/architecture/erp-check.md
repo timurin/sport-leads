@@ -71,7 +71,7 @@
 
 - `[~]` технические карты: domain **ADR-016**; DB `9.1.2`; generate `9.2.1`; composition/unit/op-volume; order UI `9.4.1` (owner visual OK); stage machine `9.2.2`; **list/document `9.4.2` shipped** (owner visual `9.4.2.7` pending); settings `9.6`; print A4×2 → `18.3.8`;
 - `[~]` shop routings / work centers — ADR-017; migration `l3m4n5o6p789`; API + settings UI; owner visual `8.2.2.6` pending (re-check after `8.3`);
-- `[ ]` **ProductionStage (цех) catalog** — Stage `8.3` (Дизайн→…→Упаковка); routing = sequence of цехов; WorkCenter = оборудование;
+- `[~]` **ProductionStage (цех) catalog** — Stage `8.3` **shipped** (seed 7; migration `m4n5o6p7q890`; settings «Этапы»; routing step = цех); owner visual pending;
 - `[ ]` **shop-floor modules** — Stage `11.3` platform + `11.4`–`11.10` (Дизайн, Раскрой, Печать, Пошив, ВТО, ОТК, Упаковка) — fact on TC;
 - `[ ]` production batches;
 - `[ ]` batch specification formation (plan+fact report document from filled TC / ADR-004);
@@ -95,9 +95,9 @@
 
 ## Правило подтверждения
 
-`[x]` ставится только при наличии реализации на соответствующем слое и успешных применимых проверок. HTML-файлы в `docs/erp/status/` не являются источником истины.
+`[x]` ставится только при наличии реализации на соответствующем слое и успешных применимых проверок. HTML-файлы в `docs/erp/status/` не являются источником истины. При изменении checklist readiness синхронизируй HTML-twin в той же итерации (см. `AGENTS.md` § canonical sync и `.cursor/rules/canonical-docs-html-twins.mdc`).
 Patch v0.8.8h confirmed: backend-generated unique codes, typed save/reload, scoped direct-assignment delete, inherited-assignment protection and required-clear validation are covered by regression tests; no migration is required.
 
 `v0.8.8i-product-characteristics-directory` confirmed: the existing characteristic model/API now supports `kind`, color HEX values, generated codes, system Color/Size records and safe deactivation. Migration `i9j0k1l2m345` has upgrade/downgrade; the settings directory and regression checks are implemented. Nomenclature card layout and variant snapshot logic are unchanged.
 
-Canonical sync `2026-07-26`: Roadmap planned **`8.3` ProductionStage** + **`11.3`–`11.10` shop modules** (docs). Prior: `9.4.1.4` OK; `9.5.1`; `9.4.2`. Next code: `8.3` or visuals `8.2.2.6`/`9.4.2.7` / settings `9.6`.
+Canonical sync `2026-07-26`: Stage **`8.3` ProductionStage shipped** (цех catalog + routing/ops bind; owner visual pending). Prior: shop modules planned `11.3`–`11.10`; `9.4.1.4` OK; `9.5.1`. Next: owner visuals `8.2.2.6`/`9.4.2.7` or settings `9.6` or `11.3`.

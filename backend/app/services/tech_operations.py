@@ -47,10 +47,17 @@ def create_tech_operation(db: Session, payload: TechOperationCreate) -> TechOper
     if repo.get_tech_operation_by_code(db, payload.code) is not None:
         raise TechOperationConflictError("Тех операция с таким кодом уже существует")
 
+    if payload.production_stage_id is not None:
+        from app.repositories import production_stages as stages_repo
+
+        if stages_repo.get_production_stage(db, payload.production_stage_id) is None:
+            raise TechOperationValidationError("Этап производства не найден")
+
     row = TechOperation(
         name=payload.name,
         code=payload.code,
         volume_unit=payload.volume_unit.value,
+        production_stage_id=payload.production_stage_id,
         is_active=payload.is_active,
         sort_order=payload.sort_order,
     )
@@ -89,6 +96,11 @@ def update_tech_operation(
     if "volume_unit" in changes and changes["volume_unit"] is not None:
         unit = changes["volume_unit"]
         changes["volume_unit"] = unit.value if hasattr(unit, "value") else unit
+    if "production_stage_id" in changes and changes["production_stage_id"] is not None:
+        from app.repositories import production_stages as stages_repo
+
+        if stages_repo.get_production_stage(db, changes["production_stage_id"]) is None:
+            raise TechOperationValidationError("Этап производства не найден")
 
     repo.apply_tech_operation_updates(row, changes)
     try:

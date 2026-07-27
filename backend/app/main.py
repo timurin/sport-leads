@@ -26,6 +26,7 @@ from app.api.vat_rates import router as vat_rates_router
 from app.api.stock import router as stock_router
 from app.api.technical_cards import router as technical_cards_router
 from app.api.tech_operations import router as tech_operations_router
+from app.api.production_stages import router as production_stages_router
 from app.api.shop_routings import (
     routings_router as shop_routings_router,
     work_centers_router,
@@ -91,6 +92,7 @@ app.include_router(vat_rates_router)
 app.include_router(stock_router)
 app.include_router(technical_cards_router)
 app.include_router(tech_operations_router)
+app.include_router(production_stages_router)
 app.include_router(work_centers_router)
 app.include_router(shop_routings_router)
 

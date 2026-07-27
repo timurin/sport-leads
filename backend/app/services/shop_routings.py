@@ -2,6 +2,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.models.shop_routing import ShopRoutingStageLine, ShopRoutingTemplate, WorkCenter
+from app.repositories import production_stages as stages_repo
 from app.repositories import shop_routings as repo
 from app.repositories import tech_operations as tech_ops_repo
 from app.schemas.shop_routing import (
@@ -52,18 +53,22 @@ def list_work_centers(
 def get_work_center(db: Session, work_center_id: int) -> WorkCenter:
     row = repo.get_work_center(db, work_center_id)
     if row is None:
-        raise WorkCenterNotFoundError("Участок не найден")
+        raise WorkCenterNotFoundError("Оборудование не найдено")
     return row
 
 
 def create_work_center(db: Session, payload: WorkCenterCreate) -> WorkCenter:
     if repo.get_work_center_by_name(db, payload.name) is not None:
-        raise WorkCenterConflictError("Участок с таким наименованием уже существует")
+        raise WorkCenterConflictError("Оборудование с таким наименованием уже существует")
     if repo.get_work_center_by_code(db, payload.code) is not None:
-        raise WorkCenterConflictError("Участок с таким кодом уже существует")
+        raise WorkCenterConflictError("Оборудование с таким кодом уже существует")
+    if payload.production_stage_id is not None:
+        if stages_repo.get_production_stage(db, payload.production_stage_id) is None:
+            raise WorkCenterValidationError("Этап производства не найден")
     row = WorkCenter(
         name=payload.name,
         code=payload.code,
+        production_stage_id=payload.production_stage_id,
         is_active=payload.is_active,
     )
     try:
@@ -74,7 +79,7 @@ def create_work_center(db: Session, payload: WorkCenterCreate) -> WorkCenter:
     except IntegrityError as error:
         db.rollback()
         raise WorkCenterConflictError(
-            "Участок с таким наименованием или кодом уже существует"
+            "Оборудование с таким наименованием или кодом уже существует"
         ) from error
 
 
@@ -89,12 +94,15 @@ def update_work_center(
         existing = repo.get_work_center_by_name(db, changes["name"])
         if existing is not None and existing.id != work_center_id:
             raise WorkCenterConflictError(
-                "Участок с таким наименованием уже существует"
+                "Оборудование с таким наименованием уже существует"
             )
     if "code" in changes:
         existing = repo.get_work_center_by_code(db, changes["code"])
         if existing is not None and existing.id != work_center_id:
-            raise WorkCenterConflictError("Участок с таким кодом уже существует")
+            raise WorkCenterConflictError("Оборудование с таким кодом уже существует")
+    if "production_stage_id" in changes and changes["production_stage_id"] is not None:
+        if stages_repo.get_production_stage(db, changes["production_stage_id"]) is None:
+            raise WorkCenterValidationError("Этап производства не найден")
     repo.apply_work_center_updates(row, changes)
     try:
         db.commit()
@@ -103,7 +111,7 @@ def update_work_center(
     except IntegrityError as error:
         db.rollback()
         raise WorkCenterConflictError(
-            "Участок с таким наименованием или кодом уже существует"
+            "Оборудование с таким наименованием или кодом уже существует"
         ) from error
 
 
@@ -147,24 +155,46 @@ def _validate_stages(
         )
     lines: list[ShopRoutingStageLine] = []
     for stage in sorted(stages, key=lambda item: item.stage_order):
-        if not stage.stage_label.strip():
+        production_stage = stages_repo.get_production_stage(db, stage.production_stage_id)
+        if production_stage is None:
+            raise ShopRoutingValidationError(
+                f"Этап производства id={stage.production_stage_id} не найден"
+            )
+        label = (stage.stage_label or production_stage.name).strip()
+        if not label:
             raise ShopRoutingValidationError("Наименование этапа не может быть пустым")
+
         if stage.tech_operation_id is not None:
             op = tech_ops_repo.get_tech_operation(db, stage.tech_operation_id)
             if op is None:
                 raise ShopRoutingValidationError(
                     f"Тех операция id={stage.tech_operation_id} не найдена"
                 )
+            if (
+                op.production_stage_id is not None
+                and op.production_stage_id != stage.production_stage_id
+            ):
+                raise ShopRoutingValidationError(
+                    f"Тех операция «{op.name}» относится к другому цеху"
+                )
         if stage.work_center_id is not None:
             wc = repo.get_work_center(db, stage.work_center_id)
             if wc is None:
                 raise ShopRoutingValidationError(
-                    f"Участок id={stage.work_center_id} не найден"
+                    f"Оборудование id={stage.work_center_id} не найдено"
+                )
+            if (
+                wc.production_stage_id is not None
+                and wc.production_stage_id != stage.production_stage_id
+            ):
+                raise ShopRoutingValidationError(
+                    f"Оборудование «{wc.name}» относится к другому цеху"
                 )
         lines.append(
             ShopRoutingStageLine(
                 stage_order=stage.stage_order,
-                stage_label=stage.stage_label.strip(),
+                production_stage_id=stage.production_stage_id,
+                stage_label=label,
                 tech_operation_id=stage.tech_operation_id,
                 work_center_id=stage.work_center_id,
                 is_quality_checkpoint=stage.is_quality_checkpoint,

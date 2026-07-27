@@ -49,6 +49,7 @@ from app.models.sewing_operation import SewingOperation
 from app.models.size_grid import SizeGrid, SizeGridRow, SizeGridSizeType
 from app.models.vat_rate import VatRate
 from app.models.tech_operation import TechOperation
+from app.models.production_stage import ProductionStage
 from app.models.shop_routing import (
     ShopRoutingStageLine,
     ShopRoutingTemplate,
@@ -117,6 +118,7 @@ __all__ = [
     "SizeGridRow",
     "SizeGridSizeType",
     "VatRate",
+    "ProductionStage",
     "TechOperation",
     "WorkCenter",
     "ShopRoutingTemplate",

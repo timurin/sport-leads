@@ -33,7 +33,7 @@ Next commercial contour:
 
 `Order-item model/assembly (3.2.5) → Order card UX + field links (3.5) → smoke (3.2.6) → Routings → Технические карты → Specifications (plan+fact report from TC + execution) → … → Администрирование`
 
-Stage 8/9/11 note (`2026-07-26`): Spec↔ТК fixed; Stage 8 MVP shipped; `9.2.2` / `9.4.2` / `9.5.1` shipped; owner visual `9.4.1.4` OK. **Planned:** `8.3` ProductionStage (цех) domain amend; Stage `11.3`–`11.10` shop-floor modules per цех. Remaining visuals: `8.2.2.6` (re-check after `8.3`), `9.4.2.7`. Next domain: `8.3` or settings `9.6` / visuals.
+Stage 8/9/11 note (`2026-07-26`): Spec↔ТК fixed; Stage 8 MVP + **`8.3` ProductionStage shipped** (owner visual routings/`8.2.2.6` pending). `9.2.2` / `9.4.2` / `9.5.1` shipped; `9.4.1.4` OK. Planned shop modules `11.3`–`11.10`. Remaining visuals: `8.2.2.6`, `9.4.2.7`. Next: visuals / `9.6` / Stage 11.3.
 
 Dedupe notes (Sales Orders):
 - Closed platform migrate `5.5.7` / `5.6.4` (PT-07) stays historical; **product layout revision** continues only in **`3.5`** (do not re-open PT-07 migrate).
@@ -1563,11 +1563,11 @@ Dependencies:
 - ADR-017 (amend)
 
 Microtasks:
-- [ ] 8.3.1 — Amend ADR-017: `ProductionStage`; `TechOperation.production_stage_id`; routing line → `production_stage_id` (+ optional op / WorkCenter); deprecate free-text-as-SoT `stage_label`; task `docs/tasks/v0.9.0-stage-8-11-shop-modules-roadmap.md`
-- [ ] 8.3.2 — Migration + seed 7 цехов; backfill existing routing lines / TC stage snapshots where possible
-- [ ] 8.3.3 — API + settings UI каталога цехов; TechOperation card: bind to цех; routing UI: step = цех select (not free-text «Этап»); WorkCenter label → «Оборудование» / «Участок»
-- [ ] 8.3.4 — Wire generate / `stage_results` / op-volume prefill on production stage id
-- [ ] 8.3.5 — Regression tests + docs checkpoint; owner visual routings after amend (closes or supersedes `8.2.2.6`)
+- [x] 8.3.1 — Amend ADR-017: `ProductionStage`; `TechOperation.production_stage_id`; routing line → `production_stage_id` (+ optional op / WorkCenter); deprecate free-text-as-SoT `stage_label`; task `docs/tasks/v0.9.0-stage-8.3-production-stages.md` — `v0.9.0`
+- [x] 8.3.2 — Migration + seed 7 цехов; backfill existing routing lines / TC stage snapshots where possible — `v0.9.0`; Alembic `m4n5o6p7q890`
+- [x] 8.3.3 — API + settings UI каталога цехов; TechOperation card: bind to цех; routing UI: step = цех select; WorkCenter → «Оборудование» — `v0.9.0`; `/settings/catalogs/production-stages`
+- [x] 8.3.4 — Wire generate / `stage_results` / op-volume prefill on production stage id — `v0.9.0`
+- [x] 8.3.5 — Regression tests + docs checkpoint; owner visual routings after amend — `v0.9.0`; `test_production_stages_8_3.py`; **owner visual `8.2.2.6` still pending**
 
 Completion criteria:
 - цех ≠ TechOperation ≠ WorkCenter in model and UI;
@@ -1578,7 +1578,7 @@ Completion criteria:
 
 > Owner ask `2026-07-26`: разработать раздел **Производство → Техкарты** и настройки **Администрирование → Техкарты**; сразу зафиксировать связь с карточкой заказа (field-link gap **#4** в `docs/architecture/order-card-field-links.md` → `9.4.1`); согласовать интерфейсы списка, фильтров, тулбара, шапки и документа ТК до кода.
 
-> Domain note (`2026-07-26`): stage gates follow **цеха from routing** (`ProductionStage` after `8.3`; until then MVP may use snapshot labels). Full per-цех execution UIs (кто / что / время / на чём) are Stage `11.3`–`11.10` — do **not** expand PT-07 document into full shop modules. Soft-dep `8.3` for stable stage ids.
+> Domain note (`2026-07-26`): stage gates follow **цеха from routing** (`ProductionStage` / `8.3` shipped). Full per-цех execution UIs (кто / что / время / на чём) are Stage `11.3`–`11.10` — do **not** expand PT-07 document into full shop modules.
 
 Goal:
 Производственный документ на одну производимую позицию заказа (номенклатура типа Продукция / Полуфабрикат): связи с моделью, лекалами, материалами и маршрутом; таблица поштучных характеристик (размер, персонализация и т.д.) внутри одного документа; строки тех операций с объёмами (из `8.1.3`); прохождение **цехов** с фиксацией результата и жёсткими stage gates. Заказ готов по производству, когда все технические карты по заказу завершены. Печатный макет 2×A4 — Stage `18.3` (Excel = print visual SoT), не замена экранного PT-07.
