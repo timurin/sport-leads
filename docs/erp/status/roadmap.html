@@ -164,7 +164,7 @@
         </div>
       </div>
       <div class="meta-list">
-        <div class="chip">Updated: 2026-07-26 (UNF rewrite 4.10 + expand stock register 4.6.5)</div>
+        <div class="chip">Updated: 2026-07-28 (Stage 19 planned: internal staff chat on order + tech cards)</div>
         <div class="chip">Version: v0.9.0</div>
         <div class="chip">Branch: feature/v0.8.1-nomenclature-core</div>
         <div class="chip">Commit: 0980f34</div>
@@ -361,7 +361,7 @@
               },
               {
                 code: "1.2.4",
-                title: "Persistent tasks, notes, timeline, and communications",
+                title: "Persistent tasks, notes, timeline, and communications — CRM/lead; ≠ Stage 19 internal order/TC chat",
                 done: false
               },
               {
@@ -585,24 +585,70 @@
               {
                 code: "3.2.6",
                 title: "Order-item model selection smoke — moved from former 6.4.1 (2026-07-22)",
-                goal: "Prove PRODUCT → available models → model → order-item selection without Stage 7 document creation.",
+                goal: "Prove PRODUCT → available models → model (assembly + routing whitelist) → order-item selection without Stage 7 document creation.",
                 dependencies: [
                   "3.2.5",
+                  "3.2.7",
                   "6.1.11",
                   "6.1.12",
+                  "6.1.17",
                   "6.2.7",
                   "6.3.5"
                 ],
                 microtasks: [
                   {
                     code: "3.2.6.1",
-                    title: "Script or manual smoke checklist (whitelist filter, autofill size_type/article, variant offer, reject foreign model)",
-                    done: false
+                    title: "Script or manual smoke checklist (whitelist filter, autofill size_type/article, variant + routing offer, reject foreign model/routing)",
+                    done: true,
+                    note: "v0.9.0; task v0.9.0-stage-3.2.6-order-item-model-smoke.md; test_order_item_model_selection_smoke_3_2_6.py"
                   },
                   {
                     code: "3.2.6.2",
                     title: "Fix P0/P1 gaps found in smoke",
-                    done: false
+                    done: true,
+                    note: "v0.9.0; none found (smoke green)"
+                  }
+                ]
+              },
+              {
+                code: "3.2.7",
+                title: "Shop routing template on order items",
+                goal: "After model (+ assembly), pick routing from model whitelist; snapshot id+name for TC generate.",
+                dependencies: [
+                  "3.2.5",
+                  "6.1.17",
+                  "8.2.3"
+                ],
+                microtasks: [
+                  {
+                    code: "3.2.7.1",
+                    title: "Snapshot strategy: routing_template_id + name; amend order-item-model-assembly.md",
+                    done: true,
+                    note: "v0.9.0; order-item-model-assembly.md §2/§4.5/§5/§6; task v0.9.0-stage-3.2.7-order-item-routing.md"
+                  },
+                  {
+                    code: "3.2.7.2",
+                    title: "Migration + schemas; require routing when model whitelist ≥1; reject foreign",
+                    done: true,
+                    note: "v0.9.0; Alembic q8r9s0t1u234; _resolve_routing_snapshot; test_order_item_routing_3_2_7.py"
+                  },
+                  {
+                    code: "3.2.7.3",
+                    title: "Order item UI: routing select after model; options = model whitelist only",
+                    done: true,
+                    note: "v0.9.0; sales-order-items-unf-demo Маршрут; loadProductModelActiveRoutings; order-details mapper"
+                  },
+                  {
+                    code: "3.2.7.4",
+                    title: "Regression tests (foreign routing rejected; snapshot immutability)",
+                    done: true,
+                    note: "v0.9.0; test_order_item_routing_3_2_7.py foreign/inactive/immutability"
+                  },
+                  {
+                    code: "3.2.7.5",
+                    title: "Visual verification — owner OK required; agent stops until owner OK",
+                    done: true,
+                    note: "v0.9.0; owner OK 2026-07-27"
                   }
                 ]
               }
@@ -654,7 +700,7 @@
               {
                 code: "3.5",
                 title: "Order card UX and platform links — after 3.2.5, before 3.2.6; PT-07 migrate 5.5.7/5.6.4 stays closed",
-                goal: "Compact header + stage rail above; merged requisites; metrics right; full-width history; comments + tasks; view filters; wire existing FKs.",
+                goal: "Compact header + stage rail above; merged requisites; metrics right; full-width history; comments + tasks; view filters; wire existing FKs. Persistent internal staff chat / @mentions / chat-microtasks → Stage 19 (do not re-open closed 3.5.*).",
                 dependencies: [
                   "3.1.3",
                   "3.2.5",
@@ -863,18 +909,19 @@
                   {
                     code: "4.6.5.1",
                     title: "ADR/note: register model (movement lines + balance projection); boundary vs Nomenclature / Stage 12",
-                    done: false
+                    done: true,
+                    note: "owned by 12.0 / ADR-019; closed with 12.0.1 / 11.2.2.1 2026-07-30"
                   },
                   {
                     code: "4.6.5.2",
-                    title: "Migration: movement/ledger tables (Decimal qty; nomenclature_id; direction/type; timezone-aware posted_at)",
+                    title: "Migration: movement/ledger tables — owned by 12.2.1",
                     done: false
                   },
                   {
                     code: "4.6.5.3",
-                    title: "Services + API: post movement; read balance by nomenclature; list balances for list page",
+                    title: "Services + API post/read balances — owned by 12.2.2–12.2.3",
                     done: false,
-                    note: "Empty GET /stock/balances stub shipped with 4.10.6; fill from ledger here"
+                    note: "Empty GET /stock/balances stub shipped with 4.10.6; fill from ledger in 12.2"
                   },
                   {
                     code: "4.6.5.4",
@@ -884,12 +931,12 @@
                   },
                   {
                     code: "4.6.5.5",
-                    title: "Regression tests (post in/out → balance; never write balance onto Nomenclature row)",
+                    title: "Regression tests — owned by 12.2.4",
                     done: false
                   },
                   {
                     code: "4.6.5.6",
-                    title: "Docs sync when register ships; Stage 12 remains for warehouses/bins/lots/full documents",
+                    title: "Docs sync when register ships — owned by 12.2.5",
                     done: false
                   }
                 ]
@@ -2526,6 +2573,57 @@
                     done: true
                   }
                 ]
+              },
+              {
+                code: "6.1.17",
+                title: "Model routing whitelist + operation material norms",
+                goal: "Whitelist ShopRoutingTemplate on ProductModel (UX like assembly variants) + operation norms (norm_qty_per_item) bound to stage/op as plan hint; fact qty on TC by цех.",
+                dependencies: [
+                  "6.1.8",
+                  "6.1.12",
+                  "8.2.1",
+                  "8.3",
+                  "ADR-014",
+                  "ADR-017"
+                ],
+                microtasks: [
+                  {
+                    code: "6.1.17.1",
+                    title: "Domain: ProductModelRoutingLink + ProductModelOperationNorm; ADR-014/017 amend",
+                    done: true,
+                    note: "v0.9.0; product-model-domain.md §7; ADR-014/017; task docs/tasks/v0.9.0-stage-6.1.17-model-routing-norms.md"
+                  },
+                  {
+                    code: "6.1.17.2",
+                    title: "Migration + schemas + service CRUD scoped to product model",
+                    done: true,
+                    note: "v0.9.0; alembic p7q8r9s0t123; product_model_routings service/repo; test_product_model_routings_6_1_17.py"
+                  },
+                  {
+                    code: "6.1.17.3",
+                    title: "API /product-models/{id}/routings (+ norms); default ∈ whitelist",
+                    done: true,
+                    note: "v0.9.0; product_models.py routings; test_product_model_routings_api_6_1_17_3.py"
+                  },
+                  {
+                    code: "6.1.17.4",
+                    title: "UI block Варианты маршрутов on PT-08 card (no duplicate /routings CRUD)",
+                    done: true,
+                    note: "v0.9.0; product-model-routings-block.tsx + add-drawer; lib/product-model-routings.ts"
+                  },
+                  {
+                    code: "6.1.17.5",
+                    title: "Regression tests",
+                    done: true,
+                    note: "v0.9.0; test_product_model_routings_6_1_17_5.py; FE product-model-routings.test.mjs"
+                  },
+                  {
+                    code: "6.1.17.6",
+                    title: "Visual verification — owner OK required; agent stops until owner OK",
+                    done: true,
+                    note: "v0.9.0; owner OK 2026-07-27"
+                  }
+                ]
               }
             ]
           },
@@ -2986,6 +3084,38 @@
                 ]
               },
               {
+                code: "6.3.9",
+                title: "Quantity per item and line sum",
+                goal: "Add quantity_per_item to sewing-operations; sum = cost × qty; snapshot on assembly/order lines; show qty/price/sum on model card and tech-card.",
+                dependencies: ["6.3.8"],
+                microtasks: [
+                  {
+                    code: "6.3.9.1",
+                    title: "Add quantity_per_item + Alembic o6p7q8r9s012 + snapshot; totals Σ(cost×qty)",
+                    done: true,
+                    note: "2026-07-27; sewing_operations / assembly_operation_lines / order snapshots"
+                  },
+                  {
+                    code: "6.3.9.2",
+                    title: "Catalog list/create/edit: qty + sum columns",
+                    done: true,
+                    note: "2026-07-27; sewing-operations-workspace / create-drawer"
+                  },
+                  {
+                    code: "6.3.9.3",
+                    title: "Model assembly variants + tech-card sewing ops: qty / price / sum",
+                    done: true,
+                    note: "2026-07-27; assembly-variants-block / tech-card-detail-workspace"
+                  },
+                  {
+                    code: "6.3.9.4",
+                    title: "Regression tests — sewing ops + assembly + frontend unit",
+                    done: true,
+                    note: "2026-07-27"
+                  }
+                ]
+              },
+              {
                 code: "6.3.7",
                 title: "PatternSet withdrawal checkpoint",
                 goal: "Confirm PatternSet / patterns routes / model→pattern link are fully removed from Stage 6 scope and docs.",
@@ -3278,7 +3408,7 @@
       },
       {
         title: "Stage 8 — Routings",
-        note: "Boundary amended 2026-07-26: ProductionStage (цех) ≠ TechOperation ≠ WorkCenter(equipment). Routing = sequence of цехов. Shop execution modules → Stage 11.3–11.10. Spec Stage 7 not hard dep. 8.3 ProductionStage shipped (owner visual pending).",
+        note: "Boundary amended 2026-07-26: ProductionStage (цех) ≠ TechOperation ≠ WorkCenter(equipment). Routing = sequence of цехов. Shop execution modules → Stage 11.3–11.10. Spec Stage 7 not hard dep. 8.3 ProductionStage shipped (owner visual 8.2.2.6 OK 2026-07-28). Amend 2026-07-27: model routing whitelist+norms 6.1.17; whitelist wire 8.2.3.7–8; material fact hard gate 9.3.4 / 11.5–11.6.",
         blocks: [
           {
             title: "8.1 — Domain and persistence",
@@ -3382,6 +3512,34 @@
                     note: "v0.9.0; test_shop_routings_8.py; task v0.9.0-stage-8-routings-ship.md"
                   }
                 ]
+              },
+              {
+                code: "8.1.4",
+                title: "TechOperation required materials",
+                goal: "Optional required MATERIAL rows on TechOperation, stored per one operation volume_unit, so TC composition can prefill from route operations without inventing a second material catalog.",
+                dependencies: [
+                  "8.1.3",
+                  "8.3",
+                  "ADR-017"
+                ],
+                microtasks: [
+                  {
+                    code: "8.1.4.1",
+                    title: "Domain child required_materials on TechOperation (MATERIAL nomenclature + qty per volume_unit); ADR-017 amend",
+                    done: false,
+                    note: "task v0.9.0-stage-8.1.4-tech-op-materials.md"
+                  },
+                  {
+                    code: "8.1.4.2",
+                    title: "DB + migration + schemas + API + settings UI for required materials rows",
+                    done: false
+                  },
+                  {
+                    code: "8.1.4.3",
+                    title: "Regression tests + docs checkpoint",
+                    done: false
+                  }
+                ]
               }
             ]
           },
@@ -3457,8 +3615,8 @@
                   {
                     code: "8.2.2.6",
                     title: "Visual verification",
-                    done: false,
-                    note: "owner pass pending; re-check after 8.3 routing UI"
+                    done: true,
+                    note: "Owner OK 2026-07-28; re-check after 8.3 passed (routing UI uses catalog цех, not free-text stage)"
                   }
                 ]
               },
@@ -3506,6 +3664,16 @@
                     title: "Add regression tests",
                     done: true,
                     note: "v0.9.0; routing CRUD + sequencing; TC snapshot wire-up"
+                  },
+                  {
+                    code: "8.2.3.7",
+                    title: "Wire generate / apply-routing to model routing whitelist (6.1.17); reject foreign",
+                    done: false
+                  },
+                  {
+                    code: "8.2.3.8",
+                    title: "Docs checkpoint + tests for whitelist validation on apply-routing",
+                    done: false
                   }
                 ]
               }
@@ -3553,7 +3721,7 @@
                     code: "8.3.5",
                     title: "Tests + docs; owner visual routings after amend (closes or supersedes 8.2.2.6)",
                     done: true,
-                    note: "v0.9.0; test_production_stages_8_3.py; owner visual 8.2.2.6 still pending"
+                    note: "v0.9.0; test_production_stages_8_3.py; owner visual 8.2.2.6 OK 2026-07-28"
                   }
                 ]
               }
@@ -3563,7 +3731,7 @@
       },
       {
         title: "Stage 9 — Технические карты (Technical Cards)",
-        note: "Owner ask 2026-07-26: Техкарты. Gates by цех (8.3 shipped). Shop modules 11.3–11.10 — not full PT-07. 9.2.2+9.4.2+9.5.1 shipped; 9.4.1.4 OK. 8.3 shipped (owner visual pending); visuals 8.2.2.6/9.4.2.7; next visuals / 9.6 / 11.3.",
+        note: "Owner ask 2026-07-26: Техкарты. Gates by цех (8.3 shipped; owner visual 8.2.2.6 OK). Shop modules 11.3–11.10 — not full PT-07. 9.2.2+9.4.2+9.5.1 shipped; 9.4.1.4 OK; owner visual 9.4.2.7 OK. 6.1.17 + 3.2.7 + smoke 3.2.6 shipped (visuals OK). Amend 2026-07-28: aggregate personalization import expands into unit lines; History active/collapsed by default; TechOperation required materials feed TC plan. 9.3.4 shipped; owner visual OK on TC document for planned/fact materials, stage bind, gate messaging. 9.3.5 shipped: route TechOperation required materials prefill TC MATERIAL rows, formula wired, missing norm warning visible to manager. 9.6 shipped: settings page, persistence, generate/prefill wiring, and focused backend/frontend regressions completed on singleton TechnicalCardSettings. 11.3.1 shipped: ADR/docs contract fixes shared shop module vs TC document boundary and material fact hard-gate semantics for cutting/print. 11.3.2 shipped: nav placeholders added under Производство for all shop modules, shell data only. 11.3.3 shipped: each shop-module route now shows a real TC queue shell filtered by current stage. 11.3.4/11.3.5 shipped: queue opens existing TC with stage context, shop fact fields + no gate bypass; unit tests shop-stage-modules.test.mjs. 11.3.6 shipped: cross-shop kanban at /production/kanban with adjacent DnD via 9.2.2. 11.4 shipped (owner visual 11.4.5 OK). 11.5 shipped (owner visual 11.5.5 OK). 11.6 shipped (owner visual 11.6.5 OK). 11.7.1–11.7.4 shipped: Пошив domain + API + UI + bind. Next owner visual 11.7.5.",
         blocks: [
           {
             title: "9.0 — Placement microtasks",
@@ -3828,6 +3996,27 @@
                     title: "Regression tests",
                     done: true,
                     note: "v0.9.0 — tests/test_technical_cards_9_3_2.py; task v0.9.0-stage-9.3.2-tech-card-unit-lines.md"
+                  },
+                  {
+                    code: "9.3.2.5",
+                    title: "Amend domain/UI contract: size_type + visible fields without color; aggregate import DTO expands into unit lines",
+                    done: false,
+                    note: "task v0.9.0-stage-9.3.2-personalization-import.md"
+                  },
+                  {
+                    code: "9.3.2.6",
+                    title: "Backend aggregate import: validate Σ quantity = order qty, expand into N unit lines, stop color defaults",
+                    done: false
+                  },
+                  {
+                    code: "9.3.2.7",
+                    title: "Frontend Поштучно: replace visible columns, add aggregate import, show qty mismatch error",
+                    done: false
+                  },
+                  {
+                    code: "9.3.2.8",
+                    title: "Regression tests for aggregate import and UI/API round-trip",
+                    done: false
                   }
                 ]
               },
@@ -3863,6 +4052,89 @@
                     title: "Regression tests",
                     done: true,
                     note: "v0.9.0 — tests/test_technical_cards_9_3_3.py; task v0.9.0-stage-9.3.3-tech-card-op-volumes.md"
+                  }
+                ]
+              },
+              {
+                code: "9.3.4",
+                title: "Composition plan/fact, stage bind, hard material gate",
+                goal: "planned_qty vs fact_qty; MATERIAL bind to production_stage; hard complete-gate for Раскрой/Печать without fact_qty.",
+                dependencies: [
+                  "9.3.1",
+                  "9.2.2",
+                  "6.1.17",
+                  "8.3",
+                  "ADR-016"
+                ],
+                microtasks: [
+                  {
+                    code: "9.3.4.1",
+                    title: "Amend composition: production_stage_id, planned_qty, fact_qty; ADR-016 amend",
+                    done: true,
+                    note: "v0.9.0 — Alembic r9s0t1u2v345; smoke test_technical_cards_9_3_4_1.py; ADR-016 amend cited; task v0.9.0-stage-9.3.4-composition-plan-fact.md"
+                  },
+                  {
+                    code: "9.3.4.2",
+                    title: "Prefill planned_qty hint from model operation norms × order qty",
+                    done: true,
+                    note: "v0.9.0 — resolve_composition_planned_qty_hint; soft-fill on replace/generate; smoke test_technical_cards_9_3_4_2.py"
+                  },
+                  {
+                    code: "9.3.4.3",
+                    title: "Hard gate complete for cutting/print if MATERIAL of stage lacks fact_qty",
+                    done: true,
+                    note: "v0.9.0 — _assert_material_fact_gate; smoke test_technical_cards_9_3_4_gate.py"
+                  },
+                  {
+                    code: "9.3.4.4",
+                    title: "API + TC UI: planned vs fact; manager material+stage; fact from shop",
+                    done: true,
+                    note: "v0.9.0 — PATCH composition fact-qty; UI Цех/План/Факт tech-card-detail-workspace.tsx"
+                  },
+                  {
+                    code: "9.3.4.5",
+                    title: "Regression tests (migration; gate; prefill)",
+                    done: true,
+                    note: "v0.9.0 — test_technical_cards_9_3_4_gate.py + 9_3_4_1/2; FE tech-cards.test.mjs"
+                  },
+                  {
+                    code: "9.3.4.6",
+                    title: "Visual verification on TC document",
+                    done: true,
+                    note: "Owner OK 2026-07-28 — planned/fact materials, stage bind, gate messaging confirmed on /production/tech-cards/[id]"
+                  }
+                ]
+              },
+              {
+                code: "9.3.5",
+                title: "TechOperation required materials → technical card composition",
+                goal: "When a route TechOperation has required materials and the model routing has a matching norm, prefill MATERIAL rows on the technical card and compute planned_qty from required-material qty × norm × order qty.",
+                dependencies: [
+                  "8.1.4",
+                  "9.3.4",
+                  "6.1.17",
+                  "8.3",
+                  "ADR-016",
+                  "ADR-017"
+                ],
+                microtasks: [
+                  {
+                    code: "9.3.5.1",
+                    title: "Generate / refresh composition from route TechOperation required materials and bind rows to stage",
+                    done: true,
+                    note: "_sync_route_required_materials_to_composition on generate / apply-routing / refresh-model; focused regression backend/tests/test_technical_cards_9_3_5_1.py; task v0.9.0-stage-9.3.5-op-materials-to-tc.md"
+                  },
+                  {
+                    code: "9.3.5.2",
+                    title: "Compute planned_qty = required_material_qty × norm_qty_per_item × order qty; missing norm surfaces explicit warning",
+                    done: true,
+                    note: "compute_planned_qty_hint + resolve_composition_planned_qty_hint; warning notes from _sync_route_required_materials_to_composition rendered manager-visible in tech-card-detail-workspace.tsx; focused regressions backend/tests/test_technical_cards_9_3_5_2.py + frontend/lib/production/tech-cards.test.mjs"
+                  },
+                  {
+                    code: "9.3.5.3",
+                    title: "Regression tests + docs checkpoint; preserve 9.3.4 fact gate",
+                    done: true,
+                    note: "backend/tests/test_technical_cards_9_3_5_1.py + test_technical_cards_9_3_5_2.py + frontend/lib/production/tech-cards.test.mjs; existing backend/tests/test_technical_cards_9_3_4_gate.py preserved"
                   }
                 ]
               }
@@ -3958,8 +4230,14 @@
                   {
                     code: "9.4.2.7",
                     title: "Frontend regression tests and visual verification",
-                    done: false,
-                    note: "unit tests shipped; owner visual pending; task v0.9.0-stage-9.4.2-tech-cards-list-document.md"
+                    done: true,
+                    note: "unit tests shipped; layout amend 2026-07-27 (Maket max-3 / order / routing+sewing; materials 50% left row-add MATERIAL + route/stages 50% right); owner visual OK 2026-07-28; task v0.9.0-stage-9.4.2-tech-card-document-layout.md"
+                  },
+                  {
+                    code: "9.4.2.8",
+                    title: "Activate History block: collapsible section default-collapsed; timeline from lifecycle + stage results or EmptyState inside active block",
+                    done: true,
+                    note: "v0.9.0; buildTechCardHistoryEntries + tech-card-detail-workspace.tsx; frontend test frontend/lib/production/tech-cards.test.mjs"
                   }
                 ]
               }
@@ -4014,27 +4292,32 @@
                   {
                     code: "9.6.1",
                     title: "Domain settings: eligible types, numbering orderNo-cardSeq default, unit-line fields; no TechOperation CRUD (8.1.3)",
-                    done: false
+                    done: true,
+                    note: "ADR-016 amend + task docs/tasks/v0.9.0-stage-9.6-tech-card-settings.md"
                   },
                   {
                     code: "9.6.2",
                     title: "Persist settings (model/migration/schemas per ADR-016)",
-                    done: false
+                    done: true,
+                    note: "singleton TechnicalCardSettings + Alembic t1u2v3w4x567 + schema TechnicalCardSettingsRead + services/technical_card_settings.py + focused regression backend/tests/test_technical_card_settings_9_6_2.py"
                   },
                   {
                     code: "9.6.3",
                     title: "Settings UI at /settings/catalogs/tech-cards",
-                    done: false
+                    done: true,
+                    note: "backend GET/PUT /technical-card-settings + frontend page/workspace/lib for singleton TechnicalCardSettings"
                   },
                   {
                     code: "9.6.4",
                     title: "Wire generate/prefill to settings defaults",
-                    done: false
+                    done: true,
+                    note: "backend/services/technical_cards.py reads settings for eligible types, numbering, unit-line defaults/import, and TechOperation prefill stage snapshot; regression backend/tests/test_technical_card_settings_9_6_4.py"
                   },
                   {
                     code: "9.6.5",
                     title: "Regression tests + docs checkpoint",
-                    done: false
+                    done: true,
+                    note: "backend regressions test_technical_card_settings_9_6_2.py + test_technical_card_settings_9_6_4.py + updated test_technical_cards_9_2_1.py, frontend regression frontend/lib/technical-card-settings.test.mjs, canonical docs synced"
                   }
                 ]
               }
@@ -4056,7 +4339,7 @@
               },
               {
                 code: "10.1.2",
-                title: "Layouts, logos, and comments",
+                title: "Layouts, logos, and comments — design-module; platform order/ТК staff chat → Stage 19",
                 done: false
               }
             ]
@@ -4080,20 +4363,97 @@
       },
       {
         title: "Stage 11 — Production",
-        note: "11.1 planning; 11.2 aggregate fact; 11.3–11.10 shop modules per цех (Дизайн→Раскрой→Печать→Пошив→ВТО→ОТК→Упаковка). Each module writes fact on TC; deps 8.3, 9.2.2, 9.4.2.",
+        note: "11.1 planning; 11.2 aggregate fact + FG warehouse bridge; 11.3–11.10 shop modules per цех (Дизайн→Раскрой→Печать→Пошив→ВТО→ОТК→Упаковка→Готовы к отгрузке→Отгружены). 11.3 platform + 11.4–11.10 shipped (owner visuals OK through 11.10.5). 11.1.1 ProductionOrder/Batch shipped (owner visual 11.1.1.5 OK 2026-07-30). 11.1.2 WorkCenter planning shipped (owner visual 11.1.2.5 OK 2026-07-30). 11.2.1 aggregate fact shipped (owner visual 11.2.1.4 OK 2026-07-30). 11.2.2.1–11.2.2.3 FG bridge shipped. Remaining: 11.2.2.4–11.2.2.5 (wire needs 12.2) + Stage 12.1+. Each module writes fact on TC; deps 8.3, 9.2.2, 9.4.2.",
         blocks: [
           {
             title: "11.1 — Production planning",
+            note: "ProductionOrder + ProductionBatch group existing TCs (ADR-004 / ADR-016). Shop fact stays on TC (11.3–11.10). WorkCenter planning = 11.1.2.",
             items: [
               {
                 code: "11.1.1",
                 title: "Production orders and batches",
-                done: false
+                goal: "Planning documents: production order + batches that group technical cards for release / Spec parent.",
+                dependencies: [
+                  "ADR-004",
+                  "9.2.2",
+                  "11.3"
+                ],
+                microtasks: [
+                  {
+                    code: "11.1.1.1",
+                    title: "Domain / ADR: ProductionOrder + ProductionBatch vs SalesOrder / TechnicalCard / Spec",
+                    done: true,
+                    note: "ADR-018 accepted 2026-07-30; task v0.9.0-stage-11.1.1.1-production-order-batch-adr.md"
+                  },
+                  {
+                    code: "11.1.1.2",
+                    title: "DB: models + Alembic (orders, batches, batch↔TC links)",
+                    done: true,
+                    note: "migration w4x5y6z7a890; models production_order.py; evidence test_production_orders_11_1_1_2.py"
+                  },
+                  {
+                    code: "11.1.1.3",
+                    title: "API: list/detail/create; attach/detach technical cards to batch",
+                    done: true,
+                    note: "/production-orders + /production-batches/{id}/cards; evidence test_production_orders_11_1_1_3.py"
+                  },
+                  {
+                    code: "11.1.1.4",
+                    title: "UI: /production/orders list + card",
+                    done: true,
+                    note: "list + detail with batches attach/detach; create by sales_order_id"
+                  },
+                  {
+                    code: "11.1.1.5",
+                    title: "Tests + owner visual",
+                    done: true,
+                    note: "tests 11_1_1_2 + 11_1_1_3; FE tsc OK; owner visual OK 2026-07-30; sales-order/TC select UX"
+                  }
+                ]
               },
               {
                 code: "11.1.2",
-                title: "Planning and equipment / WorkCenter assignment (not цех)",
-                done: false
+                title: "Planning and equipment / WorkCenter assignment",
+                goal: "Assign WorkCenter for planning on TC stage (snapshot from routing + editable); not цех; not on ProductionOrder/Batch.",
+                dependencies: [
+                  "ADR-017",
+                  "ADR-016",
+                  "8.2",
+                  "9.2.2",
+                  "11.1.1"
+                ],
+                microtasks: [
+                  {
+                    code: "11.1.2.1",
+                    title: "Contract: planned WorkCenter on TC stage_result",
+                    done: true,
+                    note: "ADR-016/017 amend 2026-07-30; task v0.9.0-stage-11.1.2.1-work-center-planning-contract.md"
+                  },
+                  {
+                    code: "11.1.2.2",
+                    title: "Snapshot work_center_id from routing stage line → TC stage_results",
+                    done: true,
+                    note: "_apply_routing_template; evidence test_work_center_planning_11_1_2_2.py"
+                  },
+                  {
+                    code: "11.1.2.3",
+                    title: "Settings UI: WorkCenter catalog list/create/edit + nav",
+                    done: true,
+                    note: "/settings/catalogs/work-centers; nav Оборудование; CRUD via /work-centers API"
+                  },
+                  {
+                    code: "11.1.2.4",
+                    title: "Production UI: planned equipment on TC stage",
+                    done: true,
+                    note: "timeline + shop WC field; PATCH planned-work-center; evidence test_work_center_planning_11_1_2_4.py"
+                  },
+                  {
+                    code: "11.1.2.5",
+                    title: "Tests + owner visual",
+                    done: true,
+                    note: "tests 11_1_2_2 + 11_1_2_4; owner visual OK 2026-07-30"
+                  }
+                ]
               }
             ]
           },
@@ -4102,13 +4462,81 @@
             items: [
               {
                 code: "11.2.1",
-                title: "Aggregated operations/performers/output/scrap; detailed per-цех in 11.4–11.10",
-                done: false
+                title: "Aggregated operations, performers, output, and scrap",
+                goal: "Read-only roll-up from TCs grouped by ProductionBatch; no duplicate SoT (shop fact stays on TC).",
+                dependencies: [
+                  "ADR-018",
+                  "ADR-016",
+                  "11.1.1",
+                  "11.3-11.10"
+                ],
+                microtasks: [
+                  {
+                    code: "11.2.1.1",
+                    title: "Contract: batch/order fact roll-up reads TC facts",
+                    done: true,
+                    note: "ADR-018 amend 2026-07-30; task v0.9.0-stage-11.2.1.1-aggregate-fact-contract.md"
+                  },
+                  {
+                    code: "11.2.1.2",
+                    title: "API: GET batch/order fact roll-up summary",
+                    done: true,
+                    note: "GET batch/order fact-rollup; production_fact_rollup.py; test_production_fact_rollup_11_2_1_2.py; task v0.9.0-stage-11.2.1.2-aggregate-fact-api.md"
+                  },
+                  {
+                    code: "11.2.1.3",
+                    title: "UI: roll-up block on /production/orders/{id}",
+                    done: true,
+                    note: "order + per-batch ProductionFactRollupPanel; task v0.9.0-stage-11.2.1.3-aggregate-fact-ui.md"
+                  },
+                  {
+                    code: "11.2.1.4",
+                    title: "Tests + owner visual",
+                    done: true,
+                    note: "owner visual OK 2026-07-30; test_production_fact_rollup_11_2_1_2.py; production-orders.test.mjs; task v0.9.0-stage-11.2.1.4-aggregate-fact-visual.md"
+                  }
+                ]
               },
               {
                 code: "11.2.2",
-                title: "Quality control release and finished goods (complements 11.9 ОТК)",
-                done: false
+                title: "Ready-to-ship / Shipped + warehouse FG (ADR-019)",
+                goal: "After Упаковка: ready_to_ship (FG receipt) and shipped (FG issue). Stock SoT = warehouse ledger. Complements ОТК scrap; Stage 14 does not duplicate issue.",
+                dependencies: [
+                  "ADR-019",
+                  "ADR-016",
+                  "11.10",
+                  "12.2"
+                ],
+                microtasks: [
+                  {
+                    code: "11.2.2.1",
+                    title: "Contract: FG stages + warehouse receipt/issue",
+                    done: true,
+                    note: "ADR-019; amend ADR-004/016/017/018; task v0.9.0-stage-11.2.2.1-warehouse-fg-contract.md"
+                  },
+                  {
+                    code: "11.2.2.2",
+                    title: "Seed ProductionStage ready_to_ship / shipped; routing append policy",
+                    done: true,
+                    note: "Alembic x5y6z7a8b901; _append_finished_goods_stages; test_fg_stages_11_2_2_2.py; task v0.9.0-stage-11.2.2.2-fg-stages-seed.md"
+                  },
+                  {
+                    code: "11.2.2.3",
+                    title: "Shop modules ready_to_ship and shipped (+ kanban)",
+                    done: true,
+                    note: "queue + shop-floor FG hints; shop-stage-modules.test.mjs; task v0.9.0-stage-11.2.2.3-fg-shop-modules.md"
+                  },
+                  {
+                    code: "11.2.2.4",
+                    title: "Wire stage complete → post StockDocument FG receipt/issue",
+                    done: false
+                  },
+                  {
+                    code: "11.2.2.5",
+                    title: "Tests + owner visual",
+                    done: false
+                  }
+                ]
               }
             ]
           },
@@ -4118,37 +4546,49 @@
               {
                 code: "11.3",
                 title: "Shared shell for цеховые модули",
-                goal: "Nav, TC queue by current ProductionStage, open TC, enforce 9.2.2 gates.",
+                goal: "Nav, TC queue by current ProductionStage, open TC, enforce 9.2.2 gates; material fact + hard-gate semantics for cutting/print (9.3.4). Owns cross-shop kanban of all цеха by stage before 11.4–11.10.",
                 dependencies: [
                   "8.3",
                   "9.2.2",
+                  "9.3.4",
                   "9.4.2"
                 ],
                 microtasks: [
                   {
                     code: "11.3.1",
-                    title: "Contract: shop module vs TC vs Stage 10 client design",
-                    done: false
+                    title: "Contract: shop vs TC vs Stage 10; material fact entry + hard-gate cutting/print",
+                    done: true,
+                    note: "ADR-016 amend 2026-07-28 + task docs/tasks/v0.9.0-stage-11-shop-material-fact.md"
                   },
                   {
                     code: "11.3.2",
                     title: "Nav placeholders under Производство (DS-SHELL data only)",
-                    done: false
+                    done: true,
+                    note: "Production nav now exposes all 7 shop modules with placeholder routes under /production/stages/*"
                   },
                   {
                     code: "11.3.3",
                     title: "Shared queue / list shell by current stage",
-                    done: false
+                    done: true,
+                    note: "Each /production/stages/* page loads real technical cards filtered by current_stage_label with queue list shell"
                   },
                   {
                     code: "11.3.4",
-                    title: "Open TC + stage context; no gate bypass",
-                    done: false
+                    title: "Open TC + stage context; no gate bypass; surface material fact fields",
+                    done: true,
+                    note: "Queue opens /production/tech-cards/{id}?stage=; shop fact_qty UI; stage actions scoped to current цех"
                   },
                   {
                     code: "11.3.5",
                     title: "Tests + docs checkpoint",
-                    done: false
+                    done: true,
+                    note: "frontend/lib/production/shop-stage-modules.test.mjs"
+                  },
+                  {
+                    code: "11.3.6",
+                    title: "Cross-shop kanban of all цеха by ProductionStage; DnD only along allowed transitions; open DnD temporary until 17.1.2.7",
+                    done: true,
+                    note: "/production/kanban; adjacent complete/rollback via 9.2.2; open DnD until 17.1.2.7"
                   }
                 ]
               }
@@ -4168,27 +4608,32 @@
                   {
                     code: "11.4.1",
                     title: "Domain fact fields",
-                    done: false
+                    done: true,
+                    note: "Alembic u2v3w4x5y678: work_done + duration_seconds on stage results"
                   },
                   {
                     code: "11.4.2",
                     title: "API write fact on TC",
-                    done: false
+                    done: true,
+                    note: "PATCH /technical-cards/{id}/stages/{order}/fact; test_shop_design_11_4.py"
                   },
                   {
                     code: "11.4.3",
                     title: "UI workspace",
-                    done: false
+                    done: true,
+                    note: "/production/stages/design → TC ?stage=design fact form"
                   },
                   {
                     code: "11.4.4",
                     title: "Bind when current stage = Дизайн",
-                    done: false
+                    done: true,
+                    note: "shop_stage_code=design API bind + UI gate"
                   },
                   {
                     code: "11.4.5",
                     title: "Tests + owner visual",
-                    done: false
+                    done: true,
+                    note: "Owner visual OK 2026-07-28; test_shop_design_11_4.py; tech-card-shop-floor-body.tsx"
                   }
                 ]
               }
@@ -4200,35 +4645,42 @@
               {
                 code: "11.5",
                 title: "Цех Раскрой on technical card",
+                goal: "Execution + fact_qty for MATERIAL of Раскрой; cannot complete without fact_qty (9.3.4).",
                 dependencies: [
                   "11.3",
-                  "8.3"
+                  "8.3",
+                  "9.3.4"
                 ],
                 microtasks: [
                   {
                     code: "11.5.1",
-                    title: "Domain fact fields",
-                    done: false
+                    title: "Domain fact fields (performer, work, duration, fact_qty per MATERIAL)",
+                    done: true,
+                    note: "ADR-016 §6.2; reuses stage fact + composition fact_qty"
                   },
                   {
                     code: "11.5.2",
-                    title: "API write fact on TC",
-                    done: false
+                    title: "API write fact on TC; complete enforces hard material gate",
+                    done: true,
+                    note: "fact + fact-qty with shop_stage_code; gate 9.3.4.3; test_shop_cutting_11_5.py"
                   },
                   {
                     code: "11.5.3",
                     title: "UI workspace",
-                    done: false
+                    done: true,
+                    note: "/production/stages/cutting → TC ?stage=cutting shop floor"
                   },
                   {
                     code: "11.5.4",
                     title: "Bind when current stage = Раскрой",
-                    done: false
+                    done: true,
+                    note: "shop_stage_code=cutting API bind + UI gate"
                   },
                   {
                     code: "11.5.5",
-                    title: "Tests + owner visual",
-                    done: false
+                    title: "Tests + owner visual — owner OK required; agent stops until owner OK",
+                    done: true,
+                    note: "Owner visual OK 2026-07-28; test_shop_cutting_11_5.py"
                   }
                 ]
               }
@@ -4240,36 +4692,43 @@
               {
                 code: "11.6",
                 title: "Цех Печать on technical card (ops + equipment)",
+                goal: "Execution + volumes + fact_qty for MATERIAL of Печать; cannot complete without fact_qty (9.3.4).",
                 dependencies: [
                   "11.3",
                   "8.3",
-                  "8.1.3"
+                  "8.1.3",
+                  "9.3.4"
                 ],
                 microtasks: [
                   {
                     code: "11.6.1",
-                    title: "Domain fact fields (op, WorkCenter, volumes)",
-                    done: false
+                    title: "Domain fact fields (op, WorkCenter, volumes, fact_qty per MATERIAL)",
+                    done: true,
+                    note: "ADR-016 §6.3; migration v3w4x5y6z789 work_center_id"
                   },
                   {
                     code: "11.6.2",
-                    title: "API write fact on TC",
-                    done: false
+                    title: "API write fact on TC; complete enforces hard material gate",
+                    done: true,
+                    note: "stage fact + op volume + fact-qty shop_stage_code=print; test_shop_print_11_6.py"
                   },
                   {
                     code: "11.6.3",
                     title: "UI workspace",
-                    done: false
+                    done: true,
+                    note: "/production/stages/print → TC ?stage=print shop floor"
                   },
                   {
                     code: "11.6.4",
                     title: "Bind when current stage = Печать",
-                    done: false
+                    done: true,
+                    note: "shop_stage_code=print API bind + UI gate"
                   },
                   {
                     code: "11.6.5",
-                    title: "Tests + owner visual",
-                    done: false
+                    title: "Tests + owner visual — owner OK required; agent stops until owner OK",
+                    done: true,
+                    note: "v0.9.0; owner visual OK 2026-07-28; test_shop_print_11_6.py"
                   }
                 ]
               }
@@ -4288,28 +4747,33 @@
                 microtasks: [
                   {
                     code: "11.7.1",
-                    title: "Domain fact fields",
-                    done: false
+                    title: "Domain fact fields (performer, work done, duration)",
+                    done: true,
+                    note: "ADR-016 §6.4; reuses stage fact; no material gate; no new migration"
                   },
                   {
                     code: "11.7.2",
                     title: "API write fact on TC",
-                    done: false
+                    done: true,
+                    note: "PATCH stages/{order}/fact shop_stage_code=sewing; test_shop_sewing_11_7.py"
                   },
                   {
                     code: "11.7.3",
                     title: "UI workspace",
-                    done: false
+                    done: true,
+                    note: "/production/stages/sewing → TC ?stage=sewing shop floor + sewing plan ops"
                   },
                   {
                     code: "11.7.4",
                     title: "Bind when current stage = Пошив",
-                    done: false
+                    done: true,
+                    note: "shop_stage_code=sewing API bind + UI gate; test_shop_sewing_11_7.py"
                   },
                   {
                     code: "11.7.5",
-                    title: "Tests + owner visual",
-                    done: false
+                    title: "Tests + owner visual — owner OK",
+                    done: true,
+                    note: "Automated tests shipped (test_shop_sewing_11_7.py); owner visual OK 2026-07-29"
                   }
                 ]
               }
@@ -4329,27 +4793,32 @@
                   {
                     code: "11.8.1",
                     title: "Domain fact fields",
-                    done: false
+                    done: true,
+                    note: "shared stage-fact surface; material hard-gate only for Раскрой/Печать (ВТО нет)"
                   },
                   {
                     code: "11.8.2",
                     title: "API write fact on TC",
-                    done: false
+                    done: true,
+                    note: "PATCH …/stages/{order}/fact with shop_stage_code=wto; evidence test_shop_wto_11_8.py"
                   },
                   {
                     code: "11.8.3",
                     title: "UI workspace",
-                    done: false
+                    done: true,
+                    note: "/production/stages/wto → TC ?stage=wto shop floor (ВТО fact fields)"
                   },
                   {
                     code: "11.8.4",
                     title: "Bind when current stage = ВТО",
-                    done: false
+                    done: true,
+                    note: "shop_stage_code=wto requires current step; evidence test_shop_wto_11_8.py"
                   },
                   {
                     code: "11.8.5",
                     title: "Tests + owner visual",
-                    done: false
+                    done: true,
+                    note: "evidence test_shop_wto_11_8.py; owner visual OK (2026-07-29)"
                   }
                 ]
               }
@@ -4369,27 +4838,32 @@
                   {
                     code: "11.9.1",
                     title: "Domain fact fields (pass/fail, scrap)",
-                    done: false
+                    done: true,
+                    note: "qc stage fact block: pass/fail + Брак/Доработка/Примечание + duration; owner visual OK (2026-07-29)"
                   },
                   {
                     code: "11.9.2",
                     title: "API write fact on TC",
-                    done: false
+                    done: true,
+                    note: "qc stage fact accepts scrap_qty/rework_qty/notes; evidence test_shop_qc_11_9_2.py"
                   },
                   {
                     code: "11.9.3",
                     title: "UI workspace",
-                    done: false
+                    done: true,
+                    note: "/production/stages/qc → TC ?stage=qc shop floor (pass/fail + Брак/Доработка/Примечание + duration); visual OK (2026-07-29)"
                   },
                   {
                     code: "11.9.4",
                     title: "Bind when current stage = ОТК",
-                    done: false
+                    done: true,
+                    note: "bind rule validated: shop_stage_code=qc rejects when current stage is not qc; evidence test_shop_qc_11_9_4.py"
                   },
                   {
                     code: "11.9.5",
                     title: "Tests + owner visual",
-                    done: false
+                    done: true,
+                    note: "evidence test_shop_qc_11_9_2/4/5.py; owner visual OK (2026-07-29)"
                   }
                 ]
               }
@@ -4409,27 +4883,32 @@
                   {
                     code: "11.10.1",
                     title: "Domain fact fields",
-                    done: false
+                    done: true,
+                    note: "shared stage-fact surface; no material hard-gate for Упаковка; ADR-016 §6.5"
                   },
                   {
                     code: "11.10.2",
                     title: "API write fact on TC",
-                    done: false
+                    done: true,
+                    note: "PATCH …/stages/{order}/fact with shop_stage_code=packaging; evidence test_shop_packaging_11_10.py"
                   },
                   {
                     code: "11.10.3",
                     title: "UI workspace",
-                    done: false
+                    done: true,
+                    note: "/production/stages/packaging → TC ?stage=packaging shop floor (fact fields Упаковка)"
                   },
                   {
                     code: "11.10.4",
                     title: "Bind when current stage = Упаковка",
-                    done: false
+                    done: true,
+                    note: "shop_stage_code=packaging requires current step; evidence test_shop_packaging_11_10.py"
                   },
                   {
                     code: "11.10.5",
                     title: "Tests + owner visual",
-                    done: false
+                    done: true,
+                    note: "evidence test_shop_packaging_11_10.py + shop-stage-modules packaging routes; owner visual OK (2026-07-29)"
                   }
                 ]
               }
@@ -4439,34 +4918,106 @@
       },
       {
         title: "Stage 12 — Warehouse",
-        goal: "Structure note 2026-07-26: MVP register/balance column owned by 4.6.5 + 4.10.6. This stage adds warehouses/bins/lots and full movement documents on top of that MVP.",
+        goal: "ADR-019 domain. Ledger ownership in 12.2 (was 4.6.5). FG bridge 11.2.2. Bins/lots/inventory after MVP.",
         blocks: [
+          {
+            title: "12.0 — Domain",
+            items: [
+              {
+                code: "12.0.1",
+                title: "ADR-019 Warehouse + FG stages contract",
+                done: true,
+                note: "same evidence as 11.2.2.1; task v0.9.0-stage-11.2.2.1-warehouse-fg-contract.md"
+              }
+            ]
+          },
           {
             title: "12.1 — Storage structure",
             items: [
               {
                 code: "12.1.1",
-                title: "Warehouses and bins",
+                title: "Warehouses CRUD + default seed Основной",
                 done: false
               },
               {
                 code: "12.1.2",
-                title: "Lots and balances — extends 4.6.5 MVP (multi-warehouse / lots); list column already from register",
+                title: "Balance projection by warehouse + nomenclature (bins/lots later)",
                 done: false
               }
             ]
           },
           {
-            title: "12.2 — Movements",
+            title: "12.2 — Ledger foundation",
+            note: "Owns former 4.6.5.1–4.6.5.3 / 4.6.5.5–4.6.5.6",
             items: [
               {
                 code: "12.2.1",
-                title: "Receipts, issues, reserves, and transfers — full documents; MVP post-movement API starts in 4.6.5.3",
+                title: "Migration: Warehouse, StockDocument, StockLedgerLine",
                 done: false
               },
               {
                 code: "12.2.2",
-                title: "Inventory and finished-goods flow",
+                title: "Services + API: post document, read balances",
+                done: false
+              },
+              {
+                code: "12.2.3",
+                title: "Fill GET /stock/balances; live column on /warehouse/stock",
+                done: false
+              },
+              {
+                code: "12.2.4",
+                title: "Regression tests (balance never on Nomenclature)",
+                done: false
+              },
+              {
+                code: "12.2.5",
+                title: "Docs sync: close linked 4.6.5.* when register ships",
+                done: false
+              }
+            ]
+          },
+          {
+            title: "12.3 — Finished-goods from production",
+            items: [
+              {
+                code: "12.3.1",
+                title: "Document types fg_receipt / fg_issue + TC links",
+                done: false
+              },
+              {
+                code: "12.3.2",
+                title: "Auto-post on TC stage complete (shared with 11.2.2.4)",
+                done: false
+              },
+              {
+                code: "12.3.3",
+                title: "UI: /warehouse/movements list + document card",
+                done: false
+              }
+            ]
+          },
+          {
+            title: "12.4 — Inventory",
+            items: [
+              {
+                code: "12.4.1",
+                title: "Inventory documents and recount postings",
+                done: false
+              }
+            ]
+          },
+          {
+            title: "12.5 — Transfers and reserves",
+            items: [
+              {
+                code: "12.5.1",
+                title: "Transfers between warehouses",
+                done: false
+              },
+              {
+                code: "12.5.2",
+                title: "Reserves (sales/production) — later",
                 done: false
               }
             ]
@@ -4516,7 +5067,7 @@
             items: [
               {
                 code: "14.1.1",
-                title: "Shipping orders, packaging, delivery, and documents",
+                title: "Shipping orders, packaging, delivery, and documents — поверх shipped (ADR-019); не дублировать issue",
                 done: false
               }
             ]
@@ -4649,7 +5200,7 @@
               {
                 code: "17.1.2",
                 title: "System users, roles, and permissions",
-                goal: "Platform users/roles/permissions; sensitive catalog mutations are role-gated.",
+                goal: "Platform users/roles/permissions; sensitive catalog mutations and protected production actions (shop kanban DnD) are role-gated. Deny-by-default once auth/roles ship; open DnD in 11.3.6 is temporary debug only.",
                 microtasks: [
                   {
                     code: "17.1.2.1",
@@ -4679,6 +5230,17 @@
                   {
                     code: "17.1.2.6",
                     title: "Regression tests (forbidden without role; allowed with role)",
+                    done: false
+                  },
+                  {
+                    code: "17.1.2.7",
+                    title: "Shop-stage kanban DnD / stage transitions: role-gated API + UI — removes temporary open DnD from 11.3.6",
+                    done: false,
+                    note: "Only authorized users may move cards between allowed ProductionStages"
+                  },
+                  {
+                    code: "17.1.2.8",
+                    title: "Stage executors (performer list) for shop-stage execution: platform users with access rights per stage — API + UI (demo fallback until permissions directory is released)",
                     done: false
                   }
                 ]
@@ -4867,6 +5429,217 @@
               {
                 code: "18.4.8",
                 title: "Regression tests + documentation checkpoint",
+                done: false
+              }
+            ]
+          }
+        ]
+      },
+      {
+        title: "Stage 19 — Внутренние коммуникации (сотрудники)",
+        note: "Owner ask 2026-07-28: internal colleague chat on SalesOrder + TechnicalCard; @mention; chat→microtasks. ≠ CRM 1.2.4 / external 1.4·16.1 / design-only 10.1.2. Deps: 17.1.1/17.1.2, 2.4.2. Does not block Stage 11.5.",
+        blocks: [
+          {
+            title: "19.0 — Placement and ADR",
+            items: [
+              {
+                code: "19.0",
+                title: "Placement and ADR",
+                goal: "Fix domain boundary vs CRM/external connectors; accept ADR for internal collaboration threads.",
+                microtasks: [
+                  {
+                    code: "19.0.1",
+                    title: "ADR: InternalCollaboration / OrderChat domain (thread, message, mention, microtask; ≠ LeadTask / ≠ external NormalizedMessage)",
+                    done: false
+                  },
+                  {
+                    code: "19.0.2",
+                    title: "Docs: amend order-card field-links + ADR-016 cross-ref (TC as optional thread context)",
+                    done: false
+                  },
+                  {
+                    code: "19.0.3",
+                    title: "Dedupe note: 3.5 Коммуникация = surface; 1.2.4 = CRM; 10.1.2 = design comments may attach later",
+                    done: false
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            title: "19.1 — Conversation domain and API",
+            items: [
+              {
+                code: "19.1",
+                title: "Conversation domain and API",
+                goal: "Threads anchored to order (required) with optional technical-card context; messages; @mentions.",
+                dependencies: [
+                  "19.0.1",
+                  "17.1.1",
+                  "17.1.2",
+                  "2.4.2"
+                ],
+                microtasks: [
+                  {
+                    code: "19.1.1",
+                    title: "Domain model: CollaborationThread (sales_order_id; optional technical_card_id); Message; Mention",
+                    done: false
+                  },
+                  {
+                    code: "19.1.2",
+                    title: "Migration + schemas (upgrade/downgrade); indexes by order / card / created_at",
+                    done: false
+                  },
+                  {
+                    code: "19.1.3",
+                    title: "Service + API: list/create messages; filter by TC; parse/store @mentions",
+                    done: false
+                  },
+                  {
+                    code: "19.1.4",
+                    title: "Access: authenticated staff only; optional read scope = users who can open order/TC",
+                    done: false
+                  },
+                  {
+                    code: "19.1.5",
+                    title: "Regression tests (create/list/mention; foreign order 404; unauthenticated 401)",
+                    done: false
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            title: "19.2 — Microtasks from chat",
+            items: [
+              {
+                code: "19.2",
+                title: "Microtasks from chat",
+                goal: "Create platform microtask from chat (e.g. Правка по макету, Не хватает материала); link order/TC; open→done MVP.",
+                dependencies: [
+                  "19.1.3",
+                  "17.1.2"
+                ],
+                microtasks: [
+                  {
+                    code: "19.2.1",
+                    title: "Domain: CollaborationMicrotask (title, status, assignee, order, optional TC, source_message)",
+                    done: false
+                  },
+                  {
+                    code: "19.2.2",
+                    title: "API: create from chat; list by order/assignee; complete/reopen",
+                    done: false
+                  },
+                  {
+                    code: "19.2.3",
+                    title: "Optional template titles (layout fix, missing material) + free-text",
+                    done: false
+                  },
+                  {
+                    code: "19.2.4",
+                    title: "Regression tests (assign, complete, order-scoped list)",
+                    done: false
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            title: "19.3 — UI surfaces (order + technical card)",
+            items: [
+              {
+                code: "19.3",
+                title: "UI surfaces (order + technical card)",
+                goal: "Order «Коммуникация» + TC document show live thread; mention autocomplete; create microtask from message.",
+                dependencies: [
+                  "19.1.3",
+                  "19.2.2",
+                  "3.5.7",
+                  "9.4.2"
+                ],
+                microtasks: [
+                  {
+                    code: "19.3.1",
+                    title: "Order card: persistent thread UI under Коммуникация",
+                    done: false
+                  },
+                  {
+                    code: "19.3.2",
+                    title: "Mention picker (employees/users) + highlight in message body",
+                    done: false
+                  },
+                  {
+                    code: "19.3.3",
+                    title: "Create microtask drawer/action from chat (prefill order + optional TC)",
+                    done: false
+                  },
+                  {
+                    code: "19.3.4",
+                    title: "Technical card document: collaboration panel / deep-link into order thread with TC context",
+                    done: false
+                  },
+                  {
+                    code: "19.3.5",
+                    title: "Owner visual (desktop + mobile matrix) on order + TC",
+                    done: false
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            title: "19.4 — Notifications for mentions and microtasks",
+            items: [
+              {
+                code: "19.4",
+                title: "Notifications for mentions and microtasks",
+                goal: "In-app notification for mention and microtask assignee (email/push later).",
+                dependencies: [
+                  "19.1.3",
+                  "19.2.2"
+                ],
+                microtasks: [
+                  {
+                    code: "19.4.1",
+                    title: "Notification events: mention, microtask_assigned, microtask_completed",
+                    done: false
+                  },
+                  {
+                    code: "19.4.2",
+                    title: "Persist + list unread for current user; mark read",
+                    done: false
+                  },
+                  {
+                    code: "19.4.3",
+                    title: "UI badge / inbox entry with deep-link to order/TC thread",
+                    done: false
+                  },
+                  {
+                    code: "19.4.4",
+                    title: "Tests + docs checkpoint",
+                    done: false
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            title: "19.5 — Hardening and docs close",
+            items: [
+              {
+                code: "19.5.1",
+                title: "erp-check / project-structure checklist close for internal collaboration",
+                done: false
+              },
+              {
+                code: "19.5.2",
+                title: "Focused backend + frontend regression pack",
+                done: false
+              },
+              {
+                code: "19.5.3",
+                title: "Owner stage sign-off",
                 done: false
               }
             ]

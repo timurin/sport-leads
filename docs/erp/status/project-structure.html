@@ -448,7 +448,7 @@
       </div>
 
       <div class="meta-list">
-        <div class="meta-chip">Updated: 2026-07-26</div>
+        <div class="meta-chip">Updated: 2026-07-27</div>
         <div class="meta-chip">Version: v0.9.0</div>
         <div class="meta-chip">Branch: feature/v0.8.1-nomenclature-core</div>
         <div class="meta-chip">Commit: 0980f34</div>
@@ -505,7 +505,7 @@
 
   <script>
     const metadata = {
-      updated: "2026-07-23",
+      updated: "2026-07-28",
       version: "v0.9.0",
       branch: "feature/v0.8.1-nomenclature-core",
       commit: "0980f34"
@@ -528,6 +528,7 @@
           { text: "Universal audit trail", done: false },
           { text: "Universal file subsystem beyond nomenclature images", done: false },
           { text: "Notifications and background jobs", done: false },
+          { text: "Internal staff collaboration chat on sales order + technical card (Stage 19: threads, @mentions, chat-microtasks) — ≠ CRM lead comms 1.2.4", done: false },
           { text: "Production secrets management, monitoring, and disaster recovery", done: false }
         ]
       },
@@ -563,6 +564,7 @@
           { text: "Organization, client, contact, and responsible bindings in order data", done: true },
           { text: "Order card field-link map and compact UX code (3.5.1–3.5.8, 3.5.10)", done: true },
           { text: "Order card owner visual verification (3.5.9)", done: false },
+          { text: "Internal order/ТК colleague chat under Коммуникация (Stage 19) — surface filter shipped in 3.5.7; domain not started", done: false },
           { text: "Persistent order items with commercial snapshot fields", done: true },
           { text: "Decimal/Numeric line totals and discount-percent recalculation", done: true },
           { text: "Size distribution, color, and personalization snapshots", done: true },
@@ -619,27 +621,30 @@
           { text: "Product-model create / edit UI and PRODUCT whitelist — create/edit visual OK; requisites polish 6.1.10.5; whitelist API+UI 6.1.11 shipped", done: true },
           { text: "Product types directory + model link + list column/filter — ProductType (6.1.14–6.1.16); Alembic y5z6a7b8c901 / a1b2c3d4e515", done: true },
           { text: "Assembly variants API + model-card UI (sewing-ops picker) — AssemblyVariantsBlock + copy-on-pick (6.1.12 / 6.3.6); owner visual OK 6.1.12.6 (2026-07-22)", done: true },
+          { text: "Model routing whitelist + operation material norms on product model — Stage 6.1.17 (plan hint; fact on TC/11.5–11.6)", done: false },
           { text: "Sewing operations flat catalog API + PT-02 list UI — sewing_operations /settings/catalogs/sewing_operations (6.3.1–5; owner visual OK 6.3.4.5 / 6.3.5.4 / 6.4.3.3); PatternSet withdrawn", done: true },
           { text: "Sewing operation normative duration (duration_seconds) + assembly-line snapshot — 6.3.8; Alembic d5e6f7a8b901", done: true },
           { text: "Dedicated size-grid directory and measurements — Mosmade men 18 + women 14; list/card visual OK (6.2.4.5 / 6.2.5.4 / 6.4.3.2); Stage-6 read-only; write/edit → 17.1.2.4; model link 6.2.7 shipped (ProductModel.size_grid_id)", done: true },
           { text: "Pattern-base owner visual checkpoint — models / grids / sewing ops / PRODUCT available-models (6.4.3); Stage 6 catalog closed", done: true },
-          { text: "Order-item model + assembly-variant selection — Stage 3.2.5 (moved from former 6.1.13); smoke 3.2.6", done: false },
+          { text: "Order-item model + assembly-variant selection — Stage 3.2.5 shipped; smoke 3.2.6 + routing 3.2.7 shipped 2026-07-27", done: true },
+          { text: "Order-item routing template selection from model whitelist — Stage 3.2.7", done: false },
           { text: "Specifications — Stage 7 plan+fact report document from filled TC + execution (ADR-004; Documents = link registry later)", done: false },
-          { text: "Routing, operations, work centers, QC; shop TechOperation (8.1.3) + routings UI (8.2) shipped; owner visual 8.2.2.6 pending after 8.3", done: true },
-          { text: "ProductionStage (цех) catalog + routing/ops bind (8.3) — shipped m4n5o6p7q890; owner visual routings pending", done: true }
+          { text: "Routing, operations, work centers, QC; shop TechOperation (8.1.3) + routings UI (8.2) shipped; whitelist wire 8.2.3.7–8 planned; owner visual 8.2.2.6 OK 2026-07-28", done: true },
+          { text: "ProductionStage (цех) catalog + routing/ops bind (8.3) — shipped m4n5o6p7q890; owner visual routings OK 2026-07-28", done: true }
         ]
       },
       {
         title: "9. Technical cards (Технические карты)",
         items: [
-          { text: "Domain contract: one technical card per manufacturable sales order line; unit lines inside the card (ADR-016 accepted 2026-07-26; amend Excel/print align — numbering orderNo-cardSeq, op-volume lines; ADR-015 = unified characteristics)", done: true },
+          { text: "Domain contract: one technical card per manufacturable sales order line; unit lines inside the card (ADR-016; amend plan/fact materials + hard gate 9.3.4 planned 2026-07-27)", done: true },
           { text: "Persistence DB core 9.1.2 (technical_cards + composition / unit / TechnicalCardOperationLine / stage results; soft tech_operation_id until 8.1.3; migration k2l3m4n5o678)", done: true },
           { text: "Generate from order 9.2.1 (preview / generate / cancel draft / sync unit lines; eligible = PRODUCT)", done: true },
           { text: "Composition on card 9.3.1 (model/pattern/material lines + soft Spec version apply until Stage 7)", done: true },
+          { text: "Composition plan/fact + stage bind + hard material gate cutting/print — Stage 9.3.4; owner visual OK 2026-07-28", done: true },
           { text: "Unit lines API 9.3.2 (patch / bulk / replace / import / reset-defaults)", done: true },
           { text: "Operation volumes API 9.3.3 (replace/patch/prefill soft until 8.1.3; no demo)", done: true },
           { text: "Order ↔ tech cards UI 9.4.1 (gap #4 closed; owner visual 9.4.1.4 OK)", done: true },
-          { text: "Stage machine / order manufacturing completeness / full list-document UI (9.2.2, 9.4.2, 9.5 shipped; owner visual 9.4.1.4 OK; 9.4.2.7 pending)", done: true },
+          { text: "Stage machine / order manufacturing completeness / full list-document UI (9.2.2, 9.4.2, 9.5 shipped; owner visuals 9.4.1.4 and 9.4.2.7 OK)", done: true },
           { text: "Placement: Production + Settings tech-cards nav (9.0.1/9.0.2); UI contract 9.0.3 (SL-TECH-CARDS-UI-v1); order gap #4 plan 9.0.4 + ship 9.4.1; settings page 9.6; print A4×2 18.3.8 still open", done: true }
         ]
       },
@@ -647,10 +652,10 @@
         title: "10. Design, Production, Warehouse, Procurement, and Shipping",
         items: [
           { text: "Design approvals and versioned layouts (Stage 10 client-facing; shop Дизайн = 11.4)", done: false },
-          { text: "Production orders, batches, aggregate fact (11.1–11.2)", done: false },
-          { text: "Shop-floor modules platform + per-цех UIs (11.3–11.10) — fact on technical card", done: false },
-          { text: "Warehouse nomenclature PT-04 /warehouse/stock — tree CRUD + list + settings redirects + остаток column/filter + owner visual OK (4.10.1–4.10.7); live ledger → 4.6.5", done: true },
-          { text: "Warehouse movements, reserves, inventory, and finished-goods flow", done: false },
+          { text: "Production orders/batches 11.1.1 + WorkCenter planning 11.1.2 + aggregate fact 11.2.1 shipped (owner visuals OK 2026-07-30); FG warehouse 11.2.2.1–11.2.2.3 shipped; wire/visual 11.2.2.4–11.2.2.5 open (deps 12.2)", done: true },
+          { text: "Shop-floor modules platform + per-цех UIs (11.3–11.10) — fact on technical card; material fact_qty hard gate on Раскрой/Печать; owner visuals OK through 11.10.5 (2026-07-29)", done: true },
+          { text: "Warehouse nomenclature PT-04 /warehouse/stock — tree CRUD + list + settings redirects + остаток column/filter + owner visual OK (4.10.1–4.10.7); live ledger → 12.2 (ADR-019)", done: true },
+          { text: "Warehouse Stage 12: structure 12.1, ledger 12.2, FG docs 12.3, inventory/transfers 12.4–12.5", done: false },
           { text: "Procurement requests, supplier orders, receipts, and returns", done: false },
           { text: "Shipping documents, delivery tracking, and confirmation of receipt", done: false }
         ]

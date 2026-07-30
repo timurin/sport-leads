@@ -1,12 +1,13 @@
 """Pydantic schemas for technical cards (ADR-016 / Stage 9.1.2–9.2.1)."""
 
-from datetime import datetime
+from datetime import date, datetime
 from decimal import Decimal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from app.models.technical_card import (
     TechnicalCardCompositionLineKind,
+    TechnicalCardOperationLineSourceKind,
     TechnicalCardStageResultStatus,
     TechnicalCardStatus,
     TechOperationVolumeUnit,
@@ -18,7 +19,8 @@ class TechnicalCardCompositionLineWrite(BaseModel):
     line_kind: TechnicalCardCompositionLineKind = TechnicalCardCompositionLineKind.MATERIAL
     nomenclature_id: int | None = None
     snapshot_name: str = Field(min_length=1, max_length=255)
-    quantity: Decimal | None = Field(default=None, ge=0, max_digits=14, decimal_places=3)
+    planned_qty: Decimal | None = Field(default=None, ge=0, max_digits=14, decimal_places=3)
+    production_stage_id: int | None = None
     unit: str | None = Field(default=None, max_length=30)
     notes: str | None = None
 
@@ -33,19 +35,45 @@ class TechnicalCardCompositionLineRead(TechnicalCardCompositionLineWrite):
 
     id: int
     technical_card_id: int
+    fact_qty: Decimal | None = None
     created_at: datetime
     updated_at: datetime
 
 
+class TechnicalCardCompositionFactQtyUpdate(BaseModel):
+    """Shop-path write for MATERIAL fact_qty (`9.3.4` / `11.5`–`11.6`)."""
+
+    fact_qty: Decimal = Field(ge=0, max_digits=14, decimal_places=3)
+    shop_stage_code: str | None = Field(default=None, max_length=50)
+
+    @field_validator("shop_stage_code", mode="before")
+    @classmethod
+    def strip_shop_stage_code(cls, value: object) -> object:
+        if value is None:
+            return None
+        if isinstance(value, str):
+            stripped = value.strip()
+            return stripped or None
+        return value
+
+
 class TechnicalCardUnitLineWrite(BaseModel):
     unit_index: int = Field(ge=1)
+    size_type: str | None = Field(default=None, max_length=20)
     size: str | None = Field(default=None, max_length=100)
     personalization: str | None = Field(default=None, max_length=500)
     print_number: str | None = Field(default=None, max_length=50)
     color: str | None = Field(default=None, max_length=100)
     notes: str | None = None
 
-    @field_validator("size", "personalization", "print_number", "color", mode="before")
+    @field_validator(
+        "size_type",
+        "size",
+        "personalization",
+        "print_number",
+        "color",
+        mode="before",
+    )
     @classmethod
     def strip_optional_text(cls, value: object) -> object:
         return value.strip() if isinstance(value, str) else value
@@ -62,9 +90,16 @@ class TechnicalCardUnitLineRead(TechnicalCardUnitLineWrite):
 
 class TechnicalCardOperationLineWrite(BaseModel):
     sequence: int = Field(ge=1)
+    source_kind: TechnicalCardOperationLineSourceKind = (
+        TechnicalCardOperationLineSourceKind.ROUTING
+    )
     tech_operation_id: int | None = Field(
         default=None,
-        description="Soft catalog id until Stage 8.1.3 TechOperation table exists",
+        description="Soft catalog id for Stage 8.1.3 TechOperation",
+    )
+    sewing_operation_id: int | None = Field(
+        default=None,
+        description="SewingOperation id when source_kind=sewing",
     )
     operation_name: str = Field(min_length=1, max_length=255)
     volume_unit: TechOperationVolumeUnit
@@ -88,6 +123,46 @@ class TechnicalCardOperationLineRead(TechnicalCardOperationLineWrite):
     updated_at: datetime
 
 
+class TechnicalCardMediaCreate(BaseModel):
+    filename: str = Field(min_length=1, max_length=255)
+    mime_type: str = Field(pattern=r"^image/(jpeg|png|webp)$")
+    content_base64: str = Field(min_length=1)
+    is_primary: bool = False
+
+
+class TechnicalCardMediaUpdate(BaseModel):
+    is_primary: bool | None = None
+
+
+class TechnicalCardMediaRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    technical_card_id: int
+    filename: str
+    mime_type: str
+    file_size: int
+    sort_order: int
+    is_primary: bool
+    content_url: str
+    created_at: datetime
+    updated_at: datetime
+
+
+class TechnicalCardAssemblySewingOpRead(BaseModel):
+    sequence: int
+    operation_name: str
+    cost: Decimal
+    quantity_per_item: int = 1
+    line_total: Decimal
+    duration_seconds: int
+    sewing_operation_id: int | None = None
+
+
+class TechnicalCardApplyRoutingRequest(BaseModel):
+    routing_template_id: int = Field(ge=1)
+
+
 class TechnicalCardStageResultWrite(BaseModel):
     stage_order: int = Field(ge=1)
     production_stage_id: int | None = Field(default=None, ge=1)
@@ -99,11 +174,22 @@ class TechnicalCardStageResultWrite(BaseModel):
     scrap_qty: Decimal | None = Field(default=None, ge=0, max_digits=14, decimal_places=3)
     rework_qty: Decimal | None = Field(default=None, ge=0, max_digits=14, decimal_places=3)
     notes: str | None = None
+    work_done: str | None = None
+    duration_seconds: int | None = Field(default=None, ge=0)
+    work_center_id: int | None = Field(default=None, ge=1)
 
     @field_validator("stage_label", "performer_name", mode="before")
     @classmethod
     def strip_text(cls, value: object) -> object:
         return value.strip() if isinstance(value, str) else value
+
+    @field_validator("work_done", "notes", mode="before")
+    @classmethod
+    def strip_optional_text(cls, value: object) -> object:
+        if isinstance(value, str):
+            stripped = value.strip()
+            return stripped or None
+        return value
 
 
 class TechnicalCardStageResultRead(TechnicalCardStageResultWrite):
@@ -132,14 +218,48 @@ class TechnicalCardStageCompleteRequest(BaseModel):
     scrap_qty: Decimal | None = Field(default=None, ge=0, max_digits=14, decimal_places=3)
     rework_qty: Decimal | None = Field(default=None, ge=0, max_digits=14, decimal_places=3)
     notes: str | None = None
+    work_done: str | None = None
+    duration_seconds: int | None = Field(default=None, ge=0)
 
-    @field_validator("performer_name", "notes", mode="before")
+    @field_validator("performer_name", "notes", "work_done", mode="before")
     @classmethod
     def strip_text(cls, value: object) -> object:
         if isinstance(value, str):
             stripped = value.strip()
             return stripped or None
         return value
+
+
+class TechnicalCardStageFactRequest(BaseModel):
+    """Shop-module stage fact write (`11.4+` / `11.7.2`): performer / work done / duration / equipment."""
+
+    performer_name: str | None = Field(default=None, max_length=255)
+    work_done: str | None = None
+    duration_seconds: int | None = Field(default=None, ge=0)
+    scrap_qty: Decimal | None = Field(
+        default=None, ge=0, max_digits=14, decimal_places=3
+    )
+    rework_qty: Decimal | None = Field(
+        default=None, ge=0, max_digits=14, decimal_places=3
+    )
+    notes: str | None = None
+    work_center_id: int | None = Field(default=None, ge=1)
+    # When set, reject unless this stage maps to the given ProductionStage.code.
+    shop_stage_code: str | None = Field(default=None, max_length=50)
+
+    @field_validator("performer_name", "work_done", "notes", "shop_stage_code", mode="before")
+    @classmethod
+    def strip_text(cls, value: object) -> object:
+        if isinstance(value, str):
+            stripped = value.strip()
+            return stripped or None
+        return value
+
+
+class TechnicalCardPlannedWorkCenterRequest(BaseModel):
+    """Planning assign of equipment onto a stage (`11.1.2.4`); not shop fact."""
+
+    work_center_id: int | None = Field(default=None, ge=1)
 
 
 class TechnicalCardWrite(BaseModel):
@@ -234,10 +354,19 @@ class TechnicalCardRead(BaseModel):
     design_mockup_url: str | None = None
     notes: str | None = None
 
+    order_number: str | None = None
+    client_name: str | None = None
+    responsible_name: str | None = None
+    desired_date: date | None = None
+
     composition_lines: list[TechnicalCardCompositionLineRead] = Field(default_factory=list)
     unit_lines: list[TechnicalCardUnitLineRead] = Field(default_factory=list)
     operation_lines: list[TechnicalCardOperationLineRead] = Field(default_factory=list)
     stage_results: list[TechnicalCardStageResultRead] = Field(default_factory=list)
+    media_items: list[TechnicalCardMediaRead] = Field(default_factory=list)
+    assembly_sewing_operations: list[TechnicalCardAssemblySewingOpRead] = Field(
+        default_factory=list
+    )
 
     created_at: datetime
     updated_at: datetime
@@ -304,6 +433,65 @@ class TechnicalCardGenerateRead(BaseModel):
     skipped: list[TechnicalCardSkippedLine] = Field(default_factory=list)
 
 
+class TechnicalCardSettingsRead(BaseModel):
+    id: int
+    eligible_nomenclature_types: list[str] = Field(default_factory=list)
+    numbering_template: str
+    unit_field_size_type_enabled: bool
+    unit_field_size_enabled: bool
+    unit_field_personalization_enabled: bool
+    unit_field_print_number_enabled: bool
+    unit_field_notes_enabled: bool
+    stage_label_binding_mode: str
+    created_at: datetime
+    updated_at: datetime
+
+
+class TechnicalCardSettingsUpdate(BaseModel):
+    eligible_nomenclature_types: list[str] = Field(min_length=1)
+    numbering_template: str = Field(min_length=1, max_length=120)
+    unit_field_size_type_enabled: bool
+    unit_field_size_enabled: bool
+    unit_field_personalization_enabled: bool
+    unit_field_print_number_enabled: bool
+    unit_field_notes_enabled: bool
+    stage_label_binding_mode: str = Field(min_length=1, max_length=30)
+
+    @field_validator("eligible_nomenclature_types", mode="before")
+    @classmethod
+    def normalize_types(cls, value: object) -> object:
+        if not isinstance(value, list):
+            return value
+        normalized: list[str] = []
+        for item in value:
+            if isinstance(item, str):
+                stripped = item.strip().upper()
+                if stripped:
+                    normalized.append(stripped)
+        return normalized
+
+    @field_validator("numbering_template", "stage_label_binding_mode", mode="before")
+    @classmethod
+    def strip_required_text(cls, value: object) -> object:
+        return value.strip() if isinstance(value, str) else value
+
+    @field_validator("stage_label_binding_mode")
+    @classmethod
+    def validate_stage_label_binding_mode(cls, value: str) -> str:
+        if value != "snapshot":
+            raise ValueError("stage_label_binding_mode supports only 'snapshot'")
+        return value
+
+    @field_validator("numbering_template")
+    @classmethod
+    def validate_numbering_template(cls, value: str) -> str:
+        if "{orderNo}" not in value or "{cardSeq}" not in value:
+            raise ValueError(
+                "numbering_template must include both {orderNo} and {cardSeq}"
+            )
+        return value
+
+
 class TechnicalCardCompositionReplace(BaseModel):
     lines: list[TechnicalCardCompositionLineWrite] = Field(default_factory=list)
 
@@ -332,13 +520,22 @@ class TechnicalCardApplySpecification(BaseModel):
 class TechnicalCardUnitLineUpdate(BaseModel):
     """Partial per-row edit; unit_index is immutable via this payload."""
 
+    size_type: str | None = Field(default=None, max_length=20)
     size: str | None = Field(default=None, max_length=100)
     personalization: str | None = Field(default=None, max_length=500)
     print_number: str | None = Field(default=None, max_length=50)
     color: str | None = Field(default=None, max_length=100)
     notes: str | None = None
 
-    @field_validator("size", "personalization", "print_number", "color", "notes", mode="before")
+    @field_validator(
+        "size_type",
+        "size",
+        "personalization",
+        "print_number",
+        "color",
+        "notes",
+        mode="before",
+    )
     @classmethod
     def strip_optional_text(cls, value: object) -> object:
         if isinstance(value, str):
@@ -363,9 +560,36 @@ class TechnicalCardUnitLinesReplace(BaseModel):
 
 
 class TechnicalCardUnitLinesImport(BaseModel):
-    """JSON import hook: rows keyed by unit_index (1..N). Missing indices keep current values."""
+    """Aggregate import rows; service expands them into N unit lines."""
 
-    lines: list[TechnicalCardUnitLineBulkItem] = Field(min_length=1)
+    lines: list["TechnicalCardUnitLineImportRow"] = Field(min_length=1)
+
+
+class TechnicalCardUnitLineImportRow(BaseModel):
+    size_type: str | None = Field(default=None, max_length=20)
+    size: str | None = Field(default=None, max_length=100)
+    personalization: str | None = Field(default=None, max_length=500)
+    print_number: str | None = Field(default=None, max_length=50)
+    quantity: int = Field(ge=1)
+    notes: str | None = None
+
+    @field_validator(
+        "size_type",
+        "size",
+        "personalization",
+        "print_number",
+        "notes",
+        mode="before",
+    )
+    @classmethod
+    def strip_import_text(cls, value: object) -> object:
+        if isinstance(value, str):
+            stripped = value.strip()
+            return stripped if stripped else None
+        return value
+
+
+TechnicalCardUnitLinesImport.model_rebuild()
 
 
 # --- Operation volume lines (Stage 9.3.3) ---
@@ -376,15 +600,19 @@ class TechnicalCardOperationLinesReplace(BaseModel):
 
 
 class TechnicalCardOperationLineVolumeUpdate(BaseModel):
-    """Manager volume edit; stage binding stays stable after generate."""
+    """Manager or shop volume edit; stage binding stays stable after generate."""
 
     volume: Decimal = Field(ge=0, max_digits=14, decimal_places=3)
     operation_name: str | None = Field(default=None, min_length=1, max_length=255)
+    shop_stage_code: str | None = Field(default=None, max_length=50)
 
-    @field_validator("operation_name", mode="before")
+    @field_validator("operation_name", "shop_stage_code", mode="before")
     @classmethod
-    def strip_name(cls, value: object) -> object:
-        return value.strip() if isinstance(value, str) else value
+    def strip_optional_text(cls, value: object) -> object:
+        if isinstance(value, str):
+            stripped = value.strip()
+            return stripped or None
+        return value
 
 
 class TechnicalCardOperationLinesPrefillRead(BaseModel):

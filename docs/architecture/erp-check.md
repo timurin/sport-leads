@@ -21,7 +21,7 @@
 - `[~]` `Deal`, архивирование, полные активности, авторизация и права не завершены;
 - `[x]` `Organization` и связь `SalesOrder.organization_id`;
 - `[x]` `SalesOrder` list/detail, status workflow и history;
-- `[~]` order card UX `3.5`: compact header + view filters + field-link map shipped in code (`docs/architecture/order-card-field-links.md`); owner visual `3.5.9` pending; tasks panel reuses source-lead `LeadTask` (empty for API leads until `1.2.4`);
+- `[~]` order card UX `3.5`: compact header + view filters + field-link map shipped in code (`docs/architecture/order-card-field-links.md`); owner visual `3.5.9` pending; tasks panel reuses source-lead `LeadTask` (empty for API leads until `1.2.4`); filter «Коммуникация» is surface only — **persistent internal staff chat / @mentions / chat-microtasks → Stage `19`** (≠ CRM `1.2.4`, ≠ external connectors);
 - `[x]` `SalesOrderItem` CRUD, snapshot-наименование, размеры (`size_range`), персонализация (`personalization`), цвет (`color`), процентная скидка (`discount_percent`), вычисляемая сумма скидки (`discount_amount`) и пересчёт `line_amount`/суммы заказа через `Decimal/Numeric`; полный pytest, frontend tests, TypeScript, lint, production build, project check 9/9 и Alembic проходят;
 - `[!]` прежняя связь `SalesOrderItem → Material` была архитектурной ошибкой и удалена отдельным patch; `Material` не является номенклатурой заказа.
 
@@ -53,8 +53,9 @@
 - `[x]` отдельный `Material` catalog/API удалён после cutover (`4.6.4`); данные в `Nomenclature` type `MATERIAL` (`z6a7b8c9d012`); Materials nav removed (`4.6.3`);
 - `[~]` единая номенклатура готовых изделий, услуг, полуфабрикатов и комплектов (типы `PRODUCT`/`GOODS`/`SERVICE`/`MATERIAL`; materials cutover `4.6.1`–`4.6.4` done; UNF primary warehouse list `4.10` shipped; stock register MVP → `4.6.5.*`);
 - `[x]` `4.10` — УНФ: Склад → «Номенклатура» (`/warehouse/stock`) primary PT-04; `4.10.1`–`4.10.7` closed (`v0.9.0`; owner visual OK `2026-07-26`); остаток column wired to empty `/stock/balances` until live register `4.6.5.*`;
-- `[ ]` `4.6.5.*` — MVP регистр проводок / баланс по `nomenclature_id` (не поля карточки `Nomenclature`); Stage 12 — склады/ячейки/партии/полные документы; empty `GET /stock/balances` + list column shipped with `4.10.6` / `4.6.5.4`;
-- `[~]` модели и артикулы — Stage 6 catalog v1 closed (`6.1.1`–`6.1.16`, `6.2.*`, `6.3.*` incl. `6.3.8` duration, `6.4`); product types directory + model link shipped; order-item binding moved to Stage `3.2.5` / smoke `3.2.6` (open);
+- `[ ]` `4.6.5.*` — MVP регистр: ADR note closed via ADR-019 / `12.0.1`; tables/API/tests owned by Stage `12.2`; empty `GET /stock/balances` + list column shipped with `4.10.6` / `4.6.5.4`;
+- `[~]` **warehouse Stage 12** — ADR-019 domain accepted (`12.0`); structure/ledger/FG/inventory open (`12.1`–`12.5`);
+- `[~]` модели и артикулы — Stage 6 catalog v1 closed (`6.1.1`–`6.1.16`, `6.2.*`, `6.3.*` incl. `6.3.8` duration, `6.4`); product types directory + model link shipped; order-item binding `3.2.5` + routing `3.2.7` + smoke `3.2.6` shipped; model routing whitelist + op norms `6.1.17` shipped;
 - `[~]` размеры и изображения — SizeGrid Mosmade men+women + list/card visual OK; Stage-6 read-only; write/edit → `17.1.2.4`; model link `6.2.7` shipped;
 - `[x]` операции пошива (каталог) + связка со строками варианта — `6.3.1`–`6.3.6` shipped; normative `duration_seconds` + assembly-line snapshot `6.3.8` shipped; owner visual OK for catalog (`2026-07-22`);
 - `[x]` типы изделия (`ProductType`) — directory + `ProductModel.product_type_id` + list filter/column (`6.1.14`–`6.1.16`);
@@ -62,26 +63,28 @@
 ## Технологическая подготовка
 
 - `[ ]` операционные узлы;
-- `[~]` технологические операции — Stage `8.1.3` **shipped** (`tech_operations` + seed 5; settings UI); строки объёмов на ТК — `9.3.3` (≠ SewingOperation Stage `6.3`); привязка ops → цех planned in `8.3`;
-- `[ ]` нормативы модели и времени;
+- `[~]` технологические операции — Stage `8.1.3` **shipped** (`tech_operations` + seed 5; settings UI); строки объёмов на ТК — `9.3.3` (≠ SewingOperation Stage `6.3`); привязка ops → цех shipped in `8.3`;
+- `[~]` нормативы модели и времени — **planned** `6.1.17` (operation material norms on model+routing as plan hint) + sewing duration already `6.3.8`; TC `planned_qty`/`fact_qty` + hard gate cutting/print → `9.3.4` / shop `11.5`–`11.6`;
 - `[ ]` подготовка и версионирование спецификации — Stage 7 **документ-отчёт план+факт** from filled TC + execution (ADR-004/016 amend `2026-07-26`; не hard dep generate ТК; не отдельный модуль);
 - `[ ]` запрет запуска партии без утверждённой версии Spec (где применимо; ТК исполняется по snapshot маршрута Stage 8);
 
 ## Производство
 
-- `[~]` технические карты: domain **ADR-016**; DB `9.1.2`; generate `9.2.1`; composition/unit/op-volume; order UI `9.4.1` (owner visual OK); stage machine `9.2.2`; **list/document `9.4.2` shipped** (owner visual `9.4.2.7` pending); settings `9.6`; print A4×2 → `18.3.8`;
-- `[~]` shop routings / work centers — ADR-017; migration `l3m4n5o6p789`; API + settings UI; owner visual `8.2.2.6` pending (re-check after `8.3`);
-- `[~]` **ProductionStage (цех) catalog** — Stage `8.3` **shipped** (seed 7; migration `m4n5o6p7q890`; settings «Этапы»; routing step = цех); owner visual pending;
-- `[ ]` **shop-floor modules** — Stage `11.3` platform + `11.4`–`11.10` (Дизайн, Раскрой, Печать, Пошив, ВТО, ОТК, Упаковка) — fact on TC;
-- `[ ]` production batches;
+- `[~]` технические карты: domain **ADR-016** (+ plan/fact materials amend `9.3.4`); DB `9.1.2`; generate `9.2.1`; composition/unit/op-volume; order UI `9.4.1` (owner visual OK); stage machine `9.2.2`; **list/document `9.4.2` shipped** (owner visual `9.4.2.7` OK `2026-07-28`); **settings `9.6` shipped** (singleton `TechnicalCardSettings`, settings page, generate/prefill wiring, focused regressions); print A4×2 → `18.3.8`;
+- `[~]` shop routings / work centers — ADR-017 (+ model whitelist amend `6.1.17` / `8.2.3.7`); migration `l3m4n5o6p789`; API + settings UI; owner visual `8.2.2.6` OK `2026-07-28`;
+- `[~]` **ProductionStage (цех) catalog** — Stage `8.3` **shipped** (seed 7 цехов; migration `m4n5o6p7q890`); FG stages `ready_to_ship` / `shipped` seeded in `11.2.2.2` (`x5y6z7a8b901`); settings «Этапы»; routing step = цех; owner visual OK `2026-07-28`;
+- `[x]` **WorkCenter planning (`11.1.2`)** — contract + routing snapshot + Settings catalog + TC planned assign UI shipped; owner visual `11.1.2.5` OK `2026-07-30`;
+- `[~]` **shop-floor modules** — Stage `11.3` platform + **`11.4`–`11.10` per-цех UIs shipped** (owner visuals OK through `11.10.5`); FG stages `11.2.2` (ADR-019) after packaging; **Раскрой/Печать** write material `fact_qty` with hard complete-gate (`9.3.4`);
+- `[x]` **production batches** — ADR-018 + DB/API/UI `/production/orders` shipped (`11.1.1`); owner visual `11.1.1.5` OK `2026-07-30`;
 - `[ ]` batch specification formation (plan+fact report document from filled TC / ADR-004);
-- `[ ]` actual consumption, operations, output, scrap, performers and deviations (aggregate `11.2`; detailed in shop modules).
+- `[x]` **aggregate fact (`11.2.1`)** — contract/API/UI/tests + owner visual OK `2026-07-30` (`11.2.1.1`–`11.2.1.4`);
+- `[~]` **FG warehouse bridge (`11.2.2`)** — contract/seed/shop modules `11.2.2.1`–`11.2.2.3` shipped; remaining wire/visual `11.2.2.4`–`11.2.2.5` (deps Stage `12.2`);
 
 Цепочка (ADR-004 amend): заказ → ТК (технология/состав) → партия → исполнение → спецификация как **сводный отчёт план+факт** → 1С. Spec — документ, не модуль; сырой факт остаётся в своих контурах. **Документы** = реестр ссылок на документы в родителях (не контур на каждый тип).
 
 ## Ресурсы, склад, закупки и финансы
 
-- `[ ]` складской регистр остатков / min stock (`4.6.5.*` MVP) — не на карточке `Nomenclature`; legacy `Material` entity removed (`4.6.4`); primary list UI — `4.10` (UNF); отдельный nav «Остатки» не возвращать; Stage 12 расширяет склады/ячейки/партии/документы;
+- `[ ]` складской регистр остатков / min stock — ADR-019; implementation `12.2` (formerly `4.6.5.*`); не на карточке `Nomenclature`; legacy `Material` removed (`4.6.4`); primary list UI — `4.10` (UNF);
 - `[ ]` единицы измерения как единый справочник, склады, зоны, резервы, партии и инвентаризация;
 - `[ ]` фактическое списание и выпуск;
 - `[ ]` закупки, поставщики и заказы поставщикам;
@@ -91,6 +94,7 @@
 
 - `[x]` collectors/parsers и mock communication connector core;
 - `[~]` реальные внешние CRM/communication adapters;
+- `[ ]` **внутренние коммуникации сотрудников** (Stage `19`): чат по заказу и техкартам, `@mention`, микротаски из чата, in-app уведомления — не внешние каналы;
 - `[ ]` обмен с 1С: номенклатуры, заказы, утверждённые спецификации, списание материалов, операции, выпуск и связанные документы.
 
 ## Правило подтверждения
@@ -100,4 +104,4 @@ Patch v0.8.8h confirmed: backend-generated unique codes, typed save/reload, scop
 
 `v0.8.8i-product-characteristics-directory` confirmed: the existing characteristic model/API now supports `kind`, color HEX values, generated codes, system Color/Size records and safe deactivation. Migration `i9j0k1l2m345` has upgrade/downgrade; the settings directory and regression checks are implemented. Nomenclature card layout and variant snapshot logic are unchanged.
 
-Canonical sync `2026-07-26`: Stage **`8.3` ProductionStage shipped** (цех catalog + routing/ops bind; owner visual pending). Prior: shop modules planned `11.3`–`11.10`; `9.4.1.4` OK; `9.5.1`. Next: owner visuals `8.2.2.6`/`9.4.2.7` or settings `9.6` or `11.3`.
+Canonical sync `2026-07-28`: **`11.3`–`11.6` shipped** (owner visuals OK), **`11.7.1`–`11.7.4` Пошив**. Next: **owner visual `11.7.5`**.

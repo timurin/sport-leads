@@ -21,7 +21,43 @@ export type AppSection = {
   topNavigation: NavigationGroup[];
 };
 
-export const appSections: AppSection[] = [
+/** Fallback seed order when AppShell cannot load ProductionStage catalog. */
+const DEFAULT_SHOP_STAGE_NAV: ReadonlyArray<NavigationChild> = [
+  { id: "design", title: "Дизайн", href: "/production/stages/design" },
+  { id: "cutting", title: "Раскрой", href: "/production/stages/cutting" },
+  { id: "print", title: "Печать", href: "/production/stages/print" },
+  { id: "sewing", title: "Пошив", href: "/production/stages/sewing" },
+  { id: "wto", title: "ВТО", href: "/production/stages/wto" },
+  { id: "qc", title: "ОТК", href: "/production/stages/qc" },
+  { id: "packaging", title: "Упаковка", href: "/production/stages/packaging" },
+  {
+    id: "ready_to_ship",
+    title: "Готовы к отгрузке",
+    href: "/production/stages/ready_to_ship",
+  },
+  { id: "shipped", title: "Отгружены", href: "/production/stages/shipped" },
+];
+
+export type ShopStageNavSource = {
+  code: string;
+  title: string;
+  href: string;
+};
+
+/** Build app nav; цеховые modules follow ProductionStage catalog order when provided. */
+export function buildAppSections(
+  shopModules?: ReadonlyArray<ShopStageNavSource>,
+): AppSection[] {
+  const shopChildren: NavigationChild[] =
+    shopModules
+      ? shopModules.map((stage) => ({
+          id: stage.code,
+          title: stage.title,
+          href: stage.href,
+        }))
+      : [...DEFAULT_SHOP_STAGE_NAV];
+
+  return [
   {
     id: "dashboard",
     title: "Главная",
@@ -116,6 +152,11 @@ export const appSections: AppSection[] = [
         href: "/production/tech-cards",
       },
       {
+        id: "production-shop-kanban",
+        title: "Канбан цехов",
+        href: "/production/kanban",
+      },
+      {
         id: "production-orders",
         title: "Заказы",
         href: "/production/orders",
@@ -126,30 +167,9 @@ export const appSections: AppSection[] = [
         href: "/production/tasks",
       },
       {
-        id: "production-stages",
-        title: "Этапы",
-        children: [
-          {
-            id: "cutting",
-            title: "Раскрой",
-            href: "/production/stages/cutting",
-          },
-          {
-            id: "printing",
-            title: "Печать",
-            href: "/production/stages/printing",
-          },
-          {
-            id: "sewing",
-            title: "Пошив",
-            href: "/production/stages/sewing",
-          },
-          {
-            id: "quality",
-            title: "Контроль качества",
-            href: "/production/stages/quality",
-          },
-        ],
+        id: "production-shop-modules",
+        title: "Цеховые модули",
+        children: shopChildren,
       },
     ],
   },
@@ -381,6 +401,11 @@ export const appSections: AppSection[] = [
             href: "/settings/catalogs/tech-operations",
           },
           {
+            id: "work-centers",
+            title: "Оборудование",
+            href: "/settings/catalogs/work-centers",
+          },
+          {
             id: "shop-routings",
             title: "Маршруты",
             href: "/settings/catalogs/routings",
@@ -404,12 +429,17 @@ export const appSections: AppSection[] = [
       },
     ],
   },
-];
+  ];
+}
+
+/** Default seed-order sections (tests / offline fallback). Prefer `buildAppSections(catalogModules)` in shell. */
+export const appSections: AppSection[] = buildAppSections();
 
 export function getSectionByPathname(
   pathname: string,
+  sections: ReadonlyArray<AppSection> = appSections,
 ): AppSection {
-  const sortedSections = [...appSections].sort(
+  const sortedSections = [...sections].sort(
     (first, second) =>
       second.href.length - first.href.length,
   );
@@ -419,7 +449,7 @@ export function getSectionByPathname(
       (section) =>
         pathname === section.href ||
         pathname.startsWith(`${section.href}/`),
-    ) ?? appSections[0]
+    ) ?? sections[0]
   );
 }
 

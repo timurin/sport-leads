@@ -113,15 +113,14 @@ test("settings navigation no longer exposes standalone materials catalog", () =>
   assert.equal(hrefs.includes("/settings/catalogs/materials"), false);
 });
 
-test("production navigation exposes tech-cards after dashboard", () => {
+test("production navigation exposes tech-cards and shop modules", () => {
   const production = appSections.find((section) => section.id === "production");
   assert.ok(production);
   const ids = production.topNavigation.map((item) => item.id);
-  assert.deepEqual(ids.slice(0, 3), [
-    "production-dashboard",
-    "production-tech-cards",
-    "production-orders",
-  ]);
+  assert.ok(ids.includes("production-dashboard"));
+  assert.ok(ids.includes("production-tech-cards"));
+  assert.ok(ids.includes("production-shop-kanban"));
+  assert.ok(ids.includes("production-shop-modules"));
   const techCards = production.topNavigation.find(
     (item) => item.id === "production-tech-cards",
   );
@@ -130,6 +129,13 @@ test("production navigation exposes tech-cards after dashboard", () => {
     title: "Техкарты",
     href: "/production/tech-cards",
   });
+  const shopGroup = production.topNavigation.find(
+    (item) => item.id === "production-shop-modules",
+  );
+  assert.deepEqual(
+    shopGroup?.children?.map((child) => child.id),
+    ["design", "cutting", "print", "sewing", "wto", "qc", "packaging", "ready_to_ship", "shipped"],
+  );
   assert.equal(
     isNavigationPathActive("/production/tech-cards", "/production"),
     false,

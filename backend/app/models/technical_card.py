@@ -15,6 +15,7 @@ from enum import Enum
 from typing import TYPE_CHECKING
 
 from sqlalchemy import (
+    Boolean,
     CheckConstraint,
     DateTime,
     ForeignKey,
@@ -61,6 +62,13 @@ class TechnicalCardStageResultStatus(str, Enum):
     IN_PROGRESS = "in_progress"
     COMPLETED = "completed"
     SKIPPED = "skipped"
+
+
+class TechnicalCardOperationLineSourceKind(str, Enum):
+    """Origin of an op-volume row: shop routing TechOperation vs sewing snapshot."""
+
+    ROUTING = "routing"
+    SEWING = "sewing"
 
 
 class TechnicalCard(Base):
@@ -188,6 +196,11 @@ class TechnicalCard(Base):
         cascade="all, delete-orphan",
         order_by="TechnicalCardStageResult.stage_order, TechnicalCardStageResult.id",
     )
+    media_items: Mapped[list["TechnicalCardMedia"]] = relationship(
+        back_populates="technical_card",
+        cascade="all, delete-orphan",
+        order_by="TechnicalCardMedia.sort_order, TechnicalCardMedia.id",
+    )
 
 
 class TechnicalCardCompositionLine(Base):
@@ -206,8 +219,12 @@ class TechnicalCardCompositionLine(Base):
             name="ck_technical_card_composition_lines_line_kind",
         ),
         CheckConstraint(
-            "quantity IS NULL OR quantity >= 0",
-            name="ck_technical_card_composition_lines_quantity",
+            "planned_qty IS NULL OR planned_qty >= 0",
+            name="ck_technical_card_composition_lines_planned_qty",
+        ),
+        CheckConstraint(
+            "fact_qty IS NULL OR fact_qty >= 0",
+            name="ck_technical_card_composition_lines_fact_qty",
         ),
         Index("ix_technical_card_composition_lines_card_id", "technical_card_id"),
     )
@@ -229,7 +246,13 @@ class TechnicalCardCompositionLine(Base):
         index=True,
     )
     snapshot_name: Mapped[str] = mapped_column(String(255), nullable=False)
-    quantity: Mapped[Decimal | None] = mapped_column(Numeric(14, 3), nullable=True)
+    planned_qty: Mapped[Decimal | None] = mapped_column(Numeric(14, 3), nullable=True)
+    fact_qty: Mapped[Decimal | None] = mapped_column(Numeric(14, 3), nullable=True)
+    production_stage_id: Mapped[int | None] = mapped_column(
+        ForeignKey("production_stages.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
     unit: Mapped[str | None] = mapped_column(String(30), nullable=True)
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
 
@@ -259,6 +282,10 @@ class TechnicalCardUnitLine(Base):
             name="uq_technical_card_unit_lines_card_unit_index",
         ),
         CheckConstraint("unit_index >= 1", name="ck_technical_card_unit_lines_unit_index"),
+        CheckConstraint(
+            "size_type IS NULL OR size_type IN ('men', 'women', 'kids')",
+            name="ck_technical_card_unit_lines_size_type",
+        ),
         Index("ix_technical_card_unit_lines_card_id", "technical_card_id"),
     )
 
@@ -268,6 +295,7 @@ class TechnicalCardUnitLine(Base):
         nullable=False,
     )
     unit_index: Mapped[int] = mapped_column(Integer, nullable=False)
+    size_type: Mapped[str | None] = mapped_column(String(20), nullable=True)
     size: Mapped[str | None] = mapped_column(String(100), nullable=True)
     personalization: Mapped[str | None] = mapped_column(String(500), nullable=True)
     print_number: Mapped[str | None] = mapped_column(String(50), nullable=True)
@@ -290,10 +318,10 @@ class TechnicalCardUnitLine(Base):
 
 
 class TechnicalCardOperationLine(Base):
-    """TechOperation volume row snapshot on the card (ADR-016 §3 / `9.3.3`).
+    """TechOperation / sewing volume row snapshot on the card (ADR-016 §3 / `9.3.3`).
 
-    `tech_operation_id` is a soft integer until catalog `8.1.3` ships (no FK).
-    Empty volume lines are allowed; prefill must not invent demo rows.
+    `tech_operation_id` is a soft integer (catalog Stage 8.1.3).
+    `source_kind` distinguishes routing TechOperations from sewing assembly snapshots.
     """
 
     __tablename__ = "technical_card_operation_lines"
@@ -316,8 +344,13 @@ class TechnicalCardOperationLine(Base):
             "stage_order IS NULL OR stage_order >= 1",
             name="ck_technical_card_operation_lines_stage_order",
         ),
+        CheckConstraint(
+            "source_kind IN ('routing', 'sewing')",
+            name="ck_technical_card_operation_lines_source_kind",
+        ),
         Index("ix_technical_card_operation_lines_card_id", "technical_card_id"),
         Index("ix_technical_card_operation_lines_tech_operation_id", "tech_operation_id"),
+        Index("ix_technical_card_operation_lines_sewing_operation_id", "sewing_operation_id"),
     )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -326,8 +359,17 @@ class TechnicalCardOperationLine(Base):
         nullable=False,
     )
     sequence: Mapped[int] = mapped_column(Integer, nullable=False)
-    # Soft ref → Stage 8.1.3 TechOperation (no FK until catalog table exists).
+    source_kind: Mapped[TechnicalCardOperationLineSourceKind] = mapped_column(
+        String(20),
+        nullable=False,
+        default=TechnicalCardOperationLineSourceKind.ROUTING,
+    )
+    # Soft ref → Stage 8.1.3 TechOperation.
     tech_operation_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    sewing_operation_id: Mapped[int | None] = mapped_column(
+        ForeignKey("sewing_operations.id", ondelete="SET NULL"),
+        nullable=True,
+    )
     operation_name: Mapped[str] = mapped_column(String(255), nullable=False)
     volume_unit: Mapped[TechOperationVolumeUnit] = mapped_column(String(20), nullable=False)
     volume: Mapped[Decimal] = mapped_column(
@@ -356,6 +398,43 @@ class TechnicalCardOperationLine(Base):
     technical_card: Mapped[TechnicalCard] = relationship(back_populates="operation_lines")
 
 
+class TechnicalCardMedia(Base):
+    """Design mockup gallery for a technical card (max 3 enforced in service)."""
+
+    __tablename__ = "technical_card_media"
+    __table_args__ = (
+        UniqueConstraint("storage_key", name="uq_technical_card_media_storage_key"),
+        CheckConstraint("file_size > 0", name="ck_technical_card_media_file_size"),
+        CheckConstraint("sort_order >= 0", name="ck_technical_card_media_sort_order"),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    technical_card_id: Mapped[int] = mapped_column(
+        ForeignKey("technical_cards.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    filename: Mapped[str] = mapped_column(String(255), nullable=False)
+    storage_key: Mapped[str] = mapped_column(String(500), nullable=False)
+    mime_type: Mapped[str] = mapped_column(String(100), nullable=False)
+    file_size: Mapped[int] = mapped_column(Integer, nullable=False)
+    sort_order: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    is_primary: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, index=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+        onupdate=func.now(),
+    )
+
+    technical_card: Mapped[TechnicalCard] = relationship(back_populates="media_items")
+
+
 class TechnicalCardStageResult(Base):
     """Fact of stage passage on the card (gates enforced in `9.2.2`)."""
 
@@ -378,6 +457,10 @@ class TechnicalCardStageResult(Base):
         CheckConstraint(
             "rework_qty IS NULL OR rework_qty >= 0",
             name="ck_technical_card_stage_results_rework_qty",
+        ),
+        CheckConstraint(
+            "duration_seconds IS NULL OR duration_seconds >= 0",
+            name="ck_technical_card_stage_results_duration_seconds",
         ),
         Index("ix_technical_card_stage_results_card_id", "technical_card_id"),
     )
@@ -405,6 +488,13 @@ class TechnicalCardStageResult(Base):
     scrap_qty: Mapped[Decimal | None] = mapped_column(Numeric(14, 3), nullable=True)
     rework_qty: Mapped[Decimal | None] = mapped_column(Numeric(14, 3), nullable=True)
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    work_done: Mapped[str | None] = mapped_column(Text, nullable=True)
+    duration_seconds: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    work_center_id: Mapped[int | None] = mapped_column(
+        ForeignKey("work_centers.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),

@@ -38,6 +38,8 @@ from app.models.product_model import (
     ProductModel,
     ProductModelHistoryEntry,
     ProductModelMedia,
+    ProductModelOperationNorm,
+    ProductModelRoutingLink,
     ProductModelSizeType,
     ProductModelStatus,
     ProductModelVersion,
@@ -48,8 +50,15 @@ from app.models.product_type import ProductType
 from app.models.sewing_operation import SewingOperation
 from app.models.size_grid import SizeGrid, SizeGridRow, SizeGridSizeType
 from app.models.vat_rate import VatRate
-from app.models.tech_operation import TechOperation
+from app.models.tech_operation import TechOperation, TechOperationRequiredMaterial
 from app.models.production_stage import ProductionStage
+from app.models.production_order import (
+    ProductionBatch,
+    ProductionBatchCardLink,
+    ProductionBatchStatus,
+    ProductionOrder,
+    ProductionOrderStatus,
+)
 from app.models.shop_routing import (
     ShopRoutingStageLine,
     ShopRoutingTemplate,
@@ -59,13 +68,16 @@ from app.models.technical_card import (
     TechnicalCard,
     TechnicalCardCompositionLine,
     TechnicalCardCompositionLineKind,
+    TechnicalCardMedia,
     TechnicalCardOperationLine,
+    TechnicalCardOperationLineSourceKind,
     TechnicalCardStageResult,
     TechnicalCardStageResultStatus,
     TechnicalCardStatus,
     TechnicalCardUnitLine,
     TechOperationVolumeUnit,
 )
+from app.models.technical_card_settings import TechnicalCardSettings
 
 
 __all__ = [
@@ -107,6 +119,8 @@ __all__ = [
     "ProductModel",
     "ProductModelHistoryEntry",
     "ProductModelMedia",
+    "ProductModelOperationNorm",
+    "ProductModelRoutingLink",
     "ProductModelSizeType",
     "ProductModelStatus",
     "ProductModelVersion",
@@ -119,19 +133,28 @@ __all__ = [
     "SizeGridSizeType",
     "VatRate",
     "ProductionStage",
+    "ProductionOrder",
+    "ProductionOrderStatus",
+    "ProductionBatch",
+    "ProductionBatchStatus",
+    "ProductionBatchCardLink",
     "TechOperation",
+    "TechOperationRequiredMaterial",
     "WorkCenter",
     "ShopRoutingTemplate",
     "ShopRoutingStageLine",
     "TechnicalCard",
     "TechnicalCardCompositionLine",
     "TechnicalCardCompositionLineKind",
+    "TechnicalCardMedia",
     "TechnicalCardOperationLine",
+    "TechnicalCardOperationLineSourceKind",
     "TechnicalCardStageResult",
     "TechnicalCardStageResultStatus",
     "TechnicalCardStatus",
     "TechnicalCardUnitLine",
     "TechOperationVolumeUnit",
+    "TechnicalCardSettings",
     "SalesOrderStatus",
     "SalesUser",
 ]
