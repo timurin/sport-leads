@@ -332,11 +332,11 @@ Dependencies:
 - 4.10.3 (list surface for column; can stub zero until API)
 
 - [x] 4.6.5.1 — ADR/note: register model (movement lines + balance projection); boundary vs `Nomenclature` / Stage 12 — **owned by Stage `12.0` / ADR-019** — closed with `12.0.1` / `11.2.2.1` (`2026-07-30`)
-- [ ] 4.6.5.2 — Migration: movement/ledger tables (Decimal qty; `nomenclature_id`; direction/type; timezone-aware `posted_at`); optional single default warehouse stub if needed for later FK — **owned by `12.2.1`**
-- [ ] 4.6.5.3 — Services + API: post movement, read balance by nomenclature (and list balances for list page) — note: empty `GET /stock/balances` stub shipped with `4.10.6`; fill from ledger here — **owned by `12.2.2`–`12.2.3`**
-- [x] 4.6.5.4 — Wire column «Остаток» + filter «все / с остатком» on warehouse nomenclature list (`4.10`) — `v0.9.0` via `4.10.6` (zeros until register posts)
-- [ ] 4.6.5.5 — Regression tests (post in/out → balance; never write balance onto `Nomenclature` row) — **owned by `12.2.4`**
-- [ ] 4.6.5.6 — Docs sync: erp-check / project-structure when register ships; Stage 12 remains for warehouses/bins/lots/full documents — **owned by `12.2.5`**
+- [x] 4.6.5.2 — Migration: movement/ledger tables (Decimal qty; `nomenclature_id`; direction/type; timezone-aware `posted_at`); optional single default warehouse stub if needed for later FK — **owned by `12.2.1`** — closed with `12.2.1` (`z7a8b9c0d123` + warehouses `y6z7a8b9c012`; `2026-07-30`)
+- [x] 4.6.5.3 — Services + API: post movement, read balance by nomenclature (and list balances for list page) — **owned by `12.2.2`–`12.2.3`** — closed with `12.2.2`/`12.2.3` (`POST /stock/documents`, live `GET /stock/balances`; `2026-07-30`)
+- [x] 4.6.5.4 — Wire column «Остаток» + filter «все / с остатком» on warehouse nomenclature list (`4.10`) — `v0.9.0` via `4.10.6`; live qty from ledger `12.2.2`–`12.2.3`
+- [x] 4.6.5.5 — Regression tests (post in/out → balance; never write balance onto `Nomenclature` row) — **owned by `12.2.4`** — closed with `12.2.4` (`test_stock_register_12_2_4.py`; `2026-07-30`)
+- [x] 4.6.5.6 — Docs sync: erp-check / project-structure when register ships; Stage 12 remains for FG docs/bins/lots/inventory — **owned by `12.2.5`** — closed with `12.2.5` (`2026-07-30`)
 
 ### 4.7 — Nomenclature UI parity with product-models (canonical catalog templates)
 
@@ -397,14 +397,14 @@ Dependencies:
 - 4.9.2 / 4.9.5 (category tree lib + folder UX)
 - 5.5.4 / DS-PT-04 (`TreeListSplit` / `TreePane` / `TreeListContent`)
 - ADR-012
-- 4.6.5.3+ for live balance column (`4.10.6` may show zero until register posts)
+- 4.6.5 / `12.2` for live balance column (shipped)
 
 - [x] 4.10.1 — Nav: title «Остатки» → «Номенклатура»; href stays `/warehouse/stock`; DS-SHELL-01/02 visual contracts preserved — `v0.9.0`; evidence: `frontend/lib/navigation.ts`, `frontend/lib/navigation.test.mjs`
 - [x] 4.10.2 — Route shell: `frontend/app/(workspace)/warehouse/stock/page.tsx` (+ loading/error); load nomenclature, categories, units, media via `frontend/lib/nomenclature.ts` — `v0.9.0`; evidence: `warehouse/stock/{page,loading,error}.tsx`, `lib/warehouse-nomenclature.ts`, shell component; PT-04 workspace → `4.10.3`
 - [x] 4.10.3 — Unified PT-04 workspace: TreePane categories (reuse `nomenclature-category-tree` / folder UX `4.9.5`) + list/filters/inspector (from `nomenclature-workspace`); filter node∪descendants; type chips; create via `NomenclatureCreatePanels`; row open → settings card — `v0.9.0`; evidence: `warehouse-nomenclature-workspace.tsx`, `nomenclature-category-folder-tree.tsx`, `filterByCategoryListScope`; category CRUD in tree → `4.10.4`
 - [x] 4.10.4 — Category CRUD in tree (create child / edit / reorder / soft deactivate) — move UX from categories directory into this pane — `v0.9.0`; evidence: `nomenclature-category-folder-tree.tsx` (Pencil/Plus/↑↓), EditDrawer + soft deactivate in `warehouse-nomenclature-workspace.tsx`, actions revalidate `/warehouse/stock`
 - [x] 4.10.5 — Nav cleanup: remove or redirect Settings «Категории номенклатуры»; redirect Settings «Номенклатура» list → `/warehouse/stock`; card URL unchanged — `v0.9.0`; evidence: redirects on list + categories pages; nav/settings hub cleaned; card `/settings/catalogs/nomenclature/[id]` + back links → warehouse
-- [x] 4.10.6 — Balance column + stock filter wired to `4.6.5` API (empty/zero until register posts); no fake demo balances — `v0.9.0`; evidence: `GET /stock/balances` empty stub, `stock-balances.ts` / filter helpers, column «Остаток» + chips «Все / С остатком»; live qty → `4.6.5.2`–`4.6.5.3`
+- [x] 4.10.6 — Balance column + stock filter wired to `4.6.5` API; no fake demo balances — `v0.9.0`; chrome via `4.10.6`; live qty from ledger `12.2.2`–`12.2.3`
 - [x] 4.10.7 — Tests (nav, redirects, tree filter, create, balance column contract) + owner visual vs UNF layout intent (PT-04, portal DS — not 1C chrome clone) — `v0.9.0`; owner visual OK (`2026-07-26`); evidence: `navigation.test.mjs`, `nomenclature-category-tree.test.mjs` (`filterByCategoryListScope`), `stock-balances-filter.test.mjs`, `test_stock_balances.py`, redirects settings list/categories → `/warehouse/stock`, create via `NomenclatureCreatePanels`; active-nav longest-match fix; `DS-SHELL-01`/`DS-SHELL-02` visual contracts preserved
 
 ### Confirmed create field layout (`4.7.10`)
@@ -2292,8 +2292,8 @@ Microtasks:
 
 ### 12.1 — Storage structure
 
-- [ ] 12.1.1 — Warehouses CRUD + default seed «Основной» (settings catalog + API)
-- [ ] 12.1.2 — Balance projection by warehouse + nomenclature (bins/lots later stub)
+- [x] 12.1.1 — Warehouses CRUD + default seed «Основной» (settings catalog + API) — `v0.9.0`; Alembic `y6z7a8b9c012`; API `/warehouses`; UI `/settings/catalogs/warehouses`; evidence `test_warehouses_12_1_1.py`; task `docs/tasks/v0.9.0-stage-12.1.1-warehouses-crud.md`
+- [x] 12.1.2 — Balance projection by warehouse + nomenclature (bins/lots later stub) — `v0.9.0`; `StockBalanceRead.warehouse_id`; `project_balances_from_ledger_rows`; API filter; evidence `test_stock_balances_12_1_2.py`; task `docs/tasks/v0.9.0-stage-12.1.2-balance-projection.md`
 
 ### 12.2 — Ledger foundation (owns former `4.6.5.1`–`4.6.5.3` / `4.6.5.5`–`4.6.5.6`)
 
@@ -2305,11 +2305,11 @@ Dependencies:
 - 4.10.6 (column chrome already)
 
 Microtasks:
-- [ ] 12.2.1 — Migration: Warehouse (if not in 12.1.1), StockDocument, StockLedgerLine (Decimal qty; timezone-aware `posted_at`)
-- [ ] 12.2.2 — Services + API: post document, read balances by nomenclature (± warehouse)
-- [ ] 12.2.3 — Fill `GET /stock/balances` from ledger; live column on `/warehouse/stock`
-- [ ] 12.2.4 — Regression tests (post in/out → balance; no balance on Nomenclature row)
-- [ ] 12.2.5 — Docs sync: close linked `4.6.5.*` checkboxes when register ships
+- [x] 12.2.1 — Migration: Warehouse (if not in 12.1.1), StockDocument, StockLedgerLine (Decimal qty; timezone-aware `posted_at`) — `v0.9.0`; Warehouse from `12.1.1`; Alembic `z7a8b9c0d123`; evidence `test_stock_ledger_12_2_1.py`; task `docs/tasks/v0.9.0-stage-12.2.1-stock-ledger-migration.md`
+- [x] 12.2.2 — Services + API: post document, read balances by nomenclature (± warehouse) — `v0.9.0`; `POST/GET /stock/documents`, post endpoint; balances from posted ledger; evidence `test_stock_documents_12_2_2.py`; task `docs/tasks/v0.9.0-stage-12.2.2-stock-document-api.md`
+- [x] 12.2.3 — Fill `GET /stock/balances` from ledger; live column on `/warehouse/stock` — `v0.9.0`; balances filled in `12.2.2`; live column + format on PT-04; evidence `stock-balances-12-2-3.test.mjs`; task `docs/tasks/v0.9.0-stage-12.2.3-live-stock-column.md`
+- [x] 12.2.4 — Regression tests (post in/out → balance; no balance on Nomenclature row) — `v0.9.0`; evidence `test_stock_register_12_2_4.py`; task `docs/tasks/v0.9.0-stage-12.2.4-stock-register-regression.md`
+- [x] 12.2.5 — Docs sync: close linked `4.6.5.*` checkboxes when register ships — `v0.9.0`; closed `4.6.5.2`–`4.6.5.6`; task `docs/tasks/v0.9.0-stage-12.2.5-stock-register-docs-sync.md`
 
 ### 12.3 — Finished-goods from production
 

@@ -19,14 +19,14 @@ export type WarehouseNomenclatureCatalog = {
   units: UnitOfMeasure[];
   coverUrls: Record<number, string | null>;
   fieldValues: Record<number, NomenclatureCharacteristicValue[]>;
-  /** Projected balances from `/stock/balances` (`4.10.6`); missing → UI zero. */
+  /** Live projected balances from posted ledger via `/stock/balances` (`12.2.3`). */
   stockBalances: Record<number, string>;
 };
 
 export { primaryNomenclatureCoverContentUrl };
 
 /**
- * Catalog payload for `/warehouse/stock` (`4.10.2`–`4.10.6`).
+ * Catalog payload for `/warehouse/stock` (`4.10.2`–`4.10.6`, live remainder `12.2.3`).
  */
 export async function loadWarehouseNomenclatureCatalog(): Promise<WarehouseNomenclatureCatalog> {
   const [items, categories, units] = await Promise.all([

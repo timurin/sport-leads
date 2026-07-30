@@ -51,10 +51,10 @@
 - `[x]` `v0.8.8h-nomenclature-free-custom-fields`: historical free-assignment contour on former `CustomField*`; **superseded by ADR-015 / `4.8`** (card values → `NomenclatureCharacteristicValue` / characteristics API);
 - `[x]` `4.8` / ADR-015: unified `Characteristic*` catalog — migration `f7a8b9c0d123`, `/custom-fields` API unmounted, DELETE + usage guards + `18.4` journal stub, nav redirect (`4.8.1`–`4.8.3`, `4.8.5`); detail card **layout confirmed** (`4.8.4`); nomenclature card UI on characteristics names (`4.8.6`); orphan `custom_fields` modules removed + focused regression (`4.8.7`); open: appearance/content polish of characteristic card (follow-up);
 - `[x]` отдельный `Material` catalog/API удалён после cutover (`4.6.4`); данные в `Nomenclature` type `MATERIAL` (`z6a7b8c9d012`); Materials nav removed (`4.6.3`);
-- `[~]` единая номенклатура готовых изделий, услуг, полуфабрикатов и комплектов (типы `PRODUCT`/`GOODS`/`SERVICE`/`MATERIAL`; materials cutover `4.6.1`–`4.6.4` done; UNF primary warehouse list `4.10` shipped; stock register MVP → `4.6.5.*`);
-- `[x]` `4.10` — УНФ: Склад → «Номенклатура» (`/warehouse/stock`) primary PT-04; `4.10.1`–`4.10.7` closed (`v0.9.0`; owner visual OK `2026-07-26`); остаток column wired to empty `/stock/balances` until live register `4.6.5.*`;
-- `[ ]` `4.6.5.*` — MVP регистр: ADR note closed via ADR-019 / `12.0.1`; tables/API/tests owned by Stage `12.2`; empty `GET /stock/balances` + list column shipped with `4.10.6` / `4.6.5.4`;
-- `[~]` **warehouse Stage 12** — ADR-019 domain accepted (`12.0`); structure/ledger/FG/inventory open (`12.1`–`12.5`);
+- `[~]` единая номенклатура готовых изделий, услуг, полуфабрикатов и комплектов (типы `PRODUCT`/`GOODS`/`SERVICE`/`MATERIAL`; materials cutover `4.6.1`–`4.6.4` done; UNF primary warehouse list `4.10` shipped; stock register MVP `4.6.5.*` / Stage `12.2` shipped);
+- `[x]` `4.10` — УНФ: Склад → «Номенклатура» (`/warehouse/stock`) primary PT-04; `4.10.1`–`4.10.7` closed (`v0.9.0`; owner visual OK `2026-07-26`); остаток column live from ledger (`12.2.2`–`12.2.3`);
+- `[x]` `4.6.5.*` — MVP регистр shipped via Stage `12.2` (`12.2.1`–`12.2.5`; ADR-019); SoT = posted ledger, not `Nomenclature`; FG docs/bins/lots → `12.3`+;
+- `[~]` **warehouse Stage 12** — ADR-019; structure `12.1` + ledger MVP `12.2` done; FG docs/inventory/transfers open (`12.3`–`12.5`);
 - `[~]` модели и артикулы — Stage 6 catalog v1 closed (`6.1.1`–`6.1.16`, `6.2.*`, `6.3.*` incl. `6.3.8` duration, `6.4`); product types directory + model link shipped; order-item binding `3.2.5` + routing `3.2.7` + smoke `3.2.6` shipped; model routing whitelist + op norms `6.1.17` shipped;
 - `[~]` размеры и изображения — SizeGrid Mosmade men+women + list/card visual OK; Stage-6 read-only; write/edit → `17.1.2.4`; model link `6.2.7` shipped;
 - `[x]` операции пошива (каталог) + связка со строками варианта — `6.3.1`–`6.3.6` shipped; normative `duration_seconds` + assembly-line snapshot `6.3.8` shipped; owner visual OK for catalog (`2026-07-22`);
@@ -84,7 +84,7 @@
 
 ## Ресурсы, склад, закупки и финансы
 
-- `[ ]` складской регистр остатков / min stock — ADR-019; implementation `12.2` (formerly `4.6.5.*`); не на карточке `Nomenclature`; legacy `Material` removed (`4.6.4`); primary list UI — `4.10` (UNF);
+- `[~]` складской регистр остатков / min stock — MVP register shipped (`4.6.5.*` / `12.2`); min stock + bins/lots later; не на карточке `Nomenclature`; legacy `Material` removed (`4.6.4`); primary list UI — `4.10` (UNF);
 - `[ ]` единицы измерения как единый справочник, склады, зоны, резервы, партии и инвентаризация;
 - `[ ]` фактическое списание и выпуск;
 - `[ ]` закупки, поставщики и заказы поставщикам;

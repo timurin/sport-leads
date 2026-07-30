@@ -50,6 +50,13 @@ from app.models.product_type import ProductType
 from app.models.sewing_operation import SewingOperation
 from app.models.size_grid import SizeGrid, SizeGridRow, SizeGridSizeType
 from app.models.vat_rate import VatRate
+from app.models.warehouse import Warehouse
+from app.models.stock import (
+    StockDocument,
+    StockDocumentStatus,
+    StockDocumentType,
+    StockLedgerLine,
+)
 from app.models.tech_operation import TechOperation, TechOperationRequiredMaterial
 from app.models.production_stage import ProductionStage
 from app.models.production_order import (
@@ -132,6 +139,11 @@ __all__ = [
     "SizeGridRow",
     "SizeGridSizeType",
     "VatRate",
+    "Warehouse",
+    "StockDocument",
+    "StockDocumentStatus",
+    "StockDocumentType",
+    "StockLedgerLine",
     "ProductionStage",
     "ProductionOrder",
     "ProductionOrderStatus",

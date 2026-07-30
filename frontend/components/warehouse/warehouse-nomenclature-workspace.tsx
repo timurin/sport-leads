@@ -100,8 +100,8 @@ function selectedCategoryIdFromScope(scope: CategoryListScope): number | null {
 }
 
 /**
- * Warehouse nomenclature workspace (`4.10.3`–`4.10.6`):
- * DS-PT-04 tree + list + inspector + category CRUD + остаток column/filter.
+ * Warehouse nomenclature workspace (`4.10.3`–`4.10.6` / `12.2.3`):
+ * DS-PT-04 tree + list + inspector + category CRUD + live остаток column/filter.
  */
 export function WarehouseNomenclatureWorkspace({
   items,

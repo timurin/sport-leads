@@ -23,6 +23,7 @@ from app.api.product_types import router as product_types_router
 from app.api.sewing_operations import router as sewing_operations_router
 from app.api.size_grids import router as size_grids_router
 from app.api.vat_rates import router as vat_rates_router
+from app.api.warehouses import router as warehouses_router
 from app.api.stock import router as stock_router
 from app.api.technical_cards import router as technical_cards_router
 from app.api.tech_operations import router as tech_operations_router
@@ -93,6 +94,7 @@ app.include_router(product_types_router)
 app.include_router(sewing_operations_router)
 app.include_router(size_grids_router)
 app.include_router(vat_rates_router)
+app.include_router(warehouses_router)
 app.include_router(stock_router)
 app.include_router(technical_cards_router)
 app.include_router(tech_operations_router)

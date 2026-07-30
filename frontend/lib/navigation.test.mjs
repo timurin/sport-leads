@@ -65,6 +65,10 @@ test("settings navigation exposes production catalogs after pattern-base", () =>
         href: "/settings/catalogs/tech-operations",
       },
       {
+        id: "work-centers",
+        href: "/settings/catalogs/work-centers",
+      },
+      {
         id: "shop-routings",
         href: "/settings/catalogs/routings",
       },
@@ -144,6 +148,19 @@ test("production navigation exposes tech-cards and shop modules", () => {
     isNavigationPathActive("/production/tech-cards", "/production/tech-cards"),
     true,
   );
+});
+
+test("settings navigation exposes warehouses catalog", () => {
+  const settings = appSections.find((section) => section.id === "settings");
+  assert.ok(settings);
+  const catalogs = settings.topNavigation.find((item) => item.id === "catalogs");
+  assert.ok(catalogs?.children);
+  const warehouses = catalogs.children.find((item) => item.id === "warehouses");
+  assert.deepEqual(warehouses, {
+    id: "warehouses",
+    title: "Склады",
+    href: "/settings/catalogs/warehouses",
+  });
 });
 
 test("warehouse navigation labels stock route as nomenclature", () => {

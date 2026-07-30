@@ -42,9 +42,9 @@
 | **Warehouse** | Справочник складов; seed default «Основной» |
 | **StockDocument** | Шапка движения: типы `receipt` / `issue` (позже transfer, inventory); status `draft` / `posted` / `cancelled` |
 | **StockLedgerLine** | Проводка регистра: `warehouse_id`, `nomenclature_id`, signed `qty`, `posted_at`, FK/soft на document; soft refs `technical_card_id`, `sales_order_id` |
-| **Balance projection** | Read-model: Σ ledger по `(warehouse_id, nomenclature_id)` — наполняет `GET /stock/balances` |
+| **Balance projection** | Read-model: Σ ledger по `(warehouse_id, nomenclature_id)` — наполняет `GET /stock/balances` (`12.1.2` contract; fill in `12.2`) |
 
-Bins / lots — **вне MVP** (`12.1.2` later).
+Bins / lots — **вне MVP** (stub under `12.1.2`; no fields on balance DTO).
 
 ### 3. Finished-goods document types
 

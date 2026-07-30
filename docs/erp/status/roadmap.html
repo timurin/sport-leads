@@ -905,6 +905,7 @@
                 title: "Stock register MVP (balances via movements; not on Nomenclature)",
                 done: false,
                 goal: "Owner/UNF 2026-07-26: column Остаток from movement register, never on Nomenclature card (ADR-012). Full warehouses/bins/lots/docs → Stage 12. MVP ledger by nomenclature_id for 4.10 list column/filter.",
+                note: "v0.9.0; all microtasks 4.6.5.1–4.6.5.6 closed via Stage 12.0/12.2 (2026-07-30); parent has no MD checkbox — progress on microtasks; FG/bins/lots remain Stage 12.3+",
                 microtasks: [
                   {
                     code: "4.6.5.1",
@@ -915,29 +916,32 @@
                   {
                     code: "4.6.5.2",
                     title: "Migration: movement/ledger tables — owned by 12.2.1",
-                    done: false
+                    done: true,
+                    note: "closed with 12.2.1; Alembic z7a8b9c0d123 + warehouses y6z7a8b9c012; 2026-07-30"
                   },
                   {
                     code: "4.6.5.3",
                     title: "Services + API post/read balances — owned by 12.2.2–12.2.3",
-                    done: false,
-                    note: "Empty GET /stock/balances stub shipped with 4.10.6; fill from ledger in 12.2"
+                    done: true,
+                    note: "closed with 12.2.2/12.2.3; POST /stock/documents + live GET /stock/balances; 2026-07-30"
                   },
                   {
                     code: "4.6.5.4",
                     title: "Wire column Остаток + filter все / с остатком on warehouse nomenclature list (4.10)",
                     done: true,
-                    note: "2026-07-26 — v0.9.0 via 4.10.6 (zeros until register posts)"
+                    note: "v0.9.0 via 4.10.6; live qty from ledger 12.2.2–12.2.3"
                   },
                   {
                     code: "4.6.5.5",
                     title: "Regression tests — owned by 12.2.4",
-                    done: false
+                    done: true,
+                    note: "closed with 12.2.4; test_stock_register_12_2_4.py; 2026-07-30"
                   },
                   {
                     code: "4.6.5.6",
                     title: "Docs sync when register ships — owned by 12.2.5",
-                    done: false
+                    done: true,
+                    note: "closed with 12.2.5; 2026-07-30"
                   }
                 ]
               }
@@ -1132,9 +1136,9 @@
               },
               {
                 code: "4.10.6",
-                title: "Balance column + stock filter wired to 4.6.5 API (zero until register posts); no fake demo balances",
+                title: "Balance column + stock filter wired to 4.6.5 API; no fake demo balances",
                 done: true,
-                note: "2026-07-26 — v0.9.0; GET /stock/balances empty stub; column Остаток + Все/С остатком; live qty waits 4.6.5.2–.3"
+                note: "v0.9.0; chrome 4.10.6; live qty from ledger 12.2.2–12.2.3"
               },
               {
                 code: "4.10.7",
@@ -4937,12 +4941,14 @@
               {
                 code: "12.1.1",
                 title: "Warehouses CRUD + default seed Основной",
-                done: false
+                done: true,
+                note: "v0.9.0; Alembic y6z7a8b9c012; API /warehouses; UI /settings/catalogs/warehouses; test_warehouses_12_1_1.py; task v0.9.0-stage-12.1.1-warehouses-crud.md"
               },
               {
                 code: "12.1.2",
                 title: "Balance projection by warehouse + nomenclature (bins/lots later)",
-                done: false
+                done: true,
+                note: "v0.9.0; StockBalanceRead.warehouse_id; project_balances_from_ledger_rows; API filter; test_stock_balances_12_1_2.py; task v0.9.0-stage-12.1.2-balance-projection.md"
               }
             ]
           },
@@ -4953,27 +4959,32 @@
               {
                 code: "12.2.1",
                 title: "Migration: Warehouse, StockDocument, StockLedgerLine",
-                done: false
+                done: true,
+                note: "v0.9.0; Warehouse from 12.1.1; Alembic z7a8b9c0d123; test_stock_ledger_12_2_1.py; task v0.9.0-stage-12.2.1-stock-ledger-migration.md"
               },
               {
                 code: "12.2.2",
                 title: "Services + API: post document, read balances",
-                done: false
+                done: true,
+                note: "v0.9.0; POST/GET /stock/documents + post; balances from posted ledger; test_stock_documents_12_2_2.py; task v0.9.0-stage-12.2.2-stock-document-api.md"
               },
               {
                 code: "12.2.3",
                 title: "Fill GET /stock/balances; live column on /warehouse/stock",
-                done: false
+                done: true,
+                note: "v0.9.0; balances filled in 12.2.2; live PT-04 column + formatStockBalanceQty; stock-balances-12-2-3.test.mjs; task v0.9.0-stage-12.2.3-live-stock-column.md"
               },
               {
                 code: "12.2.4",
                 title: "Regression tests (balance never on Nomenclature)",
-                done: false
+                done: true,
+                note: "v0.9.0; test_stock_register_12_2_4.py; task v0.9.0-stage-12.2.4-stock-register-regression.md"
               },
               {
                 code: "12.2.5",
                 title: "Docs sync: close linked 4.6.5.* when register ships",
-                done: false
+                done: true,
+                note: "v0.9.0; closed 4.6.5.2–4.6.5.6; task v0.9.0-stage-12.2.5-stock-register-docs-sync.md"
               }
             ]
           },

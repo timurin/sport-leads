@@ -34,6 +34,7 @@ test("warehouse nomenclature workspace keeps PT-04 create and balance contracts"
     "stockBalanceOrZero",
     "Остаток",
     "С остатком",
+    "12.2.3",
   ]) {
     assert.ok(source.includes(marker), `missing warehouse marker: ${marker}`);
   }

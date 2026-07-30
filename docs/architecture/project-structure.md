@@ -138,8 +138,9 @@
 - [ ] Design approvals and versioned layouts (Stage 10 client-facing; shop Дизайн = `11.4`)
 - [x] Production orders/batches `11.1.1` + WorkCenter planning `11.1.2` + aggregate fact `11.2.1` shipped (owner visuals OK `2026-07-30`); FG warehouse `11.2.2.1`–`11.2.2.3` shipped; wire/visual `11.2.2.4`–`11.2.2.5` open (deps `12.2`)
 - [x] Shop-floor modules platform + per-цех UIs (`11.3`–`11.10`) — fact on technical card; material `fact_qty` hard gate on Раскрой/Печать (`9.3.4` / `11.5`–`11.6`); owner visuals OK through `11.10.5` (`2026-07-29`)
-- [x] Warehouse nomenclature PT-04 `/warehouse/stock` — tree CRUD + list + settings redirects + остаток column/filter + owner visual OK (`4.10.1`–`4.10.7`); live ledger → `12.2` (ADR-019)
-- [ ] Warehouse Stage 12: structure `12.1`, ledger `12.2`, FG docs `12.3`, inventory/transfers `12.4`–`12.5`
+- [x] Warehouse nomenclature PT-04 `/warehouse/stock` — tree CRUD + list + settings redirects + остаток column/filter + owner visual OK (`4.10.1`–`4.10.7`); live ledger column `12.2.3` (ADR-019)
+- [x] Warehouse Stage 12 ledger MVP `12.2` (`12.2.1`–`12.2.5` / former `4.6.5.*`) — StockDocument/Ledger + post/API + live `/warehouse/stock` column + regression + docs sync
+- [ ] Warehouse Stage 12 remainder: FG docs `12.3`, inventory/transfers `12.4`–`12.5` (structure `12.1` done)
 - [ ] Procurement requests, supplier orders, receipts, and returns
 - [ ] Shipping documents, delivery tracking, and confirmation of receipt
 
