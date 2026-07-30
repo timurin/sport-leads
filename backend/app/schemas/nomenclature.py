@@ -4,6 +4,7 @@ from decimal import Decimal
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from app.models.nomenclature import NomenclatureType, UnitCategory
+from app.schemas.file_io import FileIoRowError
 
 
 class UnitOfMeasureBase(BaseModel):
@@ -142,3 +143,23 @@ class NomenclatureRead(NomenclatureBase):
     product_type_name: str | None = None
     created_at: datetime
     updated_at: datetime
+
+
+class NomenclatureImportResult(BaseModel):
+    """Catalog import dry-run / commit response (4.5.1.2 / ADR-020)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    dry_run: bool = True
+    total_rows: int = Field(..., ge=0)
+    valid_rows: int = Field(..., ge=0)
+    error_rows: int = Field(..., ge=0)
+    errors: list[FileIoRowError] = Field(default_factory=list)
+    preview: list[dict] = Field(default_factory=list)
+    can_commit: bool = False
+    created_count: int = Field(default=0, ge=0)
+    updated_count: int = Field(default=0, ge=0)
+    created_ids: list[int] = Field(default_factory=list)
+    updated_ids: list[int] = Field(default_factory=list)
+    created: list[NomenclatureRead] = Field(default_factory=list)
+    updated: list[NomenclatureRead] = Field(default_factory=list)

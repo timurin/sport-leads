@@ -233,7 +233,8 @@ def _clear_available_product_models(db: Session, nomenclature_id: int) -> None:
     )
 
 
-def create_nomenclature(db: Session, payload: NomenclatureCreate) -> Nomenclature:
+def build_nomenclature_entity(db: Session, payload: NomenclatureCreate) -> Nomenclature:
+    """Validate and construct a Nomenclature row without committing (for batch import)."""
     _validate_nomenclature_category(db, payload.category_id)
     validate_storage_unit(db, payload.storage_unit_id)
     data = payload.model_dump()
@@ -245,7 +246,11 @@ def create_nomenclature(db: Session, payload: NomenclatureCreate) -> Nomenclatur
         nomenclature_type=data["nomenclature_type"],
         require_active=True,
     )
-    item = Nomenclature(**data)
+    return Nomenclature(**data)
+
+
+def create_nomenclature(db: Session, payload: NomenclatureCreate) -> Nomenclature:
+    item = build_nomenclature_entity(db, payload)
     db.add(item)
     try:
         db.commit()
@@ -311,8 +316,14 @@ def copy_nomenclature(db: Session, nomenclature_id: int) -> Nomenclature:
     return item
 
 
-def update_nomenclature(db: Session, nomenclature_id: int, payload: NomenclatureUpdate) -> Nomenclature:
-    item = get_nomenclature(db, nomenclature_id)
+def apply_nomenclature_update(
+    db: Session,
+    item: Nomenclature,
+    payload: NomenclatureUpdate,
+    *,
+    commit: bool = True,
+) -> Nomenclature:
+    """Apply update fields; optionally defer commit for batch import."""
     changes = payload.model_dump(exclude_unset=True)
     target_type = changes.get("nomenclature_type", item.nomenclature_type)
     target_category_id = changes.get("category_id", item.category_id)
@@ -320,7 +331,8 @@ def update_nomenclature(db: Session, nomenclature_id: int, payload: Nomenclature
     validate_storage_unit(
         db,
         changes.get("storage_unit_id", item.storage_unit_id),
-        allow_inactive="storage_unit_id" not in changes or changes.get("storage_unit_id") == item.storage_unit_id,
+        allow_inactive="storage_unit_id" not in changes
+        or changes.get("storage_unit_id") == item.storage_unit_id,
     )
 
     previous_product_type_id = item.product_type_id
@@ -349,10 +361,13 @@ def update_nomenclature(db: Session, nomenclature_id: int, payload: Nomenclature
     )
     product_type_changed = target_product_type_id != previous_product_type_id
     if leaving_product or product_type_changed:
-        _clear_available_product_models(db, nomenclature_id)
+        _clear_available_product_models(db, item.id)
 
     for field_name, value in changes.items():
         setattr(item, field_name, value)
+    if not commit:
+        db.flush()
+        return item
     try:
         db.commit()
     except IntegrityError as error:
@@ -360,3 +375,8 @@ def update_nomenclature(db: Session, nomenclature_id: int, payload: Nomenclature
         raise NomenclatureConflictError("Не удалось сохранить номенклатуру") from error
     db.refresh(item)
     return item
+
+
+def update_nomenclature(db: Session, nomenclature_id: int, payload: NomenclatureUpdate) -> Nomenclature:
+    item = get_nomenclature(db, nomenclature_id)
+    return apply_nomenclature_update(db, item, payload, commit=True)

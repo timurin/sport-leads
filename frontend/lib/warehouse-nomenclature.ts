@@ -27,6 +27,7 @@ export { primaryNomenclatureCoverContentUrl };
 
 /**
  * Catalog payload for `/warehouse/stock` (`4.10.2`–`4.10.6`, live remainder `12.2.3`).
+ * Media/characteristic failures do not fail the whole page (covers stay empty).
  */
 export async function loadWarehouseNomenclatureCatalog(): Promise<WarehouseNomenclatureCatalog> {
   const [items, categories, units] = await Promise.all([
@@ -37,24 +38,33 @@ export async function loadWarehouseNomenclatureCatalog(): Promise<WarehouseNomen
   const [coverEntries, valuesEntries, stockBalances] = await Promise.all([
     Promise.all(
       items.map(async (item) => {
-        const media = await getNomenclatureMedia(item.id);
-        const contentUrl = primaryNomenclatureCoverContentUrl(media);
-        return [
-          item.id,
-          contentUrl ? nomenclatureMediaUrl(contentUrl) : null,
-        ] as const;
+        try {
+          const media = await getNomenclatureMedia(item.id);
+          const contentUrl = primaryNomenclatureCoverContentUrl(media);
+          return [
+            item.id,
+            contentUrl ? nomenclatureMediaUrl(contentUrl) : null,
+          ] as const;
+        } catch {
+          return [item.id, null] as const;
+        }
       }),
     ),
     Promise.all(
-      items.map(
-        async (item) =>
-          [
+      items.map(async (item) => {
+        try {
+          return [
             item.id,
             await getNomenclatureCharacteristicValues(item.id),
-          ] as const,
-      ),
+          ] as const;
+        } catch {
+          return [item.id, []] as const;
+        }
+      }),
     ),
-    getNomenclatureStockBalances(items.map((item) => item.id)),
+    getNomenclatureStockBalances(items.map((item) => item.id)).catch(
+      () => ({}) as Record<number, string>,
+    ),
   ]);
   return {
     items,

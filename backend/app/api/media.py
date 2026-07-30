@@ -11,8 +11,19 @@ from app.services.media import MediaError, create_media, delete_media, list_medi
 router = APIRouter(prefix="/nomenclatures", tags=["Nomenclature media"])
 
 
-def read_item(item: NomenclatureMedia) -> dict[str, object]:
-    return {**{column.name: getattr(item, column.name) for column in item.__table__.columns}, "content_url": f"/nomenclatures/{item.nomenclature_id}/media/{item.id}/content"}
+def read_item(item: NomenclatureMedia) -> NomenclatureMediaRead:
+    return NomenclatureMediaRead.model_validate(
+        {
+            **{
+                column.name: getattr(item, column.name)
+                for column in item.__table__.columns
+                if column.name != "storage_key"
+            },
+            "content_url": (
+                f"/nomenclatures/{item.nomenclature_id}/media/{item.id}/content"
+            ),
+        }
+    )
 
 
 @router.get("/{nomenclature_id}/media", response_model=list[NomenclatureMediaRead])

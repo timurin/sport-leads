@@ -1,8 +1,20 @@
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, status
+from fastapi.responses import Response
 from sqlalchemy.orm import Session
 
 from app.database.session import get_db
-from app.schemas.nomenclature import NomenclatureCategoryCreate, NomenclatureCategoryRead, NomenclatureCategoryUpdate, NomenclatureCreate, NomenclatureRead, NomenclatureUpdate, UnitOfMeasureCreate, UnitOfMeasureRead, UnitOfMeasureUpdate
+from app.schemas.nomenclature import (
+    NomenclatureCategoryCreate,
+    NomenclatureCategoryRead,
+    NomenclatureCategoryUpdate,
+    NomenclatureCreate,
+    NomenclatureImportResult,
+    NomenclatureRead,
+    NomenclatureUpdate,
+    UnitOfMeasureCreate,
+    UnitOfMeasureRead,
+    UnitOfMeasureUpdate,
+)
 from app.schemas.product_model import (
     NomenclatureProductModelCreate,
     NomenclatureProductModelRead,
@@ -33,6 +45,15 @@ from app.services.nomenclature import (
     UnitOfMeasureNotFoundError,
     UnitOfMeasureRuleError,
 )
+from app.services.nomenclature_import import (
+    NomenclatureImportError,
+    import_nomenclatures_from_bytes,
+)
+from app.services.nomenclature_export import (
+    NomenclatureExportError,
+    build_nomenclature_import_template,
+    export_nomenclatures_file,
+)
 from app.services.nomenclature_product_models import (
     NomenclatureProductModelConflictError,
     NomenclatureProductModelNotFoundError,
@@ -45,6 +66,8 @@ from app.services.nomenclature_product_models import (
 
 
 router = APIRouter(prefix="/nomenclatures", tags=["Nomenclature"])
+
+_MAX_IMPORT_BYTES = 5 * 1024 * 1024
 
 
 @router.get("/units-of-measure", response_model=list[UnitOfMeasureRead])
@@ -126,6 +149,104 @@ def read_nomenclature(
     db: Session = Depends(get_db),
 ) -> list[NomenclatureRead]:
     return [to_nomenclature_read(row) for row in list_nomenclature(db, search, is_active, limit, offset)]
+
+
+@router.get(
+    "/export",
+    operation_id="export_nomenclatures",
+    response_class=Response,
+)
+def export_nomenclatures(
+    file_format: str = Query(default="csv", alias="format", pattern="^(csv|xlsx)$"),
+    search: str | None = Query(default=None, max_length=255),
+    is_active: bool | None = Query(
+        default=None,
+        description="Omit for all; true/false to filter active flag",
+    ),
+    nomenclature_type: str | None = Query(default=None, max_length=20),
+    db: Session = Depends(get_db),
+) -> Response:
+    """Filter-aware catalog export; columns match import template (`4.5.2`)."""
+    try:
+        payload, filename, media_type = export_nomenclatures_file(
+            db,
+            file_format=file_format,  # type: ignore[arg-type]
+            search=search,
+            is_active=is_active,
+            nomenclature_type=nomenclature_type,
+        )
+    except NomenclatureExportError as error:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=str(error),
+        ) from error
+    return Response(
+        content=payload,
+        media_type=media_type,
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
+@router.get(
+    "/import-template",
+    operation_id="download_nomenclature_import_template",
+    response_class=Response,
+)
+def download_nomenclature_import_template(
+    file_format: str = Query(default="csv", alias="format", pattern="^(csv|xlsx)$"),
+) -> Response:
+    """Import template with the same columns as export (+ sample rows)."""
+    try:
+        payload, filename, media_type = build_nomenclature_import_template(
+            file_format=file_format,  # type: ignore[arg-type]
+        )
+    except NomenclatureExportError as error:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=str(error),
+        ) from error
+    return Response(
+        content=payload,
+        media_type=media_type,
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
+@router.post(
+    "/import",
+    response_model=NomenclatureImportResult,
+    operation_id="import_nomenclatures",
+)
+async def import_nomenclatures(
+    file: UploadFile = File(...),
+    dry_run: bool = Query(
+        default=True,
+        description="When true, validate only; when false, commit if can_commit",
+    ),
+    sheet_name: str | None = Query(default=None, max_length=120),
+    db: Session = Depends(get_db),
+) -> NomenclatureImportResult:
+    """Import nomenclature master rows from CSV/XLSX (ADR-020 catalog I/O)."""
+    data = await file.read()
+    if len(data) > _MAX_IMPORT_BYTES:
+        raise HTTPException(
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            detail="Import file exceeds 5 MB limit",
+        )
+    try:
+        return import_nomenclatures_from_bytes(
+            db,
+            data,
+            filename=file.filename,
+            content_type=file.content_type,
+            sheet_name=sheet_name,
+            dry_run=dry_run,
+        )
+    except NomenclatureImportError as error:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=str(error),
+        ) from error
 
 
 @router.get("/{nomenclature_id}", response_model=NomenclatureRead)

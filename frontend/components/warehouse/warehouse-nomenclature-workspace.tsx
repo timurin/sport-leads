@@ -4,16 +4,22 @@ import Link from "next/link";
 import {
   BarChart3,
   Copy,
+  Download,
   ExternalLink,
   Filter,
   FilterX,
   PanelLeft,
+  Upload,
   X,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
-import { copyNomenclature, updateNomenclatureCategory } from "@/app/(workspace)/settings/catalogs/nomenclature/nomenclature-actions";
+import {
+  copyNomenclature,
+  downloadNomenclatureExport,
+  updateNomenclatureCategory,
+} from "@/app/(workspace)/settings/catalogs/nomenclature/nomenclature-actions";
 import { PageLayout } from "@/components/layout/page-layout";
 import { NomenclatureCreatePanels } from "@/components/settings/nomenclature-create-panels";
 import { NomenclatureInspector } from "@/components/settings/nomenclature-inspector";
@@ -44,6 +50,8 @@ import { ListTotals } from "@/components/ui/list-pagination";
 import { PageToolbar } from "@/components/ui/page-header";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { WarehouseCategoryTreePane } from "@/components/warehouse/nomenclature-category-folder-tree";
+import { NomenclatureImportDrawer } from "@/components/warehouse/nomenclature-import-drawer";
+import { triggerBrowserDownload } from "@/lib/file-download";
 import {
   NOMENCLATURE_TYPE_LABELS,
   NOMENCLATURE_TYPE_OPTIONS,
@@ -121,8 +129,10 @@ export function WarehouseNomenclatureWorkspace({
   const router = useRouter();
   const searchParams = useSearchParams();
   const [copyPending, startCopyTransition] = useTransition();
+  const [exportPending, startExportTransition] = useTransition();
   const [copyBusyId, setCopyBusyId] = useState<number | null>(null);
   const [copyError, setCopyError] = useState<string | null>(null);
+  const [exportError, setExportError] = useState<string | null>(null);
   const [treeOpen, setTreeOpen] = useState(true);
   const [categoryScope, setCategoryScope] = useState<CategoryListScope>("all");
   const [createKind, setCreateKind] = useState<NomenclatureCreateKind | null>(
@@ -140,6 +150,7 @@ export function WarehouseNomenclatureWorkspace({
   const filterRef = useRef<HTMLDivElement>(null);
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [inspectorOpen, setInspectorOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
 
   const filtersActive =
     Boolean(type) ||
@@ -329,6 +340,29 @@ export function WarehouseNomenclatureWorkspace({
     });
   };
 
+  const onExportCatalog = () => {
+    setExportError(null);
+    const isActiveFilter =
+      active === "active" ? true : active === "inactive" ? false : null;
+    startExportTransition(async () => {
+      try {
+        const payload = await downloadNomenclatureExport({
+          format: "csv",
+          search: search.trim() || undefined,
+          isActive: isActiveFilter,
+          nomenclatureType: type || undefined,
+        });
+        triggerBrowserDownload(payload);
+      } catch (caught) {
+        setExportError(
+          caught instanceof Error
+            ? caught.message
+            : "Не удалось выгрузить номенклатуру",
+        );
+      }
+    });
+  };
+
   const rowActions = (item: Nomenclature) => {
     const href = `/settings/catalogs/nomenclature/${item.id}`;
     const statsActive = inspectorOpen && item.id === selectedId;
@@ -468,18 +502,41 @@ export function WarehouseNomenclatureWorkspace({
             </div>
           }
           end={
-            <NomenclatureSectionCreateMenu
-              onSelect={onCreateKindChange}
-              size="compact"
-            />
+            <div className="flex w-full flex-wrap items-center gap-portal-2 sm:w-auto">
+              <Button
+                type="button"
+                size="compact"
+                variant="secondary"
+                disabled={exportPending}
+                onClick={onExportCatalog}
+              >
+                <Download className="size-4" aria-hidden="true" />
+                {exportPending ? "Экспорт…" : "Экспорт"}
+              </Button>
+              <Button
+                type="button"
+                size="compact"
+                variant="secondary"
+                aria-haspopup="dialog"
+                aria-expanded={importOpen}
+                onClick={() => setImportOpen(true)}
+              >
+                <Upload className="size-4" aria-hidden="true" />
+                Импорт
+              </Button>
+              <NomenclatureSectionCreateMenu
+                onSelect={onCreateKindChange}
+                size="compact"
+              />
+            </div>
           }
         />
-        {copyError ? (
+        {copyError || exportError ? (
           <p
             className="border-b border-portal-danger/30 bg-portal-danger/5 px-portal-4 py-portal-2 text-portal-caption text-portal-danger"
             role="alert"
           >
-            {copyError}
+            {copyError ?? exportError}
           </p>
         ) : null}
 
@@ -797,6 +854,11 @@ export function WarehouseNomenclatureWorkspace({
           </TreeListSplit>
         </div>
       </div>
+
+      <NomenclatureImportDrawer
+        open={importOpen}
+        onClose={() => setImportOpen(false)}
+      />
 
       <NomenclatureCreatePanels
         kind={createKind}

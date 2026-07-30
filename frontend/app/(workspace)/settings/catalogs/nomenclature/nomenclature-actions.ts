@@ -9,6 +9,8 @@ import {
   type NomenclatureRequisitesDraft,
   type NomenclatureType,
 } from "@/lib/nomenclature";
+import type { NomenclatureImportResult } from "@/lib/nomenclature-import";
+import type { FileDownloadPayload } from "@/lib/file-download";
 
 const apiBaseUrl = () => (process.env.SPORT_LEADS_API_URL ?? "http://127.0.0.1:8000").replace(/\/$/, "");
 const text = (formData: FormData, name: string) => String(formData.get(name) ?? "").trim();
@@ -255,4 +257,83 @@ export async function removeNomenclatureAvailableModel(
   }
   revalidateNomenclatureCard(nomenclatureId);
   return { ok: true };
+}
+
+/** Catalog CSV/XLSX import (`POST /nomenclatures/import`, `4.5.1.2` / `4.5.1.3`). */
+export async function importNomenclaturesFile(
+  formData: FormData,
+): Promise<NomenclatureImportResult> {
+  const file = formData.get("file");
+  if (!(file instanceof File) || file.size === 0) {
+    throw new Error("Выберите непустой файл CSV или XLSX.");
+  }
+  const dryRun = String(formData.get("dry_run") ?? "true") !== "false";
+  const body = new FormData();
+  body.append("file", file);
+
+  const response = await fetch(
+    `${apiBaseUrl()}/nomenclatures/import?dry_run=${dryRun ? "true" : "false"}`,
+    {
+      method: "POST",
+      body,
+      cache: "no-store",
+    },
+  );
+  if (!response.ok) {
+    throw new Error(await readDetail(response));
+  }
+  const payload = (await response.json()) as NomenclatureImportResult;
+  if (!dryRun && payload.created_count > 0) {
+    revalidatePath("/settings/catalogs/nomenclature");
+    revalidatePath("/warehouse/stock");
+  }
+  return payload;
+}
+
+async function fetchNomenclatureFileDownload(
+  pathWithQuery: string,
+): Promise<FileDownloadPayload> {
+  const response = await fetch(`${apiBaseUrl()}/nomenclatures${pathWithQuery}`, {
+    method: "GET",
+    cache: "no-store",
+  });
+  if (!response.ok) {
+    throw new Error(await readDetail(response));
+  }
+  const buffer = Buffer.from(await response.arrayBuffer());
+  const disposition = response.headers.get("content-disposition") ?? "";
+  const match = /filename="([^"]+)"/i.exec(disposition);
+  const filename = match?.[1] ?? "nomenclature-download.bin";
+  return {
+    filename,
+    contentType: response.headers.get("content-type") ?? "application/octet-stream",
+    base64: buffer.toString("base64"),
+  };
+}
+
+/** Filter-aware catalog export (`GET /nomenclatures/export`, `4.5.2`). */
+export async function downloadNomenclatureExport(options?: {
+  format?: "csv" | "xlsx";
+  search?: string;
+  isActive?: boolean | null;
+  nomenclatureType?: string;
+}): Promise<FileDownloadPayload> {
+  const params = new URLSearchParams();
+  params.set("format", options?.format ?? "csv");
+  if (options?.search?.trim()) params.set("search", options.search.trim());
+  if (options?.isActive === true) params.set("is_active", "true");
+  if (options?.isActive === false) params.set("is_active", "false");
+  if (options?.nomenclatureType) {
+    params.set("nomenclature_type", options.nomenclatureType);
+  }
+  return fetchNomenclatureFileDownload(`/export?${params.toString()}`);
+}
+
+/** Import template — same columns as export (`GET /nomenclatures/import-template`). */
+export async function downloadNomenclatureImportTemplate(
+  format: "csv" | "xlsx" = "csv",
+): Promise<FileDownloadPayload> {
+  return fetchNomenclatureFileDownload(
+    `/import-template?format=${encodeURIComponent(format)}`,
+  );
 }

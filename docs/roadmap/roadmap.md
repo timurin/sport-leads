@@ -307,8 +307,29 @@ Completion criteria:
 
 ### 4.5 — Import and export
 
-- [ ] 4.5.1 — Nomenclature import
-- [ ] 4.5.2 — Nomenclature export
+> Decision (`ADR-020`, owner `2026-07-30`): **hybrid**. Catalog file I/O stays on the section toolbar (nomenclature first); thin shared parse/validate lib; domain inline import (`9.3.2`, SizeGrid) stays in-section only; universal job shell + 1C later (`16.3` / `16.2.1`). Print-forms `18.3` ≠ data export. Inventory: `docs/architecture/import-export-contours.md`.
+
+Goal:
+Ship nomenclature import/export as catalog actions on `/warehouse/stock` (and settings card if needed), reusing a shared parse library — not a separate Administration nav module yet.
+
+Dependencies:
+- ADR-012 / ADR-020
+- `4.2` / `4.10` nomenclature workspace
+
+- [x] 4.5.0 — ADR-020 hybrid import/export contours + inventory — `v0.9.0`; evidence: `docs/architecture/decisions/ADR-020-import-export-hybrid.md`, `docs/architecture/import-export-contours.md`; task `docs/tasks/v0.9.0-stage-4.5-import-export-adr-020.md`
+
+#### 4.5.1 — Nomenclature import
+
+- [x] 4.5.1.1 — Shared parse/validate library (CSV/XLSX helpers, row-error DTO, dry-run envelope) — no section-specific SoT — `v0.9.0`; evidence: `app/schemas/file_io.py`, `app/services/file_io.py`, `tests/test_file_io_4_5_1_1.py`; task `docs/tasks/v0.9.0-stage-4.5.1.1-shared-file-io.md`
+- [x] 4.5.1.2 — Nomenclature import API: map columns → validate → dry-run → commit (service layer; master-directory only) — `v0.9.0`; evidence: `POST /nomenclatures/import`, `services/nomenclature_import.py`, `tests/test_nomenclature_import_4_5_1_2.py`; task `docs/tasks/v0.9.0-stage-4.5.1.2-nomenclature-import-api.md`
+- [x] 4.5.1.3 — UI: Import action on nomenclature workspace toolbar (`/warehouse/stock`) — `v0.9.0`; evidence: `nomenclature-import-drawer.tsx`, `importNomenclaturesFile`, `nomenclature-import-4-5-1-3.test.mjs`; task `docs/tasks/v0.9.0-stage-4.5.1.3-nomenclature-import-ui.md`; **template download** wired with `4.5.2` (`import-template`, same columns as export)
+- [x] 4.5.1.4 — Regression tests (happy path, row errors, dry-run vs commit) — `v0.9.0`; evidence: `test_nomenclature_import_4_5_1_2.py` + template round-trip in `test_nomenclature_export_4_5_2.py`
+
+#### 4.5.2 — Nomenclature export
+
+- [x] 4.5.2.1 — Nomenclature export API (filter-aware file download) — `v0.9.0`; evidence: `GET /nomenclatures/export`, `services/nomenclature_export.py`, shared `nomenclature_file_columns.py`; task `docs/tasks/v0.9.0-stage-4.5.2-nomenclature-export.md`
+- [x] 4.5.2.2 — UI: Export action on nomenclature workspace toolbar — `v0.9.0`; evidence: toolbar «Экспорт» + import drawer «Шаблон CSV/XLSX»; `nomenclature-export-4-5-2.test.mjs`
+- [x] 4.5.2.3 — Regression tests (columns, filter scope) — `v0.9.0`; evidence: `tests/test_nomenclature_export_4_5_2.py`
 
 ### 4.6 — Unified catalog (materials consolidation)
 
@@ -1855,6 +1876,8 @@ Completion criteria:
 
 #### 9.3.2 — Unit lines (sizes and personalization)
 
+> Contour **B** (ADR-020): aggregate/personalization import stays **inside** the technical card — not Universal hub / not `4.5` catalog I/O.
+
 Goal:
 Users maintain per-piece characteristics inside one technical card (e.g. size, surname, print number).
 
@@ -2370,9 +2393,18 @@ Microtasks:
 
 ### 16.2 — Enterprise exchange
 
-- [ ] 16.2.1 — 1C:UNF exchange
+- [ ] 16.2.1 — 1C:UNF exchange — contour **D** (ADR-020); neighbor to universal job shell, not catalog Excel buttons
 - [ ] 16.2.2 — Delivery and payment-system integrations
 - [ ] 16.2.3 — External API for third-party systems
+
+### 16.3 — Universal import and export (orchestration)
+
+> ADR-020: platform **job shell** (section picker + journal) over the same adapters used by section toolbars (`4.5`). Do not pull domain-inline `9.3.2` here. Maps project-structure «Universal import and export contour».
+
+- [ ] 16.3.1 — Contract: job runner + section adapter registry (upload → map → validate → dry-run → commit; audit hooks)
+- [ ] 16.3.2 — Wire nomenclature adapter from `4.5` into the job shell
+- [ ] 16.3.3 — Administration UI: jobs list + section picker (no duplicate SoT)
+- [ ] 16.3.4 — Regression tests + documentation checkpoint
 
 ## Stage 17 — Industrial Operations and Access Control
 

@@ -858,16 +858,79 @@
           },
           {
             title: "4.5 — Import and export",
+            goal: "ADR-020 hybrid: catalog toolbar I/O + shared parse lib now; domain inline stays in-section; universal jobs later (16.3).",
+            note: "Inventory: import-export-contours.md; print 18.3 ≠ data export",
             items: [
+              {
+                code: "4.5.0",
+                title: "ADR-020 hybrid import/export contours + inventory",
+                done: true,
+                note: "v0.9.0; ADR-020; import-export-contours.md; task v0.9.0-stage-4.5-import-export-adr-020.md"
+              },
               {
                 code: "4.5.1",
                 title: "Nomenclature import",
-                done: false
+                done: false,
+                dependencies: [
+                  "4.5.0",
+                  "ADR-012",
+                  "ADR-020"
+                ],
+                microtasks: [
+                  {
+                    code: "4.5.1.1",
+                    title: "Shared parse/validate library (CSV/XLSX helpers, row-error DTO, dry-run envelope)",
+                    done: true,
+                    note: "v0.9.0; schemas/file_io.py + services/file_io.py; test_file_io_4_5_1_1.py; task v0.9.0-stage-4.5.1.1-shared-file-io.md"
+                  },
+                  {
+                    code: "4.5.1.2",
+                    title: "Nomenclature import API: map → validate → dry-run → commit",
+                    done: true,
+                    note: "v0.9.0; POST /nomenclatures/import; nomenclature_import.py; test_nomenclature_import_4_5_1_2.py; task v0.9.0-stage-4.5.1.2-nomenclature-import-api.md"
+                  },
+                  {
+                    code: "4.5.1.3",
+                    title: "UI: Import on nomenclature workspace toolbar (/warehouse/stock)",
+                    done: true,
+                    note: "v0.9.0; import drawer + template via 4.5.2 import-template; task v0.9.0-stage-4.5.1.3-nomenclature-import-ui.md"
+                  },
+                  {
+                    code: "4.5.1.4",
+                    title: "Regression tests (happy path, row errors, dry-run vs commit)",
+                    done: true,
+                    note: "v0.9.0; test_nomenclature_import_4_5_1_2.py + template round-trip in test_nomenclature_export_4_5_2.py"
+                  }
+                ]
               },
               {
                 code: "4.5.2",
                 title: "Nomenclature export",
-                done: false
+                done: false,
+                dependencies: [
+                  "4.5.0",
+                  "ADR-020"
+                ],
+                microtasks: [
+                  {
+                    code: "4.5.2.1",
+                    title: "Nomenclature export API (filter-aware file download)",
+                    done: true,
+                    note: "v0.9.0; GET /nomenclatures/export + import-template; nomenclature_file_columns.py; task v0.9.0-stage-4.5.2-nomenclature-export.md"
+                  },
+                  {
+                    code: "4.5.2.2",
+                    title: "UI: Export on nomenclature workspace toolbar",
+                    done: true,
+                    note: "v0.9.0; toolbar Export + import drawer template CSV/XLSX; nomenclature-export-4-5-2.test.mjs"
+                  },
+                  {
+                    code: "4.5.2.3",
+                    title: "Regression tests (columns, filter scope)",
+                    done: true,
+                    note: "v0.9.0; test_nomenclature_export_4_5_2.py"
+                  }
+                ]
               }
             ]
           },
@@ -3973,6 +4036,7 @@
               {
                 code: "9.3.2",
                 title: "Unit lines (sizes and personalization)",
+                note: "ADR-020 contour B: aggregate import stays inside TC — not Universal hub / not 4.5",
                 dependencies: [
                   "9.2.1"
                 ],
@@ -5158,8 +5222,9 @@
             items: [
               {
                 code: "16.2.1",
-                title: "1C:UNF exchange",
-                done: false
+                title: "1C:UNF exchange — contour D (ADR-020); neighbor to universal job shell",
+                done: false,
+                note: "ADR-020; not catalog Excel / not print 18.3"
               },
               {
                 code: "16.2.2",
@@ -5169,6 +5234,34 @@
               {
                 code: "16.2.3",
                 title: "External API for third-party systems",
+                done: false
+              }
+            ]
+          },
+          {
+            title: "16.3 — Universal import and export (orchestration)",
+            goal: "ADR-020 job shell over section adapters from 4.5; domain 9.3.2 stays out.",
+            note: "Maps project-structure Universal import and export contour",
+            items: [
+              {
+                code: "16.3.1",
+                title: "Contract: job runner + section adapter registry",
+                done: false,
+                note: "ADR-020; upload → map → validate → dry-run → commit"
+              },
+              {
+                code: "16.3.2",
+                title: "Wire nomenclature adapter from 4.5 into the job shell",
+                done: false
+              },
+              {
+                code: "16.3.3",
+                title: "Administration UI: jobs list + section picker",
+                done: false
+              },
+              {
+                code: "16.3.4",
+                title: "Regression tests + documentation checkpoint",
                 done: false
               }
             ]
