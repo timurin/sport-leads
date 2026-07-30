@@ -307,7 +307,7 @@ Completion criteria:
 
 ### 4.5 — Import and export
 
-> Decision (`ADR-020`, owner `2026-07-30`): **hybrid**. Catalog file I/O stays on the section toolbar (nomenclature first); thin shared parse/validate lib; domain inline import (`9.3.2`, SizeGrid) stays in-section only; universal job shell + 1C later (`16.3` / `16.2.1`). Print-forms `18.3` ≠ data export. Inventory: `docs/architecture/import-export-contours.md`.
+> Decision (`ADR-020`, owner `2026-07-30`): **hybrid**. Catalog file I/O stays on the section toolbar (nomenclature first); thin shared parse/validate lib; domain inline import (`9.3.2`, SizeGrid) stays in-section only; universal job shell + 1C later (`16.3` / `16.2.1`). Print-forms `18.3` ≠ data export. Inventory: `docs/architecture/import-export-contours.md`. **Owner visual OK** (`2026-07-30`) for import drawer + export on `/warehouse/stock` (incl. extended columns; CSV multi-value separator `|` / `sep=,` for Excel RU).
 
 Goal:
 Ship nomenclature import/export as catalog actions on `/warehouse/stock` (and settings card if needed), reusing a shared parse library — not a separate Administration nav module yet.
@@ -322,14 +322,14 @@ Dependencies:
 
 - [x] 4.5.1.1 — Shared parse/validate library (CSV/XLSX helpers, row-error DTO, dry-run envelope) — no section-specific SoT — `v0.9.0`; evidence: `app/schemas/file_io.py`, `app/services/file_io.py`, `tests/test_file_io_4_5_1_1.py`; task `docs/tasks/v0.9.0-stage-4.5.1.1-shared-file-io.md`
 - [x] 4.5.1.2 — Nomenclature import API: map columns → validate → dry-run → commit (service layer; master-directory only) — `v0.9.0`; evidence: `POST /nomenclatures/import`, `services/nomenclature_import.py`, `tests/test_nomenclature_import_4_5_1_2.py`; task `docs/tasks/v0.9.0-stage-4.5.1.2-nomenclature-import-api.md`
-- [x] 4.5.1.3 — UI: Import action on nomenclature workspace toolbar (`/warehouse/stock`) — `v0.9.0`; evidence: `nomenclature-import-drawer.tsx`, `importNomenclaturesFile`, `nomenclature-import-4-5-1-3.test.mjs`; task `docs/tasks/v0.9.0-stage-4.5.1.3-nomenclature-import-ui.md`; **template download** wired with `4.5.2` (`import-template`, same columns as export)
+- [x] 4.5.1.3 — UI: Import action on nomenclature workspace toolbar (`/warehouse/stock`) — `v0.9.0`; evidence: `nomenclature-import-drawer.tsx`, `importNomenclaturesFile`, `nomenclature-import-4-5-1-3.test.mjs`; task `docs/tasks/v0.9.0-stage-4.5.1.3-nomenclature-import-ui.md`; **template download** wired with `4.5.2` (`import-template`, same columns as export); **owner visual OK** (`2026-07-30`)
 - [x] 4.5.1.4 — Regression tests (happy path, row errors, dry-run vs commit) — `v0.9.0`; evidence: `test_nomenclature_import_4_5_1_2.py` + template round-trip in `test_nomenclature_export_4_5_2.py`
 
 #### 4.5.2 — Nomenclature export
 
 - [x] 4.5.2.1 — Nomenclature export API (filter-aware file download) — `v0.9.0`; evidence: `GET /nomenclatures/export`, `services/nomenclature_export.py`, shared `nomenclature_file_columns.py`; task `docs/tasks/v0.9.0-stage-4.5.2-nomenclature-export.md`
-- [x] 4.5.2.2 — UI: Export action on nomenclature workspace toolbar — `v0.9.0`; evidence: toolbar «Экспорт» + import drawer «Шаблон CSV/XLSX»; `nomenclature-export-4-5-2.test.mjs`
-- [x] 4.5.2.3 — Regression tests (columns, filter scope) — `v0.9.0`; evidence: `tests/test_nomenclature_export_4_5_2.py`
+- [x] 4.5.2.2 — UI: Export action on nomenclature workspace toolbar — `v0.9.0`; evidence: toolbar «Экспорт» + import drawer «Шаблон CSV/XLSX»; `nomenclature-export-4-5-2.test.mjs`; **owner visual OK** (`2026-07-30`)
+- [x] 4.5.2.3 — Regression tests (columns, filter scope) — `v0.9.0`; evidence: `tests/test_nomenclature_export_4_5_2.py`; multi-photo CSV shift fixed (`LIST_VALUE_SEPARATOR=|`, `sep=,`, QUOTE_NONNUMERIC)
 
 ### 4.6 — Unified catalog (materials consolidation)
 

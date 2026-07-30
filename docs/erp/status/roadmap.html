@@ -859,7 +859,7 @@
           {
             title: "4.5 — Import and export",
             goal: "ADR-020 hybrid: catalog toolbar I/O + shared parse lib now; domain inline stays in-section; universal jobs later (16.3).",
-            note: "Inventory: import-export-contours.md; print 18.3 ≠ data export",
+            note: "Inventory: import-export-contours.md; print 18.3 ≠ data export; owner visual OK 2026-07-30 (import+export /warehouse/stock; CSV | + sep=,)",
             items: [
               {
                 code: "4.5.0",
@@ -893,7 +893,7 @@
                     code: "4.5.1.3",
                     title: "UI: Import on nomenclature workspace toolbar (/warehouse/stock)",
                     done: true,
-                    note: "v0.9.0; import drawer + template via 4.5.2 import-template; task v0.9.0-stage-4.5.1.3-nomenclature-import-ui.md"
+                    note: "v0.9.0; owner visual OK 2026-07-30; import drawer + template via 4.5.2; task v0.9.0-stage-4.5.1.3-nomenclature-import-ui.md"
                   },
                   {
                     code: "4.5.1.4",
@@ -922,13 +922,13 @@
                     code: "4.5.2.2",
                     title: "UI: Export on nomenclature workspace toolbar",
                     done: true,
-                    note: "v0.9.0; toolbar Export + import drawer template CSV/XLSX; nomenclature-export-4-5-2.test.mjs"
+                    note: "v0.9.0; owner visual OK 2026-07-30; toolbar Export + import drawer template CSV/XLSX; nomenclature-export-4-5-2.test.mjs"
                   },
                   {
                     code: "4.5.2.3",
                     title: "Regression tests (columns, filter scope)",
                     done: true,
-                    note: "v0.9.0; test_nomenclature_export_4_5_2.py"
+                    note: "v0.9.0; test_nomenclature_export_4_5_2.py; multi-photo CSV shift fixed (LIST_VALUE_SEPARATOR=|, sep=,)"
                   }
                 ]
               }

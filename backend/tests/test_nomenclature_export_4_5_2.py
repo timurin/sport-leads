@@ -253,3 +253,57 @@ def test_export_import_extended_fields(client: TestClient, tmp_path, session_fac
         row.get("article") or row.get("product_model_article") for row in models.json()
     ]
     assert "EXP-MODEL-1" in articles
+
+
+def test_export_joins_multiple_photo_paths_without_column_shift(
+    client: TestClient, session_factory
+) -> None:
+    """Regression: `;` inside photo_paths made Excel (RU) shift columns."""
+    import base64
+
+    from app.schemas.media import NomenclatureMediaCreate
+    from app.services.media import create_media
+    from app.services.nomenclature_file_columns import LIST_VALUE_SEPARATOR
+
+    created = client.post(
+        "/nomenclatures",
+        json={
+            "name": "Multi Photo Item",
+            "category": "Forms",
+            "nomenclature_type": "PRODUCT",
+            "unit": "pcs",
+            "base_price": "10.00",
+            "currency": "RUB",
+        },
+    )
+    assert created.status_code == 201, created.text
+    item_id = created.json()["id"]
+
+    png = bytes.fromhex(
+        "89504e470d0a1a0a0000000d49484452000000010000000108060000001f15c4"
+        "890000000a49444154789c63000100000500010d0a2db40000000049454e44ae426082"
+    )
+    with session_factory() as db:
+        for index in range(3):
+            create_media(
+                db,
+                item_id,
+                NomenclatureMediaCreate(
+                    filename=f"r0001_{index + 1}.jpg",
+                    mime_type="image/png",
+                    content_base64=base64.b64encode(png).decode("ascii"),
+                    sort_order=index,
+                    is_primary=index == 0,
+                ),
+            )
+
+    exported = client.get("/nomenclatures/export?format=csv&search=Multi%20Photo")
+    assert exported.status_code == 200, exported.text
+    table = parse_tabular_bytes(exported.content, filename="m.csv")
+    row = next(r for r in table.rows if r["name"] == "Multi Photo Item")
+    paths = (row.get("photo_paths") or "").split(LIST_VALUE_SEPARATOR)
+    assert len(paths) == 3
+    assert row["created_at"]
+    assert "nomenclature-media" not in (row["created_at"] or "")
+    assert (row.get("photo_urls") or "").count("/media/") == 3
+    assert LIST_VALUE_SEPARATOR in (row.get("photo_urls") or "")

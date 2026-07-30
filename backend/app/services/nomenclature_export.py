@@ -15,6 +15,7 @@ from app.services.characteristics import get_nomenclature_values
 from app.services.file_io import render_csv_bytes, render_xlsx_bytes
 from app.services.media import MEDIA_ROOT
 from app.services.nomenclature_file_columns import (
+    LIST_VALUE_SEPARATOR,
     NOMENCLATURE_TEMPLATE_CHAR_CODES,
     NOMENCLATURE_TEMPLATE_SAMPLE_ROWS,
     build_file_headers,
@@ -184,9 +185,9 @@ def _item_to_export_row(
         "base_price": f"{item.base_price:.2f}",
         "currency": item.currency or "RUB",
         "is_active": "true" if item.is_active else "false",
-        "product_model_articles": ";".join(articles),
-        "photo_paths": ";".join(photo_paths),
-        "photo_urls": ";".join(photo_urls),
+        "product_model_articles": LIST_VALUE_SEPARATOR.join(articles),
+        "photo_paths": LIST_VALUE_SEPARATOR.join(photo_paths),
+        "photo_urls": LIST_VALUE_SEPARATOR.join(photo_urls),
         "created_at": item.created_at.isoformat() if item.created_at else "",
         "updated_at": item.updated_at.isoformat() if item.updated_at else "",
         **char_values,

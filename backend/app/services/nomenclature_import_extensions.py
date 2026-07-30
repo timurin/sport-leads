@@ -34,7 +34,10 @@ from app.services.characteristics import (
 )
 from app.services.media import MEDIA_ROOT, list_media
 from app.services.nomenclature import apply_nomenclature_update
-from app.services.nomenclature_file_columns import parse_char_column_header
+from app.services.nomenclature_file_columns import (
+    LIST_VALUE_SEPARATOR,
+    parse_char_column_header,
+)
 
 
 class NomenclatureImportExtensionError(RuntimeError):
@@ -193,7 +196,17 @@ def _has_value(raw: str | None) -> bool:
 
 
 def _split_list(raw: str) -> list[str]:
-    return [part.strip() for part in raw.replace(",", ";").split(";") if part.strip()]
+    """Split multi-value cells; `|` is canonical, `;`/`,` accepted for older files."""
+    text = str(raw).strip()
+    if not text:
+        return []
+    if LIST_VALUE_SEPARATOR in text:
+        parts = text.split(LIST_VALUE_SEPARATOR)
+    elif ";" in text:
+        parts = text.split(";")
+    else:
+        parts = text.split(",")
+    return [part.strip() for part in parts if part.strip()]
 
 
 def _resolve_product_type(db: Session, name: str) -> ProductType:

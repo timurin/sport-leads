@@ -145,3 +145,28 @@ def test_remap_row() -> None:
 def test_empty_file_raises() -> None:
     with pytest.raises(FileIoParseError):
         parse_tabular_bytes(b"", filename="a.csv")
+
+
+def test_render_csv_skips_sep_hint_on_reimport_and_keeps_pipe_lists() -> None:
+    from app.services.file_io import render_csv_bytes
+
+    payload = render_csv_bytes(
+        ["name", "photo_paths", "created_at"],
+        [
+            {
+                "name": "Item",
+                "photo_paths": (
+                    r"D:\a\one.jpg|D:\a\two.jpg|D:\a\three.jpg"
+                ),
+                "created_at": "2024-07-23T14:10:29+02:00",
+            }
+        ],
+    )
+    text = payload.decode("utf-8-sig")
+    assert text.startswith("sep=,")
+    table = parse_tabular_bytes(payload, filename="e.csv")
+    assert table.headers == ["name", "photo_paths", "created_at"]
+    assert table.rows[0]["photo_paths"] == r"D:\a\one.jpg|D:\a\two.jpg|D:\a\three.jpg"
+    assert table.rows[0]["created_at"] == "2024-07-23T14:10:29+02:00"
+    # Excel-RU style mis-parse would put second path into created_at — guard against that.
+    assert "two.jpg" not in (table.rows[0]["created_at"] or "")

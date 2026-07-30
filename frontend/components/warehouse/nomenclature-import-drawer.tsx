@@ -110,8 +110,8 @@ export function NomenclatureImportDrawer({
               Колонки совпадают с экспортом: карточка (name, short_name,
               description, category, category_code, nomenclature_type,
               product_type_name, unit, storage_unit_code, base_price, currency,
-              is_active), модели (product_model_articles через «;»), фото
-              (photo_paths — локальные пути через «;»), характеристики
+              is_active), модели (product_model_articles через «|»), фото
+              (photo_paths — локальные пути через «|»), характеристики
               (колонки char:код). category_path / photo_urls / даты — только
               для чтения. В шаблоне — две примерные строки.
             </p>

@@ -152,9 +152,17 @@ def render_csv_bytes(
     headers: Sequence[str],
     rows: Sequence[Mapping[str, object | None]],
 ) -> bytes:
-    """UTF-8 CSV with BOM for Excel-friendly open."""
+    """UTF-8 CSV with BOM for Excel-friendly open.
+
+    Quote all non-empty fields so Excel (RU locale) does not re-split cells
+    that contain `;` when it auto-detects semicolon as the column delimiter.
+    """
     buffer = io.StringIO()
-    writer = csv.writer(buffer, lineterminator="\n")
+    writer = csv.writer(
+        buffer,
+        lineterminator="\n",
+        quoting=csv.QUOTE_NONNUMERIC,
+    )
     writer.writerow(list(headers))
     for row in rows:
         writer.writerow(
@@ -165,7 +173,8 @@ def render_csv_bytes(
                 for header in headers
             ]
         )
-    return ("\ufeff" + buffer.getvalue()).encode("utf-8")
+    # Excel tip: honor comma delimiter even in semicolon-default locales.
+    return ("\ufeffsep=,\n" + buffer.getvalue()).encode("utf-8")
 
 
 def render_xlsx_bytes(
@@ -197,6 +206,14 @@ def render_xlsx_bytes(
 
 def _parse_csv(data: bytes) -> ParsedTable:
     text = _decode_text(data)
+    # Skip Excel locale hints like "sep=," / "sep=;" (may appear after BOM).
+    lines = text.splitlines()
+    while lines and lines[0].strip().lower().startswith("sep="):
+        lines.pop(0)
+    text = "\n".join(lines)
+    if not text.strip():
+        raise FileIoParseError("Empty file")
+
     sample = text[:4096]
     try:
         dialect = csv.Sniffer().sniff(sample, delimiters=",;\t")

@@ -8,6 +8,10 @@ from __future__ import annotations
 
 CHAR_COLUMN_PREFIX = "char:"
 
+# Multi-value cells (photos, model articles). Prefer `|` — Excel (RU) treats `;`
+# as CSV column delimiter and shifts unquoted cells across columns.
+LIST_VALUE_SEPARATOR = "|"
+
 # Fixed columns (core card + links). Dynamic char:* appended on export.
 NOMENCLATURE_FILE_HEADERS: tuple[str, ...] = (
     "id",

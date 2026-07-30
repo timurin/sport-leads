@@ -24,6 +24,7 @@ test("warehouse stock wires nomenclature export + import template", () => {
   assert.ok(drawer.includes("product_model_articles"));
   assert.ok(drawer.includes("photo_paths"));
   assert.ok(drawer.includes("char:код"));
+  assert.ok(drawer.includes("через «|»"));
 
   const actions = readFileSync(
     join(
