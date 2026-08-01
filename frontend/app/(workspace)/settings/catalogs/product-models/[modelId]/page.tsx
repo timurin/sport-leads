@@ -12,8 +12,11 @@ import {
   parseProductModelRouteId,
   toProductModelVersionViews,
 } from "@/lib/product-models";
+import { getProductModelRoutings } from "@/lib/product-model-routings";
+import { getProductionStages } from "@/lib/production-stages";
 import { getShopRoutings } from "@/lib/shop-routings";
 import { getSewingOperations } from "@/lib/sewing-operations";
+import { getTechOperations } from "@/lib/tech-operations";
 import { getProductTypes } from "@/lib/product-types";
 import { getSizeGrids } from "@/lib/size-grids";
 
@@ -53,6 +56,9 @@ export default async function ProductModelRoute({
     sizeGrids,
     productTypes,
     shopRoutings,
+    routingLinks,
+    productionStages,
+    techOperations,
   ] = await Promise.all([
     getProductModelVersions(id),
     getProductModelMedia(id),
@@ -61,7 +67,10 @@ export default async function ProductModelRoute({
     getSewingOperations({ limit: 500 }),
     getSizeGrids(),
     getProductTypes(),
-    getShopRoutings({ active_only: true, limit: 500 }),
+    getShopRoutings({ limit: 500 }),
+    getProductModelRoutings(id),
+    getProductionStages({ active_only: true, limit: 500 }),
+    getTechOperations({ active_only: true, limit: 500 }),
   ]);
 
   return (
@@ -75,6 +84,9 @@ export default async function ProductModelRoute({
       sizeGrids={sizeGrids}
       productTypes={productTypes}
       shopRoutings={shopRoutings}
+      routingLinks={routingLinks}
+      productionStages={productionStages}
+      techOperations={techOperations}
       initialEditing={initialEditing}
     />
   );

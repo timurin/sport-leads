@@ -42,11 +42,19 @@ def list_work_centers(
     db: Session,
     search: str | None = None,
     active_only: bool = False,
+    production_stage_id: int | None = None,
+    production_stage_code: str | None = None,
     limit: int = 100,
     offset: int = 0,
 ) -> list[WorkCenter]:
     return repo.list_work_centers(
-        db, search=search, active_only=active_only, limit=limit, offset=offset
+        db,
+        search=search,
+        active_only=active_only,
+        production_stage_id=production_stage_id,
+        production_stage_code=production_stage_code,
+        limit=limit,
+        offset=offset,
     )
 
 

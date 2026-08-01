@@ -31,7 +31,7 @@ const preview = {
       snapshot_name: "Доставка",
       quantity: "1",
       eligible: false,
-      skip_reason: "not_product",
+      skip_reason: "nomenclature_type_not_allowed:service",
       existing_card_id: null,
       existing_status: null,
       would_create: false,

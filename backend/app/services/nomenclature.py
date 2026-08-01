@@ -14,6 +14,10 @@ from app.schemas.nomenclature import (
     UnitOfMeasureCreate,
     UnitOfMeasureUpdate,
 )
+from app.services.nomenclature_history import (
+    append_nomenclature_history,
+    list_nomenclature_history,
+)
 
 
 class NomenclatureNotFoundError(RuntimeError):
@@ -252,6 +256,8 @@ def build_nomenclature_entity(db: Session, payload: NomenclatureCreate) -> Nomen
 def create_nomenclature(db: Session, payload: NomenclatureCreate) -> Nomenclature:
     item = build_nomenclature_entity(db, payload)
     db.add(item)
+    db.flush()
+    append_nomenclature_history(db, item.id, "Карточка создана")
     try:
         db.commit()
     except IntegrityError as error:
@@ -307,6 +313,10 @@ def copy_nomenclature(db: Session, nomenclature_id: int) -> Nomenclature:
         is_active=True,
     )
     db.add(item)
+    db.flush()
+    append_nomenclature_history(
+        db, item.id, f"Карточка скопирована из id {nomenclature_id}"
+    )
     try:
         db.commit()
     except IntegrityError as error:
@@ -365,6 +375,8 @@ def apply_nomenclature_update(
 
     for field_name, value in changes.items():
         setattr(item, field_name, value)
+    if changes:
+        append_nomenclature_history(db, item.id, _history_action_for_update(changes))
     if not commit:
         db.flush()
         return item
@@ -380,3 +392,17 @@ def apply_nomenclature_update(
 def update_nomenclature(db: Session, nomenclature_id: int, payload: NomenclatureUpdate) -> Nomenclature:
     item = get_nomenclature(db, nomenclature_id)
     return apply_nomenclature_update(db, item, payload, commit=True)
+
+
+def get_nomenclature_history(db: Session, nomenclature_id: int):
+    get_nomenclature(db, nomenclature_id)
+    return list_nomenclature_history(db, nomenclature_id)
+
+
+def _history_action_for_update(changes: dict) -> str:
+    if set(changes.keys()) == {"is_active"}:
+        if changes["is_active"] is False:
+            return "Карточка архивирована"
+        return "Карточка восстановлена из архива"
+    summary = ", ".join(sorted(changes.keys()))
+    return f"Обновлены поля: {summary}"

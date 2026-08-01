@@ -144,7 +144,7 @@ def test_composition_replace_apply_spec_and_refresh_model() -> None:
                             "line_kind": "material",
                             "nomenclature_id": ids["goods"],
                             "snapshot_name": "Коробка",
-                            "quantity": "1",
+                            "planned_qty": "1",
                             "unit": "шт",
                         }
                     ]
@@ -167,7 +167,7 @@ def test_composition_replace_apply_spec_and_refresh_model() -> None:
                             "line_kind": "material",
                             "nomenclature_id": ids["material"],
                             "snapshot_name": "Ткань сублимация",
-                            "quantity": "1.250",
+                            "planned_qty": "1.250",
                             "unit": "м",
                         },
                     ]
@@ -188,7 +188,7 @@ def test_composition_replace_apply_spec_and_refresh_model() -> None:
                             "line_kind": "material",
                             "nomenclature_id": ids["material"],
                             "snapshot_name": "Ткань сублимация",
-                            "quantity": "2.000",
+                            "planned_qty": "2.000",
                             "unit": "м",
                         },
                         {
@@ -207,7 +207,7 @@ def test_composition_replace_apply_spec_and_refresh_model() -> None:
                 "material",
                 "note",
             ]
-            assert body["composition_lines"][0]["quantity"] == "2.000"
+            assert body["composition_lines"][0]["planned_qty"] == "2.000"
 
             # Refresh model re-adds pattern line from ProductModel.patterns_path
             refreshed = client.post(

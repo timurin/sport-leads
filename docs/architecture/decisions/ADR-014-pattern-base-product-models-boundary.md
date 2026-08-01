@@ -30,8 +30,10 @@
 | **SewingOperation** | Плоский справочник операций пошива: `name` + `cost` | Stage 6 (`6.3`) |
 | **AssemblyVariant** | Именованный пакет сборки/отделки модели («С отстрочкой», …) | Stage 6 (`6.1.12`) |
 | **AssemblyOperationLine** | Упорядоченная строка варианта: операция + стоимость | Stage 6 (`6.1.12`) |
+| **ProductModelRoutingLink** | Whitelist модели ↔ существующий `ShopRoutingTemplate` (ordered; no clone) | Stage 6 (`6.1.17`); тело маршрута = Stage 8 |
+| **ProductModelOperationNorm** | Plan hint: `norm_qty_per_item` + unit на link+цех/op | Stage 6 (`6.1.17`); факт qty — ТК / Stage 11 |
 | **NomenclatureVariant** | Коммерческий SKU (характеристики) | ADR-010 — **не** модель лекал |
-| **ShopRouting / work center** | Цеховой маршрут исполнения | Stage 8 — **не** менеджерский пакет сборки |
+| **ShopRouting / work center** | Цеховой маршрут исполнения (master шаблонов) | Stage 8 — **не** менеджерский пакет сборки |
 
 **Плоское правило:** `1 ProductModel = 1 size_type (men \| women \| kids) = 1 article`.
 
@@ -42,6 +44,7 @@
 - `ProductModel` → ровно одна `SizeGrid` (целевая после `6.2.7`, согласованная с `size_type`);
 - `SewingOperation` — **глобальный** плоский каталог (не 1:1 с моделью);
 - ~~`ProductModel` → `PatternSet`~~ — **отменено**.
+- **Amend `2026-07-27`:** `ProductModel` → N `ShopRoutingTemplate` via whitelist links (`6.1.17`); `default_routing_template_id` ∈ whitelist when set. **Operation material norms** live on model+routing (+ stage/op) as plan hints — not a second routing master and not Stage 6 assembly cost lines.
 
 `AssemblyVariant[]` принадлежит модели (1:N). Итог варианта = Σ `AssemblyOperationLine.cost` (`Decimal` / `Numeric`).
 
@@ -53,8 +56,9 @@
 | `AssemblyVariant` | `NomenclatureVariant` (ADR-010) |
 | `AssemblyOperationLine` (менеджерский пакет) | Stage 8 shop routing / work centers / факт пошива |
 | `SewingOperation` | Строка варианта (MVP inline) или цеховая операция Stage 8 |
+| `ProductModelRoutingLink` / norms | Clone of `ShopRoutingTemplate` stage lines; hard BOM×qty; TC `fact_qty` |
 
-Параллельных master-справочников для модели / вариантов сборки не создаём. `SewingOperation` — единственный shared catalog операций пошива в Stage 6.
+Параллельных master-справочников для модели / вариантов сборки не создаём. `SewingOperation` — единственный shared catalog операций пошива в Stage 6. Маршруты — единственный master в Stage 8; модель только whitelist + plan hints.
 
 ### 3. PRODUCT «модели изделий» (whitelist)
 
@@ -83,15 +87,16 @@ Nomenclature (PRODUCT)
   → ProductModel ∈ available-models whitelist
       → autofill: size_type, model article
       → AssemblyVariant ∈ variants of that model
+      → ShopRoutingTemplate ∈ model routing whitelist (`6.1.17` / `3.2.7`)
 ```
 
 Дальше (другие stages):
 
 - **Stage 7:** при формировании спецификации **копируются** строки операций/стоимостей из snapshot выбранного `AssemblyVariant` позиции (не live-edit master модели).
-- **Stage 8:** цеховые маршруты, участки, нормы времени исполнения — отдельный контур; не место заново изобретать менеджерские пакеты сборки.
-- **Stage 9:** техническая карта — **ADR-016** (принято `2026-07-26`); ADR-015 = unified characteristics.
+- **Stage 8:** цеховые маршруты, участки, нормы времени исполнения — отдельный контур; не место заново изобретать менеджерские пакеты сборки. Master маршрутов глобальный; **допустимые пресеты модели** — whitelist `6.1.17`.
+- **Stage 9:** техническая карта — **ADR-016** (принято `2026-07-26`); amend plan/fact materials `9.3.4` (`2026-07-27`). ADR-015 = unified characteristics.
 
-`SalesOrderItem` хранит nullable связи + denormalized snapshot (как у номенклатуры/вариантов): model id/article/`size_type`; variant id/name/total; при необходимости — снимок строк операций. Правки справочника не переписывают старые заказы и уже сформированные спецификации.
+`SalesOrderItem` хранит nullable связи + denormalized snapshot (как у номенклатуры/вариантов): model id/article/`size_type`; variant id/name/total; **routing id/name (`3.2.7`)**; при необходимости — снимок строк операций сборки. Правки справочника не переписывают старые заказы и уже сформированные спецификации.
 
 `NomenclatureVariant` (цвет и т.п.) остаётся **отдельным** шагом выбора и не заменяет модель лекал.
 
@@ -103,11 +108,15 @@ Nomenclature (PRODUCT)
 | **Не пуст** | `product_model_id` **обязателен** и ∈ whitelist. `assembly_variant_id` обязателен, если у выбранной модели есть ≥1 активный вариант; иначе опционален до настройки вариантов. |
 | Любое | Модель вне whitelist и вариант чужой модели **отклоняются API** (не только UI). |
 
+**Amend `2026-07-27` (`3.2.7.1`):** политика whitelist маршрутов модели зеркалит варианты сборки — при ≥1 активном `ProductModelRoutingLink` поле `routing_template_id` **обязательно** и ∈ whitelist; чужой routing отклоняется. Детали снимка: `docs/architecture/order-item-model-assembly.md` §4.5 / §5.
+
 Ручные позиции без номенклатуры остаются вне этого контура (как сейчас).
 
 ### 6. Строки операций варианта vs справочник операций пошива
 
 **Справочник (`6.3`):** `SewingOperation` — плоский каталог (`name` unique, `cost ≥ 0`). UI: `/settings/catalogs/sewing_operations` (`DS-PT-02-CATALOG`).
+
+**Amend `2026-07-31` (`6.3.10`):** optional M:N link to sewing-shop `WorkCenter` (цех Пошив / `code=sewing`) for catalog compatibility. Does **not** replace Stage 8 routing / TC planned equipment (`11.1.2`). Domain: `sewing-operations-domain.md`.
 
 **Вариант сборки (`6.1.12` + `6.3.6`):** группа выбранных операций пошива. Create/add — copy-on-pick: в `AssemblyOperationLine` пишутся snapshot `operation_name` + `cost` и nullable `sewing_operation_id`. Итог варианта = Σ строк. Правки каталога не переписывают уже сохранённые варианты / заказы.
 
@@ -124,8 +133,9 @@ Nomenclature (PRODUCT)
 - Settings: модели / размерные сетки / **операции пошива** (`6.0.2`, поправка nav `2026-07-22`).
 - Карточка PRODUCT получает блок «Доступные модели лекал» (`6.1.11`).
 - Карточка модели получает блок вариантов сборки (`6.1.12`).
+- **Amend `2026-07-27`:** карточка модели получает блок whitelist маршрутов + нормы операций (`6.1.17`); заказ выбирает routing (`3.2.7`).
 - Stage 8 не дублирует менеджерские assembly packages.
 - Планируемый ADR технических карт — **ADR-016** (принято `2026-07-26`; ADR-015 = unified characteristics catalog).
 
 **Связанные решения:** ADR-004, ADR-006, ADR-010, ADR-012.  
-**Evidence:** `docs/architecture/sewing-operations-domain.md` (`6.3.1`); `docs/roadmap/roadmap.md` § `6.3`.
+**Evidence:** `docs/architecture/sewing-operations-domain.md` (`6.3.1`); `docs/architecture/product-model-domain.md` §7 (`6.1.17.1`); `docs/roadmap/roadmap.md` § `6.3` / `6.1.17`.

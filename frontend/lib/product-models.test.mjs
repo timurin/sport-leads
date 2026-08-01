@@ -287,6 +287,13 @@ test("sumSelectedSewingOperationCosts totals selected catalog rows", () => {
     ]),
     150.5,
   );
+  assert.equal(
+    sumSelectedSewingOperationCosts([
+      { cost: "100.00", quantity_per_item: 2 },
+      { cost: "50,50", quantity_per_item: 1 },
+    ]),
+    250.5,
+  );
   assert.equal(sumSelectedSewingOperationCosts([]), 0);
 });
 

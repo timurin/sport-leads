@@ -145,6 +145,16 @@ class NomenclatureRead(NomenclatureBase):
     updated_at: datetime
 
 
+class NomenclatureHistoryRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    nomenclature_id: int
+    actor: str
+    action: str
+    created_at: datetime
+
+
 class NomenclatureImportResult(BaseModel):
     """Catalog import dry-run / commit response (4.5.1.2 / ADR-020)."""
 

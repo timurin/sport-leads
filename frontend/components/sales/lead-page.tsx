@@ -33,6 +33,21 @@ import { getNotePermissions, isInternalNote } from "@/lib/sales/lead-activity";
 import { formatCurrency } from "@/lib/sales/lead-commercial";
 import type { LeadDetails } from "@/lib/sales/lead-details";
 import { convertLead, rejectLead } from "@/app/(workspace)/sales/leads/[leadId]/lead-header-actions";
+import {
+  completeLeadTask as completeLeadTaskAction,
+  deleteLeadTask as deleteLeadTaskAction,
+  reopenLeadTask as reopenLeadTaskAction,
+  rescheduleLeadTask as rescheduleLeadTaskAction,
+  saveLeadTask as saveLeadTaskAction,
+} from "@/app/(workspace)/sales/leads/[leadId]/lead-task-actions";
+import {
+  createLeadNote as createLeadNoteAction,
+  deleteLeadNote as deleteLeadNoteAction,
+  toggleLeadNotePin as toggleLeadNotePinAction,
+  updateLeadNote as updateLeadNoteAction,
+} from "@/app/(workspace)/sales/leads/[leadId]/lead-note-actions";
+import { sendLeadMessage as sendLeadMessageAction } from "@/app/(workspace)/sales/leads/[leadId]/lead-message-actions";
+import { leadMessageToActivity } from "@/lib/sales/lead-message-api";
 import type { LeadFinalActionId } from "@/lib/sales/lead-final-actions";
 import type { LeadStageConfig } from "@/lib/sales/lead-stages";
 import { formatAttachmentSize, leadMessageChannelLabels } from "@/lib/sales/lead-message";
@@ -77,6 +92,8 @@ function cloneLead(lead: LeadDetails): LeadDetails {
       assignedTo: { ...task.assignedTo },
       createdBy: { ...task.createdBy },
     })),
+    taskManagers: lead.taskManagers.map((manager) => ({ ...manager })),
+    currentActor: { ...lead.currentActor },
     messages: lead.messages.map((message) => ({
       ...message,
       author: message.author ? { ...message.author } : undefined,
@@ -129,7 +146,56 @@ export function LeadPage({
   const [taskDialog, setTaskDialog] = useState<TaskDialogState>(null);
   const [completionMode, setCompletionMode] = useState<LeadCompletionMode | null>(null);
   const [taskFilter, setTaskFilter] = useState<LeadTaskFilter>("open");
+  const [taskActionError, setTaskActionError] = useState("");
+  const [noteActionError, setNoteActionError] = useState("");
   const taskDialogTriggerRef = useRef<HTMLElement | null>(null);
+  const taskManagers = lead.taskManagers.length > 0 ? lead.taskManagers : salesManagers;
+  const currentActor = lead.currentActor ?? mockCurrentUser;
+  const taskPersistent = lead.dataOrigin === "api";
+  const noteManagers = taskPersistent ? taskManagers : salesManagers;
+
+  function applyPersistedActivities(activities: LeadActivity[]) {
+    const occurredAt = activities.reduce((latest, activity) => {
+      const stamp = Date.parse(activity.occurredAt);
+      const latestStamp = Date.parse(latest);
+      if (Number.isNaN(stamp)) return latest;
+      if (Number.isNaN(latestStamp) || stamp > latestStamp) return activity.occurredAt;
+      return latest;
+    }, new Date().toISOString());
+    setLead((current) => ({
+      ...current,
+      activities: activities.map((activity) => ({
+        ...activity,
+        author: activity.author ? { ...activity.author } : undefined,
+        metadata: activity.metadata ? { ...activity.metadata } : undefined,
+        attachments: activity.attachments?.map((attachment) => ({ ...attachment })),
+        mentionedUserIds: activity.mentionedUserIds ? [...activity.mentionedUserIds] : undefined,
+      })),
+      lastActivityAt: occurredAt,
+      taskReferenceAt: occurredAt,
+    }));
+  }
+
+  function applyPersistedTasks(tasks: LeadTask[], activities: LeadActivity[]) {
+    const occurredAt = activities.at(-1)?.occurredAt ?? new Date().toISOString();
+    setLead((current) => ({
+      ...current,
+      tasks: tasks.map((task) => ({
+        ...task,
+        assignedTo: { ...task.assignedTo },
+        createdBy: { ...task.createdBy },
+      })),
+      activities: activities.map((activity) => ({
+        ...activity,
+        author: activity.author ? { ...activity.author } : undefined,
+        metadata: activity.metadata ? { ...activity.metadata } : undefined,
+        attachments: activity.attachments?.map((attachment) => ({ ...attachment })),
+        mentionedUserIds: activity.mentionedUserIds ? [...activity.mentionedUserIds] : undefined,
+      })),
+      lastActivityAt: occurredAt,
+      taskReferenceAt: occurredAt,
+    }));
+  }
 
   function updateCustomer(customer: LeadDetails["customer"]) {
     const primaryContact = customer.contacts.find((contact) => contact.isPrimary);
@@ -201,12 +267,23 @@ export function LeadPage({
   }
 
   function addComment(text: string, mentionedUserIds: string[]) {
+    if (taskPersistent) {
+      void createLeadNoteAction(lead.id, text, mentionedUserIds, currentActor.id).then((result) => {
+        if (!result.ok) {
+          setNoteActionError(result.message);
+          return;
+        }
+        applyPersistedActivities(result.activities);
+        setNoteActionError("");
+      });
+      return;
+    }
     const occurredAt = new Date().toISOString();
     const activity: LeadActivity = {
       id: createLocalActivityId(),
       type: "comment_added",
       occurredAt,
-      author: { id: mockCurrentUser.id, name: mockCurrentUser.name },
+      author: { id: currentActor.id, name: currentActor.name },
       title: "Добавлена внутренняя заметка",
       description: text,
       channel: "internal",
@@ -221,10 +298,21 @@ export function LeadPage({
   }
 
   function editNote(noteId: string, text: string, mentionedUserIds: string[]) {
+    if (taskPersistent) {
+      void updateLeadNoteAction(lead.id, noteId, text, mentionedUserIds).then((result) => {
+        if (!result.ok) {
+          setNoteActionError(result.message);
+          return;
+        }
+        applyPersistedActivities(result.activities);
+        setNoteActionError("");
+      });
+      return;
+    }
     const updatedAt = new Date().toISOString();
     setLead((current) => {
       const note = current.activities.find((activity) => activity.id === noteId);
-      if (!note || !getNotePermissions(note, mockCurrentUser.id).canEdit) {
+      if (!note || !getNotePermissions(note, currentActor.id).canEdit) {
         return current;
       }
       return {
@@ -238,9 +326,20 @@ export function LeadPage({
   }
 
   function deleteNote(noteId: string) {
+    if (taskPersistent) {
+      void deleteLeadNoteAction(lead.id, noteId).then((result) => {
+        if (!result.ok) {
+          setNoteActionError(result.message);
+          return;
+        }
+        applyPersistedActivities(result.activities);
+        setNoteActionError("");
+      });
+      return;
+    }
     setLead((current) => {
       const note = current.activities.find((activity) => activity.id === noteId);
-      if (!note || !getNotePermissions(note, mockCurrentUser.id).canDelete) {
+      if (!note || !getNotePermissions(note, currentActor.id).canDelete) {
         return current;
       }
       return { ...current, activities: current.activities.filter((activity) => activity.id !== noteId) };
@@ -248,6 +347,17 @@ export function LeadPage({
   }
 
   function toggleNotePin(noteId: string) {
+    if (taskPersistent) {
+      void toggleLeadNotePinAction(lead.id, noteId).then((result) => {
+        if (!result.ok) {
+          setNoteActionError(result.message);
+          return;
+        }
+        applyPersistedActivities(result.activities);
+        setNoteActionError("");
+      });
+      return;
+    }
     setLead((current) => ({
       ...current,
       activities: current.activities.map((activity) => activity.id === noteId && isInternalNote(activity)
@@ -282,9 +392,25 @@ export function LeadPage({
     };
   }
 
-  function saveTask(existingTask: LeadTask | null, draft: LeadTaskDraft) {
-    const assignedTo = salesManagers.find((manager) => manager.id === draft.assignedToId);
-    if (!assignedTo) return;
+  async function saveTask(existingTask: LeadTask | null, draft: LeadTaskDraft): Promise<string | null> {
+    if (taskPersistent) {
+      const result = await saveLeadTaskAction(lead.id, existingTask?.id ?? null, {
+        title: draft.title,
+        type: draft.type,
+        priority: draft.priority,
+        description: draft.description,
+        dueAt: draft.dueAt,
+        assignedToId: draft.assignedToId,
+      });
+      if (!result.ok) return result.message;
+      applyPersistedTasks(result.tasks, result.activities);
+      setTaskActionError("");
+      closeTaskDialog();
+      return null;
+    }
+
+    const assignedTo = taskManagers.find((manager) => manager.id === draft.assignedToId);
+    if (!assignedTo) return "Выберите исполнителя.";
     const occurredAt = new Date().toISOString();
     const activityId = createLocalActivityId();
     const newTaskId = existingTask ? null : createLocalTaskId();
@@ -322,9 +448,18 @@ export function LeadPage({
       return { ...current, tasks: [...current.tasks, task], activities: [activity, ...current.activities], lastActivityAt: occurredAt, taskReferenceAt: occurredAt };
     });
     closeTaskDialog();
+    return null;
   }
 
-  function completeTask(taskId: string, result?: string) {
+  async function completeTask(taskId: string, result?: string): Promise<string | null> {
+    if (taskPersistent) {
+      const response = await completeLeadTaskAction(lead.id, taskId, result);
+      if (!response.ok) return response.message;
+      applyPersistedTasks(response.tasks, response.activities);
+      setTaskActionError("");
+      closeTaskDialog();
+      return null;
+    }
     const occurredAt = new Date().toISOString();
     const activityId = createLocalActivityId();
     setLead((current) => {
@@ -340,9 +475,20 @@ export function LeadPage({
       };
     });
     closeTaskDialog();
+    return null;
   }
 
-  function reopenTask(task: LeadTask) {
+  async function reopenTask(task: LeadTask) {
+    if (taskPersistent) {
+      const response = await reopenLeadTaskAction(lead.id, task.id);
+      if (!response.ok) {
+        setTaskActionError(response.message);
+        return;
+      }
+      applyPersistedTasks(response.tasks, response.activities);
+      setTaskActionError("");
+      return;
+    }
     const occurredAt = new Date().toISOString();
     const activity = taskActivity(createLocalActivityId(), "task_updated", `Задача «${task.title}» открыта повторно`, "Результат предыдущего выполнения очищен.", occurredAt);
     setLead((current) => ({
@@ -354,9 +500,19 @@ export function LeadPage({
     }));
   }
 
-  function rescheduleTask(task: LeadTask, days: number) {
+  async function rescheduleTask(task: LeadTask, days: number) {
     const occurredAt = new Date().toISOString();
     const dueAt = rescheduleTaskDueAt(task.dueAt, occurredAt, days);
+    if (taskPersistent) {
+      const response = await rescheduleLeadTaskAction(lead.id, task.id, dueAt);
+      if (!response.ok) {
+        setTaskActionError(response.message);
+        return;
+      }
+      applyPersistedTasks(response.tasks, response.activities);
+      setTaskActionError("");
+      return;
+    }
     const activity = taskActivity(createLocalActivityId(), "task_updated", `Срок задачи «${task.title}» перенесён`, `Новый срок: ${formatTaskDate(dueAt)}.`, occurredAt);
     setLead((current) => ({
       ...current,
@@ -367,12 +523,48 @@ export function LeadPage({
     }));
   }
 
-  function deleteTask(taskId: string) {
+  async function deleteTask(taskId: string): Promise<string | null> {
+    if (taskPersistent) {
+      const response = await deleteLeadTaskAction(lead.id, taskId);
+      if (!response.ok) return response.message;
+      applyPersistedTasks(response.tasks, response.activities);
+      setTaskActionError("");
+      closeTaskDialog();
+      return null;
+    }
     setLead((current) => ({ ...current, tasks: current.tasks.filter((task) => task.id !== taskId) }));
     closeTaskDialog();
+    return null;
   }
 
-  function sendMessage(draft: LeadMessageDraft) {
+  async function sendMessage(draft: LeadMessageDraft): Promise<string | null> {
+    if (taskPersistent) {
+      const result = await sendLeadMessageAction(lead.id, {
+        channel: draft.channel,
+        text: draft.text,
+        recipientName: draft.recipientName,
+        authorId: currentActor.id,
+        attachments: draft.attachments,
+      });
+      if (!result.ok) return result.message;
+      const messageActivities = result.messages.map(leadMessageToActivity);
+      const occurredAt = result.messages.at(-1)?.sentAt ?? new Date().toISOString();
+      setLead((current) => ({
+        ...current,
+        messages: result.messages.map((message) => ({
+          ...message,
+          author: message.author ? { ...message.author } : undefined,
+          attachments: message.attachments?.map((attachment) => ({ ...attachment })),
+        })),
+        activities: [
+          ...current.activities.filter((activity) => !activity.id.startsWith("message-")),
+          ...messageActivities,
+        ],
+        lastActivityAt: occurredAt,
+      }));
+      return null;
+    }
+
     const sentAt = new Date().toISOString();
     const messageId = createLocalMessageId();
     const message: LeadMessage = {
@@ -381,7 +573,7 @@ export function LeadPage({
       channel: draft.channel,
       direction: "outgoing",
       text: draft.text,
-      author: { ...mockCurrentUser },
+      author: { ...currentActor },
       recipientName: draft.recipientName,
       sentAt,
       status: "sent",
@@ -392,7 +584,7 @@ export function LeadPage({
       id: createLocalActivityId(),
       type: draft.channel === "email" ? "email_sent" : "outgoing_message",
       occurredAt: sentAt,
-      author: { id: mockCurrentUser.id, name: mockCurrentUser.name },
+      author: { id: currentActor.id, name: currentActor.name },
       title: draft.channel === "email" ? "Отправлено письмо клиенту" : "Отправлено сообщение клиенту",
       description: draft.text || "Сообщение содержит вложение.",
       direction: "outgoing",
@@ -411,6 +603,7 @@ export function LeadPage({
       activities: [activity, ...current.activities],
       lastActivityAt: sentAt,
     }));
+    return null;
   }
 
   function openWorkspaceSection(tab: WorkspaceTab) {
@@ -618,15 +811,48 @@ export function LeadPage({
             </nav>
 
             <div className="lead-bottom-grid grid min-w-0 items-start gap-3">
-              <div id="lead-workspace-panel-history" className={`lead-history-card min-w-0 rounded-portal-lg border border-portal-border bg-portal-surface shadow-portal-card ${workspaceTab === "history" ? "block" : "hidden"} lg:block`}><LeadActivityTimeline embedded compact mode="history" activities={lead.activities} currentUser={mockCurrentUser} managers={salesManagers} onAddComment={addComment} onEditNote={editNote} onDeleteNote={deleteNote} onTogglePin={toggleNotePin} /></div>
-              <div id="lead-workspace-panel-tasks" className={`lead-tasks-card min-w-0 rounded-portal-lg border border-portal-border bg-portal-surface shadow-portal-card ${workspaceTab === "tasks" ? "block" : "hidden"} lg:block`}><LeadTasks embedded compact tasks={lead.tasks} referenceAt={lead.taskReferenceAt} filter={taskFilter} onFilterChange={setTaskFilter} onAdd={(trigger) => openTaskDialog({ kind: "edit", task: null }, trigger)} onEdit={(task, trigger) => openTaskDialog({ kind: "edit", task }, trigger)} onComplete={(task, trigger) => openTaskDialog({ kind: "complete", task }, trigger)} onDelete={(task, trigger) => openTaskDialog({ kind: "delete", task }, trigger)} onReopen={reopenTask} onReschedule={rescheduleTask} /></div>
-              <div id="lead-workspace-panel-notes" className={`lead-notes-card min-w-0 rounded-portal-lg border border-portal-border bg-portal-surface shadow-portal-card ${workspaceTab === "notes" ? "block" : "hidden"} lg:block`}><LeadActivityTimeline embedded compact mode="notes" activities={lead.activities} currentUser={mockCurrentUser} managers={salesManagers} onAddComment={addComment} onEditNote={editNote} onDeleteNote={deleteNote} onTogglePin={toggleNotePin} /></div>
+              <div id="lead-workspace-panel-history" className={`lead-history-card min-w-0 rounded-portal-lg border border-portal-border bg-portal-surface shadow-portal-card ${workspaceTab === "history" ? "block" : "hidden"} lg:block`}>
+                <LeadActivityTimeline
+                  embedded
+                  compact
+                  mode="history"
+                  activities={lead.activities}
+                  currentUser={currentActor}
+                  managers={noteManagers}
+                  allowAllNoteActions={taskPersistent}
+                  onAddComment={addComment}
+                  onEditNote={editNote}
+                  onDeleteNote={deleteNote}
+                  onTogglePin={toggleNotePin}
+                />
+              </div>
+              <div id="lead-workspace-panel-tasks" className={`lead-tasks-card min-w-0 rounded-portal-lg border border-portal-border bg-portal-surface shadow-portal-card ${workspaceTab === "tasks" ? "block" : "hidden"} lg:block`}>
+                {taskActionError ? <p className="border-b border-red-100 bg-red-50 px-4 py-2 text-sm text-red-700" role="alert">{taskActionError}</p> : null}
+                <LeadTasks embedded compact tasks={lead.tasks} referenceAt={lead.taskReferenceAt} filter={taskFilter} onFilterChange={setTaskFilter} onAdd={(trigger) => openTaskDialog({ kind: "edit", task: null }, trigger)} onEdit={(task, trigger) => openTaskDialog({ kind: "edit", task }, trigger)} onComplete={(task, trigger) => openTaskDialog({ kind: "complete", task }, trigger)} onDelete={(task, trigger) => openTaskDialog({ kind: "delete", task }, trigger)} onReopen={reopenTask} onReschedule={rescheduleTask} />
+              </div>
+              <div id="lead-workspace-panel-notes" className={`lead-notes-card min-w-0 rounded-portal-lg border border-portal-border bg-portal-surface shadow-portal-card ${workspaceTab === "notes" ? "block" : "hidden"} lg:block`}>
+                {noteActionError ? <p className="border-b border-red-100 bg-red-50 px-4 py-2 text-sm text-red-700" role="alert">{noteActionError}</p> : null}
+                <LeadActivityTimeline
+                  embedded
+                  compact
+                  mode="notes"
+                  activities={lead.activities}
+                  currentUser={currentActor}
+                  managers={noteManagers}
+                  allowAllNoteActions={taskPersistent}
+                  onAddComment={addComment}
+                  onEditNote={editNote}
+                  onDeleteNote={deleteNote}
+                  onTogglePin={toggleNotePin}
+                />
+              </div>
             </div>
           </div>
 
           <aside id="lead-workspace-panel-communication" data-lead-communication-column className={`lead-communication-column min-w-0 self-start overflow-hidden rounded-portal-lg border border-portal-border bg-portal-surface shadow-portal-card ${workspaceTab === "communication" ? "block" : "hidden"} lg:block`}>
             <LeadCommunicationPanel
               embedded
+              persistent={taskPersistent}
               messages={lead.messages}
               primaryContact={primaryContact}
               customerWebsite={lead.customer.website}
@@ -664,16 +890,27 @@ export function LeadPage({
           key={taskDialog.task?.id ?? "new-task"}
           task={taskDialog.task}
           referenceAt={lead.taskReferenceAt}
-          managers={salesManagers}
+          managers={taskManagers}
+          persistent={taskPersistent}
           onClose={closeTaskDialog}
           onSave={(draft) => saveTask(taskDialog.task, draft)}
         />
       ) : null}
       {taskDialog?.kind === "complete" ? (
-        <LeadTaskCompleteDialog task={taskDialog.task} onClose={closeTaskDialog} onConfirm={(result) => completeTask(taskDialog.task.id, result)} />
+        <LeadTaskCompleteDialog
+          task={taskDialog.task}
+          persistent={taskPersistent}
+          onClose={closeTaskDialog}
+          onConfirm={(result) => completeTask(taskDialog.task.id, result)}
+        />
       ) : null}
       {taskDialog?.kind === "delete" ? (
-        <LeadTaskDeleteDialog task={taskDialog.task} onClose={closeTaskDialog} onConfirm={() => deleteTask(taskDialog.task.id)} />
+        <LeadTaskDeleteDialog
+          task={taskDialog.task}
+          persistent={taskPersistent}
+          onClose={closeTaskDialog}
+          onConfirm={() => deleteTask(taskDialog.task.id)}
+        />
       ) : null}
       {completionMode ? (
         <LeadCompletionDialog

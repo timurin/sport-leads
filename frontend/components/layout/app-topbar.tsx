@@ -1,5 +1,10 @@
 import { TopNavigation } from "@/components/navigation/top-navigation";
+import type { AppSection } from "@/lib/navigation";
 
-export function AppTopbar() {
-  return <TopNavigation />;
+type AppTopbarProps = {
+  sections?: AppSection[];
+};
+
+export function AppTopbar({ sections }: AppTopbarProps) {
+  return <TopNavigation sections={sections} />;
 }

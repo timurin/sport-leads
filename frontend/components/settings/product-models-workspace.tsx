@@ -3,19 +3,25 @@
 import Link from "next/link";
 import {
   Copy,
+  Download,
   ExternalLink,
   Filter,
   FilterX,
   Plus,
   Printer,
+  Upload,
   X,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 
-import { copyProductModel } from "@/app/(workspace)/settings/catalogs/product-models/product-model-actions";
+import {
+  copyProductModel,
+  downloadProductModelExport,
+} from "@/app/(workspace)/settings/catalogs/product-models/product-model-actions";
 import { ProductModelCreateDrawer } from "@/components/settings/product-model-create-drawer";
-import { IconButton } from "@/components/ui/button";
+import { ProductModelImportDrawer } from "@/components/settings/product-model-import-drawer";
+import { Button, IconButton } from "@/components/ui/button";
 import {
   DataTable,
   DataTableBody,
@@ -31,6 +37,7 @@ import { ImageLightbox } from "@/components/ui/image-lightbox";
 import { ListTotals } from "@/components/ui/list-pagination";
 import { PageToolbar } from "@/components/ui/page-header";
 import { StatusBadge } from "@/components/ui/status-badge";
+import { triggerBrowserDownload } from "@/lib/file-download";
 import {
   PRODUCT_MODEL_SIZE_TYPE_LABELS,
   PRODUCT_MODEL_STATUS_FILTER_ITEMS,
@@ -113,6 +120,9 @@ export function ProductModelsWorkspace({
   const [busyId, setBusyId] = useState<number | null>(null);
   const [rowError, setRowError] = useState<string | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
+  const [exportPending, startExportTransition] = useTransition();
+  const [exportError, setExportError] = useState<string | null>(null);
   const filterRef = useRef<HTMLDivElement>(null);
   const [mounted, setMounted] = useState(false);
 
@@ -234,6 +244,27 @@ export function ProductModelsWorkspace({
     );
   };
 
+  const onExportCatalog = () => {
+    setExportError(null);
+    startExportTransition(async () => {
+      try {
+        const payload = await downloadProductModelExport({
+          format: "csv",
+          search: query || undefined,
+          status: statusFilter || undefined,
+          productTypeId: productTypeFilter,
+        });
+        triggerBrowserDownload(payload);
+      } catch (caught) {
+        setExportError(
+          caught instanceof Error
+            ? caught.message
+            : "Не удалось экспортировать модели",
+        );
+      }
+    });
+  };
+
   const costLabel = (modelId: number) => costByModelId[modelId] ?? "—";
 
   const rowActions = (model: ProductModel) => {
@@ -276,6 +307,11 @@ export function ProductModelsWorkspace({
         onClose={() => setCreateOpen(false)}
         onCreated={handleCreated}
         sizeGrids={sizeGrids}
+      />
+
+      <ProductModelImportDrawer
+        open={importOpen}
+        onClose={() => setImportOpen(false)}
       />
 
       <PageToolbar
@@ -382,6 +418,25 @@ export function ProductModelsWorkspace({
               >
                 <Printer className="size-4" aria-hidden="true" />
               </IconButton>
+              <Button
+                type="button"
+                size="compact"
+                variant="secondary"
+                disabled={exportPending}
+                onClick={onExportCatalog}
+              >
+                <Download className="size-4" aria-hidden="true" />
+                Экспорт
+              </Button>
+              <Button
+                type="button"
+                size="compact"
+                variant="secondary"
+                onClick={() => setImportOpen(true)}
+              >
+                <Upload className="size-4" aria-hidden="true" />
+                Импорт
+              </Button>
             </div>
           </div>
         }
@@ -399,6 +454,14 @@ export function ProductModelsWorkspace({
       />
 
       <section className="min-h-0 min-w-0 flex-1 overflow-auto bg-portal-surface">
+        {exportError ? (
+          <p
+            className="border-b border-portal-danger/30 bg-portal-danger-soft px-portal-4 py-portal-2 text-portal-caption text-portal-danger"
+            role="alert"
+          >
+            {exportError}
+          </p>
+        ) : null}
         {rowError ? (
           <p
             className="border-b border-portal-danger/30 bg-portal-danger-soft px-portal-4 py-portal-2 text-portal-caption text-portal-danger"

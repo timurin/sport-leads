@@ -18,6 +18,7 @@ from app.api.lead_stages import router as lead_stages_router
 from app.api.lead_rejection_reasons import router as lead_rejection_reasons_router
 from app.api.orders import router as orders_router
 from app.api.organizations import router as organizations_router
+from app.api.sales_users import router as sales_users_router
 from app.api.product_models import router as product_models_router
 from app.api.product_types import router as product_types_router
 from app.api.sewing_operations import router as sewing_operations_router
@@ -36,6 +37,7 @@ from app.api.shop_routings import (
     routings_router as shop_routings_router,
     work_centers_router,
 )
+from app.api.analytics import router as analytics_router
 from app.config.settings import settings
 from app.database.session import engine
 from app.logging_config import configure_logging
@@ -88,7 +90,9 @@ app.include_router(leads_router)
 app.include_router(lead_stages_router)
 app.include_router(lead_rejection_reasons_router)
 app.include_router(orders_router)
+app.include_router(analytics_router)
 app.include_router(organizations_router)
+app.include_router(sales_users_router)
 app.include_router(product_models_router)
 app.include_router(product_types_router)
 app.include_router(sewing_operations_router)

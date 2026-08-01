@@ -19,6 +19,7 @@ import {
   filterSewingOperations,
   formatDurationMinutesSeconds,
   formatSewingCost,
+  sewingOperationLineTotal,
   type SewingOperation,
 } from "@/lib/sewing-operations";
 
@@ -70,10 +71,11 @@ export function AssemblyVariantSewingOpsDrawer({
   );
 
   const total = sumSelectedSewingOperationCosts(selectedOps);
-  const totalDuration = selectedOps.reduce(
-    (sum, operation) => sum + (Number(operation.duration_seconds) || 0),
-    0,
-  );
+  const totalDuration = selectedOps.reduce((sum, operation) => {
+    const duration = Number(operation.duration_seconds) || 0;
+    const qty = Math.max(1, Number(operation.quantity_per_item) || 1);
+    return sum + duration * qty;
+  }, 0);
 
   function resetAndClose() {
     if (saving) return;
@@ -128,7 +130,7 @@ export function AssemblyVariantSewingOpsDrawer({
     <CreateDrawer
       open={open}
       title={isAppend ? "Добавить операции пошива" : "Новый вариант сборки"}
-      description="Вариант — группа операций пошива. Итоговая стоимость = сумма выбранных."
+      description="Вариант — группа операций пошива. Итог строки = стоимость × количество на изделие."
       onClose={resetAndClose}
       variant="overlay"
     >
@@ -199,7 +201,7 @@ export function AssemblyVariantSewingOpsDrawer({
                         checked={checked}
                         disabled={saving}
                         onChange={() => toggle(operation.id)}
-                        label={`${operation.name} — ${formatSewingCost(operation.cost)} ₽ · ${operation.duration_seconds ?? 0} с`}
+                        label={`${operation.name} — ${formatSewingCost(operation.cost)} ₽ × ${operation.quantity_per_item ?? 1} = ${formatSewingCost(sewingOperationLineTotal(operation.cost, operation.quantity_per_item))} ₽ · ${operation.duration_seconds ?? 0} с`}
                       />
                     </li>
                   );

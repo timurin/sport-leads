@@ -60,13 +60,15 @@ export function LeadCommunicationPanel({
   onSend,
   embedded = false,
   customerSummary,
+  persistent = false,
 }: {
   messages: LeadMessage[];
   primaryContact?: LeadContact;
   customerWebsite?: string;
-  onSend: (draft: LeadMessageDraft) => void;
+  onSend: (draft: LeadMessageDraft) => void | Promise<string | null>;
   embedded?: boolean;
   customerSummary?: ReactNode;
+  persistent?: boolean;
 }) {
   const initialChannel = primaryContact?.preferredChannel;
   const [channel, setChannel] = useState<LeadMessageChannel>(
@@ -77,13 +79,14 @@ export function LeadCommunicationPanel({
   const [attachmentDrafts, setAttachmentDrafts] = useState(emptyAttachments);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  const [sending, setSending] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const historyRef = useRef<HTMLDivElement>(null);
   const visibleMessages = useMemo(() => filterLeadMessages(messages, filter), [messages, filter]);
   const destination = getLeadMessageDestination(channel, primaryContact, customerWebsite);
   const draft = drafts[channel];
   const attachments = attachmentDrafts[channel];
-  const sendEnabled = canSendLeadMessage(channel, destination);
+  const sendEnabled = canSendLeadMessage(channel, destination) && !sending;
 
   useEffect(() => {
     const history = historyRef.current;
@@ -124,9 +127,9 @@ export function LeadCommunicationPanel({
     setAttachmentDrafts((current) => ({ ...current, [channel]: current[channel].filter((attachment) => attachment.id !== id) }));
   }
 
-  function sendMessage() {
+  async function sendMessage() {
     const text = draft.trim();
-    if (!sendEnabled) {
+    if (!canSendLeadMessage(channel, destination) || sending) {
       setError(destination ? "Для этого канала отправка клиенту недоступна." : "Для этого канала контакт не указан.");
       return;
     }
@@ -138,11 +141,30 @@ export function LeadCommunicationPanel({
       setError("Введите сообщение или прикрепите файл.");
       return;
     }
-    onSend({ channel, text, recipientName: primaryContact?.name, attachments: attachments.map((attachment) => ({ ...attachment })) });
-    setDrafts((current) => ({ ...current, [channel]: "" }));
-    setAttachmentDrafts((current) => ({ ...current, [channel]: [] }));
+    setSending(true);
     setError("");
-    setNotice("Сообщение сохранено локально. Реальная отправка не выполнялась.");
+    setNotice("");
+    try {
+      const result = await onSend({
+        channel,
+        text,
+        recipientName: primaryContact?.name,
+        attachments: attachments.map((attachment) => ({ ...attachment })),
+      });
+      if (typeof result === "string" && result) {
+        setError(result);
+        return;
+      }
+      setDrafts((current) => ({ ...current, [channel]: "" }));
+      setAttachmentDrafts((current) => ({ ...current, [channel]: [] }));
+      setNotice(
+        persistent
+          ? "Сообщение сохранено (mock-отправка). Реальный внешний канал не вызывался."
+          : "Сообщение сохранено локально. Реальная отправка не выполнялась.",
+      );
+    } finally {
+      setSending(false);
+    }
   }
 
   function reply(message: LeadMessage) {
@@ -253,7 +275,7 @@ export function LeadCommunicationPanel({
         <div className="lead-composer-actions mt-4 flex flex-wrap items-center gap-2">
           <label className="inline-flex h-10 w-full cursor-pointer items-center justify-center gap-2 rounded-[var(--portal-radius-md)] border border-portal-border bg-portal-surface px-4 text-sm font-medium text-portal-text hover:bg-portal-surface-secondary focus-within:ring-2 focus-within:ring-blue-500 sm:w-auto"><Paperclip size={16} />Прикрепить файл<input type="file" multiple className="sr-only" onChange={(event) => { addFiles(event.target.files); event.target.value = ""; }} /></label>
           <label className="w-full min-w-0 text-sm font-medium text-portal-text sm:w-auto"><span className="sr-only">Шаблоны сообщений</span><select defaultValue="" onChange={(event) => { selectTemplate(event.target.value); event.target.value = ""; }} className="h-10 w-full max-w-full rounded-[var(--portal-radius-md)] border border-portal-border bg-portal-surface px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 sm:w-auto"><option value="" disabled>Шаблоны</option>{templates.map((template) => <option key={template.label} value={template.text}>{template.label}</option>)}</select></label>
-          <Button type="button" variant="primary" onClick={sendMessage} disabled={!sendEnabled} aria-label="Отправить сообщение локально" className="w-full sm:ml-auto sm:w-auto"><Send size={16} />Отправить</Button>
+          <Button type="button" variant="primary" onClick={() => void sendMessage()} disabled={!sendEnabled} aria-label={persistent ? "Отправить сообщение" : "Отправить сообщение локально"} className="w-full sm:ml-auto sm:w-auto"><Send size={16} />{sending ? "Отправка…" : "Отправить"}</Button>
         </div>
       </div>
         </div>

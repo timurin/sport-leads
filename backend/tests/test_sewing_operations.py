@@ -35,6 +35,7 @@ def test_sewing_operations_crud_and_unique_name() -> None:
                 json={
                     "name": " Базовая сборка ",
                     "cost": "120.50",
+                    "quantity_per_item": 2,
                     "duration_seconds": 125,
                 },
             )
@@ -42,7 +43,9 @@ def test_sewing_operations_crud_and_unique_name() -> None:
             body = created.json()
             assert body["name"] == "Базовая сборка"
             assert Decimal(body["cost"]) == Decimal("120.50")
+            assert body["quantity_per_item"] == 2
             assert body["duration_seconds"] == 125
+            assert body["work_center_ids"] == []
             operation_id = body["id"]
 
             duplicate = client.post(
@@ -61,10 +64,11 @@ def test_sewing_operations_crud_and_unique_name() -> None:
 
             patched = client.patch(
                 f"/sewing-operations/{operation_id}",
-                json={"cost": "130.00", "duration_seconds": 90},
+                json={"cost": "130.00", "quantity_per_item": 3, "duration_seconds": 90},
             )
             assert patched.status_code == 200, patched.text
             assert Decimal(patched.json()["cost"]) == Decimal("130.00")
+            assert patched.json()["quantity_per_item"] == 3
             assert patched.json()["duration_seconds"] == 90
 
             negative = client.post(
@@ -72,6 +76,12 @@ def test_sewing_operations_crud_and_unique_name() -> None:
                 json={"name": "Брак", "cost": "-1"},
             )
             assert negative.status_code == 422
+
+            zero_qty = client.post(
+                "/sewing-operations",
+                json={"name": "Брак", "cost": "1", "quantity_per_item": 0},
+            )
+            assert zero_qty.status_code == 422
 
             negative_duration = client.post(
                 "/sewing-operations",

@@ -1,5 +1,9 @@
 import { notFound } from "next/navigation";
 
+import {
+  listOrderInvoices,
+  listOrderQuotations,
+} from "@/app/(workspace)/sales/orders/[orderId]/order-commercial-doc-actions";
 import { SalesOrderPage } from "@/components/sales/sales-order-page";
 import { getNomenclature, getNomenclatureCategories } from "@/lib/nomenclature";
 import { getLeadDetails } from "@/lib/sales/lead-details";
@@ -17,13 +21,22 @@ type OrderRouteProps = {
 
 export default async function OrderRoute({ params }: OrderRouteProps) {
   const { orderId } = await params;
-  const [result, historyResult, nomenclature, nomenclatureCategories, vatRates] =
-    await Promise.all([
+  const [
+    result,
+    historyResult,
+    nomenclature,
+    nomenclatureCategories,
+    vatRates,
+    quotations,
+    invoices,
+  ] = await Promise.all([
       getOrderDetails(orderId),
       getOrderHistory(orderId),
       getNomenclature(),
       getNomenclatureCategories(),
       getVatRates({ is_active: true }),
+      listOrderQuotations(orderId),
+      listOrderInvoices(orderId),
     ]);
   if (result.kind === "not-found") notFound();
   if (result.kind === "error") throw new Error(result.message);
@@ -51,6 +64,8 @@ export default async function OrderRoute({ params }: OrderRouteProps) {
       nomenclature={nomenclature}
       nomenclatureCategories={nomenclatureCategories}
       vatRates={vatRates}
+      quotations={quotations}
+      invoices={invoices}
     />
   );
 }

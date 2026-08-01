@@ -271,6 +271,10 @@ class NomenclatureVariant(Base):
     __tablename__ = "nomenclature_variants"
     __table_args__ = (
         UniqueConstraint("article", name="uq_nomenclature_variants_article"),
+        CheckConstraint(
+            "price IS NULL OR price >= 0",
+            name="ck_nomenclature_variants_price_non_negative",
+        ),
     )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -279,6 +283,13 @@ class NomenclatureVariant(Base):
     )
     article: Mapped[str] = mapped_column(String(100), nullable=False, index=True)
     name: Mapped[str] = mapped_column(String(255), nullable=False)
+    price: Mapped[Decimal | None] = mapped_column(Numeric(14, 2), nullable=True)
+    barcode: Mapped[str | None] = mapped_column(
+        String(64), nullable=True, unique=True, index=True
+    )
+    external_code: Mapped[str | None] = mapped_column(
+        String(100), nullable=True, index=True
+    )
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True, index=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()

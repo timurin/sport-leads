@@ -2,7 +2,7 @@
 
 import { ClipboardList, ExternalLink, Factory, Plus, RefreshCw } from "lucide-react";
 import Link from "next/link";
-import { useCallback, useEffect, useState, useTransition } from "react";
+import { useCallback, useEffect, useState, useTransition, type ReactNode } from "react";
 
 import {
   generateOrderTechCardsAction,
@@ -92,7 +92,15 @@ function TechCardRow({ row }: { row: OrderTechCardRow }) {
   );
 }
 
-export function SalesOrderTechCardsPanel({ order }: { order: SalesOrderDetails }) {
+export function SalesOrderTechCardsPanel({
+  order,
+  collapsed = false,
+  headerActions,
+}: {
+  order: SalesOrderDetails;
+  collapsed?: boolean;
+  headerActions?: ReactNode;
+}) {
   const [state, setState] = useState<OrderTechCardsState | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -128,8 +136,10 @@ export function SalesOrderTechCardsPanel({ order }: { order: SalesOrderDetails }
       description="Одна ТК на производимую позицию (PRODUCT). Данные из API `9.2.1` — без демо-подстановки."
       size="compact"
       className="min-w-0"
+      collapsed={collapsed}
       actions={(
         <div className="flex flex-wrap items-center gap-1">
+          {headerActions}
           <IconButton
             label="Обновить список техкарт"
             variant="secondary"

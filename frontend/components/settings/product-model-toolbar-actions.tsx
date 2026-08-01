@@ -11,6 +11,8 @@ type ProductModelToolbarActionsProps = {
   editing?: boolean;
   canArchive?: boolean;
   canSave?: boolean;
+  /** When false, Save is hidden (view mode). Default true for list inert preview. */
+  showSave?: boolean;
   onEdit?: () => void;
   onCancel?: () => void;
   onArchive?: () => void;
@@ -26,6 +28,7 @@ export function ProductModelToolbarActions({
   editing = false,
   canArchive = true,
   canSave = false,
+  showSave = true,
   onEdit,
   onCancel,
   onArchive,
@@ -68,14 +71,16 @@ export function ProductModelToolbarActions({
       >
         <Archive className="size-4" />
       </IconButton>
-      <IconButton
-        label="Сохранить"
-        variant={canSave ? "primary" : "secondary"}
-        disabled={locked || !canSave}
-        onClick={inert ? undefined : onSave}
-      >
-        <Save className="size-4" />
-      </IconButton>
+      {showSave ? (
+        <IconButton
+          label="Сохранить"
+          variant={canSave ? "primary" : "secondary"}
+          disabled={locked || !canSave}
+          onClick={inert ? undefined : onSave}
+        >
+          <Save className="size-4" />
+        </IconButton>
+      ) : null}
       <IconButton
         label="Копировать"
         variant="secondary"

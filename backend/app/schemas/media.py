@@ -5,7 +5,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 class NomenclatureMediaCreate(BaseModel):
     filename: str = Field(min_length=1, max_length=255)
-    mime_type: str = Field(pattern=r"^image/(jpeg|png|webp|svg\+xml)$")
+    mime_type: str = Field(min_length=3, max_length=100)
     content_base64: str = Field(min_length=1)
     alt_text: str | None = Field(default=None, max_length=255)
     sort_order: int = Field(default=0, ge=0)

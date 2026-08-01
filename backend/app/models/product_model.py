@@ -130,6 +130,11 @@ class ProductModel(Base):
         cascade="all, delete-orphan",
         order_by="AssemblyVariant.sort_order, AssemblyVariant.id",
     )
+    routing_links: Mapped[list[ProductModelRoutingLink]] = relationship(
+        back_populates="product_model",
+        cascade="all, delete-orphan",
+        order_by="ProductModelRoutingLink.sort_order, ProductModelRoutingLink.id",
+    )
 
 
 class ProductModelVersion(Base):
@@ -292,7 +297,7 @@ class NomenclatureProductModel(Base):
 class AssemblyVariant(Base):
     """Manager-facing assembly/finishing package on a product model (ADR-014 / `6.1.12`).
 
-    Total cost is always Σ operation line costs (computed, not stored).
+    Total cost is always Σ (line.cost * line.quantity_per_item) (computed, not stored).
     Stage 8 shop routings are a separate contour.
     """
 
@@ -342,7 +347,8 @@ class AssemblyOperationLine(Base):
     """Ordered operation row inside an assembly variant.
 
     Copy-on-pick from `SewingOperation`: snapshot `operation_name` + `cost` +
-    `duration_seconds`; optional `sewing_operation_id` for catalog traceability (`6.3.6`).
+    `quantity_per_item` + `duration_seconds`; optional `sewing_operation_id`
+    for catalog traceability (`6.3.6` / `6.3.9`).
     """
 
     __tablename__ = "assembly_operation_lines"
@@ -361,6 +367,10 @@ class AssemblyOperationLine(Base):
             name="ck_assembly_operation_lines_cost",
         ),
         CheckConstraint(
+            "quantity_per_item >= 1",
+            name="ck_assembly_operation_lines_quantity_per_item",
+        ),
+        CheckConstraint(
             "duration_seconds >= 0",
             name="ck_assembly_operation_lines_duration_seconds",
         ),
@@ -375,6 +385,7 @@ class AssemblyOperationLine(Base):
     sequence: Mapped[int] = mapped_column(Integer, nullable=False)
     operation_name: Mapped[str] = mapped_column(String(255), nullable=False)
     cost: Mapped[Decimal] = mapped_column(Numeric(14, 2), nullable=False, default=Decimal("0"))
+    quantity_per_item: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
     duration_seconds: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     sewing_operation_id: Mapped[int | None] = mapped_column(
         ForeignKey("sewing_operations.id", ondelete="SET NULL"),
@@ -394,3 +405,114 @@ class AssemblyOperationLine(Base):
     )
 
     assembly_variant: Mapped[AssemblyVariant] = relationship(back_populates="operation_lines")
+
+
+class ProductModelRoutingLink(Base):
+    """Ordered whitelist: ProductModel ↔ existing ShopRoutingTemplate (`6.1.17`).
+
+    Does not clone routing stage lines — Stage 8 remains master of sequences.
+    """
+
+    __tablename__ = "product_model_routing_links"
+    __table_args__ = (
+        UniqueConstraint(
+            "product_model_id",
+            "shop_routing_template_id",
+            name="uq_product_model_routing_links_model_template",
+        ),
+        CheckConstraint(
+            "sort_order >= 0",
+            name="ck_product_model_routing_links_sort_order",
+        ),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    product_model_id: Mapped[int] = mapped_column(
+        ForeignKey("product_models.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    shop_routing_template_id: Mapped[int] = mapped_column(
+        ForeignKey("shop_routing_templates.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
+    )
+    sort_order: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True, index=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+        onupdate=func.now(),
+    )
+
+    product_model: Mapped[ProductModel] = relationship(back_populates="routing_links")
+    operation_norms: Mapped[list[ProductModelOperationNorm]] = relationship(
+        back_populates="routing_link",
+        cascade="all, delete-orphan",
+        order_by="ProductModelOperationNorm.id",
+    )
+
+
+class ProductModelOperationNorm(Base):
+    """Plan-hint material/op norm on a model routing whitelist link (`6.1.17`).
+
+    `norm_qty_per_item` is for 1 finished unit — not fact qty and not hard BOM×order-qty.
+    Uniqueness: one row per (link, production_stage_id, tech_operation_id) with
+    partial unique indexes when tech_operation_id is null vs set.
+    """
+
+    __tablename__ = "product_model_operation_norms"
+    __table_args__ = (
+        CheckConstraint(
+            "norm_qty_per_item >= 0",
+            name="ck_product_model_operation_norms_qty_nonnegative",
+        ),
+        CheckConstraint(
+            "production_stage_id IS NOT NULL OR tech_operation_id IS NOT NULL",
+            name="ck_product_model_operation_norms_stage_or_op",
+        ),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    product_model_routing_link_id: Mapped[int] = mapped_column(
+        ForeignKey("product_model_routing_links.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    production_stage_id: Mapped[int | None] = mapped_column(
+        ForeignKey("production_stages.id", ondelete="RESTRICT"),
+        nullable=True,
+        index=True,
+    )
+    tech_operation_id: Mapped[int | None] = mapped_column(
+        ForeignKey("tech_operations.id", ondelete="RESTRICT"),
+        nullable=True,
+        index=True,
+    )
+    norm_qty_per_item: Mapped[Decimal] = mapped_column(
+        Numeric(14, 3),
+        nullable=False,
+        default=Decimal("0"),
+    )
+    unit: Mapped[str] = mapped_column(String(64), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+        onupdate=func.now(),
+    )
+
+    routing_link: Mapped[ProductModelRoutingLink] = relationship(
+        back_populates="operation_norms"
+    )

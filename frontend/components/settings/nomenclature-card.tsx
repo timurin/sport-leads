@@ -11,7 +11,7 @@ import {
   type MouseEvent,
   type ReactNode,
 } from "react";
-import { ChevronDown, Pencil, Plus, Save, X } from "lucide-react";
+import { ChevronDown, FileUp, Pencil, Plus, Save, Trash2, X } from "lucide-react";
 
 import {
   addNomenclatureCharacteristicWithValue,
@@ -30,9 +30,10 @@ import {
 } from "@/components/settings/nomenclature-add-characteristic-form";
 import { NomenclatureAvailableModelsBlock } from "@/components/settings/nomenclature-available-models-block";
 import { NomenclatureMediaCarousel } from "@/components/settings/nomenclature-media-carousel";
+import { NomenclatureVariantsBlock } from "@/components/settings/nomenclature-variants-block";
 import { ProductModelToolbarActions } from "@/components/settings/product-model-toolbar-actions";
 import { EntityHeader } from "@/components/ui/entity-header";
-import { IconButton } from "@/components/ui/button";
+import { Button, IconButton } from "@/components/ui/button";
 import { Field, Input, Select, Textarea } from "@/components/ui/form-controls";
 import { ImageLightbox } from "@/components/ui/image-lightbox";
 import { SectionCard } from "@/components/ui/section-card";
@@ -42,18 +43,24 @@ import { currencyOptionLabel, formatAmountWithCurrency } from "@/lib/money";
 import { buildCategoryTreeRows } from "@/lib/nomenclature-category-tree";
 import {
   NOMENCLATURE_CURRENCY_OPTIONS,
+  NOMENCLATURE_FILE_ACCEPT,
+  NOMENCLATURE_FILE_RULE,
   NOMENCLATURE_IMAGE_RULE,
   NOMENCLATURE_TYPE_LABELS,
   NOMENCLATURE_TYPE_OPTIONS,
   categoryPathLabel,
   categoryDisplayLabel,
+  guessNomenclatureAttachmentMime,
+  isNomenclatureImageMime,
   isNomenclatureRequisitesDirty,
+  nomenclatureMediaUrl,
   nomenclatureStatusLabel,
   nomenclatureStatusTone,
   resolveNomenclatureCategoryId,
   resolveNomenclatureCategoryLabel,
   resolveNomenclatureUnitSymbol,
   toNomenclatureRequisitesDraft,
+  validateNomenclatureAttachmentFile,
   validateNomenclatureImageFile,
   validateNomenclatureRequisitesDraft,
   type CharacteristicDefinition,
@@ -62,9 +69,11 @@ import {
   type NomenclatureAvailableModel,
   type NomenclatureCategory,
   type NomenclatureCharacteristicValue,
+  type NomenclatureHistoryEntry,
   type NomenclatureMedia,
   type NomenclatureRequisitesDraft,
   type NomenclatureType,
+  type NomenclatureVariant,
   type UnitOfMeasure,
 } from "@/lib/nomenclature";
 import type { ProductModel } from "@/lib/product-models";
@@ -265,6 +274,8 @@ export function NomenclatureCard({
   usedValuesById = {},
   characteristicDefinitions,
   media,
+  history = [],
+  variants = [],
   availableModels = [],
   activeModels = [],
   productTypes = [],
@@ -278,6 +289,8 @@ export function NomenclatureCard({
   usedValuesById?: Record<number, string[]>;
   characteristicDefinitions: CharacteristicDefinition[];
   media: NomenclatureMedia[];
+  history?: NomenclatureHistoryEntry[];
+  variants?: NomenclatureVariant[];
   availableModels?: NomenclatureAvailableModel[];
   activeModels?: ProductModel[];
   productTypes?: ProductType[];
@@ -285,6 +298,7 @@ export function NomenclatureCard({
 }) {
   const router = useRouter();
   const fieldsFormRef = useRef<HTMLFormElement>(null);
+  const attachmentInputRef = useRef<HTMLInputElement>(null);
   const tempCharacteristicIdRef = useRef(-1);
   const [trackedItem, setTrackedItem] = useState(initialItem);
   const [current, setCurrent] = useState(initialItem);
@@ -385,11 +399,20 @@ export function NomenclatureCard({
   const storageUnitLabel =
     units.find((unit) => unit.id === current.storage_unit_id)?.symbol ??
     current.unit;
-  const historyEntries = [
-    { id: "created", label: "Карточка создана", at: current.created_at },
-    { id: "updated", label: "Последнее изменение", at: current.updated_at },
-  ];
-  const historySummary = `${historyEntries.length} записи`;
+  const historySummary =
+    history.length === 0
+      ? "записей нет"
+      : `${history.length} ${
+          history.length === 1
+            ? "запись"
+            : history.length < 5
+              ? "записи"
+              : "записей"
+        }`;
+  const imageItems = items.filter((entry) => isNomenclatureImageMime(entry.mime_type));
+  const attachmentItems = items.filter(
+    (entry) => !isNomenclatureImageMime(entry.mime_type),
+  );
   const assignedFieldIds = new Set(
     fieldState.map((field) => field.characteristic_id),
   );
@@ -505,6 +528,12 @@ export function NomenclatureCard({
     ) {
       return;
     }
+    if (
+      nextActive &&
+      !window.confirm(`Восстановить «${current.name}» из архива?`)
+    ) {
+      return;
+    }
     setBusy(true);
     setActionError(null);
     try {
@@ -601,7 +630,10 @@ export function NomenclatureCard({
         const data = new FormData();
         data.append("nomenclature_id", String(current.id));
         data.append("file", file);
-        data.append("is_primary", String(items.length === 0 && index === 0));
+        data.append(
+          "is_primary",
+          String(imageItems.length === 0 && index === 0),
+        );
         data.append("sort_order", String(items.length + index));
         created.push(await uploadNomenclatureMedia(data));
       }
@@ -616,10 +648,52 @@ export function NomenclatureCard({
     }
   };
 
+  const uploadAttachments = async (files: File[]) => {
+    for (const file of files) {
+      const ruleError = validateNomenclatureAttachmentFile(file);
+      if (ruleError) {
+        setActionError(ruleError);
+        return;
+      }
+    }
+    setBusy(true);
+    setActionError(null);
+    try {
+      const created: NomenclatureMedia[] = [];
+      for (const [index, file] of files.entries()) {
+        const data = new FormData();
+        data.append("nomenclature_id", String(current.id));
+        data.append("file", file);
+        data.append("mime_type", guessNomenclatureAttachmentMime(file));
+        data.append("is_primary", "false");
+        data.append("sort_order", String(items.length + index));
+        created.push(await uploadNomenclatureMedia(data));
+      }
+      setItems((currentItems) => [...currentItems, ...created]);
+      router.refresh();
+    } catch (caught) {
+      setActionError(
+        caught instanceof Error ? caught.message : "Не удалось загрузить файл",
+      );
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const onDeleteMedia = async (item: NomenclatureMedia) => {
-    if (!window.confirm(`Удалить фото «${item.filename}»?`)) return;
+    const image = isNomenclatureImageMime(item.mime_type);
+    if (
+      !window.confirm(
+        image
+          ? `Удалить фото «${item.filename}»?`
+          : `Удалить файл «${item.filename}»?`,
+      )
+    ) {
+      return;
+    }
     setBusy(true);
     setWarning(null);
+    setActionError(null);
     try {
       const data = new FormData();
       data.append("nomenclature_id", String(current.id));
@@ -628,9 +702,10 @@ export function NomenclatureCard({
       setItems((currentItems) => currentItems.filter((row) => row.id !== item.id));
       router.refresh();
     } catch (caught) {
-      setWarning(
-        caught instanceof Error ? caught.message : "Не удалось удалить изображение",
-      );
+      const message =
+        caught instanceof Error ? caught.message : "Не удалось удалить файл";
+      if (image) setWarning(message);
+      else setActionError(message);
     } finally {
       setBusy(false);
     }
@@ -1205,13 +1280,18 @@ export function NomenclatureCard({
                         label="Состояние"
                         className="order-3 min-[1700px]:order-2"
                       >
-                        <StatusBadge
-                          tone={nomenclatureStatusTone(current.is_active)}
+                        <Select
+                          value={current.is_active ? "active" : "archived"}
+                          disabled={busy}
                           size="compact"
-                          dot
+                          onChange={(event) =>
+                            void onStatusChange(event.target.value)
+                          }
+                          aria-label="Состояние"
                         >
-                          {nomenclatureStatusLabel(current.is_active)}
-                        </StatusBadge>
+                          <option value="active">Активна</option>
+                          <option value="archived">Архив</option>
+                        </Select>
                       </RequisiteRead>
                       <RequisiteRead label="Вид изделия" className="order-4">
                         {current.nomenclature_type === "PRODUCT" &&
@@ -1423,6 +1503,86 @@ export function NomenclatureCard({
                 )}
               </div>
 
+              <NomenclatureVariantsBlock
+                nomenclatureId={current.id}
+                variants={variants}
+                basePrice={current.basePrice}
+              />
+
+              <SectionCard
+                title="Вложения"
+                description={
+                  attachmentItems.length === 0
+                    ? NOMENCLATURE_FILE_RULE
+                    : `${attachmentItems.length} файл(ов)`
+                }
+                size="compact"
+                actions={
+                  <>
+                    <input
+                      ref={attachmentInputRef}
+                      type="file"
+                      className="hidden"
+                      accept={NOMENCLATURE_FILE_ACCEPT}
+                      multiple
+                      onChange={(event) => {
+                        const files = Array.from(event.target.files ?? []);
+                        event.target.value = "";
+                        if (files.length) void uploadAttachments(files);
+                      }}
+                    />
+                    <Button
+                      type="button"
+                      size="compact"
+                      variant="secondary"
+                      disabled={busy}
+                      onClick={() => attachmentInputRef.current?.click()}
+                    >
+                      <FileUp className="size-4" aria-hidden="true" />
+                      Загрузить
+                    </Button>
+                  </>
+                }
+              >
+                {attachmentItems.length > 0 ? (
+                  <ul className="grid gap-portal-2">
+                    {attachmentItems.map((entry) => (
+                      <li
+                        key={entry.id}
+                        className="flex min-w-0 items-center gap-portal-2 rounded-portal-md border border-portal-border bg-portal-surface-secondary px-portal-3 py-portal-2"
+                      >
+                        <div className="min-w-0 flex-1">
+                          <a
+                            href={nomenclatureMediaUrl(entry.content_url)}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="truncate font-medium text-portal-primary hover:underline"
+                          >
+                            {entry.filename}
+                          </a>
+                          <p className="text-portal-caption text-portal-muted">
+                            {entry.mime_type} ·{" "}
+                            {(entry.file_size / 1024).toFixed(1)} КБ
+                          </p>
+                        </div>
+                        <IconButton
+                          label={`Удалить ${entry.filename}`}
+                          variant="secondary"
+                          disabled={busy}
+                          onClick={() => void onDeleteMedia(entry)}
+                        >
+                          <Trash2 className="size-4" aria-hidden="true" />
+                        </IconButton>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-portal-caption text-portal-muted">
+                    Файлов пока нет.
+                  </p>
+                )}
+              </SectionCard>
+
               <SectionCard
                 title="История изменений"
                 description={historySummary}
@@ -1448,21 +1608,28 @@ export function NomenclatureCard({
                   </div>
                 }
               >
-                <ul className="grid gap-portal-2">
-                  {historyEntries.map((entry) => (
-                    <li
-                      key={entry.id}
-                      className="rounded-portal-md border border-portal-border bg-portal-surface-secondary px-portal-3 py-portal-2"
-                    >
-                      <p className="text-portal-body text-portal-text">
-                        {entry.label}
-                      </p>
-                      <p className="mt-1 text-portal-caption text-portal-muted">
-                        {new Date(entry.at).toLocaleString("ru-RU")}
-                      </p>
-                    </li>
-                  ))}
-                </ul>
+                {history.length > 0 ? (
+                  <ul className="grid gap-portal-2">
+                    {history.map((entry) => (
+                      <li
+                        key={entry.id}
+                        className="rounded-portal-md border border-portal-border bg-portal-surface-secondary px-portal-3 py-portal-2"
+                      >
+                        <p className="text-portal-body text-portal-text">
+                          {entry.action}
+                        </p>
+                        <p className="mt-1 text-portal-caption text-portal-muted">
+                          {entry.actor} ·{" "}
+                          {new Date(entry.created_at).toLocaleString("ru-RU")}
+                        </p>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-portal-caption text-portal-muted">
+                    Записей пока нет.
+                  </p>
+                )}
               </SectionCard>
             </>
           }
@@ -1474,9 +1641,7 @@ export function NomenclatureCard({
             >
               <div className="grid gap-portal-3 text-portal-body text-portal-text">
                 <NomenclatureMediaCarousel
-                  items={items.filter((entry) =>
-                    entry.mime_type.startsWith("image/"),
-                  )}
+                  items={imageItems}
                   busy={busy}
                   onExpand={setPreviewSrc}
                   onSetPrimary={onSetPrimary}

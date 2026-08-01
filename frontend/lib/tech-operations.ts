@@ -1,5 +1,13 @@
 export type TechOperationVolumeUnit = "linear_meters" | "pieces";
 
+export type TechOperationRequiredMaterial = {
+  id?: number;
+  nomenclature_id: number;
+  nomenclature_name?: string | null;
+  quantity: string | number;
+  unit?: string | null;
+};
+
 export type TechOperation = {
   id: number;
   name: string;
@@ -8,6 +16,7 @@ export type TechOperation = {
   production_stage_id: number | null;
   is_active: boolean;
   sort_order: number;
+  required_materials: TechOperationRequiredMaterial[];
   created_at: string;
   updated_at: string;
 };
@@ -18,6 +27,7 @@ export type TechOperationDraft = {
   volume_unit: TechOperationVolumeUnit;
   production_stage_id: number | null;
   is_active: boolean;
+  required_materials: TechOperationRequiredMaterial[];
 };
 
 export type TechOperationListParams = {
@@ -65,6 +75,15 @@ export function validateTechOperationDraft(
   }
   if (draft.volume_unit !== "linear_meters" && draft.volume_unit !== "pieces") {
     return "Выберите единицу объёма";
+  }
+  for (const row of draft.required_materials) {
+    if (!Number.isInteger(row.nomenclature_id) || row.nomenclature_id <= 0) {
+      return "Выберите материал для required materials";
+    }
+    const quantity = Number(row.quantity);
+    if (!Number.isFinite(quantity) || quantity < 0) {
+      return "Укажите корректный расход required materials";
+    }
   }
   return null;
 }

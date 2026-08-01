@@ -67,6 +67,19 @@ async function saveStage(
   if (!response.ok) return { ok: false, message: await readError(response) };
   const stage = (await response.json()) as ProductionStage;
   revalidatePath(CATALOG_PATH);
+  revalidatePath("/", "layout");
+  revalidatePath("/production/kanban");
+  for (const href of [
+    "/production/stages/design",
+    "/production/stages/cutting",
+    "/production/stages/print",
+    "/production/stages/sewing",
+    "/production/stages/wto",
+    "/production/stages/qc",
+    "/production/stages/packaging",
+  ]) {
+    revalidatePath(href);
+  }
   return { ok: true, stage };
 }
 
@@ -94,5 +107,61 @@ export async function deleteProductionStage(
     return { ok: false, message: await readError(response) };
   }
   revalidatePath(CATALOG_PATH);
+  revalidatePath("/", "layout");
+  revalidatePath("/production/kanban");
+  for (const href of [
+    "/production/stages/design",
+    "/production/stages/cutting",
+    "/production/stages/print",
+    "/production/stages/sewing",
+    "/production/stages/wto",
+    "/production/stages/qc",
+    "/production/stages/packaging",
+  ]) {
+    revalidatePath(href);
+  }
   return { ok: true };
+}
+
+export async function reorderProductionStages(
+  items: ReadonlyArray<{ id: number; sort_order: number }>,
+): Promise<{ ok: true; stages: ProductionStage[] } | { ok: false; message: string }> {
+  if (items.length === 0) return { ok: true, stages: [] };
+  const stages: ProductionStage[] = [];
+  for (const item of items) {
+    if (!Number.isSafeInteger(item.id) || item.id <= 0) {
+      return { ok: false, message: "Некорректный идентификатор цеха" };
+    }
+    if (!Number.isSafeInteger(item.sort_order) || item.sort_order < 0) {
+      return { ok: false, message: "Порядок сортировки — целое число ≥ 0" };
+    }
+    const response = await fetch(
+      `${apiBaseUrl()}/production-stages/${item.id}`,
+      {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sort_order: item.sort_order }),
+        cache: "no-store",
+      },
+    );
+    if (!response.ok) {
+      return { ok: false, message: await readError(response) };
+    }
+    stages.push((await response.json()) as ProductionStage);
+  }
+  revalidatePath(CATALOG_PATH);
+  revalidatePath("/", "layout");
+  revalidatePath("/production/kanban");
+  for (const href of [
+    "/production/stages/design",
+    "/production/stages/cutting",
+    "/production/stages/print",
+    "/production/stages/sewing",
+    "/production/stages/wto",
+    "/production/stages/qc",
+    "/production/stages/packaging",
+  ]) {
+    revalidatePath(href);
+  }
+  return { ok: true, stages };
 }

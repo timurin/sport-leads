@@ -53,6 +53,22 @@ export const NOMENCLATURE_IMAGE_ACCEPT = "image/jpeg,image/png,image/webp";
 export const NOMENCLATURE_IMAGE_RULE =
   "Только JPEG / PNG / WebP, не больше 10 МБ.";
 
+export const NOMENCLATURE_FILE_ACCEPT =
+  ".pdf,.doc,.docx,.xls,.xlsx,.zip,.txt,.csv,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/zip,text/plain,text/csv";
+export const NOMENCLATURE_FILE_RULE =
+  "PDF, Word, Excel, ZIP, TXT или CSV, не больше 10 МБ.";
+
+const NOMENCLATURE_FILE_MIMES = new Set([
+  "application/pdf",
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "application/vnd.ms-excel",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  "application/zip",
+  "text/plain",
+  "text/csv",
+]);
+
 /** Core card requisites draft — maps 1:1 to backend Nomenclature fields. */
 export type NomenclatureRequisitesDraft = {
   name: string;
@@ -232,6 +248,38 @@ export function validateNomenclatureImageFile(file: File): string | null {
   return null;
 }
 
+export function isNomenclatureImageMime(mimeType: string): boolean {
+  return mimeType.startsWith("image/");
+}
+
+export function validateNomenclatureAttachmentFile(file: File): string | null {
+  if (file.size > 10 * 1024 * 1024) return NOMENCLATURE_FILE_RULE;
+  if (NOMENCLATURE_FILE_MIMES.has(file.type)) return null;
+  // Some browsers omit mime for office files — fall back to extension.
+  const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
+  if (["pdf", "doc", "docx", "xls", "xlsx", "zip", "txt", "csv"].includes(ext)) {
+    return null;
+  }
+  return NOMENCLATURE_FILE_RULE;
+}
+
+export function guessNomenclatureAttachmentMime(file: File): string {
+  if (file.type && NOMENCLATURE_FILE_MIMES.has(file.type)) return file.type;
+  if (file.type.startsWith("image/")) return file.type;
+  const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
+  const byExt: Record<string, string> = {
+    pdf: "application/pdf",
+    doc: "application/msword",
+    docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    xls: "application/vnd.ms-excel",
+    xlsx: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    zip: "application/zip",
+    txt: "text/plain",
+    csv: "text/csv",
+  };
+  return byExt[ext] ?? file.type ?? "application/octet-stream";
+}
+
 export function nomenclatureMediaUrl(contentUrl: string): string {
   if (
     contentUrl.startsWith("http://") ||
@@ -335,12 +383,25 @@ export type NomenclatureVariant = {
   nomenclature_id: number;
   article: string;
   name: string;
+  price: string | number | null;
+  barcode: string | null;
+  external_code: string | null;
   is_active: boolean;
   option_ids: number[];
   options: CharacteristicOption[];
   created_at: string;
   updated_at: string;
 };
+
+export function effectiveVariantUnitPrice(
+  variant: NomenclatureVariant | null | undefined,
+  nomenclatureBasePrice: string | number,
+): string {
+  if (variant?.price != null && String(variant.price).trim() !== "") {
+    return Number(variant.price).toFixed(2);
+  }
+  return Number(nomenclatureBasePrice).toFixed(2);
+}
 
 export type NomenclatureMedia = {
   id: number;
@@ -354,6 +415,14 @@ export type NomenclatureMedia = {
   created_at: string;
   updated_at: string;
   content_url: string;
+};
+
+export type NomenclatureHistoryEntry = {
+  id: number;
+  nomenclature_id: number;
+  actor: string;
+  action: string;
+  created_at: string;
 };
 
 export function fromApiNomenclature(item: ApiNomenclature): Nomenclature {
@@ -500,6 +569,20 @@ export async function getNomenclatureMedia(id: number): Promise<NomenclatureMedi
     throw new Error(`Не удалось загрузить media номенклатуры (${response.status}).`);
   }
   return (await response.json()) as NomenclatureMedia[];
+}
+
+export async function getNomenclatureHistory(
+  id: number,
+): Promise<NomenclatureHistoryEntry[]> {
+  const response = await fetch(`${apiBaseUrl()}/nomenclatures/${id}/history`, {
+    cache: "no-store",
+  });
+  if (!response.ok) {
+    throw new Error(
+      `Не удалось загрузить историю номенклатуры (${response.status}).`,
+    );
+  }
+  return (await response.json()) as NomenclatureHistoryEntry[];
 }
 
 export type NomenclatureAvailableModel = {

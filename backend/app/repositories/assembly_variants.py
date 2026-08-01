@@ -129,4 +129,10 @@ def replace_line_sequences(
 
 
 def variant_total_cost(variant: AssemblyVariant) -> Decimal:
-    return sum((line.cost for line in variant.operation_lines), Decimal("0"))
+    return sum(
+        (
+            line.cost * Decimal(line.quantity_per_item)
+            for line in variant.operation_lines
+        ),
+        Decimal("0"),
+    )

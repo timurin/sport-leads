@@ -9,6 +9,7 @@ import {
   updateSewingOperation,
 } from "@/app/(workspace)/settings/catalogs/sewing_operations/sewing-operation-actions";
 import { SewingOperationCreateDrawer } from "@/components/settings/sewing-operation-create-drawer";
+import { SewingOperationEquipmentPicker } from "@/components/settings/sewing-operation-equipment-picker";
 import { IconButton } from "@/components/ui/button";
 import {
   DataTable,
@@ -27,18 +28,23 @@ import {
   filterSewingOperations,
   formatDurationSecondsLabel,
   formatSewingCost,
+  formatSewingEquipmentLabels,
+  sewingOperationLineTotal,
   toSewingCostInput,
   type SewingOperation,
   type SewingOperationCreateDraft,
 } from "@/lib/sewing-operations";
+import type { WorkCenter } from "@/lib/shop-routings";
 
 type RowDraft = SewingOperationCreateDraft;
 
 /** PT-02 sewing-operations catalog list (`DS-PT-02-CATALOG`, etalon product-models). */
 export function SewingOperationsWorkspace({
   operations,
+  sewingWorkCenters,
 }: {
   operations: SewingOperation[];
+  sewingWorkCenters: WorkCenter[];
 }) {
   const router = useRouter();
   const [created, setCreated] = useState<SewingOperation[]>([]);
@@ -73,7 +79,9 @@ export function SewingOperationsWorkspace({
     setDraft({
       name: row.name,
       cost: toSewingCostInput(row.cost),
+      quantity_per_item: String(row.quantity_per_item ?? 1),
       duration_seconds: String(row.duration_seconds ?? 0),
+      work_center_ids: [...(row.work_center_ids ?? [])],
     });
     setRowError(null);
   };
@@ -143,6 +151,7 @@ export function SewingOperationsWorkspace({
         open={createOpen}
         onClose={() => setCreateOpen(false)}
         onCreated={handleCreated}
+        sewingWorkCenters={sewingWorkCenters}
       />
 
       <PageToolbar
@@ -187,15 +196,24 @@ export function SewingOperationsWorkspace({
 
         <div className="hidden min-w-0 md:block">
           <DataTableFrame className="rounded-none border-x-0 border-b-0 shadow-none">
-            <DataTable minWidthClassName="min-w-[640px]">
+            <DataTable minWidthClassName="min-w-[1040px]">
               <DataTableHead>
                 <tr>
                   <DataTableHeaderCell>Наименование</DataTableHeaderCell>
-                  <DataTableHeaderCell className="w-40">
+                  <DataTableHeaderCell className="w-32">
                     Стоимость
                   </DataTableHeaderCell>
-                  <DataTableHeaderCell className="w-48">
+                  <DataTableHeaderCell className="w-36">
+                    Кол-во на изделие
+                  </DataTableHeaderCell>
+                  <DataTableHeaderCell className="w-32">
+                    Сумма
+                  </DataTableHeaderCell>
+                  <DataTableHeaderCell className="w-40">
                     Время выполнения
+                  </DataTableHeaderCell>
+                  <DataTableHeaderCell className="min-w-[220px]">
+                    Оборудование
                   </DataTableHeaderCell>
                   <DataTableHeaderCell className="w-28">
                     Действия
@@ -247,6 +265,34 @@ export function SewingOperationsWorkspace({
                       <DataTableCell>
                         {editing ? (
                           <Input
+                            value={draft.quantity_per_item}
+                            onChange={(event) => {
+                              const quantity_per_item = event.target.value;
+                              setDraft((prev) =>
+                                prev ? { ...prev, quantity_per_item } : prev,
+                              );
+                            }}
+                            disabled={saving}
+                            inputMode="numeric"
+                            aria-label="Количество операций на 1 изделие"
+                          />
+                        ) : (
+                          row.quantity_per_item ?? 1
+                        )}
+                      </DataTableCell>
+                      <DataTableCell className="tabular-nums">
+                        {formatSewingCost(
+                          sewingOperationLineTotal(
+                            editing ? draft.cost : row.cost,
+                            editing
+                              ? draft.quantity_per_item
+                              : row.quantity_per_item,
+                          ),
+                        )}
+                      </DataTableCell>
+                      <DataTableCell>
+                        {editing ? (
+                          <Input
                             value={draft.duration_seconds}
                             onChange={(event) => {
                               const duration_seconds = event.target.value;
@@ -260,6 +306,29 @@ export function SewingOperationsWorkspace({
                           />
                         ) : (
                           formatDurationSecondsLabel(row.duration_seconds)
+                        )}
+                      </DataTableCell>
+                      <DataTableCell>
+                        {editing ? (
+                          <SewingOperationEquipmentPicker
+                            compact
+                            idPrefix={`edit-sewing-wc-${row.id}`}
+                            workCenters={sewingWorkCenters}
+                            selectedIds={draft.work_center_ids}
+                            disabled={saving}
+                            onChange={(ids) =>
+                              setDraft((prev) =>
+                                prev ? { ...prev, work_center_ids: ids } : prev,
+                              )
+                            }
+                          />
+                        ) : (
+                          <span className="text-portal-caption text-portal-muted">
+                            {formatSewingEquipmentLabels(
+                              row.work_center_ids ?? [],
+                              sewingWorkCenters,
+                            )}
+                          </span>
                         )}
                       </DataTableCell>
                       <DataTableCell>
@@ -340,6 +409,18 @@ export function SewingOperationsWorkspace({
                       aria-label="Стоимость"
                     />
                     <Input
+                      value={draft.quantity_per_item}
+                      onChange={(event) => {
+                        const quantity_per_item = event.target.value;
+                        setDraft((prev) =>
+                          prev ? { ...prev, quantity_per_item } : prev,
+                        );
+                      }}
+                      disabled={saving}
+                      inputMode="numeric"
+                      aria-label="Количество операций на 1 изделие"
+                    />
+                    <Input
                       value={draft.duration_seconds}
                       onChange={(event) => {
                         const duration_seconds = event.target.value;
@@ -350,6 +431,18 @@ export function SewingOperationsWorkspace({
                       disabled={saving}
                       inputMode="numeric"
                       aria-label="Время выполнения операции, секунды"
+                    />
+                    <SewingOperationEquipmentPicker
+                      compact
+                      idPrefix={`edit-sewing-wc-m-${row.id}`}
+                      workCenters={sewingWorkCenters}
+                      selectedIds={draft.work_center_ids}
+                      disabled={saving}
+                      onChange={(ids) =>
+                        setDraft((prev) =>
+                          prev ? { ...prev, work_center_ids: ids } : prev,
+                        )
+                      }
                     />
                     <div className="flex gap-1">
                       <IconButton
@@ -374,8 +467,22 @@ export function SewingOperationsWorkspace({
                     <div>
                       <p className="font-medium text-portal-text">{row.name}</p>
                       <p className="text-portal-caption text-portal-muted">
-                        {formatSewingCost(row.cost)} ·{" "}
-                        {formatDurationSecondsLabel(row.duration_seconds)}
+                        {formatSewingCost(row.cost)} × {row.quantity_per_item ?? 1}{" "}
+                        ={" "}
+                        {formatSewingCost(
+                          sewingOperationLineTotal(
+                            row.cost,
+                            row.quantity_per_item,
+                          ),
+                        )}{" "}
+                        · {formatDurationSecondsLabel(row.duration_seconds)}
+                      </p>
+                      <p className="mt-portal-1 text-portal-caption text-portal-muted">
+                        Оборудование:{" "}
+                        {formatSewingEquipmentLabels(
+                          row.work_center_ids ?? [],
+                          sewingWorkCenters,
+                        )}
                       </p>
                     </div>
                     <div className="flex gap-1">

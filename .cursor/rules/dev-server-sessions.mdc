@@ -8,7 +8,8 @@ alwaysApply: true
 ## Ports
 
 - Backend: `127.0.0.1:8000` (`uvicorn app.main:app`)
-- Frontend: `127.0.0.1:3000` (`next dev` / `node`)
+- Frontend: `127.0.0.1:3001` (`next dev` / `node`)
+- Port `3000` is out of scope for Sport-Lead by default; if occupied, treat it as a foreign service unless the user explicitly asks to inspect or stop it.
 
 ## Before start or restart
 
@@ -27,11 +28,13 @@ alwaysApply: true
 
 ## Kill policy
 
-- Kill only listeners on **8000** / **3000** owned by `python`/`uvicorn`/`node`/`next` for this repo.
+- Kill only listeners on **8000** / **3001** that belong to this repo.
+- Do **not** kill or reuse port `3000` for Sport-Lead unless the user explicitly requests work on `3000`.
+- If a process is listening on `3000`, report the PID/name as foreign context and continue using `3001`.
 - Do **not** `taskkill /F` broad process names system-wide.
 - Do **not** `git reset --hard`, `git clean -fd`, or delete unknown files.
 - Prefer the script over ad-hoc kills.
 
 ## After cleanup
 
-Confirm ports free, then start. Report what was stopped (PIDs/ports) and final ready URLs.
+Confirm ports free, then start. Report what was stopped (PIDs/ports) and final ready URLs for `http://127.0.0.1:3001` and `http://127.0.0.1:8000`.

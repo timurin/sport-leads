@@ -12,7 +12,6 @@ export default async function LeadsPage() {
     <LeadWorkspace
       initialLeads={leadList.leads}
       initialStages={leadStages.stages}
-      dataOrigin={leadList.source}
       loadError={loadError}
     />
   );

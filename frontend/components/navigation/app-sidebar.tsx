@@ -34,6 +34,13 @@ import {
 type SidebarMode = "expanded" | "compact" | "hidden";
 
 const SIDEBAR_STORAGE_KEY = "sport-lead-sidebar-mode";
+/** Below this viewport width the sidebar stays compact (owner visual `3.5.9`). */
+const SIDEBAR_FORCE_COMPACT_MAX_PX = 1299;
+
+type AppSidebarProps = {
+  /** Ordered sections from ProductionStage catalog when provided by AppShell. */
+  sections?: AppSection[];
+};
 
 const sectionIcons = {
   dashboard: Home,
@@ -172,43 +179,65 @@ function NavigationGroupContent({
   );
 }
 
-export function AppSidebar() {
+export function AppSidebar({ sections = appSections }: AppSidebarProps) {
   const pathname = usePathname();
 
   const activeSectionId = useMemo(() => {
     return (
-      appSections.find((section) =>
+      sections.find((section) =>
         isSectionContentActive(pathname, section),
       )?.id ?? "dashboard"
     );
-  }, [pathname]);
+  }, [pathname, sections]);
 
-  const [mode, setMode] =
+  const [storedMode, setStoredMode] =
     useState<SidebarMode>("expanded");
+  const [forceCompact, setForceCompact] = useState(false);
 
   const [openSections, setOpenSections] = useState<
     Set<string>
   >(() => new Set([activeSectionId]));
 
+  const mode: SidebarMode =
+    storedMode === "hidden"
+      ? "hidden"
+      : forceCompact
+        ? "compact"
+        : storedMode;
+
 useEffect(() => {
-  const storedMode = window.localStorage.getItem(
+  const storedModeValue = window.localStorage.getItem(
     SIDEBAR_STORAGE_KEY,
   );
 
   if (
-    storedMode !== "expanded" &&
-    storedMode !== "compact" &&
-    storedMode !== "hidden"
+    storedModeValue !== "expanded" &&
+    storedModeValue !== "compact" &&
+    storedModeValue !== "hidden"
   ) {
     return;
   }
 
   const frame = window.requestAnimationFrame(() => {
-    setMode(storedMode);
+    setStoredMode(storedModeValue);
   });
 
   return () => {
     window.cancelAnimationFrame(frame);
+  };
+}, []);
+
+useEffect(() => {
+  const media = window.matchMedia(
+    `(max-width: ${SIDEBAR_FORCE_COMPACT_MAX_PX}px)`,
+  );
+  const sync = () => {
+    setForceCompact(media.matches);
+  };
+  sync();
+  media.addEventListener("change", sync);
+  return () => {
+    media.removeEventListener("change", sync);
   };
 }, []);
 
@@ -232,7 +261,10 @@ useEffect(() => {
 }, [activeSectionId]);
 
 function updateMode(nextMode: SidebarMode) {
-  setMode(nextMode);
+  if (forceCompact && nextMode === "expanded") {
+    return;
+  }
+  setStoredMode(nextMode);
 
   window.localStorage.setItem(
     SIDEBAR_STORAGE_KEY,
@@ -258,7 +290,7 @@ function updateMode(nextMode: SidebarMode) {
     return (
       <button
         type="button"
-        onClick={() => updateMode("expanded")}
+        onClick={() => updateMode(forceCompact ? "compact" : "expanded")}
         className="
           fixed left-3 top-3 z-portal-shell-float
           hidden size-10 items-center justify-center md:flex
@@ -359,7 +391,7 @@ function updateMode(nextMode: SidebarMode) {
         ) : null}
 
         <div className="grid gap-1">
-          {appSections.map((section) => {
+          {sections.map((section) => {
             const active = isSectionContentActive(
               pathname,
               section,
@@ -489,7 +521,7 @@ function updateMode(nextMode: SidebarMode) {
       </nav>
 
       <div className="shrink-0 border-t border-portal-border p-2">
-        {!expanded ? (
+        {!expanded && !forceCompact ? (
           <button
             type="button"
             onClick={() => updateMode("expanded")}

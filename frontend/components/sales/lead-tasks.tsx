@@ -1,7 +1,7 @@
 "use client";
 
 import { CalendarClock, CheckCircle2, Ellipsis, RotateCcw } from "lucide-react";
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { CompactTabs } from "@/components/ui/compact-tabs";
@@ -30,6 +30,7 @@ const filterOptions: ReadonlyArray<{ id: LeadTaskFilter; label: string }> = [
   { id: "completed", label: "Завершённые" },
   { id: "all", label: "Все" },
 ];
+const menuItemClass = "w-full rounded-lg px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-50";
 
 type TaskActionProps = {
   onEdit: (task: LeadTask, trigger: HTMLElement) => void;
@@ -38,6 +39,81 @@ type TaskActionProps = {
   onReopen: (task: LeadTask) => void;
   onReschedule: (task: LeadTask, days: number) => void;
 };
+
+function LeadTaskMoreMenu({ task, ...actions }: { task: LeadTask } & TaskActionProps) {
+  const [open, setOpen] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    function onPointerDown(event: MouseEvent) {
+      if (!rootRef.current?.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    }
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", onPointerDown);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", onPointerDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [open]);
+
+  function run(action: () => void) {
+    setOpen(false);
+    action();
+  }
+
+  return (
+    <div ref={rootRef} className="relative">
+      <Button
+        type="button"
+        size="compact"
+        aria-expanded={open}
+        aria-haspopup="menu"
+        onClick={() => setOpen((current) => !current)}
+      >
+        <Ellipsis size={14} /> Ещё
+      </Button>
+      {open ? (
+        <div
+          role="menu"
+          aria-label={`Дополнительные действия с задачей «${task.title}»`}
+          className="absolute right-0 z-30 mt-1 w-44 rounded-xl border border-slate-200 bg-white p-1.5 shadow-xl"
+        >
+          {task.status === "open" ? (
+            <>
+              <button type="button" role="menuitem" className={menuItemClass} onClick={() => run(() => actions.onReschedule(task, 1))}>На завтра</button>
+              <button type="button" role="menuitem" className={menuItemClass} onClick={() => run(() => actions.onReschedule(task, 3))}>Перенести на 3 дня</button>
+              <button type="button" role="menuitem" className={menuItemClass} onClick={() => run(() => actions.onReschedule(task, 7))}>Перенести на неделю</button>
+              <button
+                type="button"
+                role="menuitem"
+                className={menuItemClass}
+                onClick={(event) => run(() => actions.onEdit(task, event.currentTarget))}
+              >
+                Выбрать срок
+              </button>
+            </>
+          ) : null}
+          <button
+            type="button"
+            role="menuitem"
+            className="w-full rounded-lg px-3 py-2 text-left text-sm text-red-700 hover:bg-red-50"
+            onClick={(event) => run(() => actions.onDelete(task, event.currentTarget))}
+          >
+            Удалить
+          </button>
+        </div>
+      ) : null}
+    </div>
+  );
+}
 
 function LeadTaskCard({ task, referenceAt, ...actions }: { task: LeadTask; referenceAt: string } & TaskActionProps) {
   const timing = getTaskTimingLabel(task, referenceAt);
@@ -60,23 +136,22 @@ function LeadTaskCard({ task, referenceAt, ...actions }: { task: LeadTask; refer
       </dl>
       {task.description ? <p className="mt-2 whitespace-pre-wrap text-sm leading-5 text-slate-600">{task.description}</p> : null}
       {task.result ? <div className="mt-3 border-l-2 border-emerald-300 bg-emerald-50 px-3 py-2"><p className="text-xs font-semibold text-emerald-800">Результат</p><p className="mt-1 whitespace-pre-wrap text-sm text-slate-700">{task.result}</p></div> : null}
-      <div className="mt-3 flex flex-wrap gap-1.5 border-t border-slate-100 pt-2.5" aria-label={`Действия с задачей «${task.title}»`}>
-        {task.status === "open" ? <>
-          <Button type="button" variant="primary" onClick={(event) => actions.onComplete(task, event.currentTarget)} className="h-8 px-2.5 text-xs"><CheckCircle2 size={14} /> Завершить</Button>
-          <Button type="button" onClick={(event) => actions.onEdit(task, event.currentTarget)} className="h-8 px-2.5 text-xs">Редактировать</Button>
-        </> : <Button type="button" onClick={() => actions.onReopen(task)} className="h-8 px-2.5 text-xs"><RotateCcw size={14} /> Открыть повторно</Button>}
-        <details className="relative">
-          <summary className="flex h-8 cursor-pointer list-none items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 text-xs font-medium text-slate-700 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 [&::-webkit-details-marker]:hidden"><Ellipsis size={14} /> Ещё</summary>
-          <div className="absolute right-0 z-30 mt-1 w-44 rounded-xl border border-slate-200 bg-white p-1.5 shadow-xl">
-            {task.status === "open" ? <>
-              <button type="button" onClick={() => actions.onReschedule(task, 1)} className="w-full rounded-lg px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-50">На завтра</button>
-              <button type="button" onClick={() => actions.onReschedule(task, 3)} className="w-full rounded-lg px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-50">Перенести на 3 дня</button>
-              <button type="button" onClick={() => actions.onReschedule(task, 7)} className="w-full rounded-lg px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-50">Перенести на неделю</button>
-              <button type="button" onClick={(event) => actions.onEdit(task, event.currentTarget)} className="w-full rounded-lg px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-50">Выбрать срок</button>
-            </> : null}
-            <button type="button" onClick={(event) => actions.onDelete(task, event.currentTarget)} className="w-full rounded-lg px-3 py-2 text-left text-sm text-red-700 hover:bg-red-50">Удалить</button>
-          </div>
-        </details>
+      <div className="mt-3 flex flex-wrap items-center gap-1.5 border-t border-slate-100 pt-2.5" aria-label={`Действия с задачей «${task.title}»`}>
+        {task.status === "open" ? (
+          <>
+            <Button type="button" variant="primary" size="compact" onClick={(event) => actions.onComplete(task, event.currentTarget)}>
+              <CheckCircle2 size={14} /> Завершить
+            </Button>
+            <Button type="button" size="compact" onClick={(event) => actions.onEdit(task, event.currentTarget)}>
+              Редактировать
+            </Button>
+          </>
+        ) : (
+          <Button type="button" size="compact" onClick={() => actions.onReopen(task)}>
+            <RotateCcw size={14} /> Открыть повторно
+          </Button>
+        )}
+        <LeadTaskMoreMenu task={task} {...actions} />
       </div>
     </article>
   );

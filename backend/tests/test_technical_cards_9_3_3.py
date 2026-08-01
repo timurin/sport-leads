@@ -101,16 +101,19 @@ def test_operation_lines_replace_patch_and_soft_prefill() -> None:
             card_id = card["id"]
             assert card["operation_lines"] == []
 
-            # Soft prefill: catalog missing → empty, no demo
+            # Soft prefill: catalog table may exist (8.1.3) but empty → no demo rows
             prefill = client.post(
                 f"/technical-cards/{card_id}/operation-lines/prefill"
             )
             assert prefill.status_code == 200, prefill.text
             body = prefill.json()
             assert body["prefilled"] is False
-            assert body["catalog_available"] is False
             assert body["card"]["operation_lines"] == []
-            assert "8.1.3" in body["message"]
+            assert body["catalog_available"] in {True, False}
+            if body["catalog_available"]:
+                assert "empty" in body["message"].lower() or "demo" in body["message"].lower()
+            else:
+                assert "8.1.3" in body["message"]
 
             replaced = client.put(
                 f"/technical-cards/{card_id}/operation-lines",

@@ -56,6 +56,17 @@ Before changes: check git status/branch; read roadmap and ERP-check; inspect exi
 
 While working: minimal diff; keep architecture and compatibility; no visual changes without a direct task; do not mix roadmap stages; no mass refactor; no mock substitution for working code; no error-hiding fallbacks; do not delete unknown/untracked files; never `git reset --hard` / `git clean -fd`.
 
+## Local dev endpoints (hard rule)
+
+- Repository root for this project is `D:\Projects\sport-leads`.
+- Frontend dev URL for this project is `http://127.0.0.1:3001` and `http://localhost:3001`.
+- Backend dev URL for this project is `http://127.0.0.1:8000` and `http://localhost:8000`.
+- Treat `3001` as the canonical frontend port for local agent work in this repository unless the user explicitly changes it.
+- Treat `8000` as the canonical backend port for local agent work in this repository unless the user explicitly changes it.
+- Do **not** start, stop, kill, probe, curl, or repurpose port `3000` as part of Sport-Lead work unless the user explicitly asks for that exact action.
+- If port `3000` is occupied by another local product or service, treat it as foreign and out of scope; report it, but do not touch it by default.
+- When checking local readiness, use only the canonical project endpoints above; do not waste time rediscovering project paths or trying alternate frontend ports first.
+
 ## Protected Platform Shell
 
 Approved contracts live in `docs/design-system/shell-contracts.md`:

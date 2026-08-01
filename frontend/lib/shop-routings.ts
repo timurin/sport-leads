@@ -63,9 +63,48 @@ export type ShopRoutingListParams = {
 export type WorkCenterListParams = {
   search?: string;
   active_only?: boolean;
+  production_stage_id?: number;
+  production_stage_code?: string;
   limit?: number;
   offset?: number;
 };
+
+export type WorkCenterDraft = {
+  name: string;
+  code: string;
+  production_stage_id: number | null;
+  is_active: boolean;
+};
+
+export function filterWorkCenters(
+  rows: WorkCenter[],
+  query: string,
+): WorkCenter[] {
+  const needle = query.trim().toLocaleLowerCase("ru");
+  if (!needle) return rows;
+  return rows.filter(
+    (row) =>
+      row.name.toLocaleLowerCase("ru").includes(needle) ||
+      row.code.toLocaleLowerCase("ru").includes(needle),
+  );
+}
+
+export function validateWorkCenterDraft(draft: WorkCenterDraft): string | null {
+  if (!draft.name.trim()) return "Укажите наименование";
+  if (draft.name.trim().length > 255) {
+    return "Наименование не длиннее 255 символов";
+  }
+  if (!draft.code.trim()) return "Укажите код";
+  if (draft.code.trim().length > 64) return "Код не длиннее 64 символов";
+  if (
+    draft.production_stage_id != null &&
+    (!Number.isSafeInteger(draft.production_stage_id) ||
+      draft.production_stage_id <= 0)
+  ) {
+    return "Выберите корректный цех";
+  }
+  return null;
+}
 
 function apiBaseUrl(): string {
   return (process.env.SPORT_LEADS_API_URL ?? "http://127.0.0.1:8000").replace(
@@ -210,6 +249,12 @@ export async function getWorkCenters(
   if (params.search?.trim()) query.set("search", params.search.trim());
   if (params.active_only != null) {
     query.set("active_only", String(params.active_only));
+  }
+  if (params.production_stage_id != null) {
+    query.set("production_stage_id", String(params.production_stage_id));
+  }
+  if (params.production_stage_code?.trim()) {
+    query.set("production_stage_code", params.production_stage_code.trim());
   }
   if (params.limit != null) query.set("limit", String(params.limit));
   if (params.offset != null) query.set("offset", String(params.offset));

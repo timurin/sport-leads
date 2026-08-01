@@ -9,6 +9,8 @@ type EntityPanelProps = {
   embedded?: boolean;
   compact?: boolean;
   className?: string;
+  /** When true, header stays visible and body/filter are hidden. */
+  collapsed?: boolean;
 };
 
 /**
@@ -23,6 +25,7 @@ export function EntityPanel({
   embedded = false,
   compact = false,
   className = "",
+  collapsed = false,
 }: EntityPanelProps) {
   return (
     <section
@@ -52,8 +55,10 @@ export function EntityPanel({
         </div>
         {actions ? <div className="shrink-0">{actions}</div> : null}
       </div>
-      {filter ? <div className="mt-portal-4">{filter}</div> : null}
-      <div className={compact ? "mt-portal-3 min-w-0" : "mt-portal-4 min-w-0"}>{children}</div>
+      {collapsed ? null : filter ? <div className="mt-portal-4">{filter}</div> : null}
+      {collapsed ? null : (
+        <div className={compact ? "mt-portal-3 min-w-0" : "mt-portal-4 min-w-0"}>{children}</div>
+      )}
     </section>
   );
 }

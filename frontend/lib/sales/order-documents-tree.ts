@@ -6,12 +6,63 @@ export type OrderDocumentNode = {
   children?: OrderDocumentNode[];
 };
 
+export type OrderCommercialDocSummary = {
+  id: number;
+  number: string;
+  status: string;
+  quotationId?: number | null;
+};
+
 export function buildOrderDocumentTree(order: {
   id: string;
   number: string;
   leadId: string;
   sourceLeadHref: string;
+  quotations?: OrderCommercialDocSummary[];
+  invoices?: OrderCommercialDocSummary[];
 }): OrderDocumentNode[] {
+  const quotations = order.quotations ?? [];
+  const invoices = order.invoices ?? [];
+
+  const quotationNodes: OrderDocumentNode[] =
+    quotations.length === 0
+      ? [
+          {
+            id: "quotation-empty",
+            label: "КП (пока нет)",
+            status: "planned",
+          },
+        ]
+      : quotations.map((doc) => ({
+          id: `quotation-${doc.id}`,
+          label: `КП ${doc.number}`,
+          status: "live" as const,
+        }));
+
+  const invoiceNodes: OrderDocumentNode[] =
+    invoices.length === 0
+      ? [
+          {
+            id: "invoice-empty",
+            label: "Счёт на оплату (пока нет)",
+            status: "planned",
+          },
+        ]
+      : invoices.map((doc) => ({
+          id: `invoice-${doc.id}`,
+          label: `Счёт ${doc.number}`,
+          status: "live" as const,
+          children: doc.quotationId
+            ? [
+                {
+                  id: `invoice-${doc.id}-from-kp`,
+                  label: `из КП #${doc.quotationId}`,
+                  status: "live" as const,
+                },
+              ]
+            : undefined,
+        }));
+
   return [
     {
       id: "lead",
@@ -25,17 +76,12 @@ export function buildOrderDocumentTree(order: {
           href: `/sales/orders/${order.id}`,
           status: "live",
           children: [
+            ...quotationNodes,
+            ...invoiceNodes,
             {
-              id: "invoice",
-              label: "Счет на оплату",
+              id: "waybill",
+              label: "Товарная накладная",
               status: "planned",
-              children: [
-                {
-                  id: "waybill",
-                  label: "Товарная накладная",
-                  status: "planned",
-                },
-              ],
             },
           ],
         },

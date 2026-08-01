@@ -35,12 +35,20 @@ function useEscape(onClose: () => void) {
   }, [onClose]);
 }
 
-export function LeadTaskEditDialog({ task, referenceAt, managers, onClose, onSave }: {
+export function LeadTaskEditDialog({
+  task,
+  referenceAt,
+  managers,
+  persistent = false,
+  onClose,
+  onSave,
+}: {
   task: LeadTask | null;
   referenceAt: string;
   managers: UserSummary[];
+  persistent?: boolean;
   onClose: () => void;
-  onSave: (draft: LeadTaskDraft) => void;
+  onSave: (draft: LeadTaskDraft) => Promise<string | null> | string | null;
 }) {
   const defaultDateTime = getTaskFormDateTime(task?.dueAt ?? rescheduleTaskDueAt(referenceAt, referenceAt, 1));
   const [title, setTitle] = useState(task?.title ?? "");
@@ -51,6 +59,8 @@ export function LeadTaskEditDialog({ task, referenceAt, managers, onClose, onSav
   const [priority, setPriority] = useState<Priority>(task?.priority ?? "medium");
   const [description, setDescription] = useState(task?.description ?? "");
   const [errors, setErrors] = useState<{ title?: string; assignedToId?: string; dueAt?: string }>({});
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
   useEscape(onClose);
 
   function selectQuickType(nextType: LeadTaskType) {
@@ -60,7 +70,7 @@ export function LeadTaskEditDialog({ task, referenceAt, managers, onClose, onSav
     }
   }
 
-  function submit(event: React.FormEvent<HTMLFormElement>) {
+  async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const dueAt = createTaskDueAt(date, time);
     const nextErrors = {
@@ -70,14 +80,35 @@ export function LeadTaskEditDialog({ task, referenceAt, managers, onClose, onSav
     };
     setErrors(nextErrors);
     if (Object.values(nextErrors).some(Boolean) || !dueAt) return;
-    onSave({ title: title.trim(), type, assignedToId, dueAt, priority, description: description.trim() || undefined });
+    setSaving(true);
+    setSaveError("");
+    const error = await onSave({
+      title: title.trim(),
+      type,
+      assignedToId,
+      dueAt,
+      priority,
+      description: description.trim() || undefined,
+    });
+    setSaving(false);
+    if (error) {
+      setSaveError(error);
+      return;
+    }
   }
 
   return (
     <div className="fixed inset-0 z-portal-modal-4 flex items-center justify-center bg-slate-950/40 p-4" role="presentation" onMouseDown={onClose}>
       <section className="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white p-5 text-slate-900 shadow-2xl sm:p-6" role="dialog" aria-modal="true" aria-labelledby="lead-task-dialog-title" onMouseDown={(event) => event.stopPropagation()}>
         <div className="flex items-start justify-between gap-4">
-          <div><h2 id="lead-task-dialog-title" className="text-lg font-semibold text-slate-950">{task ? "Редактировать задачу" : "Добавить задачу"}</h2><p className="mt-1 text-sm text-slate-500">Задача сохраняется локально в карточке лида.</p></div>
+          <div>
+            <h2 id="lead-task-dialog-title" className="text-lg font-semibold text-slate-950">{task ? "Редактировать задачу" : "Добавить задачу"}</h2>
+            <p className="mt-1 text-sm text-slate-500">
+              {persistent
+                ? "Задача сохраняется в backend и остаётся на карточке после обновления."
+                : "Задача сохраняется локально в карточке лида."}
+            </p>
+          </div>
           <button type="button" onClick={onClose} aria-label="Закрыть форму задачи" className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"><X size={18} /></button>
         </div>
         <form onSubmit={submit} className="mt-5">
@@ -93,20 +124,93 @@ export function LeadTaskEditDialog({ task, referenceAt, managers, onClose, onSav
             <label className="text-sm font-medium text-slate-700">Приоритет<select value={priority} onChange={(event) => setPriority(event.target.value as Priority)} className={fieldClass}>{priorities.map((value) => <option key={value} value={value}>{priorityLabels[value]}</option>)}</select></label>
             <label className="text-sm font-medium text-slate-700 sm:col-span-2">Описание<textarea rows={4} maxLength={3000} value={description} onChange={(event) => setDescription(event.target.value)} className="mt-1 w-full resize-y rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" /></label>
           </div>
-          <div className="mt-5 flex flex-col-reverse gap-2 border-t border-slate-200 pt-4 sm:flex-row sm:justify-end"><Button type="button" onClick={onClose}>Отмена</Button><Button type="submit" variant="primary">{task ? "Сохранить" : "Создать"}</Button></div>
+          {saveError ? <p className="mt-4 text-sm text-red-700" role="alert">{saveError}</p> : null}
+          <div className="mt-5 flex flex-col-reverse gap-2 border-t border-slate-200 pt-4 sm:flex-row sm:justify-end"><Button type="button" onClick={onClose} disabled={saving}>Отмена</Button><Button type="submit" variant="primary" disabled={saving}>{saving ? "Сохранение…" : task ? "Сохранить" : "Создать"}</Button></div>
         </form>
       </section>
     </div>
   );
 }
 
-export function LeadTaskCompleteDialog({ task, onClose, onConfirm }: { task: LeadTask; onClose: () => void; onConfirm: (result?: string) => void }) {
+export function LeadTaskCompleteDialog({
+  task,
+  persistent = false,
+  onClose,
+  onConfirm,
+}: {
+  task: LeadTask;
+  persistent?: boolean;
+  onClose: () => void;
+  onConfirm: (result?: string) => Promise<string | null> | string | null;
+}) {
   const [result, setResult] = useState(task.result ?? "");
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
   useEscape(onClose);
-  return <div className="fixed inset-0 z-portal-modal-4 flex items-center justify-center bg-slate-950/40 p-4" role="presentation" onMouseDown={onClose}><section className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl" role="dialog" aria-modal="true" aria-labelledby="complete-task-title" onMouseDown={(event) => event.stopPropagation()}><h2 id="complete-task-title" className="text-lg font-semibold text-slate-950">Завершить задачу</h2><p className="mt-2 break-words text-sm text-slate-600">{task.title}</p><label className="mt-5 block text-sm font-medium text-slate-700">Результат<textarea autoFocus rows={4} maxLength={3000} value={result} onChange={(event) => setResult(event.target.value)} className="mt-1 w-full resize-y rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" /></label><div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end"><Button type="button" onClick={onClose}>Отмена</Button><Button type="button" variant="primary" onClick={() => onConfirm(result.trim() || undefined)}>Завершить</Button></div></section></div>;
+
+  async function confirm() {
+    setSaving(true);
+    setSaveError("");
+    const error = await onConfirm(result.trim() || undefined);
+    setSaving(false);
+    if (error) setSaveError(error);
+  }
+
+  return (
+    <div className="fixed inset-0 z-portal-modal-4 flex items-center justify-center bg-slate-950/40 p-4" role="presentation" onMouseDown={onClose}>
+      <section className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl" role="dialog" aria-modal="true" aria-labelledby="complete-task-title" onMouseDown={(event) => event.stopPropagation()}>
+        <h2 id="complete-task-title" className="text-lg font-semibold text-slate-950">Завершить задачу</h2>
+        <p className="mt-2 break-words text-sm text-slate-600">{task.title}</p>
+        {persistent ? <p className="mt-2 text-xs text-slate-500">Статус сохранится в backend.</p> : null}
+        <label className="mt-5 block text-sm font-medium text-slate-700">Результат<textarea autoFocus rows={4} maxLength={3000} value={result} onChange={(event) => setResult(event.target.value)} className="mt-1 w-full resize-y rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" /></label>
+        {saveError ? <p className="mt-3 text-sm text-red-700" role="alert">{saveError}</p> : null}
+        <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+          <Button type="button" onClick={onClose} disabled={saving}>Отмена</Button>
+          <Button type="button" variant="primary" onClick={confirm} disabled={saving}>{saving ? "Сохранение…" : "Завершить"}</Button>
+        </div>
+      </section>
+    </div>
+  );
 }
 
-export function LeadTaskDeleteDialog({ task, onClose, onConfirm }: { task: LeadTask; onClose: () => void; onConfirm: () => void }) {
+export function LeadTaskDeleteDialog({
+  task,
+  persistent = false,
+  onClose,
+  onConfirm,
+}: {
+  task: LeadTask;
+  persistent?: boolean;
+  onClose: () => void;
+  onConfirm: () => Promise<string | null> | string | null;
+}) {
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
   useEscape(onClose);
-  return <div className="fixed inset-0 z-portal-modal-4 flex items-center justify-center bg-slate-950/40 p-4" role="presentation" onMouseDown={onClose}><section className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl" role="dialog" aria-modal="true" aria-labelledby="delete-task-title" onMouseDown={(event) => event.stopPropagation()}><h2 id="delete-task-title" className="text-lg font-semibold text-slate-950">Удалить задачу?</h2><p className="mt-2 break-words text-sm leading-6 text-slate-600">Задача «{task.title}» будет удалена только из текущей карточки.</p><div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end"><Button type="button" onClick={onClose}>Отмена</Button><Button type="button" variant="primary" onClick={onConfirm} autoFocus>Удалить</Button></div></section></div>;
+
+  async function confirm() {
+    setSaving(true);
+    setSaveError("");
+    const error = await onConfirm();
+    setSaving(false);
+    if (error) setSaveError(error);
+  }
+
+  return (
+    <div className="fixed inset-0 z-portal-modal-4 flex items-center justify-center bg-slate-950/40 p-4" role="presentation" onMouseDown={onClose}>
+      <section className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl" role="dialog" aria-modal="true" aria-labelledby="delete-task-title" onMouseDown={(event) => event.stopPropagation()}>
+        <h2 id="delete-task-title" className="text-lg font-semibold text-slate-950">Удалить задачу?</h2>
+        <p className="mt-2 break-words text-sm leading-6 text-slate-600">
+          {persistent
+            ? `Задача «${task.title}» будет удалена из backend.`
+            : `Задача «${task.title}» будет удалена только из текущей карточки.`}
+        </p>
+        {saveError ? <p className="mt-3 text-sm text-red-700" role="alert">{saveError}</p> : null}
+        <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+          <Button type="button" onClick={onClose} disabled={saving}>Отмена</Button>
+          <Button type="button" variant="primary" onClick={confirm} disabled={saving} autoFocus>{saving ? "Удаление…" : "Удалить"}</Button>
+        </div>
+      </section>
+    </div>
+  );
 }

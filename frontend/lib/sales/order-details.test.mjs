@@ -37,6 +37,8 @@ test("maps persisted order details and preserves nullable fields", () => {
       assembly_variant_id: null,
       assembly_variant_name: null,
       assembly_variant_total_cost: null,
+      routing_template_id: null,
+      routing_template_name: null,
       vat_rate_id: null,
       vat_rate_percent: null,
       variant_snapshots: [],
@@ -79,17 +81,24 @@ test("maps persisted order details and preserves nullable fields", () => {
   assert.equal(order.items[0].assemblyVariantId, null);
   assert.equal(order.items[0].assemblyVariantName, "");
   assert.equal(order.items[0].assemblyVariantTotalCost, "");
+  assert.equal(order.items[0].routingTemplateId, null);
+  assert.equal(order.items[0].routingTemplateName, "");
   assert.equal(order.items[0].sizeRange, "S-L");
   assert.equal(order.items[0].personalization, "Капитан");
   assert.equal(order.items[0].color, "Синий");
   assert.equal(order.responsibleName, "Не назначен");
   assert.equal(order.amount, "Не указана");
+  assert.equal(order.amountValue, "");
+  assert.equal(order.currencyCode, "RUB");
+  assert.equal(order.itemsSubtotalValue, "2700");
+  assert.equal(order.discountPercent, "");
+  assert.equal(order.discountAmountValue, "0");
   assert.equal(order.description, "Описание пока не добавлено.");
   assert.equal(order.status, "Новый");
   assert.equal(order.itemCount, 1);
 });
 
-test("maps assembly variant and size_type snapshots on order items", () => {
+test("maps assembly variant, routing, and size_type snapshots on order items", () => {
   const order = fromApiSalesOrder({
     id: 42,
     number: "SO-2026-000042",
@@ -123,6 +132,8 @@ test("maps assembly variant and size_type snapshots on order items", () => {
       assembly_variant_id: 11,
       assembly_variant_name: "С отстрочкой",
       assembly_variant_total_cost: "450.00",
+      routing_template_id: 3,
+      routing_template_name: "Маршрут A",
       vat_rate_id: null,
       vat_rate_percent: null,
       variant_snapshots: [],
@@ -148,6 +159,8 @@ test("maps assembly variant and size_type snapshots on order items", () => {
   assert.equal(order.items[0].assemblyVariantId, 11);
   assert.equal(order.items[0].assemblyVariantName, "С отстрочкой");
   assert.equal(order.items[0].assemblyVariantTotalCost, "450.00");
+  assert.equal(order.items[0].routingTemplateId, 3);
+  assert.equal(order.items[0].routingTemplateName, "Маршрут A");
 });
 
 test("maps lead and order history events through shared activity mapping", () => {

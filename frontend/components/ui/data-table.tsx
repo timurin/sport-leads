@@ -1,9 +1,10 @@
-import type {
-  HTMLAttributes,
-  ReactNode,
-  ThHTMLAttributes,
-  TdHTMLAttributes,
-  TableHTMLAttributes,
+import {
+  forwardRef,
+  type HTMLAttributes,
+  type ReactNode,
+  type ThHTMLAttributes,
+  type TdHTMLAttributes,
+  type TableHTMLAttributes,
 } from "react";
 
 type DataTableProps = TableHTMLAttributes<HTMLTableElement> & {
@@ -131,20 +132,20 @@ export function DataTableCell({
   );
 }
 
-export function DataTableRow({
-  children,
-  className = "",
-  ...props
-}: HTMLAttributes<HTMLTableRowElement> & {
-  children: ReactNode;
-  className?: string;
-}) {
+export const DataTableRow = forwardRef<
+  HTMLTableRowElement,
+  HTMLAttributes<HTMLTableRowElement> & {
+    children: ReactNode;
+    className?: string;
+  }
+>(function DataTableRow({ children, className = "", ...props }, ref) {
   return (
     <tr
+      ref={ref}
       {...props}
       className={`hover:bg-portal-primary-soft/40 ${className}`}
     >
       {children}
     </tr>
   );
-}
+});

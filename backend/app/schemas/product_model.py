@@ -8,6 +8,7 @@ from app.models.product_model import (
     ProductModelStatus,
     ProductModelVersionState,
 )
+from app.schemas.file_io import FileIoRowError
 
 
 class ProductModelBase(BaseModel):
@@ -89,6 +90,26 @@ class ProductModelRead(ProductModelBase):
     created_at: datetime
     updated_at: datetime
     has_journal_operations: bool = False
+
+
+class ProductModelImportResult(BaseModel):
+    """Catalog import dry-run / commit response (4.5.3 / ADR-020)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    dry_run: bool = True
+    total_rows: int = Field(..., ge=0)
+    valid_rows: int = Field(..., ge=0)
+    error_rows: int = Field(..., ge=0)
+    errors: list[FileIoRowError] = Field(default_factory=list)
+    preview: list[dict] = Field(default_factory=list)
+    can_commit: bool = False
+    created_count: int = Field(default=0, ge=0)
+    updated_count: int = Field(default=0, ge=0)
+    created_ids: list[int] = Field(default_factory=list)
+    updated_ids: list[int] = Field(default_factory=list)
+    created: list[ProductModelRead] = Field(default_factory=list)
+    updated: list[ProductModelRead] = Field(default_factory=list)
 
 
 class ProductModelVersionCreate(BaseModel):
@@ -188,6 +209,7 @@ class NomenclatureProductModelRead(BaseModel):
 class AssemblyOperationLineBase(BaseModel):
     operation_name: str = Field(min_length=1, max_length=255)
     cost: Decimal = Field(default=Decimal("0"), ge=0, max_digits=14, decimal_places=2)
+    quantity_per_item: int = Field(default=1, ge=1)
     duration_seconds: int = Field(default=0, ge=0)
     sequence: int | None = Field(default=None, ge=1)
 
@@ -204,6 +226,7 @@ class AssemblyOperationLineCreate(AssemblyOperationLineBase):
 class AssemblyOperationLineUpdate(BaseModel):
     operation_name: str | None = Field(default=None, min_length=1, max_length=255)
     cost: Decimal | None = Field(default=None, ge=0, max_digits=14, decimal_places=2)
+    quantity_per_item: int | None = Field(default=None, ge=1)
     duration_seconds: int | None = Field(default=None, ge=0)
     sequence: int | None = Field(default=None, ge=1)
 
@@ -221,6 +244,8 @@ class AssemblyOperationLineRead(BaseModel):
     sequence: int
     operation_name: str
     cost: Decimal
+    quantity_per_item: int = 1
+    line_total: Decimal
     duration_seconds: int = 0
     sewing_operation_id: int | None = None
     created_at: datetime
@@ -275,3 +300,66 @@ class AssemblyVariantRead(BaseModel):
 
 class AssemblyVariantReorder(BaseModel):
     assembly_variant_ids: list[int] = Field(min_length=1)
+
+
+class ProductModelOperationNormBase(BaseModel):
+    production_stage_id: int | None = None
+    tech_operation_id: int | None = None
+    norm_qty_per_item: Decimal = Field(default=Decimal("0"), ge=0, max_digits=14, decimal_places=3)
+    unit: str = Field(min_length=1, max_length=64)
+
+    @field_validator("unit", mode="before")
+    @classmethod
+    def strip_unit(cls, value: object) -> object:
+        return value.strip() if isinstance(value, str) else value
+
+
+class ProductModelOperationNormCreate(ProductModelOperationNormBase):
+    pass
+
+
+class ProductModelOperationNormRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    product_model_routing_link_id: int
+    production_stage_id: int | None
+    tech_operation_id: int | None
+    norm_qty_per_item: Decimal
+    unit: str
+    created_at: datetime
+    updated_at: datetime
+
+
+class ProductModelOperationNormReplace(BaseModel):
+    norms: list[ProductModelOperationNormCreate] = Field(default_factory=list)
+
+
+class ProductModelRoutingLinkCreate(BaseModel):
+    shop_routing_template_id: int
+    is_active: bool = True
+    sort_order: int | None = Field(default=None, ge=0)
+    norms: list[ProductModelOperationNormCreate] = Field(default_factory=list)
+
+
+class ProductModelRoutingLinkUpdate(BaseModel):
+    is_active: bool | None = None
+    sort_order: int | None = Field(default=None, ge=0)
+
+
+class ProductModelRoutingLinkRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    product_model_id: int
+    shop_routing_template_id: int
+    shop_routing_template_name: str | None = None
+    is_active: bool
+    sort_order: int
+    operation_norms: list[ProductModelOperationNormRead]
+    created_at: datetime
+    updated_at: datetime
+
+
+class ProductModelRoutingLinkReorder(BaseModel):
+    routing_link_ids: list[int] = Field(min_length=1)

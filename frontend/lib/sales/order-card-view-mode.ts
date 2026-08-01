@@ -27,11 +27,6 @@ export type OrderCardSectionVisibility = {
   techCards: boolean;
 };
 
-const hiddenExtras = {
-  documents: false,
-  techCards: false,
-} as const;
-
 export function getOrderCardSectionVisibility(mode: OrderCardViewMode): OrderCardSectionVisibility {
   if (mode === "info") {
     return {
@@ -39,10 +34,11 @@ export function getOrderCardSectionVisibility(mode: OrderCardViewMode): OrderCar
       metrics: true,
       items: false,
       history: false,
-      comments: false,
-      tasks: false,
+      comments: true,
+      tasks: true,
       communication: false,
-      ...hiddenExtras,
+      documents: false,
+      techCards: false,
     };
   }
   if (mode === "items") {
@@ -68,7 +64,8 @@ export function getOrderCardSectionVisibility(mode: OrderCardViewMode): OrderCar
       comments: false,
       tasks: false,
       communication: true,
-      ...hiddenExtras,
+      documents: false,
+      techCards: false,
     };
   }
   if (mode === "documents") {
@@ -105,7 +102,8 @@ export function getOrderCardSectionVisibility(mode: OrderCardViewMode): OrderCar
     comments: true,
     tasks: true,
     communication: true,
-    documents: true,
+    // Documents only via dedicated filter (`3.5.9`)
+    documents: false,
     techCards: true,
   };
 }

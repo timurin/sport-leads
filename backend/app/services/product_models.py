@@ -96,17 +96,28 @@ def _validate_product_type_link(db: Session, product_type_id: int | None) -> Non
 
 
 def _validate_routing_template_link(
-    db: Session, routing_template_id: int | None
+    db: Session,
+    routing_template_id: int | None,
+    *,
+    product_model_id: int | None = None,
 ) -> None:
     if routing_template_id is None:
         return
     from app.repositories import shop_routings as shop_routings_repo
+    from app.services import product_model_routings as routing_links_service
 
     template = shop_routings_repo.get_routing_template(db, routing_template_id)
     if template is None:
         raise ProductModelValidationError("Маршрут не найден")
     if not template.is_active:
         raise ProductModelValidationError("Нельзя назначить неактивный маршрут")
+    if product_model_id is not None:
+        try:
+            routing_links_service.assert_default_routing_in_whitelist(
+                db, product_model_id, routing_template_id
+            )
+        except routing_links_service.ProductModelRoutingValidationError as error:
+            raise ProductModelValidationError(str(error)) from error
 
 
 def list_product_models(
@@ -238,8 +249,11 @@ def update_product_model(db: Session, model_id: int, payload: ProductModelUpdate
     if "product_type_id" in changes:
         _validate_product_type_link(db, changes["product_type_id"])
     if "default_routing_template_id" in changes:
-        _validate_routing_template_link(db, changes["default_routing_template_id"])
-
+        _validate_routing_template_link(
+            db,
+            changes["default_routing_template_id"],
+            product_model_id=row.id,
+        )
     repo.apply_product_model_updates(row, changes)
     summary = ", ".join(sorted(changes.keys()))
     _append_history(db, row.id, f"Обновлены поля: {summary}")

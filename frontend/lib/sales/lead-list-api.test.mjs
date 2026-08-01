@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { fromApiLeadListItem } from "./lead-list-mapping.ts";
+import { fromApiLeadListItem, toWorkspaceLead } from "./lead-list-mapping.ts";
 
 const baseLead = {
   id: 42,
@@ -106,4 +106,28 @@ test("maps completed converted and rejected API leads", () => {
   assert.equal(rejected.result, "rejected");
   assert.equal(rejected.rejectionReason, "Причина #2");
   assert.equal(rejected.rejectionComment, "Не целевой клиент");
+});
+
+test("toWorkspaceLead keeps API stage and does not invent demo conversion fields", () => {
+  const active = toWorkspaceLead(fromApiLeadListItem(baseLead));
+  assert.equal(active.stageId, "qualification");
+  assert.equal(active.convertedOrderId, undefined);
+
+  const legacyish = toWorkspaceLead({
+    ...fromApiLeadListItem(baseLead),
+    status: "proposal",
+    stageId: undefined,
+  });
+  assert.equal(legacyish.stageId, "proposal");
+  assert.equal(legacyish.convertedOrderId, undefined);
+
+  const completed = toWorkspaceLead(fromApiLeadListItem({
+    ...baseLead,
+    status: "completed",
+    result: "converted",
+    converted_order_id: 55,
+  }));
+  assert.equal(completed.status, "completed");
+  assert.equal(completed.convertedOrderId, "55");
+  assert.notEqual(completed.convertedOrderId?.startsWith("order-demo"), true);
 });

@@ -41,12 +41,20 @@ routings_router = APIRouter(prefix="/shop-routings", tags=["Shop routings"])
 def read_work_centers(
     search: str | None = Query(default=None, max_length=255),
     active_only: bool = Query(default=False),
+    production_stage_id: int | None = Query(default=None, ge=1),
+    production_stage_code: str | None = Query(default=None, max_length=64),
     limit: int = Query(default=100, ge=1, le=500),
     offset: int = Query(default=0, ge=0),
     db: Session = Depends(get_db),
 ) -> list:
     return list_work_centers(
-        db, search=search, active_only=active_only, limit=limit, offset=offset
+        db,
+        search=search,
+        active_only=active_only,
+        production_stage_id=production_stage_id,
+        production_stage_code=production_stage_code,
+        limit=limit,
+        offset=offset,
     )
 
 

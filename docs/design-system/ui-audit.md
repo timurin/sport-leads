@@ -109,7 +109,7 @@ Detailed matrix: § Persistent versus demo/local audit (`5.1.1.3`). Summary:
 ### Mixed / other
 
 - `/sales/leads/[leadId]` — mixed (API numeric IDs + demo `lead-*` fixtures; demo managers/`mockCurrentUser`)
-- `/sales/leads` — persistent list with demo `salesManagers` in filter options
+- `/sales/leads` — persistent list; responsible filter from API leads (`1.1.4`)
 - `/dashboard` — placeholder stub
 - `/settings` — hub linking to both live and missing routes
 - `/`, `/sales` — redirects
@@ -270,7 +270,7 @@ Superseded by § Reference and migration pages (`5.1.1.4`). Kept summary:
 | `/sales/dashboard` | no | no | no | none (demo) | inline period-empty panel | |
 | `/sales/leads` | no | no | no | `loadError` red banner | kanban «Ничего не найдено» / column empty | keeps chrome on error |
 | `/sales/leads/[leadId]` | **yes** skeleton | **yes** `unstable_retry` | **yes** | `notFound()` / throw → segment error | nested task/timeline/message empties | best segment coverage |
-| `/sales/orders` | no | no | no | `loadError` replaces board | kanban empties when OK | network throw uncaught |
+| `/sales/orders` | **yes** | **yes** | no | `loadError` EmptyState + catch in `getOrderList` | kanban empties when OK | `3.4.3` |
 | `/sales/orders/[orderId]` | **yes** pulse | **yes** `reset` | **yes** | `notFound()` / throw | items/history/picker empties | nomenclature fail looks like order error |
 | `/sales/clients` | no | no | no | none (demo) | «Клиенты не найдены» | |
 | `/sales/tasks` | no | no | no | none (demo) | kanban empties | |
@@ -299,7 +299,7 @@ Superseded by § Reference and migration pages (`5.1.1.4`). Kept summary:
 - P1: nomenclature detail 404 does not reliably hit `notFound()`
 - P1: `EmptyState` unused while ad-hoc empties proliferate
 - P2: Lead `unstable_retry` vs Order `reset`
-- P2: orders list network errors uncaught; list loading absent
+- ~~P2: orders list network errors uncaught; list loading absent~~ → closed `3.4.3` (`sales/orders/loading.tsx` + `error.tsx`; `getOrderList` try/catch)
 - P2: EntityWorkspace demo tables have blank empty bodies
 
 ## Persistent versus demo/local audit (`5.1.1.3`)
@@ -318,7 +318,7 @@ Across audited loaders, **no page silently substitutes demo data when a persiste
 | `/dashboard` | stub | placeholder copy | — | no fetch |
 | `/sales` | redirect | — | — | → `/sales/dashboard` |
 | `/sales/dashboard` | demo | `getSalesDashboardDemoData` + `lib/demo-data/sales` | — | UI labels demo snapshot date |
-| `/sales/leads` | persistent* | `salesManagers` in filters | `getLeadList`, stages API | *filter contamination; fail → empty + «Demo-данные не подставлены» |
+| `/sales/leads` | persistent | — | `getLeadList`, stages API | responsible filter from loaded leads (`1.1.4`); fail → empty + message; no `salesManagers` |
 | `/sales/leads/[leadId]` | mixed | `leads` fixtures, `salesManagers`, `mockCurrentUser`; optional `localStorage` stages read | numeric `GET /leads/{id}` + mutations | dual ID scheme |
 | `/sales/orders` | persistent | — | `getOrderList`, status actions | fail → `loadError`, no demo |
 | `/sales/orders/[orderId]` | persistent | — | order + nomenclature APIs | throw / `notFound` |
@@ -368,7 +368,7 @@ Counts: redirect 2 · stub 2 · demo 7 (+ deals) = 8 demo routes · persistent 9
 1. P1 — Persist CRM: dashboard, clients, tasks, deals (landing currently demo).
 2. P1 — De-mix lead card: drop `lead-*` dual path; replace managers/`mockCurrentUser` with employees/auth.
 3. P1 — Persist settings: organizations, employees, materials workspace on backend data.
-4. P2 — Remove `salesManagers` from leads list filters; derive from API.
+4. ~~P2 — Remove `salesManagers` from leads list filters; derive from API.~~ → closed `1.1.4`
 5. P2 — Remove orphan `clients.ts`; clean unused demo order fixtures if unused.
 6. P2 — Settings hub links to missing catalogs without data layer.
 7. P3 — Clarify `/dashboard` stub vs `/sales/dashboard`.

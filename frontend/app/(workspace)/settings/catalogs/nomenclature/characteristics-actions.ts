@@ -250,14 +250,29 @@ export async function toggleNomenclatureVariant(formData: FormData) {
   );
 }
 
+export async function updateNomenclatureVariantCommercial(
+  nomenclatureId: number,
+  variantId: number,
+  payload: {
+    price?: string | null;
+    barcode?: string | null;
+    external_code?: string | null;
+  },
+) {
+  await request(`/variants/${variantId}`, "PATCH", payload);
+  revalidatePath(`/settings/catalogs/nomenclature/${nomenclatureId}`);
+}
+
 export async function uploadNomenclatureMedia(formData: FormData) {
   const file = formData.get("file");
   if (!(file instanceof File) || file.size === 0) {
-    throw new Error("Выберите файл изображения");
+    throw new Error("Выберите файл");
   }
   if (file.size > 10 * 1024 * 1024) {
-    throw new Error("Размер изображения не должен превышать 10 МБ");
+    throw new Error("Размер файла не должен превышать 10 МБ");
   }
+  const explicitMime = String(formData.get("mime_type") ?? "").trim();
+  const mimeType = explicitMime || file.type;
   const bytes = Buffer.from(await file.arrayBuffer()).toString("base64");
   const response = await fetch(
     `${mediaBase()}/nomenclatures/${formData.get("nomenclature_id")}/media`,
@@ -266,7 +281,7 @@ export async function uploadNomenclatureMedia(formData: FormData) {
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
         filename: file.name,
-        mime_type: file.type,
+        mime_type: mimeType,
         content_base64: bytes,
         alt_text: String(formData.get("alt_text") ?? "") || null,
         sort_order: Number(formData.get("sort_order") ?? 0),

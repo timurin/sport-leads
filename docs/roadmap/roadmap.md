@@ -1,7 +1,7 @@
 # Sport-Lead — Global Roadmap
 
 **Code:** `SL-ROADMAP-v1`
-**Updated:** `2026-07-28` (Stage 19 planned: internal staff chat on order + tech cards, @mentions, chat microtasks)
+**Updated:** `2026-08-01` (Stages 7 / 13 / 15 / 16 + Stage 2 group `2.2.3`+`2.3`+`2.4` moved → `v1.00`)
 **Project version:** `v0.9.0`
 **Git branch:** `feature/v0.8.1-nomenclature-core`
 
@@ -73,16 +73,48 @@ Dedupe notes (Sales Orders):
 
 - [x] 1.1.1 — Sales dashboard
 - [x] 1.1.2 — Lead list, filters, and Kanban UI
-- [ ] 1.1.3 — Fully persistent workspace without demo/local lead state
-- [ ] 1.1.4 — Leads list filters without demo `salesManagers` data on persistent routes — gap: `docs/design-system/ui-audit.md` § Persistent versus demo/local
-- [ ] 1.1.5 — Dashboard: top pattern-model sales analysis with filters — dimensions: model article / order count / units manufactured / order amount / sewing-cost amount; depends on order-item model binding `3.2.5` (and sewing costs from assembly-variant snapshots)
+- [x] 1.1.3.1 — Task + boundary for persistent leads workspace — `v0.9.0`; task `docs/tasks/v0.9.0-stage-1.1.3-persistent-leads-workspace.md`
+- [x] 1.1.3.2 — Workspace: drop demo normalize / fake conversion fields; real reject/convert timestamps — `v0.9.0`; `toWorkspaceLead`
+- [x] 1.1.3.3 — Frontend unit tests + ui-audit gap sync — `v0.9.0`; `lead-list-api.test.mjs`
+- [x] 1.1.3.4 — Owner visual verification (leads list/kanban persistent filters) — owner OK `2026-07-31`
+- [x] 1.1.3 — Fully persistent workspace without demo/local lead state — `v0.9.0`; owner visual OK `2026-07-31`
+- [x] 1.1.4 — Leads list filters without demo `salesManagers` data on persistent routes — `v0.9.0`; options from loaded leads only
+
+#### 1.1.5 — Dashboard pattern-model sales analysis
+
+> Live top models table on `/sales/dashboard` (article, orders, units, amount, sewing). Task `docs/tasks/v0.9.0-stage-1.1.5-pattern-model-sales-dashboard.md`.
+
+- [x] 1.1.5.1 — Contract + task / roadmap split — `v0.9.0`; task `docs/tasks/v0.9.0-stage-1.1.5-pattern-model-sales-dashboard.md`
+- [x] 1.1.5.2 — Backend: `GET /analytics/pattern-model-sales` aggregation — `v0.9.0`
+- [x] 1.1.5.3 — Dashboard UI panel + period/article filters — `v0.9.0`; `pattern-model-sales-panel.tsx`
+- [x] 1.1.5.4 — Regression + docs sync — `v0.9.0`; `test_pattern_model_sales_1_1_5.py`
+- [x] 1.1.5.5 — Owner visual verification (dashboard top models panel) — owner OK `2026-08-01`
+- [x] 1.1.5 — Dashboard: top pattern-model sales analysis with filters — `v0.9.0`; owner visual OK `2026-08-01`
 
 ### 1.2 — Lead card
 
 - [x] 1.2.1 — Lead detail route and page states
 - [x] 1.2.2 — Customer, contact, and commercial data saving through API
 - [x] 1.2.3 — Configurable stages and stage management
-- [ ] 1.2.4 — Persistent tasks, notes, timeline, and communications — CRM/lead contour (external + lead notes); **≠** internal order/ТК staff chat (Stage `19`)
+- [x] 1.2.4 — Persistent tasks, notes, timeline, and communications — CRM/lead contour (external + lead notes); **≠** internal order/ТК staff chat (Stage `19`)
+  - [x] 1.2.4.1 — Contract + task / roadmap split (tasks-first slice to visual) — `v0.9.0`; task `docs/tasks/v0.9.0-stage-1.2.4-lead-tasks-persistence.md`
+  - [x] 1.2.4.2 — Extend `LeadTask` model + Alembic migration — `v0.9.0`
+  - [x] 1.2.4.3 — Lead tasks CRUD API + history events — `v0.9.0`
+  - [x] 1.2.4.4 — Lead card FE wire for API tasks (create/edit/complete/reopen/reschedule/delete) — `v0.9.0`
+- [x] 1.2.4.5 — Regression + docs sync — `v0.9.0`; `test_lead_tasks_1_2_4.py`
+- [x] 1.2.4.6 — Owner visual verification (lead card tasks panel, API lead) — owner OK `2026-08-01`
+- [x] 1.2.4.7 — Persistent lead notes — `v0.9.0`; owner visual OK `2026-08-01`
+  - [x] 1.2.4.7.1 — `LeadNote` model + Alembic migration — `v0.9.0`
+  - [x] 1.2.4.7.2 — Lead notes CRUD API (create/update/delete/pin) — `v0.9.0`
+  - [x] 1.2.4.7.3 — Lead card FE wire for API notes — `v0.9.0`
+  - [x] 1.2.4.7.4 — Regression + docs sync — `v0.9.0`; `test_lead_notes_1_2_4_7.py`
+  - [x] 1.2.4.7.5 — Owner visual verification (lead card notes panel, API lead) — owner OK `2026-08-01`
+- [x] 1.2.4.8 — Persistent lead communications contour — CRM/lead; **≠** Stage `19` — owner visual OK `2026-08-01`
+  - [x] 1.2.4.8.1 — `LeadMessage` model + Alembic migration — `v0.9.0`
+  - [x] 1.2.4.8.2 — Lead messages list/create API — `v0.9.0`
+  - [x] 1.2.4.8.3 — Lead card FE wire for API communications — `v0.9.0`
+  - [x] 1.2.4.8.4 — Regression + docs sync — `v0.9.0`; `test_lead_messages_1_2_4_8.py`
+  - [x] 1.2.4.8.5 — Owner visual verification (lead card communications, API lead) — owner OK `2026-08-01`
 - [ ] 1.2.5 — Single lead detail data path (remove `lead-*` fixture IDs); real actor for notes/tasks (depends on `17.1.1` for production auth) — gap: `ui-audit.md`
 
 ### 1.3 — Lead lifecycle
@@ -108,18 +140,22 @@ Dedupe notes (Sales Orders):
 
 - [ ] 2.2.1 — Persistent client list and dedicated workspace
 - [ ] 2.2.2 — Separate client card
-- [ ] 2.2.3 — Client lead and order history
+- [ ] 2.2.3 — Client lead and order history — **moved → v1.00** (microtasks `2.2.3.1`–`2.2.3.5` in `docs/roadmap/roadmap-v1.00.md`)
 
 ### 2.3 — Business data and quality
 
-- [ ] 2.3.1 — Legal details and banking data
-- [ ] 2.3.2 — Segmentation and duplicate detection
-- [ ] 2.3.3 — Settlements and financial client state
+> **Moved to `v1.00`** (`2026-08-01`): entire `2.3` block carried with Stage 2 group (`2.2.3` + `2.3` + `2.4`) to `docs/roadmap/roadmap-v1.00.md` (+ HTML twin). Do not execute under `v0.9.0`.
+
+- [ ] 2.3.1 — Legal details and banking data — **moved → v1.00** (`2.3.1.1`–`2.3.1.4`)
+- [ ] 2.3.2 — Segmentation and duplicate detection — **moved → v1.00** (`2.3.2.1`–`2.3.2.4`)
+- [ ] 2.3.3 — Settlements and financial client state — **moved → v1.00** (`2.3.3.1`–`2.3.3.4`)
 
 ### 2.4 — Organizations workspace
 
-- [ ] 2.4.1 — Persistent organizations list and card on backend data (replace demo `organizationRecords`)
-- [ ] 2.4.2 — Persistent employees directory on backend data (replace demo `employeeRecords`)
+> **Moved to `v1.00`** (`2026-08-01`): entire `2.4` block carried with Stage 2 group to `docs/roadmap/roadmap-v1.00.md` (+ HTML twin). Do not execute under `v0.9.0`.
+
+- [ ] 2.4.1 — Persistent organizations list and card on backend data (replace demo `organizationRecords`) — **moved → v1.00** (`2.4.1.1`–`2.4.1.5`)
+- [ ] 2.4.2 — Persistent employees directory on backend data (replace demo `employeeRecords`) — **moved → v1.00** (`2.4.2.1`–`2.4.2.4`)
 
 ## Stage 3 — Sales Orders
 
@@ -217,15 +253,63 @@ Completion criteria:
 
 ### 3.3 — Financial document scope
 
-- [ ] 3.3.1 — Order-level discount
-- [ ] 3.3.2 — Tax and VAT model
-- [ ] 3.3.3 — Currency, quotations, and invoices (order print output consumes Stage 18 print-form registry)
+#### 3.3.1 — Order-level discount
+
+> Percent on order after line `line_amount` totals; ADR-003 amend. Task `docs/tasks/v0.9.0-stage-3.3.1-order-level-discount.md`.
+
+- [x] 3.3.1.1 — ADR-003 amend + domain contract (order `discount_percent` / computed `discount_amount` / `items_subtotal`) — `v0.9.0`; task `docs/tasks/v0.9.0-stage-3.3.1-order-level-discount.md`
+- [x] 3.3.1.2 — DB migration + model + `_recalculate_order` service — `v0.9.0`; Alembic `c0d1e2f3a456`
+- [x] 3.3.1.3 — API: expose fields + PATCH order discount percent — `v0.9.0`; `PATCH /orders/{id}/discount`; evidence `test_order_discount_3_3_1.py`
+- [x] 3.3.1.4 — Order card UI: edit % + show subtotal / discount / total — `v0.9.0`; evidence: `sales-order-metrics.tsx`, `order-discount-actions.ts`, `order-details.ts` / `order-discount.test.mjs`
+- [x] 3.3.1.5 — Regression tests + docs sync — `v0.9.0`; evidence: `test_order_discount_3_3_1.py`, `order-discount.test.mjs`, `order-card-metrics.test.mjs`; project-structure + erp-check
+
+#### 3.3.2 — Tax and VAT model
+
+> Per-line VAT mode (в сумме / сверху) + persist computed `vat_amount` on lines/order. `VatRate` directory + line rate picker already shipped. Task `docs/tasks/v0.9.0-stage-3.3.2-tax-vat-model.md`. ADR-005 amend. Transfer rule for price docs.
+
+- [x] 3.3.2.1 — ADR-005 amend + domain contract + task / roadmap split — `v0.9.0`; evidence: ADR-005/003 notes; task `docs/tasks/v0.9.0-stage-3.3.2-tax-vat-model.md`
+- [x] 3.3.2.2 — DB: `price_includes_vat` + line/order `vat_amount` (+ migration) — `v0.9.0`; Alembic `e2f3a4b5c678`
+- [x] 3.3.2.3 — Service recalculate + API `vat_amount` / `amount_net` / `line_total` / mode — `v0.9.0`
+- [x] 3.3.2.4 — UI: toolbar BadgePercent «НДС в сумме/сверху» (apply all lines) + VAT totals — `v0.9.0`; `sales-order-items-unf-demo.tsx` / metrics
+- [x] 3.3.2.5 — Regression tests + docs sync (transfer rule) — `v0.9.0`; `test_order_vat_3_3_2.py`, `vat-rates.test.mjs`
+
+#### 3.3.3 — Currency, quotations, and invoices
+
+> Currency MVP (RUB) + КП / счёт as order children with VAT transfer rule; print consumes Stage 18. Task `docs/tasks/v0.9.0-stage-3.3.3-currency-quotations-invoices.md`. ADR-005 amend.
+
+- [x] 3.3.3.1 — ADR-005 amend + domain contract + task / roadmap split — `v0.9.0`; evidence: ADR-005; task `docs/tasks/v0.9.0-stage-3.3.3-currency-quotations-invoices.md`
+- [x] 3.3.3.2 — DB: `SalesOrder.currency_code` (+ migration); order API/UI read — `v0.9.0`; Alembic `f3a4b5c6d789`; evidence `test_order_currency_3_3_3_2.py`
+- [x] 3.3.3.3 — Quotation model/API + create-from-order (VAT/currency snapshot) — `v0.9.0`; Alembic `g4b5c6d7e890`; `POST /orders/{id}/quotations`
+- [x] 3.3.3.4 — Invoice model/API + create-from-order (optional from quotation) — `v0.9.0`; `POST /orders/{id}/invoices`
+- [x] 3.3.3.5 — Order card documents tree: live КП/счёт + create actions — `v0.9.0`; `sales-order-documents-tree.tsx`
+- [x] 3.3.3.6 — Regression + print handoff note + docs sync — `v0.9.0`; `test_sales_commercial_docs_3_3_3.py`
+- [x] 3.3.3.7 — Owner visual verification (documents: create КП/счёт on order card) — owner OK `2026-07-31`
 
 ### 3.4 — Order execution
 
-- [ ] 3.4.1 — Design and approval states in order flow
-- [ ] 3.4.2 — Reserve, production, shipping, payment, and closure workflow
-- [ ] 3.4.3 — Orders list route `loading.tsx` and surfaced network errors (no silent empty list) — gap: `ui-audit.md` § Registered follow-up bugs
+#### 3.4.1 — Design and approval states in order flow
+
+> Sales-side `design_approval_status` + gate before `production`. Stage 10 owns assets/review UI. Task `docs/tasks/v0.9.0-stage-3.4.1-design-approval-order-flow.md`. ADR-003 amend.
+
+- [x] 3.4.1.1 — ADR-003 amend + domain contract + task / roadmap split — `v0.9.0`; task `docs/tasks/v0.9.0-stage-3.4.1-design-approval-order-flow.md`
+- [x] 3.4.1.2 — DB: `SalesOrder.design_approval_status` (+ migration) — `v0.9.0`; Alembic `h5c6d7e8f901`
+- [x] 3.4.1.3 — Service production gate + `PATCH /orders/{id}/design-approval` — `v0.9.0`
+- [x] 3.4.1.4 — Order card UI: show + edit design approval — `v0.9.0`; `order-design-approval-field.tsx`
+- [x] 3.4.1.5 — Regression + docs sync — `v0.9.0`; `test_design_approval_3_4_1.py`
+- [x] 3.4.1.6 — Owner visual verification (design approval on order card) — owner OK `2026-07-31`
+
+#### 3.4.2 — Reserve, production, shipping, payment, and closure workflow
+
+> Sales markers `payment_status`/`paid_amount` + `material_reserve_status`; closure gate requires paid. Warehouse reserve / payment ledger / ship docs stay Stage 12/14. Task `docs/tasks/v0.9.0-stage-3.4.2-order-execution-workflow.md`. ADR-003 amend.
+
+- [x] 3.4.2.1 — ADR-003 amend + domain contract + task / roadmap split — `v0.9.0`; task `docs/tasks/v0.9.0-stage-3.4.2-order-execution-workflow.md`
+- [x] 3.4.2.2 — DB: payment + material reserve columns (+ migration) — `v0.9.0`; Alembic `i6d7e8f9a012`
+- [x] 3.4.2.3 — Service closure payment gate + `PATCH …/payment` + `PATCH …/material-reserve` — `v0.9.0`
+- [x] 3.4.2.4 — Order card UI: live payment metrics + reserve control — `v0.9.0`
+- [x] 3.4.2.5 — Regression + docs sync — `v0.9.0`; `test_order_execution_3_4_2.py`
+- [x] 3.4.2.6 — Owner visual verification (payment + reserve on order card) — owner OK `2026-07-31`
+
+- [x] 3.4.3 — Orders list route `loading.tsx` / `error.tsx` and surfaced network errors (no silent empty list) — `v0.9.0`; `sales/orders/loading.tsx` + `error.tsx`; `getOrderList` try/catch; gap closed in `ui-audit.md`
 
 ### 3.5 — Order card UX and platform links
 
@@ -268,7 +352,7 @@ Microtasks:
 - [x] 3.5.6 — Body: merge «Основные сведения» + source lead/description; metrics right; history full width; comments left + «Задачи по заказу» — `v0.9.0`; `sales-order-page.tsx`
 - [x] 3.5.7 — View filters under header: Все / Сведения о заказе / Товары / Коммуникация — `v0.9.0`; `order-card-view-mode.ts`
 - [x] 3.5.8 — Regression tests (view modes, header, field id mapping) — `v0.9.0`; `order-card-view-mode.test.mjs` + `order-details.test.mjs`
-- [ ] 3.5.9 — Owner visual verification (desktop + mobile matrix)
+- [x] 3.5.9 — Owner visual verification (desktop + mobile matrix) — owner OK `2026-07-31`; stack `<1300` / `1300–1699` / `1700+`; collapse items/tech/history in «Все»; documents filter-only; sidebar force-compact ≤1299
 - [x] 3.5.10 — Docs checkpoint (erp-check / project-structure / PT-06-based order card note; PT-07 historical) — `v0.9.0`
 
 Completion criteria:
@@ -294,7 +378,15 @@ Completion criteria:
 
 - [x] 4.3.1 — `v0.8.5` separate workspace and editable card
 - [x] 4.3.2 — `v0.8.8h` direct free assignment of custom fields in the card — historical; card values now via characteristics API (`4.8.6`)
-- [ ] 4.3.3 — Audit history, archive flow, and bulk operations
+#### 4.3.3 — Audit history, archive flow, and bulk operations
+
+> Boundary: card/list audit trail + soft archive (`is_active`) + multi-select bulk on warehouse list. **≠** catalog file I/O (`4.5` / ADR-020) and **≠** global ops journal (`18.4`).
+
+- [x] 4.3.3.1 — Persistent nomenclature history (FIFO cap) + append on create/update/copy/media + `GET /nomenclatures/{id}/history` — `v0.9.0`; evidence: `nomenclature_history` / `a8b9c0d1e234`, `services/nomenclature_history.py`, `tests/test_nomenclature_history_4_3_3_1.py`; task `docs/tasks/v0.9.0-stage-4.3.3-nomenclature-audit-archive-bulk.md`
+- [x] 4.3.3.2 — Card UI: ActivityTimeline from history API (replace synthetic created/updated-only) — `v0.9.0`
+- [x] 4.3.3.3 — Archive/restore UX polish on card + warehouse list filter for archived — `v0.9.0`
+- [x] 4.3.3.4 — Bulk archive/activate on `/warehouse/stock` multi-select — `v0.9.0`
+- [x] 4.3.3.5 — Regression tests + erp-check / project-structure sync — `v0.9.0`; backend+FE smoke; erp-check / project-structure / contours A synced
 
 ### 4.4 — Characteristics, variants, and media
 
@@ -302,8 +394,22 @@ Completion criteria:
 - [x] 4.4.2 — `v0.8.7` image media lifecycle
 - [x] 4.4.3 — `v0.8.8a` to `v0.8.8g` card layout and interaction contour
 - [x] 4.4.4 — `v0.8.8i` product-characteristics directory
-- [ ] 4.4.5 — Non-image file attachments
-- [ ] 4.4.6 — Variant pricing, barcodes, and external sync
+#### 4.4.5 — Non-image file attachments
+
+> Extend existing `nomenclature_media` (no second table). Images stay gallery/primary; non-images are downloadable attachments (pdf/office/zip/txt/csv). Max 10 MB. `is_primary` only for images.
+
+- [x] 4.4.5.1 — Backend: allowlisted non-image mimes + primary-only-for-images + history wording — `v0.9.0`; evidence: `services/media.py`, `schemas/media.py`; task `docs/tasks/v0.9.0-stage-4.4.5-nomenclature-file-attachments.md`
+- [x] 4.4.5.2 — Card UI: «Вложения» block (upload/download/delete) separate from image carousel — `v0.9.0`; evidence: `nomenclature-card.tsx`
+- [x] 4.4.5.3 — Regression tests + docs sync — `v0.9.0`; evidence: `test_nomenclature_attachments_4_4_5.py`, `nomenclature-attachments-4-4-5.test.mjs`
+
+#### 4.4.6 — Variant pricing, barcodes, and external sync
+
+> ADR-010 amend: variant may carry optional `price` (override of card `base_price`), unique `barcode`, and opaque `external_code` for later 1C. **No** live 1C exchange here — that remains `16.2.1` / ADR-020 contour D.
+
+- [x] 4.4.6.1 — ADR-010 amend + DB columns (`price`, `barcode`, `external_code`) + schemas — `v0.9.0`; Alembic `b9c0d1e2f345`; task `docs/tasks/v0.9.0-stage-4.4.6-variant-pricing-barcodes.md`
+- [x] 4.4.6.2 — API update + order UI suggests variant price when selected — `v0.9.0`; evidence: `services/characteristics.py`, `sales-order-items.tsx` + `effectiveVariantUnitPrice`
+- [x] 4.4.6.3 — Card UI: variants block with editable price / barcode / external_code — `v0.9.0`; evidence: `nomenclature-variants-block.tsx`
+- [x] 4.4.6.4 — Regression tests + docs sync — `v0.9.0`; evidence: `test_variant_pricing_4_4_6.py`, `nomenclature-variant-pricing-4-4-6.test.mjs`
 
 ### 4.5 — Import and export
 
@@ -1332,6 +1438,24 @@ Microtasks:
 - [x] 6.3.9.3 — Product-model assembly variants + tech-card sewing ops: qty / цена / сумма — `2026-07-27`; evidence: `assembly-variants-block.tsx`, `tech-card-detail-workspace.tsx`
 - [x] 6.3.9.4 — Regression tests — `2026-07-27`; `test_sewing_operations.py`, `test_assembly_variants.py`, `sewing-operations.test.mjs`, `product-models.test.mjs`
 
+#### 6.3.10 — Sewing operation ↔ sewing-shop equipment
+
+> Owner ask `2026-07-31`: bind `WorkCenter` (цех Пошив / `code=sewing`) to sewing-operations catalog. M:N; not routing/TC equipment (`11.1.2`).
+
+Goal:
+Catalog operations can list compatible sewing-shop equipment; picker rejects non-sewing WorkCenters.
+
+Dependencies:
+- 6.3.5
+- 11.1.2.3 (WorkCenter catalog)
+
+Microtasks:
+- [x] 6.3.10.1 — Domain/ADR amend + task file — `v0.9.0`; evidence: `sewing-operations-domain.md`, ADR-014/017 notes; task `docs/tasks/v0.9.0-stage-6.3.10-sewing-op-equipment.md`
+- [x] 6.3.10.2 — DB: M:N link table + migration + model — `v0.9.0`; Alembic `d1e2f3a4b567`; `sewing_operation_work_centers`; evidence `test_sewing_operation_work_centers_6_3_10_2.py`
+- [x] 6.3.10.3 — API: `work_center_ids` on sewing-operations + sewing-stage validation — `v0.9.0`; evidence `test_sewing_operation_work_centers_6_3_10_3.py`; WC list filters `production_stage_code`/`production_stage_id`
+- [x] 6.3.10.4 — UI: multi-select оборудования on sewing-op create/edit (цех Пошив only) — `v0.9.0`; evidence: `sewing-operation-equipment-picker.tsx`, create/edit on sewing-ops catalog
+- [x] 6.3.10.5 — Regression tests + docs / project-structure sync — `v0.9.0`; evidence: `test_sewing_operation_work_centers_6_3_10_2/3/5.py`, `test_sewing_operations.py`, `test_assembly_variants.py`, `sewing-operations.test.mjs`; project-structure + erp-check
+
 #### 6.3.7 — PatternSet withdrawal checkpoint
 
 Goal:
@@ -1402,6 +1526,8 @@ Completion criteria:
 
 ## Stage 7 — Specifications
 
+> **Moved to `v1.00`** (`2026-08-01`): entire Stage 7 carried to `docs/roadmap/roadmap-v1.00.md` + HTML twin `docs/erp/status/roadmap-v1.00.html`. Do not execute under `v0.9.0`. Checkboxes below remain for historical trace until `v0.9.0` close archive.
+
 ### 7.1 — Domain and persistence
 
 #### 7.1.1 — Specification architecture
@@ -1419,10 +1545,10 @@ Dependencies:
 - ADR-016
 
 Microtasks:
-- [ ] 7.1.1.1 — Define specification entities and version lifecycle (from TC / batch context; plan draft vs final plan+fact report)
-- [ ] 7.1.1.2 — Define material, accessory, norm, and substitute scope sourced from TC composition (+ fact consumption binding)
-- [ ] 7.1.1.3 — Define copy/read contract: assembly + op volumes from order-item / TC; performers / time from execution — not live model edit
-- [ ] 7.1.1.4 — Documentation checkpoint (Documents registry = link index only; no per-type contour)
+- [ ] 7.1.1.1 — Define specification entities and version lifecycle (from TC / batch context; plan draft vs final plan+fact report) — **moved → v1.00**
+- [ ] 7.1.1.2 — Define material, accessory, norm, and substitute scope sourced from TC composition (+ fact consumption binding) — **moved → v1.00**
+- [ ] 7.1.1.3 — Define copy/read contract: assembly + op volumes from order-item / TC; performers / time from execution — not live model edit — **moved → v1.00**
+- [ ] 7.1.1.4 — Documentation checkpoint (Documents registry = link index only; no per-type contour) — **moved → v1.00**
 
 Completion criteria:
 - specification is explicitly a **plan+fact report document** derived from filled TC + execution;
@@ -1438,9 +1564,9 @@ Dependencies:
 - 7.1.1
 
 Microtasks:
-- [ ] 7.1.2.1 — Add SQLAlchemy entities
-- [ ] 7.1.2.2 — Add Alembic migration
-- [ ] 7.1.2.3 — Add schemas and backend regression tests
+- [ ] 7.1.2.1 — Add SQLAlchemy entities — **moved → v1.00**
+- [ ] 7.1.2.2 — Add Alembic migration — **moved → v1.00**
+- [ ] 7.1.2.3 — Add schemas and backend regression tests — **moved → v1.00**
 
 Completion criteria:
 - specification data is stored persistently;
@@ -1458,9 +1584,9 @@ Dependencies:
 - 7.1.2
 
 Microtasks:
-- [ ] 7.2.1.1 — Add repository and service CRUD
-- [ ] 7.2.1.2 — Add endpoints
-- [ ] 7.2.1.3 — Add backend regression tests
+- [ ] 7.2.1.1 — Add repository and service CRUD — **moved → v1.00**
+- [ ] 7.2.1.2 — Add endpoints — **moved → v1.00**
+- [ ] 7.2.1.3 — Add backend regression tests — **moved → v1.00**
 
 Completion criteria:
 - API supports CRUD for specifications;
@@ -1475,12 +1601,12 @@ Dependencies:
 - 7.2.1
 
 Microtasks:
-- [ ] 7.2.2.1 — Add frontend types and API client
-- [ ] 7.2.2.2 — Add workspace/list route (interim; later subsumed by Documents filter)
-- [ ] 7.2.2.3 — Add detail card (plan+fact blocks; rights-gated edit)
-- [ ] 7.2.2.4 — Add loading/error states
-- [ ] 7.2.2.5 — Add frontend regression tests
-- [ ] 7.2.2.6 — Visual verification
+- [ ] 7.2.2.1 — Add frontend types and API client — **moved → v1.00**
+- [ ] 7.2.2.2 — Add workspace/list route (interim; later subsumed by Documents filter) — **moved → v1.00**
+- [ ] 7.2.2.3 — Add detail card (plan+fact blocks; rights-gated edit) — **moved → v1.00**
+- [ ] 7.2.2.4 — Add loading/error states — **moved → v1.00**
+- [ ] 7.2.2.5 — Add frontend regression tests — **moved → v1.00**
+- [ ] 7.2.2.6 — Visual verification — **moved → v1.00**
 
 Completion criteria:
 - specification card uses real API data;
@@ -1499,12 +1625,12 @@ Dependencies:
 - 7.2.1
 
 Microtasks:
-- [ ] 7.2.3.1 — Add backend relation fields (technical_card / order item / model / variant / batch references as approved)
-- [ ] 7.2.3.2 — Add migration and schemas for specification material + operation (+ fact) lines (snapshot/read from TC + execution)
-- [ ] 7.2.3.3 — Add service: create Spec version from TC composition + assembly snapshot (plan); refresh fact blocks from execution
-- [ ] 7.2.3.4 — Add service validation for active/approved versions where applicable
-- [ ] 7.2.3.5 — Add workspace/card integration showing plan+fact blocks sourced from TC / execution
-- [ ] 7.2.3.6 — Add regression tests (immutability vs later TC/model edits after Spec approve)
+- [ ] 7.2.3.1 — Add backend relation fields (technical_card / order item / model / variant / batch references as approved) — **moved → v1.00**
+- [ ] 7.2.3.2 — Add migration and schemas for specification material + operation (+ fact) lines (snapshot/read from TC + execution) — **moved → v1.00**
+- [ ] 7.2.3.3 — Add service: create Spec version from TC composition + assembly snapshot (plan); refresh fact blocks from execution — **moved → v1.00**
+- [ ] 7.2.3.4 — Add service validation for active/approved versions where applicable — **moved → v1.00**
+- [ ] 7.2.3.5 — Add workspace/card integration showing plan+fact blocks sourced from TC / execution — **moved → v1.00**
+- [ ] 7.2.3.6 — Add regression tests (immutability vs later TC/model edits after Spec approve) — **moved → v1.00**
 
 Completion criteria:
 - specification is created from filled TC (+ fact binding), not required before TC generate;
@@ -2351,15 +2477,17 @@ Microtasks:
 
 ## Stage 13 — Procurement
 
+> **Moved to `v1.00`** (`2026-08-01`): open work carried to `docs/roadmap/roadmap-v1.00.md` + HTML twin `docs/erp/status/roadmap-v1.00.html`. Do not execute under `v0.9.0`. Checkboxes below remain for historical trace until `v0.9.0` close archive.
+
 ### 13.1 — Supplier contour
 
-- [ ] 13.1.1 — Suppliers and supplier prices
-- [ ] 13.1.2 — Procurement requests and purchase orders
+- [ ] 13.1.1 — Suppliers and supplier prices — **moved → v1.00**
+- [ ] 13.1.2 — Procurement requests and purchase orders — **moved → v1.00**
 
 ### 13.2 — Supply execution
 
-- [ ] 13.2.1 — Receipts and returns
-- [ ] 13.2.2 — Demand planning and minimum stock linkage
+- [ ] 13.2.1 — Receipts and returns — **moved → v1.00**
+- [ ] 13.2.2 — Demand planning and minimum stock linkage — **moved → v1.00**
 
 ## Stage 14 — Shipping and Payments
 
@@ -2374,37 +2502,41 @@ Microtasks:
 
 ## Stage 15 — Costing and Analytics
 
+> **Moved to `v1.00`** (`2026-08-01`): open costing/analytics work carried to `docs/roadmap/roadmap-v1.00.md` (+ HTML twin). `15.2.1` already shipped in `v0.9.0` and is mirrored done in v1.00. Do not execute open items under `v0.9.0`.
+
 ### 15.1 — Costing
 
-- [ ] 15.1.1 — Planned, normative, and actual costing
-- [ ] 15.1.2 — Margin and plan-fact analysis
+- [ ] 15.1.1 — Planned, normative, and actual costing — **moved → v1.00**
+- [ ] 15.1.2 — Margin and plan-fact analysis — **moved → v1.00**
 
 ### 15.2 — Analytics
 
 - [x] 15.2.1 — CRM dashboard and base order analytics
-- [ ] 15.2.2 — ERP analytics and management P&L
+- [ ] 15.2.2 — ERP analytics and management P&L — **moved → v1.00**
 
 ## Stage 16 — Integrations
 
+> **Moved to `v1.00`** (`2026-08-01`): integrations contour carried to `docs/roadmap/roadmap-v1.00.md` (+ HTML twin). Do not execute under `v0.9.0`.
+
 ### 16.1 — External channels
 
-- [ ] 16.1.1 — Website forms, email, VK, Telegram, and telephony
-- [ ] 16.1.2 — Google Sheets and webhooks
+- [ ] 16.1.1 — Website forms, email, VK, Telegram, and telephony — **moved → v1.00**
+- [ ] 16.1.2 — Google Sheets and webhooks — **moved → v1.00**
 
 ### 16.2 — Enterprise exchange
 
-- [ ] 16.2.1 — 1C:UNF exchange — contour **D** (ADR-020); neighbor to universal job shell, not catalog Excel buttons
-- [ ] 16.2.2 — Delivery and payment-system integrations
-- [ ] 16.2.3 — External API for third-party systems
+- [ ] 16.2.1 — 1C:UNF exchange — contour **D** (ADR-020); neighbor to universal job shell, not catalog Excel buttons — **moved → v1.00**
+- [ ] 16.2.2 — Delivery and payment-system integrations — **moved → v1.00**
+- [ ] 16.2.3 — External API for third-party systems — **moved → v1.00**
 
 ### 16.3 — Universal import and export (orchestration)
 
-> ADR-020: platform **job shell** (section picker + journal) over the same adapters used by section toolbars (`4.5`). Do not pull domain-inline `9.3.2` here. Maps project-structure «Universal import and export contour».
+> ADR-020: platform **job shell** (section picker + journal) over the same adapters used by section toolbars (`4.5`). Do not pull domain-inline `9.3.2` here. Maps project-structure «Universal import and export contour». **Moved → v1.00.**
 
-- [ ] 16.3.1 — Contract: job runner + section adapter registry (upload → map → validate → dry-run → commit; audit hooks)
-- [ ] 16.3.2 — Wire nomenclature adapter from `4.5` into the job shell
-- [ ] 16.3.3 — Administration UI: jobs list + section picker (no duplicate SoT)
-- [ ] 16.3.4 — Regression tests + documentation checkpoint
+- [ ] 16.3.1 — Contract: job runner + section adapter registry (upload → map → validate → dry-run → commit; audit hooks) — **moved → v1.00**
+- [ ] 16.3.2 — Wire nomenclature adapter from `4.5` into the job shell — **moved → v1.00**
+- [ ] 16.3.3 — Administration UI: jobs list + section picker (no duplicate SoT) — **moved → v1.00**
+- [ ] 16.3.4 — Regression tests + documentation checkpoint — **moved → v1.00**
 
 ## Stage 17 — Industrial Operations and Access Control
 

@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -36,7 +38,20 @@ class AssemblyOperationLineNotFoundError(RuntimeError):
 
 
 def _line_read(line: AssemblyOperationLine) -> AssemblyOperationLineRead:
-    return AssemblyOperationLineRead.model_validate(line)
+    qty = max(1, int(line.quantity_per_item or 1))
+    return AssemblyOperationLineRead(
+        id=line.id,
+        assembly_variant_id=line.assembly_variant_id,
+        sequence=line.sequence,
+        operation_name=line.operation_name,
+        cost=line.cost,
+        quantity_per_item=qty,
+        line_total=line.cost * Decimal(qty),
+        duration_seconds=line.duration_seconds,
+        sewing_operation_id=line.sewing_operation_id,
+        created_at=line.created_at,
+        updated_at=line.updated_at,
+    )
 
 
 def _variant_read(variant: AssemblyVariant) -> AssemblyVariantRead:
@@ -109,6 +124,7 @@ def _append_sewing_operation_lines(
             sequence=start_sequence + offset,
             operation_name=operation.name,
             cost=operation.cost,
+            quantity_per_item=operation.quantity_per_item,
             duration_seconds=operation.duration_seconds,
             sewing_operation_id=operation.id,
         )
@@ -185,6 +201,7 @@ def create_assembly_variant(
                 sequence=line_sequence,
                 operation_name=line_payload.operation_name,
                 cost=line_payload.cost,
+                quantity_per_item=line_payload.quantity_per_item,
                 duration_seconds=line_payload.duration_seconds,
                 sewing_operation_id=line_payload.sewing_operation_id,
             )
@@ -323,6 +340,7 @@ def copy_assembly_variant(
                     sequence=index,
                     operation_name=line.operation_name,
                     cost=line.cost,
+                    quantity_per_item=line.quantity_per_item,
                     duration_seconds=line.duration_seconds,
                     sewing_operation_id=line.sewing_operation_id,
                 ),
@@ -373,6 +391,7 @@ def add_operation_line(
         sequence=sequence,
         operation_name=payload.operation_name,
         cost=payload.cost,
+        quantity_per_item=payload.quantity_per_item,
         duration_seconds=payload.duration_seconds,
         sewing_operation_id=payload.sewing_operation_id,
     )

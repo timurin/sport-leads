@@ -1057,8 +1057,18 @@ def create_variant(
         select(NomenclatureVariant).where(NomenclatureVariant.article == payload.article)
     ):
         raise CharacteristicConflictError("Variant article already exists")
+    barcode = _normalize_optional_text(payload.barcode)
+    if barcode and db.scalar(
+        select(NomenclatureVariant).where(NomenclatureVariant.barcode == barcode)
+    ):
+        raise CharacteristicConflictError("Variant barcode already exists")
     item = NomenclatureVariant(
-        nomenclature_id=nomenclature_id, article=payload.article, name=payload.name
+        nomenclature_id=nomenclature_id,
+        article=payload.article,
+        name=payload.name,
+        price=payload.price,
+        barcode=barcode,
+        external_code=_normalize_optional_text(payload.external_code),
     )
     db.add(item)
     db.flush()
@@ -1084,6 +1094,18 @@ def update_variant(db: Session, variant_id: int, payload: VariantUpdate) -> Nome
         )
     ):
         raise CharacteristicConflictError("Variant article already exists")
+    if "barcode" in changes:
+        barcode = _normalize_optional_text(changes["barcode"])
+        changes["barcode"] = barcode
+        if barcode and db.scalar(
+            select(NomenclatureVariant).where(
+                NomenclatureVariant.barcode == barcode,
+                NomenclatureVariant.id != variant_id,
+            )
+        ):
+            raise CharacteristicConflictError("Variant barcode already exists")
+    if "external_code" in changes:
+        changes["external_code"] = _normalize_optional_text(changes["external_code"])
     if option_ids is not None:
         rows = _validate_variant(db, item.nomenclature_id, option_ids, item.id)
         db.execute(variant_options.delete().where(variant_options.c.variant_id == item.id))
@@ -1096,6 +1118,13 @@ def update_variant(db: Session, variant_id: int, payload: VariantUpdate) -> Nome
     db.commit()
     db.refresh(item)
     return item
+
+
+def _normalize_optional_text(value: str | None) -> str | None:
+    if value is None:
+        return None
+    cleaned = value.strip()
+    return cleaned or None
 
 
 def generate_variants(

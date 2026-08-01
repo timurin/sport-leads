@@ -94,3 +94,19 @@ export function fromApiLeadListItem(lead: ApiLeadListItem): Lead {
     desiredDate: lead.desired_date ?? undefined,
   };
 }
+
+const defaultStageIds = new Set(["new", "contact", "qualification", "proposal", "waiting"]);
+
+/** Normalize API (or create) lead for kanban columns — no demo inventions. */
+export function toWorkspaceLead(lead: Lead): Lead & { stageId: string } {
+  if (lead.status === "completed") {
+    return {
+      ...lead,
+      stageId: lead.stageId ?? "completed",
+    };
+  }
+  const stageId =
+    lead.stageId
+    ?? (defaultStageIds.has(lead.status) ? lead.status : "new");
+  return { ...lead, stageId };
+}

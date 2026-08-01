@@ -1,4 +1,4 @@
-"""Stage 9.3.2 — unit lines edit / bulk / import / reset defaults."""
+"""Stage 9.3.2 — unit lines edit / aggregate import / reset defaults."""
 
 from __future__ import annotations
 
@@ -106,6 +106,7 @@ def test_unit_lines_patch_bulk_replace_import_reset() -> None:
             assert len(card["unit_lines"]) == 3
             assert all(row["size"] == "M" for row in card["unit_lines"])
             assert all(row["personalization"] == "Иванов" for row in card["unit_lines"])
+            assert all(row["color"] is None for row in card["unit_lines"])
 
             listed = client.get(f"/technical-cards/{card_id}/unit-lines")
             assert listed.status_code == 200
@@ -146,6 +147,7 @@ def test_unit_lines_patch_bulk_replace_import_reset() -> None:
                     "lines": [
                         {
                             "unit_index": 1,
+                            "size_type": "men",
                             "size": "S",
                             "personalization": "А",
                             "print_number": "1",
@@ -153,12 +155,14 @@ def test_unit_lines_patch_bulk_replace_import_reset() -> None:
                         },
                         {
                             "unit_index": 2,
+                            "size_type": "women",
                             "size": "M",
                             "personalization": "Б",
                             "print_number": "2",
                         },
                         {
                             "unit_index": 3,
+                            "size_type": "women",
                             "size": "L",
                             "personalization": "В",
                             "print_number": "3",
@@ -180,11 +184,52 @@ def test_unit_lines_patch_bulk_replace_import_reset() -> None:
 
             imported = client.post(
                 f"/technical-cards/{card_id}/unit-lines/import",
-                json={"lines": [{"unit_index": 2, "notes": "из импорта"}]},
+                json={
+                    "lines": [
+                        {
+                            "size_type": "men",
+                            "size": "M",
+                            "personalization": "Иванов",
+                            "print_number": "10",
+                            "quantity": 2,
+                            "notes": "основа",
+                        },
+                        {
+                            "size_type": "women",
+                            "size": "S",
+                            "personalization": "Петрова",
+                            "print_number": "7",
+                            "quantity": 1,
+                            "notes": "резерв",
+                        },
+                    ]
+                },
             )
             assert imported.status_code == 200, imported.text
-            assert imported.json()["unit_lines"][1]["notes"] == "из импорта"
-            assert imported.json()["unit_lines"][0]["size"] == "S"
+            unit_lines = imported.json()["unit_lines"]
+            assert [(row["size_type"], row["size"], row["print_number"]) for row in unit_lines] == [
+                ("men", "M", "10"),
+                ("men", "M", "10"),
+                ("women", "S", "7"),
+            ]
+            assert unit_lines[0]["notes"] == "основа"
+            assert unit_lines[2]["notes"] == "резерв"
+
+            bad_import = client.post(
+                f"/technical-cards/{card_id}/unit-lines/import",
+                json={
+                    "lines": [
+                        {
+                            "size_type": "men",
+                            "size": "M",
+                            "personalization": "Иванов",
+                            "print_number": "10",
+                            "quantity": 2,
+                        }
+                    ]
+                },
+            )
+            assert bad_import.status_code == 422
 
             reset = client.post(
                 f"/technical-cards/{card_id}/unit-lines/reset-defaults"
@@ -193,7 +238,7 @@ def test_unit_lines_patch_bulk_replace_import_reset() -> None:
             for row in reset.json()["unit_lines"]:
                 assert row["size"] == "M"
                 assert row["personalization"] == "Иванов"
-                assert row["color"] == "Белый"
+                assert row["color"] is None
                 assert row["print_number"] is None
                 assert row["notes"] is None
 

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import {
+  Archive,
   BarChart3,
   Copy,
   Download,
@@ -9,6 +10,7 @@ import {
   Filter,
   FilterX,
   PanelLeft,
+  RotateCcw,
   Upload,
   X,
 } from "lucide-react";
@@ -16,6 +18,7 @@ import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import {
+  bulkSetNomenclatureActive,
   copyNomenclature,
   downloadNomenclatureExport,
   updateNomenclatureCategory,
@@ -151,6 +154,9 @@ export function WarehouseNomenclatureWorkspace({
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [inspectorOpen, setInspectorOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(() => new Set());
+  const [bulkError, setBulkError] = useState<string | null>(null);
+  const [bulkPending, startBulkTransition] = useTransition();
 
   const filtersActive =
     Boolean(type) ||
@@ -277,6 +283,57 @@ export function WarehouseNomenclatureWorkspace({
     hasPrice,
     missingRequired,
   ]);
+
+  const allVisibleSelected =
+    visibleItems.length > 0 &&
+    visibleItems.every((item) => selectedIds.has(item.id));
+
+  const toggleSelected = (id: number) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAllVisible = () => {
+    setSelectedIds((prev) => {
+      if (allVisibleSelected) {
+        const next = new Set(prev);
+        for (const item of visibleItems) next.delete(item.id);
+        return next;
+      }
+      const next = new Set(prev);
+      for (const item of visibleItems) next.add(item.id);
+      return next;
+    });
+  };
+
+  const onBulkSetActive = (isActive: boolean) => {
+    if (selectedIds.size === 0 || bulkPending) return;
+    const ids = [...selectedIds];
+    const confirmMessage = isActive
+      ? `Восстановить из архива выбранные (${ids.length})?`
+      : `Перевести в архив выбранные (${ids.length})?`;
+    if (!window.confirm(confirmMessage)) {
+      return;
+    }
+    setBulkError(null);
+    startBulkTransition(async () => {
+      try {
+        await bulkSetNomenclatureActive(ids, isActive);
+        setSelectedIds(new Set());
+        router.refresh();
+      } catch (caught) {
+        setBulkError(
+          caught instanceof Error
+            ? caught.message
+            : "Не удалось обновить выбранные позиции",
+        );
+      }
+    });
+  };
 
   useEffect(() => {
     if (!filterOpen) return;
@@ -465,7 +522,7 @@ export function WarehouseNomenclatureWorkspace({
                       aria-label="Статус"
                     >
                       <option value="active">Активные</option>
-                      <option value="inactive">Неактивные</option>
+                      <option value="inactive">Архив</option>
                       <option value="all">Все статусы</option>
                     </Select>
                     <label className="flex items-center gap-2 text-portal-body text-portal-text">
@@ -503,6 +560,30 @@ export function WarehouseNomenclatureWorkspace({
           }
           end={
             <div className="flex w-full flex-wrap items-center gap-portal-2 sm:w-auto">
+              {selectedIds.size > 0 ? (
+                <>
+                  <Button
+                    type="button"
+                    size="compact"
+                    variant="secondary"
+                    disabled={bulkPending}
+                    onClick={() => onBulkSetActive(false)}
+                  >
+                    <Archive className="size-4" aria-hidden="true" />
+                    В архив ({selectedIds.size})
+                  </Button>
+                  <Button
+                    type="button"
+                    size="compact"
+                    variant="secondary"
+                    disabled={bulkPending}
+                    onClick={() => onBulkSetActive(true)}
+                  >
+                    <RotateCcw className="size-4" aria-hidden="true" />
+                    Восстановить ({selectedIds.size})
+                  </Button>
+                </>
+              ) : null}
               <Button
                 type="button"
                 size="compact"
@@ -531,12 +612,12 @@ export function WarehouseNomenclatureWorkspace({
             </div>
           }
         />
-        {copyError || exportError ? (
+        {copyError || exportError || bulkError ? (
           <p
             className="border-b border-portal-danger/30 bg-portal-danger/5 px-portal-4 py-portal-2 text-portal-caption text-portal-danger"
             role="alert"
           >
-            {copyError ?? exportError}
+            {copyError ?? exportError ?? bulkError}
           </p>
         ) : null}
 
@@ -688,6 +769,13 @@ export function WarehouseNomenclatureWorkspace({
                     <DataTable minWidthClassName="min-w-[820px]">
                       <DataTableHead>
                         <tr>
+                          <DataTableHeaderCell className="w-10">
+                            <Checkbox
+                              checked={allVisibleSelected}
+                              aria-label="Выбрать все видимые"
+                              onChange={toggleSelectAllVisible}
+                            />
+                          </DataTableHeaderCell>
                           <DataTableHeaderCell>Наименование</DataTableHeaderCell>
                           <DataTableHeaderCell>Тип</DataTableHeaderCell>
                           <DataTableHeaderCell>Категория</DataTableHeaderCell>
@@ -703,6 +791,7 @@ export function WarehouseNomenclatureWorkspace({
                           const href = `/settings/catalogs/nomenclature/${item.id}`;
                           const selected =
                             inspectorOpen && item.id === selectedId;
+                          const checked = selectedIds.has(item.id);
                           return (
                             <DataTableRow
                               key={item.id}
@@ -712,6 +801,13 @@ export function WarehouseNomenclatureWorkspace({
                                   : "hover:bg-portal-state-hover"
                               }
                             >
+                              <DataTableCell>
+                                <Checkbox
+                                  checked={checked}
+                                  aria-label={`Выбрать ${item.name}`}
+                                  onChange={() => toggleSelected(item.id)}
+                                />
+                              </DataTableCell>
                               <DataTableCell>
                                 <Link
                                   href={href}
@@ -795,14 +891,22 @@ export function WarehouseNomenclatureWorkspace({
                         >
                           <div className="flex min-w-0 items-start justify-between gap-portal-3">
                             <div className="min-w-0 flex-1 space-y-portal-2">
-                              <h3 className="truncate text-portal-body font-semibold text-portal-text">
-                                <Link
-                                  href={href}
-                                  className="hover:text-portal-primary hover:underline"
-                                >
-                                  {item.name}
-                                </Link>
-                              </h3>
+                              <div className="flex items-start gap-portal-2">
+                                <Checkbox
+                                  checked={selectedIds.has(item.id)}
+                                  aria-label={`Выбрать ${item.name}`}
+                                  onChange={() => toggleSelected(item.id)}
+                                  className="mt-1"
+                                />
+                                <h3 className="min-w-0 flex-1 truncate text-portal-body font-semibold text-portal-text">
+                                  <Link
+                                    href={href}
+                                    className="hover:text-portal-primary hover:underline"
+                                  >
+                                    {item.name}
+                                  </Link>
+                                </h3>
+                              </div>
                               <p className="truncate text-portal-caption text-portal-muted">
                                 {typeLabels[item.nomenclature_type]} ·{" "}
                                 {unitLabel(item)}

@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  BadgePercent,
   Copy,
   Eye,
   FileSpreadsheet,
@@ -11,7 +12,7 @@ import {
   X,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition, type ReactNode } from "react";
 
 import {
   createOrderItemPayload,
@@ -22,6 +23,7 @@ import {
 import {
   loadNomenclatureAvailableModels,
   loadProductModelActiveAssemblyVariants,
+  loadProductModelActiveRoutings,
 } from "@/app/(workspace)/sales/orders/[orderId]/order-item-catalog-actions";
 import { NomenclaturePickModal } from "@/components/sales/nomenclature-pick-modal";
 import { IconButton } from "@/components/ui/button";
@@ -39,9 +41,11 @@ import {
   formatAssemblyCost,
   type AssemblyVariant,
 } from "@/lib/product-models";
+import type { ProductModelRoutingLink } from "@/lib/product-model-routings";
 import type { SalesOrderItem } from "@/lib/sales/order-details";
 import {
-  calculateInclusiveVatAmount,
+  calculateLineGrossAmount,
+  calculateLineVatAmount,
   formatVatRatePercent,
   vatRateLabel,
   type VatRate,
@@ -58,8 +62,11 @@ type DraftRow = {
   productModelName: string;
   assemblyVariantId: number | null;
   assemblyVariantName: string;
+  routingTemplateId: number | null;
+  routingTemplateName: string;
   vatRateId: number | null;
   vatRatePercent: number;
+  priceIncludesVat: boolean;
   snapshotName: string;
   unit: string;
   quantity: string;
@@ -104,10 +111,13 @@ function toDraft(item: SalesOrderItem, index: number, rates: VatRate[]): DraftRo
     productModelName: item.productModelName,
     assemblyVariantId: item.assemblyVariantId,
     assemblyVariantName: item.assemblyVariantName,
+    routingTemplateId: item.routingTemplateId,
+    routingTemplateName: item.routingTemplateName,
     vatRateId,
     vatRatePercent: item.vatRatePercent
       ? Number(item.vatRatePercent)
       : ratePercentById(rates, vatRateId),
+    priceIncludesVat: item.priceIncludesVat,
     snapshotName: item.snapshotName,
     unit: item.unit,
     quantity: item.quantity,
@@ -154,8 +164,8 @@ function NomenclatureCellField({
 }
 
 /**
- * UNF-style order items grid with nomenclature / product model / assembly variant / price / VAT.
- * Visual chrome from `3.2.7`; persistence via order-item API (`3.2.5.4` model+assembly + `3.3.2` VAT).
+ * UNF-style order items grid with nomenclature / product model / assembly / routing / price / VAT.
+ * Persistence via order-item API (`3.2.5.4` model+assembly, `3.2.7.3` routing, `3.3.2` VAT).
  */
 export function SalesOrderItemsUnfDemo({
   orderId,
@@ -164,6 +174,8 @@ export function SalesOrderItemsUnfDemo({
   nomenclatureCategories,
   vatRates,
   documentTotal,
+  collapsed = false,
+  headerActions,
 }: {
   orderId: string;
   items: SalesOrderItem[];
@@ -171,6 +183,8 @@ export function SalesOrderItemsUnfDemo({
   nomenclatureCategories: NomenclatureCategory[];
   vatRates: VatRate[];
   documentTotal: string;
+  collapsed?: boolean;
+  headerActions?: ReactNode;
 }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -191,6 +205,9 @@ export function SalesOrderItemsUnfDemo({
   const [variantsByModel, setVariantsByModel] = useState<
     Record<number, AssemblyVariant[]>
   >({});
+  const [routingsByModel, setRoutingsByModel] = useState<
+    Record<number, ProductModelRoutingLink[]>
+  >({});
 
   const itemsSyncKey = useMemo(
     () =>
@@ -202,10 +219,14 @@ export function SalesOrderItemsUnfDemo({
               item.nomenclatureId,
               item.productModelId,
               item.assemblyVariantId,
+              item.routingTemplateId,
               item.vatRateId,
+              item.priceIncludesVat ? "1" : "0",
+              item.vatAmountValue,
               item.quantity,
               item.unitPriceValue,
               item.lineAmountValue,
+              item.lineTotalValue,
               item.snapshotName,
             ].join(":"),
         )
@@ -304,7 +325,26 @@ export function SalesOrderItemsUnfDemo({
         }
       }
     }
+    async function loadRoutings() {
+      for (const modelId of ids) {
+        try {
+          const routings = await loadProductModelActiveRoutings(modelId);
+          if (!cancelled) {
+            setRoutingsByModel((current) =>
+              current[modelId] ? current : { ...current, [modelId]: routings },
+            );
+          }
+        } catch {
+          if (!cancelled) {
+            setRoutingsByModel((current) =>
+              current[modelId] ? current : { ...current, [modelId]: [] },
+            );
+          }
+        }
+      }
+    }
     void loadVariants();
+    void loadRoutings();
     return () => {
       cancelled = true;
     };
@@ -332,13 +372,19 @@ export function SalesOrderItemsUnfDemo({
       || row.snapshotName.toLowerCase().includes(q)
       || characteristic.toLowerCase().includes(q)
       || row.assemblyVariantName.toLowerCase().includes(q)
+      || row.routingTemplateName.toLowerCase().includes(q)
     );
   });
 
   const allVisibleSelected =
     visibleRows.length > 0 && visibleRows.every((row) => selectedIds.includes(row.id));
 
-  const linesTotal = rows.reduce((sum, row) => sum + row.lineAmount, 0);
+  const linesTotal = rows.reduce(
+    (sum, row) =>
+      sum
+      + calculateLineGrossAmount(row.lineAmount, row.vatRatePercent, row.priceIncludesVat),
+    0,
+  );
 
   function toggleAllVisible() {
     if (allVisibleSelected) {
@@ -364,7 +410,9 @@ export function SalesOrderItemsUnfDemo({
       product_model_article: row.productModelArticle || null,
       product_model_name: row.productModelName || null,
       assembly_variant_id: row.assemblyVariantId,
+      routing_template_id: row.routingTemplateId,
       vat_rate_id: row.vatRateId,
+      price_includes_vat: row.priceIncludesVat,
       snapshot_name: row.snapshotName.trim() || "Новая позиция",
       unit: row.unit || "шт",
       quantity: String(Math.max(parseDecimal(row.quantity), 0.001)),
@@ -377,10 +425,19 @@ export function SalesOrderItemsUnfDemo({
     return variantsByModel[modelId] ?? [];
   }
 
-  function variantSelectionError(row: DraftRow): string | null {
+  function routingsForModel(modelId: number | null): ProductModelRoutingLink[] {
+    if (modelId === null) return [];
+    return routingsByModel[modelId] ?? [];
+  }
+
+  function bindingSelectionError(row: DraftRow): string | null {
     const variants = assemblyVariantsForModel(row.productModelId);
     if (row.productModelId !== null && variants.length >= 1 && row.assemblyVariantId === null) {
       return "Выберите вариант сборки для модели изделия.";
+    }
+    const routings = routingsForModel(row.productModelId);
+    if (row.productModelId !== null && routings.length >= 1 && row.routingTemplateId === null) {
+      return "Выберите маршрут для модели изделия.";
     }
     return null;
   }
@@ -407,7 +464,7 @@ export function SalesOrderItemsUnfDemo({
     });
     if (!persist || updated === null) return;
     const snapshot = updated;
-    const error = variantSelectionError(snapshot);
+    const error = bindingSelectionError(snapshot);
     if (error) {
       setMessage(error);
       return;
@@ -422,7 +479,9 @@ export function SalesOrderItemsUnfDemo({
         nomenclature_id: null,
         product_model_id: null,
         assembly_variant_id: null,
+        routing_template_id: null,
         vat_rate_id: vatRateId,
+        price_includes_vat: true,
         snapshot_name: "Новая позиция",
         unit: "шт",
         quantity: "1",
@@ -433,14 +492,14 @@ export function SalesOrderItemsUnfDemo({
     setSearch("");
   }
 
-  /** Persist all draft rows (nomenclature, model, assembly, qty, price, VAT). */
+  /** Persist all draft rows (nomenclature, model, assembly, routing, qty, price, VAT). */
   function saveAllRows() {
     if (rows.length === 0) {
       setMessage("Нет строк для сохранения.");
       return;
     }
     for (const row of rows) {
-      const error = variantSelectionError(row);
+      const error = bindingSelectionError(row);
       if (error) {
         setMessage(`Строка ${row.position}: ${error}`);
         setActiveRowId(row.id);
@@ -476,7 +535,7 @@ export function SalesOrderItemsUnfDemo({
   function copySelected() {
     const source = rows.find((row) => row.id === selectedIds[0]);
     if (!source) return;
-    const error = variantSelectionError(source);
+    const error = bindingSelectionError(source);
     if (error) {
       setMessage(error);
       return;
@@ -516,6 +575,13 @@ export function SalesOrderItemsUnfDemo({
     return variants;
   }
 
+  async function ensureRoutings(modelId: number): Promise<ProductModelRoutingLink[]> {
+    if (routingsByModel[modelId]) return routingsByModel[modelId];
+    const routings = await loadProductModelActiveRoutings(modelId);
+    setRoutingsByModel((current) => ({ ...current, [modelId]: routings }));
+    return routings;
+  }
+
   function onNomenclatureChange(row: DraftRow, entry: Nomenclature | null) {
     const clearedModels = {
       productModelId: null as number | null,
@@ -523,6 +589,8 @@ export function SalesOrderItemsUnfDemo({
       productModelName: "",
       assemblyVariantId: null as number | null,
       assemblyVariantName: "",
+      routingTemplateId: null as number | null,
+      routingTemplateName: "",
     };
     if (!entry) {
       patchRow(
@@ -577,6 +645,8 @@ export function SalesOrderItemsUnfDemo({
         productModelName: "",
         assemblyVariantId: null,
         assemblyVariantName: "",
+        routingTemplateId: null,
+        routingTemplateName: "",
       });
       return;
     }
@@ -599,33 +669,49 @@ export function SalesOrderItemsUnfDemo({
         productModelName: model.name,
         assemblyVariantId: null,
         assemblyVariantName: "",
+        routingTemplateId: null,
+        routingTemplateName: "",
       },
       false,
     );
     void (async () => {
-      const variants = await ensureVariants(nextModelId);
-      if (variants.length === 0) {
-        patchRow(row.id, {
-          productModelId: nextModelId,
-          productModelArticle: model.article,
-          productModelName: model.name,
-          assemblyVariantId: null,
-          assemblyVariantName: "",
-        });
+      const [variants, routings] = await Promise.all([
+        ensureVariants(nextModelId),
+        ensureRoutings(nextModelId),
+      ]);
+      const assemblyVariantId =
+        variants.length === 1 ? variants[0].id : null;
+      const assemblyVariantName =
+        variants.length === 1 ? variants[0].name : "";
+      const routingTemplateId =
+        routings.length === 1 ? routings[0].shop_routing_template_id : null;
+      const routingTemplateName =
+        routings.length === 1
+          ? (routings[0].shop_routing_template_name ?? "")
+          : "";
+      const needsVariantPick = variants.length > 1;
+      const needsRoutingPick = routings.length > 1;
+      const patch = {
+        productModelId: nextModelId,
+        productModelArticle: model.article,
+        productModelName: model.name,
+        assemblyVariantId,
+        assemblyVariantName,
+        routingTemplateId,
+        routingTemplateName,
+      };
+      if (needsVariantPick || needsRoutingPick) {
+        patchRow(row.id, patch, false);
+        if (needsVariantPick && needsRoutingPick) {
+          setMessage("Выберите вариант сборки и маршрут для модели изделия.");
+        } else if (needsVariantPick) {
+          setMessage("Выберите вариант сборки для модели изделия.");
+        } else {
+          setMessage("Выберите маршрут для модели изделия.");
+        }
         return;
       }
-      if (variants.length === 1) {
-        const only = variants[0];
-        patchRow(row.id, {
-          productModelId: nextModelId,
-          productModelArticle: model.article,
-          productModelName: model.name,
-          assemblyVariantId: only.id,
-          assemblyVariantName: only.name,
-        });
-        return;
-      }
-      setMessage("Выберите вариант сборки для модели изделия.");
+      patchRow(row.id, patch);
     })();
   }
 
@@ -653,6 +739,32 @@ export function SalesOrderItemsUnfDemo({
     });
   }
 
+  function onRoutingChange(row: DraftRow, routingIdRaw: string) {
+    if (!routingIdRaw) {
+      const routings = routingsForModel(row.productModelId);
+      if (routings.length >= 1) {
+        setMessage("Выберите маршрут для модели изделия.");
+        patchRow(
+          row.id,
+          { routingTemplateId: null, routingTemplateName: "" },
+          false,
+        );
+        return;
+      }
+      patchRow(row.id, { routingTemplateId: null, routingTemplateName: "" });
+      return;
+    }
+    const routings = routingsForModel(row.productModelId);
+    const link = routings.find(
+      (entry) => entry.shop_routing_template_id === Number(routingIdRaw),
+    );
+    if (!link) return;
+    patchRow(row.id, {
+      routingTemplateId: link.shop_routing_template_id,
+      routingTemplateName: link.shop_routing_template_name ?? "",
+    });
+  }
+
   function onVatChange(row: DraftRow, vatRateIdRaw: string) {
     const vatRateId = vatRateIdRaw ? Number(vatRateIdRaw) : null;
     patchRow(row.id, {
@@ -661,21 +773,59 @@ export function SalesOrderItemsUnfDemo({
     });
   }
 
+  /** Toggle НДС в сумме / сверху and apply to every line. */
+  function applyVatModeToAllRows() {
+    if (rows.length === 0) {
+      setMessage("Нет строк для смены режима НДС.");
+      return;
+    }
+    const nextIncludes = !rows.every((row) => row.priceIncludesVat);
+    const nextRows = rows.map((row) => ({ ...row, priceIncludesVat: nextIncludes }));
+    setRows(nextRows);
+    startTransition(async () => {
+      let lastMessage = nextIncludes
+        ? "НДС в сумме применён ко всем строкам."
+        : "НДС сверху применён ко всем строкам.";
+      for (const row of nextRows) {
+        const error = bindingSelectionError(row);
+        if (error) {
+          setMessage(`Строка ${row.position}: ${error}`);
+          setActiveRowId(row.id);
+          return;
+        }
+        const result = await updateOrderItemPayload(orderId, row.id, payloadFromRow(row));
+        lastMessage = result.ok ? lastMessage : result.message;
+        if (!result.ok) {
+          setMessage(`Строка ${row.position}: ${result.message}`);
+          setActiveRowId(row.id);
+          return;
+        }
+      }
+      setMessage(lastMessage);
+      router.refresh();
+    });
+  }
+
+  const vatModeInclusive =
+    rows.length > 0 && rows.every((row) => row.priceIncludesVat);
+
   return (
     <>
     <SectionCard
       size="compact"
       title="Товарные позиции"
-      description="Номенклатура → модель → вариант сборки, цена и ставка НДС"
+      description="Номенклатура → модель → вариант сборки → маршрут, цена; НДС (иконка %) — ко всем строкам"
       className="overflow-hidden"
+      collapsed={collapsed}
+      actions={headerActions}
       footer={
-        activeTab === "goods" ? (
+        collapsed || activeTab !== "goods" ? undefined : (
           <ListTotals
             primary={`${visibleRows.length} из ${rows.length} строк`}
             secondary={`Итого строк: ${formatMoney(linesTotal)} ₽ · документ: ${documentTotal}`}
             className="rounded-b-portal-lg border-0 px-0 py-0 lg:px-0"
           />
-        ) : undefined
+        )
       }
     >
       <div className="space-y-portal-3">
@@ -751,6 +901,24 @@ export function SalesOrderItemsUnfDemo({
                 <IconButton label="Excel" variant="secondary" disabled>
                   <FileSpreadsheet className="size-4" aria-hidden="true" />
                 </IconButton>
+                <IconButton
+                  label={
+                    vatModeInclusive
+                      ? "НДС в сумме (нажмите — сверху для всех строк)"
+                      : "НДС сверху (нажмите — в сумме для всех строк)"
+                  }
+                  variant={vatModeInclusive ? "primary" : "secondary"}
+                  disabled={isPending || rows.length === 0}
+                  aria-pressed={vatModeInclusive}
+                  title={
+                    vatModeInclusive
+                      ? "Режим: НДС в сумме · клик — сверху для всех"
+                      : "Режим: НДС сверху · клик — в сумме для всех"
+                  }
+                  onClick={applyVatModeToAllRows}
+                >
+                  <BadgePercent className="size-4" aria-hidden="true" />
+                </IconButton>
               </div>
               <div className="flex min-w-0 w-full flex-1 items-center gap-1 sm:max-w-md sm:justify-end">
                 <Input
@@ -795,6 +963,9 @@ export function SalesOrderItemsUnfDemo({
                     <th className="sticky top-0 z-[1] min-w-[10rem] bg-portal-surface-secondary px-portal-2 py-2">
                       Вариант сборки
                     </th>
+                    <th className="sticky top-0 z-[1] min-w-[10rem] bg-portal-surface-secondary px-portal-2 py-2">
+                      Маршрут
+                    </th>
                     <th className="sticky top-0 z-[1] min-w-[5.5rem] bg-portal-surface-secondary px-portal-2 py-2 text-right">
                       Количество
                     </th>
@@ -820,7 +991,7 @@ export function SalesOrderItemsUnfDemo({
                   {visibleRows.length === 0 ? (
                     <tr>
                       <td
-                        colSpan={12}
+                        colSpan={13}
                         className="px-portal-4 py-portal-8 text-center text-portal-body text-portal-muted"
                       >
                         Нет позиций. Нажмите «+», чтобы добавить строку.
@@ -837,9 +1008,17 @@ export function SalesOrderItemsUnfDemo({
                       ).filter((model) => model.status === "active");
                       const assemblyVariants = assemblyVariantsForModel(row.productModelId);
                       const variantRequired = assemblyVariants.length >= 1;
-                      const vatAmount = calculateInclusiveVatAmount(
+                      const modelRoutings = routingsForModel(row.productModelId);
+                      const routingRequired = modelRoutings.length >= 1;
+                      const vatAmount = calculateLineVatAmount(
                         row.lineAmount,
                         row.vatRatePercent,
+                        row.priceIncludesVat,
+                      );
+                      const lineTotal = calculateLineGrossAmount(
+                        row.lineAmount,
+                        row.vatRatePercent,
+                        row.priceIncludesVat,
                       );
                       return (
                         <tr
@@ -936,6 +1115,50 @@ export function SalesOrderItemsUnfDemo({
                               </Select>
                             )}
                           </td>
+                          <td className="min-w-[10rem] px-portal-2 py-1.5">
+                            {row.productModelId === null ? (
+                              <span className="text-portal-muted">—</span>
+                            ) : (
+                              <Select
+                                size="compact"
+                                value={row.routingTemplateId ?? ""}
+                                disabled={isPending}
+                                required={routingRequired}
+                                aria-required={routingRequired}
+                                aria-label={`Маршрут строки ${row.position}`}
+                                className="min-w-[9rem]"
+                                onClick={(event) => event.stopPropagation()}
+                                onChange={(event) =>
+                                  onRoutingChange(row, event.target.value)
+                                }
+                              >
+                                <option value="">
+                                  {routingRequired ? "Выберите маршрут…" : "Без маршрута"}
+                                </option>
+                                {modelRoutings.map((link) => (
+                                  <option
+                                    key={link.id}
+                                    value={link.shop_routing_template_id}
+                                  >
+                                    {link.shop_routing_template_name
+                                      ?? `Маршрут #${link.shop_routing_template_id}`}
+                                  </option>
+                                ))}
+                                {row.routingTemplateId
+                                  && !modelRoutings.some(
+                                    (link) =>
+                                      link.shop_routing_template_id === row.routingTemplateId,
+                                  )
+                                  ? (
+                                    <option value={row.routingTemplateId}>
+                                      {row.routingTemplateName
+                                        || `Маршрут #${row.routingTemplateId}`}
+                                    </option>
+                                  )
+                                  : null}
+                              </Select>
+                            )}
+                          </td>
                           <td className="px-portal-2 py-1.5 text-right">
                             <Input
                               size="compact"
@@ -1002,7 +1225,7 @@ export function SalesOrderItemsUnfDemo({
                             {formatMoney(vatAmount)}
                           </td>
                           <td className="px-portal-2 py-1.5 text-right font-semibold tabular-nums">
-                            {formatMoney(row.lineAmount)}
+                            {formatMoney(lineTotal)}
                           </td>
                         </tr>
                       );

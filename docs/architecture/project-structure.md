@@ -38,8 +38,11 @@
 - [x] Lead completion, rejection reasons, and transactional conversion to sales order
 - [x] Lead detail route with timeline, notes, tasks, and communication UI
 - [x] Lead dashboard, Kanban, list, filters, and basic analytics UI
-- [ ] Persistent lead workspace without demo/local frontend states
-- [ ] Persistent tasks, notes, and communications
+- [x] Persistent lead workspace without demo/local frontend states — list/kanban `1.1.3`/`1.1.4` owner visual OK `2026-07-31`; lead card still mixed → `1.2.5`
+- [x] Sales dashboard pattern-model analysis (`1.1.5`) — live API panel; owner visual OK `2026-08-01`; other dashboard KPIs still demo
+- [x] Persistent lead tasks (`1.2.4.1`–`1.2.4.6`) — owner visual OK `2026-08-01`
+- [x] Persistent lead notes (`1.2.4.7`) — owner visual OK `2026-08-01`
+- [x] Persistent lead communications (`1.2.4.8`) — owner visual OK `2026-08-01`; mock send only; real connectors → `1.4.3` / `16.1`
 - [ ] Deals, archive flow, and finalized access-control contour
 
 ## 3. Organizations, Clients, and Contacts
@@ -57,14 +60,18 @@
 - [x] Manual order creation and order creation from lead conversion
 - [x] Organization, client, contact, and responsible bindings in order data
 - [x] Order card field-link map and compact UX code (`3.5.1`–`3.5.8`, `3.5.10`) — evidence: `docs/architecture/order-card-field-links.md`, `sales-order-page.tsx`
-- [ ] Order card owner visual verification (`3.5.9`)
+- [x] Order card owner visual verification (`3.5.9`) — owner OK `2026-07-31` (responsive stack + collapse + sidebar compact ≤1299)
 - [ ] Internal order/ТК colleague chat under «Коммуникация» (Stage `19`) — surface filter shipped in `3.5.7`; domain not started
 - [x] Persistent order items with commercial snapshot fields
 - [x] Decimal/Numeric line totals and discount-percent recalculation
 - [x] Size distribution, color, and personalization snapshots
 - [x] Nullable nomenclature and variant links with immutable order snapshots
-- [ ] Order-level discount, tax model, currency, print forms, and customer invoice
-- [ ] Design, reserve, production, shipping, payment, and closing workflow
+- [x] Order-level discount (`3.3.1`) — `SalesOrder.discount_percent` / computed `discount_amount` / `items_subtotal`; Alembic `c0d1e2f3a456`; card metrics UI
+- [x] Tax/VAT on order lines (`3.3.2`) — `price_includes_vat` + line/order `vat_amount` / `amount_net`; Alembic `e2f3a4b5c678`; toolbar BadgePercent apply-all; transfer rule for price docs
+- [x] Currency, quotations, invoices (`3.3.3`) — `currency_code` + КП/счёт snapshot API/UI; Alembic `f3a4b5c6d789` / `g4b5c6d7e890`; owner visual OK `2026-07-31`; print templates → Stage 18
+- [x] Design approval on order (`3.4.1`) — `design_approval_status` + production gate; Alembic `h5c6d7e8f901`; owner visual OK `2026-07-31`
+- [x] Order execution markers (`3.4.2`) — payment + material reserve sales flags + completed-requires-paid; Alembic `i6d7e8f9a012`; owner visual OK `2026-07-31`; warehouse/ledger → Stage 12/14
+- [x] Orders list loading/error (`3.4.3`) — segment `loading.tsx`/`error.tsx` + `getOrderList` network catch (no silent empty)
 
 ## 5. Nomenclature Core
 
@@ -75,7 +82,7 @@
 - [x] Separate workspace and editable card for nomenclature — create uses `CreateDrawer` fullscreen (`4.7.9` / B2); create field order owner OK (`4.7.10`, 50/50 name+price | type+category+unit)
 - [x] Nomenclature card free-assignment UI on characteristics names (no `CustomField*` shims) — `4.8.6`
 - [x] Stage `4.8` residual: focused regression for unmounted `/custom-fields` + definition DELETE guards — `4.8.7` (`test_characteristics_catalog_4_8.py`)
-- [ ] Audit history, archive flow, bulk editing, import, and export
+- [x] Audit history, archive flow, bulk editing, import, and export — history/archive/bulk `4.3.3` (`v0.9.0`); catalog file I/O `4.5` (ADR-020; inventory `import-export-contours.md`); universal job shell → Stage `16.3`
 
 ## 6. Nomenclature Characteristics, Variants, and Media
 
@@ -86,8 +93,8 @@
 - [x] Persistent nomenclature variants with unique combinations and articles
 - [x] Sales-order item variant selection with stored characteristic snapshot
 - [x] Image media upload, storage, primary image, sorting, and deletion in the card
-- [ ] Non-image file attachments
-- [ ] Variant pricing, barcodes, and external-sync contour
+- [x] Non-image file attachments — `4.4.5` (`v0.9.0`; pdf/office/zip/txt/csv on same `nomenclature_media`; card «Вложения»)
+- [x] Variant pricing, barcodes, and external-sync contour — `4.4.6` (`v0.9.0`; Alembic `b9c0d1e2f345`; card «Варианты»; order suggests variant price; 1C sync remains `16.2.1`)
 
 ## 7. Materials
 
@@ -110,6 +117,7 @@
 - [ ] Model routing whitelist + operation material norms on product model — Stage `6.1.17` (plan hint; fact on TC/`11.5`–`11.6`)
 - [x] Sewing operations flat catalog API + PT-02 list UI — `sewing_operations` / `/settings/catalogs/sewing_operations` (`6.3.1–5`; owner visual OK `6.3.4.5` / `6.3.5.4` / `6.4.3.3`); PatternSet withdrawn
 - [x] Sewing operation normative duration (`duration_seconds`) + assembly-line snapshot — `6.3.8`; Alembic `d5e6f7a8b901`
+- [x] Sewing operation ↔ sewing-shop equipment (`WorkCenter`, цех Пошив) — `6.3.10` closed; Alembic `d1e2f3a4b567`; API `work_center_ids`; UI picker; ≠ routing/TC `11.1.2`
 - [x] Dedicated size-grid directory and measurements — Mosmade men 18 + women 14; list/card visual OK (`6.2.4.5` / `6.2.5.4` / `6.4.3.2`); Stage-6 read-only; write/edit → `17.1.2.4`; model link `6.2.7` shipped (`ProductModel.size_grid_id`)
 - [x] Pattern-base owner visual checkpoint — models / grids / sewing ops / PRODUCT available-models (`6.4.3`); Stage 6 catalog closed
 - [x] Order-item model + assembly-variant selection — Stage `3.2.5` shipped; smoke `3.2.6` shipped `2026-07-27`; order routing `3.2.7` shipped
@@ -158,8 +166,8 @@
 - [x] Mock communications connector core
 - [ ] Real external CRM and communications adapters
 - [ ] Website forms, email, telephony, VK, and Telegram integrations
-- [ ] 1C exchange
-- [ ] Universal import and export contour
+- [ ] 1C exchange — Stage `16.2.1` (ADR-020 contour D)
+- [ ] Universal import and export contour — Stage `16.3` orchestration shell (ADR-020); not `4.5` / not domain `9.3.2`
 
 ## 13. Operations and Deployment
 

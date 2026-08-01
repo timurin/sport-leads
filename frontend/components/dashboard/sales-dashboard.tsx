@@ -6,6 +6,7 @@ import { DashboardFilters } from "./dashboard-filters";
 import { DashboardKpiGrid } from "./dashboard-kpi-grid";
 import { LeadSourcesTable } from "./lead-sources-table";
 import { OrdersSummary } from "./orders-summary";
+import { PatternModelSalesPanel } from "./pattern-model-sales-panel";
 import { RecentActivity } from "./recent-activity";
 import { RejectionReasonsSummary } from "./rejection-reasons-summary";
 import { SalesDynamicsChart } from "./sales-dynamics-chart";
@@ -14,23 +15,47 @@ import { SalesStatusSummary } from "./sales-status-summary";
 import { TasksSummary } from "./tasks-summary";
 import { PageContent, PageLayout } from "@/components/layout/page-layout";
 import { EmptyState } from "@/components/ui/empty-state";
+import { buildDateRange, formatRange } from "@/lib/dashboard/date-range";
 import { createSalesDashboardSnapshot } from "@/lib/dashboard/sales-dashboard";
-import { defaultDashboardFilters, type DashboardFilters as Filters } from "@/lib/dashboard/sales-dashboard-types";
+import {
+  defaultDashboardFilters,
+  type DashboardFilters as Filters,
+} from "@/lib/dashboard/sales-dashboard-types";
 import { getSalesDashboardDemoData } from "@/lib/demo-data/sales-dashboard";
 
-/** PT-01 reference dashboard (`DS-PT-01`). Demo data — Stage `5.6.1` migration complete. */
+function toIsoDate(value: Date): string {
+  const year = value.getFullYear();
+  const month = String(value.getMonth() + 1).padStart(2, "0");
+  const day = String(value.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+/** PT-01 reference dashboard (`DS-PT-01`). Demo KPIs + live pattern-model panel (`1.1.5`). */
 export function SalesDashboard() {
   const data = useMemo(() => getSalesDashboardDemoData(), []);
   const [filters, setFilters] = useState<Filters>({ ...defaultDashboardFilters });
   const snapshot = useMemo(() => createSalesDashboardSnapshot(data, filters), [data, filters]);
+  const liveRange = useMemo(() => {
+    const built = buildDateRange(
+      filters.period,
+      data.now,
+      filters.customStart,
+      filters.customEnd,
+    );
+    return {
+      from: toIsoDate(built.range.start),
+      to: toIsoDate(built.range.end),
+      label: formatRange(built.range),
+      error: built.error,
+    };
+  }, [data.now, filters.customEnd, filters.customStart, filters.period]);
 
   return (
     <PageLayout>
       <PageContent width="full" size="default" className="space-y-portal-5">
         <div className="rounded-portal-md border border-dashed border-portal-warning bg-portal-warning-soft px-portal-3 py-portal-2 text-portal-body text-portal-text">
-          <strong className="font-semibold">Демо-аналитика.</strong> Показатели
-          рассчитываются из локального снимка; подключение к API — отдельный этап
-          roadmap.
+          <strong className="font-semibold">Смешанный режим.</strong> KPI/воронка —
+          демо-снимок; блок «Топ моделей» — живой API (`1.1.5`).
         </div>
         <DashboardFilters
           filters={filters}
@@ -39,6 +64,13 @@ export function SalesDashboard() {
           validationError={snapshot.validationError}
           onChange={setFilters}
         />
+        {!liveRange.error ? (
+          <PatternModelSalesPanel
+            dateFrom={liveRange.from}
+            dateTo={liveRange.to}
+            rangeLabel={liveRange.label}
+          />
+        ) : null}
         {snapshot.empty ? (
           <EmptyState
             title="За выбранный период данных нет"

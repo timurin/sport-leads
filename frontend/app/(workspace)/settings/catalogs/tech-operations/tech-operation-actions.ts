@@ -48,6 +48,11 @@ function payloadFromDraft(draft: TechOperationDraft): TechOperationDraft | null 
     volume_unit: draft.volume_unit,
     production_stage_id: draft.production_stage_id,
     is_active: draft.is_active,
+    required_materials: draft.required_materials.map((row) => ({
+      nomenclature_id: row.nomenclature_id,
+      quantity:
+        typeof row.quantity === "string" ? row.quantity.trim() || "0" : row.quantity,
+    })),
   };
 }
 

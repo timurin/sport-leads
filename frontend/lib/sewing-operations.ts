@@ -2,7 +2,9 @@ export type SewingOperation = {
   id: number;
   name: string;
   cost: string;
+  quantity_per_item: number;
   duration_seconds: number;
+  work_center_ids: number[];
   created_at: string;
   updated_at: string;
 };
@@ -10,7 +12,9 @@ export type SewingOperation = {
 export type SewingOperationCreateDraft = {
   name: string;
   cost: string;
+  quantity_per_item: string;
   duration_seconds: string;
+  work_center_ids: number[];
 };
 
 export type SewingOperationListParams = {
@@ -73,6 +77,35 @@ export function parseDurationSecondsInput(raw: string): number | null {
   return value;
 }
 
+/** Normalize quantity-per-item input (integer ≥ 1), or null if invalid. */
+export function parseQuantityPerItemInput(raw: string): number | null {
+  const normalized = String(raw ?? "")
+    .trim()
+    .replace(/[\s\u00a0\u202f]/g, "");
+  if (!normalized) return null;
+  if (!/^\d+$/.test(normalized)) return null;
+  const value = Number(normalized);
+  if (!Number.isSafeInteger(value) || value < 1) return null;
+  return value;
+}
+
+/** Стоимость × количество операций на 1 изделие. */
+export function sewingOperationLineTotal(
+  cost: string | number,
+  quantityPerItem: string | number | null | undefined,
+): number {
+  const amount =
+    typeof cost === "number" ? cost : Number(String(cost).replace(",", "."));
+  const qtyRaw =
+    typeof quantityPerItem === "number"
+      ? quantityPerItem
+      : Number(String(quantityPerItem ?? "1").replace(",", "."));
+  const qty =
+    Number.isSafeInteger(qtyRaw) && qtyRaw >= 1 ? Math.floor(qtyRaw) : 1;
+  if (!Number.isFinite(amount) || amount < 0) return 0;
+  return amount * qty;
+}
+
 function pluralRu(n: number, one: string, few: string, many: string): string {
   const abs = Math.abs(n) % 100;
   const last = abs % 10;
@@ -108,6 +141,9 @@ export function validateSewingOperationDraft(
   if (parseSewingCostInput(draft.cost) == null) {
     return "Укажите стоимость (число ≥ 0)";
   }
+  if (parseQuantityPerItemInput(draft.quantity_per_item) == null) {
+    return "Укажите количество операций на 1 изделие (целое ≥ 1)";
+  }
   if (parseDurationSecondsInput(draft.duration_seconds) == null) {
     return "Укажите время выполнения в секундах (целое ≥ 0)";
   }
@@ -123,6 +159,33 @@ export function filterSewingOperations(
   return operations.filter((row) =>
     row.name.toLocaleLowerCase("ru").includes(needle),
   );
+}
+
+/** Toggle id in multi-select list (order preserved for existing ids). */
+export function toggleSewingWorkCenterId(
+  selectedIds: number[],
+  workCenterId: number,
+): number[] {
+  if (selectedIds.includes(workCenterId)) {
+    return selectedIds.filter((id) => id !== workCenterId);
+  }
+  return [...selectedIds, workCenterId];
+}
+
+/** Labels for linked sewing-shop equipment (цех Пошив). */
+export function formatSewingEquipmentLabels(
+  workCenterIds: number[],
+  catalog: ReadonlyArray<{ id: number; name: string; code?: string }>,
+): string {
+  if (!workCenterIds.length) return "—";
+  const byId = new Map(catalog.map((row) => [row.id, row]));
+  return workCenterIds
+    .map((id) => {
+      const row = byId.get(id);
+      if (row == null) return `#${id}`;
+      return row.code ? `${row.name} (${row.code})` : row.name;
+    })
+    .join(", ");
 }
 
 export async function getSewingOperations(
@@ -142,5 +205,13 @@ export async function getSewingOperations(
       `Не удалось загрузить операции пошива (${response.status}).`,
     );
   }
-  return (await response.json()) as SewingOperation[];
+  const rows = (await response.json()) as SewingOperation[];
+  return rows.map((row) => ({
+    ...row,
+    work_center_ids: Array.isArray(row.work_center_ids)
+      ? row.work_center_ids
+          .map((id) => Number(id))
+          .filter((id) => Number.isSafeInteger(id) && id > 0)
+      : [],
+  }));
 }

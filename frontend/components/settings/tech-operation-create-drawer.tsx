@@ -13,6 +13,7 @@ import { useToast } from "@/components/ui/toast";
 import {
   TECH_OPERATION_VOLUME_UNIT_LABELS,
   validateTechOperationDraft,
+  type TechOperationRequiredMaterial,
   type TechOperation,
   type TechOperationDraft,
   type TechOperationVolumeUnit,
@@ -25,6 +26,14 @@ const emptyDraft: TechOperationDraft = {
   volume_unit: "pieces",
   production_stage_id: null,
   is_active: true,
+  required_materials: [],
+};
+
+type TechOperationMaterialOption = {
+  id: number;
+  name: string;
+  unit: string;
+  is_active: boolean;
 };
 
 type TechOperationCreateDrawerProps = {
@@ -32,6 +41,7 @@ type TechOperationCreateDrawerProps = {
   onClose: () => void;
   onCreated?: (operation: TechOperation) => void;
   productionStages: ProductionStage[];
+  materialOptions: TechOperationMaterialOption[];
 };
 
 /** CreateDrawer host for tech operations (PT-02 catalog). */
@@ -40,6 +50,7 @@ export function TechOperationCreateDrawer({
   onClose,
   onCreated,
   productionStages,
+  materialOptions,
 }: TechOperationCreateDrawerProps) {
   const { push: pushToast } = useToast();
   const [draft, setDraft] = useState<TechOperationDraft>(emptyDraft);
@@ -59,6 +70,35 @@ export function TechOperationCreateDrawer({
     setDraft(emptyDraft);
     setError("");
     onClose();
+  }
+
+  function updateMaterial(index: number, patch: Partial<TechOperationRequiredMaterial>) {
+    setDraft((current) => ({
+      ...current,
+      required_materials: current.required_materials.map((row, rowIndex) =>
+        rowIndex === index ? { ...row, ...patch } : row,
+      ),
+    }));
+    setError("");
+  }
+
+  function addMaterialRow() {
+    setDraft((current) => ({
+      ...current,
+      required_materials: [
+        ...current.required_materials,
+        { nomenclature_id: 0, quantity: "", nomenclature_name: "", unit: "" },
+      ],
+    }));
+    setError("");
+  }
+
+  function removeMaterialRow(index: number) {
+    setDraft((current) => ({
+      ...current,
+      required_materials: current.required_materials.filter((_, rowIndex) => rowIndex !== index),
+    }));
+    setError("");
   }
 
   async function submit(event: FormEvent<HTMLFormElement>) {
@@ -177,6 +217,76 @@ export function TechOperationCreateDrawer({
                 disabled={saving}
                 label="Активна"
               />
+            </div>
+            <div className="mt-portal-5 border-t border-portal-border pt-portal-5">
+              <div className="mb-portal-3 flex items-center justify-between gap-portal-3">
+                <div>
+                  <h3 className="text-portal-body font-semibold text-portal-text">
+                    Необходимые материалы
+                  </h3>
+                  <p className="mt-1 text-portal-caption text-portal-muted">
+                    Расход на 1 {TECH_OPERATION_VOLUME_UNIT_LABELS[draft.volume_unit]} операции.
+                  </p>
+                </div>
+                <Button type="button" size="compact" onClick={addMaterialRow} disabled={saving}>
+                  Добавить материал
+                </Button>
+              </div>
+              <div className="space-y-portal-3">
+                {draft.required_materials.length === 0 ? (
+                  <p className="text-portal-caption text-portal-muted">
+                    Материалы по умолчанию не заданы.
+                  </p>
+                ) : (
+                  draft.required_materials.map((row, index) => (
+                    <div key={`material-${index}`} className="grid gap-portal-3 rounded-portal-md border border-portal-border p-portal-3">
+                      <Field label="Материал" required>
+                        <Select
+                          value={row.nomenclature_id > 0 ? String(row.nomenclature_id) : ""}
+                          onChange={(event) => {
+                            const selected = materialOptions.find(
+                              (option) => option.id === Number(event.target.value),
+                            );
+                            updateMaterial(index, {
+                              nomenclature_id: event.target.value ? Number(event.target.value) : 0,
+                              nomenclature_name: selected?.name ?? "",
+                              unit: selected?.unit ?? "",
+                            });
+                          }}
+                          disabled={saving}
+                        >
+                          <option value="">Выберите материал</option>
+                          {materialOptions.map((option) => (
+                            <option key={option.id} value={option.id}>
+                              {option.name} · {option.unit}
+                            </option>
+                          ))}
+                        </Select>
+                      </Field>
+                      <Field label={`Расход на 1 ${TECH_OPERATION_VOLUME_UNIT_LABELS[draft.volume_unit]}`} required>
+                        <Input
+                          value={String(row.quantity ?? "")}
+                          onChange={(event) => updateMaterial(index, { quantity: event.target.value })}
+                          disabled={saving}
+                        />
+                      </Field>
+                      <div className="flex items-center justify-between gap-portal-3">
+                        <p className="text-portal-caption text-portal-muted">
+                          Ед. материала: {row.unit || "—"}
+                        </p>
+                        <Button
+                          type="button"
+                          size="compact"
+                          onClick={() => removeMaterialRow(index)}
+                          disabled={saving}
+                        >
+                          Удалить
+                        </Button>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
             </div>
             {error ? (
               <p

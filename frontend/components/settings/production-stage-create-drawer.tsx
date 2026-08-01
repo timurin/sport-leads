@@ -1,6 +1,6 @@
 "use client";
 
-import { type FormEvent, useState } from "react";
+import { type FormEvent, useEffect, useState } from "react";
 
 import {
   createProductionStage,
@@ -16,26 +16,38 @@ import {
   type ProductionStageDraft,
 } from "@/lib/production-stages";
 
-const emptyDraft: ProductionStageDraft = {
-  name: "",
-  code: "",
-  is_active: true,
-  sort_order: 0,
-};
+function buildEmptyDraft(sortOrder: number): ProductionStageDraft {
+  return {
+    name: "",
+    code: "",
+    is_active: true,
+    sort_order: sortOrder,
+  };
+}
 
 export function ProductionStageCreateDrawer({
   open,
+  nextSortOrder,
   onClose,
   onCreated,
 }: {
   open: boolean;
+  nextSortOrder: number;
   onClose: () => void;
   onCreated?: (stage: ProductionStage) => void;
 }) {
   const { push: pushToast } = useToast();
-  const [draft, setDraft] = useState<ProductionStageDraft>(emptyDraft);
+  const [draft, setDraft] = useState<ProductionStageDraft>(() =>
+    buildEmptyDraft(nextSortOrder),
+  );
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (!open) return;
+    setDraft(buildEmptyDraft(nextSortOrder));
+    setError("");
+  }, [open, nextSortOrder]);
 
   const update = <K extends keyof ProductionStageDraft>(
     field: K,
@@ -47,14 +59,18 @@ export function ProductionStageCreateDrawer({
 
   const close = () => {
     if (saving) return;
-    setDraft(emptyDraft);
+    setDraft(buildEmptyDraft(nextSortOrder));
     setError("");
     onClose();
   };
 
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const validationError = validateProductionStageDraft(draft);
+    const payload: ProductionStageDraft = {
+      ...draft,
+      sort_order: nextSortOrder,
+    };
+    const validationError = validateProductionStageDraft(payload);
     if (validationError) {
       setError(validationError);
       return;
@@ -62,14 +78,14 @@ export function ProductionStageCreateDrawer({
     setSaving(true);
     try {
       const result: ProductionStageActionResult =
-        await createProductionStage(draft);
+        await createProductionStage(payload);
       if (!result.ok) {
         setError(result.message);
         return;
       }
       pushToast("Цех создан", "success");
       onCreated?.(result.stage);
-      setDraft(emptyDraft);
+      setDraft(buildEmptyDraft(nextSortOrder));
       setError("");
       onClose();
     } catch {
@@ -83,27 +99,50 @@ export function ProductionStageCreateDrawer({
     <CreateDrawer
       open={open}
       title="Новый цех"
-      description="Справочник этапов производства для маршрутов и тех операций."
+      description="Справочник этапов производства для маршрутов и тех операций. Порядок задаётся в списке стрелками или перетаскиванием."
       onClose={close}
       variant="overlay"
     >
       <form onSubmit={submit} className="flex h-full min-h-0 flex-col">
         <div className="min-h-0 flex-1 space-y-portal-4 overflow-y-auto p-portal-6">
           <Field label="Наименование" required>
-            <Input autoFocus required maxLength={255} value={draft.name} onChange={(event) => update("name", event.target.value)} disabled={saving} />
+            <Input
+              autoFocus
+              required
+              maxLength={255}
+              value={draft.name}
+              onChange={(event) => update("name", event.target.value)}
+              disabled={saving}
+            />
           </Field>
           <Field label="Код" required>
-            <Input required maxLength={64} value={draft.code} onChange={(event) => update("code", event.target.value)} disabled={saving} />
+            <Input
+              required
+              maxLength={64}
+              value={draft.code}
+              onChange={(event) => update("code", event.target.value)}
+              disabled={saving}
+            />
           </Field>
-          <Field label="Порядок сортировки" required>
-            <Input value={String(draft.sort_order)} inputMode="numeric" onChange={(event) => update("sort_order", Number(event.target.value) || 0)} disabled={saving} />
-          </Field>
-          <Checkbox checked={draft.is_active} onChange={(event) => update("is_active", event.target.checked)} disabled={saving} label="Активен" />
-          {error ? <p className="text-portal-body text-portal-danger" role="alert">{error}</p> : null}
+          <Checkbox
+            checked={draft.is_active}
+            onChange={(event) => update("is_active", event.target.checked)}
+            disabled={saving}
+            label="Активен"
+          />
+          {error ? (
+            <p className="text-portal-body text-portal-danger" role="alert">
+              {error}
+            </p>
+          ) : null}
         </div>
         <footer className="flex justify-end gap-portal-2 border-t border-portal-border bg-portal-surface px-portal-6 py-portal-4">
-          <Button type="button" onClick={close} disabled={saving}>Отмена</Button>
-          <Button type="submit" variant="primary" disabled={saving}>{saving ? "Создание…" : "Создать"}</Button>
+          <Button type="button" onClick={close} disabled={saving}>
+            Отмена
+          </Button>
+          <Button type="submit" variant="primary" disabled={saving}>
+            {saving ? "Создание…" : "Создать"}
+          </Button>
         </footer>
       </form>
     </CreateDrawer>

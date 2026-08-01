@@ -1,7 +1,7 @@
 from sqlalchemy import func, select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
-from app.models.tech_operation import TechOperation
+from app.models.tech_operation import TechOperation, TechOperationRequiredMaterial
 
 
 def list_tech_operations(
@@ -12,7 +12,11 @@ def list_tech_operations(
     limit: int = 100,
     offset: int = 0,
 ) -> list[TechOperation]:
-    statement = select(TechOperation)
+    statement = select(TechOperation).options(
+        selectinload(TechOperation.required_materials).selectinload(
+            TechOperationRequiredMaterial.nomenclature
+        )
+    )
     if active_only:
         statement = statement.where(TechOperation.is_active.is_(True))
     if search and search.strip():
@@ -29,7 +33,15 @@ def list_tech_operations(
 
 
 def get_tech_operation(db: Session, operation_id: int) -> TechOperation | None:
-    return db.get(TechOperation, operation_id)
+    return db.scalar(
+        select(TechOperation)
+        .where(TechOperation.id == operation_id)
+        .options(
+            selectinload(TechOperation.required_materials).selectinload(
+                TechOperationRequiredMaterial.nomenclature
+            )
+        )
+    )
 
 
 def get_tech_operation_by_name(db: Session, name: str) -> TechOperation | None:
@@ -50,6 +62,19 @@ def apply_tech_operation_updates(row: TechOperation, changes: dict) -> TechOpera
     for field_name, value in changes.items():
         setattr(row, field_name, value)
     return row
+
+
+def build_required_material(
+    *,
+    tech_operation: TechOperation,
+    nomenclature_id: int,
+    quantity,
+) -> TechOperationRequiredMaterial:
+    return TechOperationRequiredMaterial(
+        tech_operation=tech_operation,
+        nomenclature_id=nomenclature_id,
+        quantity=quantity,
+    )
 
 
 def delete_tech_operation(db: Session, row: TechOperation) -> None:

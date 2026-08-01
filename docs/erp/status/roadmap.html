@@ -164,7 +164,7 @@
         </div>
       </div>
       <div class="meta-list">
-        <div class="chip">Updated: 2026-07-28 (Stage 19 planned: internal staff chat on order + tech cards)</div>
+        <div class="chip">Updated: 2026-08-01 (Stages 7 / 13 / 15 / 16 + Stage 2 group 2.2.3+2.3+2.4 moved → v1.00)</div>
         <div class="chip">Version: v0.9.0</div>
         <div class="chip">Branch: feature/v0.8.1-nomenclature-core</div>
         <div class="chip">Commit: 0980f34</div>
@@ -327,17 +327,78 @@
               {
                 code: "1.1.3",
                 title: "Fully persistent workspace without demo/local lead state",
-                done: false
+                done: true,
+                note: "v0.9.0; toWorkspaceLead; API-only kanban; owner visual OK 2026-07-31; task v0.9.0-stage-1.1.3-persistent-leads-workspace.md",
+                microtasks: [
+                  {
+                    code: "1.1.3.1",
+                    title: "Task + boundary for persistent leads workspace",
+                    done: true,
+                    note: "task v0.9.0-stage-1.1.3-persistent-leads-workspace.md"
+                  },
+                  {
+                    code: "1.1.3.2",
+                    title: "Drop demo normalize; real reject/convert timestamps",
+                    done: true,
+                    note: "toWorkspaceLead"
+                  },
+                  {
+                    code: "1.1.3.3",
+                    title: "Frontend unit tests + ui-audit sync",
+                    done: true,
+                    note: "lead-list-api.test.mjs"
+                  },
+                  {
+                    code: "1.1.3.4",
+                    title: "Owner visual verification",
+                    done: true,
+                    note: "owner OK 2026-07-31"
+                  }
+                ]
               },
               {
                 code: "1.1.4",
                 title: "Leads list filters without demo salesManagers on persistent routes",
-                done: false
+                done: true,
+                note: "v0.9.0; responsible options from loaded leads only"
               },
               {
                 code: "1.1.5",
-                title: "Dashboard: top pattern-model sales analysis with filters — model article / order count / units manufactured / order amount / sewing-cost amount (depends on 3.2.5)",
-                done: false
+                title: "Dashboard: top pattern-model sales analysis with filters",
+                done: true,
+                note: "v0.9.0; GET /analytics/pattern-model-sales; panel on /sales/dashboard; owner visual OK 2026-08-01; task v0.9.0-stage-1.1.5-pattern-model-sales-dashboard.md",
+                microtasks: [
+                  {
+                    code: "1.1.5.1",
+                    title: "Contract + task / roadmap split",
+                    done: true,
+                    note: "task v0.9.0-stage-1.1.5-pattern-model-sales-dashboard.md"
+                  },
+                  {
+                    code: "1.1.5.2",
+                    title: "Backend pattern-model-sales aggregation API",
+                    done: true,
+                    note: "v0.9.0"
+                  },
+                  {
+                    code: "1.1.5.3",
+                    title: "Dashboard UI panel + period/article filters",
+                    done: true,
+                    note: "pattern-model-sales-panel.tsx"
+                  },
+                  {
+                    code: "1.1.5.4",
+                    title: "Regression + docs sync",
+                    done: true,
+                    note: "test_pattern_model_sales_1_1_5.py"
+                  },
+                  {
+                    code: "1.1.5.5",
+                    title: "Owner visual verification",
+                    done: true,
+                    note: "owner OK 2026-08-01"
+                  }
+                ]
               }
             ]
           },
@@ -362,7 +423,118 @@
               {
                 code: "1.2.4",
                 title: "Persistent tasks, notes, timeline, and communications — CRM/lead; ≠ Stage 19 internal order/TC chat",
-                done: false
+                done: true,
+                note: "v0.9.0 tasks+notes+communications closed (owner OK 2026-08-01); task v0.9.0-stage-1.2.4-lead-tasks-persistence.md",
+                microtasks: [
+                  {
+                    code: "1.2.4.1",
+                    title: "Contract + task / roadmap split (tasks-first)",
+                    done: true,
+                    note: "task v0.9.0-stage-1.2.4-lead-tasks-persistence.md"
+                  },
+                  {
+                    code: "1.2.4.2",
+                    title: "Extend LeadTask model + Alembic migration",
+                    done: true,
+                    note: "v0.9.0"
+                  },
+                  {
+                    code: "1.2.4.3",
+                    title: "Lead tasks CRUD API + history events",
+                    done: true,
+                    note: "v0.9.0"
+                  },
+                  {
+                    code: "1.2.4.4",
+                    title: "Lead card FE wire for API tasks",
+                    done: true,
+                    note: "v0.9.0"
+                  },
+                  {
+                    code: "1.2.4.5",
+                    title: "Regression + docs sync",
+                    done: true,
+                    note: "test_lead_tasks_1_2_4.py"
+                  },
+                  {
+                    code: "1.2.4.6",
+                    title: "Owner visual verification (lead card tasks)",
+                    done: true,
+                    note: "owner OK 2026-08-01"
+                  },
+                  {
+                    code: "1.2.4.7",
+                    title: "Persistent lead notes",
+                    done: true,
+                    note: "owner OK 2026-08-01"
+                  },
+                  {
+                    code: "1.2.4.7.1",
+                    title: "LeadNote model + Alembic migration",
+                    done: true,
+                    note: "v0.9.0"
+                  },
+                  {
+                    code: "1.2.4.7.2",
+                    title: "Lead notes CRUD API",
+                    done: true,
+                    note: "v0.9.0"
+                  },
+                  {
+                    code: "1.2.4.7.3",
+                    title: "Lead card FE wire for API notes",
+                    done: true,
+                    note: "v0.9.0"
+                  },
+                  {
+                    code: "1.2.4.7.4",
+                    title: "Regression + docs sync (notes)",
+                    done: true,
+                    note: "test_lead_notes_1_2_4_7.py"
+                  },
+                  {
+                    code: "1.2.4.7.5",
+                    title: "Owner visual verification (lead card notes)",
+                    done: true,
+                    note: "owner OK 2026-08-01"
+                  },
+                  {
+                    code: "1.2.4.8",
+                    title: "Persistent lead communications contour",
+                    done: true,
+                    note: "owner OK 2026-08-01; ≠ Stage 19"
+                  },
+                  {
+                    code: "1.2.4.8.1",
+                    title: "LeadMessage model + Alembic migration",
+                    done: true,
+                    note: "v0.9.0"
+                  },
+                  {
+                    code: "1.2.4.8.2",
+                    title: "Lead messages list/create API",
+                    done: true,
+                    note: "v0.9.0"
+                  },
+                  {
+                    code: "1.2.4.8.3",
+                    title: "Lead card FE wire for API communications",
+                    done: true,
+                    note: "v0.9.0"
+                  },
+                  {
+                    code: "1.2.4.8.4",
+                    title: "Regression + docs sync (communications)",
+                    done: true,
+                    note: "test_lead_messages_1_2_4_8.py"
+                  },
+                  {
+                    code: "1.2.4.8.5",
+                    title: "Owner visual verification (lead card communications)",
+                    done: true,
+                    note: "owner OK 2026-08-01"
+                  }
+                ]
               },
               {
                 code: "1.2.5",
@@ -415,6 +587,7 @@
       },
       {
         title: "Stage 2 — Clients and Contacts",
+        note: "2.2.3 + 2.3 + 2.4 moved to v1.00 (2026-08-01) as one group with microtasks. 2.2.1 / 2.2.2 remain in v0.9.0.",
         blocks: [
           {
             title: "2.1 — Core entities and links",
@@ -447,42 +620,50 @@
               {
                 code: "2.2.3",
                 title: "Client lead and order history",
-                done: false
+                done: false,
+                note: "moved → v1.00; microtasks 2.2.3.1–2.2.3.5 in docs/roadmap/roadmap-v1.00.md"
               }
             ]
           },
           {
             title: "2.3 — Business data and quality",
+            note: "Moved → v1.00 with Stage 2 group (2.2.3 + 2.3 + 2.4)",
             items: [
               {
                 code: "2.3.1",
                 title: "Legal details and banking data",
-                done: false
+                done: false,
+                note: "moved → v1.00 (2.3.1.1–2.3.1.4)"
               },
               {
                 code: "2.3.2",
                 title: "Segmentation and duplicate detection",
-                done: false
+                done: false,
+                note: "moved → v1.00 (2.3.2.1–2.3.2.4)"
               },
               {
                 code: "2.3.3",
                 title: "Settlements and financial client state",
-                done: false
+                done: false,
+                note: "moved → v1.00 (2.3.3.1–2.3.3.4)"
               }
             ]
           },
           {
             title: "2.4 — Organizations workspace",
+            note: "Moved → v1.00 with Stage 2 group (2.2.3 + 2.3 + 2.4)",
             items: [
               {
                 code: "2.4.1",
                 title: "Persistent organizations list and card on backend data",
-                done: false
+                done: false,
+                note: "moved → v1.00 (2.4.1.1–2.4.1.5)"
               },
               {
                 code: "2.4.2",
                 title: "Persistent employees directory on backend data",
-                done: false
+                done: false,
+                note: "moved → v1.00 (2.4.2.1–2.4.2.4)"
               }
             ]
           }
@@ -660,17 +841,130 @@
               {
                 code: "3.3.1",
                 title: "Order-level discount",
-                done: false
+                done: true,
+                note: "v0.9.0 closed; Alembic c0d1e2f3a456; task v0.9.0-stage-3.3.1-order-level-discount.md",
+                microtasks: [
+                  {
+                    code: "3.3.1.1",
+                    title: "ADR-003 amend + domain contract",
+                    done: true,
+                    note: "v0.9.0; task v0.9.0-stage-3.3.1-order-level-discount.md"
+                  },
+                  {
+                    code: "3.3.1.2",
+                    title: "DB migration + model + recalculate service",
+                    done: true,
+                    note: "v0.9.0; Alembic c0d1e2f3a456"
+                  },
+                  {
+                    code: "3.3.1.3",
+                    title: "API expose fields + PATCH discount percent",
+                    done: true,
+                    note: "v0.9.0; PATCH /orders/{id}/discount; test_order_discount_3_3_1.py"
+                  },
+                  {
+                    code: "3.3.1.4",
+                    title: "Order card UI: edit % + totals",
+                    done: true,
+                    note: "v0.9.0; sales-order-metrics.tsx; order-discount-actions.ts"
+                  },
+                  {
+                    code: "3.3.1.5",
+                    title: "Regression tests + docs sync",
+                    done: true,
+                    note: "v0.9.0; test_order_discount_3_3_1.py; FE order-discount/metrics tests; project-structure + erp-check"
+                  }
+                ]
               },
               {
                 code: "3.3.2",
                 title: "Tax and VAT model",
-                done: false
+                done: true,
+                goal: "Per-line VAT mode (в сумме/сверху); persist vat_amount; transfer rule for price docs",
+                note: "task v0.9.0-stage-3.3.2-tax-vat-model.md; ADR-005 amend; migration e2f3a4b5c678",
+                microtasks: [
+                  {
+                    code: "3.3.2.1",
+                    title: "ADR-005 amend + domain contract + task split",
+                    done: true,
+                    note: "v0.9.0; ADR-005/003; task v0.9.0-stage-3.3.2-tax-vat-model.md"
+                  },
+                  {
+                    code: "3.3.2.2",
+                    title: "DB: price_includes_vat + line/order vat_amount",
+                    done: true,
+                    note: "v0.9.0; Alembic e2f3a4b5c678"
+                  },
+                  {
+                    code: "3.3.2.3",
+                    title: "Service recalculate + API vat_amount / amount_net / mode",
+                    done: true,
+                    note: "v0.9.0"
+                  },
+                  {
+                    code: "3.3.2.4",
+                    title: "UI: toolbar BadgePercent VAT mode (all lines) + totals",
+                    done: true,
+                    note: "v0.9.0; sales-order-items-unf-demo / metrics"
+                  },
+                  {
+                    code: "3.3.2.5",
+                    title: "Regression tests + docs sync (transfer rule)",
+                    done: true,
+                    note: "v0.9.0; test_order_vat_3_3_2.py; vat-rates.test.mjs"
+                  }
+                ]
               },
               {
                 code: "3.3.3",
-                title: "Currency, quotations, and invoices (order print output consumes Stage 18 print-form registry)",
-                done: false
+                title: "Currency, quotations, and invoices",
+                done: true,
+                goal: "Currency MVP (RUB) + КП/счёт on order with VAT transfer; print via Stage 18",
+                note: "v0.9.0 closed; Alembic f3a4b5c6d789/g4b5c6d7e890; owner visual OK 2026-07-31",
+                microtasks: [
+                  {
+                    code: "3.3.3.1",
+                    title: "ADR-005 amend + domain contract + task split",
+                    done: true,
+                    note: "v0.9.0; ADR-005; task v0.9.0-stage-3.3.3-currency-quotations-invoices.md"
+                  },
+                  {
+                    code: "3.3.3.2",
+                    title: "DB: SalesOrder.currency_code + order API/UI read",
+                    done: true,
+                    note: "v0.9.0; Alembic f3a4b5c6d789; test_order_currency_3_3_3_2.py"
+                  },
+                  {
+                    code: "3.3.3.3",
+                    title: "Quotation model/API + create-from-order snapshot",
+                    done: true,
+                    note: "v0.9.0; Alembic g4b5c6d7e890; POST /orders/{id}/quotations"
+                  },
+                  {
+                    code: "3.3.3.4",
+                    title: "Invoice model/API + create-from-order",
+                    done: true,
+                    note: "v0.9.0; POST /orders/{id}/invoices"
+                  },
+                  {
+                    code: "3.3.3.5",
+                    title: "Order card documents tree: live КП/счёт",
+                    done: true,
+                    note: "v0.9.0; sales-order-documents-tree.tsx"
+                  },
+                  {
+                    code: "3.3.3.6",
+                    title: "Regression + print handoff + docs sync",
+                    done: true,
+                    note: "v0.9.0; test_sales_commercial_docs_3_3_3.py"
+                  },
+                  {
+                    code: "3.3.3.7",
+                    title: "Owner visual verification (documents КП/счёт)",
+                    done: true,
+                    note: "owner OK 2026-07-31"
+                  }
+                ]
               }
             ]
           },
@@ -680,17 +974,98 @@
               {
                 code: "3.4.1",
                 title: "Design and approval states in order flow",
-                done: false
+                done: true,
+                goal: "Sales-side design_approval_status + gate before production; Stage 10 owns assets",
+                note: "task v0.9.0-stage-3.4.1-design-approval-order-flow.md; ADR-003 amend; Alembic h5c6d7e8f901; owner visual OK 2026-07-31",
+                microtasks: [
+                  {
+                    code: "3.4.1.1",
+                    title: "ADR-003 amend + domain contract + task split",
+                    done: true,
+                    note: "v0.9.0; task v0.9.0-stage-3.4.1-design-approval-order-flow.md"
+                  },
+                  {
+                    code: "3.4.1.2",
+                    title: "DB: design_approval_status",
+                    done: true,
+                    note: "v0.9.0; Alembic h5c6d7e8f901"
+                  },
+                  {
+                    code: "3.4.1.3",
+                    title: "Service production gate + PATCH design-approval",
+                    done: true,
+                    note: "v0.9.0"
+                  },
+                  {
+                    code: "3.4.1.4",
+                    title: "Order card UI: design approval control",
+                    done: true,
+                    note: "v0.9.0; order-design-approval-field.tsx"
+                  },
+                  {
+                    code: "3.4.1.5",
+                    title: "Regression + docs sync",
+                    done: true,
+                    note: "v0.9.0; test_design_approval_3_4_1.py"
+                  },
+                  {
+                    code: "3.4.1.6",
+                    title: "Owner visual verification",
+                    done: true,
+                    note: "owner OK 2026-07-31"
+                  }
+                ]
               },
               {
                 code: "3.4.2",
                 title: "Reserve, production, shipping, payment, and closure workflow",
-                done: false
+                done: true,
+                goal: "Sales payment/reserve markers + completed-requires-paid; warehouse/ledger Stage 12/14",
+                note: "task v0.9.0-stage-3.4.2-order-execution-workflow.md; ADR-003 amend; Alembic i6d7e8f9a012; owner visual OK 2026-07-31",
+                microtasks: [
+                  {
+                    code: "3.4.2.1",
+                    title: "ADR-003 amend + domain contract + task split",
+                    done: true,
+                    note: "v0.9.0; task v0.9.0-stage-3.4.2-order-execution-workflow.md"
+                  },
+                  {
+                    code: "3.4.2.2",
+                    title: "DB: payment + material reserve columns",
+                    done: true,
+                    note: "v0.9.0; Alembic i6d7e8f9a012"
+                  },
+                  {
+                    code: "3.4.2.3",
+                    title: "Service closure payment gate + PATCH payment/reserve",
+                    done: true,
+                    note: "v0.9.0"
+                  },
+                  {
+                    code: "3.4.2.4",
+                    title: "Order card UI: live payment + reserve",
+                    done: true,
+                    note: "v0.9.0"
+                  },
+                  {
+                    code: "3.4.2.5",
+                    title: "Regression + docs sync",
+                    done: true,
+                    note: "v0.9.0; test_order_execution_3_4_2.py"
+                  },
+                  {
+                    code: "3.4.2.6",
+                    title: "Owner visual verification",
+                    done: true,
+                    note: "owner OK 2026-07-31"
+                  }
+                ]
               },
               {
                 code: "3.4.3",
                 title: "Orders list loading.tsx and surfaced network errors",
-                done: false
+                done: true,
+                note: "v0.9.0; sales/orders/loading.tsx + error.tsx; getOrderList try/catch; ui-audit gap closed"
               }
             ]
           },
@@ -750,7 +1125,8 @@
                   {
                     code: "3.5.9",
                     title: "Owner visual verification (desktop + mobile)",
-                    done: false
+                    done: true,
+                    note: "owner OK 2026-07-31; stack 1300/1700; collapse items/tech/history; docs filter-only; sidebar compact ≤1299"
                   },
                   {
                     code: "3.5.10",
@@ -817,7 +1193,40 @@
               {
                 code: "4.3.3",
                 title: "Audit history, archive flow, and bulk operations",
-                done: false
+                done: true,
+                note: "v0.9.0; history+archive+bulk; ≠ 4.5 file I/O; ≠ 18.4 journal; task v0.9.0-stage-4.3.3-nomenclature-audit-archive-bulk.md",
+                microtasks: [
+                  {
+                    code: "4.3.3.1",
+                    title: "Persistent nomenclature history + GET /nomenclatures/{id}/history",
+                    done: true,
+                    note: "v0.9.0; nomenclature_history / a8b9c0d1e234; nomenclature_history.py; test_nomenclature_history_4_3_3_1.py"
+                  },
+                  {
+                    code: "4.3.3.2",
+                    title: "Card UI: ActivityTimeline from history API",
+                    done: true,
+                    note: "v0.9.0; getNomenclatureHistory + card history block; nomenclature-history-4-3-3-2.test.mjs"
+                  },
+                  {
+                    code: "4.3.3.3",
+                    title: "Archive/restore UX polish + list filter",
+                    done: true,
+                    note: "v0.9.0; warehouse filter Архив; restore confirm + view-mode status select; nomenclature-archive-4-3-3-3.test.mjs"
+                  },
+                  {
+                    code: "4.3.3.4",
+                    title: "Bulk archive/activate on /warehouse/stock",
+                    done: true,
+                    note: "v0.9.0; bulkSetNomenclatureActive + row checkboxes; nomenclature-bulk-4-3-3-4.test.mjs"
+                  },
+                  {
+                    code: "4.3.3.5",
+                    title: "Regression tests + docs sync",
+                    done: true,
+                    note: "v0.9.0; backend+FE smoke; erp-check / project-structure / contours A synced"
+                  }
+                ]
               }
             ]
           },
@@ -847,12 +1256,60 @@
               {
                 code: "4.4.5",
                 title: "Non-image file attachments",
-                done: false
+                done: true,
+                note: "v0.9.0; reuse nomenclature_media; PDF/Office/ZIP/txt/csv; Вложения on card; task v0.9.0-stage-4.4.5-nomenclature-file-attachments.md",
+                microtasks: [
+                  {
+                    code: "4.4.5.1",
+                    title: "Backend: allowlisted non-image mimes + primary-only-for-images",
+                    done: true,
+                    note: "v0.9.0; media.py allowlists; coerce primary off for files"
+                  },
+                  {
+                    code: "4.4.5.2",
+                    title: "Card UI: Вложения block separate from image carousel",
+                    done: true,
+                    note: "v0.9.0; nomenclature-card Вложения upload/download/delete"
+                  },
+                  {
+                    code: "4.4.5.3",
+                    title: "Regression tests + docs sync",
+                    done: true,
+                    note: "v0.9.0; test_nomenclature_attachments_4_4_5.py + nomenclature-attachments-4-4-5.test.mjs"
+                  }
+                ]
               },
               {
                 code: "4.4.6",
                 title: "Variant pricing, barcodes, and external sync",
-                done: false
+                done: true,
+                note: "v0.9.0; ADR-010 amend; Alembic b9c0d1e2f345; 1C engine → 16.2.1; task v0.9.0-stage-4.4.6-variant-pricing-barcodes.md",
+                microtasks: [
+                  {
+                    code: "4.4.6.1",
+                    title: "ADR-010 amend + DB columns + schemas",
+                    done: true,
+                    note: "v0.9.0; Alembic b9c0d1e2f345"
+                  },
+                  {
+                    code: "4.4.6.2",
+                    title: "API update + order UI suggests variant price",
+                    done: true,
+                    note: "v0.9.0; sales-order-items + effectiveVariantUnitPrice"
+                  },
+                  {
+                    code: "4.4.6.3",
+                    title: "Card UI: variants block with price/barcode/external_code",
+                    done: true,
+                    note: "v0.9.0; nomenclature-variants-block.tsx"
+                  },
+                  {
+                    code: "4.4.6.4",
+                    title: "Regression tests + docs sync",
+                    done: true,
+                    note: "v0.9.0; test_variant_pricing_4_4_6.py + nomenclature-variant-pricing-4-4-6.test.mjs"
+                  }
+                ]
               }
             ]
           },
@@ -929,6 +1386,36 @@
                     title: "Regression tests (columns, filter scope)",
                     done: true,
                     note: "v0.9.0; test_nomenclature_export_4_5_2.py; multi-photo CSV shift fixed (LIST_VALUE_SEPARATOR=|, sep=,)"
+                  }
+                ]
+              },
+              {
+                code: "4.5.3",
+                title: "Product models import / export",
+                done: false,
+                dependencies: [
+                  "4.5.0",
+                  "ADR-020",
+                  "6.1"
+                ],
+                microtasks: [
+                  {
+                    code: "4.5.3.1",
+                    title: "Product model import/export API + shared columns + template",
+                    done: true,
+                    note: "v0.9.0; /product-models/import|export|import-template; product_model_import/export/file_columns; task v0.9.0-stage-4.5.3-product-model-import-export.md"
+                  },
+                  {
+                    code: "4.5.3.2",
+                    title: "UI: Import/Export on product-models list toolbar",
+                    done: true,
+                    note: "v0.9.0; product-models-workspace + product-model-import-drawer"
+                  },
+                  {
+                    code: "4.5.3.3",
+                    title: "Regression tests",
+                    done: true,
+                    note: "v0.9.0; test_product_model_import_export_4_5_3.py + product-model-import-export-4-5-3.test.mjs"
                   }
                 ]
               }
@@ -3183,6 +3670,46 @@
                 ]
               },
               {
+                code: "6.3.10",
+                title: "Sewing operation ↔ sewing-shop equipment",
+                done: true,
+                goal: "M:N WorkCenter (цех Пошив / code=sewing) on SewingOperation catalog; ≠ routing/TC 11.1.2",
+                note: "v0.9.0 closed; Alembic d1e2f3a4b567; task v0.9.0-stage-6.3.10-sewing-op-equipment.md",
+                dependencies: ["6.3.5", "11.1.2.3"],
+                microtasks: [
+                  {
+                    code: "6.3.10.1",
+                    title: "Domain/ADR amend + task file",
+                    done: true,
+                    note: "v0.9.0; sewing-operations-domain.md; ADR-014/017; task v0.9.0-stage-6.3.10-sewing-op-equipment.md"
+                  },
+                  {
+                    code: "6.3.10.2",
+                    title: "DB: M:N link table + migration + model",
+                    done: true,
+                    note: "v0.9.0; Alembic d1e2f3a4b567; sewing_operation_work_centers"
+                  },
+                  {
+                    code: "6.3.10.3",
+                    title: "API: work_center_ids + sewing-stage validation",
+                    done: true,
+                    note: "v0.9.0; test_sewing_operation_work_centers_6_3_10_3.py; WC filters production_stage_code/id"
+                  },
+                  {
+                    code: "6.3.10.4",
+                    title: "UI: multi-select оборудования on sewing-op create/edit",
+                    done: true,
+                    note: "v0.9.0; sewing-operation-equipment-picker.tsx; create/edit sewing-ops catalog"
+                  },
+                  {
+                    code: "6.3.10.5",
+                    title: "Regression tests + docs sync",
+                    done: true,
+                    note: "v0.9.0; backend+FE sewing/assembly regressions; project-structure + erp-check"
+                  }
+                ]
+              },
+              {
                 code: "6.3.7",
                 title: "PatternSet withdrawal checkpoint",
                 goal: "Confirm PatternSet / patterns routes / model→pattern link are fully removed from Stage 6 scope and docs.",
@@ -3291,6 +3818,7 @@
       },
       {
         title: "Stage 7 — Specifications",
+        note: "Moved to v1.00 (2026-08-01): docs/roadmap/roadmap-v1.00.md + docs/erp/status/roadmap-v1.00.html. Do not execute under v0.9.0.",
         blocks: [
           {
             title: "7.1 — Domain and persistence",
@@ -3299,6 +3827,7 @@
                 code: "7.1.1",
                 title: "Specification architecture",
                 goal: "Define Spec as plan+fact report document for 1С (from filled TC + execution; Spec↔ТК fix) — not a prerequisite for TC generate. Documents = link registry later.",
+                note: "moved → v1.00",
                 dependencies: [
                   "6.1.1",
                   "6.1.12",
@@ -3312,22 +3841,26 @@
                   {
                     code: "7.1.1.1",
                     title: "Define specification entities and version lifecycle (from TC / batch; plan draft vs plan+fact)",
-                    done: false
+                    done: false,
+                    note: "moved → v1.00"
                   },
                   {
                     code: "7.1.1.2",
                     title: "Define material/norm scope from TC composition (+ fact consumption binding)",
-                    done: false
+                    done: false,
+                    note: "moved → v1.00"
                   },
                   {
                     code: "7.1.1.3",
                     title: "Define copy/read contract: TC plan + execution fact (ops/time/performers)",
-                    done: false
+                    done: false,
+                    note: "moved → v1.00"
                   },
                   {
                     code: "7.1.1.4",
                     title: "Documentation checkpoint (Documents = link index; no per-type contour)",
-                    done: false
+                    done: false,
+                    note: "moved → v1.00"
                   }
                 ]
               },
@@ -3335,6 +3868,7 @@
                 code: "7.1.2",
                 title: "Specification database core",
                 goal: "Create the persistent storage for specifications and their versions.",
+                note: "moved → v1.00",
                 dependencies: [
                   "7.1.1"
                 ],
@@ -3342,17 +3876,20 @@
                   {
                     code: "7.1.2.1",
                     title: "Add SQLAlchemy entities",
-                    done: false
+                    done: false,
+                    note: "moved → v1.00"
                   },
                   {
                     code: "7.1.2.2",
                     title: "Add Alembic migration",
-                    done: false
+                    done: false,
+                    note: "moved → v1.00"
                   },
                   {
                     code: "7.1.2.3",
                     title: "Add schemas and backend regression tests",
-                    done: false
+                    done: false,
+                    note: "moved → v1.00"
                   }
                 ]
               }
@@ -3365,6 +3902,7 @@
                 code: "7.2.1",
                 title: "Specification CRUD API",
                 goal: "Users can create, view, and update specifications through API.",
+                note: "moved → v1.00",
                 dependencies: [
                   "7.1.2"
                 ],
@@ -3372,17 +3910,20 @@
                   {
                     code: "7.2.1.1",
                     title: "Add repository and service CRUD",
-                    done: false
+                    done: false,
+                    note: "moved → v1.00"
                   },
                   {
                     code: "7.2.1.2",
                     title: "Add endpoints",
-                    done: false
+                    done: false,
+                    note: "moved → v1.00"
                   },
                   {
                     code: "7.2.1.3",
                     title: "Add backend regression tests",
-                    done: false
+                    done: false,
+                    note: "moved → v1.00"
                   }
                 ]
               },
@@ -3390,6 +3931,7 @@
                 code: "7.2.2",
                 title: "Specification workspace and card",
                 goal: "Users can open Spec document (plan+fact blocks) on parent context; interim list OK until Documents filter. Rights-gated edit.",
+                note: "moved → v1.00",
                 dependencies: [
                   "7.2.1"
                 ],
@@ -3397,32 +3939,38 @@
                   {
                     code: "7.2.2.1",
                     title: "Add frontend types and API client",
-                    done: false
+                    done: false,
+                    note: "moved → v1.00"
                   },
                   {
                     code: "7.2.2.2",
                     title: "Add workspace/list route (interim; later Documents filter)",
-                    done: false
+                    done: false,
+                    note: "moved → v1.00"
                   },
                   {
                     code: "7.2.2.3",
                     title: "Add detail card (plan+fact blocks; rights-gated edit)",
-                    done: false
+                    done: false,
+                    note: "moved → v1.00"
                   },
                   {
                     code: "7.2.2.4",
                     title: "Add loading/error states",
-                    done: false
+                    done: false,
+                    note: "moved → v1.00"
                   },
                   {
                     code: "7.2.2.5",
                     title: "Add frontend regression tests",
-                    done: false
+                    done: false,
+                    note: "moved → v1.00"
                   },
                   {
                     code: "7.2.2.6",
                     title: "Visual verification",
-                    done: false
+                    done: false,
+                    note: "moved → v1.00"
                   }
                 ]
               },
@@ -3430,6 +3978,7 @@
                 code: "7.2.3",
                 title: "Link specifications to technical card / order context",
                 goal: "Spec document from filled TC (plan) + execution fact; soft-link on TC optional after approve — not required for generate. Documents lists a link only.",
+                note: "moved → v1.00",
                 dependencies: [
                   "6.1.6",
                   "3.2.5",
@@ -3440,32 +3989,38 @@
                   {
                     code: "7.2.3.1",
                     title: "Add backend relation fields (technical_card / order item / model / variant / batch)",
-                    done: false
+                    done: false,
+                    note: "moved → v1.00"
                   },
                   {
                     code: "7.2.3.2",
                     title: "Add migration and schemas for Spec material + operation (+ fact) lines",
-                    done: false
+                    done: false,
+                    note: "moved → v1.00"
                   },
                   {
                     code: "7.2.3.3",
                     title: "Add service: create Spec from TC plan; refresh fact blocks from execution",
-                    done: false
+                    done: false,
+                    note: "moved → v1.00"
                   },
                   {
                     code: "7.2.3.4",
                     title: "Add service validation for active/approved versions where applicable",
-                    done: false
+                    done: false,
+                    note: "moved → v1.00"
                   },
                   {
                     code: "7.2.3.5",
                     title: "Add workspace/card integration showing plan+fact blocks",
-                    done: false
+                    done: false,
+                    note: "moved → v1.00"
                   },
                   {
                     code: "7.2.3.6",
                     title: "Add regression tests (immutability vs later TC/model edits after Spec approve)",
-                    done: false
+                    done: false,
+                    note: "moved → v1.00"
                   }
                 ]
               }
@@ -5101,6 +5656,7 @@
       },
       {
         title: "Stage 13 — Procurement",
+        note: "Moved to v1.00 (2026-08-01): docs/roadmap/roadmap-v1.00.md + docs/erp/status/roadmap-v1.00.html. Do not execute under v0.9.0.",
         blocks: [
           {
             title: "13.1 — Supplier contour",
@@ -5108,12 +5664,14 @@
               {
                 code: "13.1.1",
                 title: "Suppliers and supplier prices",
-                done: false
+                done: false,
+                note: "moved → v1.00"
               },
               {
                 code: "13.1.2",
                 title: "Procurement requests and purchase orders",
-                done: false
+                done: false,
+                note: "moved → v1.00"
               }
             ]
           },
@@ -5123,12 +5681,14 @@
               {
                 code: "13.2.1",
                 title: "Receipts and returns",
-                done: false
+                done: false,
+                note: "moved → v1.00"
               },
               {
                 code: "13.2.2",
                 title: "Demand planning and minimum stock linkage",
-                done: false
+                done: false,
+                note: "moved → v1.00"
               }
             ]
           }
@@ -5166,6 +5726,7 @@
       },
       {
         title: "Stage 15 — Costing and Analytics",
+        note: "Moved to v1.00 (2026-08-01): open items in docs/roadmap/roadmap-v1.00.md. 15.2.1 already shipped in v0.9.0.",
         blocks: [
           {
             title: "15.1 — Costing",
@@ -5173,12 +5734,14 @@
               {
                 code: "15.1.1",
                 title: "Planned, normative, and actual costing",
-                done: false
+                done: false,
+                note: "moved → v1.00"
               },
               {
                 code: "15.1.2",
                 title: "Margin and plan-fact analysis",
-                done: false
+                done: false,
+                note: "moved → v1.00"
               }
             ]
           },
@@ -5193,7 +5756,8 @@
               {
                 code: "15.2.2",
                 title: "ERP analytics and management P&L",
-                done: false
+                done: false,
+                note: "moved → v1.00"
               }
             ]
           }
@@ -5201,6 +5765,7 @@
       },
       {
         title: "Stage 16 — Integrations",
+        note: "Moved to v1.00 (2026-08-01): docs/roadmap/roadmap-v1.00.md + docs/erp/status/roadmap-v1.00.html. Do not execute under v0.9.0.",
         blocks: [
           {
             title: "16.1 — External channels",
@@ -5208,12 +5773,14 @@
               {
                 code: "16.1.1",
                 title: "Website forms, email, VK, Telegram, and telephony",
-                done: false
+                done: false,
+                note: "moved → v1.00"
               },
               {
                 code: "16.1.2",
                 title: "Google Sheets and webhooks",
-                done: false
+                done: false,
+                note: "moved → v1.00"
               }
             ]
           },
@@ -5224,45 +5791,50 @@
                 code: "16.2.1",
                 title: "1C:UNF exchange — contour D (ADR-020); neighbor to universal job shell",
                 done: false,
-                note: "ADR-020; not catalog Excel / not print 18.3"
+                note: "moved → v1.00; ADR-020; not catalog Excel / not print 18.3"
               },
               {
                 code: "16.2.2",
                 title: "Delivery and payment-system integrations",
-                done: false
+                done: false,
+                note: "moved → v1.00"
               },
               {
                 code: "16.2.3",
                 title: "External API for third-party systems",
-                done: false
+                done: false,
+                note: "moved → v1.00"
               }
             ]
           },
           {
             title: "16.3 — Universal import and export (orchestration)",
             goal: "ADR-020 job shell over section adapters from 4.5; domain 9.3.2 stays out.",
-            note: "Maps project-structure Universal import and export contour",
+            note: "Moved → v1.00. Maps project-structure Universal import and export contour",
             items: [
               {
                 code: "16.3.1",
                 title: "Contract: job runner + section adapter registry",
                 done: false,
-                note: "ADR-020; upload → map → validate → dry-run → commit"
+                note: "moved → v1.00; ADR-020; upload → map → validate → dry-run → commit"
               },
               {
                 code: "16.3.2",
                 title: "Wire nomenclature adapter from 4.5 into the job shell",
-                done: false
+                done: false,
+                note: "moved → v1.00"
               },
               {
                 code: "16.3.3",
                 title: "Administration UI: jobs list + section picker",
-                done: false
+                done: false,
+                note: "moved → v1.00"
               },
               {
                 code: "16.3.4",
                 title: "Regression tests + documentation checkpoint",
-                done: false
+                done: false,
+                note: "moved → v1.00"
               }
             ]
           }
@@ -5879,6 +6451,7 @@
                       <div class="item-title" style="${item.microtasks && item.microtasks.length ? "grid-column:1 / -1;" : ""}">
                         <strong>${escapeHtml(item.code)} — ${escapeHtml(item.title)}</strong>
                         ${item.goal ? `<span>${escapeHtml(item.goal)}</span>` : ""}
+                        ${item.note ? `<span>${escapeHtml(item.note)}</span>` : ""}
                       </div>
                       ${item.microtasks && item.microtasks.length ? "" : `<span class="item-status">${item.done ? "[x]" : "[ ]"}</span>`}
                     </div>
@@ -5919,7 +6492,7 @@
             <button class="stage-header" type="button" aria-expanded="true" aria-controls="stage-body-${stageIndex + 1}">
               <div>
                 <h3>${escapeHtml(stage.title)}</h3>
-                <p>${counts.done} из ${counts.total} чекбоксов подтверждены</p>
+                <p>${stage.note ? escapeHtml(stage.note) : `${counts.done} из ${counts.total} чекбоксов подтверждены`}</p>
               </div>
               <div class="stage-meta">
                 <span class="badge done">[x] ${counts.done}</span>

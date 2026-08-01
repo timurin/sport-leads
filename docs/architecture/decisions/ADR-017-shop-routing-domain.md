@@ -1,6 +1,6 @@
 # ADR-017 — Shop routing domain (Stage 8)
 
-**Status:** принято (`2026-07-26`); **amended** `2026-07-26` (`8.3` ProductionStage); **amended** `2026-07-27` (model routing whitelist + operation norms `6.1.17`); **amended** `2026-07-28` (TechOperation required materials for TC prefill `8.1.4` / `9.3.5`); **amended** `2026-07-30` (`11.1.2` WorkCenter planning: TC stage snapshot + Settings catalog); **amended** `2026-07-30` (FG stages `ready_to_ship` / `shipped` — ADR-019 / `11.2.2.1`)  
+**Status:** принято (`2026-07-26`); **amended** `2026-07-26` (`8.3` ProductionStage); **amended** `2026-07-27` (model routing whitelist + operation norms `6.1.17`); **amended** `2026-07-28` (TechOperation required materials for TC prefill `8.1.4` / `9.3.5`); **amended** `2026-07-30` (`11.1.2` WorkCenter planning: TC stage snapshot + Settings catalog); **amended** `2026-07-30` (FG stages `ready_to_ship` / `shipped` — ADR-019 / `11.2.2.1`); **amended** `2026-07-31` (`6.3.10` SewingOperation ↔ sewing-shop WorkCenter catalog link — ≠ routing/TC assignment)  
 **Date:** `2026-07-26`  
 **Roadmap:** Stage 8 § `8.1.1`–`8.2.3`, amend `8.1.4` / `8.3`; Stage `6.1.17`; Stage `9.3.5`; shop modules `11.3`–`11.10`; planning `11.1.2`; FG bridge `11.2.2`  
 **Depends on:** ADR-014, ADR-016 (Spec↔ТК amend), ADR-004, ADR-019 (FG warehouse stages)  
@@ -64,6 +64,8 @@ Settings group **«Производство»**:
 **Не** CRUD внутри `/settings/catalogs/tech-cards` (`9.6`).
 
 Плановое назначение на исполнении (`11.1.2`): `ShopRoutingStageLine.work_center_id` копируется в `TechnicalCardStageResult.work_center_id` при apply/generate; дальше правится на ТК / shop fact. Capacity calendars — вне MVP.
+
+**Amend `2026-07-31` (`6.3.10`):** каталог `SewingOperation` может хранить M:N совместимое оборудование цеха Пошив (`WorkCenter` + `production_stage.code=sewing`). Это **не** SoT планового/факт оборудования на шаге маршрута или ТК — остаётся `11.1.2`.
 
 ### 5. Seed ProductionStage (MVP)
 

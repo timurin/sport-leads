@@ -6,7 +6,7 @@ type WorkspaceLayoutProps = {
   children: ReactNode;
 };
 
-export default function WorkspaceLayout({
+export default async function WorkspaceLayout({
   children,
 }: WorkspaceLayoutProps) {
   return <AppShell>{children}</AppShell>;

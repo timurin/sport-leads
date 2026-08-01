@@ -181,6 +181,9 @@ class VariantCreate(BaseModel):
     article: str = Field(min_length=1, max_length=100)
     name: str = Field(min_length=1, max_length=255)
     option_ids: list[int] = Field(min_length=1)
+    price: Decimal | None = Field(default=None, ge=0, max_digits=14, decimal_places=2)
+    barcode: str | None = Field(default=None, max_length=64)
+    external_code: str | None = Field(default=None, max_length=100)
 
 
 class VariantUpdate(BaseModel):
@@ -188,6 +191,9 @@ class VariantUpdate(BaseModel):
     name: str | None = Field(default=None, min_length=1, max_length=255)
     option_ids: list[int] | None = Field(default=None, min_length=1)
     is_active: bool | None = None
+    price: Decimal | None = Field(default=None, ge=0, max_digits=14, decimal_places=2)
+    barcode: str | None = Field(default=None, max_length=64)
+    external_code: str | None = Field(default=None, max_length=100)
 
 
 class VariantRead(BaseModel):
@@ -195,6 +201,9 @@ class VariantRead(BaseModel):
     nomenclature_id: int
     article: str
     name: str
+    price: Decimal | None = None
+    barcode: str | None = None
+    external_code: str | None = None
     is_active: bool
     option_ids: list[int]
     options: list[CharacteristicOptionRead]

@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 
 import {
   parseDurationSecondsInput,
+  parseQuantityPerItemInput,
   parseSewingCostInput,
   validateSewingOperationDraft,
   type SewingOperation,
@@ -23,10 +24,24 @@ function apiBaseUrl(): string {
   );
 }
 
+function normalizeWorkCenterIds(value: unknown): number[] {
+  if (!Array.isArray(value)) return [];
+  const ids: number[] = [];
+  for (const item of value) {
+    const id = Number(item);
+    if (Number.isSafeInteger(id) && id > 0 && !ids.includes(id)) {
+      ids.push(id);
+    }
+  }
+  return ids;
+}
+
 function normalizeOperation(operation: SewingOperation): SewingOperation {
   return {
     ...operation,
+    quantity_per_item: Math.max(1, Number(operation.quantity_per_item ?? 1) || 1),
     duration_seconds: Number(operation.duration_seconds ?? 0) || 0,
+    work_center_ids: normalizeWorkCenterIds(operation.work_center_ids),
   };
 }
 
@@ -51,17 +66,22 @@ async function readError(response: Response): Promise<string> {
 function payloadFromDraft(draft: SewingOperationCreateDraft): {
   name: string;
   cost: string;
+  quantity_per_item: number;
   duration_seconds: number;
+  work_center_ids: number[];
 } | null {
   const cost = parseSewingCostInput(draft.cost);
+  const quantityPerItem = parseQuantityPerItemInput(draft.quantity_per_item);
   const durationSeconds = parseDurationSecondsInput(draft.duration_seconds);
-  if (cost == null || durationSeconds == null) {
+  if (cost == null || quantityPerItem == null || durationSeconds == null) {
     return null;
   }
   return {
     name: draft.name.trim(),
     cost,
+    quantity_per_item: quantityPerItem,
     duration_seconds: durationSeconds,
+    work_center_ids: normalizeWorkCenterIds(draft.work_center_ids),
   };
 }
 
@@ -74,7 +94,10 @@ export async function createSewingOperation(
   }
   const body = payloadFromDraft(draft);
   if (body == null) {
-    return { ok: false, message: "Проверьте стоимость и время выполнения" };
+    return {
+      ok: false,
+      message: "Проверьте стоимость, количество и время выполнения",
+    };
   }
 
   const response = await fetch(`${apiBaseUrl()}/sewing-operations`, {
@@ -103,7 +126,10 @@ export async function updateSewingOperation(
   }
   const body = payloadFromDraft(draft);
   if (body == null) {
-    return { ok: false, message: "Проверьте стоимость и время выполнения" };
+    return {
+      ok: false,
+      message: "Проверьте стоимость, количество и время выполнения",
+    };
   }
 
   const response = await fetch(

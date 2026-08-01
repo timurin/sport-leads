@@ -15,11 +15,20 @@ function apiBaseUrl(): string {
   );
 }
 
+function toNumber(value: string | number): number {
+  return typeof value === "number" ? value : Number(String(value).replace(",", "."));
+}
+
+function roundMoney(value: number): number {
+  return Math.round(value * 100) / 100;
+}
+
 export function formatVatRatePercent(value: string | number): string {
-  const amount =
-    typeof value === "number" ? value : Number(String(value).replace(",", "."));
+  const amount = toNumber(value);
   if (!Number.isFinite(amount)) return "0%";
-  const normalized = Number.isInteger(amount) ? String(amount) : amount.toFixed(2).replace(/\.?0+$/, "");
+  const normalized = Number.isInteger(amount)
+    ? String(amount)
+    : amount.toFixed(2).replace(/\.?0+$/, "");
   return `${normalized}%`;
 }
 
@@ -27,14 +36,78 @@ export function vatRateLabel(rate: Pick<VatRate, "name" | "rate_percent">): stri
   return rate.name || formatVatRatePercent(rate.rate_percent);
 }
 
-/** Tax-inclusive VAT amount extracted from line total. */
-export function calculateInclusiveVatAmount(
-  lineAmount: number,
+/**
+ * НДС сверху (цена без налога).
+ * vat = net × (rate / 100)
+ * gross = net × (1 + rate / 100)
+ */
+export function calculateExclusiveVatAmount(
+  amountWithoutVat: number,
   ratePercent: number,
 ): number {
-  if (!Number.isFinite(lineAmount) || lineAmount <= 0) return 0;
+  if (!Number.isFinite(amountWithoutVat) || amountWithoutVat <= 0) return 0;
   if (!Number.isFinite(ratePercent) || ratePercent <= 0) return 0;
-  return Math.round(((lineAmount * ratePercent) / (100 + ratePercent)) * 100) / 100;
+  return roundMoney((amountWithoutVat * ratePercent) / 100);
+}
+
+export function calculateAmountWithVat(
+  amountWithoutVat: number,
+  ratePercent: number,
+): number {
+  if (!Number.isFinite(amountWithoutVat) || amountWithoutVat <= 0) return 0;
+  if (!Number.isFinite(ratePercent) || ratePercent <= 0) {
+    return roundMoney(amountWithoutVat);
+  }
+  return roundMoney(amountWithoutVat * (1 + ratePercent / 100));
+}
+
+/**
+ * НДС в сумме / цене (выделение).
+ * vat = gross × [rate / (100 + rate)]
+ * net = gross − vat
+ */
+export function calculateInclusiveVatAmount(
+  amountWithVat: number,
+  ratePercent: number,
+): number {
+  if (!Number.isFinite(amountWithVat) || amountWithVat <= 0) return 0;
+  if (!Number.isFinite(ratePercent) || ratePercent <= 0) return 0;
+  return roundMoney((amountWithVat * ratePercent) / (100 + ratePercent));
+}
+
+export function calculateAmountWithoutVat(
+  amountWithVat: number,
+  ratePercent: number,
+): number {
+  if (!Number.isFinite(amountWithVat) || amountWithVat <= 0) return 0;
+  if (!Number.isFinite(ratePercent) || ratePercent <= 0) {
+    return roundMoney(amountWithVat);
+  }
+  return roundMoney(amountWithVat - calculateInclusiveVatAmount(amountWithVat, ratePercent));
+}
+
+/** Line VAT by mode: inclusive (в сумме) or exclusive (сверху). */
+export function calculateLineVatAmount(
+  lineAmount: number,
+  ratePercent: number,
+  priceIncludesVat: boolean,
+): number {
+  if (priceIncludesVat) {
+    return calculateInclusiveVatAmount(lineAmount, ratePercent);
+  }
+  return calculateExclusiveVatAmount(lineAmount, ratePercent);
+}
+
+/** Line total with VAT for document contribution. */
+export function calculateLineGrossAmount(
+  lineAmount: number,
+  ratePercent: number,
+  priceIncludesVat: boolean,
+): number {
+  if (priceIncludesVat) {
+    return roundMoney(lineAmount);
+  }
+  return roundMoney(lineAmount + calculateExclusiveVatAmount(lineAmount, ratePercent));
 }
 
 export async function getVatRates(params?: {

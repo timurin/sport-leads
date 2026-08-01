@@ -20,6 +20,7 @@ import {
   appSections,
   getSectionByPathname,
   isNavigationPathActive,
+  type AppSection,
   type NavigationGroup,
 } from "@/lib/navigation";
 
@@ -41,9 +42,13 @@ isNavigationPathActive(pathname, child.href),
 );
 }
 
-export function TopNavigation() {
+type TopNavigationProps = {
+  sections?: AppSection[];
+};
+
+export function TopNavigation({ sections = appSections }: TopNavigationProps) {
 const pathname = usePathname();
-const section = getSectionByPathname(pathname);
+const section = getSectionByPathname(pathname, sections);
 
 const [openMenuId, setOpenMenuId] =
 useState<string | null>(null);
@@ -57,7 +62,7 @@ const searchInputRef =
   useRef<HTMLInputElement | null>(null);
 
 const searchItems = useMemo(() => {
-  return appSections.flatMap((appSection) => {
+  return sections.flatMap((appSection) => {
     const sectionItem = {
       id: `section-${appSection.id}`,
       title: appSection.title,
@@ -96,7 +101,7 @@ const searchItems = useMemo(() => {
 
     return [sectionItem, ...navigationItems];
   });
-}, []);
+}, [sections]);
 
 const normalizedSearchQuery =
   searchQuery.trim().toLocaleLowerCase("ru");
@@ -530,7 +535,7 @@ return ( <header className="relative z-portal-shell border-b border-portal-borde
                     Разделы
                   </div>
 
-                  {appSections.map((appSection) => {
+                  {sections.map((appSection) => {
                     const sectionActive =
                       appSection.id === section.id;
 

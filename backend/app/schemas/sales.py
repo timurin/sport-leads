@@ -1,9 +1,13 @@
 from datetime import date, datetime
 from decimal import Decimal
+from enum import Enum
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator, model_validator
 
 from app.models.sales import (
+    DesignApprovalStatus,
+    MaterialReserveStatus,
+    OrderPaymentStatus,
     LeadEventType,
     LeadContactChannel,
     LeadCustomerType,
@@ -305,6 +309,10 @@ class SalesOrderRead(SalesSchema):
     client_id: int
     organization_id: int | None
     status: SalesOrderStatus
+    design_approval_status: DesignApprovalStatus = DesignApprovalStatus.NOT_REQUIRED
+    payment_status: OrderPaymentStatus = OrderPaymentStatus.UNPAID
+    paid_amount: Decimal = Decimal("0.00")
+    material_reserve_status: MaterialReserveStatus = MaterialReserveStatus.NOT_REQUIRED
     responsible_id: int | None
     title: str
     description: str | None
@@ -312,6 +320,12 @@ class SalesOrderRead(SalesSchema):
     sport: str | None
     quantity: int | None
     amount: Decimal | None
+    discount_percent: Decimal | None = None
+    discount_amount: Decimal = Decimal("0.00")
+    vat_amount: Decimal = Decimal("0.00")
+    currency_code: str = "RUB"
+    items_subtotal: Decimal | None = None
+    amount_net: Decimal | None = None
     desired_date: date | None
     source: str | None
     created_at: datetime
@@ -320,6 +334,10 @@ class SalesOrderRead(SalesSchema):
     responsible_name: str | None = None
     organization_name: str | None = None
     items: list["SalesOrderItemRead"] = []
+
+
+class SalesOrderDiscountUpdate(BaseModel):
+    discount_percent: Decimal | None = Field(default=None, ge=0, le=100, max_digits=5, decimal_places=2)
 
 
 class SalesOrderItemVariantSnapshotRead(SalesSchema):
@@ -335,6 +353,7 @@ class SalesOrderItemAssemblyOperationSnapshotRead(SalesSchema):
     sequence: int
     operation_name: str
     cost: Decimal
+    quantity_per_item: int = 1
     duration_seconds: int
     sewing_operation_id: int | None = None
 
@@ -351,8 +370,12 @@ class SalesOrderItemRead(SalesSchema):
     assembly_variant_id: int | None = None
     assembly_variant_name: str | None = None
     assembly_variant_total_cost: Decimal | None = None
+    routing_template_id: int | None = None
+    routing_template_name: str | None = None
     vat_rate_id: int | None = None
     vat_rate_percent: Decimal | None = None
+    price_includes_vat: bool = True
+    vat_amount: Decimal = Decimal("0.00")
     position: int
     snapshot_name: str
     size_range: str | None
@@ -365,6 +388,7 @@ class SalesOrderItemRead(SalesSchema):
     discount_percent: Decimal | None
     discount_amount: Decimal
     line_amount: Decimal
+    line_total: Decimal | None = None
     created_at: datetime
     updated_at: datetime
     variant_snapshots: list[SalesOrderItemVariantSnapshotRead] = Field(default_factory=list)
@@ -380,7 +404,9 @@ class SalesOrderItemCreate(BaseModel):
     product_model_article: str | None = Field(default=None, max_length=100)
     product_model_name: str | None = Field(default=None, max_length=255)
     assembly_variant_id: int | None = None
+    routing_template_id: int | None = None
     vat_rate_id: int | None = None
+    price_includes_vat: bool = True
     snapshot_name: str = Field(min_length=1, max_length=255)
     size_range: str | None = Field(default=None, max_length=255)
     personalization: str | None = Field(default=None, max_length=500)
@@ -398,7 +424,9 @@ class SalesOrderItemUpdate(BaseModel):
     product_model_article: str | None = Field(default=None, max_length=100)
     product_model_name: str | None = Field(default=None, max_length=255)
     assembly_variant_id: int | None = None
+    routing_template_id: int | None = None
     vat_rate_id: int | None = None
+    price_includes_vat: bool | None = None
     snapshot_name: str | None = Field(default=None, min_length=1, max_length=255)
     size_range: str | None = Field(default=None, max_length=255)
     personalization: str | None = Field(default=None, max_length=500)
@@ -431,6 +459,86 @@ class SalesOrderStatusUpdate(BaseModel):
     status: SalesOrderStatus
 
 
+class SalesOrderDesignApprovalUpdate(BaseModel):
+    design_approval_status: DesignApprovalStatus
+
+
+class SalesOrderPaymentUpdate(BaseModel):
+    payment_status: OrderPaymentStatus | None = None
+    paid_amount: Decimal | None = Field(default=None, ge=0, max_digits=14, decimal_places=2)
+
+    @model_validator(mode="after")
+    def require_at_least_one(self) -> "SalesOrderPaymentUpdate":
+        if self.payment_status is None and self.paid_amount is None:
+            raise ValueError("Provide payment_status and/or paid_amount")
+        return self
+
+
+class SalesOrderMaterialReserveUpdate(BaseModel):
+    material_reserve_status: MaterialReserveStatus
+
+
+class CommercialDocumentStatus(str, Enum):
+    DRAFT = "draft"
+    ISSUED = "issued"
+    CANCELLED = "cancelled"
+
+
+class SalesCommercialLineRead(SalesSchema):
+    id: int
+    source_order_item_id: int | None = None
+    position: int
+    snapshot_name: str
+    unit: str
+    quantity: Decimal
+    unit_price: Decimal
+    discount_percent: Decimal | None = None
+    discount_amount: Decimal
+    line_amount: Decimal
+    vat_rate_id: int | None = None
+    vat_rate_percent: Decimal | None = None
+    price_includes_vat: bool = True
+    vat_amount: Decimal
+    line_total: Decimal
+
+
+class SalesQuotationRead(SalesSchema):
+    id: int
+    number: str
+    sales_order_id: int
+    status: CommercialDocumentStatus
+    currency_code: str
+    discount_percent: Decimal | None = None
+    discount_amount: Decimal
+    vat_amount: Decimal
+    amount: Decimal
+    amount_net: Decimal
+    created_at: datetime
+    updated_at: datetime
+    items: list[SalesCommercialLineRead] = Field(default_factory=list)
+
+
+class SalesInvoiceRead(SalesSchema):
+    id: int
+    number: str
+    sales_order_id: int
+    quotation_id: int | None = None
+    status: CommercialDocumentStatus
+    currency_code: str
+    discount_percent: Decimal | None = None
+    discount_amount: Decimal
+    vat_amount: Decimal
+    amount: Decimal
+    amount_net: Decimal
+    created_at: datetime
+    updated_at: datetime
+    items: list[SalesCommercialLineRead] = Field(default_factory=list)
+
+
+class SalesInvoiceCreate(BaseModel):
+    quotation_id: int | None = None
+
+
 class LeadConversionRead(BaseModel):
     lead: LeadRead
     order: SalesOrderRead
@@ -443,4 +551,192 @@ class LeadEventRead(SalesSchema):
     event_type: LeadEventType
     actor_id: int | None
     message: str | None
+    created_at: datetime
+
+
+_LEAD_TASK_TYPE_PATTERN = (
+    r"^(call|message|email|send_proposal|clarify_sizes|receive_design|"
+    r"approve_design|check_payment|meeting|other)$"
+)
+_LEAD_TASK_PRIORITY_PATTERN = r"^(low|medium|high|urgent)$"
+
+
+class SalesUserRead(SalesSchema):
+    id: int
+    name: str
+    is_active: bool
+    created_at: datetime
+
+
+class LeadTaskCreate(BaseModel):
+    title: str = Field(min_length=1, max_length=255)
+    task_type: str = Field(default="other", max_length=50, pattern=_LEAD_TASK_TYPE_PATTERN)
+    priority: str = Field(default="medium", max_length=20, pattern=_LEAD_TASK_PRIORITY_PATTERN)
+    description: str | None = Field(default=None, max_length=3000)
+    due_at: datetime
+    assigned_to_id: int | None = None
+    created_by_id: int | None = None
+
+    @field_validator("title")
+    @classmethod
+    def strip_title(cls, value: str) -> str:
+        value = value.strip()
+        if not value:
+            raise ValueError("Task title cannot be blank")
+        return value
+
+    @field_validator("description")
+    @classmethod
+    def strip_description(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        value = value.strip()
+        return value or None
+
+
+class LeadTaskUpdate(BaseModel):
+    title: str | None = Field(default=None, min_length=1, max_length=255)
+    task_type: str | None = Field(default=None, max_length=50, pattern=_LEAD_TASK_TYPE_PATTERN)
+    priority: str | None = Field(default=None, max_length=20, pattern=_LEAD_TASK_PRIORITY_PATTERN)
+    description: str | None = Field(default=None, max_length=3000)
+    due_at: datetime | None = None
+    assigned_to_id: int | None = None
+
+    @field_validator("title")
+    @classmethod
+    def strip_optional_title(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        value = value.strip()
+        if not value:
+            raise ValueError("Task title cannot be blank")
+        return value
+
+    @field_validator("description")
+    @classmethod
+    def strip_optional_description(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        value = value.strip()
+        return value or None
+
+
+class LeadTaskCompleteRequest(BaseModel):
+    result: str | None = Field(default=None, max_length=3000)
+
+    @field_validator("result")
+    @classmethod
+    def strip_result(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        value = value.strip()
+        return value or None
+
+
+class LeadTaskRead(SalesSchema):
+    id: int
+    lead_id: int
+    title: str
+    task_type: str
+    priority: str
+    description: str | None
+    result: str | None
+    status: str
+    due_at: datetime | None
+    assigned_to_id: int | None
+    assigned_to_name: str | None = None
+    created_by_id: int | None
+    created_by_name: str | None = None
+    created_at: datetime
+    completed_at: datetime | None
+
+
+class LeadNoteCreate(BaseModel):
+    body: str = Field(min_length=1, max_length=10000)
+    author_id: int | None = None
+    mentioned_user_ids: list[int] = Field(default_factory=list)
+
+    @field_validator("body")
+    @classmethod
+    def strip_body(cls, value: str) -> str:
+        value = value.strip()
+        if not value:
+            raise ValueError("Note body cannot be blank")
+        return value
+
+
+class LeadNoteUpdate(BaseModel):
+    body: str | None = Field(default=None, min_length=1, max_length=10000)
+    mentioned_user_ids: list[int] | None = None
+
+    @field_validator("body")
+    @classmethod
+    def strip_optional_body(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        value = value.strip()
+        if not value:
+            raise ValueError("Note body cannot be blank")
+        return value
+
+
+class LeadNoteRead(SalesSchema):
+    id: int
+    lead_id: int
+    body: str
+    author_id: int | None
+    author_name: str | None = None
+    is_pinned: bool
+    mentioned_user_ids: list[int] = Field(default_factory=list)
+    created_at: datetime
+    updated_at: datetime
+
+
+_LEAD_MESSAGE_CHANNEL_PATTERN = r"^(phone|email|telegram|whatsapp|vk|website|internal)$"
+_LEAD_MESSAGE_STATUS_PATTERN = r"^(draft|sending|sent|delivered|read|failed)$"
+
+
+class LeadMessageAttachmentPayload(BaseModel):
+    id: str = Field(min_length=1, max_length=100)
+    name: str = Field(min_length=1, max_length=255)
+    type: str | None = Field(default=None, max_length=150)
+    size: int | None = Field(default=None, ge=0)
+
+
+class LeadMessageCreate(BaseModel):
+    channel: str = Field(max_length=30, pattern=_LEAD_MESSAGE_CHANNEL_PATTERN)
+    text: str = Field(default="", max_length=5000)
+    recipient_name: str | None = Field(default=None, max_length=255)
+    author_id: int | None = None
+    attachments: list[LeadMessageAttachmentPayload] = Field(default_factory=list)
+
+    @field_validator("text")
+    @classmethod
+    def strip_text(cls, value: str) -> str:
+        return value.strip()
+
+    @model_validator(mode="after")
+    def require_text_or_attachment(self) -> "LeadMessageCreate":
+        if not self.text and not self.attachments:
+            raise ValueError("Message text or an attachment is required")
+        if self.channel == "phone":
+            raise ValueError("The phone channel does not support text messages")
+        return self
+
+
+class LeadMessageRead(SalesSchema):
+    id: int
+    lead_id: int
+    channel: str
+    direction: str
+    text: str
+    status: str
+    author_id: int | None
+    author_name: str | None = None
+    sender_name: str | None
+    recipient_name: str | None
+    external_id: str | None
+    attachments: list[LeadMessageAttachmentPayload] = Field(default_factory=list)
+    is_mock: bool
+    sent_at: datetime
     created_at: datetime

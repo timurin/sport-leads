@@ -34,14 +34,35 @@ def get_media(nomenclature_id: int, db: Session = Depends(get_db)):
 
 @router.post("/{nomenclature_id}/media", response_model=NomenclatureMediaRead, status_code=201)
 def post_media(nomenclature_id: int, payload: NomenclatureMediaCreate, db: Session = Depends(get_db)):
-    try: return read_item(create_media(db, nomenclature_id, payload))
-    except MediaError as error: raise HTTPException(status_code=422 if "Invalid" in str(error) or "size" in str(error) else 404, detail=str(error)) from error
+    try:
+        return read_item(create_media(db, nomenclature_id, payload))
+    except MediaError as error:
+        detail = str(error).lower()
+        status = (
+            422
+            if any(
+                token in detail
+                for token in (
+                    "invalid",
+                    "size",
+                    "unsupported",
+                    "primary",
+                    "filename",
+                )
+            )
+            else 404
+        )
+        raise HTTPException(status_code=status, detail=str(error)) from error
 
 
 @router.patch("/{nomenclature_id}/media/{media_id}", response_model=NomenclatureMediaRead)
 def patch_media(nomenclature_id: int, media_id: int, payload: NomenclatureMediaUpdate, db: Session = Depends(get_db)):
-    try: return read_item(update_media(db, nomenclature_id, media_id, payload))
-    except MediaError as error: raise HTTPException(status_code=404, detail=str(error)) from error
+    try:
+        return read_item(update_media(db, nomenclature_id, media_id, payload))
+    except MediaError as error:
+        detail = str(error).lower()
+        status = 422 if "primary" in detail else 404
+        raise HTTPException(status_code=status, detail=str(error)) from error
 
 
 @router.delete("/{nomenclature_id}/media/{media_id}", status_code=204)

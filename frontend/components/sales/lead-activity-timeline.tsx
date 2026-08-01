@@ -15,7 +15,7 @@ import {
   RefreshCw,
   UserRound,
 } from "lucide-react";
-import { memo, useMemo, useRef, useState } from "react";
+import { memo, useMemo, useRef, useState, type ReactNode } from "react";
 
 import { LeadMentionPicker, LeadNoteDeleteDialog, LeadNoteEditDialog } from "@/components/sales/lead-note-dialog";
 import { Button } from "@/components/ui/button";
@@ -92,10 +92,104 @@ function MentionText({ text, mentionedUsers }: { text: string; mentionedUsers: U
     : <span key={index}>{part}</span>)}</>;
 }
 
+const NoteCard = memo(function NoteCard({
+  note,
+  currentUserId,
+  managers,
+  allowAllNoteActions = false,
+  onEdit,
+  onDelete,
+  onTogglePin,
+}: {
+  note: LeadActivity;
+  currentUserId: string;
+  managers: UserSummary[];
+  allowAllNoteActions?: boolean;
+  onEdit: (note: LeadActivity, trigger: HTMLElement) => void;
+  onDelete: (note: LeadActivity, trigger: HTMLElement) => void;
+  onTogglePin: (noteId: string) => void;
+}) {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
+  const permissions = getNotePermissions(note, currentUserId, { persistAll: allowAllNoteActions });
+  const mentionedUsers = managers.filter((manager) => note.mentionedUserIds?.includes(manager.id));
+  const authorName = note.author?.name ?? "Без автора";
+  const initials = note.author?.initials ?? authorName.slice(0, 2).toUpperCase();
+
+  return (
+    <article className="rounded-portal-md border border-portal-border bg-portal-surface p-3" aria-label={`Заметка: ${authorName}`}>
+      <div className="flex items-start gap-2.5">
+        <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full bg-portal-primary-soft text-xs font-semibold text-portal-primary" aria-hidden="true">
+          {initials}
+        </span>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0">
+              <p className="truncate text-sm font-semibold text-portal-text">
+                {authorName}
+                {note.isPinned ? (
+                  <span className="ml-2 inline-flex items-center gap-1 rounded-full bg-amber-50 px-1.5 py-0.5 text-[11px] font-medium text-amber-800">
+                    <Pin size={10} /> Закреплено
+                  </span>
+                ) : null}
+                {note.updatedAt ? (
+                  <span className="ml-2 text-[11px] font-medium text-portal-muted">изменено</span>
+                ) : null}
+              </p>
+              <time dateTime={note.occurredAt} className="mt-0.5 block text-xs text-portal-muted">
+                {formatActivityDate(note.occurredAt)}
+              </time>
+            </div>
+            {permissions.canPin ? (
+              <div className="relative shrink-0">
+                <button
+                  ref={menuButtonRef}
+                  type="button"
+                  aria-label="Действия с заметкой"
+                  aria-haspopup="menu"
+                  aria-expanded={menuOpen}
+                  onClick={() => setMenuOpen((current) => !current)}
+                  className="rounded-portal-sm p-1.5 text-portal-muted hover:bg-portal-surface-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-portal-focus-ring"
+                >
+                  <Ellipsis size={16} />
+                </button>
+                {menuOpen ? (
+                  <div className="absolute right-0 z-30 mt-1 w-40 rounded-xl border border-slate-200 bg-white p-1.5 text-left shadow-xl" role="menu">
+                    <button type="button" role="menuitem" onClick={() => { onTogglePin(note.id); setMenuOpen(false); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-700 hover:bg-slate-50">
+                      {note.isPinned ? <PinOff size={14} /> : <Pin size={14} />}
+                      {note.isPinned ? "Открепить" : "Закрепить"}
+                    </button>
+                    {permissions.canEdit ? (
+                      <button type="button" role="menuitem" onClick={(event) => { onEdit(note, menuButtonRef.current ?? event.currentTarget); setMenuOpen(false); }} className="w-full rounded-lg px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-50">
+                        Редактировать
+                      </button>
+                    ) : null}
+                    {permissions.canDelete ? (
+                      <button type="button" role="menuitem" onClick={(event) => { onDelete(note, menuButtonRef.current ?? event.currentTarget); setMenuOpen(false); }} className="w-full rounded-lg px-3 py-2 text-left text-sm text-red-700 hover:bg-red-50">
+                        Удалить
+                      </button>
+                    ) : null}
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
+          </div>
+          {note.description ? (
+            <p className="mt-2 whitespace-pre-wrap text-sm leading-5 text-portal-text">
+              <MentionText text={note.description} mentionedUsers={mentionedUsers} />
+            </p>
+          ) : null}
+        </div>
+      </div>
+    </article>
+  );
+});
+
 const ActivityItem = memo(function ActivityItem({
   activity,
   currentUserId,
   managers,
+  allowAllNoteActions = false,
   onEdit,
   onDelete,
   onTogglePin,
@@ -103,6 +197,7 @@ const ActivityItem = memo(function ActivityItem({
   activity: LeadActivity;
   currentUserId: string;
   managers: UserSummary[];
+  allowAllNoteActions?: boolean;
   onEdit: (note: LeadActivity, trigger: HTMLElement) => void;
   onDelete: (note: LeadActivity, trigger: HTMLElement) => void;
   onTogglePin: (noteId: string) => void;
@@ -110,7 +205,7 @@ const ActivityItem = memo(function ActivityItem({
   const [menuOpen, setMenuOpen] = useState(false);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
   const { Icon, label, classes } = getTypePresentation(activity.type);
-  const permissions = getNotePermissions(activity, currentUserId);
+  const permissions = getNotePermissions(activity, currentUserId, { persistAll: allowAllNoteActions });
   const mentionedUsers = managers.filter((manager) => activity.mentionedUserIds?.includes(manager.id));
   return (
     <article className="group relative flex min-w-0 gap-3 pb-5 last:pb-0" aria-label={`${label}: ${activity.title}`}>
@@ -198,6 +293,10 @@ export function LeadActivityTimeline({
   embedded = false,
   compact = false,
   mode = "history",
+  title,
+  actions,
+  collapsed = false,
+  allowAllNoteActions = false,
 }: {
   activities: LeadActivity[];
   currentUser: UserSummary;
@@ -209,6 +308,10 @@ export function LeadActivityTimeline({
   embedded?: boolean;
   compact?: boolean;
   mode?: "history" | "notes";
+  title?: ReactNode;
+  actions?: ReactNode;
+  collapsed?: boolean;
+  allowAllNoteActions?: boolean;
 }) {
   const [activeFilter, setActiveFilter] = useState<LeadActivityFilter>("all");
   const [comment, setComment] = useState("");
@@ -273,8 +376,15 @@ export function LeadActivityTimeline({
     <EntityPanel
       embedded={embedded}
       compact={compact}
-      title={compact ? (mode === "notes" ? "F) Комментарии менеджера" : "D) История активности") : (mode === "notes" ? "Заметки" : "История лида")}
-      description={compact ? undefined : (mode === "notes" ? "Внутренние комментарии, закрепления и упоминания команды." : "События и коммуникации в единой хронологии.")}
+      collapsed={collapsed}
+      actions={actions}
+      title={
+        title
+        ?? (compact
+          ? (mode === "notes" ? "Заметки" : "История активности")
+          : (mode === "notes" ? "Заметки" : "История лида"))
+      }
+      description={compact ? undefined : (mode === "notes" ? "Внутренние заметки команды по лиду." : "События и коммуникации в единой хронологии.")}
       filter={mode === "history" ? (
         <CompactTabs
           label="Фильтр истории лида"
@@ -289,58 +399,111 @@ export function LeadActivityTimeline({
         />
       ) : undefined}
     >
-      {mode === "notes" ? <details open={!compact} className="border-t border-slate-200 pt-3">
-        <summary className={`${compact ? "cursor-pointer text-xs font-semibold text-blue-700" : "sr-only"}`}>Добавить комментарий</summary>
-      <form onSubmit={submitComment} className={`${compact ? "mt-3" : "mt-4"} bg-slate-50 p-3.5`}>
-        <label htmlFor="lead-internal-comment" className="text-sm font-semibold text-slate-800">Добавить внутренний комментарий</label>
-        <textarea
-          ref={commentFieldRef}
-          id="lead-internal-comment"
-          rows={3}
-          maxLength={3000}
-          value={comment}
-          onChange={(event) => { setComment(event.target.value); setError(""); }}
-          aria-invalid={Boolean(error)}
-          aria-describedby={error ? "lead-internal-comment-error" : "lead-internal-comment-count"}
-          className="mt-2 w-full resize-y rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-          placeholder="Заметка видна только сотрудникам"
-        />
-        <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-          <div>
-            {error ? <p id="lead-internal-comment-error" className="text-sm text-red-700" role="alert">{error}</p> : null}
-            <p id="lead-internal-comment-count" className="text-xs text-slate-500">{comment.length} / 3000</p>
+      {mode === "notes" ? (
+        <form onSubmit={submitComment} className="rounded-portal-md border border-portal-border bg-portal-surface-secondary/60 p-3">
+          <label htmlFor="lead-internal-comment" className="sr-only">Текст заметки</label>
+          <textarea
+            ref={commentFieldRef}
+            id="lead-internal-comment"
+            rows={3}
+            maxLength={3000}
+            value={comment}
+            onChange={(event) => { setComment(event.target.value); setError(""); }}
+            aria-invalid={Boolean(error)}
+            aria-describedby={error ? "lead-internal-comment-error" : "lead-internal-comment-count"}
+            className="w-full resize-y rounded-portal-md border border-portal-border bg-portal-surface px-3 py-2 text-sm text-portal-text outline-none transition focus:border-portal-primary focus:ring-2 focus:ring-portal-focus-ring"
+            placeholder="Напишите заметку для команды…"
+          />
+          <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div className="min-h-[1.25rem]">
+              {error ? <p id="lead-internal-comment-error" className="text-xs text-red-700" role="alert">{error}</p> : (
+                <p id="lead-internal-comment-count" className="text-xs text-portal-muted">{comment.length} / 3000</p>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              <LeadMentionPicker
+                compact
+                text={comment}
+                selectedIds={selectedMentionIds}
+                managers={managers}
+                onChange={(text, ids) => { setComment(text); setSelectedMentionIds(ids); }}
+              />
+              <Button type="submit" variant="primary" size="compact" className="flex-1 sm:flex-none">
+                Добавить
+              </Button>
+            </div>
           </div>
-          <div className="flex flex-col gap-2 sm:flex-row">
-            <LeadMentionPicker text={comment} selectedIds={selectedMentionIds} managers={managers} onChange={(text, ids) => { setComment(text); setSelectedMentionIds(ids); }} />
-            <Button type="submit" variant="primary" className="w-full sm:w-auto">Добавить заметку</Button>
-          </div>
-        </div>
-      </form></details> : null}
+        </form>
+      ) : null}
 
       {mode === "notes" && pinnedNotes.length ? (
-        <section className="mt-4 border-y border-amber-200 bg-amber-50/50 p-3.5" aria-labelledby="pinned-lead-notes-title">
-          <h3 id="pinned-lead-notes-title" className="flex items-center gap-2 text-sm font-semibold text-slate-900"><Pin size={16} className="text-amber-700" /> Закреплённые заметки</h3>
-          <div className="mt-3 grid gap-3">
-            {pinnedNotes.map((note) => {
-              const mentionedUsers = managers.filter((manager) => note.mentionedUserIds?.includes(manager.id));
-              return (
-                <article key={note.id} className="min-w-0 border-l-2 border-amber-300 bg-white/70 p-3">
-                  <div className="flex items-start justify-between gap-3">
-                    <p className="text-xs font-medium text-slate-500">{note.author?.name ?? "Автор не указан"} · {formatActivityDate(note.occurredAt)}</p>
-                    <button type="button" onClick={() => onTogglePin(note.id)} aria-label="Открепить заметку" className="shrink-0 rounded-lg p-1.5 text-amber-700 hover:bg-amber-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500"><PinOff size={15} /></button>
-                  </div>
-                  <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-slate-700"><MentionText text={note.description ?? ""} mentionedUsers={mentionedUsers} /></p>
-                  {mentionedUsers.length ? <p className="mt-2 text-xs text-slate-500">Упомянуты: {mentionedUsers.map((user) => user.name).join(", ")}</p> : null}
-                </article>
-              );
-            })}
+        <section className="mt-3" aria-labelledby="pinned-lead-notes-title">
+          <h3 id="pinned-lead-notes-title" className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-amber-800">
+            <Pin size={12} /> Закреплённые
+          </h3>
+          <div className="grid gap-2">
+            {pinnedNotes.map((note) => (
+              <NoteCard
+                key={note.id}
+                note={note}
+                currentUserId={currentUser.id}
+                managers={managers}
+                allowAllNoteActions={allowAllNoteActions}
+                onEdit={(item, trigger) => openDialog({ kind: "edit", note: item }, trigger)}
+                onDelete={(item, trigger) => openDialog({ kind: "delete", note: item }, trigger)}
+                onTogglePin={onTogglePin}
+              />
+            ))}
           </div>
         </section>
       ) : null}
 
+      {mode === "notes" ? (
+        <div className="mt-3 grid gap-2" role="list" aria-label="Список заметок">
+          {filteredActivities.length ? primaryActivities.map((activity) => (
+            <NoteCard
+              key={activity.id}
+              note={activity}
+              currentUserId={currentUser.id}
+              managers={managers}
+              allowAllNoteActions={allowAllNoteActions}
+              onEdit={(item, trigger) => openDialog({ kind: "edit", note: item }, trigger)}
+              onDelete={(item, trigger) => openDialog({ kind: "delete", note: item }, trigger)}
+              onTogglePin={onTogglePin}
+            />
+          )) : pinnedNotes.length ? null : (
+            <EmptyState
+              title="Заметок пока нет"
+              description="Добавьте внутреннюю заметку для команды."
+              size="compact"
+            />
+          )}
+          {remainingActivities.length ? (
+            <details className="pt-1">
+              <summary className="cursor-pointer text-xs font-semibold text-portal-primary">
+                Показать все ({filteredActivities.length})
+              </summary>
+              <div className="mt-2 grid gap-2">
+                {remainingActivities.map((activity) => (
+                  <NoteCard
+                    key={activity.id}
+                    note={activity}
+                    currentUserId={currentUser.id}
+                    managers={managers}
+                    allowAllNoteActions={allowAllNoteActions}
+                    onEdit={(item, trigger) => openDialog({ kind: "edit", note: item }, trigger)}
+                    onDelete={(item, trigger) => openDialog({ kind: "delete", note: item }, trigger)}
+                    onTogglePin={onTogglePin}
+                  />
+                ))}
+              </div>
+            </details>
+          ) : null}
+        </div>
+      ) : (
       <ActivityTimeline
         className="mt-4"
-        label={mode === "notes" ? "Список заметок" : "События лида"}
+        label="События лида"
       >
         {filteredActivities.length ? primaryActivities.map((activity) => (
           <ActivityItem
@@ -348,20 +511,21 @@ export function LeadActivityTimeline({
             activity={activity}
             currentUserId={currentUser.id}
             managers={managers}
+            allowAllNoteActions={allowAllNoteActions}
             onEdit={(note, trigger) => openDialog({ kind: "edit", note }, trigger)}
             onDelete={(note, trigger) => openDialog({ kind: "delete", note }, trigger)}
             onTogglePin={onTogglePin}
           />
-        )) : mode === "notes" && pinnedNotes.length ? null : (
+        )) : (
           <EmptyState
-            title={mode === "notes" ? "Заметок пока нет" : "История пока пуста"}
-            description={mode === "notes" ? "Добавьте внутреннюю заметку для команды." : "События и коммуникации появятся здесь."}
+            title="История пока пуста"
+            description="События и коммуникации появятся здесь."
             size="compact"
           />
         )}
         {remainingActivities.length ? (
           <details className="mt-3 border-t border-slate-200 pt-3">
-            <summary className="cursor-pointer text-xs font-semibold text-blue-700">{mode === "notes" ? `Показать все комментарии (${filteredActivities.length})` : `Показать всю историю (${filteredActivities.length})`}</summary>
+            <summary className="cursor-pointer text-xs font-semibold text-blue-700">{`Показать всю историю (${filteredActivities.length})`}</summary>
             <div className="mt-4">
               {remainingActivities.map((activity) => (
                 <ActivityItem
@@ -369,6 +533,7 @@ export function LeadActivityTimeline({
                   activity={activity}
                   currentUserId={currentUser.id}
                   managers={managers}
+                  allowAllNoteActions={allowAllNoteActions}
                   onEdit={(note, trigger) => openDialog({ kind: "edit", note }, trigger)}
                   onDelete={(note, trigger) => openDialog({ kind: "delete", note }, trigger)}
                   onTogglePin={onTogglePin}
@@ -378,6 +543,7 @@ export function LeadActivityTimeline({
           </details>
         ) : null}
       </ActivityTimeline>
+      )}
 
       {dialog?.kind === "edit" ? (
         <LeadNoteEditDialog

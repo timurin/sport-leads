@@ -65,8 +65,15 @@ export function isInternalNote(activity: LeadActivity) {
   return activity.type === "comment_added";
 }
 
-export function getNotePermissions(activity: LeadActivity, currentUserId: string) {
+export function getNotePermissions(
+  activity: LeadActivity,
+  currentUserId: string,
+  options: { persistAll?: boolean } = {},
+) {
   const isNote = isInternalNote(activity);
+  if (options.persistAll && isNote) {
+    return { canEdit: true, canDelete: true, canPin: true };
+  }
   const isOwner = isNote && activity.author?.id === currentUserId;
   return {
     canEdit: isOwner,

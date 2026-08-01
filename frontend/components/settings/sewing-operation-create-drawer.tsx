@@ -6,6 +6,7 @@ import {
   createSewingOperation,
   type SewingOperationActionResult,
 } from "@/app/(workspace)/settings/catalogs/sewing_operations/sewing-operation-actions";
+import { SewingOperationEquipmentPicker } from "@/components/settings/sewing-operation-equipment-picker";
 import { Button } from "@/components/ui/button";
 import { CreateDrawer } from "@/components/ui/create-drawer";
 import { Field, Input } from "@/components/ui/form-controls";
@@ -15,24 +16,29 @@ import {
   type SewingOperation,
   type SewingOperationCreateDraft,
 } from "@/lib/sewing-operations";
+import type { WorkCenter } from "@/lib/shop-routings";
 
 const emptyDraft: SewingOperationCreateDraft = {
   name: "",
   cost: "",
+  quantity_per_item: "1",
   duration_seconds: "0",
+  work_center_ids: [],
 };
 
 type SewingOperationCreateDrawerProps = {
   open: boolean;
   onClose: () => void;
   onCreated?: (operation: SewingOperation) => void;
+  sewingWorkCenters: WorkCenter[];
 };
 
-/** CreateDrawer host for sewing operations (`6.3.5`, ADR-013). */
+/** CreateDrawer host for sewing operations (`6.3.5` / `6.3.10.4`, ADR-013). */
 export function SewingOperationCreateDrawer({
   open,
   onClose,
   onCreated,
+  sewingWorkCenters,
 }: SewingOperationCreateDrawerProps) {
   const { push: pushToast } = useToast();
   const [draft, setDraft] = useState<SewingOperationCreateDraft>(emptyDraft);
@@ -68,7 +74,9 @@ export function SewingOperationCreateDrawer({
       const result: SewingOperationActionResult = await createSewingOperation({
         name: draft.name,
         cost: draft.cost,
+        quantity_per_item: draft.quantity_per_item,
         duration_seconds: draft.duration_seconds,
+        work_center_ids: draft.work_center_ids,
       });
       if (result.ok) {
         setDraft(emptyDraft);
@@ -89,7 +97,7 @@ export function SewingOperationCreateDrawer({
     <CreateDrawer
       open={open}
       title="Новая операция пошива"
-      description="Плоский справочник: наименование, стоимость и время выполнения."
+      description="Плоский справочник: наименование, стоимость, количество, время и оборудование цеха Пошив."
       onClose={handleClose}
       variant="overlay"
     >
@@ -120,6 +128,18 @@ export function SewingOperationCreateDrawer({
                   placeholder="0,00"
                 />
               </Field>
+              <Field label="Количество операций на 1 изделие" required>
+                <Input
+                  required
+                  inputMode="numeric"
+                  value={draft.quantity_per_item}
+                  onChange={(event) =>
+                    update("quantity_per_item", event.target.value)
+                  }
+                  disabled={saving}
+                  placeholder="1"
+                />
+              </Field>
               <Field label="Время выполнения операции, сек" required>
                 <Input
                   required
@@ -130,6 +150,15 @@ export function SewingOperationCreateDrawer({
                   }
                   disabled={saving}
                   placeholder="0"
+                />
+              </Field>
+              <Field label="Оборудование (цех Пошив)">
+                <SewingOperationEquipmentPicker
+                  idPrefix="create-sewing-wc"
+                  workCenters={sewingWorkCenters}
+                  selectedIds={draft.work_center_ids}
+                  disabled={saving}
+                  onChange={(ids) => update("work_center_ids", ids)}
                 />
               </Field>
             </div>

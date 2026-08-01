@@ -16,6 +16,15 @@ from app.schemas.sales import (
     LeadEventRead,
     LeadRead,
     LeadRejectRequest,
+    LeadTaskCompleteRequest,
+    LeadTaskCreate,
+    LeadTaskRead,
+    LeadTaskUpdate,
+    LeadNoteCreate,
+    LeadNoteRead,
+    LeadNoteUpdate,
+    LeadMessageCreate,
+    LeadMessageRead,
     LeadUpdate,
 )
 from app.services.lead_creation import LeadResponsibleNotFoundError, create_lead
@@ -36,18 +45,68 @@ from app.services.lead_conversion import (
     reject_lead,
 )
 from app.services.lead_duplicates import LeadDuplicateCriteriaError, find_duplicate_leads
+from app.services.lead_messages import (
+    LeadMessageAuthorNotFoundError,
+    LeadNotFoundError as MessageLeadNotFoundError,
+    create_lead_message,
+    list_lead_messages,
+    to_lead_message_read,
+)
+from app.services.lead_notes import (
+    LeadNotFoundError as NoteLeadNotFoundError,
+    LeadNoteAuthorNotFoundError,
+    LeadNoteNotFoundError,
+    create_lead_note,
+    delete_lead_note,
+    list_lead_notes,
+    to_lead_note_read,
+    toggle_lead_note_pin,
+    update_lead_note,
+)
 from app.services.lead_stages import (
     LeadStageConflictError,
     LeadStageNotFoundError,
     change_lead_stage,
 )
-
+from app.services.lead_tasks import (
+    LeadNotFoundError as TaskLeadNotFoundError,
+    LeadTaskAssigneeNotFoundError,
+    LeadTaskNotFoundError,
+    LeadTaskStateError,
+    complete_lead_task,
+    create_lead_task,
+    delete_lead_task,
+    list_lead_tasks,
+    reopen_lead_task,
+    to_lead_task_read,
+    update_lead_task,
+)
 
 router = APIRouter(prefix="/leads", tags=["Sales leads"])
 
 
 def _contact_http_error(error: Exception) -> HTTPException:
     if isinstance(error, (ContactLeadNotFoundError, LeadContactNotFoundError)):
+        return HTTPException(status_code=404, detail=str(error))
+    return HTTPException(status_code=409, detail=str(error))
+
+
+def _task_http_error(error: Exception) -> HTTPException:
+    if isinstance(error, (TaskLeadNotFoundError, LeadTaskNotFoundError, LeadTaskAssigneeNotFoundError)):
+        return HTTPException(status_code=404, detail=str(error))
+    if isinstance(error, LeadTaskStateError):
+        return HTTPException(status_code=409, detail=str(error))
+    return HTTPException(status_code=409, detail=str(error))
+
+
+def _note_http_error(error: Exception) -> HTTPException:
+    if isinstance(error, (NoteLeadNotFoundError, LeadNoteNotFoundError, LeadNoteAuthorNotFoundError)):
+        return HTTPException(status_code=404, detail=str(error))
+    return HTTPException(status_code=409, detail=str(error))
+
+
+def _message_http_error(error: Exception) -> HTTPException:
+    if isinstance(error, (MessageLeadNotFoundError, LeadMessageAuthorNotFoundError)):
         return HTTPException(status_code=404, detail=str(error))
     return HTTPException(status_code=409, detail=str(error))
 
@@ -278,3 +337,210 @@ def get_lead_history(lead_id: int, db: Session = Depends(get_db)) -> list[LeadEv
             .order_by(LeadEvent.created_at, LeadEvent.id)
         ).all()
     )
+
+
+@router.get("/{lead_id}/tasks", response_model=list[LeadTaskRead])
+def list_tasks_endpoint(lead_id: int, db: Session = Depends(get_db)) -> list[LeadTaskRead]:
+    try:
+        tasks = list_lead_tasks(db, lead_id)
+    except TaskLeadNotFoundError as error:
+        raise _task_http_error(error) from error
+    return [to_lead_task_read(db, task) for task in tasks]
+
+
+@router.post("/{lead_id}/tasks", response_model=LeadTaskRead, status_code=status.HTTP_201_CREATED)
+def create_task_endpoint(
+    lead_id: int,
+    payload: LeadTaskCreate,
+    db: Session = Depends(get_db),
+) -> LeadTaskRead:
+    try:
+        task = create_lead_task(db, lead_id, payload)
+        db.commit()
+    except (TaskLeadNotFoundError, LeadTaskAssigneeNotFoundError) as error:
+        db.rollback()
+        raise _task_http_error(error) from error
+    except IntegrityError as error:
+        db.rollback()
+        raise HTTPException(status_code=409, detail="Lead task could not be created") from error
+    db.refresh(task)
+    return to_lead_task_read(db, task)
+
+
+@router.patch("/{lead_id}/tasks/{task_id}", response_model=LeadTaskRead)
+def update_task_endpoint(
+    lead_id: int,
+    task_id: int,
+    payload: LeadTaskUpdate,
+    db: Session = Depends(get_db),
+) -> LeadTaskRead:
+    try:
+        task = update_lead_task(db, lead_id, task_id, payload)
+        db.commit()
+    except (TaskLeadNotFoundError, LeadTaskNotFoundError, LeadTaskAssigneeNotFoundError) as error:
+        db.rollback()
+        raise _task_http_error(error) from error
+    db.refresh(task)
+    return to_lead_task_read(db, task)
+
+
+@router.post("/{lead_id}/tasks/{task_id}/complete", response_model=LeadTaskRead)
+def complete_task_endpoint(
+    lead_id: int,
+    task_id: int,
+    payload: LeadTaskCompleteRequest,
+    db: Session = Depends(get_db),
+) -> LeadTaskRead:
+    try:
+        task = complete_lead_task(db, lead_id, task_id, payload)
+        db.commit()
+    except (TaskLeadNotFoundError, LeadTaskNotFoundError, LeadTaskStateError) as error:
+        db.rollback()
+        raise _task_http_error(error) from error
+    db.refresh(task)
+    return to_lead_task_read(db, task)
+
+
+@router.post("/{lead_id}/tasks/{task_id}/reopen", response_model=LeadTaskRead)
+def reopen_task_endpoint(
+    lead_id: int,
+    task_id: int,
+    db: Session = Depends(get_db),
+) -> LeadTaskRead:
+    try:
+        task = reopen_lead_task(db, lead_id, task_id)
+        db.commit()
+    except (TaskLeadNotFoundError, LeadTaskNotFoundError, LeadTaskStateError) as error:
+        db.rollback()
+        raise _task_http_error(error) from error
+    db.refresh(task)
+    return to_lead_task_read(db, task)
+
+
+@router.delete(
+    "/{lead_id}/tasks/{task_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+def delete_task_endpoint(
+    lead_id: int,
+    task_id: int,
+    db: Session = Depends(get_db),
+) -> Response:
+    try:
+        delete_lead_task(db, lead_id, task_id)
+        db.commit()
+    except (TaskLeadNotFoundError, LeadTaskNotFoundError) as error:
+        db.rollback()
+        raise _task_http_error(error) from error
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@router.get("/{lead_id}/notes", response_model=list[LeadNoteRead])
+def list_notes_endpoint(lead_id: int, db: Session = Depends(get_db)) -> list[LeadNoteRead]:
+    try:
+        notes = list_lead_notes(db, lead_id)
+    except NoteLeadNotFoundError as error:
+        raise _note_http_error(error) from error
+    return [to_lead_note_read(db, note) for note in notes]
+
+
+@router.post("/{lead_id}/notes", response_model=LeadNoteRead, status_code=status.HTTP_201_CREATED)
+def create_note_endpoint(
+    lead_id: int,
+    payload: LeadNoteCreate,
+    db: Session = Depends(get_db),
+) -> LeadNoteRead:
+    try:
+        note = create_lead_note(db, lead_id, payload)
+        db.commit()
+    except (NoteLeadNotFoundError, LeadNoteAuthorNotFoundError) as error:
+        db.rollback()
+        raise _note_http_error(error) from error
+    except IntegrityError as error:
+        db.rollback()
+        raise HTTPException(status_code=409, detail="Lead note could not be created") from error
+    db.refresh(note)
+    return to_lead_note_read(db, note)
+
+
+@router.patch("/{lead_id}/notes/{note_id}", response_model=LeadNoteRead)
+def update_note_endpoint(
+    lead_id: int,
+    note_id: int,
+    payload: LeadNoteUpdate,
+    db: Session = Depends(get_db),
+) -> LeadNoteRead:
+    try:
+        note = update_lead_note(db, lead_id, note_id, payload)
+        db.commit()
+    except (NoteLeadNotFoundError, LeadNoteNotFoundError, LeadNoteAuthorNotFoundError) as error:
+        db.rollback()
+        raise _note_http_error(error) from error
+    db.refresh(note)
+    return to_lead_note_read(db, note)
+
+
+@router.post("/{lead_id}/notes/{note_id}/toggle-pin", response_model=LeadNoteRead)
+def toggle_note_pin_endpoint(
+    lead_id: int,
+    note_id: int,
+    db: Session = Depends(get_db),
+) -> LeadNoteRead:
+    try:
+        note = toggle_lead_note_pin(db, lead_id, note_id)
+        db.commit()
+    except (NoteLeadNotFoundError, LeadNoteNotFoundError) as error:
+        db.rollback()
+        raise _note_http_error(error) from error
+    db.refresh(note)
+    return to_lead_note_read(db, note)
+
+
+@router.delete(
+    "/{lead_id}/notes/{note_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+def delete_note_endpoint(
+    lead_id: int,
+    note_id: int,
+    db: Session = Depends(get_db),
+) -> Response:
+    try:
+        delete_lead_note(db, lead_id, note_id)
+        db.commit()
+    except (NoteLeadNotFoundError, LeadNoteNotFoundError) as error:
+        db.rollback()
+        raise _note_http_error(error) from error
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@router.get("/{lead_id}/messages", response_model=list[LeadMessageRead])
+def list_messages_endpoint(lead_id: int, db: Session = Depends(get_db)) -> list[LeadMessageRead]:
+    try:
+        messages = list_lead_messages(db, lead_id)
+    except MessageLeadNotFoundError as error:
+        raise _message_http_error(error) from error
+    return [to_lead_message_read(db, message) for message in messages]
+
+
+@router.post(
+    "/{lead_id}/messages",
+    response_model=LeadMessageRead,
+    status_code=status.HTTP_201_CREATED,
+)
+def create_message_endpoint(
+    lead_id: int,
+    payload: LeadMessageCreate,
+    db: Session = Depends(get_db),
+) -> LeadMessageRead:
+    try:
+        message = create_lead_message(db, lead_id, payload)
+        db.commit()
+    except (MessageLeadNotFoundError, LeadMessageAuthorNotFoundError) as error:
+        db.rollback()
+        raise _message_http_error(error) from error
+    except IntegrityError as error:
+        db.rollback()
+        raise HTTPException(status_code=409, detail="Lead message could not be created") from error
+    db.refresh(message)
+    return to_lead_message_read(db, message)

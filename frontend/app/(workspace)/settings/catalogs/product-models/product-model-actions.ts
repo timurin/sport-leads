@@ -426,3 +426,217 @@ export async function deleteAssemblyOperationLine(
   revalidateModel(modelId);
   return { ok: true };
 }
+
+export type RoutingActionResult =
+  | { ok: true }
+  | { ok: false; message: string };
+
+export async function createProductModelRouting(
+  modelId: number,
+  shopRoutingTemplateId: number,
+  norms: Array<{
+    production_stage_id: number | null;
+    tech_operation_id: number | null;
+    norm_qty_per_item: string;
+    unit: string;
+  }> = [],
+): Promise<RoutingActionResult> {
+  const response = await fetch(
+    `${apiBaseUrl()}/product-models/${modelId}/routings`,
+    {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        shop_routing_template_id: shopRoutingTemplateId,
+        norms,
+      }),
+      cache: "no-store",
+    },
+  );
+  if (!response.ok) {
+    return { ok: false, message: await readError(response) };
+  }
+  revalidateModel(modelId);
+  return { ok: true };
+}
+
+export async function updateProductModelRouting(
+  modelId: number,
+  linkId: number,
+  payload: { is_active?: boolean; sort_order?: number },
+): Promise<RoutingActionResult> {
+  const response = await fetch(
+    `${apiBaseUrl()}/product-models/${modelId}/routings/${linkId}`,
+    {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(payload),
+      cache: "no-store",
+    },
+  );
+  if (!response.ok) {
+    return { ok: false, message: await readError(response) };
+  }
+  revalidateModel(modelId);
+  return { ok: true };
+}
+
+export async function deleteProductModelRouting(
+  modelId: number,
+  linkId: number,
+): Promise<RoutingActionResult> {
+  const response = await fetch(
+    `${apiBaseUrl()}/product-models/${modelId}/routings/${linkId}`,
+    { method: "DELETE", cache: "no-store" },
+  );
+  if (!response.ok && response.status !== 204) {
+    return { ok: false, message: await readError(response) };
+  }
+  revalidateModel(modelId);
+  return { ok: true };
+}
+
+export async function reorderProductModelRoutings(
+  modelId: number,
+  routingLinkIds: number[],
+): Promise<RoutingActionResult> {
+  const response = await fetch(
+    `${apiBaseUrl()}/product-models/${modelId}/routings/reorder`,
+    {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ routing_link_ids: routingLinkIds }),
+      cache: "no-store",
+    },
+  );
+  if (!response.ok) {
+    return { ok: false, message: await readError(response) };
+  }
+  revalidateModel(modelId);
+  return { ok: true };
+}
+
+export async function replaceProductModelRoutingNorms(
+  modelId: number,
+  linkId: number,
+  norms: Array<{
+    production_stage_id: number | null;
+    tech_operation_id: number | null;
+    norm_qty_per_item: string;
+    unit: string;
+  }>,
+): Promise<RoutingActionResult> {
+  const response = await fetch(
+    `${apiBaseUrl()}/product-models/${modelId}/routings/${linkId}/norms`,
+    {
+      method: "PUT",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ norms }),
+      cache: "no-store",
+    },
+  );
+  if (!response.ok) {
+    return { ok: false, message: await readError(response) };
+  }
+  revalidateModel(modelId);
+  return { ok: true };
+}
+
+export async function setProductModelDefaultRouting(
+  modelId: number,
+  defaultRoutingTemplateId: number | null,
+): Promise<RoutingActionResult> {
+  const response = await fetch(`${apiBaseUrl()}/product-models/${modelId}`, {
+    method: "PATCH",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      default_routing_template_id: defaultRoutingTemplateId,
+    }),
+    cache: "no-store",
+  });
+  if (!response.ok) {
+    return { ok: false, message: await readError(response) };
+  }
+  revalidateModel(modelId);
+  return { ok: true };
+}
+
+/** Catalog CSV/XLSX import (`POST /product-models/import`, `4.5.3`). */
+export async function importProductModelsFile(
+  formData: FormData,
+): Promise<import("@/lib/product-model-import").ProductModelImportResult> {
+  const file = formData.get("file");
+  if (!(file instanceof File) || file.size === 0) {
+    throw new Error("Выберите непустой файл CSV или XLSX.");
+  }
+  const dryRun = String(formData.get("dry_run") ?? "true") !== "false";
+  const body = new FormData();
+  body.append("file", file);
+
+  const response = await fetch(
+    `${apiBaseUrl()}/product-models/import?dry_run=${dryRun ? "true" : "false"}`,
+    {
+      method: "POST",
+      body,
+      cache: "no-store",
+    },
+  );
+  if (!response.ok) {
+    throw new Error(await readError(response));
+  }
+  const payload =
+    (await response.json()) as import("@/lib/product-model-import").ProductModelImportResult;
+  if (!dryRun && (payload.created_count > 0 || payload.updated_count > 0)) {
+    revalidatePath("/settings/catalogs/product-models");
+  }
+  return payload;
+}
+
+async function fetchProductModelFileDownload(
+  pathWithQuery: string,
+): Promise<import("@/lib/file-download").FileDownloadPayload> {
+  const response = await fetch(`${apiBaseUrl()}/product-models${pathWithQuery}`, {
+    method: "GET",
+    cache: "no-store",
+  });
+  if (!response.ok) {
+    throw new Error(await readError(response));
+  }
+  const buffer = Buffer.from(await response.arrayBuffer());
+  const disposition = response.headers.get("content-disposition") ?? "";
+  const match = /filename="([^"]+)"/i.exec(disposition);
+  const filename = match?.[1] ?? "product-model-download.bin";
+  return {
+    filename,
+    contentType: response.headers.get("content-type") ?? "application/octet-stream",
+    base64: buffer.toString("base64"),
+  };
+}
+
+/** Filter-aware catalog export (`GET /product-models/export`, `4.5.3`). */
+export async function downloadProductModelExport(options?: {
+  format?: "csv" | "xlsx";
+  search?: string;
+  status?: string;
+  sizeType?: string;
+  productTypeId?: number | null;
+}): Promise<import("@/lib/file-download").FileDownloadPayload> {
+  const params = new URLSearchParams();
+  params.set("format", options?.format ?? "csv");
+  if (options?.search?.trim()) params.set("search", options.search.trim());
+  if (options?.status) params.set("status", options.status);
+  if (options?.sizeType) params.set("size_type", options.sizeType);
+  if (options?.productTypeId != null) {
+    params.set("product_type_id", String(options.productTypeId));
+  }
+  return fetchProductModelFileDownload(`/export?${params.toString()}`);
+}
+
+/** Import template — same columns as export. */
+export async function downloadProductModelImportTemplate(
+  format: "csv" | "xlsx" = "csv",
+): Promise<import("@/lib/file-download").FileDownloadPayload> {
+  return fetchProductModelFileDownload(
+    `/import-template?format=${encodeURIComponent(format)}`,
+  );
+}

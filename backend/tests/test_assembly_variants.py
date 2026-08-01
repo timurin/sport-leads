@@ -180,7 +180,12 @@ def test_assembly_variant_from_sewing_operations_catalog() -> None:
 
             op_a = client.post(
                 "/sewing-operations",
-                json={"name": "Базовая сборка", "cost": "100.00", "duration_seconds": 60},
+                json={
+                    "name": "Базовая сборка",
+                    "cost": "100.00",
+                    "quantity_per_item": 2,
+                    "duration_seconds": 60,
+                },
             )
             assert op_a.status_code == 201, op_a.text
             op_b = client.post(
@@ -200,10 +205,19 @@ def test_assembly_variant_from_sewing_operations_catalog() -> None:
             )
             assert created.status_code == 201, created.text
             body = created.json()
-            assert Decimal(body["total_cost"]) == Decimal("150.50")
+            # 100×2 + 50.50×1
+            assert Decimal(body["total_cost"]) == Decimal("250.50")
             assert [line["operation_name"] for line in body["operation_lines"]] == [
                 "Базовая сборка",
                 "Отстрочка",
+            ]
+            assert [line["quantity_per_item"] for line in body["operation_lines"]] == [
+                2,
+                1,
+            ]
+            assert [Decimal(line["line_total"]) for line in body["operation_lines"]] == [
+                Decimal("200.00"),
+                Decimal("50.50"),
             ]
             assert [line["duration_seconds"] for line in body["operation_lines"]] == [
                 60,
@@ -233,7 +247,7 @@ def test_assembly_variant_from_sewing_operations_catalog() -> None:
                 json={"sewing_operation_ids": [id_b, id_c]},
             )
             assert appended.status_code == 200, appended.text
-            assert Decimal(appended.json()["total_cost"]) == Decimal("160.50")
+            assert Decimal(appended.json()["total_cost"]) == Decimal("260.50")
             assert len(appended.json()["operation_lines"]) == 3
 
             copied = client.post(
@@ -242,7 +256,7 @@ def test_assembly_variant_from_sewing_operations_catalog() -> None:
             assert copied.status_code == 201, copied.text
             assert copied.json()["name"] == "С отстрочкой (копия)"
             assert copied.json()["is_active"] is True
-            assert Decimal(copied.json()["total_cost"]) == Decimal("160.50")
+            assert Decimal(copied.json()["total_cost"]) == Decimal("260.50")
             assert len(copied.json()["operation_lines"]) == 3
 
             archived = client.patch(

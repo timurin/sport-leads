@@ -33,14 +33,17 @@ import {
   type TechOperationVolumeUnit,
 } from "@/lib/tech-operations";
 import type { ProductionStage } from "@/lib/production-stages";
+import { TechOperationMaterialsDrawer } from "@/components/settings/tech-operation-materials-drawer";
 
 /** PT-02 tech-operations catalog list (`DS-PT-02-CATALOG`, etalon sewing-operations). */
 export function TechOperationsWorkspace({
   operations,
   productionStages,
+  materialOptions,
 }: {
   operations: TechOperation[];
   productionStages: ProductionStage[];
+  materialOptions: Array<{ id: number; name: string; unit: string; is_active: boolean }>;
 }) {
   const router = useRouter();
   const [created, setCreated] = useState<TechOperation[]>([]);
@@ -52,6 +55,7 @@ export function TechOperationsWorkspace({
   const [saving, setSaving] = useState(false);
   const [rowError, setRowError] = useState<string | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
+  const [materialsEditing, setMaterialsEditing] = useState<TechOperation | null>(null);
 
   const rows = useMemo(() => {
     const byId = new Map<number, TechOperation>();
@@ -81,6 +85,7 @@ export function TechOperationsWorkspace({
       volume_unit: row.volume_unit,
       production_stage_id: row.production_stage_id,
       is_active: row.is_active,
+      required_materials: row.required_materials,
     });
     setRowError(null);
   };
@@ -151,6 +156,17 @@ export function TechOperationsWorkspace({
         onClose={() => setCreateOpen(false)}
         onCreated={handleCreated}
         productionStages={productionStages}
+        materialOptions={materialOptions}
+      />
+      <TechOperationMaterialsDrawer
+        operation={materialsEditing}
+        materialOptions={materialOptions}
+        onClose={() => setMaterialsEditing(null)}
+        onSaved={(operation) => {
+          setPatched((prev) => ({ ...prev, [operation.id]: operation }));
+          setMaterialsEditing(null);
+          router.refresh();
+        }}
       />
 
       <PageToolbar
@@ -195,7 +211,7 @@ export function TechOperationsWorkspace({
 
         <div className="hidden min-w-0 md:block">
           <DataTableFrame className="rounded-none border-x-0 border-b-0 shadow-none">
-            <DataTable minWidthClassName="min-w-[720px]">
+            <DataTable minWidthClassName="min-w-[920px]">
               <DataTableHead>
                 <tr>
                   <DataTableHeaderCell>Наименование</DataTableHeaderCell>
@@ -203,6 +219,7 @@ export function TechOperationsWorkspace({
                   <DataTableHeaderCell className="w-28">
                     Ед. объёма
                   </DataTableHeaderCell>
+                  <DataTableHeaderCell>Необходимые материалы</DataTableHeaderCell>
                   <DataTableHeaderCell className="w-44">Цех</DataTableHeaderCell>
                   <DataTableHeaderCell className="w-28">Статус</DataTableHeaderCell>
                   <DataTableHeaderCell className="w-28">
@@ -278,6 +295,20 @@ export function TechOperationsWorkspace({
                           </Select>
                         ) : (
                           formatTechOperationVolumeUnit(row.volume_unit)
+                        )}
+                      </DataTableCell>
+                      <DataTableCell>
+                        {row.required_materials.length > 0 ? (
+                          <div className="space-y-1 text-portal-caption">
+                            {row.required_materials.map((item) => (
+                              <div key={item.id ?? item.nomenclature_id}>
+                                {item.nomenclature_name ?? `#${item.nomenclature_id}`} —{" "}
+                                {item.quantity} {item.unit ?? ""}
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <span className="text-portal-muted">—</span>
                         )}
                       </DataTableCell>
                       <DataTableCell>
@@ -374,6 +405,13 @@ export function TechOperationsWorkspace({
                                 onClick={() => startEdit(row)}
                               >
                                 <Pencil className="size-4" aria-hidden="true" />
+                              </IconButton>
+                              <IconButton
+                                label="Материалы"
+                                disabled={saving}
+                                onClick={() => setMaterialsEditing(row)}
+                              >
+                                <Plus className="size-4" aria-hidden="true" />
                               </IconButton>
                               <IconButton
                                 label="Удалить"
@@ -522,6 +560,16 @@ export function TechOperationsWorkspace({
                           (stage) => stage.id === row.production_stage_id,
                         )?.name ?? "Цех не указан"}
                       </p>
+                      {row.required_materials.length > 0 ? (
+                        <p className="mt-1 text-portal-caption text-portal-muted">
+                          {row.required_materials
+                            .map(
+                              (item) =>
+                                `${item.nomenclature_name ?? `#${item.nomenclature_id}`} — ${item.quantity} ${item.unit ?? ""}`,
+                            )
+                            .join("; ")}
+                        </p>
+                      ) : null}
                     </div>
                     <div className="flex gap-1">
                       <IconButton
@@ -530,6 +578,13 @@ export function TechOperationsWorkspace({
                         onClick={() => startEdit(row)}
                       >
                         <Pencil className="size-4" aria-hidden="true" />
+                      </IconButton>
+                      <IconButton
+                        label="Материалы"
+                        disabled={saving}
+                        onClick={() => setMaterialsEditing(row)}
+                      >
+                        <Plus className="size-4" aria-hidden="true" />
                       </IconButton>
                       <IconButton
                         label="Удалить"

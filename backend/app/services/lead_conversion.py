@@ -160,6 +160,7 @@ def convert_lead(
             else lead.estimated_quantity
         ),
         amount=payload.amount if payload.amount is not None else lead.estimated_amount,
+        currency_code="RUB",
         desired_date=(
             payload.desired_date
             if payload.desired_date is not None

@@ -24,11 +24,13 @@ export function LeadMentionPicker({
   selectedIds,
   managers,
   onChange,
+  compact = false,
 }: {
   text: string;
   selectedIds: string[];
   managers: UserSummary[];
   onChange: (text: string, selectedIds: string[]) => void;
+  compact?: boolean;
 }) {
   const [open, setOpen] = useState(false);
 
@@ -44,12 +46,14 @@ export function LeadMentionPicker({
     <div className="relative">
       <Button
         type="button"
+        size="compact"
         aria-haspopup="menu"
         aria-expanded={open}
         onClick={() => setOpen((current) => !current)}
-        className="h-9 px-3"
+        className={compact ? "w-full sm:w-auto" : ""}
       >
-        <AtSign size={15} /> Упомянуть сотрудника
+        <AtSign size={14} />
+        {compact ? "Упомянуть" : "Упомянуть сотрудника"}
       </Button>
       {open ? (
         <div className="absolute left-0 z-30 mt-2 w-64 max-w-[calc(100vw-3rem)] rounded-xl border border-slate-200 bg-white p-2 shadow-xl" role="menu">

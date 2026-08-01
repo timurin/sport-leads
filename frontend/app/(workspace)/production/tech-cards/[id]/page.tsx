@@ -1,7 +1,11 @@
 import { notFound } from "next/navigation";
 
 import { TechCardDetailWorkspace } from "@/components/production/tech-card-detail-workspace";
-import { fetchTechnicalCard, fetchTechnicalCards } from "@/lib/sales/order-tech-cards-api";
+import { getNomenclature } from "@/lib/nomenclature";
+import { getShopStageModule } from "@/lib/production/shop-stage-modules";
+import { getProductionStages } from "@/lib/production-stages";
+import { fetchTechnicalCard } from "@/lib/sales/order-tech-cards-api";
+import { getShopRoutings, getWorkCenters } from "@/lib/shop-routings";
 
 function parseCardId(raw: string): number | null {
   const id = Number(raw);
@@ -14,7 +18,7 @@ export default async function ProductionTechCardDocumentPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ orderId?: string }>;
+  searchParams: Promise<{ orderId?: string; stage?: string }>;
 }) {
   const { id: rawId } = await params;
   const cardId = parseCardId(rawId);
@@ -22,6 +26,7 @@ export default async function ProductionTechCardDocumentPage({
 
   const query = await searchParams;
   const listOrderId = query.orderId?.trim() || undefined;
+  const shopStageCode = getShopStageModule(query.stage?.trim() ?? "")?.code;
 
   let card;
   try {
@@ -34,25 +39,74 @@ export default async function ProductionTechCardDocumentPage({
     throw error;
   }
 
-  let orderNumber: string | null = null;
+  let routings: { id: number; name: string; code: string | null; is_active: boolean }[] =
+    [];
   try {
-    const listRows = await fetchTechnicalCards({
-      sales_order_id: card.sales_order_id,
-      limit: 500,
-    });
-    orderNumber =
-      listRows.find((row) => row.id === card.id)?.order_number ??
-      listRows[0]?.order_number ??
-      null;
+    const templates = await getShopRoutings({ active_only: false, limit: 500 });
+    routings = templates.map((row) => ({
+      id: row.id,
+      name: row.name,
+      code: row.code,
+      is_active: row.is_active,
+    }));
   } catch {
-    orderNumber = null;
+    routings = [];
+  }
+
+  let materials: {
+    id: number;
+    name: string;
+    unit: string;
+    is_active: boolean;
+  }[] = [];
+  try {
+    const nomenclature = await getNomenclature();
+    materials = nomenclature
+      .filter((row) => row.nomenclature_type === "MATERIAL")
+      .map((row) => ({
+        id: row.id,
+        name: row.name,
+        unit: row.unit,
+        is_active: row.is_active,
+      }));
+  } catch {
+    materials = [];
+  }
+
+  let productionStages: {
+    id: number;
+    name: string;
+    code: string;
+    is_active: boolean;
+  }[] = [];
+  try {
+    const stages = await getProductionStages({ active_only: false, limit: 500 });
+    productionStages = stages.map((row) => ({
+      id: row.id,
+      name: row.name,
+      code: row.code,
+      is_active: row.is_active,
+    }));
+  } catch {
+    productionStages = [];
+  }
+
+  let workCenters: Awaited<ReturnType<typeof getWorkCenters>> = [];
+  try {
+    workCenters = await getWorkCenters({ active_only: false, limit: 500 });
+  } catch {
+    workCenters = [];
   }
 
   return (
     <TechCardDetailWorkspace
       card={card}
-      orderNumber={orderNumber}
+      routings={routings}
+      materials={materials}
+      productionStages={productionStages}
       listOrderId={listOrderId}
+      shopStageCode={shopStageCode}
+      workCenters={workCenters}
     />
   );
 }

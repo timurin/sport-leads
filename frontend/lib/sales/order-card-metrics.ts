@@ -1,11 +1,20 @@
 import type { SalesOrderDetails, SalesOrderItem } from "@/lib/sales/order-details";
+import type { OrderPaymentStatus } from "@/lib/sales/order-details";
 import type { OrderStatus } from "@/types/sales";
-
-export type OrderPaymentDemoStatus = "unpaid" | "partial" | "paid" | "refunded";
 
 export type OrderCardMetricsModel = {
   amountLabel: string;
   amountValue: number;
+  currencyCode: string;
+  itemsSubtotalLabel: string;
+  itemsSubtotalValue: number;
+  discountPercent: string;
+  discountAmountLabel: string;
+  discountAmountValue: number;
+  vatAmountLabel: string;
+  vatAmountValue: number;
+  amountNetLabel: string;
+  amountNetValue: number;
   itemCount: number;
   unitsPlanned: number;
   daysInWork: number;
@@ -19,30 +28,32 @@ export type OrderCardMetricsModel = {
   sewingCostLabel: string;
   sewingCostSource: "items" | "demo";
   marginPercent: number;
-  paymentStatus: OrderPaymentDemoStatus;
+  paymentStatus: OrderPaymentStatus;
   paymentLabel: string;
   paidPercent: number;
   paidAmountLabel: string;
+  paidAmountValue: string;
   productionPercent: number;
   productionLabel: string;
   slaDaysLeft: number | null;
   slaLabel: string;
   slaTone: "default" | "success" | "warning" | "danger";
-  isDemoEnriched: true;
+  /** Margin / sewing fallback still demo-enriched until costing ships. */
+  isDemoEnriched: boolean;
 };
 
-/** Compact mirror of `lib/demo-data/sales` orders payment/amount/qty for card metrics. */
+/** Compact mirror of demo qty fallback when order has no lines. */
 const DEMO_ORDER_METRICS = [
-  { amount: 530000, quantity: 44, paymentStatus: "partial" as const },
-  { amount: 940000, quantity: 120, paymentStatus: "partial" as const },
-  { amount: 760000, quantity: 90, paymentStatus: "paid" as const },
-  { amount: 1240000, quantity: 140, paymentStatus: "paid" as const },
-  { amount: 320000, quantity: 32, paymentStatus: "paid" as const },
-  { amount: 480000, quantity: 60, paymentStatus: "paid" as const },
-  { amount: 185000, quantity: 24, paymentStatus: "partial" as const },
-  { amount: 215000, quantity: 38, paymentStatus: "paid" as const },
-  { amount: 290000, quantity: 36, paymentStatus: "paid" as const },
-  { amount: 80000, quantity: 18, paymentStatus: "refunded" as const },
+  { amount: 530000, quantity: 44 },
+  { amount: 940000, quantity: 120 },
+  { amount: 760000, quantity: 90 },
+  { amount: 1240000, quantity: 140 },
+  { amount: 320000, quantity: 32 },
+  { amount: 480000, quantity: 60 },
+  { amount: 185000, quantity: 24 },
+  { amount: 215000, quantity: 38 },
+  { amount: 290000, quantity: 36 },
+  { amount: 80000, quantity: 18 },
 ] as const;
 
 const currencyFormatter = new Intl.NumberFormat("ru-RU", {
@@ -51,11 +62,10 @@ const currencyFormatter = new Intl.NumberFormat("ru-RU", {
   maximumFractionDigits: 0,
 });
 
-const paymentLabels: Record<OrderPaymentDemoStatus, string> = {
+const paymentLabels: Record<OrderPaymentStatus, string> = {
   unpaid: "Не оплачен",
   partial: "Частично оплачен",
   paid: "Оплачен",
-  refunded: "Возврат",
 };
 
 const productionByStatus: Record<OrderStatus, { percent: number; label: string }> = {
@@ -66,13 +76,6 @@ const productionByStatus: Record<OrderStatus, { percent: number; label: string }
   shipped: { percent: 96, label: "Отгружен" },
   completed: { percent: 100, label: "Завершён" },
   cancelled: { percent: 0, label: "Отменён" },
-};
-
-const paymentPaidPercent: Record<OrderPaymentDemoStatus, number> = {
-  unpaid: 0,
-  partial: 45,
-  paid: 100,
-  refunded: 0,
 };
 
 function parseMoney(value: string): number {
@@ -133,9 +136,35 @@ export function buildOrderCardMetrics({
   openTasksCount: number;
 }): OrderCardMetricsModel {
   const demo = pickDemoOrder(order.id);
-  const amountFromOrder = parseMoney(order.amount);
-  const amountValue = amountFromOrder > 0 ? amountFromOrder : demo.amount;
-  const amountLabel = amountFromOrder > 0 ? order.amount : currencyFormatter.format(demo.amount);
+  const hasApiAmount = order.amountValue.trim() !== "";
+  const amountFromOrder = hasApiAmount
+    ? Number(String(order.amountValue).replace(",", "."))
+    : parseMoney(order.amount);
+  const amountValue =
+    hasApiAmount && Number.isFinite(amountFromOrder)
+      ? amountFromOrder
+      : parseMoney(order.amount) > 0
+        ? parseMoney(order.amount)
+        : demo.amount;
+  const amountLabel =
+    hasApiAmount && Number.isFinite(amountFromOrder)
+      ? order.amount
+      : parseMoney(order.amount) > 0
+        ? order.amount
+        : currencyFormatter.format(demo.amount);
+
+  const itemsSubtotalValue = Number(
+    String(order.itemsSubtotalValue || "0").replace(",", "."),
+  );
+  const itemsSubtotalLabel =
+    Number.isFinite(itemsSubtotalValue) && itemsSubtotalValue >= 0
+      ? order.itemsSubtotal
+      : amountLabel;
+  const discountAmountValue = Number(
+    String(order.discountAmountValue || "0").replace(",", "."),
+  );
+  const vatAmountValue = Number(String(order.vatAmountValue || "0").replace(",", "."));
+  const amountNetValue = Number(String(order.amountNetValue || "0").replace(",", "."));
 
   const sewingFromItems = sumSewingFromItems(order.items);
   const sewingCostSource: "items" | "demo" = sewingFromItems > 0 ? "items" : "demo";
@@ -147,9 +176,16 @@ export function buildOrderCardMetrics({
   const marginValue = Math.max(0, amountValue - sewingCostValue - materialsDemo);
   const marginPercent = amountValue > 0 ? Math.round((marginValue / amountValue) * 100) : 0;
 
-  const paymentStatus = demo.paymentStatus;
-  const paidPercent = paymentPaidPercent[paymentStatus];
-  const paidAmountLabel = currencyFormatter.format(Math.round((amountValue * paidPercent) / 100));
+  const paymentStatus = order.paymentStatus;
+  const paidAmountRaw = Number(String(order.paidAmountValue || "0").replace(",", "."));
+  const paidAmountValueNum = Number.isFinite(paidAmountRaw) ? paidAmountRaw : 0;
+  const paidPercent =
+    paymentStatus === "paid"
+      ? 100
+      : paymentStatus === "unpaid" || amountValue <= 0
+        ? 0
+        : Math.min(99, Math.max(1, Math.round((paidAmountValueNum / amountValue) * 100)));
+  const paidAmountLabel = currencyFormatter.format(paidAmountValueNum);
 
   const production = productionByStatus[order.statusCode];
   const unitsFromItems = order.items.reduce((sum, item) => sum + (parseQuantity(item.quantity) || 0), 0);
@@ -159,6 +195,21 @@ export function buildOrderCardMetrics({
   return {
     amountLabel,
     amountValue,
+    currencyCode: order.currencyCode || "RUB",
+    itemsSubtotalLabel:
+      Number.isFinite(itemsSubtotalValue) ? itemsSubtotalLabel : amountLabel,
+    itemsSubtotalValue: Number.isFinite(itemsSubtotalValue)
+      ? itemsSubtotalValue
+      : amountValue,
+    discountPercent: order.discountPercent,
+    discountAmountLabel: order.discountAmount,
+    discountAmountValue: Number.isFinite(discountAmountValue)
+      ? discountAmountValue
+      : 0,
+    vatAmountLabel: order.vatAmount,
+    vatAmountValue: Number.isFinite(vatAmountValue) ? vatAmountValue : 0,
+    amountNetLabel: order.amountNet,
+    amountNetValue: Number.isFinite(amountNetValue) ? amountNetValue : 0,
     itemCount: order.itemCount,
     unitsPlanned,
     daysInWork,
@@ -176,9 +227,10 @@ export function buildOrderCardMetrics({
     paymentLabel: paymentLabels[paymentStatus],
     paidPercent,
     paidAmountLabel,
+    paidAmountValue: order.paidAmountValue || "0",
     productionPercent: production.percent,
     productionLabel: production.label,
     ...sla,
-    isDemoEnriched: true,
+    isDemoEnriched: sewingCostSource === "demo",
   };
 }

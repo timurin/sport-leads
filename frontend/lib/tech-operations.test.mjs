@@ -25,6 +25,7 @@ test("validateTechOperationDraft requires name, code and volume unit", () => {
       volume_unit: "pieces",
       production_stage_id: null,
       is_active: true,
+      required_materials: [],
     }),
     "Укажите наименование операции",
   );
@@ -35,6 +36,7 @@ test("validateTechOperationDraft requires name, code and volume unit", () => {
       volume_unit: "pieces",
       production_stage_id: null,
       is_active: true,
+      required_materials: [],
     }),
     "Укажите код операции",
   );
@@ -45,8 +47,20 @@ test("validateTechOperationDraft requires name, code and volume unit", () => {
       volume_unit: "pieces",
       production_stage_id: null,
       is_active: true,
+      required_materials: [],
     }),
     null,
+  );
+  assert.equal(
+    validateTechOperationDraft({
+      name: "Сублимация",
+      code: "SUBL",
+      volume_unit: "linear_meters",
+      production_stage_id: null,
+      is_active: true,
+      required_materials: [{ nomenclature_id: 0, quantity: "1" }],
+    }),
+    "Выберите материал для required materials",
   );
 });
 
@@ -59,6 +73,7 @@ test("filterTechOperations matches name and code", () => {
       volume_unit: "linear_meters",
       production_stage_id: null,
       is_active: true,
+      required_materials: [],
       sort_order: 0,
       created_at: "",
       updated_at: "",
@@ -70,6 +85,7 @@ test("filterTechOperations matches name and code", () => {
       volume_unit: "pieces",
       production_stage_id: null,
       is_active: true,
+      required_materials: [],
       sort_order: 1,
       created_at: "",
       updated_at: "",

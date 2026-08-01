@@ -1,7 +1,14 @@
 from app.models.import_run import ImportRun, ImportStatus
 from app.models.source import Source
 from app.models.sport_event import SportEvent
-from app.models.nomenclature import Nomenclature, NomenclatureCategory, NomenclatureType, UnitCategory, UnitOfMeasure
+from app.models.nomenclature import (
+    Nomenclature,
+    NomenclatureCategory,
+    NomenclatureHistoryEntry,
+    NomenclatureType,
+    UnitCategory,
+    UnitOfMeasure,
+)
 from app.models.characteristics import (
     CategoryCharacteristic,
     CharacteristicDefinition,
@@ -24,12 +31,24 @@ from app.models.sales import (
     LeadStage,
     LeadTask,
     LeadTaskStatus,
+    LeadNote,
+    LeadMessage,
     SalesOrder,
     SalesOrderItem,
     SalesOrderItemAssemblyOperationSnapshot,
     SalesOrderItemVariantSnapshot,
     SalesOrderStatus,
+    DesignApprovalStatus,
+    MaterialReserveStatus,
+    OrderPaymentStatus,
     SalesUser,
+)
+from app.models.sales_commercial import (
+    CommercialDocumentStatus,
+    SalesInvoice,
+    SalesInvoiceItem,
+    SalesQuotation,
+    SalesQuotationItem,
 )
 from app.models.media import NomenclatureMedia
 from app.models.product_model import (
@@ -47,7 +66,7 @@ from app.models.product_model import (
     NomenclatureProductModel,
 )
 from app.models.product_type import ProductType
-from app.models.sewing_operation import SewingOperation
+from app.models.sewing_operation import SewingOperation, sewing_operation_work_centers
 from app.models.size_grid import SizeGrid, SizeGridRow, SizeGridSizeType
 from app.models.vat_rate import VatRate
 from app.models.warehouse import Warehouse
@@ -94,6 +113,7 @@ __all__ = [
     "ImportStatus",
     "Nomenclature",
     "NomenclatureCategory",
+    "NomenclatureHistoryEntry",
     "NomenclatureType",
     "UnitCategory",
     "UnitOfMeasure",
@@ -115,11 +135,22 @@ __all__ = [
     "LeadStatus",
     "LeadStage",
     "LeadTask",
+    "LeadNote",
+    "LeadMessage",
     "LeadTaskStatus",
     "SalesOrder",
     "SalesOrderItem",
     "SalesOrderItemAssemblyOperationSnapshot",
     "SalesOrderItemVariantSnapshot",
+    "SalesOrderStatus",
+    "DesignApprovalStatus",
+    "MaterialReserveStatus",
+    "OrderPaymentStatus",
+    "CommercialDocumentStatus",
+    "SalesQuotation",
+    "SalesQuotationItem",
+    "SalesInvoice",
+    "SalesInvoiceItem",
     "NomenclatureMedia",
     "AssemblyOperationLine",
     "AssemblyVariant",
@@ -135,6 +166,7 @@ __all__ = [
     "NomenclatureProductModel",
     "ProductType",
     "SewingOperation",
+    "sewing_operation_work_centers",
     "SizeGrid",
     "SizeGridRow",
     "SizeGridSizeType",
@@ -168,5 +200,8 @@ __all__ = [
     "TechOperationVolumeUnit",
     "TechnicalCardSettings",
     "SalesOrderStatus",
+    "DesignApprovalStatus",
+    "MaterialReserveStatus",
+    "OrderPaymentStatus",
     "SalesUser",
 ]

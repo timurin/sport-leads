@@ -5,7 +5,9 @@ import { fromApiSalesOrders } from "./order-list-api.ts";
 
 test("maps persisted sales orders to existing kanban columns", () => {
   const columns = fromApiSalesOrders([{
-    id: 41, number: "SO-41", lead_id: 9, client_id: 3, status: "new",
+    id: 41, number: "SO-41", lead_id: 9, client_id: 3,
+    organization_id: null, organization_name: null,
+    status: "new",
     responsible_id: 2, responsible_name: "Иван", client_name: "ООО Спорт",
     title: "Форма", description: null, product_category: "Форма", sport: "Футбол",
     quantity: 20, amount: "125000.00", desired_date: "2026-08-01", source: "website",

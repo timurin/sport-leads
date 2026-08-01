@@ -120,7 +120,7 @@ def test_technical_card_persists_header_unit_op_volume_and_stage_results() -> No
                     sequence=1,
                     line_kind=TechnicalCardCompositionLineKind.MATERIAL,
                     snapshot_name="Ткань сублимация",
-                    quantity=Decimal("1.250"),
+                    planned_qty=Decimal("1.250"),
                     unit="м",
                 )
             ],

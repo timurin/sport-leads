@@ -39,6 +39,7 @@ from app.services.nomenclature import (
     build_nomenclature_entity,
     to_nomenclature_read,
 )
+from app.services.nomenclature_history import append_nomenclature_history
 from app.services.nomenclature_import_extensions import (
     NomenclatureImportExtensionError,
     apply_import_extensions,
@@ -276,6 +277,8 @@ def import_nomenclatures_from_bytes(
             if existing is None:
                 item = build_nomenclature_entity(db, payload)
                 db.add(item)
+                db.flush()
+                append_nomenclature_history(db, item.id, "Карточка создана")
                 created.append(item)
             else:
                 update_payload = NomenclatureUpdate(**payload.model_dump())

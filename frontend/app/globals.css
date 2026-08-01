@@ -578,6 +578,38 @@ body {
   }
 }
 
+/* Order card (`3.5.9`): responsive block stack — full width <1300; pair/triple from 1300/1700. */
+.order-card-top-pair,
+.order-card-top-triple,
+.order-card-mid-pair {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+@media (min-width: 1300px) {
+  .order-card-top-pair,
+  .order-card-mid-pair {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .order-card-top-triple {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .order-card-top-triple > .order-card-comms {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (min-width: 1700px) {
+  .order-card-top-triple {
+    grid-template-columns: minmax(0, 33fr) minmax(0, 33fr) minmax(0, 34fr);
+  }
+
+  .order-card-top-triple > .order-card-comms {
+    grid-column: auto;
+  }
+}
+
 @container lead-comms (min-width: 32rem) {
   .lead-channel-list {
     display: grid;

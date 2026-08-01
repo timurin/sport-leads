@@ -12,13 +12,40 @@ from sqlalchemy.orm import Session
 from app.models.media import NomenclatureMedia
 from app.models.nomenclature import Nomenclature
 from app.schemas.media import NomenclatureMediaCreate, NomenclatureMediaUpdate
+from app.services.nomenclature_history import append_nomenclature_history
 
 MEDIA_ROOT = Path("storage/nomenclature-media").resolve()
 MAX_FILE_SIZE = 10 * 1024 * 1024
 
+ALLOWED_IMAGE_MIMES = frozenset(
+    {
+        "image/jpeg",
+        "image/png",
+        "image/webp",
+        "image/svg+xml",
+    }
+)
+ALLOWED_FILE_MIMES = frozenset(
+    {
+        "application/pdf",
+        "application/msword",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "application/vnd.ms-excel",
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "application/zip",
+        "text/plain",
+        "text/csv",
+    }
+)
+ALLOWED_MEDIA_MIMES = ALLOWED_IMAGE_MIMES | ALLOWED_FILE_MIMES
+
 
 class MediaError(RuntimeError):
     pass
+
+
+def is_image_mime(mime_type: str) -> bool:
+    return mime_type in ALLOWED_IMAGE_MIMES
 
 
 def _nomenclature(db: Session, nomenclature_id: int) -> None:
@@ -43,6 +70,11 @@ def _decode(content: str) -> bytes:
     return data
 
 
+def _assert_allowed_mime(mime_type: str) -> None:
+    if mime_type not in ALLOWED_MEDIA_MIMES:
+        raise MediaError(f"Unsupported media mime type: {mime_type}")
+
+
 def _set_primary(db: Session, nomenclature_id: int, media_id: int | None = None) -> None:
     query = update(NomenclatureMedia).where(NomenclatureMedia.nomenclature_id == nomenclature_id)
     if media_id is not None:
@@ -57,16 +89,33 @@ def list_media(db: Session, nomenclature_id: int) -> list[NomenclatureMedia]:
 
 def create_media(db: Session, nomenclature_id: int, payload: NomenclatureMediaCreate) -> NomenclatureMedia:
     _nomenclature(db, nomenclature_id)
+    _assert_allowed_mime(payload.mime_type)
     data = _decode(payload.content_base64)
     filename = _safe_filename(payload.filename)
+    image = is_image_mime(payload.mime_type)
+    make_primary = bool(payload.is_primary) and image
     key = f"nomenclature/{nomenclature_id}/{uuid.uuid4().hex}-{filename}"
     path = MEDIA_ROOT / key
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_bytes(data)
-    if payload.is_primary:
+    if make_primary:
         _set_primary(db, nomenclature_id)
-    item = NomenclatureMedia(nomenclature_id=nomenclature_id, filename=filename, storage_key=key, mime_type=payload.mime_type, file_size=len(data), alt_text=payload.alt_text, sort_order=payload.sort_order, is_primary=payload.is_primary)
+    item = NomenclatureMedia(
+        nomenclature_id=nomenclature_id,
+        filename=filename,
+        storage_key=key,
+        mime_type=payload.mime_type,
+        file_size=len(data),
+        alt_text=payload.alt_text if image else None,
+        sort_order=payload.sort_order,
+        is_primary=make_primary,
+    )
     db.add(item)
+    append_nomenclature_history(
+        db,
+        nomenclature_id,
+        f"Добавлено фото: {filename}" if image else f"Добавлен файл: {filename}",
+    )
     db.commit()
     db.refresh(item)
     return item
@@ -78,7 +127,12 @@ def update_media(db: Session, nomenclature_id: int, media_id: int, payload: Nome
         raise MediaError("Media not found")
     changes = payload.model_dump(exclude_unset=True)
     if changes.get("is_primary"):
+        if not is_image_mime(item.mime_type):
+            raise MediaError("Only image media can be marked primary")
         _set_primary(db, nomenclature_id, media_id)
+        append_nomenclature_history(
+            db, nomenclature_id, f"Основное фото: {item.filename}"
+        )
     for key, value in changes.items():
         setattr(item, key, value)
     db.commit()
@@ -90,12 +144,19 @@ def delete_media(db: Session, nomenclature_id: int, media_id: int) -> None:
     item = db.scalar(select(NomenclatureMedia).where(NomenclatureMedia.id == media_id, NomenclatureMedia.nomenclature_id == nomenclature_id))
     if item is None:
         raise MediaError("Media not found")
+    filename = item.filename
+    image = is_image_mime(item.mime_type)
     path = (MEDIA_ROOT / item.storage_key).resolve()
     if MEDIA_ROOT not in path.parents:
         raise MediaError("Unsafe media storage path")
     if path.exists():
         path.unlink()
     db.delete(item)
+    append_nomenclature_history(
+        db,
+        nomenclature_id,
+        f"Удалено фото: {filename}" if image else f"Удалён файл: {filename}",
+    )
     db.commit()
 
 

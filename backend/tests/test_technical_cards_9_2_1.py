@@ -144,14 +144,20 @@ def test_generate_preview_sync_cancel_and_revive() -> None:
             assert by_item[product_item_id]["would_create"] is True
             assert by_item[product_item_id]["planned_unit_line_count"] == 2
             assert by_item[service_item_id]["eligible"] is False
-            assert by_item[service_item_id]["skip_reason"] == "not_product"
+            assert (
+                by_item[service_item_id]["skip_reason"]
+                == "nomenclature_type_not_allowed:service"
+            )
 
             generated = client.post(f"/orders/{order_id}/technical-cards/generate")
             assert generated.status_code == 201, generated.text
             gen = generated.json()
             assert len(gen["created"]) == 1
             assert gen["revived"] == []
-            assert {row["reason"] for row in gen["skipped"]} >= {"not_product", "no_nomenclature"}
+            assert {row["reason"] for row in gen["skipped"]} >= {
+                "nomenclature_type_not_allowed:service",
+                "no_nomenclature",
+            }
             card = gen["created"][0]
             card_id = card["id"]
             assert card["number"] == f"{order_number}-1"

@@ -13,7 +13,7 @@
 
 | Code | Contour | Roadmap / checklist | Status | Meaning |
 |------|---------|---------------------|--------|---------|
-| **A** | Catalog file I/O | `4.5.1` / `4.5.2`; project-structure §5 «import, and export» | open | Пакетный файл ↔ мастер-справочник (сначала номенклатура) |
+| **A** | Catalog file I/O | `4.5.1` / `4.5.2` / `4.5.3`; project-structure §5 «import, and export» | done (adapters) | Пакетный файл ↔ мастер-справочник (номенклатура + модели изделий); universal jobs → `16.3` |
 | **B** | Domain / inline import | `9.3.2.*` (personalization); SizeGrid Mosmade row-by-row; unit-lines API `9.3.2.3` | partial | Импорт **внутрь** документа/сущности; SoT остаётся domain rows |
 | **C** | Lead / source ingest | `1.4.1` done; `1.4.3` open | collectors | Нормализация внешних лидов — не Excel-каталог |
 | **D** | System exchange + universal jobs | `16.2.1` 1C:UNF; `16.3.*` universal job shell; project-structure «Universal import and export» / «1C exchange» | open | Внешняя ERP + кросс-модульный job runner |

@@ -397,6 +397,8 @@ export type AssemblyOperationLine = {
   sequence: number;
   operation_name: string;
   cost: string;
+  quantity_per_item: number;
+  line_total?: string;
   duration_seconds: number;
   sewing_operation_id: number | null;
   created_at: string;
@@ -499,26 +501,59 @@ export function validateAssemblyOperationLineDraft(
   return null;
 }
 
-/** Sum catalog costs of selected sewing operations (variant total preview). */
+/** Sum catalog line totals (cost × quantity_per_item) of selected sewing operations. */
 export function sumSelectedSewingOperationCosts(
-  operations: Array<{ cost: string | number }>,
+  operations: Array<{
+    cost: string | number;
+    quantity_per_item?: string | number | null;
+  }>,
 ): number {
   return operations.reduce((total, operation) => {
     const amount =
       typeof operation.cost === "number"
         ? operation.cost
         : Number(String(operation.cost).replace(",", "."));
-    return total + (Number.isFinite(amount) ? amount : 0);
+    const qtyRaw =
+      typeof operation.quantity_per_item === "number"
+        ? operation.quantity_per_item
+        : Number(String(operation.quantity_per_item ?? "1").replace(",", "."));
+    const qty =
+      Number.isSafeInteger(qtyRaw) && qtyRaw >= 1 ? Math.floor(qtyRaw) : 1;
+    return total + (Number.isFinite(amount) ? amount * qty : 0);
   }, 0);
 }
 
-/** Sum snapshot duration_seconds across assembly variant lines. */
+/** Line sum for an assembly operation: cost × quantity_per_item. */
+export function assemblyOperationLineTotal(
+  line: Pick<AssemblyOperationLine, "cost" | "quantity_per_item"> & {
+    line_total?: string | number;
+  },
+): number {
+  if (line.line_total != null && line.line_total !== "") {
+    const fromApi =
+      typeof line.line_total === "number"
+        ? line.line_total
+        : Number(String(line.line_total).replace(",", "."));
+    if (Number.isFinite(fromApi)) return fromApi;
+  }
+  const amount = Number(String(line.cost).replace(",", "."));
+  const qty = Math.max(1, Number(line.quantity_per_item) || 1);
+  return Number.isFinite(amount) ? amount * qty : 0;
+}
+
+/** Sum snapshot duration_seconds × quantity across assembly variant lines. */
 export function sumAssemblyVariantDurationSeconds(
-  lines: ReadonlyArray<Pick<AssemblyOperationLine, "duration_seconds">>,
+  lines: ReadonlyArray<
+    Pick<AssemblyOperationLine, "duration_seconds" | "quantity_per_item">
+  >,
 ): number {
   return lines.reduce((total, line) => {
     const value = Number(line.duration_seconds);
-    return total + (Number.isFinite(value) && value > 0 ? Math.floor(value) : 0);
+    const qty = Math.max(1, Number(line.quantity_per_item) || 1);
+    return (
+      total +
+      (Number.isFinite(value) && value > 0 ? Math.floor(value) * qty : 0)
+    );
   }, 0);
 }
 

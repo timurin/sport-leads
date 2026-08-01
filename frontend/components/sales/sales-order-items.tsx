@@ -7,7 +7,11 @@ import { Button } from "@/components/ui/button";
 import { Input, Select } from "@/components/ui/form-controls";
 import { ListTotals } from "@/components/ui/list-pagination";
 import { SectionCard } from "@/components/ui/section-card";
-import { nomenclatureLabel, type Nomenclature } from "@/lib/nomenclature";
+import {
+  effectiveVariantUnitPrice,
+  nomenclatureLabel,
+  type Nomenclature,
+} from "@/lib/nomenclature";
 import type { SalesOrderItem } from "@/lib/sales/order-details";
 
 function NomenclaturePicker({
@@ -135,6 +139,9 @@ function ItemForm({
   onDelete: () => void;
 }) {
   const [selectedId, setSelectedId] = useState<number | null>(item.nomenclatureId);
+  const [selectedVariantId, setSelectedVariantId] = useState<number | null>(
+    item.nomenclatureVariantId,
+  );
   const [snapshotName, setSnapshotName] = useState(item.snapshotName);
   const [unitPrice, setUnitPrice] = useState(priceValue(item.unitPrice));
   const selected = nomenclature.find((entry) => entry.id === selectedId) ?? null;
@@ -142,10 +149,21 @@ function ItemForm({
 
   function selectNomenclature(entry: Nomenclature | null) {
     setSelectedId(entry?.id ?? null);
+    setSelectedVariantId(null);
     if (entry) {
       setSnapshotName(entry.name);
       setUnitPrice(entry.basePrice);
     }
+  }
+
+  function selectVariant(variantId: number | null) {
+    setSelectedVariantId(variantId);
+    if (!selected) return;
+    const variant =
+      variantId == null
+        ? null
+        : (variants.find((row) => row.id === variantId) ?? null);
+    setUnitPrice(effectiveVariantUnitPrice(variant, selected.basePrice));
   }
 
   return (
@@ -161,7 +179,11 @@ function ItemForm({
       <Select
         name="nomenclature_variant_id"
         size="compact"
-        defaultValue={item.nomenclatureVariantId ?? ""}
+        value={selectedVariantId ?? ""}
+        onChange={(event) => {
+          const raw = event.target.value;
+          selectVariant(raw === "" ? null : Number(raw));
+        }}
       >
         <option value="">Без варианта</option>
         {variants
@@ -287,6 +309,7 @@ export function SalesOrderItems({
   const [message, setMessage] = useState<string | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
   const [createNomenclatureId, setCreateNomenclatureId] = useState<number | null>(null);
+  const [createVariantId, setCreateVariantId] = useState<number | null>(null);
   const [createSnapshotName, setCreateSnapshotName] = useState("");
   const [createUnitPrice, setCreateUnitPrice] = useState("");
 
@@ -297,6 +320,7 @@ export function SalesOrderItems({
       if (result.ok) {
         formRef.current?.reset();
         setCreateNomenclatureId(null);
+        setCreateVariantId(null);
         setCreateSnapshotName("");
         setCreateUnitPrice("");
       }
@@ -317,10 +341,24 @@ export function SalesOrderItems({
 
   function selectCreateNomenclature(entry: Nomenclature | null) {
     setCreateNomenclatureId(entry?.id ?? null);
+    setCreateVariantId(null);
     if (entry) {
       setCreateSnapshotName(entry.name);
       setCreateUnitPrice(entry.basePrice);
     }
+  }
+
+  function selectCreateVariant(variantId: number | null) {
+    setCreateVariantId(variantId);
+    if (createNomenclatureId == null) return;
+    const card = nomenclature.find((entry) => entry.id === createNomenclatureId);
+    if (!card) return;
+    const variants = variantsByNomenclature[createNomenclatureId] ?? [];
+    const variant =
+      variantId == null
+        ? null
+        : (variants.find((row) => row.id === variantId) ?? null);
+    setCreateUnitPrice(effectiveVariantUnitPrice(variant, card.basePrice));
   }
 
   const createVariants = createNomenclatureId
@@ -375,7 +413,14 @@ export function SalesOrderItems({
           value={createNomenclatureId}
           onChange={selectCreateNomenclature}
         />
-        <Select name="nomenclature_variant_id" defaultValue="">
+        <Select
+          name="nomenclature_variant_id"
+          value={createVariantId ?? ""}
+          onChange={(event) => {
+            const raw = event.target.value;
+            selectCreateVariant(raw === "" ? null : Number(raw));
+          }}
+        >
           <option value="">Без варианта</option>
           {createVariants
             .filter((variant) => variant.is_active)

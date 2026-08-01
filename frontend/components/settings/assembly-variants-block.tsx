@@ -24,6 +24,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { SectionCard } from "@/components/ui/section-card";
 import { StatusBadge } from "@/components/ui/status-badge";
 import {
+  assemblyOperationLineTotal,
   formatAssemblyCost,
   sumAssemblyVariantDurationSeconds,
   type AssemblyVariant,
@@ -266,41 +267,54 @@ export function AssemblyVariantsBlock({
                   <div className="border-t border-portal-border px-portal-3 py-portal-3">
                     {variant.operation_lines.length > 0 ? (
                       <ul className="divide-y divide-portal-border overflow-hidden rounded-portal-md border border-portal-border bg-portal-surface">
+                        <li className="grid grid-cols-[minmax(0,1fr)_4.5rem_5.5rem_5.5rem_auto] items-center gap-portal-2 bg-portal-bg px-portal-3 py-portal-2 text-portal-caption text-portal-muted">
+                          <span>Операция</span>
+                          <span className="text-right">Кол-во</span>
+                          <span className="text-right">Цена</span>
+                          <span className="text-right">Сумма</span>
+                          <span className="w-8" aria-hidden="true" />
+                        </li>
                         {variant.operation_lines.map((line) => (
                           <li
                             key={line.id}
-                            className="flex flex-wrap items-center justify-between gap-portal-2 px-portal-3 py-portal-2"
+                            className="grid grid-cols-[minmax(0,1fr)_4.5rem_5.5rem_5.5rem_auto] items-center gap-portal-2 px-portal-3 py-portal-2"
                           >
                             <p className="min-w-0 text-portal-body text-portal-text">
                               <span className="text-portal-muted">
                                 {line.sequence}.{" "}
                               </span>
                               {line.operation_name}
-                            </p>
-                            <div className="flex items-center gap-portal-2">
-                              <span className="text-portal-caption text-portal-muted">
+                              <span className="ml-portal-2 text-portal-caption text-portal-muted">
                                 {formatDurationSecondsLabel(
-                                  line.duration_seconds,
+                                  (Number(line.duration_seconds) || 0) *
+                                    Math.max(1, Number(line.quantity_per_item) || 1),
                                 )}
                               </span>
-                              <span className="text-portal-body font-medium text-portal-text">
-                                {formatAssemblyCost(line.cost)} ₽
-                              </span>
-                              <IconButton
-                                label={`Убрать операцию ${line.operation_name}`}
-                                variant="danger"
-                                disabled={busy || archived}
-                                onClick={() =>
-                                  void onDeleteLine(
-                                    variant.id,
-                                    line.id,
-                                    line.operation_name,
-                                  )
-                                }
-                              >
-                                <Trash2 className="size-4" />
-                              </IconButton>
-                            </div>
+                            </p>
+                            <span className="text-right tabular-nums text-portal-body text-portal-text">
+                              {line.quantity_per_item ?? 1}
+                            </span>
+                            <span className="text-right tabular-nums text-portal-body text-portal-text">
+                              {formatAssemblyCost(line.cost)} ₽
+                            </span>
+                            <span className="text-right tabular-nums text-portal-body font-medium text-portal-text">
+                              {formatAssemblyCost(assemblyOperationLineTotal(line))}{" "}
+                              ₽
+                            </span>
+                            <IconButton
+                              label={`Убрать операцию ${line.operation_name}`}
+                              variant="danger"
+                              disabled={busy || archived}
+                              onClick={() =>
+                                void onDeleteLine(
+                                  variant.id,
+                                  line.id,
+                                  line.operation_name,
+                                )
+                              }
+                            >
+                              <Trash2 className="size-4" />
+                            </IconButton>
                           </li>
                         ))}
                       </ul>

@@ -98,11 +98,11 @@ Rules:
 - Whitelist M2M on PRODUCT card (`6.1.11`); only `active` models should be addable/selectable for new work.
 - Model is **not** a nomenclature variant (ADR-010).
 
-### 5.2 Sales order item (`3.2.5`, former `6.1.13`)
+### 5.2 Sales order item (`3.2.5`, former `6.1.13`; routing pick `3.2.7`)
 
-Order line selects `product_model_id` from PRODUCT available-models whitelist, then `assembly_variant_id` of that model. Snapshots store article / size_type / name / variant name / total and **MVP operation-line child snapshots**. Owned by **Sales Orders**, not Stage 6 catalog.
+Order line selects `product_model_id` from PRODUCT available-models whitelist, then `assembly_variant_id` of that model, then (when `6.1.17` / `3.2.7` ship) `routing_template_id` ∈ model routing whitelist. Snapshots store article / size_type / name / variant name / total and **MVP operation-line child snapshots** (+ routing id/name when `3.2.7`). Owned by **Sales Orders**, not Stage 6 catalog.
 
-Chain: nomenclature → model ∈ whitelist → autofill `article` + `size_type` (+ name) → assembly variant ∈ model.
+Chain: nomenclature → model ∈ whitelist → autofill `article` + `size_type` (+ name) → assembly variant ∈ model → shop routing ∈ model routing whitelist.
 
 **Canonical contract:** `docs/architecture/order-item-model-assembly.md` (`SL-ORDER-ITEM-MODEL-ASSEMBLY-v1`, `3.2.5.1`).  
 Manual lines without nomenclature: out of this contour.
@@ -117,34 +117,113 @@ Spec is a **document report** (plan + fact in one form) for 1С batch cost repor
 
 ### 5.5 Technical card (Stage 9 / ADR-016)
 
-TC links or snapshots model / assembly variant / sewing operations per future ADR-016 (ADR-015 = unified characteristics). Domain constraint from this contract: TC must not become a second pattern-base master.
+TC snapshots model / assembly / sewing / routing per ADR-016. `planned_qty` on MATERIAL composition may use `ProductModelOperationNorm` × order qty as a **hint** (`9.3.4`); fact qty is shop-written. Domain constraint: TC must not become a second pattern-base or routing master.
 
-### 5.6 Stage 8 shop routing
+### 5.6 Stage 8 shop routing + model whitelist (`6.1.17`)
 
-Shop routings may later reference a model/variant for execution; they must not duplicate manager-facing assembly packages (ADR-014).
+Global master of routing templates / stage sequences remains Stage 8 (`/settings/catalogs/routings`, ADR-017). The product model owns only:
+
+- ordered **whitelist** of existing `ShopRoutingTemplate` rows (`ProductModelRoutingLink`);
+- per-link **operation material norms** (`ProductModelOperationNorm`) as plan hints for 1 unit;
+- nullable `default_routing_template_id` that **must ∈ whitelist** when the whitelist is non-empty.
+
+No duplicate routing CRUD on the model card. Shop routings must not duplicate manager-facing assembly packages (ADR-014).
 
 ## 6. Assembly variants (`6.1.12`)
 
 | Entity | Fields | Rules |
 |---|---|---|
 | `AssemblyVariant` | `product_model_id`, `name` (unique per model), `is_active`, `sort_order` | 1:N child of `ProductModel`; inactive variants excluded from new order picks (`active_only`) |
-| `AssemblyOperationLine` | `assembly_variant_id`, `sequence` (≥1, unique per variant), `operation_name`, `cost` (`Numeric(14,2)` ≥0) | MVP inline name+cost (ADR-014 §6); no shared operations catalog yet |
+| `AssemblyOperationLine` | `assembly_variant_id`, `sequence` (≥1, unique per variant), `operation_name`, `cost` (`Numeric(14,2)` ≥0), optional sewing catalog FK | Cost contour Stage 6; ≠ shop routing / material norms |
 
-`total_cost` is always computed as Σ line costs (`Decimal`); not persisted.
+`total_cost` is always computed from lines (`Decimal`); not persisted.
 
-## 7. Out of scope for domain contract alone
+## 7. Model routing whitelist + operation norms (`6.1.17`)
 
-- SQLAlchemy / Alembic / API implementation details beyond field contracts
+**Code amend:** `SL-PRODUCT-MODEL-DOMAIN-v1` / `2026-07-27`  
+**Task:** `docs/tasks/v0.9.0-stage-6.1.17-model-routing-norms.md`  
+**ADRs:** ADR-014 amend, ADR-017 amend
+
+### 7.1 Entities
+
+| Entity | Role | Master of truth |
+|---|---|---|
+| `ProductModelRoutingLink` | Ordered whitelist row: model ↔ existing `ShopRoutingTemplate` | Stage 6 model card (`6.1.17`); template body SoT = Stage 8 |
+| `ProductModelOperationNorm` | Plan hint on one whitelist link: stage and/or tech-op + `norm_qty_per_item` + unit | Stage 6; feeds TC `planned_qty` hint only |
+| `ProductModel.default_routing_template_id` | Nullable FK to template; default for TC generate | Must ∈ link set when whitelist non-empty |
+
+### 7.2 Field contract
+
+#### `ProductModelRoutingLink`
+
+| Field | Type | Rules |
+|---|---|---|
+| `id` | PK | Surrogate |
+| `product_model_id` | FK → `product_models` CASCADE | Parent model |
+| `shop_routing_template_id` | FK → `shop_routing_templates` RESTRICT | Existing template only; **no clone** of stage lines |
+| `sort_order` | int ≥ 0 | Display / pick order |
+| `is_active` | bool | Soft exclude from new picks without deleting history |
+| `created_at` / `updated_at` | timestamptz | Timezone-aware |
+
+Constraints:
+
+- `UNIQUE(product_model_id, shop_routing_template_id)`
+- Attach rejects unknown / inactive templates (service rule; list filter active-only for new picks)
+- Removing a link that is the current `default_routing_template_id` clears default or rejects until reassigned (service picks one policy and keeps it)
+
+#### `ProductModelOperationNorm`
+
+| Field | Type | Rules |
+|---|---|---|
+| `id` | PK | Surrogate |
+| `product_model_routing_link_id` | FK → link CASCADE | Norms scoped to one whitelist row |
+| `production_stage_id` | FK → `production_stages` RESTRICT, nullable* | Цех bind (`8.3`) |
+| `tech_operation_id` | soft/nullable id → TechOperation | Optional finer bind; when set must belong to same цех as stage when both present |
+| `norm_qty_per_item` | `Numeric` / `Decimal` | Plan hint for **1 unit** (e.g. `0.7`); **≥ 0**; money-safe Decimal path |
+| `unit` | string | Required non-empty unit label/code (e.g. linear meters); align with TechOperation volume unit when op set |
+| `created_at` / `updated_at` | timestamptz | Timezone-aware |
+
+\*At least one of `production_stage_id` / `tech_operation_id` required. Service resolves
+`production_stage_id` from TechOperation when only op is sent (op must have a цех).
+**Uniqueness locked (`6.1.17.2`):** partial unique indexes —
+`(link, production_stage_id)` where `tech_operation_id IS NULL`, and
+`(link, production_stage_id, tech_operation_id)` where op is set.
+
+Semantics:
+
+- Norm = **plan hint**, not hard BOM × order qty, not fact consumption.
+- TC `planned_qty` may compute `norm_qty_per_item × order_line.qty` (`9.3.4`); sizes may differ — not hard SoT.
+- Fact qty written by цех (`11.5` / `11.6`); not stored on the model.
+
+### 7.3 Default ∈ whitelist
+
+| Whitelist state | `default_routing_template_id` |
+|---|---|
+| Empty | May be null (legacy FK cleared when first incompatible write happens) |
+| Non-empty | Must be null **or** equal to one of the linked `shop_routing_template_id` values |
+
+Foreign routing on write → reject (API, not UI-only).
+
+### 7.4 UI placement (contract only; build in `6.1.17.4`)
+
+PT-08 model card block **«Варианты маршрутов»**: add/remove/reorder/default + per-link norms editor. Add = pick from active Stage 8 catalog. Link-out to `/settings/catalogs/routings` for master CRUD. **DS-SHELL-01/02** unchanged.
+
+## 8. Out of scope for domain contract alone
+
+- SQLAlchemy / Alembic / API implementation (`6.1.17.2`–`.3`)
+- Order-item routing snapshot persistence (`3.2.7`)
+- TC plan/fact material gate (`9.3.4`) and shop fact UI (`11.5`/`11.6`)
+- Wire generate/apply-routing to whitelist (`8.2.3.7`–`8.2.3.8`)
 - Size-grid entity schemas (`6.2.*`); sewing operations (`6.3.*` / `sewing-operations-domain.md`)
-- Order-item snapshot persistence implementation (`3.2.5.2+`); strategy locked in `order-item-model-assembly.md` (`3.2.5.1`)
-- UI feature fill beyond already shipped shells
+- Duplicate Stage 8 routing master on the model card
 
-## 8. Checkpoint (`6.1.1.5`)
+## 9. Checkpoint (`6.1.1.5` + `6.1.17.1`)
 
 | Criterion | Status |
 |---|---|
 | Single source of truth for product models | Yes — this doc + ADR-014 |
 | Flat `1 model = 1 size_type = 1 article` | Explicit §1–§2 |
 | Dependencies on grids, sewing ops, assembly variants, specs | Explicit §3–§6 |
+| Model routing whitelist + operation norms domain (`6.1.17.1`) | Explicit §5.6 / §7; ADR-014/017 amend |
 
-**Catalog closed.** Order-item binding is Stage `3.2.5` (Sales Orders).
+**Catalog domain for models:** closed for `6.1.1`; routing whitelist domain locked for `6.1.17.1` (implementation `6.1.17.2+`). Order-item model/assembly binding is Stage `3.2.5`; order routing pick is `3.2.7`.

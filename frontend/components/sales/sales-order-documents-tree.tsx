@@ -1,9 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import { ChevronRight, FileText } from "lucide-react";
-import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { ChevronRight, FileText, FilePlus2, Receipt } from "lucide-react";
+import { useState, useTransition } from "react";
 
+import {
+  createOrderInvoice,
+  createOrderQuotation,
+  type SalesInvoice,
+  type SalesQuotation,
+} from "@/app/(workspace)/sales/orders/[orderId]/order-commercial-doc-actions";
+import { Button } from "@/components/ui/button";
 import { SectionCard } from "@/components/ui/section-card";
 import {
   buildOrderDocumentTree,
@@ -76,17 +84,84 @@ function DocumentTreeNode({
 
 export function SalesOrderDocumentsTree({
   order,
+  quotations,
+  invoices,
 }: {
   order: { id: string; number: string; leadId: string; sourceLeadHref: string };
+  quotations: SalesQuotation[];
+  invoices: SalesInvoice[];
 }) {
-  const tree = buildOrderDocumentTree(order);
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
+  const [message, setMessage] = useState<string | null>(null);
+  const tree = buildOrderDocumentTree({
+    ...order,
+    quotations: quotations.map((doc) => ({
+      id: doc.id,
+      number: doc.number,
+      status: doc.status,
+    })),
+    invoices: invoices.map((doc) => ({
+      id: doc.id,
+      number: doc.number,
+      status: doc.status,
+      quotationId: doc.quotation_id,
+    })),
+  });
+
+  function runCreate(action: () => Promise<{ ok: boolean; message: string }>) {
+    startTransition(async () => {
+      const result = await action();
+      setMessage(result.message);
+      if (result.ok) router.refresh();
+    });
+  }
+
+  const latestQuotationId = quotations[0]?.id ?? null;
+
   return (
     <SectionCard
       title="Документы"
-      description="Связанные документы по цепочке от лида. Плановые узлы появятся в контурах 3.3 / 7 / 9."
+      description="КП и счета создаются snapshot’ом заказа (НДС-режим и валюта переносятся)."
       size="compact"
       className="min-w-0"
+      actions={
+        <div className="flex flex-wrap items-center gap-1.5">
+          <Button
+            type="button"
+            variant="secondary"
+            size="compact"
+            disabled={isPending}
+            onClick={() => runCreate(() => createOrderQuotation(order.id))}
+          >
+            <FilePlus2 className="size-3.5" aria-hidden="true" />
+            Создать КП
+          </Button>
+          <Button
+            type="button"
+            variant="secondary"
+            size="compact"
+            disabled={isPending}
+            onClick={() =>
+              runCreate(() => createOrderInvoice(order.id, latestQuotationId))
+            }
+            title={
+              latestQuotationId
+                ? `Счёт из последнего КП #${latestQuotationId}`
+                : "Счёт напрямую из заказа"
+            }
+          >
+            <Receipt className="size-3.5" aria-hidden="true" />
+            Создать счёт
+          </Button>
+        </div>
+      }
     >
+      {message ? (
+        <p className="mb-2 text-portal-meta text-portal-muted" role="status">
+          {message}
+        </p>
+      ) : null}
       <ul className="min-w-0 rounded-portal-md border border-portal-border bg-portal-surface py-1">
         {tree.map((node) => (
           <DocumentTreeNode key={node.id} node={node} depth={0} />

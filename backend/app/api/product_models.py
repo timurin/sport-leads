@@ -1,5 +1,5 @@
-from fastapi import APIRouter, Depends, HTTPException, Query, status
-from fastapi.responses import FileResponse
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, status
+from fastapi.responses import FileResponse, Response
 from sqlalchemy.orm import Session
 
 from app.database.session import get_db
@@ -16,10 +16,16 @@ from app.schemas.product_model import (
     ProductModelCoverUpload,
     ProductModelCreate,
     ProductModelHistoryRead,
+    ProductModelImportResult,
     ProductModelMediaCreate,
     ProductModelMediaRead,
     ProductModelMediaUpdate,
+    ProductModelOperationNormReplace,
     ProductModelRead,
+    ProductModelRoutingLinkCreate,
+    ProductModelRoutingLinkRead,
+    ProductModelRoutingLinkReorder,
+    ProductModelRoutingLinkUpdate,
     ProductModelUpdate,
     ProductModelVersionCreate,
     ProductModelVersionRead,
@@ -41,6 +47,18 @@ from app.services.assembly_variants import (
     reorder_operation_lines,
     update_assembly_variant,
     update_operation_line,
+)
+from app.services.product_model_routings import (
+    ProductModelRoutingConflictError,
+    ProductModelRoutingNotFoundError,
+    ProductModelRoutingValidationError,
+    create_routing_link,
+    delete_routing_link,
+    get_routing_link,
+    list_routing_links,
+    reorder_routing_links,
+    replace_routing_link_norms,
+    update_routing_link,
 )
 from app.services.product_models import (
     ProductModelArticleConflictError,
@@ -72,12 +90,23 @@ from app.services.product_models import (
     update_product_model,
     upload_product_model_cover,
 )
+from app.services.product_model_export import (
+    ProductModelExportError,
+    build_product_model_import_template,
+    export_product_models_file,
+)
+from app.services.product_model_import import (
+    ProductModelImportError,
+    import_product_models_from_bytes,
+)
 from app.services.product_model_operations_journal import (
     product_model_has_journal_operations,
 )
 from app.models.product_model import ProductModel
 
 router = APIRouter(prefix="/product-models", tags=["Product models"])
+
+_MAX_IMPORT_BYTES = 5 * 1024 * 1024
 
 
 def _model_read(db: Session, row: ProductModel) -> ProductModelRead:
@@ -128,6 +157,98 @@ def read_product_models(
         offset=offset,
     )
     return [_model_read(db, row) for row in rows]
+
+
+@router.get(
+    "/export",
+    operation_id="export_product_models",
+    response_class=Response,
+)
+def export_product_models(
+    file_format: str = Query(default="csv", alias="format", pattern="^(csv|xlsx)$"),
+    search: str | None = Query(default=None, max_length=255),
+    status_filter: ProductModelStatus | None = Query(default=None, alias="status"),
+    size_type: ProductModelSizeType | None = None,
+    product_type_id: int | None = None,
+    db: Session = Depends(get_db),
+) -> Response:
+    """Filter-aware catalog export; columns match import template (`4.5.3`)."""
+    try:
+        payload, filename, media_type = export_product_models_file(
+            db,
+            file_format=file_format,  # type: ignore[arg-type]
+            search=search,
+            status=status_filter,
+            size_type=size_type,
+            product_type_id=product_type_id,
+        )
+    except (ProductModelExportError, ValueError) as error:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=str(error),
+        ) from error
+    return Response(
+        content=payload,
+        media_type=media_type,
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
+@router.get(
+    "/import-template",
+    operation_id="download_product_model_import_template",
+    response_class=Response,
+)
+def download_product_model_import_template(
+    file_format: str = Query(default="csv", alias="format", pattern="^(csv|xlsx)$"),
+) -> Response:
+    try:
+        payload, filename, media_type = build_product_model_import_template(
+            file_format=file_format,  # type: ignore[arg-type]
+        )
+    except ProductModelExportError as error:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=str(error),
+        ) from error
+    return Response(
+        content=payload,
+        media_type=media_type,
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
+@router.post(
+    "/import",
+    response_model=ProductModelImportResult,
+    operation_id="import_product_models",
+)
+async def import_product_models(
+    file: UploadFile = File(...),
+    dry_run: bool = Query(default=True),
+    sheet_name: str | None = Query(default=None, max_length=120),
+    db: Session = Depends(get_db),
+) -> ProductModelImportResult:
+    data = await file.read()
+    if len(data) > _MAX_IMPORT_BYTES:
+        raise HTTPException(
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            detail="Import file exceeds 5 MB limit",
+        )
+    try:
+        return import_product_models_from_bytes(
+            db,
+            data,
+            filename=file.filename,
+            content_type=file.content_type,
+            sheet_name=sheet_name,
+            dry_run=dry_run,
+        )
+    except ProductModelImportError as error:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=str(error),
+        ) from error
 
 
 @router.get("/{model_id}", response_model=ProductModelRead, operation_id="get_product_model")
@@ -698,4 +819,137 @@ def reorder_variant_operation_lines(
     except AssemblyVariantNotFoundError as error:
         raise HTTPException(status_code=404, detail=str(error)) from error
     except AssemblyVariantValidationError as error:
+        raise HTTPException(status_code=422, detail=str(error)) from error
+
+
+@router.get(
+    "/{model_id}/routings",
+    response_model=list[ProductModelRoutingLinkRead],
+    operation_id="list_product_model_routings",
+)
+def read_routing_links(
+    model_id: int,
+    active_only: bool = Query(default=False),
+    db: Session = Depends(get_db),
+):
+    try:
+        return list_routing_links(db, model_id, active_only=active_only)
+    except ProductModelNotFoundError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+
+
+@router.get(
+    "/{model_id}/routings/{link_id}",
+    response_model=ProductModelRoutingLinkRead,
+    operation_id="get_product_model_routing",
+)
+def read_one_routing_link(
+    model_id: int,
+    link_id: int,
+    db: Session = Depends(get_db),
+):
+    try:
+        return get_routing_link(db, model_id, link_id)
+    except ProductModelNotFoundError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+    except ProductModelRoutingNotFoundError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+
+
+@router.post(
+    "/{model_id}/routings",
+    response_model=ProductModelRoutingLinkRead,
+    status_code=status.HTTP_201_CREATED,
+    operation_id="create_product_model_routing",
+)
+def create_one_routing_link(
+    model_id: int,
+    payload: ProductModelRoutingLinkCreate,
+    db: Session = Depends(get_db),
+):
+    try:
+        return create_routing_link(db, model_id, payload)
+    except ProductModelNotFoundError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+    except ProductModelRoutingConflictError as error:
+        raise HTTPException(status_code=409, detail=str(error)) from error
+    except ProductModelRoutingValidationError as error:
+        raise HTTPException(status_code=422, detail=str(error)) from error
+
+
+@router.patch(
+    "/{model_id}/routings/{link_id}",
+    response_model=ProductModelRoutingLinkRead,
+    operation_id="update_product_model_routing",
+)
+def update_one_routing_link(
+    model_id: int,
+    link_id: int,
+    payload: ProductModelRoutingLinkUpdate,
+    db: Session = Depends(get_db),
+):
+    try:
+        return update_routing_link(db, model_id, link_id, payload)
+    except ProductModelNotFoundError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+    except ProductModelRoutingNotFoundError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+
+
+@router.delete(
+    "/{model_id}/routings/{link_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    operation_id="delete_product_model_routing",
+)
+def remove_one_routing_link(
+    model_id: int,
+    link_id: int,
+    db: Session = Depends(get_db),
+) -> None:
+    try:
+        delete_routing_link(db, model_id, link_id)
+    except ProductModelNotFoundError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+    except ProductModelRoutingNotFoundError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+
+
+@router.post(
+    "/{model_id}/routings/reorder",
+    response_model=list[ProductModelRoutingLinkRead],
+    operation_id="reorder_product_model_routings",
+)
+def reorder_model_routing_links(
+    model_id: int,
+    payload: ProductModelRoutingLinkReorder,
+    db: Session = Depends(get_db),
+):
+    try:
+        return reorder_routing_links(db, model_id, payload)
+    except ProductModelNotFoundError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+    except ProductModelRoutingValidationError as error:
+        raise HTTPException(status_code=422, detail=str(error)) from error
+
+
+@router.put(
+    "/{model_id}/routings/{link_id}/norms",
+    response_model=ProductModelRoutingLinkRead,
+    operation_id="replace_product_model_routing_norms",
+)
+def replace_one_routing_link_norms(
+    model_id: int,
+    link_id: int,
+    payload: ProductModelOperationNormReplace,
+    db: Session = Depends(get_db),
+):
+    try:
+        return replace_routing_link_norms(db, model_id, link_id, payload)
+    except ProductModelNotFoundError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+    except ProductModelRoutingNotFoundError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+    except ProductModelRoutingConflictError as error:
+        raise HTTPException(status_code=409, detail=str(error)) from error
+    except ProductModelRoutingValidationError as error:
         raise HTTPException(status_code=422, detail=str(error)) from error

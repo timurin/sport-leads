@@ -56,7 +56,7 @@ flowchart LR
 | Product model | `product_model_id` + article/name/size_type | live FK + snapshot | Product models (`6.1.*`); whitelist `6.1.11` |
 | Assembly variant | `assembly_variant_id` + name/total | live FK + snapshot | `6.1.12` |
 | Assembly operation lines | `assembly_operation_snapshots` | snapshot | Persisted; frontend map optional until Spec/TC |
-| VAT | `vat_rate_id` + percent | live FK + snapshot | VAT rates directory |
+| VAT | `vat_rate_id` + percent snapshot; computed `vat_amount` (`3.3.2`) | live FK + snapshot + computed | VAT rates directory; amounts tax-inclusive |
 | Qty / prices / discounts | commercial columns | live | Recalc service |
 | Technical card link / status | `TechnicalCard` per manufacturable line | live | `/production/tech-cards/[id]` + status (`9.4.1`; ADR-016) |
 

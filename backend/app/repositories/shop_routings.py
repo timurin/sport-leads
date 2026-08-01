@@ -9,12 +9,24 @@ def list_work_centers(
     *,
     search: str | None = None,
     active_only: bool = False,
+    production_stage_id: int | None = None,
+    production_stage_code: str | None = None,
     limit: int = 100,
     offset: int = 0,
 ) -> list[WorkCenter]:
     statement = select(WorkCenter)
     if active_only:
         statement = statement.where(WorkCenter.is_active.is_(True))
+    if production_stage_id is not None:
+        statement = statement.where(WorkCenter.production_stage_id == production_stage_id)
+    if production_stage_code and production_stage_code.strip():
+        from app.models.production_stage import ProductionStage
+
+        code = production_stage_code.strip().lower()
+        statement = statement.join(
+            ProductionStage,
+            ProductionStage.id == WorkCenter.production_stage_id,
+        ).where(func.lower(ProductionStage.code) == code)
     if search and search.strip():
         pattern = f"%{search.strip()}%"
         statement = statement.where(

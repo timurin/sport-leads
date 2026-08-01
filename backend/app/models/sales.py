@@ -13,12 +13,13 @@ from sqlalchemy import (
     ForeignKey,
     Index,
     Integer,
+    JSON,
     Numeric,
     String,
     Text,
     UniqueConstraint,
     func,
-    text,
+    text as sa_text,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -53,6 +54,26 @@ class SalesOrderStatus(str, Enum):
     SHIPPED = "shipped"
     COMPLETED = "completed"
     CANCELLED = "cancelled"
+
+
+class DesignApprovalStatus(str, Enum):
+    NOT_REQUIRED = "not_required"
+    PENDING = "pending"
+    IN_REVIEW = "in_review"
+    APPROVED = "approved"
+    REJECTED = "rejected"
+
+
+class OrderPaymentStatus(str, Enum):
+    UNPAID = "unpaid"
+    PARTIAL = "partial"
+    PAID = "paid"
+
+
+class MaterialReserveStatus(str, Enum):
+    NOT_REQUIRED = "not_required"
+    PENDING = "pending"
+    RESERVED = "reserved"
 
 
 class LeadEventType(str, Enum):
@@ -280,8 +301,8 @@ class LeadContact(Base):
             "uq_lead_contacts_primary_per_lead",
             "lead_id",
             unique=True,
-            postgresql_where=text("is_primary"),
-            sqlite_where=text("is_primary"),
+            postgresql_where=sa_text("is_primary"),
+            sqlite_where=sa_text("is_primary"),
         ),
     )
 
@@ -310,7 +331,29 @@ class LeadContact(Base):
 
 class SalesOrder(Base):
     __tablename__ = "sales_orders"
-    __table_args__ = (UniqueConstraint("lead_id", name="uq_sales_orders_lead_id"),)
+    __table_args__ = (
+        UniqueConstraint("lead_id", name="uq_sales_orders_lead_id"),
+        CheckConstraint(
+            "discount_percent IS NULL OR (discount_percent >= 0 AND discount_percent <= 100)",
+            name="ck_sales_orders_discount_percent_range",
+        ),
+        CheckConstraint(
+            "discount_amount >= 0",
+            name="ck_sales_orders_discount_amount_nonnegative",
+        ),
+        CheckConstraint(
+            "vat_amount >= 0",
+            name="ck_sales_orders_vat_amount_nonnegative",
+        ),
+        CheckConstraint(
+            "length(currency_code) = 3",
+            name="ck_sales_orders_currency_code_iso4217_length",
+        ),
+        CheckConstraint(
+            "paid_amount >= 0",
+            name="ck_sales_orders_paid_amount_nonnegative",
+        ),
+    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     number: Mapped[str] = mapped_column(String(50), nullable=False, unique=True, index=True)
@@ -329,6 +372,30 @@ class SalesOrder(Base):
         default=SalesOrderStatus.NEW,
         index=True,
     )
+    design_approval_status: Mapped[DesignApprovalStatus] = mapped_column(
+        enum_type(DesignApprovalStatus, "design_approval_status"),
+        nullable=False,
+        default=DesignApprovalStatus.NOT_REQUIRED,
+        server_default=sa_text("'not_required'"),
+        index=True,
+    )
+    payment_status: Mapped[OrderPaymentStatus] = mapped_column(
+        enum_type(OrderPaymentStatus, "order_payment_status"),
+        nullable=False,
+        default=OrderPaymentStatus.UNPAID,
+        server_default=sa_text("'unpaid'"),
+        index=True,
+    )
+    paid_amount: Mapped[Decimal] = mapped_column(
+        Numeric(14, 2), nullable=False, default=Decimal("0.00")
+    )
+    material_reserve_status: Mapped[MaterialReserveStatus] = mapped_column(
+        enum_type(MaterialReserveStatus, "material_reserve_status"),
+        nullable=False,
+        default=MaterialReserveStatus.NOT_REQUIRED,
+        server_default=sa_text("'not_required'"),
+        index=True,
+    )
     responsible_id: Mapped[int | None] = mapped_column(
         ForeignKey("sales_users.id", ondelete="SET NULL"), index=True
     )
@@ -338,6 +405,16 @@ class SalesOrder(Base):
     sport: Mapped[str | None] = mapped_column(String(150))
     quantity: Mapped[int | None] = mapped_column(Integer)
     amount: Mapped[Decimal | None] = mapped_column(Numeric(14, 2))
+    discount_percent: Mapped[Decimal | None] = mapped_column(Numeric(5, 2), nullable=True)
+    discount_amount: Mapped[Decimal] = mapped_column(
+        Numeric(14, 2), nullable=False, default=Decimal("0.00")
+    )
+    vat_amount: Mapped[Decimal] = mapped_column(
+        Numeric(14, 2), nullable=False, default=Decimal("0.00")
+    )
+    currency_code: Mapped[str] = mapped_column(
+        String(3), nullable=False, default="RUB", server_default=sa_text("'RUB'")
+    )
     desired_date: Mapped[date | None] = mapped_column(Date)
     source: Mapped[str | None] = mapped_column(String(150), index=True)
     created_at: Mapped[datetime] = mapped_column(
@@ -370,6 +447,7 @@ class SalesOrderItem(Base):
         ),
         CheckConstraint("discount_amount >= 0", name="ck_sales_order_items_discount_amount_nonnegative"),
         CheckConstraint("line_amount >= 0", name="ck_sales_order_items_line_amount_nonnegative"),
+        CheckConstraint("vat_amount >= 0", name="ck_sales_order_items_vat_amount_nonnegative"),
         CheckConstraint(
             "product_model_size_type IS NULL OR product_model_size_type IN ('men', 'women', 'kids')",
             name="ck_sales_order_items_product_model_size_type",
@@ -401,10 +479,18 @@ class SalesOrderItem(Base):
     )
     assembly_variant_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
     assembly_variant_total_cost: Mapped[Decimal | None] = mapped_column(Numeric(14, 2), nullable=True)
+    routing_template_id: Mapped[int | None] = mapped_column(
+        ForeignKey("shop_routing_templates.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+    routing_template_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
     vat_rate_id: Mapped[int | None] = mapped_column(
         ForeignKey("vat_rates.id", ondelete="SET NULL"), nullable=True, index=True
     )
     vat_rate_percent: Mapped[Decimal | None] = mapped_column(Numeric(5, 2), nullable=True)
+    price_includes_vat: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    vat_amount: Mapped[Decimal] = mapped_column(Numeric(14, 2), nullable=False, default=Decimal("0.00"))
     position: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
     snapshot_name: Mapped[str] = mapped_column(String(255), nullable=False)
     size_range: Mapped[str | None] = mapped_column(String(255), nullable=True)
@@ -467,6 +553,10 @@ class SalesOrderItemAssemblyOperationSnapshot(Base):
             name="ck_sales_order_item_assembly_op_snapshot_cost",
         ),
         CheckConstraint(
+            "quantity_per_item >= 1",
+            name="ck_sales_order_item_assembly_op_snapshot_qty",
+        ),
+        CheckConstraint(
             "duration_seconds >= 0",
             name="ck_sales_order_item_assembly_op_snapshot_duration",
         ),
@@ -481,6 +571,7 @@ class SalesOrderItemAssemblyOperationSnapshot(Base):
     sequence: Mapped[int] = mapped_column(Integer, nullable=False)
     operation_name: Mapped[str] = mapped_column(String(255), nullable=False)
     cost: Mapped[Decimal] = mapped_column(Numeric(14, 2), nullable=False, default=Decimal("0"))
+    quantity_per_item: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
     duration_seconds: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     sewing_operation_id: Mapped[int | None] = mapped_column(
         ForeignKey("sewing_operations.id", ondelete="SET NULL"), nullable=True
@@ -518,13 +609,84 @@ class LeadTask(Base):
         ForeignKey("leads.id", ondelete="CASCADE"), nullable=False, index=True
     )
     title: Mapped[str] = mapped_column(String(255), nullable=False)
+    task_type: Mapped[str] = mapped_column(
+        String(50), nullable=False, default="other", server_default="other"
+    )
+    priority: Mapped[str] = mapped_column(
+        String(20), nullable=False, default="medium", server_default="medium"
+    )
+    description: Mapped[str | None] = mapped_column(Text)
+    result: Mapped[str | None] = mapped_column(Text)
     status: Mapped[LeadTaskStatus] = mapped_column(
         enum_type(LeadTaskStatus, "lead_task_status"),
         nullable=False,
         default=LeadTaskStatus.OPEN,
         index=True,
     )
+    due_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), index=True)
+    assigned_to_id: Mapped[int | None] = mapped_column(
+        ForeignKey("sales_users.id", ondelete="SET NULL"), index=True
+    )
+    created_by_id: Mapped[int | None] = mapped_column(
+        ForeignKey("sales_users.id", ondelete="SET NULL")
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class LeadNote(Base):
+    __tablename__ = "lead_notes"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    lead_id: Mapped[int] = mapped_column(
+        ForeignKey("leads.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    body: Mapped[str] = mapped_column(Text, nullable=False)
+    author_id: Mapped[int | None] = mapped_column(
+        ForeignKey("sales_users.id", ondelete="SET NULL"), index=True
+    )
+    is_pinned: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, server_default="false"
+    )
+    mentioned_user_ids: Mapped[list] = mapped_column(
+        JSON, nullable=False, default=list, server_default=sa_text("'[]'")
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now(), index=True
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now()
+    )
+
+
+class LeadMessage(Base):
+    __tablename__ = "lead_messages"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    lead_id: Mapped[int] = mapped_column(
+        ForeignKey("leads.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    channel: Mapped[str] = mapped_column(String(30), nullable=False, index=True)
+    direction: Mapped[str] = mapped_column(String(20), nullable=False, default="outgoing")
+    text: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    status: Mapped[str] = mapped_column(String(20), nullable=False, default="sent")
+    author_id: Mapped[int | None] = mapped_column(
+        ForeignKey("sales_users.id", ondelete="SET NULL"), index=True
+    )
+    sender_name: Mapped[str | None] = mapped_column(String(255))
+    recipient_name: Mapped[str | None] = mapped_column(String(255))
+    external_id: Mapped[str | None] = mapped_column(String(255))
+    attachments: Mapped[list] = mapped_column(
+        JSON, nullable=False, default=list, server_default=sa_text("'[]'")
+    )
+    is_mock: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=True, server_default="true"
+    )
+    sent_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now(), index=True
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )

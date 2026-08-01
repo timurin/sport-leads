@@ -27,11 +27,11 @@ import {
 } from "@/app/(workspace)/sales/leads/[leadId]/lead-header-actions";
 import { createLead as createApiLeadAction } from "@/app/(workspace)/sales/leads/lead-create-actions";
 import { saveLeadStageConfiguration } from "@/app/(workspace)/sales/leads/lead-stage-actions";
-import { salesManagers } from "@/lib/demo-data/sales";
 import {
   getLeadStagePersistenceDecision,
   resolveLeadStageAfterPersistence,
 } from "@/lib/sales/lead-stage-persistence";
+import { toWorkspaceLead } from "@/lib/sales/lead-list-mapping";
 import {
   getActiveLeadStages,
   getDefaultLeadStages,
@@ -49,40 +49,12 @@ const systemDefinitions = [
   { id: "rejected", title: "Отказ", accentClass: "bg-red-500" },
 ] as const;
 
-const defaultStageIds = new Set(getDefaultLeadStages().map((stage) => stage.id));
-
-function normalizeLead(lead: Lead, index: number): WorkspaceLead {
-  if (lead.status === "won") {
-    return {
-      ...lead,
-      stageId: "proposal",
-      status: "completed",
-      result: "converted",
-      completedAt: "15 июля 2026",
-      completedBy: lead.responsible,
-      convertedOrderId: `order-demo-${index}`,
-      convertedOrderNumber: `№${1060 + index}`,
-    };
-  }
-
-  if (lead.status === "unqualified") {
-    return {
-      ...lead,
-      stageId: "qualification",
-      status: "completed",
-      result: "rejected",
-      completedAt: "14 июля 2026",
-      completedBy: lead.responsible,
-      rejectionReason: index % 2 ? "Другое" : "Нет бюджета",
-      rejectionComment: index % 2 ? "Клиент вернётся к обсуждению позже" : undefined,
-    };
-  }
-
-  const stageId = lead.stageId ?? (lead.status === "proposal" && index % 2
-    ? "waiting"
-    : defaultStageIds.has(lead.status) ? lead.status : "new");
-
-  return { ...lead, stageId };
+function formatNowLabel(): string {
+  return new Intl.DateTimeFormat("ru-RU", {
+    dateStyle: "medium",
+    timeStyle: "short",
+    timeZone: "Europe/Moscow",
+  }).format(new Date());
 }
 function boardStatus(lead: WorkspaceLead): string {
   if (lead.result === "converted") {
@@ -99,15 +71,13 @@ function boardStatus(lead: WorkspaceLead): string {
 export function LeadWorkspace({
   initialLeads,
   initialStages,
-  dataOrigin,
   loadError,
 }: {
   initialLeads: Lead[];
   initialStages: LeadStageConfig[];
-  dataOrigin: "api" | "demo";
   loadError?: string;
 }) {
-  const [leads, setLeads] = useState<WorkspaceLead[]>(() => initialLeads.map(normalizeLead));
+  const [leads, setLeads] = useState<WorkspaceLead[]>(() => initialLeads.map(toWorkspaceLead));
   const [stages, setStages] = useState<LeadStageConfig[]>(() => sortLeadStages(initialStages));
   const [view, setView] = useState<LeadView>("active");
   const [query, setQuery] = useState("");
@@ -128,11 +98,8 @@ export function LeadWorkspace({
     [activeStages],
   );
   const responsibleOptions = useMemo(() => {
-    const names = new Set([
-      ...salesManagers.map((manager) => manager.name),
-      ...leads.map((lead) => lead.responsible.name),
-    ]);
-    return [...names].filter(Boolean).sort((first, second) => first.localeCompare(second, "ru"));
+    const names = new Set(leads.map((lead) => lead.responsible.name).filter(Boolean));
+    return [...names].sort((first, second) => first.localeCompare(second, "ru"));
   }, [leads]);
   const stageLeadCounts = useMemo(
     () => leads.reduce<Record<string, number>>((counts, lead) => {
@@ -206,7 +173,7 @@ export function LeadWorkspace({
             ...lead,
             status: "completed",
             result: "converted",
-            completedAt: "Сохранено backend",
+            completedAt: formatNowLabel(),
             completedBy: lead.responsible,
             convertedOrderId: result.orderId,
             convertedOrderNumber: result.orderNumber,
@@ -236,7 +203,7 @@ export function LeadWorkspace({
             ...lead,
             status: "completed",
             result: "rejected",
-            completedAt: "16 июля 2026, 18:00",
+            completedAt: formatNowLabel(),
             completedBy: lead.responsible,
             rejectionReason: reason.name,
             rejectionComment: comment || undefined,
@@ -250,7 +217,7 @@ export function LeadWorkspace({
   async function createLead(draft: Parameters<typeof createApiLeadAction>[0]) {
     const result = await createApiLeadAction(draft);
     if (result.ok) {
-      setLeads((current) => [normalizeLead(result.lead, current.length), ...current]);
+      setLeads((current) => [toWorkspaceLead(result.lead), ...current]);
       setView("active");
       setRevision((value) => value + 1);
     }
@@ -384,7 +351,7 @@ export function LeadWorkspace({
         >
           {loadError}
         </InlineAlert>
-      ) : dataOrigin === "api" ? (
+      ) : (
         <InlineAlert
           className="rounded-none border-x-0 border-t-0 border-b lg:px-portal-6"
           tone="success"
@@ -392,7 +359,7 @@ export function LeadWorkspace({
         >
           Лиды загружены из backend.
         </InlineAlert>
-      ) : null}
+      )}
 
       <section
         className="border-b border-portal-border bg-portal-surface-secondary px-portal-4 py-portal-4 lg:px-portal-6"
@@ -437,7 +404,7 @@ export function LeadWorkspace({
               currentLead.id,
               previousStage,
               move.targetColumnId,
-              dataOrigin,
+              "api",
             );
             if (!decision.shouldPersist) {
               if (decision.reason === "unchanged") {

@@ -3,7 +3,7 @@ import test from "node:test";
 
 import { getOrderCardSectionVisibility } from "./order-card-view-mode.ts";
 
-test("all mode shows every order card section including documents and tech cards", () => {
+test("all mode shows core sections but hides documents", () => {
   const visibility = getOrderCardSectionVisibility("all");
   assert.equal(visibility.info, true);
   assert.equal(visibility.metrics, true);
@@ -12,19 +12,18 @@ test("all mode shows every order card section including documents and tech cards
   assert.equal(visibility.comments, true);
   assert.equal(visibility.tasks, true);
   assert.equal(visibility.communication, true);
-  assert.equal(visibility.documents, true);
+  assert.equal(visibility.documents, false);
   assert.equal(visibility.techCards, true);
 });
 
-test("info mode keeps only requisites and metrics", () => {
-  const visibility = getOrderCardSectionVisibility("info");
-  assert.deepEqual(visibility, {
+test("info mode keeps requisites, metrics, comments and tasks", () => {
+  assert.deepEqual(getOrderCardSectionVisibility("info"), {
     info: true,
     metrics: true,
     items: false,
     history: false,
-    comments: false,
-    tasks: false,
+    comments: true,
+    tasks: true,
     communication: false,
     documents: false,
     techCards: false,

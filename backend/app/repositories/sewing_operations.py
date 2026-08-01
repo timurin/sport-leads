@@ -1,7 +1,11 @@
 from sqlalchemy import func, select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from app.models.sewing_operation import SewingOperation
+
+
+def _with_work_centers():
+    return selectinload(SewingOperation.work_centers)
 
 
 def list_sewing_operations(
@@ -11,7 +15,7 @@ def list_sewing_operations(
     limit: int = 100,
     offset: int = 0,
 ) -> list[SewingOperation]:
-    statement = select(SewingOperation)
+    statement = select(SewingOperation).options(_with_work_centers())
     if search and search.strip():
         pattern = f"%{search.strip()}%"
         statement = statement.where(SewingOperation.name.ilike(pattern))
@@ -30,7 +34,9 @@ def get_sewing_operations_by_ids(
         return []
     rows = list(
         db.scalars(
-            select(SewingOperation).where(SewingOperation.id.in_(operation_ids))
+            select(SewingOperation)
+            .options(_with_work_centers())
+            .where(SewingOperation.id.in_(operation_ids))
         ).all()
     )
     by_id = {row.id: row for row in rows}
@@ -38,7 +44,11 @@ def get_sewing_operations_by_ids(
 
 
 def get_sewing_operation(db: Session, operation_id: int) -> SewingOperation | None:
-    return db.get(SewingOperation, operation_id)
+    return db.scalars(
+        select(SewingOperation)
+        .options(_with_work_centers())
+        .where(SewingOperation.id == operation_id)
+    ).first()
 
 
 def get_sewing_operation_by_name(db: Session, name: str) -> SewingOperation | None:

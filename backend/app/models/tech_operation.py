@@ -6,6 +6,7 @@ Distinct from Stage 6 SewingOperation (name + cost). Belongs to a ProductionStag
 from __future__ import annotations
 
 from datetime import datetime
+from decimal import Decimal
 
 from sqlalchemy import (
     Boolean,
@@ -13,6 +14,7 @@ from sqlalchemy import (
     DateTime,
     ForeignKey,
     Integer,
+    Numeric,
     String,
     UniqueConstraint,
     func,
@@ -69,3 +71,54 @@ class TechOperation(Base):
     )
 
     production_stage = relationship("ProductionStage")
+    required_materials: Mapped[list["TechOperationRequiredMaterial"]] = relationship(
+        back_populates="tech_operation",
+        cascade="all, delete-orphan",
+        order_by="TechOperationRequiredMaterial.id",
+    )
+
+
+class TechOperationRequiredMaterial(Base):
+    """Default MATERIAL consumption per one TechOperation volume unit."""
+
+    __tablename__ = "tech_operation_required_materials"
+    __table_args__ = (
+        CheckConstraint(
+            "quantity >= 0",
+            name="ck_tech_operation_required_materials_quantity_nonnegative",
+        ),
+        UniqueConstraint(
+            "tech_operation_id",
+            "nomenclature_id",
+            name="uq_tech_operation_required_materials_pair",
+        ),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    tech_operation_id: Mapped[int] = mapped_column(
+        ForeignKey("tech_operations.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    nomenclature_id: Mapped[int] = mapped_column(
+        ForeignKey("nomenclatures.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
+    )
+    quantity: Mapped[Decimal] = mapped_column(
+        Numeric(14, 3), nullable=False, default=Decimal("0")
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+        onupdate=func.now(),
+    )
+
+    tech_operation: Mapped[TechOperation] = relationship(back_populates="required_materials")
+    nomenclature = relationship("Nomenclature")

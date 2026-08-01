@@ -57,6 +57,55 @@ export function filterProductionStages(
   );
 }
 
+/** Stable catalog order step (10, 20, 30…). */
+export const PRODUCTION_STAGE_ORDER_STEP = 10;
+
+export function nextProductionStageSortOrder(
+  stages: ReadonlyArray<Pick<ProductionStage, "sort_order">>,
+): number {
+  if (stages.length === 0) return PRODUCTION_STAGE_ORDER_STEP;
+  const max = Math.max(...stages.map((stage) => stage.sort_order));
+  return max + PRODUCTION_STAGE_ORDER_STEP;
+}
+
+export function applyProductionStageOrder<T extends { id: number; sort_order: number }>(
+  stages: readonly T[],
+  orderedIds: readonly number[],
+): T[] {
+  const byId = new Map(stages.map((stage) => [stage.id, stage]));
+  const next: T[] = [];
+  orderedIds.forEach((id, index) => {
+    const stage = byId.get(id);
+    if (!stage) return;
+    next.push({
+      ...stage,
+      sort_order: (index + 1) * PRODUCTION_STAGE_ORDER_STEP,
+    });
+  });
+  return next;
+}
+
+export function moveProductionStageInOrder<T extends { id: number; sort_order: number }>(
+  stages: readonly T[],
+  stageId: number,
+  direction: -1 | 1,
+): T[] | null {
+  const ordered = [...stages].sort(
+    (a, b) => a.sort_order - b.sort_order || a.id - b.id,
+  );
+  const index = ordered.findIndex((stage) => stage.id === stageId);
+  if (index < 0) return null;
+  const target = index + direction;
+  if (target < 0 || target >= ordered.length) return null;
+  const swapped = [...ordered];
+  const [moved] = swapped.splice(index, 1);
+  swapped.splice(target, 0, moved);
+  return applyProductionStageOrder(
+    swapped,
+    swapped.map((stage) => stage.id),
+  );
+}
+
 export async function getProductionStages(
   params: ProductionStageListParams = {},
 ): Promise<ProductionStage[]> {

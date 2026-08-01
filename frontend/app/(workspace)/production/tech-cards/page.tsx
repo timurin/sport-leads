@@ -28,12 +28,16 @@ export default async function ProductionTechCardsPage({
   const orderId = params.orderId?.trim() || undefined;
   const state = await loadCards(orderId);
 
-  if (!state.ok) {
-    throw new Error(state.message ?? "Не удалось загрузить техкарты");
-  }
-
   return (
     <PageLayout className="flex min-h-0 flex-1 flex-col">
+      {!state.ok ? (
+        <div
+          className="p-portal-6 text-portal-body text-portal-danger"
+          role="alert"
+        >
+          {state.message ?? "Не удалось загрузить техкарты"}
+        </div>
+      ) : null}
       <Suspense
         fallback={
           <div className="p-portal-6 text-portal-body text-portal-muted">

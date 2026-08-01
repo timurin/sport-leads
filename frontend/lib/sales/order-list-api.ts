@@ -94,12 +94,33 @@ function apiBaseUrl() {
 }
 
 export async function getOrderList(): Promise<OrderListResult> {
-  const response = await fetch(`${apiBaseUrl()}/orders?limit=500`, { cache: "no-store" });
-  if (!response.ok) {
-    return { ok: false, message: `Не удалось загрузить заказы из backend (${response.status}).` };
+  try {
+    const response = await fetch(`${apiBaseUrl()}/orders?limit=500`, { cache: "no-store" });
+    if (!response.ok) {
+      const payload = (await response.json().catch(() => null)) as
+        | { detail?: string | { msg?: string }[] }
+        | null;
+      const detail =
+        typeof payload?.detail === "string"
+          ? payload.detail
+          : Array.isArray(payload?.detail)
+            ? payload.detail.map((item) => item.msg).filter(Boolean).join("; ")
+            : null;
+      return {
+        ok: false,
+        message:
+          detail
+          || `Не удалось загрузить заказы из backend (${response.status}).`,
+      };
+    }
+    const orders = await response.json() as ApiSalesOrder[];
+    return { ok: true, orders, columns: fromApiSalesOrders(orders) };
+  } catch {
+    return {
+      ok: false,
+      message: "Не удалось связаться с backend. Список заказов не подставлен из demo.",
+    };
   }
-  const orders = await response.json() as ApiSalesOrder[];
-  return { ok: true, orders, columns: fromApiSalesOrders(orders) };
 }
 
 export async function updateApiOrderStatus(
@@ -114,7 +135,19 @@ export async function updateApiOrderStatus(
   });
 
   if (!response.ok) {
-    return { ok: false, message: `Backend не сохранил статус заказа (${response.status}).` };
+    const payload = (await response.json().catch(() => null)) as
+      | { detail?: string | { msg?: string }[] }
+      | null;
+    const detail =
+      typeof payload?.detail === "string"
+        ? payload.detail
+        : Array.isArray(payload?.detail)
+          ? payload.detail.map((item) => item.msg).filter(Boolean).join("; ")
+          : null;
+    return {
+      ok: false,
+      message: detail || `Backend не сохранил статус заказа (${response.status}).`,
+    };
   }
 
   return { ok: true, order: await response.json() as ApiSalesOrder };

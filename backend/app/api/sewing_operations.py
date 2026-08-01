@@ -49,6 +49,10 @@ def create_sewing_operation_endpoint(
         return create_sewing_operation(db, payload)
     except SewingOperationConflictError as error:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(error)) from error
+    except SewingOperationValidationError as error:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(error)
+        ) from error
 
 
 @router.get(

@@ -126,6 +126,51 @@ export async function updateNomenclatureRequisites(
   return fromApiNomenclature(updated);
 }
 
+/** Soft archive / restore — only `is_active` (roadmap 4.3.3.4 bulk). */
+export async function setNomenclatureActive(
+  nomenclatureId: number,
+  isActive: boolean,
+): Promise<Nomenclature> {
+  const updated = await mutate(`/${nomenclatureId}`, "PATCH", {
+    is_active: isActive,
+  });
+  if (!updated) {
+    throw new Error("Backend не вернул карточку номенклатуры.");
+  }
+  revalidatePath("/settings/catalogs/nomenclature");
+  revalidatePath(`/settings/catalogs/nomenclature/${nomenclatureId}`);
+  revalidatePath("/warehouse/stock");
+  return fromApiNomenclature(updated);
+}
+
+export async function bulkSetNomenclatureActive(
+  nomenclatureIds: number[],
+  isActive: boolean,
+): Promise<{ updated_count: number }> {
+  const uniqueIds = [...new Set(nomenclatureIds.filter((id) => Number.isInteger(id) && id > 0))];
+  if (uniqueIds.length === 0) {
+    return { updated_count: 0 };
+  }
+  let updatedCount = 0;
+  const errors: string[] = [];
+  for (const id of uniqueIds) {
+    try {
+      await setNomenclatureActive(id, isActive);
+      updatedCount += 1;
+    } catch (caught) {
+      errors.push(
+        `#${id}: ${caught instanceof Error ? caught.message : "ошибка"}`,
+      );
+    }
+  }
+  if (errors.length > 0) {
+    throw new Error(
+      `Обновлено ${updatedCount} из ${uniqueIds.length}. ${errors.slice(0, 3).join("; ")}`,
+    );
+  }
+  return { updated_count: updatedCount };
+}
+
 export async function createUnitOfMeasure(formData: FormData) {
   await mutate("/units-of-measure", "POST", {
     code: text(formData, "code"), name: text(formData, "name"), symbol: text(formData, "symbol"),

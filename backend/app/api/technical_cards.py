@@ -1,16 +1,23 @@
 """Technical cards API (Stage 9.2.1 generate + Stage 9.2.2 stage machine)."""
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 
 from app.database.session import get_db
+from app.models.technical_card import TechnicalCard
 from app.schemas.technical_card import (
     OrderManufacturingCompletenessRead,
+    TechnicalCardApplyRoutingRequest,
     TechnicalCardApplySpecification,
+    TechnicalCardCompositionFactQtyUpdate,
     TechnicalCardCompositionReplace,
     TechnicalCardGenerateRead,
     TechnicalCardGenerateRequest,
     TechnicalCardListRead,
+    TechnicalCardMediaCreate,
+    TechnicalCardMediaRead,
+    TechnicalCardMediaUpdate,
     TechnicalCardOperationLineRead,
     TechnicalCardOperationLinesPrefillRead,
     TechnicalCardOperationLinesReplace,
@@ -18,34 +25,50 @@ from app.schemas.technical_card import (
     TechnicalCardPreviewRead,
     TechnicalCardRead,
     TechnicalCardStageCompleteRequest,
+    TechnicalCardStageFactRequest,
+    TechnicalCardPlannedWorkCenterRequest,
     TechnicalCardStageStartRequest,
     TechnicalCardUnitLineRead,
     TechnicalCardUnitLinesBulkUpdate,
     TechnicalCardUnitLinesImport,
     TechnicalCardUnitLinesReplace,
     TechnicalCardUnitLineUpdate,
+    TechnicalCardSettingsRead,
+    TechnicalCardSettingsUpdate,
 )
 from app.services.order_manufacturing_completeness import (
     OrderManufacturingNotFoundError,
     compute_order_manufacturing_completeness,
 )
+from app.services.technical_card_settings import (
+    get_technical_card_settings,
+    update_technical_card_settings,
+)
 from app.services.technical_card_stages import (
+    assign_planned_work_center,
     complete_stage,
     rollback_stage,
+    rollback_stage_for_shop_kanban,
     start_stage,
     start_technical_card,
+    update_stage_fact,
 )
 from app.services.technical_cards import (
     TechnicalCardConflictError,
     TechnicalCardNotFoundError,
     TechnicalCardValidationError,
+    add_technical_card_media,
+    apply_routing_template,
     apply_specification_version,
     bulk_update_unit_lines,
     cancel_draft_technical_card,
+    delete_technical_card_media,
     generate_technical_cards,
     get_technical_card,
+    get_technical_card_media,
     import_unit_lines,
     list_operation_lines,
+    list_technical_card_media,
     list_technical_cards,
     list_technical_cards_for_order,
     list_unit_lines,
@@ -56,7 +79,13 @@ from app.services.technical_cards import (
     replace_operation_lines,
     replace_unit_lines,
     reset_unit_lines_from_order_defaults,
+    delete_composition_line,
+    set_composition_line_fact_qty,
+    set_technical_card_media_primary,
     sync_technical_card_unit_lines,
+    tech_card_media_content_url,
+    technical_card_media_path,
+    to_technical_card_read,
     update_operation_line_volume,
     update_unit_line,
 )
@@ -76,6 +105,46 @@ def _http_error(error: Exception) -> HTTPException:
     return HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(error))
 
 
+def _card_read(db: Session, card: TechnicalCard) -> TechnicalCardRead:
+    return to_technical_card_read(db, card)
+
+
+def _media_read(item) -> TechnicalCardMediaRead:
+    return TechnicalCardMediaRead(
+        id=item.id,
+        technical_card_id=item.technical_card_id,
+        filename=item.filename,
+        mime_type=item.mime_type,
+        file_size=item.file_size,
+        sort_order=item.sort_order,
+        is_primary=item.is_primary,
+        content_url=tech_card_media_content_url(item.technical_card_id, item.id),
+        created_at=item.created_at,
+        updated_at=item.updated_at,
+    )
+
+
+@router.get(
+    "/technical-card-settings",
+    response_model=TechnicalCardSettingsRead,
+    operation_id="get_technical_card_settings",
+)
+def read_technical_card_settings(db: Session = Depends(get_db)) -> TechnicalCardSettingsRead:
+    return get_technical_card_settings(db)
+
+
+@router.put(
+    "/technical-card-settings",
+    response_model=TechnicalCardSettingsRead,
+    operation_id="update_technical_card_settings",
+)
+def update_technical_card_settings_endpoint(
+    payload: TechnicalCardSettingsUpdate,
+    db: Session = Depends(get_db),
+) -> TechnicalCardSettingsRead:
+    return update_technical_card_settings(db, payload)
+
+
 @router.get(
     "/orders/{order_id}/technical-cards",
     response_model=list[TechnicalCardRead],
@@ -88,7 +157,7 @@ def list_order_technical_cards(
         rows = list_technical_cards_for_order(db, order_id)
     except TechnicalCardNotFoundError as error:
         raise _http_error(error) from error
-    return [TechnicalCardRead.model_validate(row) for row in rows]
+    return [_card_read(db, row) for row in rows]
 
 
 @router.get(
@@ -152,8 +221,8 @@ def generate_order_technical_cards(
         raise _http_error(error) from error
     return TechnicalCardGenerateRead(
         sales_order_id=result.sales_order_id,
-        created=[TechnicalCardRead.model_validate(row) for row in result.created],
-        revived=[TechnicalCardRead.model_validate(row) for row in result.revived],
+        created=[_card_read(db, row) for row in result.created],
+        revived=[_card_read(db, row) for row in result.revived],
         skipped=result.skipped,
     )
 
@@ -183,9 +252,10 @@ def read_technical_cards(
     )
     result: list[TechnicalCardListRead] = []
     for card, order_number in rows:
-        item = TechnicalCardListRead.model_validate(card)
-        item.order_number = order_number
-        result.append(item)
+        read_card = _card_read(db, card)
+        data = read_card.model_dump()
+        data["order_number"] = order_number
+        result.append(TechnicalCardListRead.model_validate(data))
     return result
 
 
@@ -196,9 +266,111 @@ def read_technical_cards(
 )
 def read_technical_card(card_id: int, db: Session = Depends(get_db)) -> TechnicalCardRead:
     try:
-        return TechnicalCardRead.model_validate(get_technical_card(db, card_id))
+        return _card_read(db, get_technical_card(db, card_id))
     except TechnicalCardNotFoundError as error:
         raise _http_error(error) from error
+
+
+@router.post(
+    "/technical-cards/{card_id}/apply-routing",
+    response_model=TechnicalCardRead,
+    operation_id="apply_technical_card_routing",
+)
+def apply_routing_endpoint(
+    card_id: int,
+    payload: TechnicalCardApplyRoutingRequest,
+    db: Session = Depends(get_db),
+) -> TechnicalCardRead:
+    try:
+        return _card_read(
+            db, apply_routing_template(db, card_id, payload.routing_template_id)
+        )
+    except (
+        TechnicalCardNotFoundError,
+        TechnicalCardConflictError,
+        TechnicalCardValidationError,
+    ) as error:
+        raise _http_error(error) from error
+
+
+@router.get(
+    "/technical-cards/{card_id}/media",
+    response_model=list[TechnicalCardMediaRead],
+    operation_id="list_technical_card_media",
+)
+def list_media_endpoint(
+    card_id: int, db: Session = Depends(get_db)
+) -> list[TechnicalCardMediaRead]:
+    try:
+        return [_media_read(item) for item in list_technical_card_media(db, card_id)]
+    except TechnicalCardNotFoundError as error:
+        raise _http_error(error) from error
+
+
+@router.post(
+    "/technical-cards/{card_id}/media",
+    response_model=TechnicalCardMediaRead,
+    status_code=status.HTTP_201_CREATED,
+    operation_id="add_technical_card_media",
+)
+def add_media_endpoint(
+    card_id: int,
+    payload: TechnicalCardMediaCreate,
+    db: Session = Depends(get_db),
+) -> TechnicalCardMediaRead:
+    try:
+        return _media_read(add_technical_card_media(db, card_id, payload))
+    except (TechnicalCardNotFoundError, TechnicalCardValidationError) as error:
+        raise _http_error(error) from error
+
+
+@router.patch(
+    "/technical-cards/{card_id}/media/{media_id}",
+    response_model=TechnicalCardMediaRead,
+    operation_id="update_technical_card_media",
+)
+def update_media_endpoint(
+    card_id: int,
+    media_id: int,
+    payload: TechnicalCardMediaUpdate,
+    db: Session = Depends(get_db),
+) -> TechnicalCardMediaRead:
+    try:
+        if payload.is_primary is True:
+            item = set_technical_card_media_primary(db, card_id, media_id)
+        else:
+            item = get_technical_card_media(db, card_id, media_id)
+        return _media_read(item)
+    except (TechnicalCardNotFoundError, TechnicalCardValidationError) as error:
+        raise _http_error(error) from error
+
+
+@router.delete(
+    "/technical-cards/{card_id}/media/{media_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    operation_id="delete_technical_card_media",
+)
+def delete_media_endpoint(
+    card_id: int, media_id: int, db: Session = Depends(get_db)
+) -> None:
+    try:
+        delete_technical_card_media(db, card_id, media_id)
+    except (TechnicalCardNotFoundError, TechnicalCardValidationError) as error:
+        raise _http_error(error) from error
+
+
+@router.get(
+    "/technical-cards/{card_id}/media/{media_id}/content",
+    operation_id="get_technical_card_media_content",
+)
+def read_media_content_endpoint(
+    card_id: int, media_id: int, db: Session = Depends(get_db)
+):
+    try:
+        path, mime_type = technical_card_media_path(db, card_id, media_id)
+    except TechnicalCardNotFoundError as error:
+        raise _http_error(error) from error
+    return FileResponse(path, media_type=mime_type)
 
 
 @router.post(
@@ -210,9 +382,7 @@ def sync_unit_lines_endpoint(
     card_id: int, db: Session = Depends(get_db)
 ) -> TechnicalCardRead:
     try:
-        return TechnicalCardRead.model_validate(
-            sync_technical_card_unit_lines(db, card_id)
-        )
+        return _card_read(db, sync_technical_card_unit_lines(db, card_id))
     except (
         TechnicalCardNotFoundError,
         TechnicalCardValidationError,
@@ -229,9 +399,7 @@ def cancel_draft_endpoint(
     card_id: int, db: Session = Depends(get_db)
 ) -> TechnicalCardRead:
     try:
-        return TechnicalCardRead.model_validate(
-            cancel_draft_technical_card(db, card_id)
-        )
+        return _card_read(db, cancel_draft_technical_card(db, card_id))
     except (
         TechnicalCardNotFoundError,
         TechnicalCardConflictError,
@@ -248,7 +416,7 @@ def start_technical_card_endpoint(
     card_id: int, db: Session = Depends(get_db)
 ) -> TechnicalCardRead:
     try:
-        return TechnicalCardRead.model_validate(start_technical_card(db, card_id))
+        return _card_read(db, start_technical_card(db, card_id))
     except (
         TechnicalCardNotFoundError,
         TechnicalCardConflictError,
@@ -269,9 +437,7 @@ def start_stage_endpoint(
     db: Session = Depends(get_db),
 ) -> TechnicalCardRead:
     try:
-        return TechnicalCardRead.model_validate(
-            start_stage(db, card_id, stage_order, payload)
-        )
+        return _card_read(db, start_stage(db, card_id, stage_order, payload))
     except (
         TechnicalCardNotFoundError,
         TechnicalCardConflictError,
@@ -292,9 +458,7 @@ def complete_stage_endpoint(
     db: Session = Depends(get_db),
 ) -> TechnicalCardRead:
     try:
-        return TechnicalCardRead.model_validate(
-            complete_stage(db, card_id, stage_order, payload)
-        )
+        return _card_read(db, complete_stage(db, card_id, stage_order, payload))
     except (
         TechnicalCardNotFoundError,
         TechnicalCardConflictError,
@@ -314,8 +478,79 @@ def rollback_stage_endpoint(
     db: Session = Depends(get_db),
 ) -> TechnicalCardRead:
     try:
-        return TechnicalCardRead.model_validate(
-            rollback_stage(db, card_id, stage_order)
+        return _card_read(db, rollback_stage(db, card_id, stage_order))
+    except (
+        TechnicalCardNotFoundError,
+        TechnicalCardConflictError,
+        TechnicalCardValidationError,
+    ) as error:
+        raise _http_error(error) from error
+
+
+@router.post(
+    "/technical-cards/{card_id}/stages/{stage_order}/rollback-kanban",
+    response_model=TechnicalCardRead,
+    operation_id="rollback_technical_card_stage_kanban",
+)
+def rollback_stage_for_shop_kanban_endpoint(
+    card_id: int,
+    stage_order: int,
+    db: Session = Depends(get_db),
+) -> TechnicalCardRead:
+    """Kanban rollback variant for shop testing.
+
+    Allows rolling back even when later stages are `in_progress`.
+    """
+    try:
+        return _card_read(
+            db, rollback_stage_for_shop_kanban(db, card_id, stage_order)
+        )
+    except (
+        TechnicalCardNotFoundError,
+        TechnicalCardConflictError,
+        TechnicalCardValidationError,
+    ) as error:
+        raise _http_error(error) from error
+
+
+@router.patch(
+    "/technical-cards/{card_id}/stages/{stage_order}/fact",
+    response_model=TechnicalCardRead,
+    operation_id="update_technical_card_stage_fact",
+)
+def update_stage_fact_endpoint(
+    card_id: int,
+    stage_order: int,
+    payload: TechnicalCardStageFactRequest,
+    db: Session = Depends(get_db),
+) -> TechnicalCardRead:
+    try:
+        return _card_read(db, update_stage_fact(db, card_id, stage_order, payload))
+    except (
+        TechnicalCardNotFoundError,
+        TechnicalCardConflictError,
+        TechnicalCardValidationError,
+    ) as error:
+        raise _http_error(error) from error
+
+
+@router.patch(
+    "/technical-cards/{card_id}/stages/{stage_order}/planned-work-center",
+    response_model=TechnicalCardRead,
+    operation_id="assign_technical_card_planned_work_center",
+)
+def assign_planned_work_center_endpoint(
+    card_id: int,
+    stage_order: int,
+    payload: TechnicalCardPlannedWorkCenterRequest,
+    db: Session = Depends(get_db),
+) -> TechnicalCardRead:
+    try:
+        return _card_read(
+            db,
+            assign_planned_work_center(
+                db, card_id, stage_order, payload.work_center_id
+            ),
         )
     except (
         TechnicalCardNotFoundError,
@@ -336,8 +571,65 @@ def replace_composition_endpoint(
     db: Session = Depends(get_db),
 ) -> TechnicalCardRead:
     try:
-        return TechnicalCardRead.model_validate(
-            replace_composition_lines(db, card_id, payload.lines)
+        return _card_read(db, replace_composition_lines(db, card_id, payload.lines))
+    except (
+        TechnicalCardNotFoundError,
+        TechnicalCardValidationError,
+    ) as error:
+        raise _http_error(error) from error
+
+
+@router.patch(
+    "/technical-cards/{card_id}/composition/{line_id}/fact-qty",
+    response_model=TechnicalCardRead,
+    operation_id="set_technical_card_composition_fact_qty",
+)
+def set_composition_fact_qty_endpoint(
+    card_id: int,
+    line_id: int,
+    payload: TechnicalCardCompositionFactQtyUpdate,
+    db: Session = Depends(get_db),
+) -> TechnicalCardRead:
+    """Shop-path fact write; manager composition replace does not accept fact_qty."""
+    try:
+        return _card_read(
+            db,
+            set_composition_line_fact_qty(
+                db,
+                card_id,
+                line_id,
+                payload.fact_qty,
+                shop_stage_code=payload.shop_stage_code,
+            ),
+        )
+    except (
+        TechnicalCardNotFoundError,
+        TechnicalCardValidationError,
+    ) as error:
+        raise _http_error(error) from error
+
+
+@router.delete(
+    "/technical-cards/{card_id}/composition/{line_id}",
+    response_model=TechnicalCardRead,
+    operation_id="delete_technical_card_composition_line",
+)
+def delete_composition_line_endpoint(
+    card_id: int,
+    line_id: int,
+    shop_stage_code: str | None = None,
+    db: Session = Depends(get_db),
+) -> TechnicalCardRead:
+    """Shop-path delete of one MATERIAL composition line (цех bind via query)."""
+    try:
+        return _card_read(
+            db,
+            delete_composition_line(
+                db,
+                card_id,
+                line_id,
+                shop_stage_code=shop_stage_code,
+            ),
         )
     except (
         TechnicalCardNotFoundError,
@@ -355,9 +647,7 @@ def refresh_model_composition_endpoint(
     card_id: int, db: Session = Depends(get_db)
 ) -> TechnicalCardRead:
     try:
-        return TechnicalCardRead.model_validate(
-            refresh_model_and_pattern_composition(db, card_id)
-        )
+        return _card_read(db, refresh_model_and_pattern_composition(db, card_id))
     except (
         TechnicalCardNotFoundError,
         TechnicalCardValidationError,
@@ -376,9 +666,7 @@ def apply_specification_endpoint(
     db: Session = Depends(get_db),
 ) -> TechnicalCardRead:
     try:
-        return TechnicalCardRead.model_validate(
-            apply_specification_version(db, card_id, payload)
-        )
+        return _card_read(db, apply_specification_version(db, card_id, payload))
     except (
         TechnicalCardNotFoundError,
         TechnicalCardValidationError,
@@ -413,9 +701,7 @@ def update_unit_line_endpoint(
     db: Session = Depends(get_db),
 ) -> TechnicalCardRead:
     try:
-        return TechnicalCardRead.model_validate(
-            update_unit_line(db, card_id, line_id, payload)
-        )
+        return _card_read(db, update_unit_line(db, card_id, line_id, payload))
     except (
         TechnicalCardNotFoundError,
         TechnicalCardValidationError,
@@ -434,9 +720,7 @@ def replace_unit_lines_endpoint(
     db: Session = Depends(get_db),
 ) -> TechnicalCardRead:
     try:
-        return TechnicalCardRead.model_validate(
-            replace_unit_lines(db, card_id, payload.lines)
-        )
+        return _card_read(db, replace_unit_lines(db, card_id, payload.lines))
     except (
         TechnicalCardNotFoundError,
         TechnicalCardValidationError,
@@ -455,9 +739,7 @@ def bulk_update_unit_lines_endpoint(
     db: Session = Depends(get_db),
 ) -> TechnicalCardRead:
     try:
-        return TechnicalCardRead.model_validate(
-            bulk_update_unit_lines(db, card_id, payload.lines)
-        )
+        return _card_read(db, bulk_update_unit_lines(db, card_id, payload.lines))
     except (
         TechnicalCardNotFoundError,
         TechnicalCardValidationError,
@@ -476,9 +758,7 @@ def import_unit_lines_endpoint(
     db: Session = Depends(get_db),
 ) -> TechnicalCardRead:
     try:
-        return TechnicalCardRead.model_validate(
-            import_unit_lines(db, card_id, payload.lines)
-        )
+        return _card_read(db, import_unit_lines(db, card_id, payload.lines))
     except (
         TechnicalCardNotFoundError,
         TechnicalCardValidationError,
@@ -495,9 +775,7 @@ def reset_unit_line_defaults_endpoint(
     card_id: int, db: Session = Depends(get_db)
 ) -> TechnicalCardRead:
     try:
-        return TechnicalCardRead.model_validate(
-            reset_unit_lines_from_order_defaults(db, card_id)
-        )
+        return _card_read(db, reset_unit_lines_from_order_defaults(db, card_id))
     except (
         TechnicalCardNotFoundError,
         TechnicalCardValidationError,
@@ -531,9 +809,7 @@ def replace_operation_lines_endpoint(
     db: Session = Depends(get_db),
 ) -> TechnicalCardRead:
     try:
-        return TechnicalCardRead.model_validate(
-            replace_operation_lines(db, card_id, payload.lines)
-        )
+        return _card_read(db, replace_operation_lines(db, card_id, payload.lines))
     except (
         TechnicalCardNotFoundError,
         TechnicalCardValidationError,
@@ -553,14 +829,16 @@ def update_operation_line_volume_endpoint(
     db: Session = Depends(get_db),
 ) -> TechnicalCardRead:
     try:
-        return TechnicalCardRead.model_validate(
+        return _card_read(
+            db,
             update_operation_line_volume(
                 db,
                 card_id,
                 line_id,
                 volume=payload.volume,
                 operation_name=payload.operation_name,
-            )
+                shop_stage_code=payload.shop_stage_code,
+            ),
         )
     except (
         TechnicalCardNotFoundError,
@@ -587,7 +865,7 @@ def prefill_operation_lines_endpoint(
     ) as error:
         raise _http_error(error) from error
     return TechnicalCardOperationLinesPrefillRead(
-        card=TechnicalCardRead.model_validate(card),
+        card=_card_read(db, card),
         prefilled=prefilled,
         catalog_available=catalog_available,
         message=message,

@@ -111,3 +111,32 @@ class Nomenclature(Base):
     storage_unit_id: Mapped[int | None] = mapped_column(ForeignKey("units_of_measure.id", ondelete="RESTRICT"), nullable=True, index=True)
     storage_unit: Mapped[UnitOfMeasure | None] = relationship(back_populates="nomenclatures", foreign_keys=[storage_unit_id])
     product_type: Mapped[ProductType | None] = relationship("ProductType")
+    history_entries: Mapped[list[NomenclatureHistoryEntry]] = relationship(
+        back_populates="nomenclature",
+        cascade="all, delete-orphan",
+        order_by="NomenclatureHistoryEntry.created_at.desc()",
+    )
+
+
+class NomenclatureHistoryEntry(Base):
+    """Per-nomenclature change log (who / what / when), capped at 10 rows FIFO."""
+
+    __tablename__ = "nomenclature_history"
+    HISTORY_LIMIT = 10
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    nomenclature_id: Mapped[int] = mapped_column(
+        ForeignKey("nomenclatures.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    actor: Mapped[str] = mapped_column(String(255), nullable=False, default="Система")
+    action: Mapped[str] = mapped_column(String(500), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+        index=True,
+    )
+
+    nomenclature: Mapped[Nomenclature] = relationship(back_populates="history_entries")

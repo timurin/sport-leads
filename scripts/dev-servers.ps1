@@ -1,7 +1,7 @@
 #Requires -Version 5.1
 <#
 .SYNOPSIS
-  Status / stop hung / start Sport-Lead local backend (:8000) and frontend (:3000).
+  Status / stop hung / start Sport-Lead local backend (:8000) and frontend (:3001).
 
 .EXAMPLE
   powershell -File scripts/dev-servers.ps1 -Action status
@@ -13,7 +13,7 @@ param(
   [string]$Action = "status",
 
   [int]$BackendPort = 8000,
-  [int]$FrontendPort = 3000,
+  [int]$FrontendPort = 3001,
   [int]$ReadyTimeoutSec = 45
 )
 

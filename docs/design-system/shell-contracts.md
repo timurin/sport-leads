@@ -13,6 +13,7 @@ Approved look and behaviour:
 
 - expanded width `260px`; compact width `72px`;
 - on viewports below `md` (≤767 px) the sidebar is not shown; platform and section navigation use the topbar compact menu;
+- on viewports `md`–`1299` px the sidebar is **always compact** (icons only); expand control is hidden; stored `expanded` preference is restored from `1300` px up (owner visual `3.5.9`, `2026-07-31`);
 - light background and SPORT-LEAD visual system;
 - logo `SL` and title `SPORT-LEAD`;
 - section/subsection grouping;

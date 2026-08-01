@@ -8,6 +8,7 @@ from app.schemas.nomenclature import (
     NomenclatureCategoryRead,
     NomenclatureCategoryUpdate,
     NomenclatureCreate,
+    NomenclatureHistoryRead,
     NomenclatureImportResult,
     NomenclatureRead,
     NomenclatureUpdate,
@@ -32,6 +33,7 @@ from app.services.nomenclature import (
     create_nomenclature,
     get_category,
     get_nomenclature,
+    get_nomenclature_history,
     list_categories,
     list_nomenclature,
     to_nomenclature_read,
@@ -253,6 +255,20 @@ async def import_nomenclatures(
 def read_one_nomenclature(nomenclature_id: int, db: Session = Depends(get_db)) -> NomenclatureRead:
     try:
         return to_nomenclature_read(get_nomenclature(db, nomenclature_id))
+    except NomenclatureNotFoundError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+
+
+@router.get(
+    "/{nomenclature_id}/history",
+    response_model=list[NomenclatureHistoryRead],
+    operation_id="list_nomenclature_history",
+)
+def read_nomenclature_history(
+    nomenclature_id: int, db: Session = Depends(get_db)
+) -> list[NomenclatureHistoryRead]:
+    try:
+        return get_nomenclature_history(db, nomenclature_id)
     except NomenclatureNotFoundError as error:
         raise HTTPException(status_code=404, detail=str(error)) from error
 

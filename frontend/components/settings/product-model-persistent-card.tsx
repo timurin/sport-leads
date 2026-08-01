@@ -19,6 +19,7 @@ import {
 import { CatalogVersionedCardLayout } from "@/components/entity/catalog-versioned-card-layout";
 import { VersionedWorkspace } from "@/components/entity/versioned-workspace";
 import { AssemblyVariantsBlock } from "@/components/settings/assembly-variants-block";
+import { ProductModelRoutingsBlock } from "@/components/settings/product-model-routings-block";
 import { ProductModelMediaCarousel } from "@/components/settings/product-model-media-carousel";
 import { ProductModelToolbarActions } from "@/components/settings/product-model-toolbar-actions";
 import { EntityHeader } from "@/components/ui/entity-header";
@@ -46,8 +47,12 @@ import {
   type ProductModelStatus,
   type ProductModelVersionView,
 } from "@/lib/product-models";
+import type { ProductModelRoutingLink } from "@/lib/product-model-routings";
+import { whitelistedRoutingTemplateIds } from "@/lib/product-model-routings";
+import type { ProductionStage } from "@/lib/production-stages";
 import type { SewingOperation } from "@/lib/sewing-operations";
 import type { ShopRoutingTemplate } from "@/lib/shop-routings";
+import type { TechOperation } from "@/lib/tech-operations";
 import type { ProductType } from "@/lib/product-types";
 import type { SizeGridListItem } from "@/lib/size-grids";
 
@@ -66,6 +71,9 @@ export function ProductModelPersistentCard({
   sizeGrids,
   productTypes,
   shopRoutings,
+  routingLinks = [],
+  productionStages = [],
+  techOperations = [],
   initialEditing = false,
 }: {
   model: ProductModel;
@@ -78,6 +86,9 @@ export function ProductModelPersistentCard({
   sizeGrids: SizeGridListItem[];
   productTypes: ProductType[];
   shopRoutings: ShopRoutingTemplate[];
+  routingLinks?: ProductModelRoutingLink[];
+  productionStages?: ProductionStage[];
+  techOperations?: TechOperation[];
   initialEditing?: boolean;
 }) {
   const router = useRouter();
@@ -95,15 +106,45 @@ export function ProductModelPersistentCard({
     initialEditing ? toProductModelRequisitesDraft(model) : null,
   );
 
+  // Keep client edit draft across soft refreshes (assembly/routing/media).
+  // Only reset when navigating to another model id.
   if (model.id !== trackedModel.id) {
     setTrackedModel(model);
     setCurrent(model);
-    setEditing(false);
-    setDraft(null);
+    setEditing(initialEditing);
+    setDraft(initialEditing ? toProductModelRequisitesDraft(model) : null);
     setActionError(null);
   } else if (model !== trackedModel && !editing) {
     setTrackedModel(model);
     setCurrent(model);
+  } else if (
+    model !== trackedModel &&
+    editing &&
+    model.default_routing_template_id !==
+      trackedModel.default_routing_template_id
+  ) {
+    // Side panels may PATCH default_routing while requisites editor is open.
+    const nextDefault = model.default_routing_template_id;
+    const prevDefault = trackedModel.default_routing_template_id;
+    setTrackedModel(model);
+    setCurrent((prev) => ({
+      ...prev,
+      default_routing_template_id: nextDefault,
+      updated_at: model.updated_at,
+    }));
+    setDraft((prevDraft) => {
+      if (!prevDraft) return prevDraft;
+      if (prevDraft.default_routing_template_id === prevDefault) {
+        return {
+          ...prevDraft,
+          default_routing_template_id: nextDefault,
+        };
+      }
+      return prevDraft;
+    });
+  } else if (model !== trackedModel) {
+    // Editing requisites: absorb newer server snapshot without wiping draft.
+    setTrackedModel(model);
   }
 
   if (media !== trackedMedia) {
@@ -154,17 +195,21 @@ export function ProductModelPersistentCard({
     shopRoutings,
   ]);
   const shopRoutingOptions = useMemo(() => {
-    const active = shopRoutings.filter((row) => row.is_active);
+    const whitelistIds = whitelistedRoutingTemplateIds(routingLinks);
+    const base =
+      whitelistIds.size > 0
+        ? shopRoutings.filter((row) => whitelistIds.has(row.id))
+        : shopRoutings.filter((row) => row.is_active);
     if (
       linkedDefaultRouting &&
-      !active.some((row) => row.id === linkedDefaultRouting.id)
+      !base.some((row) => row.id === linkedDefaultRouting.id)
     ) {
-      return [...active, linkedDefaultRouting].sort((a, b) =>
+      return [...base, linkedDefaultRouting].sort((a, b) =>
         a.name.localeCompare(b.name, "ru"),
       );
     }
-    return active;
-  }, [linkedDefaultRouting, shopRoutings]);
+    return [...base].sort((a, b) => a.name.localeCompare(b.name, "ru"));
+  }, [linkedDefaultRouting, routingLinks, shopRoutings]);
   const historySummary =
     history.length === 0
       ? "Записей пока нет"
@@ -304,6 +349,16 @@ export function ProductModelPersistentCard({
     setEditing(true);
     setDraft(toProductModelRequisitesDraft(current));
     setActionError(null);
+    router.replace(
+      `/settings/catalogs/product-models/${current.id}?edit=1`,
+      { scroll: false },
+    );
+  };
+
+  const clearEditQuery = () => {
+    router.replace(`/settings/catalogs/product-models/${current.id}`, {
+      scroll: false,
+    });
   };
 
   const cancelEdit = () => {
@@ -317,6 +372,7 @@ export function ProductModelPersistentCard({
     setEditing(false);
     setDraft(null);
     setActionError(null);
+    clearEditQuery();
   };
 
   const onSave = async () => {
@@ -341,9 +397,11 @@ export function ProductModelPersistentCard({
         product_type_id: draft.product_type_id,
         default_routing_template_id: draft.default_routing_template_id,
       });
+      setTrackedModel(updated);
       setCurrent(updated);
       setEditing(false);
       setDraft(null);
+      clearEditQuery();
       router.refresh();
     } catch (caught) {
       setActionError(
@@ -367,9 +425,11 @@ export function ProductModelPersistentCard({
     setActionError(null);
     try {
       const updated = await archiveProductModel(current.id);
+      setTrackedModel(updated);
       setCurrent(updated);
       setEditing(false);
       setDraft(null);
+      clearEditQuery();
       router.refresh();
     } catch (caught) {
       setActionError(
@@ -487,8 +547,9 @@ export function ProductModelPersistentCard({
                   <ProductModelToolbarActions
                     disabled={busy}
                     editing={editing}
+                    showSave={editing}
                     canArchive={current.status !== "archived"}
-                    canSave={Boolean(dirty)}
+                    canSave={Boolean(editing && draft)}
                     onEdit={startEdit}
                     onCancel={cancelEdit}
                     onArchive={onArchive}
@@ -924,6 +985,15 @@ export function ProductModelPersistentCard({
                 modelId={current.id}
                 variants={assemblyVariants}
                 sewingOperations={sewingOperations}
+              />
+
+              <ProductModelRoutingsBlock
+                modelId={current.id}
+                defaultRoutingTemplateId={current.default_routing_template_id}
+                links={routingLinks}
+                shopRoutings={shopRoutings}
+                productionStages={productionStages}
+                techOperations={techOperations}
               />
 
               <SectionCard

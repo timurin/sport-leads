@@ -1,13 +1,16 @@
 import "server-only";
 
-import { leads } from "@/lib/demo-data/sales";
+import { leads, mockCurrentUser, salesManagers } from "@/lib/demo-data/sales";
 import { fromApiLeadCommercial, type ApiLeadCommercialFields } from "@/lib/sales/lead-commercial-api";
 import { fromApiLeadContact, type ApiLeadContact } from "@/lib/sales/lead-contact-api";
 import { fromApiLeadCustomer, type ApiLeadCustomerFields } from "@/lib/sales/lead-customer-api";
 import { resolveLeadDetailStage } from "@/lib/sales/lead-detail-stage";
 import { findBackendReasonId, type ApiLeadRejectionReason } from "@/lib/sales/lead-rejection";
 import { fromApiLeadEvent, type ApiLeadEvent } from "@/lib/sales/lead-history";
-import type { LeadActivity, LeadCommercialDetailsData, LeadCustomer, LeadMessage, LeadResult, LeadStatus, LeadTask } from "@/types/sales";
+import { fromApiLeadMessage, leadMessageToActivity, type ApiLeadMessage } from "@/lib/sales/lead-message-api";
+import { fromApiLeadNote, type ApiLeadNote } from "@/lib/sales/lead-note-api";
+import { fromApiLeadTask, fromApiSalesUser, type ApiLeadTask, type ApiSalesUser } from "@/lib/sales/lead-task-api";
+import type { LeadActivity, LeadCommercialDetailsData, LeadCustomer, LeadMessage, LeadResult, LeadStatus, LeadTask, UserSummary } from "@/types/sales";
 
 export type LeadSource = string;
 
@@ -33,10 +36,11 @@ export type LeadDetails = {
   commercial: LeadCommercialDetailsData;
   activities: LeadActivity[];
   tasks: LeadTask[];
+  taskManagers: UserSummary[];
+  currentActor: UserSummary;
   messages: LeadMessage[];
   taskReferenceAt: string;
-  dataOrigin: "api" | "demo";
-  result?: LeadResult;
+  dataOrigin: "api" | "demo";  result?: LeadResult;
   completedAt?: string;
   completedBy?: LeadResponsible;
   convertedOrderId?: string;
@@ -192,6 +196,8 @@ function fromDemoLead(lead: (typeof leads)[number]): LeadDetails {
       assignedTo: { ...task.assignedTo },
       createdBy: { ...task.createdBy },
     })) ?? [],
+    taskManagers: salesManagers.map((manager) => ({ ...manager })),
+    currentActor: { ...mockCurrentUser },
     messages,
     taskReferenceAt: new Date(Date.UTC(2026, 6, 16, 12, sequence)).toISOString(),
     dataOrigin: "demo",
@@ -211,9 +217,23 @@ function fromDemoLead(lead: (typeof leads)[number]): LeadDetails {
   };
 }
 
-function fromApiLead(lead: ApiLead, activities: LeadActivity[]): LeadDetails {
+function fromApiLead(
+  lead: ApiLead,
+  activities: LeadActivity[],
+  tasks: LeadTask[],
+  taskManagers: UserSummary[],
+  currentActor: UserSummary,
+  messages: LeadMessage[],
+): LeadDetails {
   const persistedCommercial = fromApiLeadCommercial(lead);
   const stageState = resolveLeadDetailStage(lead.status);
+  const lastActivityAt = activities.reduce((latest, activity) => {
+    const stamp = Date.parse(activity.occurredAt);
+    const latestStamp = Date.parse(latest);
+    if (Number.isNaN(stamp)) return latest;
+    if (Number.isNaN(latestStamp) || stamp > latestStamp) return activity.occurredAt;
+    return latest;
+  }, lead.updated_at);
   return {
     id: String(lead.id),
     title: lead.company_name ?? lead.contact_name,
@@ -228,14 +248,16 @@ function fromApiLead(lead: ApiLead, activities: LeadActivity[]): LeadDetails {
       },
     source: persistedCommercial.source,
     createdAt: lead.created_at,
-    lastActivityAt: activities.at(-1)?.occurredAt ?? lead.updated_at,
+    lastActivityAt,
     estimatedAmount: persistedCommercial.estimatedAmount,
     probability: persistedCommercial.probability,
     commercial: persistedCommercial.commercial,
     activities,
-    tasks: [],
-    messages: [],
-    taskReferenceAt: activities.at(-1)?.occurredAt ?? lead.updated_at,
+    tasks,
+    taskManagers,
+    currentActor,
+    messages,
+    taskReferenceAt: lastActivityAt,
     dataOrigin: "api",
     result: lead.result ?? undefined,
     completedAt: lead.completed_at ?? undefined,
@@ -455,12 +477,49 @@ export async function getLeadDetails(leadId: string): Promise<LeadDetails | null
   }
 
   const apiLead = await response.json() as ApiLead;
-  const historyResponse = await fetch(`${apiUrl.replace(/\/$/, "")}/leads/${leadId}/history`, {
-    cache: "no-store",
-  });
+  const [historyResponse, tasksResponse, notesResponse, messagesResponse, usersResponse] = await Promise.all([
+    fetch(`${apiUrl.replace(/\/$/, "")}/leads/${leadId}/history`, { cache: "no-store" }),
+    fetch(`${apiUrl.replace(/\/$/, "")}/leads/${leadId}/tasks`, { cache: "no-store" }),
+    fetch(`${apiUrl.replace(/\/$/, "")}/leads/${leadId}/notes`, { cache: "no-store" }),
+    fetch(`${apiUrl.replace(/\/$/, "")}/leads/${leadId}/messages`, { cache: "no-store" }),
+    fetch(`${apiUrl.replace(/\/$/, "")}/sales-users?is_active=true`, { cache: "no-store" }),
+  ]);
   if (!historyResponse.ok) {
     throw new Error(`Lead history API request failed with status ${historyResponse.status}`);
   }
+  if (!tasksResponse.ok) {
+    throw new Error(`Lead tasks API request failed with status ${tasksResponse.status}`);
+  }
+  if (!notesResponse.ok) {
+    throw new Error(`Lead notes API request failed with status ${notesResponse.status}`);
+  }
+  if (!messagesResponse.ok) {
+    throw new Error(`Lead messages API request failed with status ${messagesResponse.status}`);
+  }
+  if (!usersResponse.ok) {
+    throw new Error(`Sales users API request failed with status ${usersResponse.status}`);
+  }
   const history = await historyResponse.json() as ApiLeadEvent[];
-  return fromApiLead(apiLead, history.map(fromApiLeadEvent));
+  const tasks = (await tasksResponse.json() as ApiLeadTask[]).map(fromApiLeadTask);
+  const notes = (await notesResponse.json() as ApiLeadNote[]).map(fromApiLeadNote);
+  const messages = (await messagesResponse.json() as ApiLeadMessage[]).map(fromApiLeadMessage);
+  const taskManagers = (await usersResponse.json() as ApiSalesUser[]).map(fromApiSalesUser);
+  const managers: UserSummary[] = taskManagers.length > 0
+    ? taskManagers
+    : apiLead.responsible_id === null
+      ? [{ id: "1", name: "System", initials: "SY" }]
+      : [{
+        id: String(apiLead.responsible_id),
+        name: `Сотрудник #${apiLead.responsible_id}`,
+        initials: `#${apiLead.responsible_id}`,
+      }];
+  const currentActor = managers.find((manager) => manager.id === "1")
+    ?? managers[0]
+    ?? { id: "1", name: "System", initials: "SY" };
+  const historyActivities = history
+    .filter((event) => event.event_type !== "comment_added")
+    .map(fromApiLeadEvent);
+  const messageActivities = messages.map(leadMessageToActivity);
+  const activities = [...historyActivities, ...notes, ...messageActivities];
+  return fromApiLead(apiLead, activities, tasks, managers, currentActor, messages);
 }

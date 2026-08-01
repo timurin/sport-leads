@@ -1,7 +1,7 @@
 ---
 name: start-dev-stack
 description: >-
-  Starts Sport-Lead local backend (uvicorn :8000) and frontend (next :3000),
+  Starts Sport-Lead local backend (uvicorn :8000) and frontend (next :3001),
   after checking and clearing hung terminal/port sessions. Use when the user
   asks to raise/start/restart backend, frontend, dev servers, локальный стек,
   поднять бэкенд/фронт, or clean hung sessions.
@@ -17,7 +17,7 @@ Bring up a healthy local stack:
 |----------|------|---------------------------------------|
 | Postgres | 5432 | `docker compose` healthy (if needed)  |
 | Backend  | 8000 | `GET http://127.0.0.1:8000/health` or OpenAPI `/docs` responds |
-| Frontend | 3000 | `GET http://127.0.0.1:3000` responds  |
+| Frontend | 3001 | `GET http://127.0.0.1:3001` responds  |
 
 Prefer the helper script; fall back to manual commands only if the script fails.
 
@@ -32,7 +32,7 @@ Read and follow .cursor/skills/start-dev-stack/SKILL.md and .cursor/rules/dev-se
 2) If hung/orphan ports or duplicate servers: powershell -File scripts/dev-servers.ps1 -Action stop
 3) Ensure postgres: docker compose up -d postgres (from repo root)
 4) Start stack: powershell -File scripts/dev-servers.ps1 -Action start
-5) Re-check status until both :8000 and :3000 are ready (or report exact failure)
+5) Re-check status until both :8000 and :3001 are ready (or report exact failure)
 Return: backend URL, frontend URL, PIDs/ports, what was killed, any errors.
 ```
 
@@ -44,7 +44,7 @@ Parent agent: do not duplicate the start work; wait for the subagent report.
    ```powershell
    powershell -File scripts/dev-servers.ps1 -Action status
    ```
-2. **Clear hung sessions** if status reports hung, orphan, or duplicate listeners on 8000/3000.
+2. **Clear hung sessions** if status reports hung, orphan, or duplicate listeners on 8000/3001.
    ```powershell
    powershell -File scripts/dev-servers.ps1 -Action stop
    ```
@@ -62,7 +62,7 @@ Parent agent: do not duplicate the start work; wait for the subagent report.
 ## Manual fallback
 
 - Backend (cwd `backend/`): `uvicorn app.main:app --reload --host 127.0.0.1 --port 8000`
-- Frontend (cwd `frontend/`): `npm run dev`
+- Frontend (cwd `frontend/`): `npm run dev -- -H 127.0.0.1 -p 3001`
 - Run each in a long-lived shell (`block_until_ms: 0`). Confirm ready via HTTP, not only process spawn.
 - Require `.env` at repo root (`POSTGRES_PASSWORD` set). Do not invent credentials.
 
@@ -81,6 +81,6 @@ Dev stack:
 - cleaned: <none | ports/pids>
 - postgres: <up | skipped | failed>
 - backend:  http://127.0.0.1:8000  (<ready|failed>)
-- frontend: http://127.0.0.1:3000 (<ready|failed>)
+- frontend: http://127.0.0.1:3001 (<ready|failed>)
 - notes: <optional>
 ```
