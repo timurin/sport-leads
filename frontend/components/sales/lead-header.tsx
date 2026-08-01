@@ -8,15 +8,14 @@ import { PageActions, PageContent } from "@/components/layout/page-layout";
 import { LeadBackButton } from "@/components/sales/lead-back-button";
 import { Button } from "@/components/ui/button";
 import { StatusBadge, type StatusBadgeTone } from "@/components/ui/status-badge";
-import { salesManagers } from "@/lib/demo-data/sales";
 import type { LeadDetails, LeadResponsible } from "@/lib/sales/lead-details";
 import { leadFinalActions, type LeadFinalActionId } from "@/lib/sales/lead-final-actions";
 import {
   getActiveLeadStages,
-  loadLeadStages,
   type LeadStageAccent,
   type LeadStageConfig,
 } from "@/lib/sales/lead-stages";
+import type { UserSummary } from "@/types/sales";
 
 type OpenMenu = "status" | "responsible" | "more" | null;
 
@@ -43,6 +42,7 @@ function initials(name: string) {
 type LeadHeaderProps = {
   lead: LeadDetails;
   initialStages: LeadStageConfig[];
+  managers: UserSummary[];
   lastActivityAtLabel: string;
   onAddTask: (trigger: HTMLElement) => void;
   onWrite: () => void;
@@ -52,12 +52,13 @@ type LeadHeaderProps = {
 export function LeadHeader({
   lead,
   initialStages,
+  managers,
   lastActivityAtLabel,
   onAddTask,
   onWrite,
   onFinalAction,
 }: LeadHeaderProps) {
-  const [stages, setStages] = useState<LeadStageConfig[]>(() => (
+  const [stages] = useState<LeadStageConfig[]>(() => (
     initialStages.map((stage) => ({ ...stage }))
   ));
   const [statusId, setStatusId] = useState<string>(lead.stageId ?? lead.status);
@@ -66,19 +67,7 @@ export function LeadHeader({
   const [notice, setNotice] = useState("");
   const [isPending, startTransition] = useTransition();
   const headerRef = useRef<HTMLElement>(null);
-  const isDemoLead = lead.id.startsWith("lead-");
   const isClosed = ["completed", "won", "unqualified"].includes(statusId);
-
-  useEffect(() => {
-    if (!isDemoLead) {
-      return;
-    }
-    const timeoutId = window.setTimeout(() => {
-      setStages(loadLeadStages(window.localStorage));
-    }, 0);
-
-    return () => window.clearTimeout(timeoutId);
-  }, [isDemoLead]);
 
   useEffect(() => {
     if (!openMenu) {
@@ -117,17 +106,11 @@ export function LeadHeader({
       : statusId === "unqualified"
         ? "danger"
         : "neutral";
-  const displayId = lead.id.startsWith("lead-") ? lead.id.slice(5) : lead.id;
+  const displayId = lead.id;
 
   function chooseStatus(stage: LeadStageConfig) {
     setOpenMenu(null);
     setNotice("");
-
-    if (isDemoLead) {
-      setStatusId(stage.id);
-      setNotice("Статус изменён локально до перезагрузки страницы.");
-      return;
-    }
 
     startTransition(async () => {
       const result = await updateLeadStatus(lead.id, stage.id);
@@ -138,24 +121,18 @@ export function LeadHeader({
     });
   }
 
-  function chooseResponsible(manager: (typeof salesManagers)[number]) {
+  function chooseResponsible(manager: UserSummary) {
     setOpenMenu(null);
     setNotice("");
-
-    if (isDemoLead) {
-      setResponsible(manager);
-      setNotice("Ответственный изменён локально до перезагрузки страницы.");
-      return;
-    }
     if (!/^\d+$/.test(manager.id)) {
-      setNotice("Ответственный не изменён: текущий список менеджеров demo и не содержит backend id.");
+      setNotice("Ответственный не изменён: нужен идентификатор сотрудника из backend.");
       return;
     }
 
     startTransition(async () => {
       const result = await updateLeadResponsible(lead.id, manager.id);
       if (result.ok) {
-        setResponsible(manager);
+        setResponsible({ id: manager.id, name: manager.name });
       }
       setNotice(result.message);
     });
@@ -281,16 +258,14 @@ export function LeadHeader({
               {openMenu === "responsible" ? (
                 <div className="absolute left-0 z-30 mt-2 w-64 max-w-[calc(100vw-2rem)] rounded-[var(--portal-radius-lg)] border border-portal-border bg-portal-surface p-2 text-left shadow-[var(--portal-shadow-overlay)] sm:left-auto sm:right-0" role="menu">
                   <p className="px-3 pb-2 text-xs leading-5 text-slate-500">
-                    {isDemoLead
-                      ? "Демо-список · выбор сохраняется локально"
-                      : "Demo-список без backend id · API-лид не изменяется локально"}
+                    Список сотрудников из sales-users
                   </p>
-                  {salesManagers.map((manager) => (
+                  {managers.map((manager) => (
                     <button
                       key={manager.id}
                       type="button"
                       role="menuitem"
-                      disabled={manager.id === responsible?.id || (!isDemoLead && !/^\d+$/.test(manager.id))}
+                      disabled={manager.id === responsible?.id || !/^\d+$/.test(manager.id)}
                       onClick={() => chooseResponsible(manager)}
                       className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
                     >

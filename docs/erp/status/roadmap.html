@@ -164,7 +164,7 @@
         </div>
       </div>
       <div class="meta-list">
-        <div class="chip">Updated: 2026-08-01 (Stages 7 / 13 / 15 / 16 + Stage 2 group 2.2.3+2.3+2.4 moved → v1.00)</div>
+        <div class="chip">Updated: 2026-08-01 (10.2 cancelled → Stage 19 + 3.4.1; Stages 7 / 13 / 15 / 16 + Stage 2 group moved → v1.00)</div>
         <div class="chip">Version: v0.9.0</div>
         <div class="chip">Branch: feature/v0.8.1-nomenclature-core</div>
         <div class="chip">Commit: 0980f34</div>
@@ -539,7 +539,39 @@
               {
                 code: "1.2.5",
                 title: "Single lead detail data path; real actor for notes/tasks",
-                done: false
+                done: false,
+                note: "1.2.5.1–1.2.5.4 shipped; STOP for owner visual 1.2.5.5; task v0.9.0-stage-1.2.5-lead-detail-single-path.md; production auth → 17.1.1",
+                microtasks: [
+                  {
+                    code: "1.2.5.1",
+                    title: "Contract + task file",
+                    done: true,
+                    note: "v0.9.0-stage-1.2.5-lead-detail-single-path.md"
+                  },
+                  {
+                    code: "1.2.5.2",
+                    title: "getLeadDetails API-only; non-numeric not found",
+                    done: true,
+                    note: "v0.9.0"
+                  },
+                  {
+                    code: "1.2.5.3",
+                    title: "Lead card/header drop demo paths; sales-users actor",
+                    done: true,
+                    note: "v0.9.0"
+                  },
+                  {
+                    code: "1.2.5.4",
+                    title: "Regression + docs sync",
+                    done: true,
+                    note: "lead-detail-path-1-2-5.test.mjs"
+                  },
+                  {
+                    code: "1.2.5.5",
+                    title: "Owner visual verification (API lead card)",
+                    done: false
+                  }
+                ]
               }
             ]
           },
@@ -975,8 +1007,8 @@
                 code: "3.4.1",
                 title: "Design and approval states in order flow",
                 done: true,
-                goal: "Sales-side design_approval_status + gate before production; Stage 10 owns assets",
-                note: "task v0.9.0-stage-3.4.1-design-approval-order-flow.md; ADR-003 amend; Alembic h5c6d7e8f901; owner visual OK 2026-07-31",
+                goal: "Sales-side design_approval_status + gate before production; Stage 10 owns assets (10.1); approval UX = order field + Stage 19 (10.2 cancelled)",
+                note: "task v0.9.0-stage-3.4.1-design-approval-order-flow.md; ADR-003 amend; Alembic h5c6d7e8f901; owner visual OK 2026-07-31; 10.2 cancelled 2026-08-01",
                 microtasks: [
                   {
                     code: "3.4.1.1",
@@ -4950,7 +4982,7 @@
       },
       {
         title: "Stage 10 — Design and Approval",
-        note: "Client-facing design/approval. Shop-floor Дизайн execution on TC = 11.4 (not duplicate).",
+        note: "2026-08-01: Stage 10 = design assets/versions/layouts (10.1). Approval workflow is NOT 10.2 — use Stage 19 chat+microtasks + SalesOrder.design_approval_status (3.4.1). Shop Дизайн = 11.4.",
         blocks: [
           {
             title: "10.1 — Design assets and comments",
@@ -4968,17 +5000,20 @@
             ]
           },
           {
-            title: "10.2 — Approval workflow",
+            title: "10.2 — Approval workflow — cancelled",
+            note: "Cancelled 2026-08-01 (owner): no separate client review portal. Covered by Stage 19 + 3.4.1.",
             items: [
               {
                 code: "10.2.1",
                 title: "Client review and correction requests",
-                done: false
+                done: false,
+                note: "cancelled → Stage 19 + 3.4.1"
               },
               {
                 code: "10.2.2",
                 title: "Final approval checkpoint before production launch",
-                done: false
+                done: false,
+                note: "cancelled → already 3.4.1 gate; staff notify via Stage 19"
               }
             ]
           }

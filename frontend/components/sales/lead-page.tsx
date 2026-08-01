@@ -28,7 +28,7 @@ import { PageActions, PageContent, PageLayout, ResponsiveGrid } from "@/componen
 import { Button } from "@/components/ui/button";
 import { CompactTabs } from "@/components/ui/compact-tabs";
 import { MetricCard, SectionCard } from "@/components/ui/section-card";
-import { mockCurrentUser, salesManagers } from "@/lib/demo-data/sales";
+import { mockCurrentUser } from "@/lib/demo-data/sales";
 import { getNotePermissions, isInternalNote } from "@/lib/sales/lead-activity";
 import { formatCurrency } from "@/lib/sales/lead-commercial";
 import type { LeadDetails } from "@/lib/sales/lead-details";
@@ -149,10 +149,10 @@ export function LeadPage({
   const [taskActionError, setTaskActionError] = useState("");
   const [noteActionError, setNoteActionError] = useState("");
   const taskDialogTriggerRef = useRef<HTMLElement | null>(null);
-  const taskManagers = lead.taskManagers.length > 0 ? lead.taskManagers : salesManagers;
+  const taskManagers = lead.taskManagers;
   const currentActor = lead.currentActor ?? mockCurrentUser;
-  const taskPersistent = lead.dataOrigin === "api";
-  const noteManagers = taskPersistent ? taskManagers : salesManagers;
+  const taskPersistent = true;
+  const noteManagers = taskManagers;
 
   function applyPersistedActivities(activities: LeadActivity[]) {
     const occurredAt = activities.reduce((latest, activity) => {
@@ -385,7 +385,7 @@ export function LeadPage({
       id,
       type,
       occurredAt,
-      author: { id: mockCurrentUser.id, name: mockCurrentUser.name },
+      author: { id: currentActor.id, name: currentActor.name },
       title,
       description,
       isSystem: true,
@@ -442,7 +442,7 @@ export function LeadPage({
         dueAt: draft.dueAt,
         description: draft.description,
         createdAt: occurredAt,
-        createdBy: { ...mockCurrentUser },
+        createdBy: { ...currentActor },
       };
       const activity = taskActivity(activityId, "task_created", `Создана задача «${task.title}»`, `Срок: ${formatTaskDate(task.dueAt)}. Исполнитель: ${task.assignedTo.name}.`, occurredAt);
       return { ...current, tasks: [...current.tasks, task], activities: [activity, ...current.activities], lastActivityAt: occurredAt, taskReferenceAt: occurredAt };
@@ -743,6 +743,7 @@ export function LeadPage({
         key={`${lead.id}-${lead.status}-${lead.stageId ?? "final"}`}
         lead={lead}
         initialStages={stages}
+        managers={taskManagers}
         lastActivityAtLabel={formatDate(lead.lastActivityAt)}
         onAddTask={(trigger) => openTaskDialog({ kind: "edit", task: null }, trigger)}
         onWrite={() => openWorkspaceSection("communication")}
@@ -764,7 +765,7 @@ export function LeadPage({
                   compact
                   customer={lead.customer}
                   leadId={lead.id}
-                  contactPersistence={lead.dataOrigin === "api" ? "api" : "local"}
+                  contactPersistence="api"
                   onCustomerChange={updateCustomer}
                 />
               </div>
@@ -777,7 +778,7 @@ export function LeadPage({
                   estimatedAmount={lead.estimatedAmount}
                   probability={lead.probability}
                   leadId={lead.id}
-                  persistence={lead.dataOrigin === "api" ? "api" : "local"}
+                  persistence="api"
                   onChange={updateCommercial}
                 />
               </div>

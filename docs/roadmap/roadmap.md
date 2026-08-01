@@ -1,7 +1,7 @@
 # Sport-Lead — Global Roadmap
 
 **Code:** `SL-ROADMAP-v1`
-**Updated:** `2026-08-01` (Stages 7 / 13 / 15 / 16 + Stage 2 group `2.2.3`+`2.3`+`2.4` moved → `v1.00`)
+**Updated:** `2026-08-01` (`10.2` cancelled; carry → `v1.00`: Stage 2 group, 7, 12.4–12.5, 13, 14, 15, 16, 18.4)
 **Project version:** `v0.9.0`
 **Git branch:** `feature/v0.8.1-nomenclature-core`
 
@@ -116,6 +116,11 @@ Dedupe notes (Sales Orders):
   - [x] 1.2.4.8.4 — Regression + docs sync — `v0.9.0`; `test_lead_messages_1_2_4_8.py`
   - [x] 1.2.4.8.5 — Owner visual verification (lead card communications, API lead) — owner OK `2026-08-01`
 - [ ] 1.2.5 — Single lead detail data path (remove `lead-*` fixture IDs); real actor for notes/tasks (depends on `17.1.1` for production auth) — gap: `ui-audit.md`
+  - [x] 1.2.5.1 — Contract + task file — `v0.9.0`; `docs/tasks/v0.9.0-stage-1.2.5-lead-detail-single-path.md`
+  - [x] 1.2.5.2 — `getLeadDetails` API-only; non-numeric → not found — `v0.9.0`
+  - [x] 1.2.5.3 — Lead card/header drop demo/`lead-*` paths; actor from sales-users — `v0.9.0`
+  - [x] 1.2.5.4 — Regression + docs sync — `v0.9.0`; `lead-detail-path-1-2-5.test.mjs`
+  - [ ] 1.2.5.5 — Owner visual verification (API lead card, no fixture IDs)
 
 ### 1.3 — Lead lifecycle
 
@@ -289,7 +294,7 @@ Completion criteria:
 
 #### 3.4.1 — Design and approval states in order flow
 
-> Sales-side `design_approval_status` + gate before `production`. Stage 10 owns assets/review UI. Task `docs/tasks/v0.9.0-stage-3.4.1-design-approval-order-flow.md`. ADR-003 amend.
+> Sales-side `design_approval_status` + gate before `production`. Stage 10 owns design **assets** (`10.1`); staff/client operational approval UX = order status field + Stage `19` chat/microtasks (`10.2` cancelled). Task `docs/tasks/v0.9.0-stage-3.4.1-design-approval-order-flow.md`. ADR-003 amend.
 
 - [x] 3.4.1.1 — ADR-003 amend + domain contract + task / roadmap split — `v0.9.0`; task `docs/tasks/v0.9.0-stage-3.4.1-design-approval-order-flow.md`
 - [x] 3.4.1.2 — DB: `SalesOrder.design_approval_status` (+ migration) — `v0.9.0`; Alembic `h5c6d7e8f901`
@@ -2189,17 +2194,19 @@ Completion criteria:
 
 ## Stage 10 — Design and Approval
 
-> Boundary note (`2026-07-26`): Stage 10 = **client-facing** design assets and approval. Shop-floor «Дизайн» execution on the technical card (who / what / duration) is Stage **`11.4`**, not a duplicate of this stage.
+> Boundary note (`2026-08-01`): Stage 10 = design **assets** / versions / layouts (`10.1`). Client/staff **approval workflow is not** a separate Stage `10.2` — operational approval via Stage `19` (order/TC chat + microtasks) + `SalesOrder.design_approval_status` (`3.4.1`, already shipped). Shop-floor «Дизайн» execution on the technical card (who / what / duration) remains Stage **`11.4`**.
 
 ### 10.1 — Design assets and comments
 
 - [ ] 10.1.1 — Design project entity and versions
 - [ ] 10.1.2 — Layouts, logos, and comments — design-module comments; platform order/ТК staff chat remains Stage `19` (deep-link later if needed)
 
-### 10.2 — Approval workflow
+### 10.2 — Approval workflow — cancelled
 
-- [ ] 10.2.1 — Client review and correction requests
-- [ ] 10.2.2 — Final approval checkpoint before production launch
+> Cancelled `2026-08-01` (owner): no separate client review portal. Covered by Stage `19` (order/TC chat + microtasks) + `3.4.1` (order `design_approval_status` gate). Operational flow: manager↔designer chat on TC → on approve manager notifies → designer prepares print files → closes microtask.
+
+- [ ] 10.2.1 — Client review and correction requests — **cancelled** → Stage `19` + `3.4.1`
+- [ ] 10.2.2 — Final approval checkpoint before production launch — **cancelled** → already `3.4.1` gate; staff notify via Stage `19`
 
 ## Stage 11 — Production
 
@@ -2468,12 +2475,16 @@ Microtasks:
 
 ### 12.4 — Inventory
 
-- [ ] 12.4.1 — Inventory documents and recount postings
+> **Moved to `v1.00`** (`2026-08-01`): `docs/roadmap/roadmap-v1.00.md`. Do not execute under `v0.9.0`. `12.3` FG remains here.
+
+- [ ] 12.4.1 — Inventory documents and recount postings — **moved → v1.00**
 
 ### 12.5 — Transfers and reserves
 
-- [ ] 12.5.1 — Transfers between warehouses
-- [ ] 12.5.2 — Reserves (sales/production) — later
+> **Moved to `v1.00`** (`2026-08-01`): `docs/roadmap/roadmap-v1.00.md`. Do not execute under `v0.9.0`.
+
+- [ ] 12.5.1 — Transfers between warehouses — **moved → v1.00**
+- [ ] 12.5.2 — Reserves (sales/production) — later — **moved → v1.00**
 
 ## Stage 13 — Procurement
 

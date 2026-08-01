@@ -3,7 +3,6 @@ import { notFound } from "next/navigation";
 import { LeadPage } from "@/components/sales/lead-page";
 import { getLeadDetails } from "@/lib/sales/lead-details";
 import { getLeadStages } from "@/lib/sales/lead-stage-api";
-import { getDefaultLeadStages } from "@/lib/sales/lead-stages";
 
 type LeadRouteProps = {
   params: Promise<{ leadId: string }>;
@@ -11,12 +10,13 @@ type LeadRouteProps = {
 
 export default async function LeadRoute({ params }: LeadRouteProps) {
   const { leadId } = await params;
-  const isApiLead = /^\d+$/.test(leadId);
+  if (!/^\d+$/.test(leadId)) {
+    notFound();
+  }
+
   const [lead, stageResult] = await Promise.all([
     getLeadDetails(leadId),
-    isApiLead
-      ? getLeadStages()
-      : Promise.resolve({ ok: true as const, stages: getDefaultLeadStages() }),
+    getLeadStages(),
   ]);
 
   if (!lead) {

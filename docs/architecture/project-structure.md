@@ -38,7 +38,7 @@
 - [x] Lead completion, rejection reasons, and transactional conversion to sales order
 - [x] Lead detail route with timeline, notes, tasks, and communication UI
 - [x] Lead dashboard, Kanban, list, filters, and basic analytics UI
-- [x] Persistent lead workspace without demo/local frontend states — list/kanban `1.1.3`/`1.1.4` owner visual OK `2026-07-31`; lead card still mixed → `1.2.5`
+- [~] Persistent lead workspace without demo/local frontend states — list/kanban `1.1.3`/`1.1.4` owner visual OK `2026-07-31`; lead card demix `1.2.5.1`–`1.2.5.4` shipped (**STOP visual** `1.2.5.5`)
 - [x] Sales dashboard pattern-model analysis (`1.1.5`) — live API panel; owner visual OK `2026-08-01`; other dashboard KPIs still demo
 - [x] Persistent lead tasks (`1.2.4.1`–`1.2.4.6`) — owner visual OK `2026-08-01`
 - [x] Persistent lead notes (`1.2.4.7`) — owner visual OK `2026-08-01`
@@ -143,7 +143,7 @@
 
 ## 10. Design, Production, Warehouse, Procurement, and Shipping
 
-- [ ] Design approvals and versioned layouts (Stage 10 client-facing; shop Дизайн = `11.4`)
+- [ ] Design versioned layouts / assets (Stage `10.1`); approval = `3.4.1` order status + Stage `19` chat/microtasks (`10.2` cancelled); shop Дизайн = `11.4`
 - [x] Production orders/batches `11.1.1` + WorkCenter planning `11.1.2` + aggregate fact `11.2.1` shipped (owner visuals OK `2026-07-30`); FG warehouse `11.2.2.1`–`11.2.2.3` shipped; wire/visual `11.2.2.4`–`11.2.2.5` open (deps `12.2`)
 - [x] Shop-floor modules platform + per-цех UIs (`11.3`–`11.10`) — fact on technical card; material `fact_qty` hard gate on Раскрой/Печать (`9.3.4` / `11.5`–`11.6`); owner visuals OK through `11.10.5` (`2026-07-29`)
 - [x] Warehouse nomenclature PT-04 `/warehouse/stock` — tree CRUD + list + settings redirects + остаток column/filter + owner visual OK (`4.10.1`–`4.10.7`); live ledger column `12.2.3` (ADR-019)

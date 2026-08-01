@@ -17,7 +17,7 @@
 
 - `[x]` `Lead`, `LeadContact`, `Client`, `LeadEvent`, `SalesUser` и их миграции;
 - `[x]` создание лида, contact CRUD, стадии, частичное редактирование, конвертация, отказ и история;
-- `[~]` список/Kanban, задачи, заметки, timeline и коммуникации частично local/demo; **лиды list/kanban** `1.1.3`/`1.1.4` closed (owner visual OK `2026-07-31`); **dashboard models** `1.1.5` closed (owner visual OK `2026-08-01`); **lead tasks/notes/communications** `1.2.4` closed (owner visual OK `2026-08-01`); lead **card** still mixed (`lead-*` / managers → `1.2.5`);
+- `[~]` список/Kanban, задачи, заметки, timeline и коммуникации частично local/demo; **лиды list/kanban** `1.1.3`/`1.1.4` closed (owner visual OK `2026-07-31`); **dashboard models** `1.1.5` closed (owner visual OK `2026-08-01`); **lead tasks/notes/communications** `1.2.4` closed (owner visual OK `2026-08-01`); lead **card demix** `1.2.5.1`–`1.2.5.4` shipped (**STOP visual** `1.2.5.5`; production auth → `17.1.1`);
 - `[~]` `Deal`, архивирование, полные активности, авторизация и права не завершены;
 - `[x]` `Organization` и связь `SalesOrder.organization_id`;
 - `[x]` `SalesOrder` list/detail, status workflow и history;

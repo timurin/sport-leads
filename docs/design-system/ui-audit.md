@@ -108,7 +108,7 @@ Detailed matrix: § Persistent versus demo/local audit (`5.1.1.3`). Summary:
 
 ### Mixed / other
 
-- `/sales/leads/[leadId]` — mixed (API numeric IDs + demo `lead-*` fixtures; demo managers/`mockCurrentUser`)
+- `/sales/leads/[leadId]` — API-only numeric IDs (`1.2.5.1`–`1.2.5.4`); actor from sales-users until `17.1.1`; **STOP visual** `1.2.5.5`
 - `/sales/leads` — persistent list; responsible filter from API leads (`1.1.4`)
 - `/dashboard` — placeholder stub
 - `/settings` — hub linking to both live and missing routes
