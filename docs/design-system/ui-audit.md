@@ -308,7 +308,7 @@ Superseded by § Reference and migration pages (`5.1.1.4`). Kept summary:
 
 ### Verdict on silent fallback
 
-Across audited loaders, **no page silently substitutes demo data when a persistent API call fails**. Lead mixed mode is an intentional ID-based dual path (`lead-*` fixtures vs numeric API), not catch→demo.
+Across audited loaders, **no page silently substitutes demo data when a persistent API call fails**. Lead card detail is API-only numeric IDs (`1.2.5`); remaining demo fixtures may still exist for other surfaces (dashboard KPIs, deals).
 
 ### Per-route classification
 
@@ -319,7 +319,7 @@ Across audited loaders, **no page silently substitutes demo data when a persiste
 | `/sales` | redirect | — | — | → `/sales/dashboard` |
 | `/sales/dashboard` | demo | `getSalesDashboardDemoData` + `lib/demo-data/sales` | — | UI labels demo snapshot date |
 | `/sales/leads` | persistent | — | `getLeadList`, stages API | responsible filter from loaded leads (`1.1.4`); fail → empty + message; no `salesManagers` |
-| `/sales/leads/[leadId]` | mixed | `leads` fixtures, `salesManagers`, `mockCurrentUser`; optional `localStorage` stages read | numeric `GET /leads/{id}` + mutations | dual ID scheme |
+| `/sales/leads/[leadId]` | api | — | numeric `GET /leads/{id}` + mutations; managers from sales-users | `1.2.5` demix; visual `1.2.5.5` |
 | `/sales/orders` | persistent | — | `getOrderList`, status actions | fail → `loadError`, no demo |
 | `/sales/orders/[orderId]` | persistent | — | order + nomenclature APIs | throw / `notFound` |
 | `/sales/clients` | demo | `clients`, `salesCurrency` | — | |
@@ -360,13 +360,13 @@ Counts: redirect 2 · stub 2 · demo 7 (+ deals) = 8 demo routes · persistent 9
 |---|---|---|
 | `salesManagers` | leads list filters; lead card header/timelines | Demo people on API screens |
 | `mockCurrentUser` | lead card notes/tasks authorship | Fake actor / permissions |
-| `leads` fixtures | `getLeadDetails` for `lead-*` ids | Parallel non-API lead path |
+| `leads` fixtures | legacy demo catalog (not used by lead detail route) | Other demo surfaces / historical tests |
 | `RUSSIAN_CITY_SUGGESTIONS` | lead city autocomplete | Static local suggestions (acceptable until geo API) |
 
 ### Prioritized persistence gaps (later work, not this microtask)
 
 1. P1 — Persist CRM: dashboard, clients, tasks, deals (landing currently demo).
-2. P1 — De-mix lead card: drop `lead-*` dual path; replace managers/`mockCurrentUser` with employees/auth.
+2. P1 — De-mix lead card: **done in `1.2.5.1`–`1.2.5.4`** (STOP visual `1.2.5.5`); production auth actor → `17.1.1`.
 3. P1 — Persist settings: organizations, employees, materials workspace on backend data.
 4. ~~P2 — Remove `salesManagers` from leads list filters; derive from API.~~ → closed `1.1.4`
 5. P2 — Remove orphan `clients.ts`; clean unused demo order fixtures if unused.
