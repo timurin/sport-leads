@@ -448,10 +448,10 @@
       </div>
 
       <div class="meta-list">
-        <div class="meta-chip">Updated: 2026-07-27</div>
+        <div class="meta-chip">Updated: 2026-08-02</div>
         <div class="meta-chip">Version: v0.9.0</div>
         <div class="meta-chip">Branch: feature/v0.8.1-nomenclature-core</div>
-        <div class="meta-chip">Commit: 0980f34</div>
+        <div class="meta-chip">Commit: cae8bbf</div>
       </div>
 
       <div class="legend" style="margin:20px 0 18px;">
@@ -505,10 +505,10 @@
 
   <script>
     const metadata = {
-      updated: "2026-07-28",
+      updated: "2026-08-02",
       version: "v0.9.0",
       branch: "feature/v0.8.1-nomenclature-core",
-      commit: "0980f34"
+      commit: "cae8bbf"
     };
 
     const sections = [
@@ -524,12 +524,15 @@
           { text: "CI pipeline for mandatory checks (GitHub Actions + `scripts/check_project.py`)", done: true },
           { text: "Dev/staging database backup and restore scripts", done: true },
           { text: "Structured application logging baseline", done: true },
-          { text: "Authentication, system users, and access roles", done: false },
-          { text: "Universal audit trail", done: false },
+          { text: "Authentication (17.1.1) — ADR-023 + API + /login gate shipped (owner visual OK 2026-08-01)", done: true },
+          { text: "System users, roles, and permissions (17.1.2) — ADR-024; Alembic t7u8v9w0x123 + u8v9w0x1y234; owner visuals OK 2026-08-01", done: true },
+          { text: "Universal audit trail (17.1.3) — ADR-025; Alembic v9w0x1y2z345; size-grid Журнал аудита; owner visual OK 2026-08-01", done: true },
+          { text: "Administration shell and system settings workspace (18.1) — nav «Платформа», system settings workspace, placement rules, and PT mapping; owner visuals OK 2026-08-02", done: true },
+          { text: "Platform directories contract and persistent API under Administration (18.2.1/18.2.2) — cities first live directory; Alembic y2z3a4b5c678; owner visual for UI list/card remains open in 18.2.3", done: true },
           { text: "Universal file subsystem beyond nomenclature images", done: false },
           { text: "Notifications and background jobs", done: false },
           { text: "Internal staff collaboration chat on sales order + technical card (Stage 19: threads, @mentions, chat-microtasks) — ≠ CRM lead comms 1.2.4", done: false },
-          { text: "Production secrets management, monitoring, and disaster recovery", done: false }
+          { text: "Production secrets management (Vault/etc.) — monitoring + DR covered in 17.2.2/17.2.3; file .env.production remains host SoT for secrets MVP", done: false }
         ]
       },
       {
@@ -540,12 +543,14 @@
           { text: "Lead completion, rejection reasons, and transactional conversion to sales order", done: true },
           { text: "Lead detail route with timeline, notes, tasks, and communication UI", done: true },
           { text: "Lead dashboard, Kanban, list, filters, and basic analytics UI", done: true },
-          { text: "Persistent lead workspace without demo/local frontend states — list/kanban 1.1.3/1.1.4 owner visual OK 2026-07-31; lead card demix 1.2.5.1–1.2.5.4 shipped (STOP visual 1.2.5.5)", done: false },
+          { text: "Persistent lead workspace without demo/local frontend states — list/kanban 1.1.3/1.1.4 + card demix 1.2.5 owner visual OK 2026-08-01; production auth actor → 17.1.1", done: true },
           { text: "Sales dashboard pattern-model analysis (1.1.5) — live API panel; owner visual OK 2026-08-01; other dashboard KPIs still demo", done: true },
           { text: "Persistent lead tasks (1.2.4.1–1.2.4.6) — owner visual OK 2026-08-01", done: true },
           { text: "Persistent lead notes (1.2.4.7) — owner visual OK 2026-08-01", done: true },
-          { text: "Persistent lead communications (1.2.4.8) — owner visual OK 2026-08-01; mock send only; real connectors → 1.4.3 / 16.1", done: true },
-          { text: "Deals, archive flow, and finalized access-control contour", done: false }
+          { text: "Persistent lead communications (1.2.4.8) — owner visual OK 2026-08-01; mock send only; real connectors → v1.00 / 1.4.3 (channel transport 16.1)", done: true },
+          { text: "Deals boundary + CRM access-control — 1.3.3: no separate Deal; /sales/deals → orders; lead archive cancelled (converted/rejected); ACL → 17.1.1; owner visual OK 2026-08-01", done: true },
+          { text: "Persistent client list workspace (2.2.1) — GET /clients + /sales/clients; owner visual OK 2026-08-01", done: true },
+          { text: "Separate client card (2.2.2) — PT-05 /sales/clients/[id]; owner visual OK 2026-08-01; history → v1.00", done: true }
         ]
       },
       {
@@ -556,7 +561,7 @@
           { text: "Persistent employees directory, org structure, and user linkage", done: false },
           { text: "Clients and contacts linked to leads and orders", done: true },
           { text: "Customer and contact saving from the lead workflow", done: true },
-          { text: "Separate persistent client workspace, card, history, deduplication, and settlements", done: false }
+          { text: "Separate persistent client history, deduplication, and settlements (2.2.3+ / 2.3; → v1.00)", done: false }
         ]
       },
       {
@@ -628,16 +633,16 @@
           { text: "Product-model create / edit UI and PRODUCT whitelist — create/edit visual OK; requisites polish 6.1.10.5; whitelist API+UI 6.1.11 shipped", done: true },
           { text: "Product types directory + model link + list column/filter — ProductType (6.1.14–6.1.16); Alembic y5z6a7b8c901 / a1b2c3d4e515", done: true },
           { text: "Assembly variants API + model-card UI (sewing-ops picker) — AssemblyVariantsBlock + copy-on-pick (6.1.12 / 6.3.6); owner visual OK 6.1.12.6 (2026-07-22)", done: true },
-          { text: "Model routing whitelist + operation material norms on product model — Stage 6.1.17 (plan hint; fact on TC/11.5–11.6)", done: false },
+          { text: "Model routing whitelist + operation material norms on product model — Stage 6.1.17 shipped (owner visual OK 2026-07-27; plan hint; fact on TC/11.5–11.6)", done: true },
           { text: "Sewing operations flat catalog API + PT-02 list UI — sewing_operations /settings/catalogs/sewing_operations (6.3.1–5; owner visual OK 6.3.4.5 / 6.3.5.4 / 6.4.3.3); PatternSet withdrawn", done: true },
           { text: "Sewing operation normative duration (duration_seconds) + assembly-line snapshot — 6.3.8; Alembic d5e6f7a8b901", done: true },
           { text: "Sewing operation ↔ sewing-shop equipment (WorkCenter, цех Пошив) — 6.3.10 closed; Alembic d1e2f3a4b567; API work_center_ids; UI picker; ≠ routing/TC 11.1.2", done: true },
           { text: "Dedicated size-grid directory and measurements — Mosmade men 18 + women 14; list/card visual OK (6.2.4.5 / 6.2.5.4 / 6.4.3.2); Stage-6 read-only; write/edit → 17.1.2.4; model link 6.2.7 shipped (ProductModel.size_grid_id)", done: true },
           { text: "Pattern-base owner visual checkpoint — models / grids / sewing ops / PRODUCT available-models (6.4.3); Stage 6 catalog closed", done: true },
           { text: "Order-item model + assembly-variant selection — Stage 3.2.5 shipped; smoke 3.2.6 + routing 3.2.7 shipped 2026-07-27", done: true },
-          { text: "Order-item routing template selection from model whitelist — Stage 3.2.7", done: false },
+          { text: "Order-item routing template selection from model whitelist — Stage 3.2.7 shipped (owner visual OK 2026-07-27)", done: true },
           { text: "Specifications — Stage 7 plan+fact report document from filled TC + execution (ADR-004; Documents = link registry later)", done: false },
-          { text: "Routing, operations, work centers, QC; shop TechOperation (8.1.3) + routings UI (8.2) shipped; whitelist wire 8.2.3.7–8 planned; owner visual 8.2.2.6 OK 2026-07-28", done: true },
+          { text: "Routing, operations, work centers, QC; shop TechOperation (8.1.3 + required materials 8.1.4) + routings UI (8.2) shipped; TC whitelist wire 8.2.3.7–8.2.3.8 shipped; owner visual 8.2.2.6 OK 2026-07-28", done: true },
           { text: "ProductionStage (цех) catalog + routing/ops bind (8.3) — shipped m4n5o6p7q890; owner visual routings OK 2026-07-28", done: true }
         ]
       },
@@ -649,7 +654,7 @@
           { text: "Generate from order 9.2.1 (preview / generate / cancel draft / sync unit lines; eligible = PRODUCT)", done: true },
           { text: "Composition on card 9.3.1 (model/pattern/material lines + soft Spec version apply until Stage 7)", done: true },
           { text: "Composition plan/fact + stage bind + hard material gate cutting/print — Stage 9.3.4; owner visual OK 2026-07-28", done: true },
-          { text: "Unit lines API 9.3.2 (patch / bulk / replace / import / reset-defaults)", done: true },
+          { text: "Unit lines API 9.3.2 (patch / bulk / replace / aggregate import / reset-defaults; size_type male/female; Alembic o2p3q4r5s678)", done: true },
           { text: "Operation volumes API 9.3.3 (replace/patch/prefill soft until 8.1.3; no demo)", done: true },
           { text: "Order ↔ tech cards UI 9.4.1 (gap #4 closed; owner visual 9.4.1.4 OK)", done: true },
           { text: "Stage machine / order manufacturing completeness / full list-document UI (9.2.2, 9.4.2, 9.5 shipped; owner visuals 9.4.1.4 and 9.4.2.7 OK)", done: true },
@@ -659,12 +664,12 @@
       {
         title: "10. Design, Production, Warehouse, Procurement, and Shipping",
         items: [
-          { text: "Design versioned layouts / assets (Stage 10.1); approval = 3.4.1 order status + Stage 19 chat/microtasks (10.2 cancelled); shop Дизайн = 11.4", done: false },
-          { text: "Production orders/batches 11.1.1 + WorkCenter planning 11.1.2 + aggregate fact 11.2.1 shipped (owner visuals OK 2026-07-30); FG warehouse 11.2.2.1–11.2.2.3 shipped; wire/visual 11.2.2.4–11.2.2.5 open (deps 12.2)", done: true },
+          { text: "Design versioned layouts / assets (Stage 10.1) — ADR-021/022; 10.1.1–10.1.2 closed (owner visuals OK 2026-08-01); approval = 3.4.1 + Stage 19 (10.2 cancelled); shop Дизайн = 11.4", done: true },
+          { text: "Production orders/batches 11.1.1 + WorkCenter planning 11.1.2 + aggregate fact 11.2.1 shipped (owner visuals OK 2026-07-30); FG warehouse 11.2.2 shipped (owner visual 11.2.2.5 OK 2026-08-01)", done: true },
           { text: "Shop-floor modules platform + per-цех UIs (11.3–11.10) — fact on technical card; material fact_qty hard gate on Раскрой/Печать; owner visuals OK through 11.10.5 (2026-07-29)", done: true },
           { text: "Warehouse nomenclature PT-04 /warehouse/stock — tree CRUD + list + settings redirects + остаток column/filter + owner visual OK (4.10.1–4.10.7); live ledger column 12.2.3 (ADR-019)", done: true },
           { text: "Warehouse Stage 12 ledger MVP 12.2 (12.2.1–12.2.5 / former 4.6.5.*) — StockDocument/Ledger + post/API + live /warehouse/stock column + regression + docs sync", done: true },
-          { text: "Warehouse Stage 12 remainder: FG docs 12.3, inventory/transfers 12.4–12.5 (structure 12.1 done)", done: false },
+          { text: "Warehouse FG docs + movements 12.3 (12.3.1–12.3.3) shipped; inventory/transfers 12.4–12.5 → v1.00", done: true },
           { text: "Procurement requests, supplier orders, receipts, and returns", done: false },
           { text: "Shipping documents, delivery tracking, and confirmation of receipt", done: false }
         ]
@@ -693,10 +698,10 @@
       {
         title: "13. Operations and Deployment",
         items: [
-          { text: "VPS, production Docker, reverse proxy, HTTPS, and domain", done: false },
+          { text: "VPS, production Docker, reverse proxy, HTTPS, and domain (17.2.1) — in-repo compose.prod.yaml + Caddy + runbook; live host apply = owner", done: true },
           { text: "Dev/staging CI for mandatory checks", done: true },
-          { text: "Production deployment pipeline, centralized monitoring, and log aggregation", done: false },
-          { text: "Production backup, disaster recovery, and administrator runbooks", done: false }
+          { text: "Production deployment pipeline, centralized monitoring, and log aggregation (17.2.2) — deploy-production.yml + health probes + json-file rotation", done: true },
+          { text: "Production backup, disaster recovery, and administrator runbooks (17.2.3) — prod-backup/restore + production-17-2-3.md", done: true }
         ]
       }
     ];
