@@ -19,6 +19,7 @@ from decimal import Decimal
 
 from sqlalchemy.orm import Session
 
+from app.models.auth import PlatformUser
 from app.models.production_stage import ProductionStage
 from app.models.shop_routing import WorkCenter
 from app.models.technical_card import (
@@ -28,6 +29,7 @@ from app.models.technical_card import (
     TechnicalCardStageResultStatus,
     TechnicalCardStatus,
 )
+from app.services import audit as audit_service
 from app.schemas.technical_card import (
     TechnicalCardStageCompleteRequest,
     TechnicalCardStageFactRequest,
@@ -275,6 +277,8 @@ def complete_stage(
     card_id: int,
     stage_order: int,
     payload: TechnicalCardStageCompleteRequest | None = None,
+    *,
+    actor: PlatformUser | None = None,
 ) -> TechnicalCard:
     card = get_technical_card(db, card_id)
     _assert_card_executable(card)
@@ -328,6 +332,27 @@ def complete_stage(
             card.current_stage_order = next_pending.stage_order
             card.current_stage_label = next_pending.stage_label
 
+    stage_code = resolve_production_stage_code(
+        db, stage.production_stage_id, stage.stage_label
+    )
+    from app.services.fg_stock_posting import post_fg_on_stage_complete
+
+    post_fg_on_stage_complete(db, card, stage_code)
+
+    if actor is not None:
+        audit_service.append_audit_event(
+            db,
+            actor=actor,
+            action=audit_service.ACTION_SHOP_STAGE_COMPLETE,
+            entity_type="technical_card",
+            entity_id=card_id,
+            payload={
+                "stage_order": stage_order,
+                "stage_code": stage_code,
+                "stage_label": stage.stage_label,
+            },
+        )
+
     db.commit()
     return get_technical_card(db, card_id)
 
@@ -345,6 +370,13 @@ def rollback_stage(db: Session, card_id: int, stage_order: int) -> TechnicalCard
         raise TechnicalCardValidationError(
             f"Only completed stages can be rolled back (stage {stage_order} is {stage.status})"
         )
+
+    stage_code = resolve_production_stage_code(
+        db, stage.production_stage_id, stage.stage_label
+    )
+    from app.services.fg_stock_posting import assert_fg_stage_rollback_allowed
+
+    assert_fg_stage_rollback_allowed(db, card, stage_code)
 
     for later in _ordered_stages(card):
         if later.stage_order <= stage_order:
@@ -370,7 +402,11 @@ def rollback_stage(db: Session, card_id: int, stage_order: int) -> TechnicalCard
 
 
 def rollback_stage_for_shop_kanban(
-    db: Session, card_id: int, stage_order: int
+    db: Session,
+    card_id: int,
+    stage_order: int,
+    *,
+    actor: PlatformUser | None = None,
 ) -> TechnicalCard:
     """Shop-kanban rollback for test convenience.
 
@@ -389,6 +425,13 @@ def rollback_stage_for_shop_kanban(
         raise TechnicalCardValidationError(
             f"Only completed stages can be rolled back (stage {stage_order} is {stage.status})"
         )
+
+    stage_code = resolve_production_stage_code(
+        db, stage.production_stage_id, stage.stage_label
+    )
+    from app.services.fg_stock_posting import assert_fg_stage_rollback_allowed
+
+    assert_fg_stage_rollback_allowed(db, card, stage_code)
 
     for later in _ordered_stages(card):
         if later.stage_order <= stage_order:
@@ -419,6 +462,19 @@ def rollback_stage_for_shop_kanban(
         card.status = TechnicalCardStatus.IN_PROGRESS
 
     _sync_current_stage(card)
+    if actor is not None:
+        audit_service.append_audit_event(
+            db,
+            actor=actor,
+            action=audit_service.ACTION_SHOP_STAGE_ROLLBACK_KANBAN,
+            entity_type="technical_card",
+            entity_id=card_id,
+            payload={
+                "stage_order": stage_order,
+                "stage_code": stage_code,
+                "stage_label": stage.stage_label,
+            },
+        )
     db.commit()
     return get_technical_card(db, card_id)
 

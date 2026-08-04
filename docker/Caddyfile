@@ -1,0 +1,25 @@
+# Sport-Lead production edge (17.2.1.2 / 17.2.2.2).
+# Set SPORT_LEADS_DOMAIN in the environment (e.g. erp.example.com).
+# Caddy obtains/renews Let's Encrypt certificates automatically when the domain
+# points at this host and ports 80/443 are reachable.
+
+{$SPORT_LEADS_DOMAIN:localhost} {
+	encode gzip
+
+	# Edge liveness (Caddy process)
+	handle /healthz {
+		respond "ok" 200
+	}
+
+	# API liveness / readiness for uptime monitors (17.2.2.2)
+	handle /health {
+		reverse_proxy api:8000
+	}
+	handle /health/ready {
+		reverse_proxy api:8000
+	}
+
+	handle {
+		reverse_proxy web:3000
+	}
+}

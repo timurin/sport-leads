@@ -204,6 +204,38 @@ def render_xlsx_bytes(
     return out.getvalue()
 
 
+def _detect_csv_delimiter(text: str) -> str:
+    """Pick CSV delimiter without trusting Sniffer alone.
+
+    Excel RU exports often use `;`. Sniffer fails or prefers `,` when cell
+    values contain commas (e.g. product model names), collapsing the header
+    into a single column.
+    """
+    first = ""
+    for line in text.splitlines():
+        if line.strip():
+            first = line
+            break
+    if not first:
+        return ","
+
+    counts = {
+        ";": first.count(";"),
+        ",": first.count(","),
+        "\t": first.count("\t"),
+    }
+    # Prefer the delimiter that splits the header into the most fields.
+    best = max(counts.items(), key=lambda item: item[1])
+    if best[1] > 0:
+        return best[0]
+
+    sample = text[:4096]
+    try:
+        return csv.Sniffer().sniff(sample, delimiters=",;\t").delimiter
+    except csv.Error:
+        return ","
+
+
 def _parse_csv(data: bytes) -> ParsedTable:
     text = _decode_text(data)
     # Skip Excel locale hints like "sep=," / "sep=;" (may appear after BOM).
@@ -214,13 +246,8 @@ def _parse_csv(data: bytes) -> ParsedTable:
     if not text.strip():
         raise FileIoParseError("Empty file")
 
-    sample = text[:4096]
-    try:
-        dialect = csv.Sniffer().sniff(sample, delimiters=",;\t")
-    except csv.Error:
-        dialect = csv.excel
-
-    reader = csv.reader(io.StringIO(text), dialect)
+    delimiter = _detect_csv_delimiter(text)
+    reader = csv.reader(io.StringIO(text), delimiter=delimiter)
     matrix = [[normalize_header(cell) for cell in row] for row in reader]
     headers, rows = _matrix_to_table(matrix)
     return ParsedTable(headers=headers, rows=rows, source_format="csv")

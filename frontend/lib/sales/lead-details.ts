@@ -9,6 +9,7 @@ import { fromApiLeadEvent, type ApiLeadEvent } from "@/lib/sales/lead-history";
 import { fromApiLeadMessage, leadMessageToActivity, type ApiLeadMessage } from "@/lib/sales/lead-message-api";
 import { fromApiLeadNote, type ApiLeadNote } from "@/lib/sales/lead-note-api";
 import { fromApiLeadTask, fromApiSalesUser, type ApiLeadTask, type ApiSalesUser } from "@/lib/sales/lead-task-api";
+import { getMe, platformUserToSummary } from "@/lib/auth/session";
 import type { LeadActivity, LeadCommercialDetailsData, LeadCustomer, LeadMessage, LeadResult, LeadStatus, LeadTask, UserSummary } from "@/types/sales";
 
 export type LeadSource = string;
@@ -369,11 +370,12 @@ export async function getLeadDetails(leadId: string): Promise<LeadDetails | null
         name: `Сотрудник #${apiLead.responsible_id}`,
         initials: `#${apiLead.responsible_id}`,
       }];
-  const responsibleId = apiLead.responsible_id === null ? null : String(apiLead.responsible_id);
-  const currentActor = (responsibleId ? managers.find((manager) => manager.id === responsibleId) : undefined)
-    ?? managers.find((manager) => manager.id === "1")
-    ?? managers[0]
-    ?? { id: "1", name: "System", initials: "SY" };
+  const me = await getMe();
+  const currentActor = me
+    ? platformUserToSummary(me)
+    : managers.find((manager) => manager.id === "1")
+      ?? managers[0]
+      ?? { id: "1", name: "System", initials: "SY" };
   const historyActivities = history
     .filter((event) => event.event_type !== "comment_added")
     .map(fromApiLeadEvent);

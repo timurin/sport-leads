@@ -12,6 +12,7 @@ from sqlalchemy.pool import StaticPool
 from app.database.base import Base
 from app.database.session import get_db
 from app.main import app
+from tests.auth_test_helpers import ensure_user_with_role, login_client
 from app.models.production_stage import ProductionStage
 from app.models.sales import Client, Lead, LeadTask, SalesOrder, SalesOrderItem, SalesOrderStatus, SalesUser
 from app.models.technical_card import (
@@ -186,7 +187,10 @@ def test_sewing_stage_fact_write_and_bind() -> None:
         with factory() as db:
             card_id = _seed_sewing_card(db)
 
+        with factory() as _auth_db:
+            ensure_user_with_role(_auth_db, login="ops", role_code="shop_operator")
         with TestClient(app) as client:
+            login_client(client, login="ops")
             ok = client.patch(
                 f"/technical-cards/{card_id}/stages/2/fact",
                 json={
@@ -245,7 +249,10 @@ def test_sewing_shop_bind_rejects_when_current_is_not_sewing() -> None:
         with factory() as db:
             card_id = _seed_print_current_card(db)
 
+        with factory() as _auth_db:
+            ensure_user_with_role(_auth_db, login="ops", role_code="shop_operator")
         with TestClient(app) as client:
+            login_client(client, login="ops")
             blocked = client.patch(
                 f"/technical-cards/{card_id}/stages/1/fact",
                 json={

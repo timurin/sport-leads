@@ -53,6 +53,9 @@ const VOLUME_UNIT_LABEL: Record<string, string> = {
 };
 
 const UNIT_LINE_SIZE_TYPE_LABEL: Record<string, string> = {
+  male: "Мужской",
+  female: "Женский",
+  // Legacy aliases (pre-9.3.2.5 men/women/kids)
   men: "Мужской",
   women: "Женский",
   kids: "Детский",

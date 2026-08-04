@@ -22,9 +22,11 @@ import type { ApiTechnicalCardListItem } from "@/lib/sales/order-tech-cards-api"
 export function ShopStageKanbanWorkspace({
   cards,
   shopModules,
+  canTransition = false,
 }: {
   cards: ApiTechnicalCardListItem[];
   shopModules: ShopStageModule[];
+  canTransition?: boolean;
 }) {
   const router = useRouter();
   const initialColumns = useMemo(
@@ -41,7 +43,20 @@ export function ShopStageKanbanWorkspace({
     setBoardRevision((value) => value + 1);
   }, [cards, shopModules]);
 
+  const boardColumns = useMemo(() => {
+    if (canTransition) return columns;
+    return columns.map((column) => ({
+      ...column,
+      cards: column.cards.map((card) => ({ ...card, draggable: false })),
+    }));
+  }, [canTransition, columns]);
+
   const onMove = (move: KanbanMove<ShopStageKanbanStatus>) => {
+    if (!canTransition) {
+      setMoveError("Недостаточно прав: shop.kanban.transition");
+      return;
+    }
+
     const previousColumns = cloneKanbanColumns(columns);
     const sourceCard = previousColumns
       .flatMap((column) => column.cards)
@@ -106,17 +121,20 @@ export function ShopStageKanbanWorkspace({
       />
 
       <div className="min-w-0 flex-1 overflow-auto p-portal-4 lg:p-portal-6">
-        <InlineAlert className="mb-portal-4" tone="warning">
-          DnD временно открыт для всех пользователей (отладка `11.3.6`). Ролевой gate —
-          `17.1.2.7`. Переход только на соседний цех; complete/rollback через API `9.2.2`
-          без обхода hard-gate.
+        <InlineAlert
+          className="mb-portal-4"
+          tone={canTransition ? "neutral" : "warning"}
+        >
+          {canTransition
+            ? "DnD доступен с правом shop.kanban.transition. Переход только на соседний цех; complete/rollback-kanban через API."
+            : "Просмотр без DnD: нет права shop.kanban.transition. Назначение роли — /settings/users."}
         </InlineAlert>
         {moveError ? (
           <InlineAlert className="mb-portal-4" tone="danger">
             {moveError}
           </InlineAlert>
         ) : null}
-        {columns.every((column) => column.cards.length === 0) ? (
+        {boardColumns.every((column) => column.cards.length === 0) ? (
           <EmptyState
             title="Нет активных техкарт"
             description="Канбан строится из реальных ТК с текущим ProductionStage."
@@ -124,11 +142,11 @@ export function ShopStageKanbanWorkspace({
         ) : (
           <KanbanBoard
             key={boardRevision}
-            columns={columns}
+            columns={boardColumns}
             query={query}
             selectedFilters={{}}
-            onColumnsChange={setColumns}
-            onMove={onMove}
+            onColumnsChange={canTransition ? setColumns : undefined}
+            onMove={canTransition ? onMove : undefined}
           />
         )}
       </div>

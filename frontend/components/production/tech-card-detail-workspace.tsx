@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import {
@@ -6,12 +6,15 @@ import {
   ChevronRight,
   CheckCircle2,
   ExternalLink,
+  FileDown,
   Play,
+  Plus,
   Printer,
   RotateCcw,
+  Trash2,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 
 import {
   applyRoutingAction,
@@ -19,7 +22,9 @@ import {
   completeTechnicalCardStageAction,
   deleteCompositionLineAction,
   deleteTechCardMediaAction,
-  importUnitLinesAction,
+  generateTechnicalCardPrintForm,
+  importUnitLinesFileAction,
+  replaceUnitLinesAction,
   replaceCompositionAction,
   rollbackTechnicalCardStageAction,
   rollbackTechnicalCardStageKanbanAction,
@@ -33,6 +38,7 @@ import {
 } from "@/app/(workspace)/production/tech-cards/tech-card-actions";
 import { TechCardMediaCarousel } from "@/components/production/tech-card-media-carousel";
 import { TechCardShopFloorBody } from "@/components/production/tech-card-shop-floor-body";
+import { OrderCollaborationPanel } from "@/components/sales/order-collaboration-panel";
 import { DocumentCard } from "@/components/entity/document-card";
 import { Button, IconButton } from "@/components/ui/button";
 import { ActivityTimeline, ActivityTimelineItem } from "@/components/ui/activity-timeline";
@@ -58,12 +64,12 @@ import {
   shopStageCardHref,
   shopStageCodeByTitle,
 } from "@/lib/production/shop-stage-modules";
+import { buildTechnicalCardPrintRequest } from "@/lib/production/tech-card-print";
 import {
   asTechCardUiStatus,
   buildCompositionReplaceLines,
   buildTechCardHistoryEntries,
   compositionLineKindLabel,
-  findSewingHostRoutingLineIndex,
   formatDesiredDate,
   formatTechCardDateTime,
   formatVolumeUnit,
@@ -86,10 +92,11 @@ import type {
   ApiTechnicalCardMedia,
   ApiTechnicalCardOperationLine,
   ApiTechnicalCardStageResult,
-  TechnicalCardUnitLineAggregateImportRow,
+  ApiTechnicalCardUnitLine,
 } from "@/lib/sales/order-tech-cards-api";
 import type { WorkCenter } from "@/lib/shop-routings";
 import { techCardStatusLabel } from "@/lib/sales/order-tech-cards";
+import type { SizeGrid } from "@/lib/size-grids";
 import {
   assemblyOperationLineTotal,
   formatAssemblyCost,
@@ -126,12 +133,30 @@ type TechCardDetailWorkspaceProps = {
   shopStageCode?: string;
   /** Active work centers for print shop (`11.6`). */
   workCenters?: WorkCenter[];
+  unitSizeGrid?: SizeGrid | null;
+};
+
+type UnitLineDraft = {
+  id: number;
+  unit_index: number;
+  size_type?: string | null;
+  size?: string | null;
+  personalization?: string | null;
+  print_number?: string | null;
+  notes?: string | null;
 };
 
 let materialDraftKeySeq = 0;
+let unitLineDraftTempIdSeq = -1;
 function nextMaterialDraftKey(): string {
   materialDraftKeySeq += 1;
   return `new-${materialDraftKeySeq}`;
+}
+
+function nextUnitLineDraftId(): number {
+  const next = unitLineDraftTempIdSeq;
+  unitLineDraftTempIdSeq -= 1;
+  return next;
 }
 
 function stageTone(status: string): "neutral" | "primary" | "success" | "warning" {
@@ -150,6 +175,157 @@ function sortMedia(items: ApiTechnicalCardMedia[]): ApiTechnicalCardMedia[] {
   );
 }
 
+function unitLineToDraft(line: ApiTechnicalCardUnitLine): UnitLineDraft {
+  return {
+    id: line.id,
+    unit_index: line.unit_index,
+    size_type: line.size_type ?? null,
+    size: line.size ?? null,
+    personalization: line.personalization ?? null,
+    print_number: line.print_number ?? null,
+    notes: line.notes ?? null,
+  };
+}
+
+function normalizeUnitLineValue(value: string | null | undefined): string {
+  return value?.trim() ?? "";
+}
+
+function normalizeUnitSizeValue(value: string | null | undefined): string {
+  const raw = value?.trim() ?? "";
+  if (!raw) return "";
+  const parts = raw.split("/");
+  if (parts.length !== 2) return raw;
+  const [ru, intLabel] = parts;
+  const left = ru?.trim() ?? "";
+  const right = intLabel?.trim() ?? "";
+  if (!left || !right) return raw;
+  return `${left} / ${right}`;
+}
+
+function reindexUnitLineDrafts(lines: UnitLineDraft[]): UnitLineDraft[] {
+  return lines.map((line, index) => ({
+    ...line,
+    unit_index: index + 1,
+  }));
+}
+
+function unitLineDraftsEqual(left: UnitLineDraft[], right: UnitLineDraft[]): boolean {
+  if (left.length !== right.length) return false;
+  return left.every((draft, index) => {
+    const other = right[index];
+    if (!other) return false;
+    return (
+      draft.id === other.id &&
+      draft.unit_index === other.unit_index &&
+      normalizeUnitLineValue(draft.size_type) === normalizeUnitLineValue(other.size_type) &&
+      normalizeUnitSizeValue(draft.size) === normalizeUnitSizeValue(other.size) &&
+      normalizeUnitLineValue(draft.personalization) ===
+        normalizeUnitLineValue(other.personalization) &&
+      normalizeUnitLineValue(draft.print_number) ===
+        normalizeUnitLineValue(other.print_number) &&
+      normalizeUnitLineValue(draft.notes) === normalizeUnitLineValue(other.notes)
+    );
+  });
+}
+
+function openGeneratedPrintForm(
+  render: {
+  output_format: string;
+  content: string;
+  content_type: string;
+  file_name: string;
+  content_encoding?: string;
+},
+  options?: { autoPrint?: boolean },
+): string | null {
+  if (render.output_format === "html") {
+    const printToolbar = `
+<style>
+  .sl-print-toolbar {
+    position: fixed;
+    top: 12px;
+    right: 12px;
+    z-index: 2147483647;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    padding: 8px 10px;
+    border-radius: 999px;
+    background: rgba(17, 24, 39, 0.92);
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.22);
+    color: #fff;
+    font: 500 12px/1.2 Arial, sans-serif;
+  }
+  .sl-print-toolbar__hint {
+    white-space: nowrap;
+  }
+  .sl-print-toolbar__button {
+    appearance: none;
+    border: 0;
+    border-radius: 999px;
+    padding: 8px 12px;
+    background: #fff;
+    color: #111827;
+    font: inherit;
+    cursor: pointer;
+  }
+  .sl-print-toolbar__button:hover {
+    background: #e5e7eb;
+  }
+  @media print {
+    .sl-print-toolbar {
+      display: none !important;
+    }
+  }
+</style>
+<div class="sl-print-toolbar" data-print-toolbar>
+  <span class="sl-print-toolbar__hint">A4 / PDF</span>
+  <button type="button" class="sl-print-toolbar__button" onclick="window.print()">PDF</button>
+</div>`;
+    const printScript = `
+<script>
+  window.addEventListener("load", () => {
+    document.title = ${JSON.stringify(render.file_name.replace(/\.[^.]+$/, ""))};
+    ${
+      options?.autoPrint
+        ? 'window.setTimeout(() => window.print(), 150);'
+        : ""
+    }
+  });
+</script>`;
+    const html = render.content.includes("</body>")
+      ? render.content.replace("</body>", `${printToolbar}${printScript}</body>`)
+      : `${render.content}${printToolbar}${printScript}`;
+    const blob = new Blob([html], { type: render.content_type });
+    const url = URL.createObjectURL(blob);
+    const popup = window.open(url, "_blank", "noopener,noreferrer");
+    if (!popup) {
+      URL.revokeObjectURL(url);
+      return "Браузер заблокировал окно печати. Разрешите popup и повторите.";
+    }
+    window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    return null;
+  }
+
+  const blob =
+    render.content_encoding === "base64"
+      ? new Blob(
+          [
+            Uint8Array.from(atob(render.content), (char) => char.charCodeAt(0)),
+          ],
+          { type: render.content_type },
+        )
+      : new Blob([render.content], { type: render.content_type });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = render.file_name;
+  link.click();
+  URL.revokeObjectURL(url);
+  return null;
+}
+
 /** PT-07 technical card document workspace. */
 export function TechCardDetailWorkspace({
   card,
@@ -159,9 +335,11 @@ export function TechCardDetailWorkspace({
   listOrderId,
   shopStageCode,
   workCenters = [],
+  unitSizeGrid,
 }: TechCardDetailWorkspaceProps) {
   const router = useRouter();
   const { push: pushToast } = useToast();
+  const [isPrintPending, startPrintTransition] = useTransition();
   const [busy, setBusy] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
   const [completeOpen, setCompleteOpen] = useState(false);
@@ -171,19 +349,25 @@ export function TechCardDetailWorkspace({
   const [reworkQty, setReworkQty] = useState("");
   const [stageNotes, setStageNotes] = useState("");
   const [previewSrc, setPreviewSrc] = useState<string | null>(null);
+  const unitImportInputRef = useRef<HTMLInputElement>(null);
   const [materialDrafts, setMaterialDrafts] = useState<TechCardMaterialDraftLine[]>(() =>
     materialDraftsFromComposition(card.composition_lines ?? []),
   );
+  const [unitLineDrafts, setUnitLineDrafts] = useState<UnitLineDraft[]>(() =>
+    [...(card.unit_lines ?? [])]
+      .sort((a, b) => a.unit_index - b.unit_index)
+      .map(unitLineToDraft),
+  );
   const [unitImportOpen, setUnitImportOpen] = useState(false);
-  const [unitImportText, setUnitImportText] = useState("");
+  const [unitImportFile, setUnitImportFile] = useState<File | null>(null);
   const [collapsedBlocks, setCollapsedBlocks] = useState({
     mockup: false,
     orderData: false,
     modelRouting: false,
     operations: true,
+    assemblyScheme: true,
     materials: true,
     stages: true,
-    units: true,
     history: true,
   });
   const [shopFactDrafts, setShopFactDrafts] = useState<Record<number, string>>({});
@@ -196,7 +380,7 @@ export function TechCardDetailWorkspace({
   // Demo performers (until platform user-per-stage permissions are available).
   const factPerformerOptions = useMemo(
     () => [
-      { value: "Ма", label: "Ма" },
+      { value: "Мастер", label: "Мастер" },
       { value: "Иванов", label: "Иванов" },
       { value: "Петров", label: "Петров" },
       { value: "Сидоров", label: "Сидоров" },
@@ -242,14 +426,6 @@ export function TechCardDetailWorkspace({
   const { routing: routingOps, sewing: sewingOps } =
     groupOperationLinesBySource(operationLines);
   const assemblySewingOps = card.assembly_sewing_operations ?? [];
-  const sewingProductionStageId =
-    productionStages.find((row) => row.code === "sewing")?.id ?? null;
-  const sewingHostIndex = findSewingHostRoutingLineIndex(
-    routingOps,
-    sewingProductionStageId,
-  );
-  const hasSewingChildContent =
-    assemblySewingOps.length > 0 || sewingOps.length > 0;
   const mediaItems = sortMedia(card.media_items ?? []);
 
   const toggleBlock = (key: keyof typeof collapsedBlocks) => {
@@ -262,6 +438,14 @@ export function TechCardDetailWorkspace({
   useEffect(() => {
     setMaterialDrafts(materialDraftsFromComposition(card.composition_lines ?? []));
   }, [card.id, card.updated_at]);
+
+  useEffect(() => {
+    setUnitLineDrafts(
+      [...(card.unit_lines ?? [])]
+        .sort((a, b) => a.unit_index - b.unit_index)
+        .map(unitLineToDraft),
+    );
+  }, [card.id, card.unit_lines, card.updated_at]);
 
   useEffect(() => {
     if (!shopProductionStage) {
@@ -282,6 +466,28 @@ export function TechCardDetailWorkspace({
 
   const compositionEditable =
     !isShopContext && status !== "cancelled" && status !== "completed";
+  const unitLinesEditable = compositionEditable;
+  const persistedUnitLineDrafts = useMemo(
+    () => unitLines.map(unitLineToDraft),
+    [unitLines],
+  );
+  const unitLineDraftsDirty = !unitLineDraftsEqual(
+    unitLineDrafts,
+    persistedUnitLineDrafts,
+  );
+  const expectedUnitLineCount = Math.max(0, Number(card.quantity) || 0);
+  const unitLineCountMatches = unitLineDrafts.length === expectedUnitLineCount;
+  const unitSizeOptions = useMemo(() => {
+    const seen = new Set<string>();
+    const options: string[] = [];
+    for (const row of unitSizeGrid?.rows ?? []) {
+      const value = normalizeUnitSizeValue(`${row.ru_size} / ${row.int_label}`);
+      if (!value || seen.has(value)) continue;
+      seen.add(value);
+      options.push(value);
+    }
+    return options;
+  }, [unitSizeGrid]);
 
   const shopMaterialLines = useMemo(() => {
     if (!shopProductionStage) return [] as ApiTechnicalCardCompositionLine[];
@@ -414,57 +620,98 @@ export function TechCardDetailWorkspace({
 
   const documentNumber = techCardDocumentNumberLabel(card.order_number, card.number);
 
-  const parseUnitImport = (): TechnicalCardUnitLineAggregateImportRow[] => {
-    const rows = unitImportText
-      .split(/\r?\n/)
-      .map((row) => row.trim())
-      .filter(Boolean);
-    if (rows.length === 0) {
-      throw new Error("Добавьте хотя бы одну строку импорта");
+  const onImportUnitLines = () => {
+    if (!unitImportFile) {
+      setActionError("Выберите XLSX-файл для импорта");
+      return;
     }
-    return rows.map((row, index) => {
-      const cells = row
-        .split(/\t|;/)
-        .map((cell) => cell.trim());
-      if (cells.length < 6) {
-        throw new Error(`Строка ${index + 1}: ожидается 6 колонок`);
+    const formData = new FormData();
+    formData.append("file", unitImportFile);
+    void runAction(() =>
+      importUnitLinesFileAction(card.id, formData, card.sales_order_id),
+    ).then((result) => {
+      if (!result?.ok) return;
+      setUnitImportFile(null);
+      if (unitImportInputRef.current) {
+        unitImportInputRef.current.value = "";
       }
-      const [sizeTypeLabel, size, personalization, printNumber, quantityRaw, notes] = cells;
-      const quantity = Number(quantityRaw.replace(",", "."));
-      if (!Number.isInteger(quantity) || quantity < 1) {
-        throw new Error(`Строка ${index + 1}: количество должно быть целым числом >= 1`);
-      }
-      const normalizedSizeType =
-        sizeTypeLabel.toLowerCase() === "мужской"
-          ? "men"
-          : sizeTypeLabel.toLowerCase() === "женский"
-            ? "women"
-            : sizeTypeLabel.toLowerCase() === "детский"
-              ? "kids"
-              : null;
-      if (normalizedSizeType == null) {
-        throw new Error(`Строка ${index + 1}: тип размера должен быть Мужской или Женский`);
-      }
-      return {
-        size_type: normalizedSizeType,
-        size,
-        personalization,
-        print_number: printNumber,
-        quantity,
-        notes,
-      };
     });
   };
 
-  const onImportUnitLines = () => {
-    let lines: TechnicalCardUnitLineAggregateImportRow[];
-    try {
-      lines = parseUnitImport();
-    } catch (error) {
-      setActionError(error instanceof Error ? error.message : "Ошибка импорта");
-      return;
-    }
-    void runAction(() => importUnitLinesAction(card.id, lines, card.sales_order_id));
+  const updateUnitLineDraft = (
+    lineId: number,
+    field: keyof Omit<UnitLineDraft, "id" | "unit_index">,
+    value: string,
+  ) => {
+    setUnitLineDrafts((current) =>
+      current.map((line) =>
+        line.id === lineId
+          ? {
+              ...line,
+              [field]: value,
+            }
+          : line,
+      ),
+    );
+    setActionError(null);
+  };
+
+  const resetUnitLineDrafts = () => {
+    setUnitLineDrafts(persistedUnitLineDrafts);
+    setActionError(null);
+  };
+
+  const addUnitLineDraft = () => {
+    setUnitLineDrafts((current) =>
+      reindexUnitLineDrafts([
+        ...current,
+        {
+          id: nextUnitLineDraftId(),
+          unit_index: current.length + 1,
+          size_type: current[0]?.size_type ?? null,
+          size: null,
+          personalization: null,
+          print_number: null,
+          notes: null,
+        },
+      ]),
+    );
+    setActionError(null);
+  };
+
+  const removeUnitLineDraft = (lineId: number) => {
+    setUnitLineDrafts((current) =>
+      reindexUnitLineDrafts(current.filter((line) => line.id !== lineId)),
+    );
+    setActionError(null);
+  };
+
+  const onSaveUnitLines = () => {
+    void runAction(
+      () =>
+        replaceUnitLinesAction(
+          card.id,
+          unitLineDrafts.map((line) => ({
+            unit_index: line.unit_index,
+            size_type: normalizeUnitLineValue(line.size_type) || null,
+            size: normalizeUnitSizeValue(line.size) || null,
+            personalization: normalizeUnitLineValue(line.personalization) || null,
+            print_number: normalizeUnitLineValue(line.print_number) || null,
+            notes: normalizeUnitLineValue(line.notes) || null,
+          })),
+          card.sales_order_id,
+        ),
+      { skipRefresh: true },
+    ).then((result) => {
+      if (!result?.ok) return;
+      const nextCard = result.card;
+      if (!nextCard) return;
+      setUnitLineDrafts(
+        [...(nextCard.unit_lines ?? [])]
+          .sort((a, b) => a.unit_index - b.unit_index)
+          .map(unitLineToDraft),
+      );
+    });
   };
 
   const openCompleteForm = (stageOrder: number) => {
@@ -529,7 +776,46 @@ export function TechCardDetailWorkspace({
   };
 
   const onPrint = () => {
-    pushToast("Печать техкарты — скоро", "neutral");
+    startPrintTransition(async () => {
+      const result = await generateTechnicalCardPrintForm(
+        buildTechnicalCardPrintRequest(card),
+      );
+      if (result.ok && result.render) {
+        const clientMessage = openGeneratedPrintForm(result.render);
+        if (clientMessage) {
+          pushToast(clientMessage, "danger");
+        } else {
+          pushToast(result.message, "success");
+        }
+        return;
+      }
+      pushToast(result.message, "danger");
+    });
+  };
+
+  const onSavePdf = () => {
+    startPrintTransition(async () => {
+      const result = await generateTechnicalCardPrintForm(
+        buildTechnicalCardPrintRequest(card, "pdf"),
+      );
+      if (result.ok && result.render) {
+        if (result.render.output_format !== "pdf") {
+          pushToast(
+            "Сервер вернул не PDF. Проверьте настройки печатной формы техкарты.",
+            "danger",
+          );
+          return;
+        }
+        const clientMessage = openGeneratedPrintForm(result.render);
+        if (clientMessage) {
+          pushToast(clientMessage, "danger");
+        } else {
+          pushToast("PDF сохранён", "success");
+        }
+        return;
+      }
+      pushToast(result.message, "danger");
+    });
   };
 
   const onStartCard = () =>
@@ -1097,10 +1383,18 @@ export function TechCardDetailWorkspace({
                 <IconButton
                   label="Печать"
                   variant="secondary"
-                  disabled={busy}
+                  disabled={busy || isPrintPending}
                   onClick={onPrint}
                 >
                   <Printer className="size-4" aria-hidden="true" />
+                </IconButton>
+                <IconButton
+                  label="PDF"
+                  variant="secondary"
+                  disabled={busy || isPrintPending}
+                  onClick={onSavePdf}
+                >
+                  <FileDown className="size-4" aria-hidden="true" />
                 </IconButton>
                 <Link
                   href={`/sales/orders/${card.sales_order_id}`}
@@ -1132,6 +1426,19 @@ export function TechCardDetailWorkspace({
           {actionError}
         </p>
       ) : null}
+
+      <SectionCard
+        title="Сотрудничество по заказу"
+        description="Внутренняя переписка с контекстом этой техкарты (ADR-026)."
+        size="compact"
+      >
+        <OrderCollaborationPanel
+          orderId={card.sales_order_id}
+          technicalCardId={card.id}
+          title={`Переписка · ${card.number}`}
+          deepLinkHref={`/sales/orders/${card.sales_order_id}?view=communication`}
+        />
+      </SectionCard>
 
       {completeOpen && completingStage ? (
         <SectionCard
@@ -1338,58 +1645,52 @@ export function TechCardDetailWorkspace({
           />
         }
       >
-        <div className="space-y-portal-3">
-          <h3 className="text-portal-body font-semibold text-portal-text">
-            Операции маршрута
-          </h3>
-          {routingOps.length === 0 ? (
-            <EmptyState
-              title="Операции маршрута не заданы"
-              description="Выберите маршрут, чтобы заполнить операции."
-            />
-          ) : (
-            <div className="space-y-portal-3">
-              {routingOps.map((line, index) => (
-                <div
-                  key={line.id}
-                  className="rounded-portal-md border border-portal-border px-portal-4 py-portal-3"
-                >
-                  <div className="grid gap-portal-2 min-[720px]:grid-cols-[3rem_minmax(0,1fr)_5rem_4rem_4rem_minmax(0,8rem)] min-[720px]:items-center">
-                    <span className="tabular-nums text-portal-muted">{line.sequence}</span>
-                    <span className="font-medium text-portal-text">{line.operation_name}</span>
-                    <span className="tabular-nums">{line.volume}</span>
-                    <span>{formatVolumeUnit(String(line.volume_unit))}</span>
-                    <span className="text-portal-muted">{line.stage_order ?? "—"}</span>
-                    <span className="text-portal-muted">{line.stage_label ?? "—"}</span>
-                  </div>
-                  {index === sewingHostIndex ? (
-                    <SewingOpsChildBlock
-                      assemblySewingOps={assemblySewingOps}
-                      sewingOps={sewingOps}
-                    />
-                  ) : null}
+        {routingOps.length === 0 ? (
+          <EmptyState
+            title="Операции маршрута не заданы"
+            description="Выберите маршрут, чтобы заполнить операции."
+          />
+        ) : (
+          <div className="space-y-portal-3">
+            {routingOps.map((line) => (
+              <div
+                key={line.id}
+                className="rounded-portal-md border border-portal-border px-portal-4 py-portal-3"
+              >
+                <div className="grid gap-portal-2 min-[720px]:grid-cols-[3rem_minmax(0,1fr)_5rem_4rem_4rem_minmax(0,8rem)] min-[720px]:items-center">
+                  <span className="tabular-nums text-portal-muted">{line.sequence}</span>
+                  <span className="font-medium text-portal-text">{line.operation_name}</span>
+                  <span className="tabular-nums">{line.volume}</span>
+                  <span>{formatVolumeUnit(String(line.volume_unit))}</span>
+                  <span className="text-portal-muted">{line.stage_order ?? "—"}</span>
+                  <span className="text-portal-muted">{line.stage_label ?? "—"}</span>
                 </div>
-              ))}
-            </div>
-          )}
-          {routingOps.length > 0 && sewingHostIndex < 0 && hasSewingChildContent ? (
-            <div className="rounded-portal-md border border-dashed border-portal-border px-portal-4 py-portal-3">
-              <p className="mb-portal-2 text-portal-caption text-portal-muted">
-                Цех «Пошив» в маршруте не найден — операции пошива показаны отдельно.
-              </p>
-              <SewingOpsChildBlock
-                assemblySewingOps={assemblySewingOps}
-                sewingOps={sewingOps}
-              />
-            </div>
-          ) : null}
-          {routingOps.length === 0 && hasSewingChildContent ? (
-            <SewingOpsChildBlock
-              assemblySewingOps={assemblySewingOps}
-              sewingOps={sewingOps}
-            />
-          ) : null}
-        </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </SectionCard>
+
+      <SectionCard
+        title="Схема сборки изделия"
+        description={
+          card.assembly_variant_name
+            ? `Вариант: ${card.assembly_variant_name}`
+            : "Снимок швейных операций выбранного варианта сборки."
+        }
+        size="compact"
+        collapsed={collapsedBlocks.assemblyScheme}
+        actions={
+          <CollapseToggleButton
+            collapsed={collapsedBlocks.assemblyScheme}
+            onToggle={() => toggleBlock("assemblyScheme")}
+          />
+        }
+      >
+        <AssemblySchemeBlock
+          assemblySewingOps={assemblySewingOps}
+          sewingOps={sewingOps}
+        />
       </SectionCard>
 
       <div className="grid grid-cols-1 gap-portal-4 min-[900px]:grid-cols-2">
@@ -1637,76 +1938,220 @@ export function TechCardDetailWorkspace({
         title="Поштучно"
         description="Размеры и персонализация по единицам."
         size="compact"
-        collapsed={collapsedBlocks.units}
         actions={
           <div className="flex flex-wrap items-center gap-portal-2">
-            <CollapseToggleButton
-              collapsed={collapsedBlocks.units}
-              onToggle={() => toggleBlock("units")}
-            />
-            {!collapsedBlocks.units ? (
-              <Button
-                type="button"
-                size="compact"
-                onClick={() => setUnitImportOpen((current) => !current)}
-                disabled={busy || compositionEditable === false}
-              >
-                {unitImportOpen ? "Скрыть импорт" : "Импорт по столбцам"}
-              </Button>
-            ) : null}
+            <Button
+              type="button"
+              size="compact"
+              onClick={() => setUnitImportOpen((current) => !current)}
+              disabled={busy || !unitLinesEditable}
+            >
+              {unitImportOpen ? "Скрыть импорт" : "Импорт XLSX"}
+            </Button>
           </div>
         }
       >
         {unitImportOpen ? (
           <div className="mb-portal-4 grid gap-portal-3 rounded-portal-md border border-portal-border p-portal-4">
             <Field
-              label="Строки импорта"
-              help="Формат: Тип размера; Размер; Фамилия; Номер; Количество; Примечание"
+              label="Файл импорта"
+              help="Загрузите XLSX по шаблону techcart_example.xlsx. Тип размера = наименование размерной сетки, размер = RU / INT."
             >
-              <Textarea
-                value={unitImportText}
-                onChange={(event) => setUnitImportText(event.target.value)}
-                rows={6}
+              <input
+                ref={unitImportInputRef}
+                type="file"
+                accept=".xlsx,.xlsm,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
                 disabled={busy}
-                placeholder={"Мужской; M; Иванов; 10; 2; Основной состав\nЖенский; S; Петрова; 7; 1; Запас"}
+                className="block w-full text-portal-body text-portal-text file:mr-portal-3 file:rounded-portal-md file:border file:border-portal-border file:bg-portal-surface file:px-portal-3 file:py-portal-2 file:text-portal-caption"
+                aria-label="Файл импорта поштучных строк"
+                onChange={(event) => {
+                  setUnitImportFile(event.target.files?.[0] ?? null);
+                  setActionError(null);
+                }}
               />
             </Field>
+            <p className="text-portal-caption text-portal-muted">
+              Количество в техкарте:{" "}
+              <span className="font-medium text-portal-text">{String(card.quantity)}</span>
+            </p>
+            {unitImportFile ? (
+              <p className="text-portal-caption text-portal-muted">
+                Выбран файл: {unitImportFile.name} ({Math.ceil(unitImportFile.size / 1024)} КБ)
+              </p>
+            ) : null}
             <div className="flex flex-wrap gap-portal-2">
               <Button type="button" variant="primary" size="compact" disabled={busy} onClick={onImportUnitLines}>
                 Импортировать
               </Button>
-              <Button type="button" size="compact" disabled={busy} onClick={() => setUnitImportText("")}>
+              <Button
+                type="button"
+                size="compact"
+                disabled={busy}
+                onClick={() => {
+                  setUnitImportFile(null);
+                  if (unitImportInputRef.current) {
+                    unitImportInputRef.current.value = "";
+                  }
+                }}
+              >
                 Очистить
               </Button>
             </div>
           </div>
         ) : null}
-        {unitLines.length === 0 ? (
+        {unitLinesEditable && unitSizeOptions.length === 0 ? (
+          <p className="mb-portal-4 text-portal-caption text-portal-muted">
+            Размерная сетка модели не привязана или пуста. Размер можно менять вручную.
+          </p>
+        ) : null}
+        {unitLinesEditable ? (
+          <div className="mb-portal-4 flex flex-wrap gap-portal-2">
+            <div className="flex items-center rounded-portal-sm border border-portal-border px-portal-3 text-portal-caption text-portal-muted">
+              {unitLineDrafts.length} / {expectedUnitLineCount}
+            </div>
+            <Button
+              type="button"
+              size="compact"
+              onClick={addUnitLineDraft}
+              disabled={busy}
+            >
+              <Plus className="size-4" aria-hidden="true" />
+              Добавить
+            </Button>
+            <Button
+              type="button"
+              size="compact"
+              onClick={resetUnitLineDrafts}
+              disabled={busy || !unitLineDraftsDirty}
+            >
+              Сбросить
+            </Button>
+            <Button
+              type="button"
+              size="compact"
+              variant="primary"
+              onClick={onSaveUnitLines}
+              disabled={busy || !unitLineDraftsDirty || !unitLineCountMatches}
+            >
+              Сохранить
+            </Button>
+            {!unitLineCountMatches ? (
+              <span className="flex items-center text-portal-caption text-portal-danger">
+                Количество строк должно быть равно {expectedUnitLineCount}
+              </span>
+            ) : null}
+          </div>
+        ) : null}
+        {unitLineDrafts.length === 0 ? (
           <EmptyState title="Строки не заполнены" description="Поштучные данные отсутствуют." />
         ) : (
           <DataTableFrame>
-            <DataTable minWidthClassName="min-w-[880px]">
+            <DataTable minWidthClassName="min-w-[1040px]">
               <DataTableHead>
                 <tr>
                   <DataTableHeaderCell className="w-12">#</DataTableHeaderCell>
                   <DataTableHeaderCell className="w-28">Тип размера</DataTableHeaderCell>
-                  <DataTableHeaderCell className="w-24">Размер</DataTableHeaderCell>
+                  <DataTableHeaderCell className="w-40">Размер</DataTableHeaderCell>
                   <DataTableHeaderCell>Фамилия</DataTableHeaderCell>
                   <DataTableHeaderCell className="w-24">Номер</DataTableHeaderCell>
                   <DataTableHeaderCell>Примечание</DataTableHeaderCell>
+                  {unitLinesEditable ? (
+                    <DataTableHeaderCell className="w-14 text-right">Г—</DataTableHeaderCell>
+                  ) : null}
                 </tr>
               </DataTableHead>
               <DataTableBody>
-                {unitLines.map((line) => (
+                {unitLineDrafts.map((line) => (
                   <DataTableRow key={line.id}>
                     <DataTableCell>{line.unit_index}</DataTableCell>
                     <DataTableCell>{unitLineSizeTypeLabel(line.size_type ?? null)}</DataTableCell>
-                    <DataTableCell>{line.size ?? "—"}</DataTableCell>
-                    <DataTableCell>{line.personalization ?? "—"}</DataTableCell>
-                    <DataTableCell>{line.print_number ?? "—"}</DataTableCell>
-                    <DataTableCell className="text-portal-muted">
-                      {line.notes ?? "—"}
+                    <DataTableCell>
+                      {unitLinesEditable ? (
+                        unitSizeOptions.length > 0 ? (
+                          <Select
+                            value={normalizeUnitSizeValue(line.size)}
+                            disabled={busy}
+                            aria-label={`Размер строки ${line.unit_index}`}
+                            onChange={(event) =>
+                              updateUnitLineDraft(line.id, "size", event.target.value)
+                            }
+                          >
+                            <option value="">Не выбран</option>
+                            {unitSizeOptions.map((option) => (
+                              <option key={option} value={option}>
+                                {option}
+                              </option>
+                            ))}
+                          </Select>
+                        ) : (
+                          <Input
+                            value={line.size ?? ""}
+                            onChange={(event) =>
+                              updateUnitLineDraft(line.id, "size", event.target.value)
+                            }
+                            disabled={busy}
+                            className="min-w-[10rem]"
+                            aria-label={`Размер строки ${line.unit_index}`}
+                          />
+                        )
+                      ) : (
+                        line.size ?? "—"
+                      )}
                     </DataTableCell>
+                    <DataTableCell>
+                      {unitLinesEditable ? (
+                        <Input
+                          value={line.personalization ?? ""}
+                          onChange={(event) =>
+                            updateUnitLineDraft(line.id, "personalization", event.target.value)
+                          }
+                          disabled={busy}
+                          aria-label={`Фамилия строки ${line.unit_index}`}
+                        />
+                      ) : (
+                        line.personalization ?? "—"
+                      )}
+                    </DataTableCell>
+                    <DataTableCell>
+                      {unitLinesEditable ? (
+                        <Input
+                          value={line.print_number ?? ""}
+                          onChange={(event) =>
+                            updateUnitLineDraft(line.id, "print_number", event.target.value)
+                          }
+                          disabled={busy}
+                          aria-label={`Номер строки ${line.unit_index}`}
+                        />
+                      ) : (
+                        line.print_number ?? "—"
+                      )}
+                    </DataTableCell>
+                    <DataTableCell className="text-portal-muted">
+                      {unitLinesEditable ? (
+                        <Input
+                          value={line.notes ?? ""}
+                          onChange={(event) =>
+                            updateUnitLineDraft(line.id, "notes", event.target.value)
+                          }
+                          disabled={busy}
+                          aria-label={`Примечание строки ${line.unit_index}`}
+                        />
+                      ) : (
+                        line.notes ?? "—"
+                      )}
+                    </DataTableCell>
+                    {unitLinesEditable ? (
+                      <DataTableCell className="text-right">
+                        <IconButton
+                          label={`Удалить строку ${line.unit_index}`}
+                          variant="danger"
+                          disabled={busy}
+                          onClick={() => removeUnitLineDraft(line.id)}
+                        >
+                          <Trash2 className="size-4" aria-hidden="true" />
+                        </IconButton>
+                      </DataTableCell>
+                    ) : null}
                   </DataTableRow>
                 ))}
               </DataTableBody>
@@ -1776,89 +2221,90 @@ function CollapseToggleButton({
   );
 }
 
-function SewingOpsChildBlock({
+function AssemblySchemeBlock({
   assemblySewingOps,
   sewingOps,
 }: {
   assemblySewingOps: NonNullable<ApiTechnicalCard["assembly_sewing_operations"]>;
   sewingOps: ApiTechnicalCardOperationLine[];
 }) {
-  return (
-    <div className="mt-portal-3 rounded-portal-md border border-portal-border bg-portal-surface-secondary/40 p-portal-3">
-      <h4 className="mb-portal-2 text-portal-caption font-semibold uppercase tracking-wide text-portal-muted">
-        Операции пошива
-      </h4>
-      {assemblySewingOps.length > 0 ? (
-        <DataTableFrame>
-          <DataTable minWidthClassName="min-w-[640px]">
-            <DataTableHead>
-              <tr>
-                <DataTableHeaderCell className="w-12">#</DataTableHeaderCell>
-                <DataTableHeaderCell>Операция</DataTableHeaderCell>
-                <DataTableHeaderCell className="w-28">
-                  Кол-во на модель
-                </DataTableHeaderCell>
-                <DataTableHeaderCell className="w-28">Цена</DataTableHeaderCell>
-                <DataTableHeaderCell className="w-28">Сумма</DataTableHeaderCell>
-              </tr>
-            </DataTableHead>
-            <DataTableBody>
-              {assemblySewingOps.map((op) => {
-                const qty = Math.max(1, Number(op.quantity_per_item) || 1);
-                const lineTotal = assemblyOperationLineTotal({
-                  cost: String(op.cost),
-                  quantity_per_item: qty,
-                  line_total: op.line_total,
-                });
-                return (
-                  <DataTableRow key={`${op.sequence}-${op.operation_name}`}>
-                    <DataTableCell>{op.sequence}</DataTableCell>
-                    <DataTableCell>{op.operation_name}</DataTableCell>
-                    <DataTableCell className="tabular-nums">{qty}</DataTableCell>
-                    <DataTableCell className="tabular-nums">
-                      {formatAssemblyCost(op.cost)} ₽
-                    </DataTableCell>
-                    <DataTableCell className="tabular-nums font-medium">
-                      {formatAssemblyCost(lineTotal)} ₽
-                    </DataTableCell>
-                  </DataTableRow>
-                );
-              })}
-            </DataTableBody>
-          </DataTable>
-        </DataTableFrame>
-      ) : sewingOps.length > 0 ? (
-        <DataTableFrame>
-          <DataTable minWidthClassName="min-w-[560px]">
-            <DataTableHead>
-              <tr>
-                <DataTableHeaderCell className="w-12">#</DataTableHeaderCell>
-                <DataTableHeaderCell>Операция</DataTableHeaderCell>
-                <DataTableHeaderCell className="w-28">Объём</DataTableHeaderCell>
-                <DataTableHeaderCell className="w-20">Ед.</DataTableHeaderCell>
-              </tr>
-            </DataTableHead>
-            <DataTableBody>
-              {sewingOps.map((line) => (
-                <DataTableRow key={line.id}>
-                  <DataTableCell>{line.sequence}</DataTableCell>
-                  <DataTableCell>{line.operation_name}</DataTableCell>
-                  <DataTableCell className="tabular-nums">{line.volume}</DataTableCell>
-                  <DataTableCell>
-                    {formatVolumeUnit(String(line.volume_unit))}
+  if (assemblySewingOps.length > 0) {
+    return (
+      <DataTableFrame>
+        <DataTable minWidthClassName="min-w-[640px]">
+          <DataTableHead>
+            <tr>
+              <DataTableHeaderCell className="w-12">#</DataTableHeaderCell>
+              <DataTableHeaderCell>Операция</DataTableHeaderCell>
+              <DataTableHeaderCell className="w-28">
+                Кол-во на модель
+              </DataTableHeaderCell>
+              <DataTableHeaderCell className="w-28">Цена</DataTableHeaderCell>
+              <DataTableHeaderCell className="w-28">Сумма</DataTableHeaderCell>
+            </tr>
+          </DataTableHead>
+          <DataTableBody>
+            {assemblySewingOps.map((op) => {
+              const qty = Math.max(1, Number(op.quantity_per_item) || 1);
+              const lineTotal = assemblyOperationLineTotal({
+                cost: String(op.cost),
+                quantity_per_item: qty,
+                line_total: op.line_total,
+              });
+              return (
+                <DataTableRow key={`${op.sequence}-${op.operation_name}`}>
+                  <DataTableCell>{op.sequence}</DataTableCell>
+                  <DataTableCell>{op.operation_name}</DataTableCell>
+                  <DataTableCell className="tabular-nums">{qty}</DataTableCell>
+                  <DataTableCell className="tabular-nums">
+                    {formatAssemblyCost(op.cost)} ₽
+                  </DataTableCell>
+                  <DataTableCell className="tabular-nums font-medium">
+                    {formatAssemblyCost(lineTotal)} ₽
                   </DataTableCell>
                 </DataTableRow>
-              ))}
-            </DataTableBody>
-          </DataTable>
-        </DataTableFrame>
-      ) : (
-        <EmptyState
-          title="Операции пошива не заданы"
-          description="Операции появятся после выбора варианта сборки."
-        />
-      )}
-    </div>
+              );
+            })}
+          </DataTableBody>
+        </DataTable>
+      </DataTableFrame>
+    );
+  }
+
+  if (sewingOps.length > 0) {
+    return (
+      <DataTableFrame>
+        <DataTable minWidthClassName="min-w-[560px]">
+          <DataTableHead>
+            <tr>
+              <DataTableHeaderCell className="w-12">#</DataTableHeaderCell>
+              <DataTableHeaderCell>Операция</DataTableHeaderCell>
+              <DataTableHeaderCell className="w-28">Объём</DataTableHeaderCell>
+              <DataTableHeaderCell className="w-20">Ед.</DataTableHeaderCell>
+            </tr>
+          </DataTableHead>
+          <DataTableBody>
+            {sewingOps.map((line) => (
+              <DataTableRow key={line.id}>
+                <DataTableCell>{line.sequence}</DataTableCell>
+                <DataTableCell>{line.operation_name}</DataTableCell>
+                <DataTableCell className="tabular-nums">{line.volume}</DataTableCell>
+                <DataTableCell>
+                  {formatVolumeUnit(String(line.volume_unit))}
+                </DataTableCell>
+              </DataTableRow>
+            ))}
+          </DataTableBody>
+        </DataTable>
+      </DataTableFrame>
+    );
+  }
+
+  return (
+    <EmptyState
+      title="Схема сборки не задана"
+      description="Операции появятся после выбора варианта сборки."
+    />
   );
 }
 

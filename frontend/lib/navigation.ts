@@ -113,6 +113,11 @@ export function buildAppSections(
         href: "/sales/tasks",
       },
       {
+        id: "collaboration-notifications",
+        title: "Уведомления сотрудничества",
+        href: "/sales/collaboration-notifications",
+      },
+      {
         id: "sales-reports",
         title: "Отчёты",
         children: [
@@ -160,6 +165,11 @@ export function buildAppSections(
         id: "production-orders",
         title: "Заказы",
         href: "/production/orders",
+      },
+      {
+        id: "design-projects",
+        title: "Дизайн-проекты",
+        href: "/design/projects",
       },
       {
         id: "production-tasks",
@@ -297,11 +307,6 @@ export function buildAppSections(
         title: "Справочники",
         children: [
           {
-            id: "cities",
-            title: "Города",
-            href: "/settings/catalogs/cities",
-          },
-          {
             id: "warehouses",
             title: "Склады",
             href: "/settings/catalogs/warehouses",
@@ -418,6 +423,32 @@ export function buildAppSections(
         href: "/settings/catalogs/tech-cards",
       },
       {
+        id: "platform-admin",
+        title: "Платформа",
+        children: [
+          {
+            id: "system-settings",
+            title: "Системные настройки",
+            href: "/settings/system",
+          },
+          {
+            id: "platform-directories",
+            title: "Справочники платформы",
+            href: "/settings/platform-directories",
+          },
+          {
+            id: "platform-cities",
+            title: "Города",
+            href: "/settings/platform-directories/cities",
+          },
+          {
+            id: "print-forms",
+            title: "Печатные формы",
+            href: "/settings/print-forms",
+          },
+        ],
+      },
+      {
         id: "users",
         title: "Пользователи",
         href: "/settings/users",
@@ -435,22 +466,42 @@ export function buildAppSections(
 /** Default seed-order sections (tests / offline fallback). Prefer `buildAppSections(catalogModules)` in shell. */
 export const appSections: AppSection[] = buildAppSections();
 
+function collectSectionPathCandidates(section: AppSection): string[] {
+  const hrefs = [section.href];
+  for (const group of section.topNavigation) {
+    if (group.href) hrefs.push(group.href);
+    for (const child of group.children ?? []) {
+      hrefs.push(child.href);
+    }
+  }
+  return hrefs;
+}
+
+/** Longest matching section root or topNavigation href (aligns topbar with sidebar). */
+function sectionPathMatchScore(pathname: string, section: AppSection): number {
+  let best = 0;
+  for (const href of collectSectionPathCandidates(section)) {
+    if (pathname === href || pathname.startsWith(`${href}/`)) {
+      best = Math.max(best, href.length);
+    }
+  }
+  return best;
+}
+
 export function getSectionByPathname(
   pathname: string,
   sections: ReadonlyArray<AppSection> = appSections,
 ): AppSection {
-  const sortedSections = [...sections].sort(
-    (first, second) =>
-      second.href.length - first.href.length,
-  );
-
-  return (
-    sortedSections.find(
-      (section) =>
-        pathname === section.href ||
-        pathname.startsWith(`${section.href}/`),
-    ) ?? sections[0]
-  );
+  let bestSection: AppSection | null = null;
+  let bestScore = 0;
+  for (const section of sections) {
+    const score = sectionPathMatchScore(pathname, section);
+    if (score > bestScore) {
+      bestScore = score;
+      bestSection = section;
+    }
+  }
+  return bestSection ?? sections[0];
 }
 
 function collectNavigationHrefs(): string[] {

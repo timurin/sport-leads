@@ -1,6 +1,6 @@
 "use client";
 
-import { type FormEvent, useState } from "react";
+import { type FormEvent, useEffect, useState } from "react";
 
 import {
   createProductModel,
@@ -12,39 +12,60 @@ import { Field, Input, Select, Textarea } from "@/components/ui/form-controls";
 import { useToast } from "@/components/ui/toast";
 import {
   PRODUCT_MODEL_SIZE_TYPE_LABELS,
+  buildProductModelCatalogTreeRows,
   validateProductModelCreateDraft,
   type ProductModel,
   type ProductModelCreateDraft,
+  type ProductModelFolder,
   type ProductModelSizeType,
 } from "@/lib/product-models";
 import type { SizeGridListItem } from "@/lib/size-grids";
 
-const emptyDraft: ProductModelCreateDraft = {
-  article: "",
-  name: "",
-  size_type: "men",
-  description: "",
-  size_grid_id: null,
-};
+function emptyDraft(folderId: number | null = null): ProductModelCreateDraft {
+  return {
+    article: "",
+    name: "",
+    size_type: "men",
+    description: "",
+    size_grid_id: null,
+    folder_id: folderId,
+  };
+}
 
 type ProductModelCreateDrawerProps = {
   open: boolean;
   onClose: () => void;
   onCreated?: (model: ProductModel) => void;
   sizeGrids: SizeGridListItem[];
+  folders?: ProductModelFolder[];
+  defaultFolderId?: number | null;
 };
 
-/** CreateDrawer host for product models (`6.1.9`, ADR-013). */
+/** CreateDrawer host for product models (`6.1.9`, ADR-013; folders `6.1.18`). */
 export function ProductModelCreateDrawer({
   open,
   onClose,
   onCreated,
   sizeGrids,
+  folders = [],
+  defaultFolderId = null,
 }: ProductModelCreateDrawerProps) {
   const { push: pushToast } = useToast();
-  const [draft, setDraft] = useState<ProductModelCreateDraft>(emptyDraft);
+  const [draft, setDraft] = useState<ProductModelCreateDraft>(() =>
+    emptyDraft(defaultFolderId),
+  );
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (!open) return;
+    setDraft(emptyDraft(defaultFolderId));
+    setError("");
+  }, [open, defaultFolderId]);
+
+  const folderOptions = buildProductModelCatalogTreeRows(folders, []).filter(
+    (row) => row.kind === "folder",
+  );
 
   function update<K extends keyof ProductModelCreateDraft>(
     field: K,
@@ -56,7 +77,7 @@ export function ProductModelCreateDrawer({
 
   function handleClose() {
     if (saving) return;
-    setDraft(emptyDraft);
+    setDraft(emptyDraft(null));
     setError("");
     onClose();
   }
@@ -78,9 +99,10 @@ export function ProductModelCreateDrawer({
         size_type: draft.size_type,
         size_grid_id: draft.size_grid_id,
         description: draft.description.trim() || null,
+        folder_id: draft.folder_id,
       });
       if (result.ok) {
-        setDraft(emptyDraft);
+        setDraft(emptyDraft(null));
         setSaving(false);
         pushToast("Модель создана", "success");
         onCreated?.(result.model);
@@ -109,6 +131,26 @@ export function ProductModelCreateDrawer({
               Основные реквизиты
             </h3>
             <div className="grid gap-portal-4">
+              <Field label="Папка">
+                <Select
+                  value={draft.folder_id == null ? "" : String(draft.folder_id)}
+                  disabled={saving}
+                  aria-label="Папка"
+                  onChange={(event) => {
+                    const raw = event.target.value;
+                    update("folder_id", raw === "" ? null : Number(raw));
+                  }}
+                >
+                  <option value="">Корень каталога</option>
+                  {folderOptions.map((row) =>
+                    row.kind === "folder" ? (
+                      <option key={row.id} value={row.id}>
+                        {"—".repeat(row.depth)} {row.name}
+                      </option>
+                    ) : null,
+                  )}
+                </Select>
+              </Field>
               <Field label="Артикул" required>
                 <Input
                   autoFocus

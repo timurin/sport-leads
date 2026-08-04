@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { ArrowDownUp, Search } from "lucide-react";
 import { useMemo, useState } from "react";
 
@@ -19,17 +20,19 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { FilterToolbar } from "@/components/ui/filter-toolbar";
 import { Input, Select } from "@/components/ui/form-controls";
 import { ListTotals, Pagination } from "@/components/ui/list-pagination";
+import { InlineAlert } from "@/components/ui/inline-alert";
 import { PageToolbar } from "@/components/ui/page-header";
 import { MetricCard } from "@/components/ui/section-card";
 import { StatusBadge } from "@/components/ui/status-badge";
-import { salesCurrency } from "@/lib/demo-data/sales";
 import type { Client } from "@/types/sales";
 
-type ClientsTableProps = { clients: Client[] };
+type ClientsTableProps = { clients: Client[]; loadError?: string };
 type SortField = "name" | "salesAmount" | "lastContact";
 type SortDirection = "asc" | "desc";
 
 const PAGE_SIZE = 25;
+
+const salesCurrency = (value: number) => `${new Intl.NumberFormat("ru-RU").format(value)} ₽`;
 
 const statusLabels = { new: "Новый", active: "Активный", paused: "Приостановлен" } as const;
 const statusTones = {
@@ -38,8 +41,8 @@ const statusTones = {
   paused: "neutral",
 } as const;
 
-/** PT-02 reference list/table workspace (`DS-PT-02`). Demo data only. */
-export function ClientsTable({ clients }: ClientsTableProps) {
+/** PT-02 client list workspace (`DS-PT-02`). Persistent `/clients` API (2.2.1). */
+export function ClientsTable({ clients, loadError }: ClientsTableProps) {
   const [query, setQuery] = useState("");
   const [type, setType] = useState("");
   const [status, setStatus] = useState("");
@@ -111,6 +114,16 @@ export function ClientsTable({ clients }: ClientsTableProps) {
           </Button>
         }
       />
+
+      {loadError ? (
+        <InlineAlert
+          className="rounded-none border-x-0 border-t-0 border-b lg:px-portal-6"
+          tone="danger"
+          size="compact"
+        >
+          {loadError}
+        </InlineAlert>
+      ) : null}
 
       <section
         className="border-b border-portal-border bg-portal-surface-secondary px-portal-4 py-portal-4 lg:px-portal-6"
@@ -224,7 +237,14 @@ export function ClientsTable({ clients }: ClientsTableProps) {
             <DataTableBody>
               {pageRows.map((client) => (
                 <DataTableRow key={client.id}>
-                  <DataTableCell className="font-semibold">{client.name}</DataTableCell>
+                  <DataTableCell className="font-semibold">
+                    <Link
+                      href={`/sales/clients/${client.id}`}
+                      className="text-portal-text hover:text-portal-primary hover:underline"
+                    >
+                      {client.name}
+                    </Link>
+                  </DataTableCell>
                   <DataTableCell className="text-portal-muted">{client.type}</DataTableCell>
                   <DataTableCell>{client.contact}</DataTableCell>
                   <DataTableCell className="whitespace-nowrap text-portal-muted">
@@ -283,7 +303,12 @@ export function ClientsTable({ clients }: ClientsTableProps) {
               <div className="flex min-w-0 items-start justify-between gap-portal-3">
                 <div className="min-w-0">
                   <h3 className="truncate text-portal-body font-semibold text-portal-text">
-                    {client.name}
+                    <Link
+                      href={`/sales/clients/${client.id}`}
+                      className="hover:text-portal-primary hover:underline"
+                    >
+                      {client.name}
+                    </Link>
                   </h3>
                   <p className="mt-1 truncate text-portal-caption text-portal-muted">
                     {client.type} · {client.city}

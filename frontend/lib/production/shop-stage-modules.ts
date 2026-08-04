@@ -172,10 +172,10 @@ export function shopStageIsFinishedGoods(stageCode: string): boolean {
 export function shopStageFinishedGoodsHint(stageCode: string): string | null {
   const code = stageCode.trim().toLowerCase();
   if (code === "ready_to_ship") {
-    return "Приход ГП на склад при завершении этапа (проводка — Stage 12 / 11.2.2.4).";
+    return "Приход ГП на склад создаётся автоматически при завершении этапа.";
   }
   if (code === "shipped") {
-    return "Списание со склада при завершении этапа (проводка — Stage 12 / 11.2.2.4).";
+    return "Списание со склада создаётся автоматически при завершении этапа.";
   }
   return null;
 }

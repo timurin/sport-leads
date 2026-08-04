@@ -13,6 +13,42 @@ from app.models.technical_card import (
     TechOperationVolumeUnit,
 )
 
+UNIT_LINE_SIZE_TYPES = frozenset({"male", "female"})
+
+
+def _normalize_unit_line_size_type(value: object) -> object:
+    """Active unit-line size_type is male/female (9.3.2.5); legacy aliases accepted on write."""
+    if value is None:
+        return None
+    if not isinstance(value, str):
+        return value
+    stripped = value.strip().lower()
+    if not stripped:
+        return None
+    aliases = {
+        "male": "male",
+        "men": "male",
+        "мужской": "male",
+        "female": "female",
+        "women": "female",
+        "женский": "female",
+    }
+    if stripped in aliases:
+        return aliases[stripped]
+    raise ValueError("size_type must be male or female")
+
+
+def map_product_model_size_type_to_unit_line(value: str | None) -> str | None:
+    """ProductModel uses men/women/kids; unit lines use male/female only."""
+    if value is None:
+        return None
+    normalized = value.strip().lower()
+    if normalized in {"men", "male"}:
+        return "male"
+    if normalized in {"women", "female"}:
+        return "female"
+    return None
+
 
 class TechnicalCardCompositionLineWrite(BaseModel):
     sequence: int = Field(ge=1)
@@ -63,11 +99,19 @@ class TechnicalCardUnitLineWrite(BaseModel):
     size: str | None = Field(default=None, max_length=100)
     personalization: str | None = Field(default=None, max_length=500)
     print_number: str | None = Field(default=None, max_length=50)
-    color: str | None = Field(default=None, max_length=100)
+    color: str | None = Field(
+        default=None,
+        max_length=100,
+        description="Legacy nullable storage; not an active UI/import field (9.3.2.5).",
+    )
     notes: str | None = None
 
+    @field_validator("size_type", mode="before")
+    @classmethod
+    def normalize_size_type(cls, value: object) -> object:
+        return _normalize_unit_line_size_type(value)
+
     @field_validator(
-        "size_type",
         "size",
         "personalization",
         "print_number",
@@ -338,6 +382,7 @@ class TechnicalCardRead(BaseModel):
     product_model_article: str | None = None
     product_model_name: str | None = None
     product_model_size_type: str | None = None
+    product_model_cover_image_url: str | None = None
 
     assembly_variant_id: int | None = None
     assembly_variant_name: str | None = None
@@ -514,7 +559,8 @@ class TechnicalCardApplySpecification(BaseModel):
 
 
 # --- Unit lines (Stage 9.3.2) ---
-# MVP field set: unit_index, size, personalization, print_number, color, notes.
+# Active fields: unit_index, size_type (male/female), size, personalization, print_number, notes.
+# `color` remains nullable legacy storage only.
 
 
 class TechnicalCardUnitLineUpdate(BaseModel):
@@ -524,11 +570,19 @@ class TechnicalCardUnitLineUpdate(BaseModel):
     size: str | None = Field(default=None, max_length=100)
     personalization: str | None = Field(default=None, max_length=500)
     print_number: str | None = Field(default=None, max_length=50)
-    color: str | None = Field(default=None, max_length=100)
+    color: str | None = Field(
+        default=None,
+        max_length=100,
+        description="Legacy nullable storage; not an active UI/import field (9.3.2.5).",
+    )
     notes: str | None = None
 
+    @field_validator("size_type", mode="before")
+    @classmethod
+    def normalize_size_type(cls, value: object) -> object:
+        return _normalize_unit_line_size_type(value)
+
     @field_validator(
-        "size_type",
         "size",
         "personalization",
         "print_number",
@@ -573,8 +627,12 @@ class TechnicalCardUnitLineImportRow(BaseModel):
     quantity: int = Field(ge=1)
     notes: str | None = None
 
+    @field_validator("size_type", mode="before")
+    @classmethod
+    def normalize_size_type(cls, value: object) -> object:
+        return _normalize_unit_line_size_type(value)
+
     @field_validator(
-        "size_type",
         "size",
         "personalization",
         "print_number",

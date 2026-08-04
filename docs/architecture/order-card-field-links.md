@@ -3,7 +3,7 @@
 **Code:** `SL-ORDER-CARD-FIELD-LINKS-v1`  
 **Roadmap:** `3.5.1` (+ Stage `9.0.4` / `9.4.1` for tech-card gap `#4`)  
 **Route:** `/sales/orders/[id]`  
-**Updated:** `2026-07-26`
+**Updated:** `2026-08-04` (`19.0.2` — Stage 19 internal collaboration surface)
 
 ## Purpose
 
@@ -27,9 +27,15 @@ flowchart LR
   Lead --> LeadEvent
   Lead --> LeadTask
   LeadEvent --> SalesOrder
+  SalesOrder --> CollaborationThread
+  CollaborationThread --> CollaborationMessage
+  CollaborationMessage --> CollaborationMention
+  SalesOrder --> CollaborationMicrotask
 ```
 
 `TechnicalCard` (Stage 9): one document per manufacturable `SalesOrderItem`; DB core `9.1.2` + generate API `9.2.1` + order UI `9.4.1` shipped. Wiring plan: § Gap `#4` below.
+
+**Internal staff chat (Stage 19 / ADR-026):** one `CollaborationThread` per `SalesOrder`; messages may carry optional `technical_card_id` (TC context / filter). Order card filter «Коммуникация» (`3.5.7`) and TC document panel are **UI surfaces** only — domain SoT is Stage 19, not CRM `LeadTask` / `LeadMessage`.
 
 ## Header / document fields
 
@@ -42,10 +48,11 @@ flowchart LR
 | Organization | `organization_id` + `organization_name` | live FK + joined name | `/settings/organizations` | `PATCH .../organization` exists; display+link in `3.5.2` |
 | Responsible | `responsible_id` + `responsible_name` | live FK + joined name | `SalesUser`; employees dir `2.4.2` | Name only until employees card |
 | Amount / quantity / dates / source / category / sport / description | order columns | live | order row | Commercial totals also driven by items |
-| Communications / notes / managers | local UI state + demo fixtures | demo-local | → `1.2.4` | Not persistent for API leads |
-| Tasks panel | `LeadTask` via `lead_id` | live model / empty for API leads | Lead tasks | Order-scoped `order_id` deferred to `3.5.4` if needed |
+| Communications / notes / managers | local UI state + demo fixtures (CRM lead channel chrome) | demo-local → live Stage 19 | Internal staff thread → ADR-026 / `19.3.1` | ≠ CRM lead external channels (`1.2.4`); surface filter `3.5.7` |
+| Tasks panel | `LeadTask` via `lead_id` | live model / empty for API leads | Lead tasks | CRM only; order chat microtasks → `CollaborationMicrotask` (`19.2`) |
 | History | `LeadEvent` lead ∪ order | live | `GET /orders/{id}/history` | |
 | Manufacturing / ТК summary | technical cards by order | live | Production `/production/tech-cards?orderId=` | Gap `#4` closed `9.4.1`; not commercial status |
+| Internal collaboration (staff) | `CollaborationThread` / messages / microtasks | live (Stage 19) | Order «Коммуникация» + TC panel | ADR-026; optional `technical_card_id` on messages |
 
 ## Order line fields
 
@@ -108,15 +115,26 @@ Placement on the card: view mode **«Товары»** shows items + tech-card st
 
 1. Client entity card — Stage `2.2.*`
 2. Persistent employees for responsible picker — `2.4.2`
-3. Persistent tasks/notes/messages — `1.2.4`; optional `LeadTask.order_id` — `3.5.4`
+3. Persistent CRM tasks/notes/messages — `1.2.4`; optional `LeadTask.order_id` — `3.5.4` (CRM only; ≠ Stage 19 staff chat)
 4. Technical cards on order — **shipped `9.4.1`** (plan was `9.0.4`); full list/document UI `9.4.2`; settings `9.6`; UI contract `SL-TECH-CARDS-UI-v1`.
 5. Do not invent a parallel Client API inside Stage 3
+6. Internal staff collaboration (messages / @mentions / chat-microtasks) — Stage `19` / **ADR-026**; do not store in `LeadMessage` or design comments
+
+## Dedupe note (`19.0.3`)
+
+| Contour | Owns | Does not own |
+|---------|------|--------------|
+| `3.5.7` «Коммуникация» | Order-card **view filter / chrome** | Message persistence |
+| `1.2.4` CRM lead | Lead notes, `LeadTask`, external-ish lead messages | Order execution staff chat |
+| `10.1.2` / ADR-022 | DesignVersion asset comments | Order/TC collaboration thread |
+| Stage `19` / ADR-026 | `CollaborationThread` + messages + mentions + microtasks | CRM lead timeline; design asset comments |
 
 ## Evidence
 
-- Models: `backend/app/models/sales.py`, `backend/app/models/technical_card.py`
-- API: `backend/app/api/orders.py`, `backend/app/api/technical_cards.py`
+- Models: `backend/app/models/sales.py`, `backend/app/models/technical_card.py`, `backend/app/models/collaboration.py` (Stage 19)
+- API: `backend/app/api/orders.py`, `backend/app/api/technical_cards.py`, `backend/app/api/collaboration.py`
 - Frontend: `frontend/lib/sales/order-details.ts`, `frontend/components/sales/sales-order-page.tsx`, `frontend/components/sales/sales-order-tech-cards-panel.tsx`
 - Tech-card UI contract: `docs/tasks/v0.9.0-stage-9.0.3-tech-cards-ui-contract.md`
 - Wiring task: `docs/tasks/v0.9.0-stage-9.0.4-order-tech-card-wiring.md`
 - Order UI task: `docs/tasks/v0.9.0-stage-9.4.1-order-tech-cards-ui.md`
+- Collaboration ADR: `docs/architecture/decisions/ADR-026-internal-collaboration-order-chat.md`

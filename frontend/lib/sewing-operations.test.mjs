@@ -2,9 +2,11 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  buildSewingCatalogTreeRows,
   filterSewingOperations,
   formatDurationMinutesSeconds,
   formatSewingEquipmentLabels,
+  nextSewingOperationCopyName,
   parseDurationSecondsInput,
   parseQuantityPerItemInput,
   parseSewingCostInput,
@@ -12,6 +14,7 @@ import {
   toSewingCostInput,
   toggleSewingWorkCenterId,
   validateSewingOperationDraft,
+  visibleSewingCatalogTreeRows,
 } from "./sewing-operations.ts";
 
 test("parseSewingCostInput accepts comma and rejects negative", () => {
@@ -62,6 +65,7 @@ test("validateSewingOperationDraft requires name, cost, qty and duration", () =>
       cost: "10",
       quantity_per_item: "1",
       duration_seconds: "0",
+      folder_id: null,
       work_center_ids: [],
     }),
     "Укажите наименование операции",
@@ -72,6 +76,7 @@ test("validateSewingOperationDraft requires name, cost, qty and duration", () =>
       cost: "abc",
       quantity_per_item: "1",
       duration_seconds: "0",
+      folder_id: null,
       work_center_ids: [],
     }),
     "Укажите стоимость (число ≥ 0)",
@@ -82,6 +87,7 @@ test("validateSewingOperationDraft requires name, cost, qty and duration", () =>
       cost: "10,00",
       quantity_per_item: "0",
       duration_seconds: "0",
+      folder_id: null,
       work_center_ids: [],
     }),
     "Укажите количество операций на 1 изделие (целое ≥ 1)",
@@ -92,6 +98,7 @@ test("validateSewingOperationDraft requires name, cost, qty and duration", () =>
       cost: "10,00",
       quantity_per_item: "1",
       duration_seconds: "",
+      folder_id: null,
       work_center_ids: [],
     }),
     "Укажите время выполнения в секундах (целое ≥ 0)",
@@ -102,6 +109,7 @@ test("validateSewingOperationDraft requires name, cost, qty and duration", () =>
       cost: "10,00",
       quantity_per_item: "2",
       duration_seconds: "90",
+      folder_id: null,
       work_center_ids: [3],
     }),
     null,
@@ -137,6 +145,8 @@ test("filterSewingOperations matches name", () => {
       cost: "100.00",
       quantity_per_item: 1,
       duration_seconds: 60,
+      folder_id: null,
+      sort_order: 0,
       work_center_ids: [],
       created_at: "",
       updated_at: "",
@@ -147,6 +157,8 @@ test("filterSewingOperations matches name", () => {
       cost: "50.00",
       quantity_per_item: 2,
       duration_seconds: 30,
+      folder_id: null,
+      sort_order: 1,
       work_center_ids: [1],
       created_at: "",
       updated_at: "",
@@ -154,4 +166,80 @@ test("filterSewingOperations matches name", () => {
   ];
   assert.equal(filterSewingOperations(rows, "отстр").length, 1);
   assert.equal(filterSewingOperations(rows, "").length, 2);
+});
+
+test("buildSewingCatalogTreeRows folders then ops by sort_order", () => {
+  const folders = [
+    {
+      id: 1,
+      name: "Root",
+      parent_id: null,
+      sort_order: 0,
+      created_at: "",
+      updated_at: "",
+    },
+    {
+      id: 2,
+      name: "Child",
+      parent_id: 1,
+      sort_order: 0,
+      created_at: "",
+      updated_at: "",
+    },
+  ];
+  const ops = [
+    {
+      id: 10,
+      name: "Op root",
+      cost: "1",
+      quantity_per_item: 1,
+      duration_seconds: 0,
+      folder_id: null,
+      sort_order: 0,
+      work_center_ids: [],
+      created_at: "",
+      updated_at: "",
+    },
+    {
+      id: 11,
+      name: "Op child",
+      cost: "1",
+      quantity_per_item: 1,
+      duration_seconds: 0,
+      folder_id: 2,
+      sort_order: 0,
+      work_center_ids: [],
+      created_at: "",
+      updated_at: "",
+    },
+  ];
+  const rows = buildSewingCatalogTreeRows(folders, ops);
+  assert.deepEqual(
+    rows.map((row) => `${row.kind}:${row.id}:${row.depth}`),
+    ["folder:1:0", "folder:2:1", "operation:11:2", "operation:10:0"],
+  );
+  const collapsed = visibleSewingCatalogTreeRows(rows, new Set());
+  assert.deepEqual(
+    collapsed.map((row) => `${row.kind}:${row.id}`),
+    ["folder:1", "operation:10"],
+  );
+});
+
+test("nextSewingOperationCopyName increments until free", () => {
+  assert.equal(
+    nextSewingOperationCopyName("Оверлок", ["Оверлок"]),
+    "Оверлок (копия)",
+  );
+  assert.equal(
+    nextSewingOperationCopyName("Оверлок", ["Оверлок", "Оверлок (копия)"]),
+    "Оверлок (копия 2)",
+  );
+  assert.equal(
+    nextSewingOperationCopyName("Оверлок", [
+      "Оверлок",
+      "Оверлок (копия)",
+      "Оверлок (копия 2)",
+    ]),
+    "Оверлок (копия 3)",
+  );
 });

@@ -118,12 +118,30 @@ function Stop-DevListeners {
         Write-Warning ("Skip PID {0} on :{1} ({2}) - not a known dev-server process" -f $l.Pid, $port, $l.Name)
         continue
       }
+      $targetPids = @($l.Pid)
+      # uvicorn --reload: parent may be dead while spawn child still serves the port
+      # (Get-NetTCPConnection can keep reporting the dead parent PID).
       try {
-        Stop-Process -Id $l.Pid -Force -ErrorAction Stop
-        $stopped += "pid=$($l.Pid) name=$($l.Name) port=$port"
-        Write-Host ("Stopped {0}" -f $stopped[-1])
-      } catch {
-        Write-Warning ("Failed to stop PID {0}: {1}" -f $l.Pid, $_.Exception.Message)
+        $orphans = Get-CimInstance Win32_Process -Filter "Name='python.exe'" -ErrorAction SilentlyContinue |
+          Where-Object {
+            $_.CommandLine -and
+            $_.CommandLine -like "*multiprocessing.spawn*" -and
+            $_.CommandLine -like ("*parent_pid={0}*" -f $l.Pid)
+          }
+        foreach ($o in @($orphans)) {
+          $targetPids += [int]$o.ProcessId
+        }
+      } catch {}
+      foreach ($pidToStop in ($targetPids | Select-Object -Unique)) {
+        try {
+          $proc = Get-Process -Id $pidToStop -ErrorAction SilentlyContinue
+          $procName = if ($proc) { $proc.ProcessName } else { $l.Name }
+          Stop-Process -Id $pidToStop -Force -ErrorAction Stop
+          $stopped += "pid=$pidToStop name=$procName port=$port"
+          Write-Host ("Stopped {0}" -f $stopped[-1])
+        } catch {
+          Write-Warning ("Failed to stop PID {0}: {1}" -f $pidToStop, $_.Exception.Message)
+        }
       }
     }
   }

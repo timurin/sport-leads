@@ -15,7 +15,11 @@ import {
 import { getProductModelRoutings } from "@/lib/product-model-routings";
 import { getProductionStages } from "@/lib/production-stages";
 import { getShopRoutings } from "@/lib/shop-routings";
-import { getSewingOperations } from "@/lib/sewing-operations";
+import { getSewingOperationTemplates } from "@/lib/sewing-operation-templates";
+import {
+  getSewingOperationFolders,
+  getSewingOperations,
+} from "@/lib/sewing-operations";
 import { getTechOperations } from "@/lib/tech-operations";
 import { getProductTypes } from "@/lib/product-types";
 import { getSizeGrids } from "@/lib/size-grids";
@@ -53,6 +57,8 @@ export default async function ProductModelRoute({
     history,
     assemblyVariants,
     sewingOperations,
+    sewingFolders,
+    sewingTemplates,
     sizeGrids,
     productTypes,
     shopRoutings,
@@ -65,6 +71,8 @@ export default async function ProductModelRoute({
     getProductModelHistory(id),
     getProductModelAssemblyVariants(id),
     getSewingOperations({ limit: 500 }),
+    getSewingOperationFolders(),
+    getSewingOperationTemplates(),
     getSizeGrids(),
     getProductTypes(),
     getShopRoutings({ limit: 500 }),
@@ -81,6 +89,8 @@ export default async function ProductModelRoute({
       history={history}
       assemblyVariants={assemblyVariants}
       sewingOperations={sewingOperations}
+      sewingFolders={sewingFolders}
+      sewingTemplates={sewingTemplates}
       sizeGrids={sizeGrids}
       productTypes={productTypes}
       shopRoutings={shopRoutings}

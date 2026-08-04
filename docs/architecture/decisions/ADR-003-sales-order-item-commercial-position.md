@@ -31,7 +31,7 @@ VAT amount persistence/recalc sits on top of this commercial stack (tax-inclusiv
 
 Sales-side **design approval status** on `SalesOrder` (`design_approval_status`): `not_required` (default) / `pending` / `in_review` / `approved` / `rejected`.
 
-Gate: transition to `production` only when status is `not_required` or `approved`. Client design assets and review UI remain Stage **10**; shop Дизайн remains `11.4`. Task `docs/tasks/v0.9.0-stage-3.4.1-design-approval-order-flow.md`.
+Gate: transition to `production` only when status is `not_required` or `approved`. Design **assets** remain Stage **10.1** (**ADR-021** `DesignProject`/`DesignVersion`); operational approval UX = this order status field + Stage **19** chat/microtasks (`10.2` client-review portal **cancelled** `2026-08-01`). Shop Дизайн remains `11.4`. Task `docs/tasks/v0.9.0-stage-3.4.1-design-approval-order-flow.md`.
 
 ## Amendment (`3.4.2`, `2026-07-31`)
 

@@ -451,6 +451,40 @@ class OrganizationRead(SalesSchema):
     updated_at: datetime
 
 
+class ClientListItem(SalesSchema):
+    """List row for `/clients` (2.2.1). Aggregates from `sales_orders` when present."""
+
+    id: int
+    company_name: str | None
+    contact_name: str
+    phone: str | None
+    email: str | None
+    city: str | None
+    responsible_id: int | None
+    responsible_name: str | None = None
+    orders_count: int = 0
+    sales_amount: Decimal = Decimal("0.00")
+    primary_sport: str | None = None
+    created_at: datetime
+    updated_at: datetime
+
+
+class ClientOrderSummary(SalesSchema):
+    id: int
+    number: str
+    title: str
+    status: SalesOrderStatus
+    amount: Decimal | None = None
+    sport: str | None = None
+    created_at: datetime
+
+
+class ClientDetailRead(ClientListItem):
+    """Card payload for `/clients/{id}` (2.2.2). Full history UI → 2.2.3 / v1.00."""
+
+    recent_orders: list[ClientOrderSummary] = []
+
+
 class SalesOrderOrganizationUpdate(BaseModel):
     organization_id: int | None = None
 

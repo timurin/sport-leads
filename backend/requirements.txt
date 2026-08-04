@@ -25,5 +25,4 @@ pymupdf
 phonenumbers
 email-validator
 
-pytest
-httpx
+argon2-cffi

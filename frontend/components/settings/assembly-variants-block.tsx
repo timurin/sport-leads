@@ -33,12 +33,16 @@ import {
   formatDurationMinutesSeconds,
   formatDurationSecondsLabel,
   type SewingOperation,
+  type SewingOperationFolder,
 } from "@/lib/sewing-operations";
+import type { SewingOperationTemplate } from "@/lib/sewing-operation-templates";
 
 type AssemblyVariantsBlockProps = {
   modelId: number;
   variants: AssemblyVariant[];
   sewingOperations: SewingOperation[];
+  sewingFolders?: SewingOperationFolder[];
+  sewingTemplates?: SewingOperationTemplate[];
 };
 
 /** PT-08 main-slot block: assembly variants as sewing-operation groups (`6.1.12` / `6.3.6`). */
@@ -46,6 +50,8 @@ export function AssemblyVariantsBlock({
   modelId,
   variants,
   sewingOperations,
+  sewingFolders = [],
+  sewingTemplates = [],
 }: AssemblyVariantsBlockProps) {
   const router = useRouter();
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -350,6 +356,8 @@ export function AssemblyVariantsBlock({
         open={drawerOpen}
         modelId={modelId}
         sewingOperations={sewingOperations}
+        folders={sewingFolders}
+        templates={sewingTemplates}
         variantId={appendVariantId}
         excludeSewingOperationIds={appendExcludeIds}
         onClose={() => {

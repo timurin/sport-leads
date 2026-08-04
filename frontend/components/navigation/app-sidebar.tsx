@@ -30,6 +30,12 @@ import {
   type AppSection,
   type NavigationGroup,
 } from "@/lib/navigation";
+import {
+  brandInitials,
+  DEFAULT_PLATFORM_BRAND,
+  platformMediaUrl,
+  type PlatformBrand,
+} from "@/lib/platform-system-settings";
 
 type SidebarMode = "expanded" | "compact" | "hidden";
 
@@ -40,6 +46,8 @@ const SIDEBAR_FORCE_COMPACT_MAX_PX = 1299;
 type AppSidebarProps = {
   /** Ordered sections from ProductionStage catalog when provided by AppShell. */
   sections?: AppSection[];
+  /** Brand from platform system settings (18.1.2); falls back to SPORT-LEAD. */
+  brand?: PlatformBrand;
 };
 
 const sectionIcons = {
@@ -179,7 +187,10 @@ function NavigationGroupContent({
   );
 }
 
-export function AppSidebar({ sections = appSections }: AppSidebarProps) {
+export function AppSidebar({
+  sections = appSections,
+  brand = DEFAULT_PLATFORM_BRAND,
+}: AppSidebarProps) {
   const pathname = usePathname();
 
   const activeSectionId = useMemo(() => {
@@ -307,6 +318,12 @@ function updateMode(nextMode: SidebarMode) {
     );
   }
 
+  const brandTitle =
+    brand.organization_display_name.trim() ||
+    DEFAULT_PLATFORM_BRAND.organization_display_name;
+  const brandLogoSrc = platformMediaUrl(brand.logo_url);
+  const brandMark = brandInitials(brandTitle);
+
   const expanded = mode === "expanded";
 
   return (
@@ -334,23 +351,39 @@ function updateMode(nextMode: SidebarMode) {
         <Link
           href="/dashboard"
           className="flex min-w-0 items-center"
-          aria-label="SPORT-LEAD"
+          aria-label={brandTitle}
         >
-          <span
-            className="
-              flex size-10 shrink-0 items-center justify-center
-              rounded-lg bg-gradient-to-br
-              from-[var(--portal-primary-gradient-from)] to-[var(--portal-primary-gradient-to)]
-              text-sm font-extrabold text-portal-primary-on shadow-sm
-            "
-          >
-            SL
-          </span>
+          {brandLogoSrc ? (
+            <span
+              className="
+                flex size-10 shrink-0 items-center justify-center
+                overflow-hidden rounded-lg bg-portal-surface-secondary shadow-sm
+              "
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={brandLogoSrc}
+                alt=""
+                className="size-full object-contain"
+              />
+            </span>
+          ) : (
+            <span
+              className="
+                flex size-10 shrink-0 items-center justify-center
+                rounded-lg bg-gradient-to-br
+                from-[var(--portal-primary-gradient-from)] to-[var(--portal-primary-gradient-to)]
+                text-sm font-extrabold text-portal-primary-on shadow-sm
+              "
+            >
+              {brandMark}
+            </span>
+          )}
 
           {expanded ? (
             <span className="ml-3 min-w-0">
               <span className="block truncate text-[15px] font-extrabold tracking-[0.01em] text-portal-text">
-                SPORT-LEAD
+                {brandTitle}
               </span>
 
               <span className="mt-0.5 block text-[10px] font-semibold uppercase tracking-[0.08em] text-portal-subtle">

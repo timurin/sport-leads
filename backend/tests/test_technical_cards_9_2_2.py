@@ -12,6 +12,7 @@ from sqlalchemy.pool import StaticPool
 from app.database.base import Base
 from app.database.session import get_db
 from app.main import app
+from tests.auth_test_helpers import ensure_user_with_role, login_client
 from app.models.nomenclature import Nomenclature, NomenclatureType
 from app.models.product_model import ProductModel, ProductModelSizeType, ProductModelStatus
 from app.models.production_stage import ProductionStage
@@ -137,7 +138,10 @@ def test_stage_gates_complete_rollback_and_card_completion() -> None:
             ids = _seed(db)
         lead_id = _add_lead(factory)
 
+        with factory() as _auth_db:
+            ensure_user_with_role(_auth_db, login="ops", role_code="shop_operator")
         with TestClient(app) as client:
+            login_client(client, login="ops")
             order_id = client.post(
                 f"/leads/{lead_id}/convert",
                 json={"completed_by_id": 1},
@@ -250,7 +254,10 @@ def test_start_without_routing_stages_rejected() -> None:
             product_id = product.id
         lead_id = _add_lead(factory)
 
+        with factory() as _auth_db:
+            ensure_user_with_role(_auth_db, login="ops", role_code="shop_operator")
         with TestClient(app) as client:
+            login_client(client, login="ops")
             order_id = client.post(
                 f"/leads/{lead_id}/convert",
                 json={"completed_by_id": 1},

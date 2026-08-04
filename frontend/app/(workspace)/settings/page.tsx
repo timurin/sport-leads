@@ -2,12 +2,15 @@ import {
   Building2,
   ClipboardList,
   Factory,
+  FileText,
   FolderCog,
+  Layers,
   MapPin,
   Package,
   Ruler,
   Settings2,
   Shirt,
+  SlidersHorizontal,
   Users,
   Warehouse,
 } from "lucide-react";
@@ -20,12 +23,6 @@ const settingsGroups = [
       "Основные данные для работы всех модулей ERP",
     icon: FolderCog,
     items: [
-      {
-        title: "Города",
-        description: "География клиентов, заказов и доставки",
-        href: "/settings/catalogs/cities",
-        icon: MapPin,
-      },
       {
         title: "Склады",
         description: "Места хранения материалов и продукции",
@@ -171,6 +168,51 @@ const settingsGroups = [
         description: "Настройки раздела технических карт",
         href: "/settings/catalogs/tech-cards",
         icon: ClipboardList,
+      },
+    ],
+  },
+  {
+    title: "Платформа",
+    description:
+      "Оболочка Администрирования Stage 18: системные параметры, платформенные справочники, печатные формы",
+    icon: Layers,
+    items: [
+      {
+        title: "Системные настройки",
+        description: "Организация, часовой пояс, локаль и контакт поддержки",
+        href: "/settings/system",
+        icon: SlidersHorizontal,
+      },
+      {
+        title: "Справочники платформы",
+        description: "Реестр кросс-модульных справочников",
+        href: "/settings/platform-directories",
+        icon: FolderCog,
+      },
+      {
+        title: "Города",
+        description: "География клиентов, заказов и подсказок",
+        href: "/settings/platform-directories/cities",
+        icon: MapPin,
+      },
+      {
+        title: "Печатные формы",
+        description: "Реестр шаблонов печати (Stage 18.3)",
+        href: "/settings/print-forms",
+        icon: FileText,
+      },
+    ],
+  },
+  {
+    title: "Доступ",
+    description: "Учётные записи платформы и роли",
+    icon: Users,
+    items: [
+      {
+        title: "Пользователи",
+        description: "PlatformUser и назначение ролей (ADR-024)",
+        href: "/settings/users",
+        icon: Users,
       },
     ],
   },

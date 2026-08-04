@@ -58,6 +58,18 @@ export type SalesInvoice = {
   items: CommercialLine[];
 };
 
+export type PrintFormRender = {
+  print_form_id: number;
+  print_form_code: string;
+  version_id: number;
+  version_no: number;
+  output_format: string;
+  content_type: string;
+  file_name: string;
+  content: string;
+  is_preview: boolean;
+};
+
 async function callCommercial(
   orderId: string,
   path: string,
@@ -107,4 +119,33 @@ export async function createOrderInvoice(orderId: string, quotationId?: number |
   return callCommercial(orderId, "/invoices", "POST", {
     quotation_id: quotationId ?? null,
   });
+}
+
+export async function generatePrintForm(request: {
+  binding_type: "model";
+  binding_key: "sales_order" | "sales_quotation" | "sales_invoice";
+  output_format: "html";
+  payload: Record<string, unknown>;
+}) {
+  const response = await fetch(`${apiBaseUrl()}/print-forms/generate`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(request),
+    cache: "no-store",
+  });
+  if (!response.ok) {
+    const payload = (await response.json().catch(() => null)) as { detail?: string } | null;
+    return {
+      ok: false as const,
+      message:
+        payload?.detail
+        ?? `Не удалось сформировать печатную форму (${response.status}).`,
+      render: null,
+    };
+  }
+  return {
+    ok: true as const,
+    message: "Печатная форма сформирована.",
+    render: (await response.json()) as PrintFormRender,
+  };
 }

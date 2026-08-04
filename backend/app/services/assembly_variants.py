@@ -258,6 +258,75 @@ def add_sewing_operations_to_variant(
     return get_assembly_variant(db, product_model_id, variant_id)
 
 
+def apply_sewing_operation_template_to_variant(
+    db: Session,
+    product_model_id: int,
+    variant_id: int,
+    *,
+    template_id: int,
+    mode: str = "append",
+) -> AssemblyVariantRead:
+    """Copy-on-pick template lines onto assembly variant (`6.3.13`). No equipment copy."""
+    from app.repositories import sewing_operation_templates as templates_repo
+
+    if mode not in {"append", "replace"}:
+        raise AssemblyVariantValidationError(
+            "mode должен быть append или replace"
+        )
+
+    variant = _get_owned_variant(db, product_model_id, variant_id)
+    template = templates_repo.get_template(db, template_id)
+    if template is None:
+        raise AssemblyVariantValidationError("Шаблон операций пошива не найден")
+
+    ordered_ids = [
+        line.sewing_operation_id
+        for line in sorted(template.lines, key=lambda item: (item.sequence, item.id))
+    ]
+    if not ordered_ids:
+        raise AssemblyVariantValidationError("В шаблоне нет операций пошива")
+
+    sewing_ops = _resolve_sewing_operations(db, ordered_ids)
+
+    try:
+        if mode == "replace":
+            for line in list(variant.operation_lines):
+                repo.delete_operation_line(db, line)
+            db.flush()
+            _append_sewing_operation_lines(
+                db,
+                variant,
+                sewing_ops,
+                start_sequence=1,
+            )
+        else:
+            existing_catalog_ids = {
+                line.sewing_operation_id
+                for line in variant.operation_lines
+                if line.sewing_operation_id is not None
+            }
+            to_add = [row for row in sewing_ops if row.id not in existing_catalog_ids]
+            if not to_add:
+                raise AssemblyVariantValidationError(
+                    "Все операции шаблона уже есть в этом варианте"
+                )
+            start_sequence = repo.next_line_sequence(db, variant.id)
+            _append_sewing_operation_lines(
+                db,
+                variant,
+                to_add,
+                start_sequence=start_sequence,
+            )
+        db.commit()
+    except IntegrityError as error:
+        db.rollback()
+        raise AssemblyVariantConflictError(
+            "Конфликт уникальности строк операций варианта"
+        ) from error
+
+    return get_assembly_variant(db, product_model_id, variant_id)
+
+
 def update_assembly_variant(
     db: Session,
     product_model_id: int,

@@ -10,12 +10,12 @@ import {
   type ShopStageKanbanStatus,
 } from "@/lib/production/shop-stage-modules";
 import { getProductionStages } from "@/lib/production-stages";
+import { sessionAuthHeaders } from "@/lib/auth/api-headers";
 import {
   completeTechnicalCardStage,
   fetchTechnicalCard,
-  rollbackTechnicalCardStage,
+  rollbackTechnicalCardStageKanban,
 } from "@/lib/sales/order-tech-cards-api";
-import { rollbackTechnicalCardStageKanban } from "@/lib/sales/order-tech-cards-api";
 
 export type ShopKanbanMoveResult = {
   ok: boolean;
@@ -55,6 +55,7 @@ export async function moveShopStageKanbanCardAction(input: {
   }
 
   try {
+    const auth = { headers: await sessionAuthHeaders() };
     const card = await fetchTechnicalCard(input.cardId);
     if (card.current_stage_order == null) {
       return { ok: false, message: "У техкарты нет текущего этапа" };
@@ -67,7 +68,12 @@ export async function moveShopStageKanbanCardAction(input: {
     }
 
     if (kind === "forward") {
-      await completeTechnicalCardStage(card.id, card.current_stage_order, {});
+      await completeTechnicalCardStage(
+        card.id,
+        card.current_stage_order,
+        {},
+        auth,
+      );
     } else {
       const toStage = getShopStageModule(input.toStageCode, shopModules);
       if (!toStage) {
@@ -85,7 +91,11 @@ export async function moveShopStageKanbanCardAction(input: {
         };
       }
 
-      await rollbackTechnicalCardStageKanban(card.id, toStageRow.stage_order);
+      await rollbackTechnicalCardStageKanban(
+        card.id,
+        toStageRow.stage_order,
+        auth,
+      );
     }
 
     revalidatePath("/production/kanban");

@@ -109,5 +109,5 @@ Men / RU `46` / INT `S` from Mosmade:
 - Routes: `/settings/catalogs/size-grids`, `/settings/catalogs/size-grids/[id]`
 - API prefix: `/size-grids`
 - List chrome: `DS-PT-02-CATALOG`; card: `DS-PT-05`
-- **Stage 6:** read-only list/card + Mosmade seed
-- **Mutations** (create/update/delete grids and rows): role-gated under roadmap `17.1.2.4` (not Stage 6)
+- **Reads:** list/card open to workspace users (FE gate)
+- **Mutations** (create/update/delete grids and rows): permission `size_grids.write` (`17.1.2.4` / ADR-024) — API `require_permission`; UI shows create/edit only when `/auth/me` includes the code

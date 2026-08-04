@@ -1,0 +1,79 @@
+name: Deploy production
+
+# Manual production deploy (17.2.2.1). Requires owner-configured repository secrets.
+# Does not run on every push — use workflow_dispatch after checks pass on main.
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "Git ref to deploy (branch, tag, or SHA)"
+        required: true
+        default: "main"
+      skip_pull:
+        description: "Skip git fetch/checkout (compose rebuild only)"
+        type: boolean
+        default: false
+
+concurrency:
+  group: production-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Require production SSH secrets
+        env:
+          PROD_SSH_HOST: ${{ secrets.PROD_SSH_HOST }}
+          PROD_SSH_USER: ${{ secrets.PROD_SSH_USER }}
+          PROD_SSH_KEY: ${{ secrets.PROD_SSH_KEY }}
+          PROD_APP_PATH: ${{ secrets.PROD_APP_PATH }}
+        run: |
+          missing=0
+          for name in PROD_SSH_HOST PROD_SSH_USER PROD_SSH_KEY PROD_APP_PATH; do
+            if [ -z "${!name}" ]; then
+              echo "::error::$name secret is not set"
+              missing=1
+            fi
+          done
+          if [ "$missing" -ne 0 ]; then
+            echo "Configure secrets documented in docs/ops/production-17-2-2.md"
+            exit 1
+          fi
+
+      - name: Deploy over SSH
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.PROD_SSH_HOST }}
+          username: ${{ secrets.PROD_SSH_USER }}
+          key: ${{ secrets.PROD_SSH_KEY }}
+          port: ${{ secrets.PROD_SSH_PORT || 22 }}
+          script_stop: true
+          script: |
+            set -euo pipefail
+            APP_PATH="${{ secrets.PROD_APP_PATH }}"
+            REF="${{ inputs.ref }}"
+            cd "$APP_PATH"
+            if [ "${{ inputs.skip_pull }}" != "true" ]; then
+              git fetch --prune origin
+              git checkout --force "$REF"
+              if git show-ref --verify --quiet "refs/remotes/origin/${REF}"; then
+                git reset --hard "origin/${REF}"
+              else
+                git reset --hard "$REF"
+              fi
+            fi
+            test -f .env.production
+            docker compose -f compose.prod.yaml --env-file .env.production up -d --build
+            docker compose -f compose.prod.yaml --env-file .env.production ps
+            DOMAIN="$(grep -E '^SPORT_LEADS_DOMAIN=' .env.production | cut -d= -f2- | tr -d '\r' | tr -d '\"')"
+            if [ -n "$DOMAIN" ] && [ "$DOMAIN" != "localhost" ] && [ "$DOMAIN" != "erp.example.com" ]; then
+              curl -fsS "https://${DOMAIN}/healthz" >/dev/null
+              curl -fsS "https://${DOMAIN}/health" >/dev/null
+              curl -fsS "https://${DOMAIN}/health/ready" >/dev/null
+              echo "Health checks OK for https://${DOMAIN}"
+            else
+              echo "SPORT_LEADS_DOMAIN is placeholder/localhost — skipped remote HTTPS probes"
+            fi

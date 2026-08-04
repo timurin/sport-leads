@@ -1,7 +1,7 @@
 # Sport-Lead — Global Roadmap
 
 **Code:** `SL-ROADMAP-v1`
-**Updated:** `2026-08-01` (`10.2` cancelled; carry → `v1.00`: Stage 2 group, 7, 12.4–12.5, 13, 14, 15, 16, 18.4)
+**Updated:** `2026-08-04` (Stage 19 closed — owner sign-off `19.5.3`; prior: `0.4` → `v1.00` Stage 0; carry → `v1.00`: 1.4.3, Stage 2 group, 7, 12.4–12.5, 13, 14, 15, 16, 18.4)
 **Project version:** `v0.9.0`
 **Git branch:** `feature/v0.8.1-nomenclature-core`
 
@@ -40,7 +40,7 @@ Dedupe notes (Sales Orders):
 - Informal lead-like card task `docs/tasks/v0.9.0-order-card-lead-appearance.md` folded into **`3.5`** (no parallel `3.1.4`).
 - Item model/assembly `3.2.5` / smoke `3.2.6` stay separate from card chrome `3.5`.
 - Cross-ref: persistent CRM lead comms `1.2.4`; client card `2.2.*`; employees `2.4.2`; tech-card order link gap `#4` / `9.4.1`.
-- **Internal staff chat** (order + tech-card threads, @mentions, chat→microtasks) → Stage **`19`** — not CRM lead UI (`1.2.4`), not external connectors (`1.4` / `16.1`), not design-only comments (`10.1.2`). Order filter «Коммуникация» (`3.5.7`) is the future surface.
+- **Internal staff chat** (order + tech-card threads, @mentions, chat→microtasks, in-app notifications) → Stage **`19` closed** (`2026-08-04`, owner sign-off `19.5.3`) — not CRM lead UI (`1.2.4`), not external connectors (`1.4` / `16.1`), not design-only comments (`10.1.2`). Order filter «Коммуникация» (`3.5.7`) is the surface.
 
 ## Stage 0 — Platform and Infrastructure
 
@@ -66,6 +66,16 @@ Dedupe notes (Sales Orders):
 - [x] 0.3.1 — Secrets and environment baseline for dev and staging (no production secrets in repo) — `v0.9.0`; evidence: `.env.example`, `.gitignore`
 - [x] 0.3.2 — Structured application logging baseline for API and local runs — `v0.9.0`; `LOG_LEVEL`/`LOG_FORMAT`, loguru config, HTTP request log middleware; evidence: `backend/app/logging_config.py`, `backend/app/main.py`, `backend/tests/test_logging_config.py`
 - [x] 0.3.3 — Documented database backup and restore on dev/staging — `v0.9.0`; evidence: `scripts/backup_db.ps1`, `scripts/restore_db.ps1`
+
+### 0.4 — Platform performance
+
+> **Moved to `v1.00` Stage 0** (`2026-08-02`): platform slow-data / list performance work lives in `docs/roadmap/roadmap-v1.00.md` (+ HTML twin) as Stage **0** (`0.1` full audit first, then known N+1 fixes). Do not execute under `v0.9.0`.
+
+- [ ] 0.4.1 — Contract: list-page rules — **moved → v1.00** (`0.2.1`)
+- [ ] 0.4.2 — P1 case product-models list N+1 — **moved → v1.00** (`0.2.2`)
+- [ ] 0.4.3 — Audit pass: characteristics / warehouse stock / tech-cards — **moved → v1.00** (`0.2.3`)
+- [ ] 0.4.4 — Shared guardrails + tests — **moved → v1.00** (`0.2.4`)
+- [ ] 0.4.5 — Docs checkpoint — **moved → v1.00** (`0.2.5`)
 
 ## Stage 1 — CRM and Leads
 
@@ -115,24 +125,32 @@ Dedupe notes (Sales Orders):
   - [x] 1.2.4.8.3 — Lead card FE wire for API communications — `v0.9.0`
   - [x] 1.2.4.8.4 — Regression + docs sync — `v0.9.0`; `test_lead_messages_1_2_4_8.py`
   - [x] 1.2.4.8.5 — Owner visual verification (lead card communications, API lead) — owner OK `2026-08-01`
-- [ ] 1.2.5 — Single lead detail data path (remove `lead-*` fixture IDs); real actor for notes/tasks (depends on `17.1.1` for production auth) — gap: `ui-audit.md`
+- [x] 1.2.5 — Single lead detail data path (remove `lead-*` fixture IDs); actor from sales-users until `17.1.1` — owner visual OK `2026-08-01`
   - [x] 1.2.5.1 — Contract + task file — `v0.9.0`; `docs/tasks/v0.9.0-stage-1.2.5-lead-detail-single-path.md`
   - [x] 1.2.5.2 — `getLeadDetails` API-only; non-numeric → not found — `v0.9.0`
   - [x] 1.2.5.3 — Lead card/header drop demo/`lead-*` paths; actor from sales-users — `v0.9.0`
   - [x] 1.2.5.4 — Regression + docs sync — `v0.9.0`; `lead-detail-path-1-2-5.test.mjs`
-  - [ ] 1.2.5.5 — Owner visual verification (API lead card, no fixture IDs)
+  - [x] 1.2.5.5 — Owner visual verification (API lead card, no fixture IDs) — owner OK `2026-08-01`
 
 ### 1.3 — Lead lifecycle
 
 - [x] 1.3.1 — Completion and rejection flow
 - [x] 1.3.2 — Transactional conversion from lead to sales order
-- [ ] 1.3.3 — Deals, archive, and finalized CRM access-control contour
+- [x] 1.3.3 — Deals boundary + CRM access-control contour (no separate Deal; ACL → `17.1.1`) — owner visual OK `2026-08-01`
+  - [x] 1.3.3.1 — Contract: no `Deal` entity (conversion → `SalesOrder`); lead archive **out of scope** (converted/rejected suffice); ACL → `17.1.1` — `v0.9.0`; task `docs/tasks/v0.9.0-stage-1.3.3-crm-archive-deals-boundary.md`
+  - [x] 1.3.3.2 — Lead soft-archive model + API — **cancelled** `2026-08-01` (owner: redundant with converted/rejected); dropped `n1c2d3e4f567`
+  - [x] 1.3.3.3 — Leads workspace archive UI — **cancelled** `2026-08-01` (same)
+  - [x] 1.3.3.4 — Retire demo `/sales/deals` page (redirect → orders) — `v0.9.0`
+  - [x] 1.3.3.5 — Regression + docs sync — `v0.9.0`; `lead-archive-1-3-3.test.mjs` (deals redirect)
+  - [x] 1.3.3.6 — Owner visual verification (deals redirect; no archive tab on leads) — owner OK `2026-08-01`
 
 ### 1.4 — CRM source integrations
 
+> **Boundary (`2026-08-01`):** `1.4.1` / `1.4.2` closed in `v0.9.0` (core + mock). Real adapters `1.4.3` deferred to `v1.00` (microtasks `1.4.3.1`–`1.4.3.5` in `docs/roadmap/roadmap-v1.00.md`). Lead card send (`1.2.4.8`) stays on mock until then. Do not execute `1.4.3` under `v0.9.0`.
+
 - [x] 1.4.1 — Collectors, parsers, and import normalization core
 - [x] 1.4.2 — Mock communication connector core
-- [ ] 1.4.3 — Real external lead-source and communication adapters
+- [ ] 1.4.3 — Real external lead-source and communication adapters — **moved → v1.00** (microtasks `1.4.3.1`–`1.4.3.5` in `docs/roadmap/roadmap-v1.00.md`)
 
 ## Stage 2 — Clients and Contacts
 
@@ -143,8 +161,18 @@ Dedupe notes (Sales Orders):
 
 ### 2.2 — Separate client workspace
 
-- [ ] 2.2.1 — Persistent client list and dedicated workspace
-- [ ] 2.2.2 — Separate client card
+- [x] 2.2.1 — Persistent client list and dedicated workspace — owner visual OK `2026-08-01`
+  - [x] 2.2.1.1 — Contract + task — `v0.9.0`; `docs/tasks/v0.9.0-stage-2.2.1-persistent-clients-workspace.md`
+  - [x] 2.2.1.2 — `GET /clients` list API (+ order aggregates) — `v0.9.0`; `api/clients.py`, `services/clients.py`
+  - [x] 2.2.1.3 — FE `/sales/clients` from API (no demo substitution) — `v0.9.0`; `client-list-api.ts`
+  - [x] 2.2.1.4 — Regression + docs sync — `v0.9.0`; `test_clients_2_2_1.py`, `client-list-mapping.test.mjs`
+  - [x] 2.2.1.5 — Owner visual verification — owner OK `2026-08-01`
+- [x] 2.2.2 — Separate client card — owner visual OK `2026-08-01`
+  - [x] 2.2.2.1 — Contract + task (PT-05; history panel → `2.2.3`/v1.00) — `v0.9.0`
+  - [x] 2.2.2.2 — `GET /clients/{id}` (+ related orders summary) — `v0.9.0`
+  - [x] 2.2.2.3 — FE card route `/sales/clients/[clientId]` + list links — `v0.9.0`
+  - [x] 2.2.2.4 — Regression + docs sync — `v0.9.0`
+  - [x] 2.2.2.5 — Owner visual verification — owner OK `2026-08-01`
 - [ ] 2.2.3 — Client lead and order history — **moved → v1.00** (microtasks `2.2.3.1`–`2.2.3.5` in `docs/roadmap/roadmap-v1.00.md`)
 
 ### 2.3 — Business data and quality
@@ -773,12 +801,12 @@ Microtasks:
 
 ## Stage 6 — База лекал
 
-> Structure note (`2026-07-22`, amended): modules `6.1` Models / `6.2` Size grids / `6.3` **Sewing operations** (replaces Patterns/`PatternSet`); `6.0` shell and ADR; `6.4` catalog checkpoint. Agreed domain: **1 model = 1 size type (men/women/kids) = 1 article**; assembly/finishing variants live on the model; PRODUCT nomenclature holds **available pattern models** whitelist; sewing ops = flat `name`+`cost` catalog. Commercial assembly packages are Stage 6 catalog (before Specs). **Order-item selection of model/assembly variant is Stage `3.2.5`** (moved from former `6.1.13`). Stage 8 keeps shop-floor routings / work centers / execution — not a second place to invent manager-facing assembly variants. Stages 7+ include Technical cards (Stage 9).
+> Structure note (`2026-07-22`, amended `2026-08-02`): modules `6.1` Models / `6.2` Size grids / `6.3` **Sewing operations** (replaces Patterns/`PatternSet`) + **folder tree catalog** (`6.3.11`) + **operation templates library** (`6.3.12`) + **apply template to assembly** (`6.3.13`); `6.0` shell and ADR; `6.4` catalog checkpoint. Agreed domain: **1 model = 1 size type (men/women/kids) = 1 article**; assembly/finishing variants live on the model; PRODUCT nomenclature holds **available pattern models** whitelist; sewing ops = leaf catalog rows under optional folders. Commercial assembly packages are Stage 6 catalog (before Specs). **Order-item selection of model/assembly variant is Stage `3.2.5`** (moved from former `6.1.13`). Stage 8 keeps shop-floor routings / work centers / execution — not a second place to invent manager-facing assembly variants. Stages 7+ include Technical cards (Stage 9).
 
 Goal:
-Собрать справочник моделей изделий для лидов, заказа покупателя, спецификации и технической карты: плоская модель (артикул + тип размера), размерная сетка 1:1, плоский справочник операций пошива, варианты сборки/отделки с операциями и стоимостью; на номенклатуре PRODUCT — whitelist доступных моделей.
+Собрать справочник моделей изделий для лидов, заказа покупателя, спецификации и технической карты: плоская модель (артикул + тип размера), размерная сетка 1:1, справочник операций пошива в **иерархии папок** (родитель/потомок) плюс библиотека шаблонов-заготовок, варианты сборки/отделки с операциями и стоимостью; на номенклатуре PRODUCT — whitelist доступных моделей.
 
-> Stage 6 catalog close (`2026-07-22`): masters + UI + owner visual OK. Kids Mosmade seed cancelled (`6.2.2.7`). Order binding → `3.2.5` / smoke `3.2.6`.
+> Stage 6 catalog close (`2026-07-22`): masters + UI + owner visual OK. Kids Mosmade seed cancelled (`6.2.2.7`). Order binding → `3.2.5` / smoke `3.2.6`. Reopened contour (`2026-08-02`): `6.3.11`–`6.3.13` (folder tree + templates + apply).
 
 ### 6.0 — Module shell and contracts
 
@@ -1157,6 +1185,55 @@ Completion criteria:
 - operation norms persist per model+routing+stage/op and are Decimal-safe;
 - Stage 8 catalog remains the only SoT for routing stage sequences.
 
+#### 6.1.18 — Product-model folders catalog tree
+
+> Owner ask: folder tree on `/settings/catalogs/product-models` like sewing operations (`6.3.11`) — create/rename/delete folders, ↑↓ sibling folders, create model into folder, move existing models into folders; create drawer folder pick.
+
+Goal:
+Users organize the product-models list in a collapsible folder tree without changing the flat `1 model = 1 size_type = 1 article` domain rule.
+
+Dependencies:
+- 6.1.7
+- 6.1.9
+- 6.3.11 (UI pattern reference)
+
+Microtasks:
+- [x] 6.1.18.1 — Domain: `ProductModelFolder` (`parent_id`, `name`, sibling `sort_order`); `ProductModel.folder_id` nullable + `sort_order`; cycle-safe parents; empty-folder delete — `v0.9.0`; evidence: `docs/architecture/product-model-domain.md` §2.3
+- [x] 6.1.18.2 — DB migration `c6d7e8f9a012` (folder table + model `folder_id`/`sort_order`; up/down) — `v0.9.0`; evidence: `backend/alembic/versions/c6d7e8f9a012_add_product_model_folders.py`
+- [x] 6.1.18.3 — API: `/product-model-folders` CRUD + move-sibling; model create/update/list with `folder_id`/`sort_order` — `v0.9.0`; evidence: `api/product_models.py` folders_router; `services/product_model_folders.py`; `tests/test_product_model_folders_6_1_18.py`
+- [x] 6.1.18.4 — UI: folder tree on `/settings/catalogs/product-models` (collapse/expand, create folder/child, ↑↓, delete empty, create model into folder, move model, create-drawer folder pick) — `v0.9.0`; evidence: `product-models-workspace.tsx`, `product-model-create-drawer.tsx`, `lib/product-models.ts` tree helpers; bulk/single move via `CatalogFolderMoveModal` (`catalog-folder-move-modal.tsx`)
+- [x] 6.1.18.5 — Regression tests + owner visual — FE tree helpers shipped (`product-models.test.mjs`); BE `test_product_model_folders_6_1_18.py`; mass move modal shipped; **owner visual OK** `2026-08-03` (folders + mass move)
+
+Completion criteria:
+- list shows folders then models by `sort_order` under each parent;
+- empty folders can be deleted; non-empty delete rejected;
+- models can move to root or any folder without breaking existing card/list columns.
+
+#### 6.1.19 — Folder default sewing-operation template
+
+> Owner ask (`2026-08-02`): bind **one** sewing-operation template to a product-model folder/category (e.g. «Футболки, майки» → «Футболка базовая»). New models in that folder auto-receive a base assembly variant seeded from the template; lines stay editable on the model (add/remove/edit). No silent overwrite of existing assembly lines when template/folder default changes or model is moved.
+
+Goal:
+Category folders carry an optional default `SewingOperationTemplate`; create-model seeds copy-on-pick ops into a «Базовый» assembly variant.
+
+Dependencies:
+- 6.1.18
+- 6.3.12
+- 6.3.13
+
+Microtasks:
+- [x] 6.1.19.1 — Domain: `ProductModelFolder.default_sewing_operation_template_id` nullable FK; seed rules; no live sync after apply — `v0.9.0`; evidence: `docs/architecture/product-model-domain.md` §2.3
+- [x] 6.1.19.2 — DB migration `d7e8f9a0b123` (FK ON DELETE SET NULL; up/down) — `v0.9.0`; evidence: `backend/alembic/versions/d7e8f9a0b123_add_folder_default_sewing_template.py`
+- [x] 6.1.19.3 — API folder create/update/read + create-model seed «Базовый» from folder template — `v0.9.0`; evidence: `services/product_model_folders.py`, `services/product_models.py` `_seed_folder_default_sewing_template`
+- [x] 6.1.19.4 — UI: bind template on folder; show binding in tree; create into folder uses seed — `v0.9.0`; evidence: `catalog-folder-template-modal.tsx`, `product-models-workspace.tsx`
+- [x] 6.1.19.5 — Regression tests + owner visual — BE `test_folder_default_sewing_template_6_1_19.py`; **owner visual OK** `2026-08-03`
+
+Completion criteria:
+- folder can bind at most one template (or none);
+- new model in bound folder gets «Базовый» variant with snapshot lines from template;
+- model card can still add/remove/edit ops; template edit does not rewrite existing variants;
+- move into folder does not replace non-empty assembly.
+
 ### 6.2 — Размерные сетки (Size Grids)
 
 > Decision (`2026-07-22`): **Variant A** — separate `SizeGrid` per `size_type` (`men`/`women`/`kids`). Reference seed from [Mosmade size tables](https://mosmade.ru/about/tablitsy-razmerov/). Import proceeds **one row at a time** (verify, then continue). Domain: `docs/architecture/size-grids-domain.md`.
@@ -1305,7 +1382,8 @@ Completion criteria:
 
 ### 6.3 — Операции пошива (Sewing Operations)
 
-> Amended `2026-07-22`: former «Лекала / PatternSet» contour withdrawn; Stage `6.3` is a flat sewing-operations catalog (`name` + `cost`).
+> Amended `2026-07-22`: former «Лекала / PatternSet» contour withdrawn; Stage `6.3` is a sewing-operations catalog (`name` + `cost` + …).  
+> Amended `2026-08-02`: **folder tree** for ops catalog (`6.3.11`, parent/child like nomenclature categories), named operation-template library (`6.3.12`), apply template → assembly variant (`6.3.13`). Task: `docs/tasks/v0.9.0-stage-6.3.11-sewing-op-sort-and-templates.md`.
 
 #### 6.3.1 — Sewing-operation domain architecture
 
@@ -1460,6 +1538,71 @@ Microtasks:
 - [x] 6.3.10.3 — API: `work_center_ids` on sewing-operations + sewing-stage validation — `v0.9.0`; evidence `test_sewing_operation_work_centers_6_3_10_3.py`; WC list filters `production_stage_code`/`production_stage_id`
 - [x] 6.3.10.4 — UI: multi-select оборудования on sewing-op create/edit (цех Пошив only) — `v0.9.0`; evidence: `sewing-operation-equipment-picker.tsx`, create/edit on sewing-ops catalog
 - [x] 6.3.10.5 — Regression tests + docs / project-structure sync — `v0.9.0`; evidence: `test_sewing_operation_work_centers_6_3_10_2/3/5.py`, `test_sewing_operations.py`, `test_assembly_variants.py`, `sewing-operations.test.mjs`; project-structure + erp-check
+
+#### 6.3.11 — Sewing operations folder tree catalog
+
+> Owner ask `2026-08-02` (amended same day): organize `/settings/catalogs/sewing_operations` as a **folder hierarchy** (parents/children like Windows folders / nomenclature categories `4.9`–`4.10`), not a flat A→Z list or flat `sort_order`-only strip. Sibling order inside a folder via `sort_order` + ↑/↓. No DnD-only without persistence. Soft-status on **operations** still out of scope.
+
+Goal:
+Users browse and manage sewing operations in a collapsible folder tree: folders nest; leaf rows remain `SewingOperation` (cost/qty/duration/equipment). Folders are navigation containers only (not copy-on-pick targets for assembly).
+
+Dependencies:
+- 6.3.3
+- 6.3.5
+- 4.9.5 / 4.10.3 (folder-tree UX pattern to reuse)
+
+Microtasks:
+- [x] 6.3.11.1 — Domain amend: `SewingOperationFolder` (or equivalent) with `parent_id`, `name`, sibling `sort_order`; `SewingOperation.folder_id` nullable (root allowed); cycle-safe parents; uniqueness rules; folders ≠ assembly snapshot targets — `v0.9.0`; `docs/architecture/sewing-operations-domain.md`; ADR-014 amend; task `docs/tasks/v0.9.0-stage-6.3.11-sewing-op-sort-and-templates.md`
+- [x] 6.3.11.2 — DB: folder table + op `folder_id` + sibling `sort_order` on folders and ops; backfill existing ops to root with order by `lower(name)`; Alembic up/down — `v0.9.0`; Alembic `a4b5c6d7e890`
+- [x] 6.3.11.3 — API: folder CRUD (create child / rename / move parent / sibling reorder); ops create/update with `folder_id` + sibling reorder; list/tree read; reject cycles and folder-as-op misuse — `v0.9.0`; `/sewing-operation-folders` + `/sewing-operations/.../move-sibling`
+- [x] 6.3.11.4 — UI: folder tree on `/settings/catalogs/sewing_operations` (collapse/expand, create folder/child, move op into folder, ↑/↓ siblings); reuse patterns from `nomenclature-category-folder-tree` / `4.9.5` where fit; keep create/edit op drawers — `v0.9.0`; owner visual OK `2026-08-02`; evidence: `sewing-operations-workspace.tsx`, `sewing-operation-create-drawer.tsx`; bulk/single move via `CatalogFolderMoveModal` (`2026-08-02`)
+- [x] 6.3.11.5 — Regression tests + docs sync (domain/ADR-014 note; project-structure / erp-check on close) — `v0.9.0`; `test_sewing_operation_folders_6_3_11.py`; `sewing-operations.test.mjs` tree helpers
+
+Completion criteria:
+- catalog is folder-navigable with persisted parent/child + sibling order;
+- pickers for assembly (`6.3.6`) / templates (`6.3.12`) still select **leaf operations** only.
+
+#### 6.3.12 — Sewing operation templates (library)
+
+> Owner ask `2026-08-02`: library of named «заготовки» — ordered packs of catalog sewing operations under База лекал.
+
+Goal:
+Named `SewingOperationTemplate` + ordered `SewingOperationTemplateLine` (`sewing_operation_id`, `sequence`). Template lines reference live catalog ops (no cost/qty/duration snapshot on template). Snapshot only on apply to assembly (`6.3.13`). UI: fullscreen modal from `/settings/catalogs/sewing_operations` (composition = folder tree); not a separate nav route. Not Stage 8 `TechOperation`.
+
+Dependencies:
+- 6.3.11.1 (domain package)
+- 6.3.5
+
+Microtasks:
+- [x] 6.3.12.1 — Domain + ADR-014 amend: template vs `SewingOperation` vs `AssemblyVariant` vs Stage 8 TechOp; copy-on-apply rules — `v0.9.0`; `docs/architecture/sewing-operations-domain.md` §2.3; ADR-014 amend `2026-08-02`
+- [x] 6.3.12.2 — DB: tables + unique template name + line sequence uniqueness; Alembic up/down — `v0.9.0`; Alembic `b5c6d7e8f901`
+- [x] 6.3.12.3 — API CRUD templates + replace/reorder lines (only existing sewing ops) — `v0.9.0`; `/sewing-operation-templates` (+ `PUT …/lines`)
+- [x] 6.3.12.4 — UI list + create/edit + template composition (pick ops, ↑/↓ lines) — `v0.9.0`; fullscreen modal on sewing ops catalog; composition folder tree; `sewing-operation-templates-modal.tsx`
+- [x] 6.3.12.5 — Nav «База лекал»: templates via ops catalog (no separate route); `DS-SHELL-01` / `DS-SHELL-02` visual contracts preserved — `v0.9.0`; `frontend/lib/navigation.ts` (ops only)
+- [x] 6.3.12.6 — Regression tests + docs; owner visual pass templates modal (+ folder-tree composition) — `v0.9.0`; owner visual OK `2026-08-02`; `test_sewing_operation_templates_6_3_12.py`, `sewing-operation-templates.test.mjs`; modal on sewing ops catalog
+
+Completion criteria:
+- managers can maintain reusable ordered packs of sewing operations;
+- templates do not duplicate Stage 8 TechOp or per-model `AssemblyVariant`.
+
+#### 6.3.13 — Apply template to assembly variant
+
+Goal:
+On product-model assembly variant: apply a sewing-operation template → copy-on-pick `AssemblyOperationLine` snapshots (`operation_name`, `cost`, `quantity_per_item`, `duration_seconds`, `sewing_operation_id`) + `sequence`. Default **append** to end of sequence (confirm); API flag + UI confirm for **replace**. Equipment links from catalog are **not** copied (same as `6.3.10`).
+
+Dependencies:
+- 6.3.6
+- 6.3.12.3
+
+Microtasks:
+- [x] 6.3.13.1 — Service: apply template → assembly lines (append/replace); no equipment copy — `v0.9.0`; `apply_sewing_operation_template_to_variant`
+- [x] 6.3.13.2 — API endpoint on assembly variant (or sewing-ops drawer action) — `v0.9.0`; `POST …/apply-sewing-template`; drawer prefill via template picker
+- [x] 6.3.13.3 — UI: template picker on model-card assembly sewing-ops drawer — `v0.9.0`; блок «Из шаблона» + folder tree ops; `assembly-variant-sewing-ops-drawer.tsx`
+- [x] 6.3.13.4 — Regression tests + docs; owner visual on model card — `v0.9.0`; owner visual OK `2026-08-02`; `test_apply_sewing_template_6_3_13.py`, `mergeTemplateOperationIds`; drawer «Из шаблона»
+
+Completion criteria:
+- one template apply creates consistent snapshot lines like single-op pick (`6.3.6`);
+- catalog/template edits do not rewrite existing variant lines.
 
 #### 6.3.7 — PatternSet withdrawal checkpoint
 
@@ -1721,9 +1864,9 @@ Dependencies:
 - ADR-017
 
 Microtasks:
-- [ ] 8.1.4.1 — Domain: child `required_materials` on TechOperation (MATERIAL nomenclature + qty per one `volume_unit` of the operation; e.g. sublimation paper 1 m and ink 10 g per 1 linear meter) — ADR-017 amend; task `docs/tasks/v0.9.0-stage-8.1.4-tech-op-materials.md`
-- [ ] 8.1.4.2 — DB + migration + schemas + API + settings UI on `/settings/catalogs/tech-operations` for required materials rows
-- [ ] 8.1.4.3 — Regression tests + docs checkpoint
+- [x] 8.1.4.1 — Domain: child `required_materials` on TechOperation (MATERIAL nomenclature + qty per one `volume_unit` of the operation; e.g. sublimation paper 1 m and ink 10 g per 1 linear meter) — ADR-017 amend; task `docs/tasks/v0.9.0-stage-8.1.4-tech-op-materials.md` — `v0.9.0`
+- [x] 8.1.4.2 — DB + migration + schemas + API + settings UI on `/settings/catalogs/tech-operations` for required materials rows — `v0.9.0`; Alembic `s0t1u2v3w456`; settings drawers
+- [x] 8.1.4.3 — Regression tests + docs checkpoint — `v0.9.0`; `test_tech_operations_8_1_4.py`; consumed by `9.3.5`
 
 Completion criteria:
 - TechOperation may optionally own required MATERIAL rows without touching SewingOperation;
@@ -1788,8 +1931,8 @@ Microtasks:
 - [x] 8.2.3.4 — Add model-card / variant integration notes (no duplicate assembly-variant CRUD) — `v0.9.0`; model card select only
 - [x] 8.2.3.5 — Add order-context / technical-card integration notes — `v0.9.0`; generate snapshot in `technical_cards.py`
 - [x] 8.2.3.6 — Add regression tests — `v0.9.0`; routing CRUD + sequencing; TC snapshot covered by service wire-up
-- [ ] 8.2.3.7 — Wire generate / apply-routing to model routing whitelist (`6.1.17`); reject foreign routing; keep global `/shop-routings` catalog master
-- [ ] 8.2.3.8 — Docs checkpoint + regression tests for whitelist validation on apply-routing / generate
+- [x] 8.2.3.7 — Wire generate / apply-routing to model routing whitelist (`6.1.17`); reject foreign routing; keep global `/shop-routings` catalog master — `v0.9.0`; `_ensure_routing_template_allowed_for_model`; prefer order-item routing on generate
+- [x] 8.2.3.8 — Docs checkpoint + regression tests for whitelist validation on apply-routing / generate — `v0.9.0`; `test_technical_cards_8_2_3_7.py`
 
 Completion criteria:
 - model/variant-to-shop-routing relation is persistent and validated when required;
@@ -2020,10 +2163,10 @@ Microtasks:
 - [x] 9.3.2.2 — Defaults from order line snapshots vs per-row edit — `v0.9.0`; reset-defaults + generate/sync defaults
 - [x] 9.3.2.3 — API and bulk edit/import hooks — `v0.9.0`; evidence: `api/technical_cards.py` unit-lines endpoints
 - [x] 9.3.2.4 — Regression tests — `v0.9.0`; evidence: `tests/test_technical_cards_9_3_2.py` (1 passed); task `docs/tasks/v0.9.0-stage-9.3.2-tech-card-unit-lines.md`
-- [ ] 9.3.2.5 — Amend domain/UI contract: `size_type` (`male` / `female`), visible fields = size type / size / surname (`personalization`) / print number / notes; `color` removed from active UI/import but stays nullable legacy in storage — ADR-016 amend; task `docs/tasks/v0.9.0-stage-9.3.2-personalization-import.md`
-- [ ] 9.3.2.6 — Backend aggregate import: accept column rows (size type, size, surname, print number, quantity, notes), validate `Σ quantity = order-item qty`, expand into N unit lines, and stop pulling `color` defaults from order snapshots
-- [ ] 9.3.2.7 — Frontend «Поштучно»: replace visible columns, add aggregate import UX by columns, and show a clear validation error when the aggregate quantity total differs from the order quantity
-- [ ] 9.3.2.8 — Regression tests for aggregate import expand, quantity mismatch reject, and UI/API round-trip
+- [x] 9.3.2.5 — Amend domain/UI contract: `size_type` (`male` / `female`), visible fields = size type / size / surname (`personalization`) / print number / notes; `color` removed from active UI/import but stays nullable legacy in storage — ADR-016 amend; task `docs/tasks/v0.9.0-stage-9.3.2-personalization-import.md` — `v0.9.0`; Alembic `o2p3q4r5s678`
+- [x] 9.3.2.6 — Backend aggregate import: accept column rows (size type, size, surname, print number, quantity, notes), validate `Σ quantity = order-item qty`, expand into N unit lines, and stop pulling `color` defaults from order snapshots — `v0.9.0`; `import_unit_lines`
+- [x] 9.3.2.7 — Frontend «Поштучно»: replace visible columns, add aggregate import UX by columns, and show a clear validation error when the aggregate quantity total differs from the order quantity — `v0.9.0`; TC document import panel
+- [x] 9.3.2.8 — Regression tests for aggregate import expand, quantity mismatch reject, and UI/API round-trip — `v0.9.0`; `test_technical_cards_9_3_2.py`; `tech-cards.test.mjs`
 
 Completion criteria:
 - all quantity rows are editable and validated;
@@ -2198,8 +2341,18 @@ Completion criteria:
 
 ### 10.1 — Design assets and comments
 
-- [ ] 10.1.1 — Design project entity and versions
-- [ ] 10.1.2 — Layouts, logos, and comments — design-module comments; platform order/ТК staff chat remains Stage `19` (deep-link later if needed)
+- [x] 10.1.1 — Design project entity and versions
+  - [x] 10.1.1.1 — Domain: `DesignProject` + `DesignVersion` vs order approval / TC media / shop Дизайн / Stage 19 — **ADR-021** accepted `2026-08-01`; task `docs/tasks/v0.9.0-stage-10.1.1-design-project.md`
+  - [x] 10.1.1.2 — DB: models + Alembic (projects, versions; FK `sales_order_id`; ≤1 `current` version per project) — `design_projects`/`design_versions`; Alembic `p3q4r5s6t789`; evidence `backend/tests/test_design_projects_10_1_1_2.py`
+  - [x] 10.1.1.3 — API: list/detail/create project; create/list versions; set current / supersede — `/design-projects`; evidence `backend/tests/test_design_projects_10_1_1_3.py`
+  - [x] 10.1.1.4 — UI: `/design/projects` list + card (+ nav); no DS-SHELL visual redesign — PT-02/card; Production nav «Дизайн-проекты»; evidence `frontend/lib/design/design-projects.test.mjs`
+  - [x] 10.1.1.5 — Tests + owner visual — **STOP** — owner OK `2026-08-01`; nav section fix `getSectionByPathname` for `/design/projects`
+- [x] 10.1.2 — Layouts, logos, and comments — design-module comments; platform order/ТК staff chat remains Stage `19` (deep-link later if needed)
+  - [x] 10.1.2.1 — Domain: assets (`layout`/`logo`/`other`) + design-module comments on `DesignVersion` vs Stage 19 / TC media — **ADR-022** accepted `2026-08-01`; task `docs/tasks/v0.9.0-stage-10.1.2-design-assets-comments.md`
+  - [x] 10.1.2.2 — DB: models + Alembic (attachments + comments; FK `design_version_id`) — `design_version_assets`/`design_version_comments`; Alembic `q4r5s6t7u890`; evidence `backend/tests/test_design_assets_10_1_2_2.py`
+  - [x] 10.1.2.3 — API: upload/list/delete assets; CRUD comments on version — nested under `/design-projects/{id}/versions/{vid}/…`; evidence `backend/tests/test_design_assets_10_1_2_3.py`
+  - [x] 10.1.2.4 — UI: assets + comments on `/design/projects/[id]` — version-scoped panels; upload + comments
+  - [x] 10.1.2.5 — Tests + owner visual — **STOP** — owner OK `2026-08-01`; backend restart required for `/design-projects` routes
 
 ### 10.2 — Approval workflow — cancelled
 
@@ -2287,8 +2440,8 @@ Microtasks:
 - [x] 11.2.2.1 — Contract: FG stages + warehouse receipt/issue; ADR-019; amend ADR-004/016/017/018; task `docs/tasks/v0.9.0-stage-11.2.2.1-warehouse-fg-contract.md`
 - [x] 11.2.2.2 — Seed ProductionStage `ready_to_ship` / `shipped`; routing append policy after packaging — Alembic `x5y6z7a8b901`; `_append_finished_goods_stages`; evidence `test_fg_stages_11_2_2_2.py`; task `docs/tasks/v0.9.0-stage-11.2.2.2-fg-stages-seed.md`
 - [x] 11.2.2.3 — Shop modules `/production/stages/ready_to_ship` and `/production/stages/shipped` (+ kanban columns) — queue + shop-floor FG hints; evidence `shop-stage-modules.test.mjs`; task `docs/tasks/v0.9.0-stage-11.2.2.3-fg-shop-modules.md`
-- [ ] 11.2.2.4 — Wire stage complete → post StockDocument FG receipt/issue (deps `12.2` / `12.3`)
-- [ ] 11.2.2.5 — Tests + owner visual
+- [x] 11.2.2.4 — Wire stage complete → post StockDocument FG receipt/issue (deps `12.2` / `12.3`) — `v0.9.0`; `fg_stock_posting.py` on `complete_stage`; evidence `test_fg_stock_auto_post_12_3_2.py`; shared with `12.3.2`
+- [x] 11.2.2.5 — Tests + owner visual — `v0.9.0`; owner visual OK (`2026-08-01`); evidence `test_fg_stock_auto_post_12_3_2.py`
 
 ### 11.3 — Shop module platform (shared)
 
@@ -2469,9 +2622,9 @@ Microtasks:
 
 ### 12.3 — Finished-goods from production
 
-- [ ] 12.3.1 — Document types `fg_receipt` / `fg_issue` + links to TechnicalCard / SalesOrder
-- [ ] 12.3.2 — Auto-post on TC stage complete (`ready_to_ship` / `shipped`) — shared with `11.2.2.4`
-- [ ] 12.3.3 — UI: `/warehouse/movements` list + document card
+- [x] 12.3.1 — Document types `fg_receipt` / `fg_issue` + links to TechnicalCard / SalesOrder — Alembic `r5s6t7u8v901`; FG docs require `technical_card_id` (order filled from TC); evidence `backend/tests/test_stock_fg_12_3_1.py`
+- [x] 12.3.2 — Auto-post on TC stage complete (`ready_to_ship` / `shipped`) — shared with `11.2.2.4`; `fg_stock_posting.py`; evidence `test_fg_stock_auto_post_12_3_2.py`; task `docs/tasks/v0.9.0-stage-12.3.2-fg-auto-post.md`
+- [x] 12.3.3 — UI: `/warehouse/movements` list + document card — `GET /stock/documents` list; PT-02/PT-07; evidence `test_stock_documents_list_12_3_3.py`, `stock-documents-12-3-3.test.mjs`; task `docs/tasks/v0.9.0-stage-12.3.3-warehouse-movements-ui.md`
 
 ### 12.4 — Inventory
 
@@ -2502,14 +2655,16 @@ Microtasks:
 
 ## Stage 14 — Shipping and Payments
 
+> **Moved to `v1.00`** (`2026-08-01`): entire Stage 14 carried to `docs/roadmap/roadmap-v1.00.md` (+ HTML twin). Do not execute under `v0.9.0`.
+
 ### 14.1 — Shipping
 
-- [ ] 14.1.1 — Shipping orders, packaging, delivery, and documents — **поверх** уже `shipped` (складское списание ADR-019); не дублировать issue
+- [ ] 14.1.1 — Shipping orders, packaging, delivery, and documents — **поверх** уже `shipped` (складское списание ADR-019); не дублировать issue — **moved → v1.00**
 
 ### 14.2 — Payments
 
-- [ ] 14.2.1 — Invoices, payments, advances, and debt
-- [ ] 14.2.2 — Settlements by order and client
+- [ ] 14.2.1 — Invoices, payments, advances, and debt — **moved → v1.00**
+- [ ] 14.2.2 — Settlements by order and client — **moved → v1.00**
 
 ## Stage 15 — Costing and Analytics
 
@@ -2559,10 +2714,10 @@ Goal:
 Users sign in before using protected ERP surfaces.
 
 Microtasks:
-- [ ] 17.1.1.1 — Define auth strategy and session/token contract
-- [ ] 17.1.1.2 — Implement authentication API and session lifecycle
-- [ ] 17.1.1.3 — Wire frontend login / session gate
-- [ ] 17.1.1.4 — Regression tests and documentation checkpoint
+- [x] 17.1.1.1 — Define auth strategy and session/token contract — `v0.9.0`; ADR-023; task `docs/tasks/v0.9.0-stage-17.1.1-authentication.md`
+- [x] 17.1.1.2 — Implement authentication API and session lifecycle — `v0.9.0`; Alembic `s6t7u8v9w012`; `POST /auth/login|logout`, `GET /auth/me`; cookie `sl_session`; evidence `test_auth_17_1_1_2.py`
+- [x] 17.1.1.3 — Wire frontend login / session gate — `v0.9.0`; `/login` + workspace `getMe` gate; lead actor from `/auth/me`; evidence `session.test.mjs`
+- [x] 17.1.1.4 — Regression tests and documentation checkpoint — `v0.9.0`; owner visual OK (`2026-08-01`); evidence `test_auth_17_1_1_2.py`, `session.test.mjs`; task `docs/tasks/v0.9.0-stage-17.1.1-authentication.md`
 
 #### 17.1.2 — System users, roles, and permissions
 
@@ -2570,15 +2725,15 @@ Goal:
 Platform has system users, roles, and permission checks for sensitive catalog mutations, admin actions, and protected production actions (incl. shop-stage kanban DnD). Deny-by-default once auth/roles ship. Unrestricted DnD during Stage `11.3` debugging is temporary and is not the target contract.
 
 Microtasks:
-- [ ] 17.1.2.1 — Define user/role/permission domain model
-- [ ] 17.1.2.2 — Persist users, roles, and role↔permission links
-- [ ] 17.1.2.3 — Enforce permission checks in API (deny-by-default for protected writes)
-- [ ] 17.1.2.4 — Size-grid mutation (create/update/delete grids and rows): role-gated API + UI — supersedes cancelled Stage `6.2.3` write / `6.2.6` edit; catalog stays readable without this permission
-- [ ] 17.1.2.5 — Administration UI for assigning roles to users
-- [ ] 17.1.2.6 — Regression tests (forbidden without role; allowed with role)
-- [ ] 17.1.2.7 — Shop-stage kanban DnD / stage transitions: role-gated API + UI — only authorized users may move cards between allowed ProductionStages; removes temporary open DnD from `11.3.6` debug period
-- [ ] 17.1.2.8 — Stage executors (performer list) for shop-stage execution: platform users with access rights per stage — API + UI (demo fallback until permissions directory is released)
-- [ ] 17.1.2.8 — Stage executors (performer list) for shop-stage execution: platform users with access rights per stage — API + UI (demo fallback until permissions directory is released)
+- [x] 17.1.2.1 — Define user/role/permission domain model — `v0.9.0`; ADR-024 `docs/architecture/decisions/ADR-024-roles-permissions.md`
+- [x] 17.1.2.2 — Persist users, roles, and role↔permission links — `v0.9.0`; Alembic `t7u8v9w0x123`; models `Role`/`Permission`; seed admin/catalog_editor/shop_operator
+- [x] 17.1.2.3 — Enforce permission checks in API (deny-by-default for protected writes) — `v0.9.0`; `require_permission`; `/roles` + assign/revoke; `/auth/me` roles+permissions; `test_rbac_17_1_2.py`
+- [x] 17.1.2.4 — Size-grid mutation (create/update/delete grids and rows): role-gated API + UI — supersedes cancelled Stage `6.2.3` write / `6.2.6` edit; catalog stays readable without this permission — `v0.9.0`; owner visual OK (`2026-08-01`); `size_grids.write`; `test_size_grids_write_17_1_2_4.py`
+- [x] 17.1.2.5 — Administration UI for assigning roles to users — `v0.9.0`; owner visual OK (`2026-08-01`); `/settings/users`; `GET /platform-users`; `admin.roles.assign`
+- [x] 17.1.2.6 — Regression tests (forbidden without role; allowed with role) — `v0.9.0`; `test_rbac_regression_17_1_2_6.py`; size-grid/role-assign/kanban permission matrix; shop complete suites auth-aware
+- [x] 17.1.2.7 — Shop-stage kanban DnD / stage transitions: role-gated API + UI — only authorized users may move cards between allowed ProductionStages; removes temporary open DnD from `11.3.6` debug period — `v0.9.0`; owner visual OK (`2026-08-01`); `shop.kanban.transition`
+- [x] 17.1.2.8 — Stage executors (performer list) for shop-stage execution: platform users with access rights per stage — API + UI (demo fallback until permissions directory is released) — `v0.9.0`; Alembic `u8v9w0x1y234`; `GET /shop-stage-executors` + `GET|PUT /production-stages/{id}/executors`; role_fallback; FE Select; `test_stage_executors_17_1_2_8.py`; owner OK (`2026-08-01`) after BE :8000 orphan cleanup
+- [x] 17.1.2.8 — Stage executors (performer list) for shop-stage execution: platform users with access rights per stage — API + UI (demo fallback until permissions directory is released) — `v0.9.0`; same evidence (duplicate MD line kept)
 
 Completion criteria:
 - unauthorized users cannot mutate size grids;
@@ -2589,15 +2744,44 @@ Completion criteria:
 
 #### 17.1.3 — Universal audit trail
 
-- [ ] 17.1.3.1 — Define audit event contract
-- [ ] 17.1.3.2 — Persist and query audit trail
-- [ ] 17.1.3.3 — Surface critical mutations (incl. size-grid edits when `17.1.2.4` ships)
+- [x] 17.1.3.1 — Define audit event contract — `v0.9.0`; ADR-025 `docs/architecture/decisions/ADR-025-universal-audit-trail.md`; task `docs/tasks/v0.9.0-stage-17.1.3-universal-audit.md`
+- [x] 17.1.3.2 — Persist and query audit trail — `v0.9.0`; Alembic `v9w0x1y2z345`; `audit_events` + `GET /audit-events`; emitters on size-grid/role/kanban/executors; `audit.read`; evidence `test_audit_17_1_3_2.py`
+- [x] 17.1.3.3 — Surface critical mutations (incl. size-grid edits when `17.1.2.4` ships) — `v0.9.0`; owner visual OK (`2026-08-01`); size-grid «Журнал аудита»; `GET /audit-events?size_grid_id=`; `audit-events.test.mjs`
 
 ### 17.2 — Production operations
 
-- [ ] 17.2.1 — VPS, production Docker, reverse proxy, and HTTPS
-- [ ] 17.2.2 — Production deployment pipeline, centralized monitoring, and log aggregation (dev CI covered in `0.2.3`)
-- [ ] 17.2.3 — Production backup, disaster recovery, and administrator runbooks (dev/staging scripts covered in `0.3.3`)
+#### 17.2.1 — VPS, production Docker, reverse proxy, and HTTPS
+
+Goal:
+In-repo production stack (Compose + Dockerfiles + Caddy TLS) and a VPS bootstrap runbook. Live host provision/DNS is owner ops using the runbook.
+
+Microtasks:
+- [x] 17.2.1.1 — Production Docker images + Compose (`api` / `web` / `postgres`) — `v0.9.0`; `docker/backend/Dockerfile`, `docker/frontend/Dockerfile`, `compose.prod.yaml`
+- [x] 17.2.1.2 — Reverse proxy + HTTPS (Caddy edge, Let's Encrypt) — `v0.9.0`; `docker/Caddyfile`; ports 80/443 only
+- [x] 17.2.1.3 — VPS bootstrap runbook + env template — `v0.9.0`; `docs/ops/production-17-2-1.md`, `.env.production.example`; task `docs/tasks/v0.9.0-stage-17.2.1-production-docker.md`
+
+Completion criteria:
+- production Compose validates;
+- browser reaches Next via Caddy; API/Postgres not published;
+- runbook lists DNS/TLS/`docker compose up` steps for owner VPS apply.
+
+#### 17.2.2 — Production deployment pipeline, monitoring, and log aggregation
+
+> Dev CI covered in `0.2.3` (`checks.yml`). This item adds production deploy dispatch + health probes + log rotation.
+
+Microtasks:
+- [x] 17.2.2.1 — GitHub Actions production deploy (`workflow_dispatch` + SSH) — `v0.9.0`; `.github/workflows/deploy-production.yml`
+- [x] 17.2.2.2 — Edge/API health routes + probe scripts — `v0.9.0`; Caddy `/health` `/health/ready`; `scripts/prod-health-check.ps1` / `.sh`
+- [x] 17.2.2.3 — JSON log rotation + aggregation runbook — `v0.9.0`; compose `json-file` limits; `docs/ops/production-17-2-2.md`; task `docs/tasks/v0.9.0-stage-17.2.2-production-pipeline.md`
+
+#### 17.2.3 — Production backup, disaster recovery, and administrator runbooks
+
+> Extends `0.3.3` local `backup_db.ps1` / `restore_db.ps1` with compose.prod-aware scripts.
+
+Microtasks:
+- [x] 17.2.3.1 — Production DB backup via compose Postgres — `v0.9.0`; `scripts/prod-backup-db.ps1` / `.sh`
+- [x] 17.2.3.2 — Production restore + DR steps — `v0.9.0`; `scripts/prod-restore-db.ps1` / `.sh`; `docs/ops/production-17-2-3.md`
+- [x] 17.2.3.3 — Administrator ops index — `v0.9.0`; same runbook §3; task `docs/tasks/v0.9.0-stage-17.2.3-production-backup-dr.md`
 
 ## Stage 18 — Администрирование
 
@@ -2605,32 +2789,33 @@ Completion criteria:
 
 ### 18.1 — Оболочка администрирования и системные настройки
 
-- [ ] 18.1.1 — Navigation contour for Administration (system settings + platform directories + print forms)
-- [ ] 18.1.2 — System settings workspace (platform-level parameters)
-- [ ] 18.1.3 — Placement rules: platform directories vs domain catalogs (nomenclature, pattern base, organizations)
-- [ ] 18.1.4 — Page template mapping for Administration list/card routes (PT-02 / PT-05 as applicable)
+- [x] 18.1.1 — Navigation contour for Administration (system settings + platform directories + print forms) — `v0.9.0`; owner visual OK (`2026-08-02`); nav «Платформа»; stubs + hub; compact topbar OK; task `docs/tasks/v0.9.0-stage-18.1.1-administration-nav.md`
+- [x] 18.1.2 — System settings workspace (platform-level parameters) — `v0.9.0`; owner visual OK (`2026-08-02`); brand→sidebar + logo; `PageToolbar`; task `docs/tasks/v0.9.0-stage-18.1.2-system-settings-workspace.md`
+- [x] 18.1.3 — Placement rules: platform directories vs domain catalogs (nomenclature, pattern base, organizations) — `v0.9.0`; `docs/architecture/administration-placement.md`
+- [x] 18.1.4 — Page template mapping for Administration list/card routes (PT-02 / PT-05 as applicable) — `v0.9.0`; `docs/architecture/administration-page-templates.md`
 
 ### 18.2 — Справочники платформы
 
-- [ ] 18.2.1 — Platform directories registry and domain contracts
-- [ ] 18.2.2 — Persistent CRUD API for platform directories under Administration
-- [ ] 18.2.3 — Administration UI for platform directories (list/card, no demo substitution)
-- [ ] 18.2.4 — Cross-links from consuming modules to platform directories
-
+- [x] 18.2.1 — Platform directories registry and domain contracts — `v0.9.0`; `docs/architecture/platform-directories.md`; first live code `cities`
+- [x] 18.2.2 — Persistent CRUD API for platform directories under Administration — `v0.9.0`; `GET /platform-directories` + cities CRUD; Alembic `y2z3a4b5c678`; perm `platform_directories.write`
+- [x] 18.2.3 — Administration UI for platform directories (list/card, no demo substitution) — `v0.9.0`; owner visual OK (`2026-08-02`); hub + cities list/card; task `docs/tasks/v0.9.0-stage-18.2.2-18.2.3-platform-cities.md`
+- [x] 18.2.4 — Cross-links from consuming modules to platform directories — `v0.9.0`; owner visual OK (`2026-08-02`); CRM lead city pickers use platform directories API + direct link to `/settings/platform-directories/cities`; task `docs/tasks/v0.9.0-stage-18.2.4-platform-city-consumers.md`
 ### 18.3 — Печатные формы
 
 > Category under Administration: print-form templates bound to specific **models** and **directories** (справочники). Document modules (orders, invoices, …) consume the registry; they do not own a parallel template store.
 
-- [ ] 18.3.1 — Print-form domain contract: entity binding (model / directory / document type), status, versioning
-- [ ] 18.3.2 — Database model, migration, and schemas for print-form registry and templates
-- [ ] 18.3.3 — Service and API: list/create/update, bind to model or directory, activate/archive
-- [ ] 18.3.4 — Template storage, preview, and generation pipeline
-- [ ] 18.3.5 — Administration UI: print forms list and card under Administration → Печатные формы
-- [ ] 18.3.6 — Integration points: sales order / quotation / invoice print output uses registry (link from `3.3.3`)
-- [ ] 18.3.7 — Documentation checkpoint (ADR or domain note) and regression tests
-- [ ] 18.3.8 — Technical card print form «Техкарта A4 ×2» bound to `TechnicalCard`: Side 1 header + mockup + size matrix; Side 2 nomenclature/model + materials + op-volume table; Excel workbook = print visual SoT; consumes Stage 9 domain fields only (no parallel domain store) — depends on `9.1.2` / `9.3.3` when printing live data
+- [x] 18.3.1 — Print-form domain contract: entity binding (model / directory / document type), status, versioning — `v0.9.0`; `docs/architecture/print-forms-domain.md`; task `docs/tasks/v0.9.0-stage-18.3.1-print-forms-contract.md`
+- [x] 18.3.2 — Database model, migration, and schemas for print-form registry and templates — `v0.9.0`; `backend/app/models/print_form.py`; Alembic `z3a4b5c6d789`; task `docs/tasks/v0.9.0-stage-18.3.2-print-forms-persistence.md`
+- [x] 18.3.3 — Service and API: list/create/update, bind to model or directory, activate/archive — `v0.9.0`; `backend/app/api/print_forms.py`, `backend/app/services/print_forms.py`; perm `print_forms.write`; `backend/tests/test_print_forms_18_3_3.py`; task `docs/tasks/v0.9.0-stage-18.3.3-print-forms-api.md`
+- [x] 18.3.4 — Template storage, preview, and generation pipeline — `v0.9.0`; version CRUD/publish/current + preview/generate JSON pipeline in `backend/app/api/print_forms.py`, `backend/app/services/print_forms.py`; schemas `backend/app/schemas/print_forms.py`; regression `backend/tests/test_print_forms_18_3_3.py`; task `docs/tasks/v0.9.0-stage-18.3.4-print-forms-pipeline.md`
+- [x] 18.3.5 — Administration UI: print forms list and card under Administration → Печатные формы — `v0.9.0`; owner visual OK (`2026-08-02`); live registry list/card + preview; task `docs/tasks/v0.9.0-stage-18.3.5-print-forms-ui.md`
+- [x] 18.3.6 — Integration points: sales order / quotation / invoice print output uses registry (link from `3.3.3`) — `v0.9.0`; owner visual OK (`2026-08-02`); `/sales/orders/[id]` documents panel uses registry generate for `sales_order` / `sales_quotation` / `sales_invoice`; task `docs/tasks/v0.9.0-stage-18.3.6-print-output-integration.md`
+- [x] 18.3.7 — Documentation checkpoint (ADR or domain note) and regression tests — `v0.9.0`; canonical consumer note in `docs/architecture/print-forms-domain.md`; frontend payload regression `frontend/lib/sales/commercial-print.test.mjs`; backend generate regression kept in `backend/tests/test_print_forms_18_3_3.py`; task `docs/tasks/v0.9.0-stage-18.3.7-print-forms-docs-tests.md`
+- [x] 18.3.8 — Technical card print form «Техкарта A4 ×2» bound to `TechnicalCard`: Side 1 landscape — заказ 100% + макет 30% / поштучно 70% (unit-line fields + size summary); Side 2 — номенклатура/модель (+фото), отдельный блок «Схема сборки изделия», материалы, операции/объёмы; Excel workbook = print visual SoT; consumes Stage 9 domain fields only (no parallel domain store) — depends on `9.1.2` / `9.3.3` when printing live data — **layout v3** `2026-08-03`; seed `a4b5c6d7e891` + Alembic `e8f9a0b1c234`/`f9a0b1c2d345`; `tech-card-print.ts` + header Печать/PDF; **owner visual OK** `2026-08-03`
 
 ### 18.4 — Глобальный журнал операций
+
+> **Moved to `v1.00`** (`2026-08-01`): **full** `18.4` carried to `docs/roadmap/roadmap-v1.00.md`. No minimum close in `v0.9.0` — catalog stubs (`product_model_has_journal_operations` / characteristic journal hooks return `False`) remain until journal ships in `v1.00`. Admin shell `18.1`–`18.3` stay in `v0.9.0`.
 
 Goal:
 Единый журнал движений сущностей (сначала — моделей изделий) по продажам и производству. Запись создаётся **только** когда модель реально участвовала в операции (продажа / производство); отсутствие участия = нет записи. Журнал — источник проверки для возврата модели в черновик и смены размерной сетки.
@@ -2641,14 +2826,14 @@ Dependencies:
 - Stage 8 / technical cards for production writes (as available)
 
 Microtasks:
-- [ ] 18.4.1 — Domain contract: OperationJournal entry fields, sources (sales / production), idempotency, retention
-- [ ] 18.4.2 — Database model, migration, schemas for global operations journal
-- [ ] 18.4.3 — Service API: append / query by entity (`product_model_id`, …); `has_operations(entity)` helper
-- [ ] 18.4.4 — Write path: sales order uses model → append journal row (no write if model not used)
-- [ ] 18.4.5 — Write path: production / ТК uses model → append journal row
-- [ ] 18.4.6 — Wire product-model guards (`revert_to_draft`, size-grid change) to real `has_operations` (replace Stage-6 stub)
-- [ ] 18.4.7 — Administration UI: journal list/filter (PT-02) under Администрирование → Журнал операций
-- [ ] 18.4.8 — Regression tests + documentation checkpoint
+- [ ] 18.4.1 — Domain contract: OperationJournal entry fields, sources (sales / production), idempotency, retention — **moved → v1.00**
+- [ ] 18.4.2 — Database model, migration, schemas for global operations journal — **moved → v1.00**
+- [ ] 18.4.3 — Service API: append / query by entity (`product_model_id`, …); `has_operations(entity)` helper — **moved → v1.00**
+- [ ] 18.4.4 — Write path: sales order uses model → append journal row (no write if model not used) — **moved → v1.00**
+- [ ] 18.4.5 — Write path: production / ТК uses model → append journal row — **moved → v1.00**
+- [ ] 18.4.6 — Wire product-model guards (`revert_to_draft`, size-grid change) to real `has_operations` (replace Stage-6 stub) — **moved → v1.00**
+- [ ] 18.4.7 — Administration UI: journal list/filter (PT-02) under Администрирование → Журнал операций — **moved → v1.00**
+- [ ] 18.4.8 — Regression tests + documentation checkpoint — **moved → v1.00**
 
 Completion criteria:
 - model used in a sale produces a journal row; unused model produces none;
@@ -2684,9 +2869,9 @@ Dependencies:
 - Owner confirmation of Stage 19 placement (this section)
 
 Microtasks:
-- [ ] 19.0.1 — ADR: InternalCollaboration / OrderChat domain (thread scope, message, mention, microtask; ≠ `LeadTask` / ≠ external `NormalizedMessage`)
-- [ ] 19.0.2 — Docs: amend order-card field-links + ADR-016 cross-ref (TC as optional thread context); roadmap/HTML twin already this stage
-- [ ] 19.0.3 — Dedupe note: `3.5` «Коммуникация» = surface; `1.2.4` = CRM; `10.1.2` = design comments may attach later
+- [x] 19.0.1 — ADR: InternalCollaboration / OrderChat domain (thread scope, message, mention, microtask; ≠ `LeadTask` / ≠ external `NormalizedMessage`) — `v0.9.0`; **ADR-026** `docs/architecture/decisions/ADR-026-internal-collaboration-order-chat.md`; task `docs/tasks/v0.9.0-stage-19.0.1-internal-collaboration-adr.md`
+- [x] 19.0.2 — Docs: amend order-card field-links + ADR-016 cross-ref (TC as optional thread context) — `v0.9.0`; `order-card-field-links.md` + ADR-016 amend; task `docs/tasks/v0.9.0-stage-19.0.2-19.0.3-collaboration-docs.md`
+- [x] 19.0.3 — Dedupe note: `3.5` «Коммуникация» = surface; `1.2.4` = CRM; `10.1.2` = design comments may attach later — `v0.9.0`; same task / field-links § Dedupe
 
 Completion criteria:
 - ADR accepted; no parallel chat model invented under Stage 3 or Stage 9.
@@ -2703,11 +2888,11 @@ Dependencies:
 - 2.4.2
 
 Microtasks:
-- [ ] 19.1.1 — Domain model: `CollaborationThread` (`sales_order_id` required; optional `technical_card_id`); `CollaborationMessage`; `CollaborationMention`
-- [ ] 19.1.2 — Migration + schemas (upgrade/downgrade); indexes by order / card / created_at
-- [ ] 19.1.3 — Service + API: list/create messages on order thread; list/filter by technical card; parse/store @mentions
-- [ ] 19.1.4 — Access: only authenticated staff; deny anonymous; optional read scope = users who can open the order/TC
-- [ ] 19.1.5 — Regression tests (create/list/mention; foreign order 404; unauthenticated 401)
+- [x] 19.1.1 — Domain model: `CollaborationThread` (`sales_order_id` required); `CollaborationMessage` (+ optional `technical_card_id`); `CollaborationMention` — `v0.9.0`; `backend/app/models/collaboration.py` (ADR-026: TC on message, not separate thread)
+- [x] 19.1.2 — Migration + schemas (upgrade/downgrade); indexes by order / card / created_at — `v0.9.0`; Alembic `g0a1b2c3d456`; `schemas/collaboration.py`
+- [x] 19.1.3 — Service + API: list/create messages on order thread; list/filter by technical card; parse/store @mentions — `v0.9.0`; `services/collaboration.py`, `api/collaboration.py`
+- [x] 19.1.4 — Access: only authenticated staff; deny anonymous; optional read scope = users who can open the order/TC — `v0.9.0`; MVP = `get_current_platform_user` (401 anonymous)
+- [x] 19.1.5 — Regression tests (create/list/mention; foreign order 404; unauthenticated 401) — `v0.9.0`; `backend/tests/test_collaboration_19_1_19_2.py`
 
 Completion criteria:
 - messages persist and reload on order; TC-scoped filter returns only that card’s context messages (or messages tagged with that card).
@@ -2722,10 +2907,10 @@ Dependencies:
 - 17.1.2
 
 Microtasks:
-- [ ] 19.2.1 — Domain: `CollaborationMicrotask` (title, status, assignee, `sales_order_id`, optional `technical_card_id`, optional `source_message_id`, created_by)
-- [ ] 19.2.2 — API: create from chat action; list by order / assignee; complete/reopen
-- [ ] 19.2.3 — Seed/template titles optional (not hard-coded business rules): layout fix, missing material, and free-text
-- [ ] 19.2.4 — Regression tests (assign, complete, order-scoped list)
+- [x] 19.2.1 — Domain: `CollaborationMicrotask` (title, status, assignee, `sales_order_id`, optional `technical_card_id`, optional `source_message_id`, created_by) — `v0.9.0`; same models/migration
+- [x] 19.2.2 — API: create from chat action; list by order / assignee; complete/reopen — `v0.9.0`; `/orders/{id}/collaboration/microtasks`, `PATCH /collaboration/microtasks/{id}`
+- [x] 19.2.3 — Seed/template titles optional (not hard-coded business rules): layout fix, missing material, and free-text — `v0.9.0`; `GET /collaboration/microtask-title-templates`
+- [x] 19.2.4 — Regression tests (assign, complete, order-scoped list) — `v0.9.0`; same test module
 
 Completion criteria:
 - microtask created from chat appears on order and in assignee’s task list; closing does not delete chat history.
@@ -2742,11 +2927,11 @@ Dependencies:
 - 9.4.2 (TC document shell)
 
 Microtasks:
-- [ ] 19.3.1 — Order card: replace/extend comments chrome under «Коммуникация» with persistent thread UI
-- [ ] 19.3.2 — Mention picker (employees/users) + highlight in message body
-- [ ] 19.3.3 — Create microtask drawer/action from chat (prefill order + optional TC)
-- [ ] 19.3.4 — Technical card document: collaboration panel / deep-link into order thread with TC context
-- [ ] 19.3.5 — Owner visual (desktop + mobile matrix) on order + TC
+- [x] 19.3.1 — Order card: replace/extend comments chrome under «Коммуникация» with persistent thread UI — `v0.9.0`; `OrderCollaborationPanel` in `sales-order-page.tsx`
+- [x] 19.3.2 — Mention picker (employees/users) + highlight in message body — `v0.9.0`; `@` autocomplete + mention highlight
+- [x] 19.3.3 — Create microtask drawer/action from chat (prefill order + optional TC) — `v0.9.0`; panel form + templates + from-message action
+- [x] 19.3.4 — Technical card document: collaboration panel / deep-link into order thread with TC context — `v0.9.0`; `tech-card-detail-workspace.tsx` panel + order deep-link
+- [x] 19.3.5 — Owner visual (desktop + mobile matrix) on order + TC — **owner visual OK** `2026-08-04`
 
 Completion criteria:
 - manager and shop staff can discuss an order and a specific TC in one coherent history;
@@ -2763,19 +2948,19 @@ Dependencies:
 - Platform notifications baseline (project-structure checklist)
 
 Microtasks:
-- [ ] 19.4.1 — Notification events: `mention`, `microtask_assigned`, `microtask_completed`
-- [ ] 19.4.2 — Persist + list unread for current user; mark read
-- [ ] 19.4.3 — UI badge / inbox entry with deep-link to order/TC thread
-- [ ] 19.4.4 — Tests + docs checkpoint
+- [x] 19.4.1 — Notification events: `mention`, `microtask_assigned`, `microtask_completed` — `v0.9.0`; emit in `services/collaboration.py`
+- [x] 19.4.2 — Persist + list unread for current user; mark read — `v0.9.0`; Alembic `h1b2c3d4e567`; `GET/POST /collaboration/notifications*`
+- [x] 19.4.3 — UI badge / inbox entry with deep-link to order/TC thread — `v0.9.0`; `/sales/collaboration-notifications` (+ nav); badge on page toolbar (shell topbar untouched)
+- [x] 19.4.4 — Tests + docs checkpoint — `v0.9.0`; `test_collaboration_notifications_19_4.py`; task `docs/tasks/v0.9.0-stage-19.4-collaboration-notifications.md`
 
 Completion criteria:
 - assignee sees unread mention/task without polling the order manually (MVP: poll or simple refresh OK).
 
 ### 19.5 — Hardening and docs close
 
-- [ ] 19.5.1 — erp-check / project-structure checklist close for internal collaboration
-- [ ] 19.5.2 — Focused backend + frontend regression pack
-- [ ] 19.5.3 — Owner stage sign-off
+- [x] 19.5.1 — erp-check / project-structure checklist close for internal collaboration — `v0.9.0`; `erp-check.md` + project-structure `[x]`
+- [x] 19.5.2 — Focused backend + frontend regression pack — `v0.9.0`; `test_collaboration_19_1_19_2.py` + `test_collaboration_notifications_19_4.py` (3 passed)
+- [x] 19.5.3 — Owner stage sign-off — **owner OK** `2026-08-04` (message send verified on order «Коммуникация»)
 
 Completion criteria:
 - Stage 19 closed only after persistent order+TC chat, mentions, microtasks, and notification MVP are verified.

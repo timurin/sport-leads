@@ -2,21 +2,29 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ChevronRight, FileText, FilePlus2, Receipt } from "lucide-react";
+import { ChevronRight, FileText, FilePlus2, Printer, Receipt } from "lucide-react";
 import { useState, useTransition } from "react";
 
 import {
   createOrderInvoice,
   createOrderQuotation,
+  generatePrintForm,
+  type PrintFormRender,
   type SalesInvoice,
   type SalesQuotation,
 } from "@/app/(workspace)/sales/orders/[orderId]/order-commercial-doc-actions";
 import { Button } from "@/components/ui/button";
 import { SectionCard } from "@/components/ui/section-card";
 import {
+  buildSalesInvoicePrintRequest,
+  buildSalesOrderPrintRequest,
+  buildSalesQuotationPrintRequest,
+} from "@/lib/sales/commercial-print";
+import {
   buildOrderDocumentTree,
   type OrderDocumentNode,
 } from "@/lib/sales/order-documents-tree";
+import type { SalesOrderDetails } from "@/lib/sales/order-details";
 
 function DocumentTreeNode({
   node,
@@ -82,12 +90,35 @@ function DocumentTreeNode({
   );
 }
 
+function openGeneratedPrintForm(render: PrintFormRender): string | null {
+  if (render.output_format === "html") {
+    const popup = window.open("", "_blank", "noopener,noreferrer");
+    if (!popup) {
+      return "Браузер заблокировал окно печати. Разрешите popup и повторите.";
+    }
+    popup.document.open();
+    popup.document.write(render.content);
+    popup.document.title = render.file_name;
+    popup.document.close();
+    return null;
+  }
+
+  const blob = new Blob([render.content], { type: render.content_type });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = render.file_name;
+  link.click();
+  URL.revokeObjectURL(url);
+  return null;
+}
+
 export function SalesOrderDocumentsTree({
   order,
   quotations,
   invoices,
 }: {
-  order: { id: string; number: string; leadId: string; sourceLeadHref: string };
+  order: SalesOrderDetails;
   quotations: SalesQuotation[];
   invoices: SalesInvoice[];
 }) {
@@ -117,12 +148,30 @@ export function SalesOrderDocumentsTree({
     });
   }
 
+  function runPrint(action: () => Promise<{
+    ok: boolean;
+    message: string;
+    render: PrintFormRender | null;
+  }>) {
+    startTransition(async () => {
+      const result = await action();
+      if (result.ok && result.render) {
+        const clientMessage = openGeneratedPrintForm(result.render);
+        setMessage(clientMessage ?? result.message);
+        return;
+      }
+      setMessage(result.message);
+    });
+  }
+
   const latestQuotationId = quotations[0]?.id ?? null;
+  const latestQuotation = quotations[0] ?? null;
+  const latestInvoice = invoices[0] ?? null;
 
   return (
     <SectionCard
       title="Документы"
-      description="КП и счета создаются snapshot’ом заказа (НДС-режим и валюта переносятся)."
+      description="КП и счета создаются snapshot’ом заказа; печать использует реестр Stage 18.3."
       size="compact"
       className="min-w-0"
       actions={
@@ -153,6 +202,65 @@ export function SalesOrderDocumentsTree({
           >
             <Receipt className="size-3.5" aria-hidden="true" />
             Создать счёт
+          </Button>
+          <Button
+            type="button"
+            variant="secondary"
+            size="compact"
+            disabled={isPending}
+            title={`Печать заказа ${order.number}`}
+            onClick={() =>
+              runPrint(() => generatePrintForm(buildSalesOrderPrintRequest(order)))
+            }
+          >
+            <Printer className="size-3.5" aria-hidden="true" />
+            Печать заказа
+          </Button>
+          <Button
+            type="button"
+            variant="secondary"
+            size="compact"
+            disabled={isPending || latestQuotation === null}
+            title={
+              latestQuotation
+                ? `Печать КП ${latestQuotation.number}`
+                : "Сначала создайте КП"
+            }
+            onClick={() =>
+              latestQuotation
+                ? runPrint(() =>
+                    generatePrintForm(
+                      buildSalesQuotationPrintRequest(order, latestQuotation),
+                    ),
+                  )
+                : undefined
+            }
+          >
+            <Printer className="size-3.5" aria-hidden="true" />
+            Печать КП
+          </Button>
+          <Button
+            type="button"
+            variant="secondary"
+            size="compact"
+            disabled={isPending || latestInvoice === null}
+            title={
+              latestInvoice
+                ? `Печать счёта ${latestInvoice.number}`
+                : "Сначала создайте счёт"
+            }
+            onClick={() =>
+              latestInvoice
+                ? runPrint(() =>
+                    generatePrintForm(
+                      buildSalesInvoicePrintRequest(order, latestInvoice),
+                    ),
+                  )
+                : undefined
+            }
+          >
+            <Printer className="size-3.5" aria-hidden="true" />
+            Печать счёта
           </Button>
         </div>
       }

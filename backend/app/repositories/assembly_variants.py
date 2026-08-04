@@ -136,3 +136,37 @@ def variant_total_cost(variant: AssemblyVariant) -> Decimal:
         ),
         Decimal("0"),
     )
+
+
+def assembly_cost_ranges_by_model_ids(
+    db: Session,
+    model_ids: list[int],
+) -> dict[int, tuple[Decimal, Decimal]]:
+    """Min/max variant totals (Σ cost × qty) keyed by product_model_id."""
+    if not model_ids:
+        return {}
+    unique_ids = list(dict.fromkeys(model_ids))
+    line_total = AssemblyOperationLine.cost * AssemblyOperationLine.quantity_per_item
+    variant_totals = (
+        select(
+            AssemblyVariant.product_model_id.label("product_model_id"),
+            AssemblyVariant.id.label("variant_id"),
+            func.coalesce(func.sum(line_total), 0).label("total_cost"),
+        )
+        .outerjoin(
+            AssemblyOperationLine,
+            AssemblyOperationLine.assembly_variant_id == AssemblyVariant.id,
+        )
+        .where(AssemblyVariant.product_model_id.in_(unique_ids))
+        .group_by(AssemblyVariant.product_model_id, AssemblyVariant.id)
+        .subquery()
+    )
+    statement = select(
+        variant_totals.c.product_model_id,
+        func.min(variant_totals.c.total_cost),
+        func.max(variant_totals.c.total_cost),
+    ).group_by(variant_totals.c.product_model_id)
+    result: dict[int, tuple[Decimal, Decimal]] = {}
+    for model_id, cost_min, cost_max in db.execute(statement).all():
+        result[int(model_id)] = (Decimal(str(cost_min)), Decimal(str(cost_max)))
+    return result

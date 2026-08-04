@@ -18,6 +18,7 @@ from app.services.stock_documents import (
     StockDocumentValidationError,
     create_stock_document,
     get_stock_document,
+    list_stock_documents,
     post_stock_document,
 )
 
@@ -53,6 +54,39 @@ def read_stock_balances(
             status_code=status.HTTP_404_NOT_FOUND, detail=str(error)
         ) from error
     except StockBalanceValidationError as error:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(error)
+        ) from error
+
+
+@router.get(
+    "/documents",
+    response_model=list[StockDocumentRead],
+    operation_id="list_stock_documents",
+)
+def read_stock_documents(
+    doc_type: str | None = Query(default=None),
+    status_filter: str | None = Query(default=None, alias="status"),
+    warehouse_id: int | None = Query(default=None, ge=1),
+    technical_card_id: int | None = Query(default=None, ge=1),
+    sales_order_id: int | None = Query(default=None, ge=1),
+    limit: int = Query(default=100, ge=1, le=500),
+    offset: int = Query(default=0, ge=0),
+    db: Session = Depends(get_db),
+) -> list[StockDocumentRead]:
+    """Stock document journal for `/warehouse/movements` (`12.3.3`)."""
+    try:
+        return list_stock_documents(
+            db,
+            doc_type=doc_type,
+            status=status_filter,
+            warehouse_id=warehouse_id,
+            technical_card_id=technical_card_id,
+            sales_order_id=sales_order_id,
+            limit=limit,
+            offset=offset,
+        )
+    except StockDocumentValidationError as error:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(error)
         ) from error

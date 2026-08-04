@@ -283,7 +283,7 @@ class TechnicalCardUnitLine(Base):
         ),
         CheckConstraint("unit_index >= 1", name="ck_technical_card_unit_lines_unit_index"),
         CheckConstraint(
-            "size_type IS NULL OR size_type IN ('men', 'women', 'kids')",
+            "size_type IS NULL OR size_type IN ('male', 'female')",
             name="ck_technical_card_unit_lines_size_type",
         ),
         Index("ix_technical_card_unit_lines_card_id", "technical_card_id"),

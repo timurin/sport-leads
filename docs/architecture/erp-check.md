@@ -17,11 +17,11 @@
 
 - `[x]` `Lead`, `LeadContact`, `Client`, `LeadEvent`, `SalesUser` и их миграции;
 - `[x]` создание лида, contact CRUD, стадии, частичное редактирование, конвертация, отказ и история;
-- `[~]` список/Kanban, задачи, заметки, timeline и коммуникации частично local/demo; **лиды list/kanban** `1.1.3`/`1.1.4` closed (owner visual OK `2026-07-31`); **dashboard models** `1.1.5` closed (owner visual OK `2026-08-01`); **lead tasks/notes/communications** `1.2.4` closed (owner visual OK `2026-08-01`); lead **card demix** `1.2.5.1`–`1.2.5.4` shipped (**STOP visual** `1.2.5.5`; production auth → `17.1.1`);
-- `[~]` `Deal`, архивирование, полные активности, авторизация и права не завершены;
+- `[~]` список/Kanban, задачи, заметки, timeline и коммуникации частично local/demo; **лиды list/kanban** `1.1.3`/`1.1.4` closed (owner visual OK `2026-07-31`); **dashboard models** `1.1.5` closed (owner visual OK `2026-08-01`); **lead tasks/notes/communications** `1.2.4` closed (owner visual OK `2026-08-01`); lead **card demix** `1.2.5` closed (owner visual OK `2026-08-01`; production auth → `17.1.1`); **`1.3.3` closed** (owner visual OK `2026-08-01`): no Deal; deals→orders; lead archive cancelled; ACL → `17.1.1`; **`2.2.1`/`2.2.2` closed** (owner visual OK `2026-08-01`; history → v1.00);
+- `[x]` `Deal` как отдельная сущность **не вводится** (конверсия → `SalesOrder`); ACL CRM → `17.1.1`;
 - `[x]` `Organization` и связь `SalesOrder.organization_id`;
 - `[x]` `SalesOrder` list/detail, status workflow и history;
-- `[x]` order card UX `3.5`: compact header + view filters + field-link map; owner visual OK `3.5.9` (`2026-07-31`); tasks panel reuses source-lead `LeadTask` (API tasks via `1.2.4`); filter «Коммуникация» is surface only — **persistent internal staff chat / @mentions / chat-microtasks → Stage `19`** (≠ CRM `1.2.4`, ≠ external connectors);
+- `[x]` order card UX `3.5`: compact header + view filters + field-link map; owner visual OK `3.5.9` (`2026-07-31`); tasks panel reuses source-lead `LeadTask` (API tasks via `1.2.4`); filter «Коммуникация» = surface for **Stage `19` internal collaboration** — **Stage 19 closed** `2026-08-04` (owner sign-off `19.5.3`; message send verified); ≠ CRM `1.2.4`, ≠ external connectors;
 - `[x]` `SalesOrderItem` CRUD, snapshot-наименование, размеры (`size_range`), персонализация (`personalization`), цвет (`color`), процентная скидка строки (`discount_percent`), вычисляемая сумма скидки (`discount_amount`) и пересчёт `line_amount` через `Decimal/Numeric`; **скидка заказа** `3.3.1` shipped (`SalesOrder.discount_percent` / `discount_amount` / `items_subtotal`; UI на карточке); **НДС** `3.3.2` shipped (`price_includes_vat` per line, line/order `vat_amount`, API `amount_net` / `line_total`; UI toolbar `BadgePercent` apply-all; transfer rule для price-доков; Alembic `e2f3a4b5c678`); полный pytest, frontend tests, TypeScript, lint, production build, project check 9/9 и Alembic проходят;
 - `[!]` прежняя связь `SalesOrderItem → Material` была архитектурной ошибкой и удалена отдельным patch; `Material` не является номенклатурой заказа.
 
@@ -59,7 +59,7 @@
 - `[~]` **warehouse Stage 12** — ADR-019; structure `12.1` + ledger MVP `12.2` done; FG docs/inventory/transfers open (`12.3`–`12.5`);
 - `[~]` модели и артикулы — Stage 6 catalog v1 closed (`6.1.1`–`6.1.16`, `6.2.*`, `6.3.*` incl. `6.3.8` duration / `6.3.10` equipment, `6.4`); product types directory + model link shipped; order-item binding `3.2.5` + routing `3.2.7` + smoke `3.2.6` shipped; model routing whitelist + op norms `6.1.17` shipped;
 - `[~]` размеры и изображения — SizeGrid Mosmade men+women + list/card visual OK; Stage-6 read-only; write/edit → `17.1.2.4`; model link `6.2.7` shipped;
-- `[x]` операции пошива (каталог) + связка со строками варианта — `6.3.1`–`6.3.6` shipped; normative `duration_seconds` + assembly-line snapshot `6.3.8` shipped; equipment M:N (цех Пошив) `6.3.10` shipped; owner visual OK for catalog (`2026-07-22`);
+- `[x]` операции пошива (каталог) + связка со строками варианта — `6.3.1`–`6.3.6` shipped; normative `duration_seconds` + assembly-line snapshot `6.3.8` shipped; equipment M:N (цех Пошив) `6.3.10` shipped; folder tree `6.3.11` + templates `6.3.12` + apply to assembly `6.3.13` shipped (owner visual OK `2026-08-02`);
 - `[x]` типы изделия (`ProductType`) — directory + `ProductModel.product_type_id` + list filter/column (`6.1.14`–`6.1.16`);
 
 ## Технологическая подготовка
@@ -72,15 +72,15 @@
 
 ## Производство
 
-- `[~]` технические карты: domain **ADR-016** (+ plan/fact materials amend `9.3.4`); DB `9.1.2`; generate `9.2.1`; composition/unit/op-volume; order UI `9.4.1` (owner visual OK); stage machine `9.2.2`; **list/document `9.4.2` shipped** (owner visual `9.4.2.7` OK `2026-07-28`); **settings `9.6` shipped** (singleton `TechnicalCardSettings`, settings page, generate/prefill wiring, focused regressions); print A4×2 → `18.3.8`;
-- `[~]` shop routings / work centers — ADR-017 (+ model whitelist amend `6.1.17` / `8.2.3.7`); migration `l3m4n5o6p789`; API + settings UI; owner visual `8.2.2.6` OK `2026-07-28`;
+- `[x]` технические карты: domain **ADR-016** (+ plan/fact materials amend `9.3.4`); DB `9.1.2`; generate `9.2.1`; composition/unit/op-volume; order UI `9.4.1` (owner visual OK); stage machine `9.2.2`; **list/document `9.4.2` shipped** (owner visual `9.4.2.7` OK `2026-07-28`); **settings `9.6` shipped** (singleton `TechnicalCardSettings`, settings page, generate/prefill wiring, focused regressions); print A4×2 `18.3.8` owner visual OK `2026-08-03`;
+- `[~]` shop routings / work centers — ADR-017 (+ model whitelist amend `6.1.17`; TC wire `8.2.3.7`–`8.2.3.8` shipped; TechOp materials `8.1.4` shipped); migration `l3m4n5o6p789`; API + settings UI; owner visual `8.2.2.6` OK `2026-07-28`;
 - `[~]` **ProductionStage (цех) catalog** — Stage `8.3` **shipped** (seed 7 цехов; migration `m4n5o6p7q890`); FG stages `ready_to_ship` / `shipped` seeded in `11.2.2.2` (`x5y6z7a8b901`); settings «Этапы»; routing step = цех; owner visual OK `2026-07-28`;
 - `[x]` **WorkCenter planning (`11.1.2`)** — contract + routing snapshot + Settings catalog + TC planned assign UI shipped; owner visual `11.1.2.5` OK `2026-07-30`;
 - `[~]` **shop-floor modules** — Stage `11.3` platform + **`11.4`–`11.10` per-цех UIs shipped** (owner visuals OK through `11.10.5`); FG stages `11.2.2` (ADR-019) after packaging; **Раскрой/Печать** write material `fact_qty` with hard complete-gate (`9.3.4`);
 - `[x]` **production batches** — ADR-018 + DB/API/UI `/production/orders` shipped (`11.1.1`); owner visual `11.1.1.5` OK `2026-07-30`;
 - `[ ]` batch specification formation (plan+fact report document from filled TC / ADR-004);
 - `[x]` **aggregate fact (`11.2.1`)** — contract/API/UI/tests + owner visual OK `2026-07-30` (`11.2.1.1`–`11.2.1.4`);
-- `[~]` **FG warehouse bridge (`11.2.2`)** — contract/seed/shop modules `11.2.2.1`–`11.2.2.3` shipped; remaining wire/visual `11.2.2.4`–`11.2.2.5` (deps Stage `12.2`);
+- `[x]` **FG warehouse bridge (`11.2.2`)** — wire + auto-post + owner visual OK `2026-08-01`; movements UI `12.3.3` shipped;
 
 Цепочка (ADR-004 amend): заказ → ТК (технология/состав) → партия → исполнение → спецификация как **сводный отчёт план+факт** → 1С. Spec — документ, не модуль; сырой факт остаётся в своих контурах. **Документы** = реестр ссылок на документы в родителях (не контур на каждый тип).
 
@@ -91,6 +91,13 @@
 - `[ ]` фактическое списание и выпуск;
 - `[ ]` закупки, поставщики и заказы поставщикам;
 - `[ ]` оплаты, себестоимость, маржа, задолженность и финансовые документы.
+
+## Платформа и доступ
+
+- `[x]` **Authentication (`17.1.1`)** — ADR-023 + API + `/login` workspace gate; owner visual OK `2026-08-01`; evidence `test_auth_17_1_1_2.py`, `session.test.mjs`;
+- `[x]` System users / roles / permissions (`17.1.2`) — ADR-024 + RBAC + size-grid/kanban/admin gates + stage executors; owner visuals OK `2026-08-01`;
+- `[x]` Universal audit trail (`17.1.3`) — ADR-025 + `audit_events` + size-grid UI journal; owner visual OK `2026-08-01`;
+- `[x]` Production ops (`17.2`) — `17.2.1`–`17.2.3` shipped (Compose/Caddy, deploy/health/logs, backup/DR runbooks); live VPS/secrets = owner apply.
 
 ## Интеграции
 

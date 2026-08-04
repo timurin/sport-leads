@@ -1,10 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { FilterX } from "lucide-react";
+import { FilterX, Plus } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 
-import { IconButton } from "@/components/ui/button";
+import { SizeGridCreateDrawer } from "@/components/settings/size-grid-create-drawer";
+import { Button, IconButton } from "@/components/ui/button";
 import {
   DataTable,
   DataTableBody,
@@ -33,13 +35,31 @@ const sizeTypeTone: Record<SizeGridSizeType, "primary" | "success" | "neutral"> 
 };
 
 /** PT-02 size-grids catalog list (`DS-PT-02-CATALOG`). */
-export function SizeGridsWorkspace({ grids }: { grids: SizeGridListItem[] }) {
+export function SizeGridsWorkspace({
+  grids,
+  canWrite = false,
+}: {
+  grids: SizeGridListItem[];
+  canWrite?: boolean;
+}) {
+  const router = useRouter();
   const [query, setQuery] = useState("");
   const [sizeType, setSizeType] = useState<SizeGridSizeType | "all">("all");
+  const [createOpen, setCreateOpen] = useState(false);
+  const [created, setCreated] = useState<SizeGridListItem[]>([]);
+
+  const rows = useMemo(() => {
+    const byId = new Map<number, SizeGridListItem>();
+    for (const grid of grids) byId.set(grid.id, grid);
+    for (const grid of created) byId.set(grid.id, grid);
+    return Array.from(byId.values()).sort((a, b) =>
+      a.name.localeCompare(b.name, "ru"),
+    );
+  }, [created, grids]);
 
   const filtered = useMemo(
-    () => filterSizeGrids(grids, query, sizeType),
-    [grids, query, sizeType],
+    () => filterSizeGrids(rows, query, sizeType),
+    [rows, query, sizeType],
   );
 
   const clearFilters = () => {
@@ -75,13 +95,25 @@ export function SizeGridsWorkspace({ grids }: { grids: SizeGridListItem[] }) {
           </>
         }
         end={
-          <IconButton
-            label="Сбросить фильтры"
-            variant="secondary"
-            onClick={clearFilters}
-          >
-            <FilterX className="size-4" aria-hidden="true" />
-          </IconButton>
+          <>
+            <IconButton
+              label="Сбросить фильтры"
+              variant="secondary"
+              onClick={clearFilters}
+            >
+              <FilterX className="size-4" aria-hidden="true" />
+            </IconButton>
+            {canWrite ? (
+              <Button
+                type="button"
+                variant="primary"
+                onClick={() => setCreateOpen(true)}
+              >
+                <Plus className="size-4" aria-hidden="true" />
+                Создать
+              </Button>
+            ) : null}
+          </>
         }
       />
 
@@ -90,8 +122,10 @@ export function SizeGridsWorkspace({ grids }: { grids: SizeGridListItem[] }) {
           <EmptyState
             title="Нет размерных сеток"
             description={
-              grids.length === 0
-                ? "Справочник пока пуст."
+              rows.length === 0
+                ? canWrite
+                  ? "Создайте первую сетку или загрузите эталон."
+                  : "Справочник пока пуст."
                 : "Измените фильтры или сбросьте поиск."
             }
           />
@@ -138,8 +172,30 @@ export function SizeGridsWorkspace({ grids }: { grids: SizeGridListItem[] }) {
       </div>
 
       <ListTotals
-        primary={`Показано: ${filtered.length} из ${grids.length}`}
+        primary={`Показано: ${filtered.length} из ${rows.length}`}
       />
+
+      {canWrite ? (
+        <SizeGridCreateDrawer
+          open={createOpen}
+          onClose={() => setCreateOpen(false)}
+          onCreated={(grid) => {
+            setCreated((current) => [
+              {
+                id: grid.id,
+                name: grid.name,
+                size_type: grid.size_type,
+                source_note: grid.source_note,
+                row_count: grid.rows.length,
+                created_at: grid.created_at,
+                updated_at: grid.updated_at,
+              },
+              ...current.filter((item) => item.id !== grid.id),
+            ]);
+            router.push(`/settings/catalogs/size-grids/${grid.id}`);
+          }}
+        />
+      ) : null}
     </div>
   );
 }

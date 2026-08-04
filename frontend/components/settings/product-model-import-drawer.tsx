@@ -95,7 +95,7 @@ export function ProductModelImportDrawer({
     <CreateDrawer
       open={open}
       title="Импорт моделей изделий"
-      description="Скачайте шаблон (те же колонки, что у экспорта), заполните и загрузите."
+      description="Скачайте шаблон или загрузите CSV/XLSX экспорта. Сначала «Проверить», затем «Импортировать»."
       onClose={handleClose}
       variant="overlay"
     >
@@ -103,15 +103,56 @@ export function ProductModelImportDrawer({
         <div className="min-h-0 flex-1 space-y-portal-4 overflow-y-auto px-portal-6 py-portal-5">
           <div className="space-y-portal-2 rounded-portal-md border border-portal-border bg-portal-surface-secondary p-portal-3">
             <p className="text-portal-body font-medium text-portal-text">
+              Формат CSV / XLSX
+            </p>
+            <ul className="list-disc space-y-1 pl-portal-4 text-portal-caption text-portal-muted">
+              <li>
+                Файлы: <strong className="font-medium text-portal-text">.csv</strong> или{" "}
+                <strong className="font-medium text-portal-text">.xlsx</strong> (UTF-8; BOM
+                допустим).
+              </li>
+              <li>
+                Разделитель колонок CSV:{" "}
+                <strong className="font-medium text-portal-text">;</strong> (Excel RU) или{" "}
+                <strong className="font-medium text-portal-text">,</strong> — определяется
+                по строке заголовка. Не смешивайте оба в одном файле.
+              </li>
+              <li>
+                Шаблон платформы пишется с{" "}
+                <strong className="font-medium text-portal-text">,</strong> и строкой{" "}
+                <code className="text-portal-text">sep=,</code> для Excel.
+              </li>
+              <li>
+                Обязательные колонки:{" "}
+                <code className="text-portal-text">article</code>,{" "}
+                <code className="text-portal-text">name</code>,{" "}
+                <code className="text-portal-text">size_type</code> (
+                <code className="text-portal-text">men</code> |{" "}
+                <code className="text-portal-text">women</code> |{" "}
+                <code className="text-portal-text">kids</code>).
+              </li>
+              <li>
+                Списки в ячейке (маршруты, варианты, фото): разделитель{" "}
+                <strong className="font-medium text-portal-text">|</strong>, не точка с
+                запятой.
+              </li>
+              <li>
+                Upsert по <code className="text-portal-text">id</code> или артикулу;{" "}
+                <code className="text-portal-text">photo_urls</code> / даты — только
+                экспорт (чтение).
+              </li>
+            </ul>
+          </div>
+
+          <div className="space-y-portal-2 rounded-portal-md border border-portal-border bg-portal-surface-secondary p-portal-3">
+            <p className="text-portal-body font-medium text-portal-text">
               Шаблон для заполнения
             </p>
             <p className="text-portal-caption text-portal-muted">
-              Колонки: article, name, size_type (men|women|kids),
-              size_grid_name, product_type_name, description, patterns_path,
-              constructor_name, patterns_created_on, default_routing_code,
-              assembly_variant_ids, routing_template_ids (id через «|»),
-              photo_paths (локальные пути через «|»; photo_urls — только экспорт),
-              status. id / даты — для round-trip. Upsert по id или артикулу.
+              Колонки: article, name, size_type, size_grid_name, product_type_name,
+              description, patterns_path, constructor_name, patterns_created_on,
+              default_routing_code, assembly_variant_ids, routing_template_ids,
+              photo_paths, status (+ id / даты для round-trip).
             </p>
             <div className="flex flex-wrap gap-portal-2">
               <Button

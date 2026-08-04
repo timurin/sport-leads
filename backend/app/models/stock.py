@@ -31,10 +31,12 @@ if TYPE_CHECKING:
 
 
 class StockDocumentType(str, Enum):
-    """MVP movement types; FG subtypes arrive in `12.3.1`."""
+    """Movement types including FG subtypes (`12.3.1` / ADR-019)."""
 
     RECEIPT = "receipt"
     ISSUE = "issue"
+    FG_RECEIPT = "fg_receipt"
+    FG_ISSUE = "fg_issue"
 
 
 class StockDocumentStatus(str, Enum):
@@ -44,7 +46,7 @@ class StockDocumentStatus(str, Enum):
 
 
 class StockDocument(Base):
-    """Stock movement header (Приход / Списание). Balance SoT is ledger only."""
+    """Stock movement header (Приход / Списание / FG). Balance SoT is ledger only."""
 
     __tablename__ = "stock_documents"
     __table_args__ = (
@@ -54,7 +56,7 @@ class StockDocument(Base):
         Index("ix_stock_documents_doc_type", "doc_type"),
         Index("ix_stock_documents_posted_at", "posted_at"),
         CheckConstraint(
-            "doc_type IN ('receipt', 'issue')",
+            "doc_type IN ('receipt', 'issue', 'fg_receipt', 'fg_issue')",
             name="ck_stock_documents_doc_type",
         ),
         CheckConstraint(

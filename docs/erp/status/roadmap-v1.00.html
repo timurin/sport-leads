@@ -1,0 +1,1608 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sport-Lead — Roadmap v1.00</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f3f6fb;
+      --surface: #ffffff;
+      --surface-2: #f7f9fc;
+      --line: #d8e1eb;
+      --line-strong: #b6c4d6;
+      --text: #10243a;
+      --muted: #637487;
+      --accent: #1d5eff;
+      --accent-soft: #e9efff;
+      --done: #147b4d;
+      --done-soft: #e7f6ee;
+      --todo: #985d00;
+      --todo-soft: #fff3df;
+      --carry: #0f6e8c;
+      --carry-soft: #e5f6fb;
+      --shadow: 0 16px 46px rgba(16, 36, 58, 0.08);
+      --radius: 18px;
+      --font: "Segoe UI", Arial, sans-serif;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; }
+    body {
+      background:
+        radial-gradient(circle at top left, rgba(29, 94, 255, 0.08), transparent 30%),
+        linear-gradient(180deg, #f7f9fd 0%, var(--bg) 100%);
+      color: var(--text);
+      font: 14px/1.5 var(--font);
+    }
+    .layout {
+      display: grid;
+      grid-template-columns: 300px minmax(0, 1fr);
+      min-height: 100vh;
+    }
+    .sidebar {
+      position: sticky; top: 0; align-self: start; height: 100vh; overflow: auto;
+      padding: 22px 18px; border-right: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.92); backdrop-filter: blur(12px);
+    }
+    .brand { display: grid; gap: 10px; margin-bottom: 18px; }
+    .brand-badge {
+      width: 44px; height: 44px; border-radius: 14px; display: grid; place-items: center;
+      background: linear-gradient(135deg, #1d5eff, #0f4ad2); color: #fff; font-weight: 800;
+    }
+    .brand h1 { margin: 0; font-size: 20px; line-height: 1.15; }
+    .brand p, .sidebar-note, .meta-list { color: var(--muted); }
+    .meta-list, .sidebar-note, .nav-links { display: grid; gap: 8px; }
+    .chip {
+      display: inline-flex; align-items: center; gap: 8px; width: fit-content;
+      padding: 8px 10px; border-radius: 999px; border: 1px solid var(--line);
+      background: var(--surface-2); font-size: 12px; color: var(--muted);
+    }
+    .lang-switch {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 14px 0 4px;
+    }
+    .lang-switch button {
+      border: 1px solid var(--line-strong); border-radius: 12px; padding: 10px 12px;
+      background: #fff; color: var(--text); font: inherit; font-weight: 700; cursor: pointer;
+    }
+    .lang-switch button.active {
+      background: var(--accent-soft); border-color: #cad8ff; color: var(--accent);
+    }
+    .lang-switch button:hover, .lang-switch button:focus-visible {
+      border-color: var(--accent); outline: none;
+    }
+    .nav-links a {
+      display: flex; justify-content: space-between; gap: 12px; text-decoration: none; color: inherit;
+      padding: 10px 12px; border-radius: 12px; border: 1px solid transparent;
+    }
+    .nav-links a:hover, .nav-links a:focus-visible { background: var(--accent-soft); border-color: #cad8ff; outline: none; }
+    .nav-links small { color: var(--muted); }
+    .content { padding: 24px; }
+    .hero, .toolbar, .stage-card, .panel {
+      background: rgba(255,255,255,0.95); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow);
+    }
+    .hero { padding: 28px; display: grid; gap: 18px; margin-bottom: 18px; }
+    .hero-top { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; align-items: flex-start; }
+    .hero h2 { margin: 0 0 8px; font-size: 30px; line-height: 1.1; }
+    .hero p { margin: 0; color: var(--muted); max-width: 900px; }
+    .stats { display: grid; grid-template-columns: repeat(5, minmax(0,1fr)); gap: 12px; }
+    .stat {
+      padding: 16px; border-radius: 16px; border: 1px solid var(--line);
+      background: linear-gradient(180deg, #fff 0%, #f8fbff 100%);
+    }
+    .stat strong { display: block; font-size: 28px; line-height: 1; margin-bottom: 6px; }
+    .stat span { color: var(--muted); font-size: 13px; }
+    .progress-shell { display: grid; gap: 8px; }
+    .progress-row { display: flex; justify-content: space-between; gap: 12px; color: var(--muted); font-size: 13px; }
+    .progress-bar { width: 100%; height: 12px; border-radius: 999px; background: #e8eef5; border: 1px solid #dde6ef; overflow: hidden; }
+    .progress-bar span { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #1d5eff, #4b85ff); }
+    .toolbar {
+      padding: 18px; display: grid; grid-template-columns: minmax(240px,1fr) auto auto auto; gap: 12px;
+      margin-bottom: 18px; align-items: center;
+    }
+    .toolbar input, .toolbar select, .toolbar button {
+      border: 1px solid var(--line-strong); border-radius: 12px; padding: 11px 12px; background: #fff; color: var(--text); font: inherit;
+    }
+    .toolbar .button-row { display: flex; gap: 10px; }
+    .toolbar button { cursor: pointer; font-weight: 700; background: var(--surface-2); }
+    .toolbar .lang-inline { display: flex; gap: 8px; }
+    .toolbar .lang-inline button.active {
+      background: var(--accent-soft); border-color: #cad8ff; color: var(--accent);
+    }
+    .legend { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 18px; }
+    .legend-item {
+      display: inline-flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 999px;
+      border: 1px solid var(--line); background: rgba(255,255,255,0.95); box-shadow: var(--shadow);
+    }
+    .panel { padding: 20px; margin-bottom: 18px; display: grid; gap: 12px; }
+    .panel h3 { margin: 0; font-size: 18px; }
+    .panel p, .panel li { color: var(--muted); }
+    .panel ul { margin: 0; padding-left: 18px; display: grid; gap: 6px; }
+    .stages { display: grid; gap: 16px; }
+    .stage-card { overflow: hidden; }
+    .stage-header {
+      padding: 18px 20px; display: flex; justify-content: space-between; gap: 16px; align-items: center;
+      background: linear-gradient(180deg, #fff 0%, #f8fbff 100%); border-bottom: 1px solid var(--line); cursor: pointer;
+    }
+    .stage-header h3 { margin: 0 0 6px; font-size: 20px; line-height: 1.15; }
+    .stage-header p { margin: 0; color: var(--muted); font-size: 13px; }
+    .stage-meta { display: flex; flex-wrap: wrap; gap: 10px; justify-content: flex-end; }
+    .badge { display: inline-flex; align-items: center; gap: 7px; padding: 7px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; }
+    .badge.done { background: var(--done-soft); color: var(--done); }
+    .badge.todo { background: var(--todo-soft); color: var(--todo); }
+    .badge.carry { background: var(--carry-soft); color: var(--carry); }
+    .stage-body { padding: 18px 20px 20px; }
+    .stage-body[hidden] { display: none; }
+    .block-grid { display: grid; gap: 14px; }
+    .block-card { border: 1px solid var(--line); border-radius: 16px; background: var(--surface); overflow: hidden; }
+    .block-head { padding: 14px 16px; background: var(--surface-2); border-bottom: 1px solid var(--line); }
+    .block-head h4 { margin: 0; font-size: 16px; line-height: 1.2; }
+    .item-list { display: grid; gap: 10px; padding: 14px 16px 16px; }
+    .item-card { border: 1px solid var(--line); border-radius: 14px; background: #fff; padding: 12px 14px; display: grid; gap: 8px; }
+    .item-top { display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: start; }
+    .check-icon {
+      width: 22px; height: 22px; border-radius: 7px; display: grid; place-items: center;
+      border: 1px solid var(--line-strong); font-size: 12px; font-weight: 800; background: #fff; color: var(--muted);
+    }
+    .check-icon.done { background: var(--done-soft); border-color: #9fd6b8; color: var(--done); }
+    .check-icon.todo { background: var(--todo-soft); border-color: #f0d39a; color: var(--todo); }
+    .item-title { display: grid; gap: 4px; }
+    .item-title strong { font-size: 14px; }
+    .item-title span, .item-note { color: var(--muted); font-size: 13px; }
+    .item-status { font-size: 12px; font-weight: 700; color: var(--muted); }
+    .note-box {
+      margin: 0 16px 14px; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--line);
+      background: var(--surface-2); color: var(--muted); font-size: 13px;
+    }
+    .footer-note { margin-top: 18px; color: var(--muted); font-size: 12px; }
+    @media (max-width: 980px) {
+      .layout { grid-template-columns: 1fr; }
+      .sidebar { position: static; height: auto; }
+      .stats { grid-template-columns: repeat(2, minmax(0,1fr)); }
+      .toolbar { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-badge">SL</div>
+        <div>
+          <h1 id="ui-brand-title">Roadmap v1.00</h1>
+          <p id="ui-brand-sub">HTML twin for SL-ROADMAP-v1.00</p>
+        </div>
+      </div>
+      <div class="lang-switch" role="group" aria-label="Language">
+        <button type="button" id="lang-en" data-lang="en" class="active">English</button>
+        <button type="button" id="lang-ru" data-lang="ru">Русский</button>
+      </div>
+      <div class="meta-list">
+        <div class="chip" id="chip-updated">Updated: 2026-08-01</div>
+        <div class="chip">Version: v1.00</div>
+        <div class="chip" id="chip-carry">Carry: Stages 13, 15, 16</div>
+        <div class="chip" id="chip-active">Active work: still v0.9.0</div>
+      </div>
+      <div class="sidebar-note" style="margin:18px 0;">
+        <strong id="ui-legend-title" style="color:var(--text)">Legend</strong>
+        <div id="ui-legend-done">`[x]` done</div>
+        <div id="ui-legend-todo">`[ ]` open</div>
+        <div id="ui-legend-html">HTML is a report. Markdown is the source of truth.</div>
+      </div>
+      <nav class="nav-links" id="nav-links" aria-label="Roadmap stages"></nav>
+    </aside>
+
+    <main class="content">
+      <section class="hero">
+        <div class="hero-top">
+          <div>
+            <h2 id="ui-hero-title">Sport-Lead Roadmap v1.00</h2>
+            <p id="ui-hero-text">Confirmed carry-over from v0.9.0: Procurement (13), Costing and Analytics (15), Integrations (16). Switch language with EN / RU.</p>
+          </div>
+          <div class="chip">Source: docs/roadmap/roadmap-v1.00.md</div>
+        </div>
+        <div class="stats" id="stats"></div>
+        <div class="progress-shell">
+          <div class="progress-row">
+            <strong id="ui-progress-label">Overall progress</strong>
+            <span id="overall-progress-label"></span>
+          </div>
+          <div class="progress-bar" aria-hidden="true"><span id="overall-progress-bar"></span></div>
+        </div>
+      </section>
+
+      <section class="panel" id="transfer">
+        <h3 id="ui-transfer-title">Owner transfer</h3>
+        <p id="ui-transfer-text">Confirmed move from v0.9.0 → v1.00: Stages 13, 15, 16. Other open work stays on the v0.9.0 roadmap until transferred.</p>
+        <ul id="ui-transfer-list"></ul>
+      </section>
+
+      <section class="toolbar" aria-label="Search and filters">
+        <input id="search" type="search" placeholder="Search stages and microtasks">
+        <select id="filter">
+          <option value="all">All items</option>
+          <option value="todo">Open only</option>
+          <option value="done">Done only</option>
+        </select>
+        <div class="lang-inline" role="group" aria-label="Language toolbar">
+          <button type="button" data-lang="en" class="active">EN</button>
+          <button type="button" data-lang="ru">RU</button>
+        </div>
+        <div class="button-row">
+          <button id="expand-all" type="button">Expand all</button>
+          <button id="collapse-all" type="button">Collapse all</button>
+        </div>
+      </section>
+
+      <div class="legend" id="legend"></div>
+      <div class="stages" id="stages"></div>
+      <div class="footer-note" id="ui-footer">Twin of docs/roadmap/roadmap-v1.00.md. Active execution remains on docs/roadmap/roadmap.md (v0.9.0) until version gate.</div>
+    </main>
+  </div>
+
+  <script>
+    const STORAGE_KEY = "sport-lead-roadmap-v1-lang";
+
+    const ui = {
+      en: {
+        brandTitle: "Roadmap v1.00",
+        brandSub: "HTML twin for SL-ROADMAP-v1.00",
+        chipUpdated: "Updated: 2026-08-02",
+        chipCarry: "Carry: 1.4.3, 2 group, 7, 12.4–12.5, 13–16, 18.4 + Stage 0 perf",
+        chipActive: "Active work: still v0.9.0",
+        legendTitle: "Legend",
+        legendDone: "`[x]` done",
+        legendTodo: "`[ ]` open",
+        legendHtml: "HTML is a report. Markdown is the source of truth.",
+        heroTitle: "Sport-Lead Roadmap v1.00",
+        heroText: "Includes new Stage 0 platform performance (full slow-data audit first, then seed N+1 fixes) plus carry-over 1.4.3, Stage 2 group, Specs, 12.4–12.5, 13–16, 18.4. Switch EN / RU.",
+        progressLabel: "Overall progress",
+        transferTitle: "Owner transfer",
+        transferText: "Stage 0 is new in v1.00 (from v0.9 stub 0.4). First: full audit 0.1.1; then known product-models/list N+1 seed 0.2.*. Carry items unchanged.",
+        transferItems: [
+          "New: Stage 0 — Platform performance / slow-data (0.1.1 audit first; 0.2.1–0.2.5 seed)",
+          "Moved: 1.4.3 — Real CRM source / communication adapters (1.4.3.1–1.4.3.5)",
+          "Moved: Stage 2 group — Client history, business data, organizations",
+          "Moved: Stage 7 — Specifications",
+          "Moved: 12.4–12.5 — Inventory / transfers / reserves (12.3 remains in v0.9)",
+          "Moved: Stage 13 — Procurement",
+          "Moved: Stage 14 — Shipping and Payments",
+          "Moved: Stage 15 — Costing and Analytics",
+          "Moved: Stage 16 — Integrations",
+          "Moved: 18.4 — Global operations journal",
+          "Remain in v0.9.0: 1.4.1/1.4.2 done, 2.2.1/2.2.2, 12.3 FG, 1.3.3.6 visual, 17, 18.1–18.3, 19, …"
+        ],
+        searchPlaceholder: "Search stages and microtasks",
+        filterAll: "All items",
+        filterTodo: "Open only",
+        filterDone: "Done only",
+        expand: "Expand all",
+        collapse: "Collapse all",
+        footer: "Twin of docs/roadmap/roadmap-v1.00.md. Active execution remains on docs/roadmap/roadmap.md (v0.9.0) until version gate.",
+        stats: { stages: "Stages", blocks: "Blocks", items: "Microtasks", done: "Done [x]", todo: "Open [ ]" },
+        legendItems: ["Open", "Done", "Carried from v0.9.0"],
+        sourcePrefix: "Source v0.9:",
+        noteLabel: "Note"
+      },
+      ru: {
+        brandTitle: "Roadmap v1.00",
+        brandSub: "HTML-близнец SL-ROADMAP-v1.00",
+        chipUpdated: "Обновлено: 2026-08-02",
+        chipCarry: "Перенос: 1.4.3, группа 2, 7, 12.4–12.5, 13–16, 18.4 + Stage 0 perf",
+        chipActive: "Активная работа: ещё v0.9.0",
+        legendTitle: "Легенда",
+        legendDone: "`[x]` выполнено",
+        legendTodo: "`[ ]` открыто",
+        legendHtml: "HTML — отчёт. Источник истины — Markdown.",
+        heroTitle: "Sport-Lead Roadmap v1.00",
+        heroText: "Новый Stage 0 производительность (сначала полный аудит slow-data, затем seed N+1) плюс перенос 1.4.3, группа 2, Спецификации, 12.4–12.5, 13–16, 18.4. Язык EN / RU.",
+        progressLabel: "Общий прогресс",
+        transferTitle: "Перенос владельца",
+        transferText: "Stage 0 новый в v1.00 (из stub 0.4 v0.9). Сначала аудит 0.1.1; затем seed 0.2.*. Перенесённые этапы без изменений.",
+        transferItems: [
+          "Новое: Stage 0 — Производительность / медленные данные (0.1.1 аудит первым; 0.2.1–0.2.5 seed)",
+          "Перенесено: 1.4.3 — Реальные адаптеры источников лидов / коммуникаций (1.4.3.1–1.4.3.5)",
+          "Перенесено: группа этап 2 — История клиента, бизнес-данные, организации",
+          "Перенесено: этап 7 — Спецификации",
+          "Перенесено: 12.4–12.5 — Инвентаризация / перемещения / резервы (12.3 остаётся в v0.9)",
+          "Перенесено: этап 13 — Закупки",
+          "Перенесено: этап 14 — Отгрузка и платежи",
+          "Перенесено: этап 15 — Себестоимость и аналитика",
+          "Перенесено: этап 16 — Интеграции",
+          "Перенесено: 18.4 — Глобальный журнал операций",
+          "Остаются в v0.9.0: 1.4.1/1.4.2 done, 2.2.1/2.2.2, 12.3 FG, visual 1.3.3.6, 17, 18.1–18.3, 19, …"
+        ],
+        searchPlaceholder: "Поиск по этапам и микрозадачам",
+        filterAll: "Все пункты",
+        filterTodo: "Только открытые",
+        filterDone: "Только выполненные",
+        expand: "Раскрыть все",
+        collapse: "Свернуть все",
+        footer: "Близнец docs/roadmap/roadmap-v1.00.md. Активное исполнение — docs/roadmap/roadmap.md (v0.9.0) до шлюза версии.",
+        stats: { stages: "Этапы", blocks: "Блоки", items: "Микрозадачи", done: "Готово [x]", todo: "Открыто [ ]" },
+        legendItems: ["Открыто", "Готово", "Перенесено из v0.9.0"],
+        sourcePrefix: "Источник v0.9:",
+        noteLabel: "Заметка"
+      }
+    };
+
+    const roadmap = [
+      {
+        code: "0",
+        title: {
+          en: "Stage 0 — Platform performance",
+          ru: "Этап 0 — Производительность платформы"
+        },
+        note: {
+          en: "New in v1.00 (from v0.9 stub 0.4). First: full slow-data audit 0.1.1; then seed N+1 fixes 0.2.*. Evidence: product-models 1+N assembly-variants.",
+          ru: "Новое в v1.00 (из stub 0.4 v0.9). Сначала полный аудит 0.1.1; затем seed 0.2.*. Evidence: product-models 1+N."
+        },
+        blocks: [
+          {
+            title: {
+              en: "0.1 — Full slow-data audit (first)",
+              ru: "0.1 — Полный аудит медленных данных (первым)"
+            },
+            items: [
+              {
+                code: "0.1.1",
+                done: false,
+                title: {
+                  en: "Audit FE list/RSC N+1 and waterfalls; BE fat list loads/JSON; dependency/runtime cost; write findings into Stage 0 roadmap (MD+HTML) before close",
+                  ru: "Аудит FE list/RSC N+1 и waterfall; BE жирные list; зависимости/runtime; внести находки в Stage 0 roadmap (MD+HTML) до закрытия"
+                }
+              }
+            ]
+          },
+          {
+            title: {
+              en: "0.2 — Known findings (seed 2026-08-02)",
+              ru: "0.2 — Известные находки (seed 2026-08-02)"
+            },
+            items: [
+              {
+                code: "0.2.1",
+                done: false,
+                title: {
+                  en: "Contract: list-page rules — no per-row RSC HTTP; batch/embed summary; slim list vs detail; TTFB without N round-trips",
+                  ru: "Контракт: правила list pages — без per-row RSC HTTP; batch/embed; slim list vs detail"
+                }
+              },
+              {
+                code: "0.2.2",
+                done: false,
+                title: {
+                  en: "P1 case product-models list: remove N× assembly-variants (batch cost / bulk / no SSR N+1)",
+                  ru: "P1 кейс product-models: убрать N× assembly-variants"
+                },
+                note: {
+                  en: "evidence: settings/catalogs/product-models/page.tsx",
+                  ru: "evidence: settings/catalogs/product-models/page.tsx"
+                }
+              },
+              {
+                code: "0.2.3",
+                done: false,
+                title: {
+                  en: "Sibling pass: characteristics option counts; warehouse-nomenclature 2N; tech-cards list fat load — fix or backlog under Stage 0",
+                  ru: "Соседний pass: characteristics; warehouse stock; tech-cards list — fix или backlog в Stage 0"
+                }
+              },
+              {
+                code: "0.2.4",
+                done: false,
+                title: {
+                  en: "Shared guardrails: architecture/AGENTS checklist + focused product-models batch tests",
+                  ru: "Guardrails: architecture/AGENTS + тесты batch path product-models"
+                }
+              },
+              {
+                code: "0.2.5",
+                done: false,
+                title: {
+                  en: "Docs checkpoint: erp-check / project-structure + before/after evidence",
+                  ru: "Checkpoint документации + evidence до/после"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        code: "1.4.3",
+        title: {
+          en: "Stage 1.4.3 — Real external lead-source and communication adapters",
+          ru: "Этап 1.4.3 — Реальные адаптеры источников лидов и коммуникаций"
+        },
+        note: {
+          en: "Open remainder of 1.4. Core 1.4.1 + mock 1.4.2 stay done in v0.9. CRM ingest contour C; ≠ Stage 19; shared channel transport with 16.1.",
+          ru: "Открытый остаток 1.4. Ядро 1.4.1 + mock 1.4.2 закрыты в v0.9. Контур CRM ingest C; ≠ Stage 19; общий transport с 16.1."
+        },
+        blocks: [
+          {
+            title: {
+              en: "1.4.3 — Adapter microtasks",
+              ru: "1.4.3 — Микрозадачи адаптеров"
+            },
+            items: [
+              {
+                code: "1.4.3.1",
+                done: false,
+                title: {
+                  en: "Contract: adapter registry vs collectors (1.4.1); lead create/update mapping; ≠ Stage 19; relation to 16.1 (shared transport, CRM ingest owned here)",
+                  ru: "Контракт: реестр адаптеров vs collectors (1.4.1); mapping create/update лида; ≠ Stage 19; связь с 16.1"
+                }
+              },
+              {
+                code: "1.4.3.2",
+                done: false,
+                title: {
+                  en: "First real lead-source adapter (e.g. website form / webhook ingest) wired through normalization core",
+                  ru: "Первый реальный lead-source адаптер (форма сайта / webhook) через normalization core"
+                }
+              },
+              {
+                code: "1.4.3.3",
+                done: false,
+                title: {
+                  en: "First real communication adapter for lead outbound/inbound (replace mock path used by 1.2.4.8 send)",
+                  ru: "Первый реальный communication адаптер (входящие/исходящие лида; заменить mock path 1.2.4.8)"
+                }
+              },
+              {
+                code: "1.4.3.4",
+                done: false,
+                title: {
+                  en: "Persist connector config + credentials (no secrets in repo); admin/settings surface as needed",
+                  ru: "Персистентность config/credentials (без секретов в репо); admin/settings при необходимости"
+                }
+              },
+              {
+                code: "1.4.3.5",
+                done: false,
+                title: {
+                  en: "Regression tests + docs checkpoint (erp-check / import-export contour C)",
+                  ru: "Регрессия + checkpoint документации (erp-check / контур C)"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        code: "2",
+        title: {
+          en: "Stage 2 — Client history, business data, organizations",
+          ru: "Этап 2 — История клиента, бизнес-данные, организации"
+        },
+        note: {
+          en: "Carried from v0.9.0 as one group: 2.2.3 + 2.3 + 2.4. 2.2.1 / 2.2.2 remain in v0.9.0. History panel embeddable; full card placement depends on 2.2.2.",
+          ru: "Перенесено из v0.9.0 одной группой: 2.2.3 + 2.3 + 2.4. 2.2.1 / 2.2.2 остаются в v0.9.0. История — встраиваемая панель; полное размещение на карточке зависит от 2.2.2."
+        },
+        blocks: [
+          {
+            title: {
+              en: "2.2.3 — Client lead and order history",
+              ru: "2.2.3 — История лидов и заказов клиента"
+            },
+            items: [
+              {
+                code: "2.2.3.1",
+                done: false,
+                title: {
+                  en: "Contract: sources (Lead / SalesOrder), filters, sort, empty states; embeddable on future client card (2.2.2)",
+                  ru: "Контракт: источники (Lead / SalesOrder), фильтры, сортировка, empty states; встраивание на будущую карточку клиента (2.2.2)"
+                }
+              },
+              {
+                code: "2.2.3.2",
+                done: false,
+                title: {
+                  en: "Backend: GET client history aggregation (leads + orders) + schemas",
+                  ru: "Backend: агрегация истории клиента (лиды + заказы) + schemas"
+                }
+              },
+              {
+                code: "2.2.3.3",
+                done: false,
+                title: {
+                  en: "Frontend: history panel/component wired to API (no demo substitution)",
+                  ru: "Frontend: панель истории на API (без demo)"
+                }
+              },
+              {
+                code: "2.2.3.4",
+                done: false,
+                title: {
+                  en: "Regression tests (API + FE mapper/unit as applicable)",
+                  ru: "Регрессионные тесты (API + FE)"
+                }
+              },
+              {
+                code: "2.2.3.5",
+                done: false,
+                title: {
+                  en: "Owner visual verification",
+                  ru: "Визуальная проверка владельцем"
+                }
+              }
+            ]
+          },
+          {
+            title: {
+              en: "2.3.1 — Legal details and banking data",
+              ru: "2.3.1 — Юр. реквизиты и банковские данные"
+            },
+            items: [
+              {
+                code: "2.3.1.1",
+                done: false,
+                title: {
+                  en: "Domain fields + validation (INN/KPP/bank etc. as approved) on Client",
+                  ru: "Доменные поля + валидация (ИНН/КПП/банк и т.п.) на Client"
+                }
+              },
+              {
+                code: "2.3.1.2",
+                done: false,
+                title: {
+                  en: "Migration + schemas + API read/write",
+                  ru: "Миграция + schemas + API read/write"
+                }
+              },
+              {
+                code: "2.3.1.3",
+                done: false,
+                title: {
+                  en: "FE edit surface (card section or interim settings form)",
+                  ru: "FE-форма редактирования (секция карточки или interim)"
+                }
+              },
+              {
+                code: "2.3.1.4",
+                done: false,
+                title: {
+                  en: "Regression + docs checkpoint",
+                  ru: "Регрессия + checkpoint документации"
+                }
+              }
+            ]
+          },
+          {
+            title: {
+              en: "2.3.2 — Segmentation and duplicate detection",
+              ru: "2.3.2 — Сегментация и дедупликация"
+            },
+            items: [
+              {
+                code: "2.3.2.1",
+                done: false,
+                title: {
+                  en: "Contract: segment tags + duplicate match rules (name/phone/INN)",
+                  ru: "Контракт: сегменты + правила дублей (name/phone/INN)"
+                }
+              },
+              {
+                code: "2.3.2.2",
+                done: false,
+                title: {
+                  en: "Persist segments + duplicate-check service/API",
+                  ru: "Персистентность сегментов + service/API проверки дублей"
+                }
+              },
+              {
+                code: "2.3.2.3",
+                done: false,
+                title: {
+                  en: "FE: segment UI + duplicate warning on create/edit",
+                  ru: "FE: UI сегментов + предупреждение о дублях"
+                }
+              },
+              {
+                code: "2.3.2.4",
+                done: false,
+                title: {
+                  en: "Regression tests",
+                  ru: "Регрессионные тесты"
+                }
+              }
+            ]
+          },
+          {
+            title: {
+              en: "2.3.3 — Settlements and financial client state",
+              ru: "2.3.3 — Взаиморасчёты и фин. состояние клиента"
+            },
+            items: [
+              {
+                code: "2.3.3.1",
+                done: false,
+                title: {
+                  en: "Contract: which balances are SoT (orders/payments Stage 14 vs summary flags); MVP scope",
+                  ru: "Контракт: SoT балансов (заказы/платежи Stage 14 vs summary); MVP scope"
+                }
+              },
+              {
+                code: "2.3.3.2",
+                done: false,
+                title: {
+                  en: "Backend summary API (debt/advance/open orders) — no fake ledger",
+                  ru: "Backend summary API (долг/аванс/открытые заказы) — без fake ledger"
+                }
+              },
+              {
+                code: "2.3.3.3",
+                done: false,
+                title: {
+                  en: "FE settlements summary block",
+                  ru: "FE-блок сводки взаиморасчётов"
+                }
+              },
+              {
+                code: "2.3.3.4",
+                done: false,
+                title: {
+                  en: "Regression + docs; note link to Stage 14 when payments ship",
+                  ru: "Регрессия + docs; связь со Stage 14 при платежах"
+                }
+              }
+            ]
+          },
+          {
+            title: {
+              en: "2.4.1 — Organizations list and card",
+              ru: "2.4.1 — Список и карточка организаций"
+            },
+            note: {
+              en: "Backend Organization + /organizations already exist; FE still uses demo organizationRecords.",
+              ru: "Backend Organization + /organizations уже есть; FE ещё на demo organizationRecords."
+            },
+            items: [
+              {
+                code: "2.4.1.1",
+                done: false,
+                title: {
+                  en: "Contract: list/card fields vs existing OrganizationRead; drop demo path",
+                  ru: "Контракт: поля list/card vs OrganizationRead; отказ от demo"
+                }
+              },
+              {
+                code: "2.4.1.2",
+                done: false,
+                title: {
+                  en: "Extend API if gaps (CRUD/detail) + schemas",
+                  ru: "Расширить API при пробелах (CRUD/detail) + schemas"
+                }
+              },
+              {
+                code: "2.4.1.3",
+                done: false,
+                title: {
+                  en: "Wire /settings/organizations list to API (remove organizationRecords)",
+                  ru: "Подключить список /settings/organizations к API (убрать organizationRecords)"
+                }
+              },
+              {
+                code: "2.4.1.4",
+                done: false,
+                title: {
+                  en: "Persistent organization card route + edit",
+                  ru: "Persistent карточка организации + edit"
+                }
+              },
+              {
+                code: "2.4.1.5",
+                done: false,
+                title: {
+                  en: "Regression + owner visual",
+                  ru: "Регрессия + визуальная проверка владельцем"
+                }
+              }
+            ]
+          },
+          {
+            title: {
+              en: "2.4.2 — Employees directory",
+              ru: "2.4.2 — Справочник сотрудников"
+            },
+            note: {
+              en: "/settings/organizations/employees uses demo employeeRecords; user linkage → Stage 17.1 later.",
+              ru: "/settings/organizations/employees на demo employeeRecords; связка с users → Stage 17.1 позже."
+            },
+            items: [
+              {
+                code: "2.4.2.1",
+                done: false,
+                title: {
+                  en: "Domain: Employee entity vs platform User; org/department links (MVP)",
+                  ru: "Домен: Employee vs platform User; связи org/department (MVP)"
+                }
+              },
+              {
+                code: "2.4.2.2",
+                done: false,
+                title: {
+                  en: "DB + migration + schemas + API",
+                  ru: "БД + миграция + schemas + API"
+                }
+              },
+              {
+                code: "2.4.2.3",
+                done: false,
+                title: {
+                  en: "Wire employees list/card UI to API (remove employeeRecords)",
+                  ru: "Подключить UI сотрудников к API (убрать employeeRecords)"
+                }
+              },
+              {
+                code: "2.4.2.4",
+                done: false,
+                title: {
+                  en: "Regression + owner visual; auth linkage deferred to 17.1",
+                  ru: "Регрессия + visual; auth-связка отложена на 17.1"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        code: "7",
+        title: { en: "Stage 7 — Specifications", ru: "Этап 7 — Спецификации" },
+        note: {
+          en: "Carried from v0.9.0. Spec = plan+fact report document from filled TC + execution (ADR-004/016). Not a prerequisite for TC generate.",
+          ru: "Перенесено из v0.9.0. Спецификация = документ-отчёт план+факт из заполненной ТК + исполнения (ADR-004/016). Не prerequisite для generate ТК."
+        },
+        blocks: [
+          {
+            title: {
+              en: "7.1.1 — Specification architecture",
+              ru: "7.1.1 — Архитектура спецификации"
+            },
+            items: [
+              {
+                code: "7.1.1.1",
+                done: false,
+                title: {
+                  en: "Define specification entities and version lifecycle (from TC / batch context; plan draft vs final plan+fact report)",
+                  ru: "Сущности спецификации и lifecycle версий (из ТК / batch; plan draft vs итоговый план+факт)"
+                }
+              },
+              {
+                code: "7.1.1.2",
+                done: false,
+                title: {
+                  en: "Define material, accessory, norm, and substitute scope sourced from TC composition (+ fact consumption binding)",
+                  ru: "Scope материалов/норм/замен из состава ТК (+ привязка факта расхода)"
+                }
+              },
+              {
+                code: "7.1.1.3",
+                done: false,
+                title: {
+                  en: "Define copy/read contract: assembly + op volumes from order-item / TC; performers / time from execution — not live model edit",
+                  ru: "Контракт copy/read: сборка + объёмы ops из order-item / ТК; исполнители / время из исполнения — не live-редактирование модели"
+                }
+              },
+              {
+                code: "7.1.1.4",
+                done: false,
+                title: {
+                  en: "Documentation checkpoint (Documents registry = link index only; no per-type contour)",
+                  ru: "Checkpoint документации (реестр Документы = только индекс ссылок)"
+                }
+              }
+            ]
+          },
+          {
+            title: {
+              en: "7.1.2 — Specification database core",
+              ru: "7.1.2 — Ядро БД спецификаций"
+            },
+            items: [
+              {
+                code: "7.1.2.1",
+                done: false,
+                title: {
+                  en: "Add SQLAlchemy entities",
+                  ru: "Добавить SQLAlchemy entities"
+                }
+              },
+              {
+                code: "7.1.2.2",
+                done: false,
+                title: {
+                  en: "Add Alembic migration",
+                  ru: "Добавить Alembic migration"
+                }
+              },
+              {
+                code: "7.1.2.3",
+                done: false,
+                title: {
+                  en: "Add schemas and backend regression tests",
+                  ru: "Schemas + backend regression tests"
+                }
+              }
+            ]
+          },
+          {
+            title: {
+              en: "7.2.1 — Specification CRUD API",
+              ru: "7.2.1 — CRUD API спецификаций"
+            },
+            items: [
+              {
+                code: "7.2.1.1",
+                done: false,
+                title: {
+                  en: "Add repository and service CRUD",
+                  ru: "Repository + service CRUD"
+                }
+              },
+              {
+                code: "7.2.1.2",
+                done: false,
+                title: {
+                  en: "Add endpoints",
+                  ru: "Endpoints"
+                }
+              },
+              {
+                code: "7.2.1.3",
+                done: false,
+                title: {
+                  en: "Add backend regression tests",
+                  ru: "Backend regression tests"
+                }
+              }
+            ]
+          },
+          {
+            title: {
+              en: "7.2.2 — Specification workspace and card",
+              ru: "7.2.2 — Workspace и карточка спецификации"
+            },
+            items: [
+              {
+                code: "7.2.2.1",
+                done: false,
+                title: {
+                  en: "Add frontend types and API client",
+                  ru: "Frontend types + API client"
+                }
+              },
+              {
+                code: "7.2.2.2",
+                done: false,
+                title: {
+                  en: "Add workspace/list route (interim; later subsumed by Documents filter)",
+                  ru: "Workspace/list route (interim; позже Documents filter)"
+                }
+              },
+              {
+                code: "7.2.2.3",
+                done: false,
+                title: {
+                  en: "Add detail card (plan+fact blocks; rights-gated edit)",
+                  ru: "Detail card (блоки план+факт; edit по правам)"
+                }
+              },
+              {
+                code: "7.2.2.4",
+                done: false,
+                title: {
+                  en: "Add loading/error states",
+                  ru: "Loading/error states"
+                }
+              },
+              {
+                code: "7.2.2.5",
+                done: false,
+                title: {
+                  en: "Add frontend regression tests",
+                  ru: "Frontend regression tests"
+                }
+              },
+              {
+                code: "7.2.2.6",
+                done: false,
+                title: {
+                  en: "Visual verification",
+                  ru: "Визуальная проверка"
+                }
+              }
+            ]
+          },
+          {
+            title: {
+              en: "7.2.3 — Link specifications to technical card / order context",
+              ru: "7.2.3 — Связь спецификаций с ТК / контекстом заказа"
+            },
+            items: [
+              {
+                code: "7.2.3.1",
+                done: false,
+                title: {
+                  en: "Add backend relation fields (technical_card / order item / model / variant / batch references as approved)",
+                  ru: "Backend relation fields (ТК / позиция заказа / модель / вариант / batch)"
+                }
+              },
+              {
+                code: "7.2.3.2",
+                done: false,
+                title: {
+                  en: "Add migration and schemas for specification material + operation (+ fact) lines (snapshot/read from TC + execution)",
+                  ru: "Миграция + schemas строк материалов/операций (+ факт)"
+                }
+              },
+              {
+                code: "7.2.3.3",
+                done: false,
+                title: {
+                  en: "Add service: create Spec version from TC composition + assembly snapshot (plan); refresh fact blocks from execution",
+                  ru: "Service: создать версию Spec из состава ТК + snapshot сборки (plan); обновить факт из исполнения"
+                }
+              },
+              {
+                code: "7.2.3.4",
+                done: false,
+                title: {
+                  en: "Add service validation for active/approved versions where applicable",
+                  ru: "Валидация active/approved версий"
+                }
+              },
+              {
+                code: "7.2.3.5",
+                done: false,
+                title: {
+                  en: "Add workspace/card integration showing plan+fact blocks sourced from TC / execution",
+                  ru: "Интеграция workspace/card с блоками план+факт из ТК / исполнения"
+                }
+              },
+              {
+                code: "7.2.3.6",
+                done: false,
+                title: {
+                  en: "Add regression tests (immutability vs later TC/model edits after Spec approve)",
+                  ru: "Регрессия (иммутабельность vs правки ТК/модели после approve Spec)"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        code: "12",
+        title: {
+          en: "Stage 12 — Warehouse remainder (12.4–12.5)",
+          ru: "Этап 12 — Остаток склада (12.4–12.5)"
+        },
+        note: {
+          en: "Carried from v0.9.0: inventory + transfers/reserves. 12.1/12.2 shipped; FG 12.3 remains in v0.9.0.",
+          ru: "Перенесено из v0.9.0: инвентаризация + перемещения/резервы. 12.1/12.2 закрыты; FG 12.3 остаётся в v0.9.0."
+        },
+        blocks: [
+          {
+            title: { en: "12.4 — Inventory", ru: "12.4 — Инвентаризация" },
+            items: [
+              {
+                code: "12.4.1",
+                done: false,
+                title: {
+                  en: "Inventory documents and recount postings",
+                  ru: "Документы инвентаризации и пересчётные проводки"
+                }
+              }
+            ]
+          },
+          {
+            title: { en: "12.5 — Transfers and reserves", ru: "12.5 — Перемещения и резервы" },
+            items: [
+              {
+                code: "12.5.1",
+                done: false,
+                title: {
+                  en: "Transfers between warehouses",
+                  ru: "Перемещения между складами"
+                }
+              },
+              {
+                code: "12.5.2",
+                done: false,
+                title: {
+                  en: "Reserves (sales/production) — later",
+                  ru: "Резервы (продажи/производство) — later"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        code: "13",
+        title: { en: "Stage 13 — Procurement", ru: "Этап 13 — Закупки" },
+        note: {
+          en: "Carried from v0.9.0. Supplier contour and supply execution.",
+          ru: "Перенесено из v0.9.0. Контур поставщиков и исполнение поставок."
+        },
+        blocks: [
+          {
+            title: { en: "13.1 — Supplier contour", ru: "13.1 — Контур поставщиков" },
+            items: [
+              {
+                code: "13.1.1",
+                done: false,
+                title: {
+                  en: "Suppliers and supplier prices",
+                  ru: "Поставщики и цены поставщиков"
+                }
+              },
+              {
+                code: "13.1.2",
+                done: false,
+                title: {
+                  en: "Procurement requests and purchase orders",
+                  ru: "Заявки на закупку и заказы поставщикам"
+                }
+              }
+            ]
+          },
+          {
+            title: { en: "13.2 — Supply execution", ru: "13.2 — Исполнение поставок" },
+            items: [
+              {
+                code: "13.2.1",
+                done: false,
+                title: {
+                  en: "Receipts and returns",
+                  ru: "Поступления и возвраты"
+                }
+              },
+              {
+                code: "13.2.2",
+                done: false,
+                title: {
+                  en: "Demand planning and minimum stock linkage",
+                  ru: "Планирование потребности и связь с минимальным остатком"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        code: "14",
+        title: {
+          en: "Stage 14 — Shipping and Payments",
+          ru: "Этап 14 — Отгрузка и платежи"
+        },
+        note: {
+          en: "Carried from v0.9.0. Shipping docs on top of warehouse shipped; payments/settlements ledger.",
+          ru: "Перенесено из v0.9.0. Документы отгрузки поверх складского shipped; платежи/взаиморасчёты."
+        },
+        blocks: [
+          {
+            title: { en: "14.1 — Shipping", ru: "14.1 — Отгрузка" },
+            items: [
+              {
+                code: "14.1.1",
+                done: false,
+                title: {
+                  en: "Shipping orders, packaging, delivery, and documents — on top of already shipped warehouse issue (ADR-019); do not duplicate issue",
+                  ru: "Заказы на отгрузку, упаковка, доставка и документы — поверх уже shipped (складское списание ADR-019); не дублировать issue"
+                }
+              }
+            ]
+          },
+          {
+            title: { en: "14.2 — Payments", ru: "14.2 — Платежи" },
+            items: [
+              {
+                code: "14.2.1",
+                done: false,
+                title: {
+                  en: "Invoices, payments, advances, and debt",
+                  ru: "Счета, оплаты, авансы и задолженность"
+                }
+              },
+              {
+                code: "14.2.2",
+                done: false,
+                title: {
+                  en: "Settlements by order and client",
+                  ru: "Взаиморасчёты по заказу и клиенту"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        code: "15",
+        title: { en: "Stage 15 — Costing and Analytics", ru: "Этап 15 — Себестоимость и аналитика" },
+        note: {
+          en: "Carried from v0.9.0. 15.2.1 already shipped in v0.9.0.",
+          ru: "Перенесено из v0.9.0. 15.2.1 уже закрыто в v0.9.0."
+        },
+        blocks: [
+          {
+            title: { en: "15.1 — Costing", ru: "15.1 — Себестоимость" },
+            items: [
+              {
+                code: "15.1.1",
+                done: false,
+                title: {
+                  en: "Planned, normative, and actual costing",
+                  ru: "Плановая, нормативная и фактическая себестоимость"
+                }
+              },
+              {
+                code: "15.1.2",
+                done: false,
+                title: {
+                  en: "Margin and plan-fact analysis",
+                  ru: "Маржа и план-факт анализ"
+                }
+              }
+            ]
+          },
+          {
+            title: { en: "15.2 — Analytics", ru: "15.2 — Аналитика" },
+            items: [
+              {
+                code: "15.2.1",
+                done: true,
+                title: {
+                  en: "CRM dashboard and base order analytics",
+                  ru: "CRM-дашборд и базовая аналитика заказов"
+                },
+                note: {
+                  en: "Already shipped in v0.9.0",
+                  ru: "Уже закрыто в v0.9.0"
+                }
+              },
+              {
+                code: "15.2.2",
+                done: false,
+                title: {
+                  en: "ERP analytics and management P&L",
+                  ru: "ERP-аналитика и управленческий P&L"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        code: "16",
+        title: { en: "Stage 16 — Integrations", ru: "Этап 16 — Интеграции" },
+        note: {
+          en: "Carried from v0.9.0. External channels, enterprise exchange, universal job shell (ADR-020).",
+          ru: "Перенесено из v0.9.0. Внешние каналы, корпоративный обмен, universal job shell (ADR-020)."
+        },
+        blocks: [
+          {
+            title: { en: "16.1 — External channels", ru: "16.1 — Внешние каналы" },
+            note: {
+              en: "Platform channel connectors. Lead ingest adapters owned by 1.4.3.* (shared transport OK, no duplicate CRM SoT).",
+              ru: "Канальные коннекторы платформы. Адаптеры ingest лидов — 1.4.3.* (общий transport OK, без дубля CRM SoT)."
+            },
+            items: [
+              {
+                code: "16.1.1",
+                done: false,
+                title: {
+                  en: "Website forms, email, VK, Telegram, and telephony",
+                  ru: "Формы сайта, email, VK, Telegram и телефония"
+                }
+              },
+              {
+                code: "16.1.2",
+                done: false,
+                title: {
+                  en: "Google Sheets and webhooks",
+                  ru: "Google Sheets и webhooks"
+                }
+              }
+            ]
+          },
+          {
+            title: { en: "16.2 — Enterprise exchange", ru: "16.2 — Корпоративный обмен" },
+            items: [
+              {
+                code: "16.2.1",
+                done: false,
+                title: {
+                  en: "1C:UNF exchange — contour D (ADR-020); neighbor to universal job shell, not catalog Excel buttons",
+                  ru: "Обмен с 1С:УНФ — контур D (ADR-020); рядом с universal job shell, не кнопки Excel каталога"
+                }
+              },
+              {
+                code: "16.2.2",
+                done: false,
+                title: {
+                  en: "Delivery and payment-system integrations",
+                  ru: "Интеграции доставки и платёжных систем"
+                }
+              },
+              {
+                code: "16.2.3",
+                done: false,
+                title: {
+                  en: "External API for third-party systems",
+                  ru: "Внешний API для сторонних систем"
+                }
+              }
+            ]
+          },
+          {
+            title: {
+              en: "16.3 — Universal import and export (orchestration)",
+              ru: "16.3 — Универсальный импорт и экспорт (оркестрация)"
+            },
+            note: {
+              en: "ADR-020: platform job shell over section adapters (4.5). Do not pull domain-inline 9.3.2 here.",
+              ru: "ADR-020: платформенная оболочка заданий поверх адаптеров разделов (4.5). Не тянуть сюда доменный inline 9.3.2."
+            },
+            items: [
+              {
+                code: "16.3.1",
+                done: false,
+                title: {
+                  en: "Contract: job runner + section adapter registry (upload → map → validate → dry-run → commit; audit hooks)",
+                  ru: "Контракт: runner заданий + реестр адаптеров разделов (upload → map → validate → dry-run → commit; audit hooks)"
+                }
+              },
+              {
+                code: "16.3.2",
+                done: false,
+                title: {
+                  en: "Wire nomenclature adapter from 4.5 into the job shell",
+                  ru: "Подключить адаптер номенклатуры из 4.5 к оболочке заданий"
+                }
+              },
+              {
+                code: "16.3.3",
+                done: false,
+                title: {
+                  en: "Administration UI: jobs list + section picker (no duplicate SoT)",
+                  ru: "UI администрирования: список заданий + выбор раздела (без дубля SoT)"
+                }
+              },
+              {
+                code: "16.3.4",
+                done: false,
+                title: {
+                  en: "Regression tests + documentation checkpoint",
+                  ru: "Регрессионные тесты + checkpoint документации"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        code: "18.4",
+        title: {
+          en: "Stage 18.4 — Global operations journal",
+          ru: "Этап 18.4 — Глобальный журнал операций"
+        },
+        note: {
+          en: "Full carry from v0.9.0. No minimum close in v0.9 — catalog stubs (has_operations=False) remain until this ships. Admin shell 18.1–18.3 stay in v0.9.",
+          ru: "Полный перенос из v0.9.0. Без минимального закрытия в v0.9 — stubs каталога остаются до реализации. Оболочка admin 18.1–18.3 в v0.9."
+        },
+        blocks: [
+          {
+            title: {
+              en: "18.4 — Journal microtasks",
+              ru: "18.4 — Микрозадачи журнала"
+            },
+            items: [
+              {
+                code: "18.4.1",
+                done: false,
+                title: {
+                  en: "Domain contract: OperationJournal entry fields, sources (sales / production), idempotency, retention",
+                  ru: "Контракт: поля записи, источники (sales / production), idempotency, retention"
+                }
+              },
+              {
+                code: "18.4.2",
+                done: false,
+                title: {
+                  en: "Database model, migration, schemas for global operations journal",
+                  ru: "Модель БД, миграция, schemas"
+                }
+              },
+              {
+                code: "18.4.3",
+                done: false,
+                title: {
+                  en: "Service API: append / query by entity (product_model_id, …); has_operations(entity) helper",
+                  ru: "Service API: append / query; helper has_operations"
+                }
+              },
+              {
+                code: "18.4.4",
+                done: false,
+                title: {
+                  en: "Write path: sales order uses model → append journal row (no write if model not used)",
+                  ru: "Write path: продажа с моделью → строка журнала"
+                }
+              },
+              {
+                code: "18.4.5",
+                done: false,
+                title: {
+                  en: "Write path: production / ТК uses model → append journal row",
+                  ru: "Write path: производство / ТК → строка журнала"
+                }
+              },
+              {
+                code: "18.4.6",
+                done: false,
+                title: {
+                  en: "Wire product-model guards (revert_to_draft, size-grid change) to real has_operations (replace Stage-6 stub)",
+                  ru: "Подключить guards модели к реальному has_operations (заменить stub)"
+                }
+              },
+              {
+                code: "18.4.7",
+                done: false,
+                title: {
+                  en: "Administration UI: journal list/filter (PT-02) under Администрирование → Журнал операций",
+                  ru: "UI администрирования: список/фильтр журнала"
+                }
+              },
+              {
+                code: "18.4.8",
+                done: false,
+                title: {
+                  en: "Regression tests + documentation checkpoint",
+                  ru: "Регрессия + checkpoint документации"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ];
+
+    const state = {
+      lang: localStorage.getItem(STORAGE_KEY) === "ru" ? "ru" : "en",
+      search: "",
+      filter: "all",
+      collapsed: new Set()
+    };
+
+    const stagesRoot = document.getElementById("stages");
+    const navLinks = document.getElementById("nav-links");
+    const statsRoot = document.getElementById("stats");
+    const overallLabel = document.getElementById("overall-progress-label");
+    const overallBar = document.getElementById("overall-progress-bar");
+    const legendRoot = document.getElementById("legend");
+    const searchInput = document.getElementById("search");
+    const filterSelect = document.getElementById("filter");
+
+    function t(path) {
+      return ui[state.lang][path];
+    }
+
+    function loc(obj) {
+      if (!obj) return "";
+      if (typeof obj === "string") return obj;
+      return obj[state.lang] || obj.en || "";
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;");
+    }
+
+    function flattenItems(stage) {
+      return stage.blocks.flatMap((block) => block.items);
+    }
+
+    function countStage(stage) {
+      const items = flattenItems(stage);
+      const done = items.filter((item) => item.done).length;
+      return { total: items.length, done, todo: items.length - done, blocks: stage.blocks.length };
+    }
+
+    function matches(item, stage, block) {
+      if (state.filter === "done" && !item.done) return false;
+      if (state.filter === "todo" && item.done) return false;
+      if (!state.search) return true;
+      const hay = `${loc(stage.title)} ${loc(block.title)} ${item.code} ${loc(item.title)} ${loc(item.note)}`.toLowerCase();
+      return hay.includes(state.search);
+    }
+
+    function setLanguage(lang) {
+      state.lang = lang === "ru" ? "ru" : "en";
+      localStorage.setItem(STORAGE_KEY, state.lang);
+      document.documentElement.lang = state.lang;
+      applyUi();
+      renderAll();
+    }
+
+    function applyUi() {
+      const copy = ui[state.lang];
+      document.getElementById("ui-brand-title").textContent = copy.brandTitle;
+      document.getElementById("ui-brand-sub").textContent = copy.brandSub;
+      document.getElementById("chip-updated").textContent = copy.chipUpdated;
+      document.getElementById("chip-carry").textContent = copy.chipCarry;
+      document.getElementById("chip-active").textContent = copy.chipActive;
+      document.getElementById("ui-legend-title").textContent = copy.legendTitle;
+      document.getElementById("ui-legend-done").textContent = copy.legendDone;
+      document.getElementById("ui-legend-todo").textContent = copy.legendTodo;
+      document.getElementById("ui-legend-html").textContent = copy.legendHtml;
+      document.getElementById("ui-hero-title").textContent = copy.heroTitle;
+      document.getElementById("ui-hero-text").textContent = copy.heroText;
+      document.getElementById("ui-progress-label").textContent = copy.progressLabel;
+      document.getElementById("ui-transfer-title").textContent = copy.transferTitle;
+      document.getElementById("ui-transfer-text").textContent = copy.transferText;
+      document.getElementById("ui-transfer-list").innerHTML = copy.transferItems
+        .map((item) => `<li>${escapeHtml(item)}</li>`)
+        .join("");
+      document.getElementById("ui-footer").textContent = copy.footer;
+      document.title = state.lang === "ru"
+        ? "Sport-Lead — Roadmap v1.00"
+        : "Sport-Lead — Roadmap v1.00";
+
+      searchInput.placeholder = copy.searchPlaceholder;
+      filterSelect.options[0].textContent = copy.filterAll;
+      filterSelect.options[1].textContent = copy.filterTodo;
+      filterSelect.options[2].textContent = copy.filterDone;
+      document.getElementById("expand-all").textContent = copy.expand;
+      document.getElementById("collapse-all").textContent = copy.collapse;
+
+      document.querySelectorAll("[data-lang]").forEach((btn) => {
+        btn.classList.toggle("active", btn.dataset.lang === state.lang);
+      });
+    }
+
+    function renderStats() {
+      let total = 0, done = 0, blocks = 0;
+      roadmap.forEach((stage) => {
+        const c = countStage(stage);
+        total += c.total;
+        done += c.done;
+        blocks += c.blocks;
+      });
+      const percent = total === 0 ? 0 : Math.round((done / total) * 100);
+      overallLabel.textContent = `${done} / ${total} (${percent}%)`;
+      overallBar.style.width = `${percent}%`;
+      const labels = t("stats");
+      statsRoot.innerHTML = [
+        { value: roadmap.length, label: labels.stages },
+        { value: blocks, label: labels.blocks },
+        { value: total, label: labels.items },
+        { value: done, label: labels.done },
+        { value: total - done, label: labels.todo }
+      ].map((entry) => `
+        <div class="stat"><strong>${entry.value}</strong><span>${escapeHtml(entry.label)}</span></div>
+      `).join("");
+    }
+
+    function renderNav() {
+      navLinks.innerHTML = roadmap.map((stage, index) => {
+        const c = countStage(stage);
+        return `<a href="#stage-${index + 1}"><span>${escapeHtml(loc(stage.title))}</span><small>${c.done}/${c.total}</small></a>`;
+      }).join("");
+    }
+
+    function renderLegend() {
+      const items = t("legendItems");
+      legendRoot.innerHTML = `
+        <div class="legend-item"><span class="check-icon todo"> </span><span>${escapeHtml(items[0])}</span></div>
+        <div class="legend-item"><span class="check-icon done">x</span><span>${escapeHtml(items[1])}</span></div>
+        <div class="legend-item"><span class="badge carry">${escapeHtml(items[2])}</span></div>
+      `;
+    }
+
+    function renderStages() {
+      stagesRoot.innerHTML = roadmap.map((stage, stageIndex) => {
+        const c = countStage(stage);
+        const percent = c.total === 0 ? 0 : Math.round((c.done / c.total) * 100);
+        const visibleBlocks = stage.blocks.map((block) => {
+          const visibleItems = block.items.filter((item) => matches(item, stage, block));
+          return { block, visibleItems };
+        }).filter((entry) => entry.visibleItems.length > 0);
+
+        if (visibleBlocks.length === 0) return "";
+        const collapsed = state.collapsed.has(stageIndex);
+
+        return `
+          <article class="stage-card" id="stage-${stageIndex + 1}">
+            <div class="stage-header" data-stage="${stageIndex}" role="button" tabindex="0">
+              <div>
+                <h3>${escapeHtml(loc(stage.title))}</h3>
+                <p>${escapeHtml(loc(stage.note))}</p>
+              </div>
+              <div class="stage-meta">
+                <span class="badge carry">${state.lang === "ru" ? "перенос" : "carry"}</span>
+                <span class="badge ${c.todo ? "todo" : "done"}">${c.done}/${c.total} · ${percent}%</span>
+              </div>
+            </div>
+            <div class="stage-body" ${collapsed ? "hidden" : ""}>
+              <div class="block-grid">
+                ${visibleBlocks.map(({ block, visibleItems }) => `
+                  <div class="block-card">
+                    <div class="block-head"><h4>${escapeHtml(loc(block.title))}</h4></div>
+                    ${block.note ? `<div class="note-box"><strong>${escapeHtml(t("noteLabel"))}:</strong> ${escapeHtml(loc(block.note))}</div>` : ""}
+                    <div class="item-list">
+                      ${visibleItems.map((item) => `
+                        <div class="item-card">
+                          <div class="item-top">
+                            <span class="check-icon ${item.done ? "done" : "todo"}">${item.done ? "x" : " "}</span>
+                            <div class="item-title">
+                              <strong>${escapeHtml(item.code)} — ${escapeHtml(loc(item.title))}</strong>
+                              ${item.note ? `<span>${escapeHtml(loc(item.note))}</span>` : ""}
+                            </div>
+                            <span class="item-status">${item.done ? "[x]" : "[ ]"}</span>
+                          </div>
+                        </div>
+                      `).join("")}
+                    </div>
+                  </div>
+                `).join("")}
+              </div>
+            </div>
+          </article>
+        `;
+      }).join("");
+
+      stagesRoot.querySelectorAll(".stage-header").forEach((header) => {
+        const toggle = () => {
+          const idx = Number(header.dataset.stage);
+          if (state.collapsed.has(idx)) state.collapsed.delete(idx);
+          else state.collapsed.add(idx);
+          renderStages();
+        };
+        header.addEventListener("click", toggle);
+        header.addEventListener("keydown", (event) => {
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            toggle();
+          }
+        });
+      });
+    }
+
+    function renderAll() {
+      renderStats();
+      renderNav();
+      renderLegend();
+      renderStages();
+    }
+
+    document.querySelectorAll("[data-lang]").forEach((btn) => {
+      btn.addEventListener("click", () => setLanguage(btn.dataset.lang));
+    });
+
+    searchInput.addEventListener("input", (event) => {
+      state.search = event.target.value.trim().toLowerCase();
+      renderStages();
+    });
+    filterSelect.addEventListener("change", (event) => {
+      state.filter = event.target.value;
+      renderStages();
+    });
+    document.getElementById("expand-all").addEventListener("click", () => {
+      state.collapsed.clear();
+      renderStages();
+    });
+    document.getElementById("collapse-all").addEventListener("click", () => {
+      roadmap.forEach((_, index) => state.collapsed.add(index));
+      renderStages();
+    });
+
+    applyUi();
+    renderAll();
+  </script>
+</body>
+</html>

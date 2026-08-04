@@ -3,12 +3,15 @@
 import { revalidatePath } from "next/cache";
 
 import {
+  nextSewingOperationCopyName,
   parseDurationSecondsInput,
   parseQuantityPerItemInput,
   parseSewingCostInput,
+  toSewingCostInput,
   validateSewingOperationDraft,
   type SewingOperation,
   type SewingOperationCreateDraft,
+  type SewingOperationFolder,
 } from "@/lib/sewing-operations";
 
 export type SewingOperationActionResult =
@@ -41,6 +44,11 @@ function normalizeOperation(operation: SewingOperation): SewingOperation {
     ...operation,
     quantity_per_item: Math.max(1, Number(operation.quantity_per_item ?? 1) || 1),
     duration_seconds: Number(operation.duration_seconds ?? 0) || 0,
+    folder_id:
+      operation.folder_id == null || Number(operation.folder_id) <= 0
+        ? null
+        : Number(operation.folder_id),
+    sort_order: Number(operation.sort_order ?? 0) || 0,
     work_center_ids: normalizeWorkCenterIds(operation.work_center_ids),
   };
 }
@@ -68,6 +76,7 @@ function payloadFromDraft(draft: SewingOperationCreateDraft): {
   cost: string;
   quantity_per_item: number;
   duration_seconds: number;
+  folder_id: number | null;
   work_center_ids: number[];
 } | null {
   const cost = parseSewingCostInput(draft.cost);
@@ -81,6 +90,7 @@ function payloadFromDraft(draft: SewingOperationCreateDraft): {
     cost,
     quantity_per_item: quantityPerItem,
     duration_seconds: durationSeconds,
+    folder_id: draft.folder_id,
     work_center_ids: normalizeWorkCenterIds(draft.work_center_ids),
   };
 }
@@ -114,6 +124,34 @@ export async function createSewingOperation(
   );
   revalidatePath(CATALOG_PATH);
   return { ok: true, operation };
+}
+
+export async function copySewingOperation(
+  operationId: number,
+  existingNames: string[],
+): Promise<SewingOperationActionResult> {
+  if (!Number.isSafeInteger(operationId) || operationId <= 0) {
+    return { ok: false, message: "Некорректная операция" };
+  }
+  const response = await fetch(
+    `${apiBaseUrl()}/sewing-operations/${operationId}`,
+    { cache: "no-store" },
+  );
+  if (!response.ok) {
+    return { ok: false, message: await readError(response) };
+  }
+  const source = normalizeOperation(
+    (await response.json()) as SewingOperation,
+  );
+  const draft: SewingOperationCreateDraft = {
+    name: nextSewingOperationCopyName(source.name, existingNames),
+    cost: toSewingCostInput(source.cost),
+    quantity_per_item: String(source.quantity_per_item ?? 1),
+    duration_seconds: String(source.duration_seconds ?? 0),
+    folder_id: source.folder_id,
+    work_center_ids: [...(source.work_center_ids ?? [])],
+  };
+  return createSewingOperation(draft);
 }
 
 export async function updateSewingOperation(
@@ -151,6 +189,41 @@ export async function updateSewingOperation(
   return { ok: true, operation };
 }
 
+export async function moveSewingOperationsToFolder(
+  operationIds: number[],
+  folderId: number | null,
+): Promise<
+  | { ok: true; operations: SewingOperation[] }
+  | { ok: false; message: string }
+> {
+  const uniqueIds = [...new Set(operationIds)].filter(
+    (id) => Number.isSafeInteger(id) && id > 0,
+  );
+  if (uniqueIds.length === 0) {
+    return { ok: false, message: "Выберите хотя бы одну операцию" };
+  }
+  const operations: SewingOperation[] = [];
+  for (const operationId of uniqueIds) {
+    const response = await fetch(
+      `${apiBaseUrl()}/sewing-operations/${operationId}`,
+      {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ folder_id: folderId }),
+        cache: "no-store",
+      },
+    );
+    if (!response.ok) {
+      return { ok: false, message: await readError(response) };
+    }
+    operations.push(
+      normalizeOperation((await response.json()) as SewingOperation),
+    );
+  }
+  revalidatePath(CATALOG_PATH);
+  return { ok: true, operations };
+}
+
 export async function deleteSewingOperation(
   operationId: number,
 ): Promise<{ ok: true } | { ok: false; message: string }> {
@@ -163,4 +236,110 @@ export async function deleteSewingOperation(
   }
   revalidatePath(CATALOG_PATH);
   return { ok: true };
+}
+
+export type SewingFolderActionResult =
+  | { ok: true; folder: SewingOperationFolder }
+  | { ok: false; message: string };
+
+export async function createSewingOperationFolder(input: {
+  name: string;
+  parent_id: number | null;
+}): Promise<SewingFolderActionResult> {
+  const name = input.name.trim();
+  if (!name) return { ok: false, message: "Укажите название папки" };
+  const response = await fetch(`${apiBaseUrl()}/sewing-operation-folders`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name, parent_id: input.parent_id }),
+    cache: "no-store",
+  });
+  if (!response.ok) {
+    return { ok: false, message: await readError(response) };
+  }
+  const folder = (await response.json()) as SewingOperationFolder;
+  revalidatePath(CATALOG_PATH);
+  return { ok: true, folder };
+}
+
+export async function updateSewingOperationFolder(
+  folderId: number,
+  input: { name?: string; parent_id?: number | null },
+): Promise<SewingFolderActionResult> {
+  const body: Record<string, unknown> = {};
+  if (input.name != null) body.name = input.name.trim();
+  if ("parent_id" in input) body.parent_id = input.parent_id ?? null;
+  const response = await fetch(
+    `${apiBaseUrl()}/sewing-operation-folders/${folderId}`,
+    {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+      cache: "no-store",
+    },
+  );
+  if (!response.ok) {
+    return { ok: false, message: await readError(response) };
+  }
+  const folder = (await response.json()) as SewingOperationFolder;
+  revalidatePath(CATALOG_PATH);
+  return { ok: true, folder };
+}
+
+export async function deleteSewingOperationFolder(
+  folderId: number,
+): Promise<{ ok: true } | { ok: false; message: string }> {
+  const response = await fetch(
+    `${apiBaseUrl()}/sewing-operation-folders/${folderId}`,
+    { method: "DELETE", cache: "no-store" },
+  );
+  if (!response.ok && response.status !== 204) {
+    return { ok: false, message: await readError(response) };
+  }
+  revalidatePath(CATALOG_PATH);
+  return { ok: true };
+}
+
+export async function moveSewingOperationFolderSibling(
+  folderId: number,
+  direction: "up" | "down",
+): Promise<SewingFolderActionResult> {
+  const response = await fetch(
+    `${apiBaseUrl()}/sewing-operation-folders/${folderId}/move-sibling`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ direction }),
+      cache: "no-store",
+    },
+  );
+  if (!response.ok) {
+    return { ok: false, message: await readError(response) };
+  }
+  const folder = (await response.json()) as SewingOperationFolder;
+  revalidatePath(CATALOG_PATH);
+  return { ok: true, folder };
+}
+
+export async function moveSewingOperationSibling(
+  operationId: number,
+  direction: "up" | "down",
+): Promise<SewingOperationActionResult> {
+  const response = await fetch(
+    `${apiBaseUrl()}/sewing-operations/${operationId}/move-sibling`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ direction }),
+      cache: "no-store",
+    },
+  );
+  if (!response.ok) {
+    return { ok: false, message: await readError(response) };
+  }
+  const operation = normalizeOperation(
+    (await response.json()) as SewingOperation,
+  );
+  revalidatePath(CATALOG_PATH);
+  return { ok: true, operation };
 }

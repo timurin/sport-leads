@@ -1,5 +1,10 @@
 import { ShopStageKanbanWorkspace } from "@/components/production/shop-stage-kanban-workspace";
 import { PageLayout } from "@/components/layout/page-layout";
+import { getMe } from "@/lib/auth/session";
+import {
+  hasPermission,
+  PERM_SHOP_KANBAN_TRANSITION,
+} from "@/lib/auth/session-mapping";
 import {
   buildShopStageModulesFromCatalog,
   SHOP_STAGE_MODULES,
@@ -14,6 +19,9 @@ export default async function ProductionShopKanbanPage() {
   let cards: ApiTechnicalCardListItem[] = [];
   let loadError: string | null = null;
   let shopModules = SHOP_STAGE_MODULES;
+  const me = await getMe();
+  const canTransition = hasPermission(me, PERM_SHOP_KANBAN_TRANSITION);
+
   try {
     const [cardRows, stages] = await Promise.all([
       fetchTechnicalCards({ limit: 500 }),
@@ -32,7 +40,11 @@ export default async function ProductionShopKanbanPage() {
           {loadError}
         </div>
       ) : (
-        <ShopStageKanbanWorkspace cards={cards} shopModules={shopModules} />
+        <ShopStageKanbanWorkspace
+          cards={cards}
+          shopModules={shopModules}
+          canTransition={canTransition}
+        />
       )}
     </PageLayout>
   );

@@ -4,7 +4,18 @@ export type SewingOperation = {
   cost: string;
   quantity_per_item: number;
   duration_seconds: number;
+  folder_id: number | null;
+  sort_order: number;
   work_center_ids: number[];
+  created_at: string;
+  updated_at: string;
+};
+
+export type SewingOperationFolder = {
+  id: number;
+  name: string;
+  parent_id: number | null;
+  sort_order: number;
   created_at: string;
   updated_at: string;
 };
@@ -14,6 +25,7 @@ export type SewingOperationCreateDraft = {
   cost: string;
   quantity_per_item: string;
   duration_seconds: string;
+  folder_id: number | null;
   work_center_ids: number[];
 };
 
@@ -150,6 +162,26 @@ export function validateSewingOperationDraft(
   return null;
 }
 
+/** Unique catalog name for an operation copy (`Name (копия)`, `Name (копия 2)`, …). */
+export function nextSewingOperationCopyName(
+  sourceName: string,
+  existingNames: Iterable<string>,
+): string {
+  const taken = new Set(
+    [...existingNames].map((name) => name.trim().toLocaleLowerCase("ru")),
+  );
+  const base = sourceName.trim() || "Операция";
+  const first = `${base} (копия)`;
+  if (!taken.has(first.toLocaleLowerCase("ru"))) return first;
+  let suffix = 2;
+  while (suffix < 10_000) {
+    const candidate = `${base} (копия ${suffix})`;
+    if (!taken.has(candidate.toLocaleLowerCase("ru"))) return candidate;
+    suffix += 1;
+  }
+  return `${base} (копия ${Date.now()})`;
+}
+
 export function filterSewingOperations(
   operations: SewingOperation[],
   query: string,
@@ -208,10 +240,146 @@ export async function getSewingOperations(
   const rows = (await response.json()) as SewingOperation[];
   return rows.map((row) => ({
     ...row,
+    folder_id:
+      row.folder_id == null || Number(row.folder_id) <= 0
+        ? null
+        : Number(row.folder_id),
+    sort_order: Number(row.sort_order ?? 0) || 0,
     work_center_ids: Array.isArray(row.work_center_ids)
       ? row.work_center_ids
           .map((id) => Number(id))
           .filter((id) => Number.isSafeInteger(id) && id > 0)
       : [],
   }));
+}
+
+export async function getSewingOperationFolders(): Promise<
+  SewingOperationFolder[]
+> {
+  const response = await fetch(`${apiBaseUrl()}/sewing-operation-folders`, {
+    cache: "no-store",
+  });
+  if (!response.ok) {
+    throw new Error(
+      `Не удалось загрузить папки операций пошива (${response.status}).`,
+    );
+  }
+  const rows = (await response.json()) as SewingOperationFolder[];
+  return rows.map((row) => ({
+    ...row,
+    parent_id:
+      row.parent_id == null || Number(row.parent_id) <= 0
+        ? null
+        : Number(row.parent_id),
+    sort_order: Number(row.sort_order ?? 0) || 0,
+  }));
+}
+
+export type SewingCatalogTreeRow =
+  | {
+      kind: "folder";
+      id: number;
+      name: string;
+      parent_id: number | null;
+      sort_order: number;
+      depth: number;
+      folder: SewingOperationFolder;
+    }
+  | {
+      kind: "operation";
+      id: number;
+      name: string;
+      parent_id: number | null;
+      sort_order: number;
+      depth: number;
+      operation: SewingOperation;
+    };
+
+/** Build depth-first catalog rows: folders then ops under each parent. */
+export function buildSewingCatalogTreeRows(
+  folders: SewingOperationFolder[],
+  operations: SewingOperation[],
+): SewingCatalogTreeRow[] {
+  const childrenOf = new Map<number | null, SewingOperationFolder[]>();
+  for (const folder of folders) {
+    const key = folder.parent_id;
+    const list = childrenOf.get(key) ?? [];
+    list.push(folder);
+    childrenOf.set(key, list);
+  }
+  for (const list of childrenOf.values()) {
+    list.sort(
+      (a, b) =>
+        a.sort_order - b.sort_order ||
+        a.name.localeCompare(b.name, "ru") ||
+        a.id - b.id,
+    );
+  }
+
+  const opsOf = new Map<number | null, SewingOperation[]>();
+  for (const op of operations) {
+    const key = op.folder_id;
+    const list = opsOf.get(key) ?? [];
+    list.push(op);
+    opsOf.set(key, list);
+  }
+  for (const list of opsOf.values()) {
+    list.sort(
+      (a, b) =>
+        a.sort_order - b.sort_order ||
+        a.name.localeCompare(b.name, "ru") ||
+        a.id - b.id,
+    );
+  }
+
+  const rows: SewingCatalogTreeRow[] = [];
+
+  const walk = (parentId: number | null, depth: number) => {
+    for (const folder of childrenOf.get(parentId) ?? []) {
+      rows.push({
+        kind: "folder",
+        id: folder.id,
+        name: folder.name,
+        parent_id: folder.parent_id,
+        sort_order: folder.sort_order,
+        depth,
+        folder,
+      });
+      walk(folder.id, depth + 1);
+    }
+    for (const operation of opsOf.get(parentId) ?? []) {
+      rows.push({
+        kind: "operation",
+        id: operation.id,
+        name: operation.name,
+        parent_id: operation.folder_id,
+        sort_order: operation.sort_order,
+        depth,
+        operation,
+      });
+    }
+  };
+
+  walk(null, 0);
+  return rows;
+}
+
+export function visibleSewingCatalogTreeRows(
+  rows: SewingCatalogTreeRow[],
+  expandedFolderIds: Set<number>,
+): SewingCatalogTreeRow[] {
+  const visible: SewingCatalogTreeRow[] = [];
+  const collapsedSubtree = new Set<number>();
+
+  for (const row of rows) {
+    if (row.parent_id != null && collapsedSubtree.has(row.parent_id)) {
+      if (row.kind === "folder") collapsedSubtree.add(row.id);
+      continue;
+    }
+    visible.push(row);
+    if (row.kind === "folder" && !expandedFolderIds.has(row.id)) {
+      collapsedSubtree.add(row.id);
+    }
+  }
+  return visible;
 }

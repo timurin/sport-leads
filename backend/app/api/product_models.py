@@ -9,12 +9,16 @@ from app.schemas.product_model import (
     AssemblyOperationLineReorder,
     AssemblyOperationLineUpdate,
     AssemblyVariantAddSewingOperations,
+    AssemblyVariantApplySewingTemplate,
     AssemblyVariantCreate,
     AssemblyVariantRead,
     AssemblyVariantReorder,
     AssemblyVariantUpdate,
     ProductModelCoverUpload,
     ProductModelCreate,
+    ProductModelFolderCreate,
+    ProductModelFolderRead,
+    ProductModelFolderUpdate,
     ProductModelHistoryRead,
     ProductModelImportResult,
     ProductModelMediaCreate,
@@ -26,10 +30,12 @@ from app.schemas.product_model import (
     ProductModelRoutingLinkRead,
     ProductModelRoutingLinkReorder,
     ProductModelRoutingLinkUpdate,
+    ProductModelSiblingMove,
     ProductModelUpdate,
     ProductModelVersionCreate,
     ProductModelVersionRead,
 )
+from app.repositories import assembly_variants as assembly_variants_repo
 from app.services.assembly_variants import (
     AssemblyOperationLineNotFoundError,
     AssemblyVariantConflictError,
@@ -37,6 +43,7 @@ from app.services.assembly_variants import (
     AssemblyVariantValidationError,
     add_operation_line,
     add_sewing_operations_to_variant,
+    apply_sewing_operation_template_to_variant,
     copy_assembly_variant,
     create_assembly_variant,
     delete_assembly_variant,
@@ -59,6 +66,18 @@ from app.services.product_model_routings import (
     reorder_routing_links,
     replace_routing_link_norms,
     update_routing_link,
+)
+from app.services.product_model_folders import (
+    ProductModelFolderConflictError,
+    ProductModelFolderNotFoundError,
+    ProductModelFolderValidationError,
+    create_product_model_folder,
+    delete_product_model_folder,
+    get_product_model_folder_read,
+    list_product_model_folders,
+    move_product_model_folder_sibling,
+    move_product_model_sibling,
+    update_product_model_folder,
 )
 from app.services.product_models import (
     ProductModelArticleConflictError,
@@ -105,11 +124,18 @@ from app.services.product_model_operations_journal import (
 from app.models.product_model import ProductModel
 
 router = APIRouter(prefix="/product-models", tags=["Product models"])
+folders_router = APIRouter(prefix="/product-model-folders", tags=["Product models"])
 
 _MAX_IMPORT_BYTES = 5 * 1024 * 1024
 
 
-def _model_read(db: Session, row: ProductModel) -> ProductModelRead:
+def _model_read(
+    db: Session,
+    row: ProductModel,
+    *,
+    assembly_cost_min: object | None = None,
+    assembly_cost_max: object | None = None,
+) -> ProductModelRead:
     product_type_name = None
     if row.product_type_id is not None:
         linked = row.product_type
@@ -118,6 +144,8 @@ def _model_read(db: Session, row: ProductModel) -> ProductModelRead:
         update={
             "has_journal_operations": product_model_has_journal_operations(db, row.id),
             "product_type_name": product_type_name,
+            "assembly_cost_min": assembly_cost_min,
+            "assembly_cost_max": assembly_cost_max,
         }
     )
 
@@ -143,6 +171,7 @@ def read_product_models(
     status_filter: ProductModelStatus | None = Query(default=None, alias="status"),
     size_type: ProductModelSizeType | None = None,
     product_type_id: int | None = None,
+    folder_id: int | None = Query(default=None, ge=1),
     limit: int = Query(default=100, ge=1, le=500),
     offset: int = Query(default=0, ge=0),
     db: Session = Depends(get_db),
@@ -153,10 +182,25 @@ def read_product_models(
         status=status_filter,
         size_type=size_type,
         product_type_id=product_type_id,
+        folder_id=folder_id,
         limit=limit,
         offset=offset,
     )
-    return [_model_read(db, row) for row in rows]
+    cost_ranges = assembly_variants_repo.assembly_cost_ranges_by_model_ids(
+        db, [row.id for row in rows]
+    )
+    result: list[ProductModelRead] = []
+    for row in rows:
+        cost_range = cost_ranges.get(row.id)
+        result.append(
+            _model_read(
+                db,
+                row,
+                assembly_cost_min=None if cost_range is None else cost_range[0],
+                assembly_cost_max=None if cost_range is None else cost_range[1],
+            )
+        )
+    return result
 
 
 @router.get(
@@ -292,6 +336,22 @@ def update_one_product_model(
         raise HTTPException(status_code=409, detail=str(error)) from error
     except ProductModelValidationError as error:
         raise HTTPException(status_code=422, detail=str(error)) from error
+
+
+@router.post(
+    "/{model_id}/move-sibling",
+    response_model=ProductModelRead,
+    operation_id="move_product_model_sibling",
+)
+def move_one_product_model_sibling(
+    model_id: int,
+    payload: ProductModelSiblingMove,
+    db: Session = Depends(get_db),
+):
+    try:
+        return _model_read(db, move_product_model_sibling(db, model_id, payload.direction))
+    except ProductModelNotFoundError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
 
 
 @router.post(
@@ -756,6 +816,35 @@ def attach_sewing_operations(
         raise HTTPException(status_code=409, detail=str(error)) from error
 
 
+@router.post(
+    "/{model_id}/assembly-variants/{variant_id}/apply-sewing-template",
+    response_model=AssemblyVariantRead,
+    operation_id="apply_sewing_operation_template_to_assembly_variant",
+)
+def apply_sewing_template(
+    model_id: int,
+    variant_id: int,
+    payload: AssemblyVariantApplySewingTemplate,
+    db: Session = Depends(get_db),
+):
+    try:
+        return apply_sewing_operation_template_to_variant(
+            db,
+            model_id,
+            variant_id,
+            template_id=payload.template_id,
+            mode=payload.mode,
+        )
+    except ProductModelNotFoundError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+    except AssemblyVariantNotFoundError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+    except AssemblyVariantValidationError as error:
+        raise HTTPException(status_code=422, detail=str(error)) from error
+    except AssemblyVariantConflictError as error:
+        raise HTTPException(status_code=409, detail=str(error)) from error
+
+
 @router.patch(
     "/{model_id}/assembly-variants/{variant_id}/operation-lines/{line_id}",
     response_model=AssemblyVariantRead,
@@ -953,3 +1042,106 @@ def replace_one_routing_link_norms(
         raise HTTPException(status_code=409, detail=str(error)) from error
     except ProductModelRoutingValidationError as error:
         raise HTTPException(status_code=422, detail=str(error)) from error
+
+
+@folders_router.get(
+    "",
+    response_model=list[ProductModelFolderRead],
+    operation_id="list_product_model_folders",
+)
+def read_product_model_folders(db: Session = Depends(get_db)) -> list:
+    return list_product_model_folders(db)
+
+
+@folders_router.post(
+    "",
+    response_model=ProductModelFolderRead,
+    status_code=status.HTTP_201_CREATED,
+    operation_id="create_product_model_folder",
+)
+def create_product_model_folder_endpoint(
+    payload: ProductModelFolderCreate,
+    db: Session = Depends(get_db),
+) -> ProductModelFolderRead:
+    try:
+        return create_product_model_folder(db, payload)
+    except ProductModelFolderConflictError as error:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(error)) from error
+    except ProductModelFolderValidationError as error:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(error)
+        ) from error
+    except ProductModelFolderNotFoundError as error:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(error)) from error
+
+
+@folders_router.get(
+    "/{folder_id}",
+    response_model=ProductModelFolderRead,
+    operation_id="get_product_model_folder",
+)
+def read_product_model_folder(
+    folder_id: int,
+    db: Session = Depends(get_db),
+) -> ProductModelFolderRead:
+    try:
+        return get_product_model_folder_read(db, folder_id)
+    except ProductModelFolderNotFoundError as error:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(error)) from error
+
+
+@folders_router.patch(
+    "/{folder_id}",
+    response_model=ProductModelFolderRead,
+    operation_id="update_product_model_folder",
+)
+def patch_product_model_folder(
+    folder_id: int,
+    payload: ProductModelFolderUpdate,
+    db: Session = Depends(get_db),
+) -> ProductModelFolderRead:
+    try:
+        return update_product_model_folder(db, folder_id, payload)
+    except ProductModelFolderNotFoundError as error:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(error)) from error
+    except ProductModelFolderConflictError as error:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(error)) from error
+    except ProductModelFolderValidationError as error:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(error)
+        ) from error
+
+
+@folders_router.post(
+    "/{folder_id}/move-sibling",
+    response_model=ProductModelFolderRead,
+    operation_id="move_product_model_folder_sibling",
+)
+def move_product_model_folder_sibling_endpoint(
+    folder_id: int,
+    payload: ProductModelSiblingMove,
+    db: Session = Depends(get_db),
+) -> ProductModelFolderRead:
+    try:
+        return move_product_model_folder_sibling(db, folder_id, payload.direction)
+    except ProductModelFolderNotFoundError as error:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(error)) from error
+
+
+@folders_router.delete(
+    "/{folder_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    operation_id="delete_product_model_folder",
+)
+def remove_product_model_folder(
+    folder_id: int,
+    db: Session = Depends(get_db),
+) -> None:
+    try:
+        delete_product_model_folder(db, folder_id)
+    except ProductModelFolderNotFoundError as error:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(error)) from error
+    except ProductModelFolderValidationError as error:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(error)
+        ) from error

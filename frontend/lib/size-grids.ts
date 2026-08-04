@@ -33,11 +33,100 @@ export type SizeGrid = {
   rows: SizeGridRow[];
 };
 
+export type SizeGridDraft = {
+  name: string;
+  size_type: SizeGridSizeType;
+  source_note: string;
+};
+
+export type SizeGridRowDraft = {
+  sort_order: string;
+  ru_size: string;
+  int_label: string;
+  chest: string;
+  waist: string;
+  hip: string;
+  height_s: string;
+  height_n: string;
+  height_t: string;
+};
+
 export const SIZE_GRID_SIZE_TYPE_LABELS: Record<SizeGridSizeType, string> = {
   men: "Мужской",
   women: "Женский",
   kids: "Детский",
 };
+
+export const emptySizeGridDraft = (): SizeGridDraft => ({
+  name: "",
+  size_type: "men",
+  source_note: "",
+});
+
+export const emptySizeGridRowDraft = (sortOrder = 0): SizeGridRowDraft => ({
+  sort_order: String(sortOrder),
+  ru_size: "",
+  int_label: "",
+  chest: "",
+  waist: "",
+  hip: "",
+  height_s: "",
+  height_n: "",
+  height_t: "",
+});
+
+export function sizeGridRowToDraft(row: SizeGridRow): SizeGridRowDraft {
+  return {
+    sort_order: String(row.sort_order),
+    ru_size: row.ru_size,
+    int_label: row.int_label,
+    chest: row.chest,
+    waist: row.waist,
+    hip: row.hip,
+    height_s: row.height_s ?? "",
+    height_n: row.height_n ?? "",
+    height_t: row.height_t ?? "",
+  };
+}
+
+export function validateSizeGridDraft(draft: SizeGridDraft): string | null {
+  if (!draft.name.trim()) return "Укажите наименование сетки";
+  if (!["men", "women", "kids"].includes(draft.size_type)) {
+    return "Некорректный тип размерной сетки";
+  }
+  return null;
+}
+
+export function validateSizeGridRowDraft(draft: SizeGridRowDraft): string | null {
+  const sort = Number(draft.sort_order.trim());
+  if (!Number.isInteger(sort) || sort < 0) {
+    return "Порядок — целое число ≥ 0";
+  }
+  if (!draft.ru_size.trim()) return "Укажите RU размер";
+  if (!draft.int_label.trim()) return "Укажите INT / рост";
+  if (!draft.chest.trim()) return "Укажите обхват груди";
+  if (!draft.waist.trim()) return "Укажите обхват талии";
+  if (!draft.hip.trim()) return "Укажите обхват бедер";
+  return null;
+}
+
+export function sizeGridRowDraftToPayload(draft: SizeGridRowDraft) {
+  const height = (value: string) => {
+    const trimmed = value.trim();
+    return trimmed ? trimmed : null;
+  };
+  return {
+    sort_order: Number(draft.sort_order.trim()),
+    ru_size: draft.ru_size.trim(),
+    int_label: draft.int_label.trim(),
+    chest: draft.chest.trim(),
+    waist: draft.waist.trim(),
+    hip: draft.hip.trim(),
+    height_s: height(draft.height_s),
+    height_n: height(draft.height_n),
+    height_t: height(draft.height_t),
+  };
+}
 
 function apiBaseUrl(): string {
   return (process.env.SPORT_LEADS_API_URL ?? "http://127.0.0.1:8000").replace(

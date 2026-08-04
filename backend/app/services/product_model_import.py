@@ -620,7 +620,8 @@ def _resolve_size_grid(
             )
         ]
     grid = matches[0]
-    return grid.id, ProductModelSizeType(grid.size_type.value), []
+    size_type_raw = str(getattr(grid.size_type, "value", grid.size_type))
+    return grid.id, ProductModelSizeType(size_type_raw), []
 
 
 def _resolve_product_type(

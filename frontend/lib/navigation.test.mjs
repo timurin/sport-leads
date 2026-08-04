@@ -3,6 +3,7 @@ import test from "node:test";
 
 import {
   appSections,
+  getSectionByPathname,
   isNavigationPathActive,
 } from "./navigation.ts";
 
@@ -26,17 +27,38 @@ test("settings navigation exposes tech-cards after pattern-base", () => {
   const patternIdx = ids.indexOf("pattern-base");
   const productionIdx = ids.indexOf("production-catalogs");
   const techIdx = ids.indexOf("tech-cards");
+  const platformIdx = ids.indexOf("platform-admin");
   const usersIdx = ids.indexOf("users");
   assert.ok(patternIdx >= 0);
   assert.ok(productionIdx === patternIdx + 1);
   assert.ok(techIdx === productionIdx + 1);
-  assert.ok(usersIdx === techIdx + 1);
+  assert.ok(platformIdx === techIdx + 1);
+  assert.ok(usersIdx === platformIdx + 1);
   const techCards = settings.topNavigation.find((item) => item.id === "tech-cards");
   assert.deepEqual(techCards, {
     id: "tech-cards",
     title: "Техкарты",
     href: "/settings/catalogs/tech-cards",
   });
+  const platform = settings.topNavigation.find(
+    (item) => item.id === "platform-admin",
+  );
+  assert.ok(platform?.children);
+  assert.deepEqual(
+    platform.children.map((item) => ({ id: item.id, href: item.href })),
+    [
+      { id: "system-settings", href: "/settings/system" },
+      {
+        id: "platform-directories",
+        href: "/settings/platform-directories",
+      },
+      {
+        id: "platform-cities",
+        href: "/settings/platform-directories/cities",
+      },
+      { id: "print-forms", href: "/settings/print-forms" },
+    ],
+  );
   assert.equal(
     isNavigationPathActive(
       "/settings/catalogs/tech-cards",
@@ -124,7 +146,18 @@ test("production navigation exposes tech-cards and shop modules", () => {
   assert.ok(ids.includes("production-dashboard"));
   assert.ok(ids.includes("production-tech-cards"));
   assert.ok(ids.includes("production-shop-kanban"));
+  assert.ok(ids.includes("design-projects"));
   assert.ok(ids.includes("production-shop-modules"));
+  const designProjects = production.topNavigation.find(
+    (item) => item.id === "design-projects",
+  );
+  assert.deepEqual(designProjects, {
+    id: "design-projects",
+    title: "Дизайн-проекты",
+    href: "/design/projects",
+  });
+  assert.equal(getSectionByPathname("/design/projects").id, "production");
+  assert.equal(getSectionByPathname("/design/projects/42").id, "production");
   const techCards = production.topNavigation.find(
     (item) => item.id === "production-tech-cards",
   );

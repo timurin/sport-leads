@@ -1,6 +1,6 @@
 # ADR-016 — Technical card domain boundary
 
-**Status:** принято (`2026-07-26`); amend numbering + TechOperation / op-volume lines (`2026-07-26`); amend Spec↔ТК dependency (`2026-07-26`); amend Spec = план+факт report (`2026-07-26`); amend screen mockups on TC max 3 + sewing snapshot lines (`2026-07-27`); **amend composition plan/fact + hard material gate cutting/print (`2026-07-27`)**; **amend aggregate personalization import + history block + TechOperation material prefill (`2026-07-28`)**; **amend shop-module platform contract (`11.3.1`, `2026-07-28`)**; **amend Раскрой shop domain (`11.5.1`, `2026-07-28`)**; **amend Печать shop domain (`11.6.1`, `2026-07-28`)**; **amend Пошив shop domain (`11.7.1`, `2026-07-28`)**; **amend Упаковка shop domain (`11.10.1`, `2026-07-29`)**  
+**Status:** принято (`2026-07-26`); amend numbering + TechOperation / op-volume lines (`2026-07-26`); amend Spec↔ТК dependency (`2026-07-26`); amend Spec = план+факт report (`2026-07-26`); amend screen mockups on TC max 3 + sewing snapshot lines (`2026-07-27`); **amend composition plan/fact + hard material gate cutting/print (`2026-07-27`)**; **amend aggregate personalization import + history block + TechOperation material prefill (`2026-07-28`)**; **amend shop-module platform contract (`11.3.1`, `2026-07-28`)**; **amend Раскрой shop domain (`11.5.1`, `2026-07-28`)**; **amend Печать shop domain (`11.6.1`, `2026-07-28`)**; **amend Пошив shop domain (`11.7.1`, `2026-07-28`)**; **amend Упаковка shop domain (`11.10.1`, `2026-07-29`)**; **amend DesignProject SoT ADR-021 (`2026-08-01`)**; **amend Stage 19 internal collaboration context (`2026-08-04`, ADR-026)**  
 **Date:** `2026-07-26`  
 **Roadmap:** Stage 9 § `9.1.1` (+ Stage `8.1.3` TechOperation catalog; Stage `9.3.3` volume lines; Stage `9.3.4` plan/fact materials; Stage `9.3.5` required materials prefill; document layout `9.4.2.7` / history `9.4.2.8`; shop Упаковка `11.10`)  
 **Depends on:** ADR-004, ADR-003, ADR-012, ADR-014 (ADR-017 for shop routing)  
@@ -80,7 +80,7 @@ UNIQUE: не более одной ТК на один `sales_order_item_id` (к�
 | Спецификация (Stage 7) | optional soft `specification_version_id` + label | **Не** источник generate. Spec = сводный отчёт (план из ТК + факт исполнения) для партии / 1С. Soft-ref на карте — обратная связь после Stage 7, не hard gate |
 | Shop routing template (Stage 8) | template id + ordered stage plan snapshot | Снимок маршрута на generate from order-item snapshot / model whitelist (`3.2.7` / `6.1.17`); исполнение пишет **stage results** на карте |
 | TechOperation volume lines | operation id + name/unit snapshot + volume Decimal + stage binding | Prefill from routing/`8.1.3` on generate (`9.3.3`); manager may edit volumes; catalog edits do not live-merge |
-| Design mockup (Stage 10) | optional asset / file link | Не блокирует generate; экран и Side 1 печати показывают когда есть. **Amend `2026-07-27`:** экранная галерея на ТК до 3 фото (`TechnicalCardMedia`) раньше полного модуля Stage 10; печать 2×A4 остаётся `18.3` |
+| Design mockup (Stage 10) | optional asset / file link | Не блокирует generate; экран и Side 1 печати показывают когда есть. **Amend `2026-07-27`:** экранная галерея на ТК до 3 фото (`TechnicalCardMedia`) раньше полного модуля Stage 10; печать 2×A4 остаётся `18.3`. **Amend `2026-08-01`:** версионный SoT = `DesignProject` / `DesignVersion` (**ADR-021**); TC media ≠ DesignVersion |
 
 **Live** допускаются только: статус/участок исполнения, unit-line edits, composition edits (до правил `9.2.2`), op-volume edits, stage results, **fact material qty via shop modules**, ссылки навигации.  
 **Не** live-merge: цены справочника пошива, шаги routing template / TechOperation master после generate; утверждённая Spec version не переписывает открытую ТК без явного действия.
@@ -128,7 +128,7 @@ Explicitly out of scope for `9.6` settings:
 | Stage 8 Shop routing | Шаблон участков → snapshot plan; факт шагов на ТК |
 | Stage 8 TechOperation (`8.1.3`) | Цеховой каталог операций с `volume_unit` (`linear_meters` \| `pieces`); seed: сублимация, термоперенос, пошив, ВТО, упаковка |
 | Stage 9.3.3 op-volume lines | Snapshot строк объёмов на ТК |
-| Stage 10 Design | Опциональный макет/визуал для карточки и Side 1 печати |
+| Stage 10 Design | Версии макетов: **ADR-021** `DesignProject`/`DesignVersion`; TC media ≤3 — interim gallery; approval gate = `3.4.1` + Stage `19` |
 | Stage 11 Production batch | **ADR-018:** `ProductionOrder` → `ProductionBatch` группирует ТК; **не** меняет правило 1:1 line↔card; shop fact остаётся на ТК |
 | Stage 11.1.2 WorkCenter planning | Planned equipment on `TechnicalCardStageResult.work_center_id` (snapshot from routing + editable); shop fact reuses same field; **not** a field on ProductionOrder/Batch |
 | Stage 11.3 shop modules | Shared queue + stage-scoped execution UI open the **existing** TC and write fact on it; no second TC document |
@@ -269,6 +269,7 @@ API не отдаёт ORM; деньги/нормы/объёмы — `Decimal`/`N
 - Stage `11.10` Упаковка: stage fact only (`performer` / `work_done` / `duration`); no material gate; no WorkCenter/QC scrap fields in MVP.
 - Stage `11.2.2` / ADR-019: after Упаковка — `ready_to_ship` (складской приход ГП) → `shipped` (складское списание); остаток SoT в ledger, не на ТК.
 - ADR-004: «технология» = заполненная ТК + snapshot маршрута; Spec — сводный отчёт план+факт по партии, опирается на ТК и факт, не предшествует create ТК.
+- **Stage 19 / ADR-026:** document UI may show the order’s internal staff collaboration thread filtered by optional `technical_card_id`. ТК is **context**, not a second chat store; messages live on the order thread.
 
 ## Ограничения / вне scope ADR
 
@@ -276,7 +277,8 @@ API не отдаёт ORM; деньги/нормы/объёмы — `Decimal`/`N
 - Полный enum переходов и scrap/rework (`9.2.2`)  
 - Партии Stage 11, обмен 1С  
 - Auth/roles для stage actions (`17.1`)  
-- Реализация печатного шаблона 2×A4 (`18.3.8`)
+- Реализация печатного шаблона 2×A4 (`18.3.8`)  
+- Internal staff chat persistence (Stage `19` / ADR-026)
 
 ## Evidence
 

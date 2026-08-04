@@ -27,7 +27,8 @@
 |----------|------|-----------------|
 | **ProductModel** | Справочник модели изделия: то, что выбирают в лиде / заказе / ТК / спецификации | Stage 6 (`6.1`) |
 | **SizeGrid** | Размерная сетка модели (размеры внутри одного `size_type`) | Stage 6 (`6.2`) |
-| **SewingOperation** | Плоский справочник операций пошива: `name` + `cost` | Stage 6 (`6.3`) |
+| **SewingOperation** | Листовая операция пошива: `name` + `cost` (+ qty/duration/equipment); опционально в папке | Stage 6 (`6.3`) |
+| **SewingOperationFolder** | Навигационные папки parent/child для каталога операций (`6.3.11`) | Stage 6 (`6.3.11`) |
 | **AssemblyVariant** | Именованный пакет сборки/отделки модели («С отстрочкой», …) | Stage 6 (`6.1.12`) |
 | **AssemblyOperationLine** | Упорядоченная строка варианта: операция + стоимость | Stage 6 (`6.1.12`) |
 | **ProductModelRoutingLink** | Whitelist модели ↔ существующий `ShopRoutingTemplate` (ordered; no clone) | Stage 6 (`6.1.17`); тело маршрута = Stage 8 |
@@ -114,10 +115,13 @@ Nomenclature (PRODUCT)
 
 ### 6. Строки операций варианта vs справочник операций пошива
 
-**Справочник (`6.3`):** `SewingOperation` — плоский каталог (`name` unique, `cost ≥ 0`). UI: `/settings/catalogs/sewing_operations` (`DS-PT-02-CATALOG`).
+**Справочник (`6.3`):** `SewingOperation` — листовой каталог (`name` unique, `cost ≥ 0`, …). UI: `/settings/catalogs/sewing_operations`.
 
 **Amend `2026-07-31` (`6.3.10`):** optional M:N link to sewing-shop `WorkCenter` (цех Пошив / `code=sewing`) for catalog compatibility. Does **not** replace Stage 8 routing / TC planned equipment (`11.1.2`). Domain: `sewing-operations-domain.md`.
 
+**Amend `2026-08-02` (`6.3.11`):** `SewingOperationFolder` parent/child tree for catalog navigation; ops have nullable `folder_id` + sibling `sort_order`. Folders are **not** assembly snapshot targets; pick/apply remain leaf-only. Domain: `sewing-operations-domain.md` §2.2 / §3.
+
+**Amend `2026-08-02` (`6.3.12`):** `SewingOperationTemplate` library — ordered refs to leaf sewing ops (no cost snapshot on template lines). Apply to assembly variant is `6.3.13`. Not Stage 8 `TechOperation`. Domain: `sewing-operations-domain.md` §2.3.
 **Вариант сборки (`6.1.12` + `6.3.6`):** группа выбранных операций пошива. Create/add — copy-on-pick: в `AssemblyOperationLine` пишутся snapshot `operation_name` + `cost` и nullable `sewing_operation_id`. Итог варианта = Σ строк. Правки каталога не переписывают уже сохранённые варианты / заказы.
 
 Стоимость варианта всегда считается как сумма строк в money-safe типах (`Decimal` / `Numeric`).

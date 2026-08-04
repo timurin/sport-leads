@@ -10,7 +10,7 @@
 
 Tokenize topbar chrome without changing structure/behaviour:
 
-- heights → `--portal-shell-topbar-sm` (64) / `--portal-shell-topbar` (72 from `md`)
+- heights → `--portal-shell-topbar-sm` (52) / `--portal-shell-topbar` (56 from `md`) — compacted `2026-08-02` (was 64/72)
 - surfaces/borders/text → portal tokens
 - brand actions / active nav → Decision A primary (`portal-primary*`)
 - focus → `portal-focus-ring`

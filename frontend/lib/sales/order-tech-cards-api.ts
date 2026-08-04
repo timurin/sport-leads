@@ -64,6 +64,25 @@ export type TechnicalCardUnitLineAggregateImportRow = {
   notes?: string | null;
 };
 
+export type TechnicalCardUnitLineBulkUpdateItem = {
+  id?: number | null;
+  unit_index?: number | null;
+  size_type?: string | null;
+  size?: string | null;
+  personalization?: string | null;
+  print_number?: string | null;
+  notes?: string | null;
+};
+
+export type TechnicalCardUnitLineWriteItem = {
+  unit_index: number;
+  size_type?: string | null;
+  size?: string | null;
+  personalization?: string | null;
+  print_number?: string | null;
+  notes?: string | null;
+};
+
 export type TechnicalCardOperationLineSourceKind = "routing" | "sewing";
 
 export type ApiTechnicalCardOperationLine = {
@@ -147,6 +166,7 @@ export type ApiTechnicalCard = {
   product_model_article: string | null;
   product_model_name: string | null;
   product_model_size_type?: string | null;
+  product_model_cover_image_url?: string | null;
   assembly_variant_id?: number | null;
   assembly_variant_name: string | null;
   assembly_variant_total_cost?: string | number | null;
@@ -481,6 +501,53 @@ export async function importTechnicalCardUnitLines(
   });
   if (!response.ok) {
     throw new Error(await readError(response, "Unit-line import failed"));
+  }
+  return (await response.json()) as ApiTechnicalCard;
+}
+
+export async function importTechnicalCardUnitLinesFile(
+  cardId: number | string,
+  formData: FormData,
+): Promise<ApiTechnicalCard> {
+  const response = await fetch(`${apiBaseUrl()}/technical-cards/${cardId}/unit-lines/import-file`, {
+    method: "POST",
+    body: formData,
+    cache: "no-store",
+  });
+  if (!response.ok) {
+    throw new Error(await readError(response, "Unit-line file import failed"));
+  }
+  return (await response.json()) as ApiTechnicalCard;
+}
+
+export async function replaceTechnicalCardUnitLines(
+  cardId: number | string,
+  lines: TechnicalCardUnitLineWriteItem[],
+): Promise<ApiTechnicalCard> {
+  const response = await fetch(`${apiBaseUrl()}/technical-cards/${cardId}/unit-lines`, {
+    method: "PUT",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ lines }),
+    cache: "no-store",
+  });
+  if (!response.ok) {
+    throw new Error(await readError(response, "Unit-line replace failed"));
+  }
+  return (await response.json()) as ApiTechnicalCard;
+}
+
+export async function bulkUpdateTechnicalCardUnitLines(
+  cardId: number | string,
+  lines: TechnicalCardUnitLineBulkUpdateItem[],
+): Promise<ApiTechnicalCard> {
+  const response = await fetch(`${apiBaseUrl()}/technical-cards/${cardId}/unit-lines/bulk`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ lines }),
+    cache: "no-store",
+  });
+  if (!response.ok) {
+    throw new Error(await readError(response, "Unit-line bulk update failed"));
   }
   return (await response.json()) as ApiTechnicalCard;
 }

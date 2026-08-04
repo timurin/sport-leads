@@ -164,7 +164,7 @@
         </div>
       </div>
       <div class="meta-list">
-        <div class="chip">Updated: 2026-08-01 (10.2 cancelled → Stage 19 + 3.4.1; Stages 7 / 13 / 15 / 16 + Stage 2 group moved → v1.00)</div>
+        <div class="chip">Updated: 2026-08-02 (0.4 Platform performance → v1.00 Stage 0; prior carry → v1.00: 1.4.3, 2 group, 7, 12.4–12.5, 13–16, 18.4)</div>
         <div class="chip">Version: v0.9.0</div>
         <div class="chip">Branch: feature/v0.8.1-nomenclature-core</div>
         <div class="chip">Commit: 0980f34</div>
@@ -220,6 +220,7 @@
     const roadmap = [
       {
         title: "Stage 0 — Platform and Infrastructure",
+        note: "0.4 Platform performance moved → v1.00 Stage 0 (2026-08-02). Execute slow-data work only under roadmap-v1.00.md.",
         blocks: [
           {
             title: "0.1 — Core platform",
@@ -305,11 +306,48 @@
                 done: true
               }
             ]
+          },
+          {
+            title: "0.4 — Platform performance",
+            note: "moved → v1.00 Stage 0 (0.1 audit first, then 0.2.* known N+1 fixes)",
+            items: [
+              {
+                code: "0.4.1",
+                title: "Contract: list-page rules — no per-row RSC HTTP; batch/embed summary; slim list vs detail; TTFB without N round-trips",
+                done: false,
+                note: "moved → v1.00 (0.2.1)"
+              },
+              {
+                code: "0.4.2",
+                title: "P1 case product-models list: remove N× assembly-variants (batch cost summary / bulk / no SSR N+1)",
+                done: false,
+                note: "moved → v1.00 (0.2.2)"
+              },
+              {
+                code: "0.4.3",
+                title: "Audit pass: characteristics list, warehouse stock catalog, tech-cards list payload",
+                done: false,
+                note: "moved → v1.00 (0.2.3)"
+              },
+              {
+                code: "0.4.4",
+                title: "Shared guardrails: architecture/AGENTS checklist + focused product-models batch tests",
+                done: false,
+                note: "moved → v1.00 (0.2.4)"
+              },
+              {
+                code: "0.4.5",
+                title: "Docs checkpoint: erp-check / project-structure + before/after evidence",
+                done: false,
+                note: "moved → v1.00 (0.2.5)"
+              }
+            ]
           }
         ]
       },
       {
         title: "Stage 1 — CRM and Leads",
+        note: "1.4.1/1.4.2 closed in v0.9.0; real adapters 1.4.3 deferred to v1.00 (1.4.3.1–1.4.3.5). Lead card send stays on mock.",
         blocks: [
           {
             title: "1.1 — Sales workspace",
@@ -539,8 +577,8 @@
               {
                 code: "1.2.5",
                 title: "Single lead detail data path; real actor for notes/tasks",
-                done: false,
-                note: "1.2.5.1–1.2.5.4 shipped; STOP for owner visual 1.2.5.5; task v0.9.0-stage-1.2.5-lead-detail-single-path.md; production auth → 17.1.1",
+                done: true,
+                note: "owner OK 2026-08-01; production auth still → 17.1.1",
                 microtasks: [
                   {
                     code: "1.2.5.1",
@@ -569,7 +607,8 @@
                   {
                     code: "1.2.5.5",
                     title: "Owner visual verification (API lead card)",
-                    done: false
+                    done: true,
+                    note: "owner OK 2026-08-01"
                   }
                 ]
               }
@@ -590,8 +629,47 @@
               },
               {
                 code: "1.3.3",
-                title: "Deals, archive, and finalized CRM access-control contour",
-                done: false
+                title: "Deals boundary + CRM access-control contour (no separate Deal)",
+                done: true,
+                note: "owner OK 2026-08-01; no Deal; archive cancelled; deals→orders; ACL→17.1.1",
+                microtasks: [
+                  {
+                    code: "1.3.3.1",
+                    title: "Contract: Deal=SalesOrder; no lead archive; ACL→17.1.1",
+                    done: true,
+                    note: "v0.9.0-stage-1.3.3-crm-archive-deals-boundary.md"
+                  },
+                  {
+                    code: "1.3.3.2",
+                    title: "Lead soft-archive model + API",
+                    done: true,
+                    note: "cancelled 2026-08-01; dropped n1c2d3e4f567"
+                  },
+                  {
+                    code: "1.3.3.3",
+                    title: "Leads workspace archive filter + actions",
+                    done: true,
+                    note: "cancelled 2026-08-01"
+                  },
+                  {
+                    code: "1.3.3.4",
+                    title: "Retire demo /sales/deals (redirect → orders)",
+                    done: true,
+                    note: "v0.9.0"
+                  },
+                  {
+                    code: "1.3.3.5",
+                    title: "Regression + docs sync",
+                    done: true,
+                    note: "lead-archive-1-3-3.test.mjs (deals redirect)"
+                  },
+                  {
+                    code: "1.3.3.6",
+                    title: "Owner visual verification (deals redirect; no archive tab)",
+                    done: true,
+                    note: "owner OK 2026-08-01"
+                  }
+                ]
               }
             ]
           },
@@ -611,7 +689,8 @@
               {
                 code: "1.4.3",
                 title: "Real external lead-source and communication adapters",
-                done: false
+                done: false,
+                note: "moved → v1.00; microtasks 1.4.3.1–1.4.3.5 in docs/roadmap/roadmap-v1.00.md"
               }
             ]
           }
@@ -642,12 +721,78 @@
               {
                 code: "2.2.1",
                 title: "Persistent client list and dedicated workspace",
-                done: false
+                done: true,
+                note: "owner OK 2026-08-01; GET /clients + FE wire",
+                microtasks: [
+                  {
+                    code: "2.2.1.1",
+                    title: "Contract + task",
+                    done: true,
+                    note: "v0.9.0-stage-2.2.1-persistent-clients-workspace.md"
+                  },
+                  {
+                    code: "2.2.1.2",
+                    title: "GET /clients list API (+ order aggregates)",
+                    done: true,
+                    note: "api/clients.py; services/clients.py"
+                  },
+                  {
+                    code: "2.2.1.3",
+                    title: "FE /sales/clients from API (no demo substitution)",
+                    done: true,
+                    note: "client-list-api.ts"
+                  },
+                  {
+                    code: "2.2.1.4",
+                    title: "Regression + docs sync",
+                    done: true,
+                    note: "test_clients_2_2_1.py; client-list-mapping.test.mjs"
+                  },
+                  {
+                    code: "2.2.1.5",
+                    title: "Owner visual verification",
+                    done: true,
+                    note: "owner OK 2026-08-01"
+                  }
+                ]
               },
               {
                 code: "2.2.2",
                 title: "Separate client card",
-                done: false
+                done: true,
+                note: "owner OK 2026-08-01; PT-05; GET /clients/{id}; history → 2.2.3/v1.00",
+                microtasks: [
+                  {
+                    code: "2.2.2.1",
+                    title: "Contract + task (PT-05)",
+                    done: true,
+                    note: "v0.9.0-stage-2.2.2-client-card.md"
+                  },
+                  {
+                    code: "2.2.2.2",
+                    title: "GET /clients/{id} (+ related orders summary)",
+                    done: true,
+                    note: "services/clients.py get_client"
+                  },
+                  {
+                    code: "2.2.2.3",
+                    title: "FE card route + list links",
+                    done: true,
+                    note: "/sales/clients/[clientId]"
+                  },
+                  {
+                    code: "2.2.2.4",
+                    title: "Regression + docs sync",
+                    done: true,
+                    note: "test_clients_2_2_1.py get-by-id; client-card tests"
+                  },
+                  {
+                    code: "2.2.2.5",
+                    title: "Owner visual verification",
+                    done: true,
+                    note: "owner OK 2026-08-01"
+                  }
+                ]
               },
               {
                 code: "2.2.3",
@@ -3210,6 +3355,94 @@
                     note: "v0.9.0; owner OK 2026-07-27"
                   }
                 ]
+              },
+              {
+                code: "6.1.18",
+                title: "Product-model folders catalog tree",
+                done: true,
+                goal: "Collapsible folder tree on /settings/catalogs/product-models like sewing ops (6.3.11): create/rename/delete folders, ↑↓ siblings, create/move models into folders; create-drawer folder pick. Flat 1 model = 1 size_type = 1 article unchanged.",
+                note: "2026-08-03: .1–.5 closed; owner visual OK (folders + mass move)",
+                dependencies: [
+                  "6.1.7",
+                  "6.1.9",
+                  "6.3.11"
+                ],
+                microtasks: [
+                  {
+                    code: "6.1.18.1",
+                    title: "Domain: ProductModelFolder + ProductModel.folder_id/sort_order",
+                    done: true,
+                    note: "v0.9.0; product-model-domain.md §2.3"
+                  },
+                  {
+                    code: "6.1.18.2",
+                    title: "DB migration c6d7e8f9a012",
+                    done: true,
+                    note: "v0.9.0; alembic c6d7e8f9a012_add_product_model_folders.py"
+                  },
+                  {
+                    code: "6.1.18.3",
+                    title: "API /product-model-folders CRUD + move-sibling; model folder_id",
+                    done: true,
+                    note: "v0.9.0; product_models.py folders_router; test_product_model_folders_6_1_18.py"
+                  },
+                  {
+                    code: "6.1.18.4",
+                    title: "UI tree + move on product-models list + create-drawer folder pick",
+                    done: true,
+                    note: "v0.9.0; product-models-workspace.tsx; CatalogFolderMoveModal bulk/single move"
+                  },
+                  {
+                    code: "6.1.18.5",
+                    title: "Regression tests + owner visual",
+                    done: true,
+                    note: "v0.9.0; FE product-models.test.mjs; BE test_product_model_folders_6_1_18.py; mass move modal; owner visual OK 2026-08-03"
+                  }
+                ]
+              },
+              {
+                code: "6.1.19",
+                title: "Folder default sewing-operation template",
+                done: true,
+                goal: "Bind one SewingOperationTemplate to a product-model folder; new models in that folder get «Базовый» assembly seeded from template; lines editable on model; no silent overwrite on move/template change.",
+                note: "2026-08-03: .1–.5 closed; owner visual OK",
+                dependencies: [
+                  "6.1.18",
+                  "6.3.12",
+                  "6.3.13"
+                ],
+                microtasks: [
+                  {
+                    code: "6.1.19.1",
+                    title: "Domain: folder.default_sewing_operation_template_id + seed rules",
+                    done: true,
+                    note: "v0.9.0; product-model-domain.md §2.3"
+                  },
+                  {
+                    code: "6.1.19.2",
+                    title: "DB migration FK ON DELETE SET NULL",
+                    done: true,
+                    note: "v0.9.0; alembic d7e8f9a0b123"
+                  },
+                  {
+                    code: "6.1.19.3",
+                    title: "API folder field + create-model seed «Базовый»",
+                    done: true,
+                    note: "v0.9.0; product_model_folders.py; _seed_folder_default_sewing_template"
+                  },
+                  {
+                    code: "6.1.19.4",
+                    title: "UI bind template on folder + tree hint",
+                    done: true,
+                    note: "v0.9.0; catalog-folder-template-modal.tsx"
+                  },
+                  {
+                    code: "6.1.19.5",
+                    title: "Regression tests + owner visual",
+                    done: true,
+                    note: "BE test_folder_default_sewing_template_6_1_19.py; owner visual OK 2026-08-03"
+                  }
+                ]
               }
             ]
           },
@@ -3467,6 +3700,7 @@
           },
           {
             title: "6.3 — Операции пошива (Sewing Operations)",
+            note: "Amended 2026-08-02: 6.3.11 folder tree (parent/child) + 6.3.12 templates library + 6.3.13 apply to assembly; task v0.9.0-stage-6.3.11-sewing-op-sort-and-templates.md",
             items: [
               {
                 code: "6.3.1",
@@ -3738,6 +3972,126 @@
                     title: "Regression tests + docs sync",
                     done: true,
                     note: "v0.9.0; backend+FE sewing/assembly regressions; project-structure + erp-check"
+                  }
+                ]
+              },
+              {
+                code: "6.3.11",
+                title: "Sewing operations folder tree catalog",
+                done: true,
+                goal: "Folder hierarchy (parent/child) on /settings/catalogs/sewing_operations like nomenclature categories 4.9–4.10; sibling sort_order + ↑/↓; leaf SewingOperation only for pickers",
+                note: "v0.9.0 closed; Alembic a4b5c6d7e890; owner visual OK 2026-08-02",
+                dependencies: ["6.3.3", "6.3.5", "4.9.5", "4.10.3"],
+                microtasks: [
+                  {
+                    code: "6.3.11.1",
+                    title: "Domain amend: SewingOperationFolder parent_id/name/sort_order; SewingOperation.folder_id; cycle-safe; folders ≠ snapshots",
+                    done: true,
+                    note: "v0.9.0; sewing-operations-domain.md; ADR-014; task v0.9.0-stage-6.3.11-sewing-op-sort-and-templates.md"
+                  },
+                  {
+                    code: "6.3.11.2",
+                    title: "DB: folder table + op folder_id + sibling sort_order; backfill root by lower(name); Alembic",
+                    done: true,
+                    note: "v0.9.0; Alembic a4b5c6d7e890"
+                  },
+                  {
+                    code: "6.3.11.3",
+                    title: "API: folder CRUD/move/reorder; ops folder_id + sibling reorder; tree read; reject cycles",
+                    done: true,
+                    note: "v0.9.0; /sewing-operation-folders + move-sibling"
+                  },
+                  {
+                    code: "6.3.11.4",
+                    title: "UI: folder tree on sewing_operations (collapse, create folder, move op, ↑/↓); reuse 4.9.5 patterns",
+                    done: true,
+                    note: "v0.9.0; owner visual OK 2026-08-02; CatalogFolderMoveModal bulk/single move 2026-08-02"
+                  },
+                  {
+                    code: "6.3.11.5",
+                    title: "Regression tests + docs sync (domain/ADR-014; project-structure / erp-check on close)",
+                    done: true,
+                    note: "v0.9.0; test_sewing_operation_folders_6_3_11.py; sewing-operations.test.mjs"
+                  }
+                ]
+              },
+              {
+                code: "6.3.12",
+                title: "Sewing operation templates (library)",
+                done: true,
+                goal: "Named SewingOperationTemplate + ordered lines referencing catalog SewingOperation; fullscreen modal on /settings/catalogs/sewing_operations; composition folder tree; snapshot only on apply (6.3.13)",
+                note: "2026-08-02 closed; modal UX on sewing ops; owner visual OK",
+                dependencies: ["6.3.11.1", "6.3.5"],
+                microtasks: [
+                  {
+                    code: "6.3.12.1",
+                    title: "Domain + ADR-014 amend: template vs SewingOperation vs AssemblyVariant vs TechOp; copy-on-apply",
+                    done: true,
+                    note: "v0.9.0; sewing-operations-domain.md §2.3; ADR-014 amend 2026-08-02"
+                  },
+                  {
+                    code: "6.3.12.2",
+                    title: "DB: template + line tables; unique name; sequence uniqueness; Alembic",
+                    done: true,
+                    note: "v0.9.0; Alembic b5c6d7e8f901"
+                  },
+                  {
+                    code: "6.3.12.3",
+                    title: "API CRUD templates + replace/reorder lines (existing sewing ops only)",
+                    done: true,
+                    note: "v0.9.0; /sewing-operation-templates (+ PUT …/lines)"
+                  },
+                  {
+                    code: "6.3.12.4",
+                    title: "UI list + create/edit + template composition (pick ops, ↑/↓)",
+                    done: true,
+                    note: "v0.9.0; sewing-operation-templates-modal.tsx; folder-tree composition"
+                  },
+                  {
+                    code: "6.3.12.5",
+                    title: "Nav База лекал entry; DS-SHELL-01/02 contracts preserved",
+                    done: true,
+                    note: "v0.9.0; templates via ops catalog (no separate nav route)"
+                  },
+                  {
+                    code: "6.3.12.6",
+                    title: "Tests + docs; owner visual templates (+ folder-tree ops catalog from 6.3.11 if needed)",
+                    done: true,
+                    note: "v0.9.0; owner visual OK 2026-08-02; test_sewing_operation_templates_6_3_12.py"
+                  }
+                ]
+              },
+              {
+                code: "6.3.13",
+                title: "Apply template to assembly variant",
+                done: true,
+                goal: "Apply sewing-op template → AssemblyOperationLine copy-on-pick snapshots; default append; replace via flag+confirm; no equipment copy",
+                note: "2026-08-02 closed; owner visual OK on model-card drawer",
+                dependencies: ["6.3.6", "6.3.12.3"],
+                microtasks: [
+                  {
+                    code: "6.3.13.1",
+                    title: "Service: apply template → assembly lines (append/replace); no equipment copy",
+                    done: true,
+                    note: "v0.9.0; apply_sewing_operation_template_to_variant"
+                  },
+                  {
+                    code: "6.3.13.2",
+                    title: "API endpoint on assembly variant (or sewing-ops drawer action)",
+                    done: true,
+                    note: "v0.9.0; POST …/apply-sewing-template"
+                  },
+                  {
+                    code: "6.3.13.3",
+                    title: "UI: template picker on model-card assembly sewing-ops drawer",
+                    done: true,
+                    note: "v0.9.0; assembly-variant-sewing-ops-drawer «Из шаблона»"
+                  },
+                  {
+                    code: "6.3.13.4",
+                    title: "Regression tests + docs; owner visual on model card",
+                    done: true,
+                    note: "v0.9.0; owner visual OK 2026-08-02; test_apply_sewing_template_6_3_13.py"
                   }
                 ]
               },
@@ -4170,6 +4524,8 @@
               {
                 code: "8.1.4",
                 title: "TechOperation required materials",
+                done: true,
+                note: "v0.9.0; Alembic s0t1u2v3w456; test_tech_operations_8_1_4.py; consumed by 9.3.5",
                 goal: "Optional required MATERIAL rows on TechOperation, stored per one operation volume_unit, so TC composition can prefill from route operations without inventing a second material catalog.",
                 dependencies: [
                   "8.1.3",
@@ -4180,18 +4536,20 @@
                   {
                     code: "8.1.4.1",
                     title: "Domain child required_materials on TechOperation (MATERIAL nomenclature + qty per volume_unit); ADR-017 amend",
-                    done: false,
+                    done: true,
                     note: "task v0.9.0-stage-8.1.4-tech-op-materials.md"
                   },
                   {
                     code: "8.1.4.2",
                     title: "DB + migration + schemas + API + settings UI for required materials rows",
-                    done: false
+                    done: true,
+                    note: "Alembic s0t1u2v3w456; settings drawers"
                   },
                   {
                     code: "8.1.4.3",
                     title: "Regression tests + docs checkpoint",
-                    done: false
+                    done: true,
+                    note: "test_tech_operations_8_1_4.py"
                   }
                 ]
               }
@@ -4322,12 +4680,14 @@
                   {
                     code: "8.2.3.7",
                     title: "Wire generate / apply-routing to model routing whitelist (6.1.17); reject foreign",
-                    done: false
+                    done: true,
+                    note: "v0.9.0; _ensure_routing_template_allowed_for_model; prefer order-item routing"
                   },
                   {
                     code: "8.2.3.8",
                     title: "Docs checkpoint + tests for whitelist validation on apply-routing",
-                    done: false
+                    done: true,
+                    note: "test_technical_cards_8_2_3_7.py"
                   }
                 ]
               }
@@ -4623,7 +4983,8 @@
               {
                 code: "9.3.2",
                 title: "Unit lines (sizes and personalization)",
-                note: "ADR-020 contour B: aggregate import stays inside TC — not Universal hub / not 4.5",
+                done: true,
+                note: "v0.9.0; aggregate import + male/female size_type; owner may spot-check Поштучно",
                 dependencies: [
                   "9.2.1"
                 ],
@@ -4655,23 +5016,26 @@
                   {
                     code: "9.3.2.5",
                     title: "Amend domain/UI contract: size_type + visible fields without color; aggregate import DTO expands into unit lines",
-                    done: false,
-                    note: "task v0.9.0-stage-9.3.2-personalization-import.md"
+                    done: true,
+                    note: "v0.9.0; male/female; Alembic o2p3q4r5s678; task personalization-import.md"
                   },
                   {
                     code: "9.3.2.6",
                     title: "Backend aggregate import: validate Σ quantity = order qty, expand into N unit lines, stop color defaults",
-                    done: false
+                    done: true,
+                    note: "import_unit_lines"
                   },
                   {
                     code: "9.3.2.7",
                     title: "Frontend Поштучно: replace visible columns, add aggregate import, show qty mismatch error",
-                    done: false
+                    done: true,
+                    note: "TC document import panel"
                   },
                   {
                     code: "9.3.2.8",
                     title: "Regression tests for aggregate import and UI/API round-trip",
-                    done: false
+                    done: true,
+                    note: "test_technical_cards_9_3_2.py; tech-cards.test.mjs"
                   }
                 ]
               },
@@ -4990,12 +5354,78 @@
               {
                 code: "10.1.1",
                 title: "Design project entity and versions",
-                done: false
+                done: true,
+                note: "ADR-021; owner visual OK 2026-08-01; next 10.1.2",
+                microtasks: [
+                  {
+                    code: "10.1.1.1",
+                    title: "Domain ADR-021 DesignProject + DesignVersion",
+                    done: true,
+                    note: "ADR-021; task v0.9.0-stage-10.1.1-design-project.md"
+                  },
+                  {
+                    code: "10.1.1.2",
+                    title: "DB models + Alembic",
+                    done: true,
+                    note: "p3q4r5s6t789; test_design_projects_10_1_1_2.py"
+                  },
+                  {
+                    code: "10.1.1.3",
+                    title: "API list/detail/create + versions set-current",
+                    done: true,
+                    note: "/design-projects; test_design_projects_10_1_1_3.py"
+                  },
+                  {
+                    code: "10.1.1.4",
+                    title: "UI /design/projects list + card (+ nav)",
+                    done: true,
+                    note: "PT-02; Production nav; design-projects.test.mjs"
+                  },
+                  {
+                    code: "10.1.1.5",
+                    title: "Tests + owner visual",
+                    done: true,
+                    note: "owner OK 2026-08-01; getSectionByPathname fix"
+                  }
+                ]
               },
               {
                 code: "10.1.2",
                 title: "Layouts, logos, and comments — design-module; platform order/ТК staff chat → Stage 19",
-                done: false
+                done: true,
+                note: "ADR-022; owner visual OK 2026-08-01; Stage 10.1 complete",
+                microtasks: [
+                  {
+                    code: "10.1.2.1",
+                    title: "Domain ADR assets + design-module comments",
+                    done: true,
+                    note: "ADR-022; task v0.9.0-stage-10.1.2-design-assets-comments.md"
+                  },
+                  {
+                    code: "10.1.2.2",
+                    title: "DB models + Alembic",
+                    done: true,
+                    note: "q4r5s6t7u890; test_design_assets_10_1_2_2.py"
+                  },
+                  {
+                    code: "10.1.2.3",
+                    title: "API assets + comments",
+                    done: true,
+                    note: "nested /versions/{id}/assets|comments; test_design_assets_10_1_2_3.py"
+                  },
+                  {
+                    code: "10.1.2.4",
+                    title: "UI assets + comments on project card",
+                    done: true,
+                    note: "/design/projects/[id] version panels"
+                  },
+                  {
+                    code: "10.1.2.5",
+                    title: "Tests + owner visual",
+                    done: true,
+                    note: "owner OK 2026-08-01"
+                  }
+                ]
               }
             ]
           },
@@ -5021,7 +5451,7 @@
       },
       {
         title: "Stage 11 — Production",
-        note: "11.1 planning; 11.2 aggregate fact + FG warehouse bridge; 11.3–11.10 shop modules per цех (Дизайн→Раскрой→Печать→Пошив→ВТО→ОТК→Упаковка→Готовы к отгрузке→Отгружены). 11.3 platform + 11.4–11.10 shipped (owner visuals OK through 11.10.5). 11.1.1 ProductionOrder/Batch shipped (owner visual 11.1.1.5 OK 2026-07-30). 11.1.2 WorkCenter planning shipped (owner visual 11.1.2.5 OK 2026-07-30). 11.2.1 aggregate fact shipped (owner visual 11.2.1.4 OK 2026-07-30). 11.2.2.1–11.2.2.3 FG bridge shipped. Remaining: 11.2.2.4–11.2.2.5 (wire needs 12.2) + Stage 12.1+. Each module writes fact on TC; deps 8.3, 9.2.2, 9.4.2.",
+        note: "11.1 planning; 11.2 aggregate fact + FG warehouse bridge; 11.3–11.10 shop modules per цех (Дизайн→Раскрой→Печать→Пошив→ВТО→ОТК→Упаковка→Готовы к отгрузке→Отгружены). 11.3 platform + 11.4–11.10 shipped (owner visuals OK through 11.10.5). 11.1.1 ProductionOrder/Batch shipped (owner visual 11.1.1.5 OK 2026-07-30). 11.1.2 WorkCenter planning shipped (owner visual 11.1.2.5 OK 2026-07-30). 11.2.1 aggregate fact shipped (owner visual 11.2.1.4 OK 2026-07-30). 11.2.2 FG bridge shipped (owner visual 11.2.2.5 OK 2026-08-01). 12.3 FG docs + movements shipped. Each module writes fact on TC; deps 8.3, 9.2.2, 9.4.2.",
         blocks: [
           {
             title: "11.1 — Production planning",
@@ -5187,12 +5617,14 @@
                   {
                     code: "11.2.2.4",
                     title: "Wire stage complete → post StockDocument FG receipt/issue",
-                    done: false
+                    done: true,
+                    note: "fg_stock_posting.py; test_fg_stock_auto_post_12_3_2.py; shared 12.3.2"
                   },
                   {
                     code: "11.2.2.5",
                     title: "Tests + owner visual",
-                    done: false
+                    done: true,
+                    note: "owner OK 2026-08-01; test_fg_stock_auto_post_12_3_2.py"
                   }
                 ]
               }
@@ -5648,42 +6080,50 @@
               {
                 code: "12.3.1",
                 title: "Document types fg_receipt / fg_issue + TC links",
-                done: false
+                done: true,
+                note: "r5s6t7u8v901; test_stock_fg_12_3_1.py; task v0.9.0-stage-12.3.1-fg-document-types.md"
               },
               {
                 code: "12.3.2",
                 title: "Auto-post on TC stage complete (shared with 11.2.2.4)",
-                done: false
+                done: true,
+                note: "fg_stock_posting.py; test_fg_stock_auto_post_12_3_2.py; task v0.9.0-stage-12.3.2-fg-auto-post.md"
               },
               {
                 code: "12.3.3",
                 title: "UI: /warehouse/movements list + document card",
-                done: false
+                done: true,
+                note: "GET /stock/documents; PT-02/PT-07; test_stock_documents_list_12_3_3.py; stock-documents-12-3-3.test.mjs; task v0.9.0-stage-12.3.3-warehouse-movements-ui.md"
               }
             ]
           },
           {
             title: "12.4 — Inventory",
+            note: "Moved → v1.00 (2026-08-01). 12.3 FG remains in v0.9.0.",
             items: [
               {
                 code: "12.4.1",
                 title: "Inventory documents and recount postings",
-                done: false
+                done: false,
+                note: "moved → v1.00"
               }
             ]
           },
           {
             title: "12.5 — Transfers and reserves",
+            note: "Moved → v1.00 (2026-08-01).",
             items: [
               {
                 code: "12.5.1",
                 title: "Transfers between warehouses",
-                done: false
+                done: false,
+                note: "moved → v1.00"
               },
               {
                 code: "12.5.2",
                 title: "Reserves (sales/production) — later",
-                done: false
+                done: false,
+                note: "moved → v1.00"
               }
             ]
           }
@@ -5731,6 +6171,7 @@
       },
       {
         title: "Stage 14 — Shipping and Payments",
+        note: "Moved to v1.00 (2026-08-01): docs/roadmap/roadmap-v1.00.md + HTML twin. Do not execute under v0.9.0.",
         blocks: [
           {
             title: "14.1 — Shipping",
@@ -5738,7 +6179,8 @@
               {
                 code: "14.1.1",
                 title: "Shipping orders, packaging, delivery, and documents — поверх shipped (ADR-019); не дублировать issue",
-                done: false
+                done: false,
+                note: "moved → v1.00"
               }
             ]
           },
@@ -5748,12 +6190,14 @@
               {
                 code: "14.2.1",
                 title: "Invoices, payments, advances, and debt",
-                done: false
+                done: false,
+                note: "moved → v1.00"
               },
               {
                 code: "14.2.2",
                 title: "Settlements by order and client",
-                done: false
+                done: false,
+                note: "moved → v1.00"
               }
             ]
           }
@@ -5889,22 +6333,26 @@
                   {
                     code: "17.1.1.1",
                     title: "Define auth strategy and session/token contract",
-                    done: false
+                    done: true,
+                    note: "ADR-023; task v0.9.0-stage-17.1.1-authentication.md"
                   },
                   {
                     code: "17.1.1.2",
                     title: "Implement authentication API and session lifecycle",
-                    done: false
+                    done: true,
+                    note: "s6t7u8v9w012; /auth/login|logout|/me; sl_session; test_auth_17_1_1_2.py"
                   },
                   {
                     code: "17.1.1.3",
                     title: "Wire frontend login / session gate",
-                    done: false
+                    done: true,
+                    note: "/login + workspace getMe gate; lead actor from /auth/me; session.test.mjs"
                   },
                   {
                     code: "17.1.1.4",
                     title: "Regression tests and documentation checkpoint",
-                    done: false
+                    done: true,
+                    note: "owner OK 2026-08-01; test_auth_17_1_1_2.py; session.test.mjs"
                   }
                 ]
               },
@@ -5916,43 +6364,50 @@
                   {
                     code: "17.1.2.1",
                     title: "Define user/role/permission domain model",
-                    done: false
+                    done: true,
+                    note: "v0.9.0; ADR-024"
                   },
                   {
                     code: "17.1.2.2",
                     title: "Persist users, roles, and role↔permission links",
-                    done: false
+                    done: true,
+                    note: "v0.9.0; Alembic t7u8v9w0x123; seed roles"
                   },
                   {
                     code: "17.1.2.3",
                     title: "Enforce permission checks in API (deny-by-default for protected writes)",
-                    done: false
+                    done: true,
+                    note: "v0.9.0; require_permission; role assign API; test_rbac_17_1_2.py"
                   },
                   {
                     code: "17.1.2.4",
                     title: "Size-grid mutation (create/update/delete): role-gated API + UI — supersedes cancelled 6.2.3 write / 6.2.6 edit",
-                    done: false
+                    done: true,
+                    note: "v0.9.0; owner OK 2026-08-01; size_grids.write; test_size_grids_write_17_1_2_4.py"
                   },
                   {
                     code: "17.1.2.5",
                     title: "Administration UI for assigning roles to users",
-                    done: false
+                    done: true,
+                    note: "v0.9.0; owner OK 2026-08-01; /settings/users; GET /platform-users"
                   },
                   {
                     code: "17.1.2.6",
                     title: "Regression tests (forbidden without role; allowed with role)",
-                    done: false
+                    done: true,
+                    note: "v0.9.0; test_rbac_regression_17_1_2_6.py; shop complete auth-aware"
                   },
                   {
                     code: "17.1.2.7",
                     title: "Shop-stage kanban DnD / stage transitions: role-gated API + UI — removes temporary open DnD from 11.3.6",
-                    done: false,
-                    note: "Only authorized users may move cards between allowed ProductionStages"
+                    done: true,
+                    note: "v0.9.0; owner OK 2026-08-01; shop.kanban.transition"
                   },
                   {
                     code: "17.1.2.8",
                     title: "Stage executors (performer list) for shop-stage execution: platform users with access rights per stage — API + UI (demo fallback until permissions directory is released)",
-                    done: false
+                    done: true,
+                    note: "v0.9.0; owner OK 2026-08-01; u8v9w0x1y234; /shop-stage-executors; role_fallback"
                   }
                 ]
               },
@@ -5963,17 +6418,20 @@
                   {
                     code: "17.1.3.1",
                     title: "Define audit event contract",
-                    done: false
+                    done: true,
+                    note: "v0.9.0; ADR-025; task v0.9.0-stage-17.1.3-universal-audit.md"
                   },
                   {
                     code: "17.1.3.2",
                     title: "Persist and query audit trail",
-                    done: false
+                    done: true,
+                    note: "v0.9.0; Alembic v9w0x1y2z345; GET /audit-events; audit.read; test_audit_17_1_3_2.py"
                   },
                   {
                     code: "17.1.3.3",
                     title: "Surface critical mutations (incl. size-grid edits when 17.1.2.4 ships)",
-                    done: false
+                    done: true,
+                    note: "v0.9.0; owner OK 2026-08-01; size-grid Журнал аудита; size_grid_id filter"
                   }
                 ]
               }
@@ -5985,17 +6443,80 @@
               {
                 code: "17.2.1",
                 title: "VPS, production Docker, reverse proxy, and HTTPS",
-                done: false
+                goal: "In-repo Compose+Dockerfiles+Caddy TLS and VPS runbook; live host apply is owner ops.",
+                note: "v0.9.0; compose.prod.yaml; docs/ops/production-17-2-1.md",
+                microtasks: [
+                  {
+                    code: "17.2.1.1",
+                    title: "Production Docker images + Compose (api / web / postgres)",
+                    done: true,
+                    note: "v0.9.0; docker/backend+frontend Dockerfiles; compose.prod.yaml"
+                  },
+                  {
+                    code: "17.2.1.2",
+                    title: "Reverse proxy + HTTPS (Caddy edge, Let's Encrypt)",
+                    done: true,
+                    note: "v0.9.0; docker/Caddyfile; ports 80/443 only"
+                  },
+                  {
+                    code: "17.2.1.3",
+                    title: "VPS bootstrap runbook + env template",
+                    done: true,
+                    note: "v0.9.0; docs/ops/production-17-2-1.md; .env.production.example"
+                  }
+                ]
               },
               {
                 code: "17.2.2",
                 title: "Production deployment pipeline, centralized monitoring, and log aggregation",
-                done: false
+                goal: "workflow_dispatch SSH deploy; health probes; json-file log rotation (dev CI = 0.2.3).",
+                note: "v0.9.0; deploy-production.yml; docs/ops/production-17-2-2.md",
+                microtasks: [
+                  {
+                    code: "17.2.2.1",
+                    title: "GitHub Actions production deploy (workflow_dispatch + SSH)",
+                    done: true,
+                    note: "v0.9.0; .github/workflows/deploy-production.yml"
+                  },
+                  {
+                    code: "17.2.2.2",
+                    title: "Edge/API health routes + probe scripts",
+                    done: true,
+                    note: "v0.9.0; Caddy /health /health/ready; prod-health-check.ps1/.sh"
+                  },
+                  {
+                    code: "17.2.2.3",
+                    title: "JSON log rotation + aggregation runbook",
+                    done: true,
+                    note: "v0.9.0; compose json-file limits; production-17-2-2.md"
+                  }
+                ]
               },
               {
                 code: "17.2.3",
                 title: "Production backup, disaster recovery, and administrator runbooks",
-                done: false
+                goal: "Compose-aware backup/restore + DR/admin ops index (extends 0.3.3).",
+                note: "v0.9.0; docs/ops/production-17-2-3.md",
+                microtasks: [
+                  {
+                    code: "17.2.3.1",
+                    title: "Production DB backup via compose Postgres",
+                    done: true,
+                    note: "v0.9.0; scripts/prod-backup-db.ps1/.sh"
+                  },
+                  {
+                    code: "17.2.3.2",
+                    title: "Production restore + DR steps",
+                    done: true,
+                    note: "v0.9.0; prod-restore-db; production-17-2-3.md"
+                  },
+                  {
+                    code: "17.2.3.3",
+                    title: "Administrator ops index",
+                    done: true,
+                    note: "v0.9.0; production-17-2-3.md §3"
+                  }
+                ]
               }
             ]
           }
@@ -6010,22 +6531,26 @@
               {
                 code: "18.1.1",
                 title: "Navigation contour for Administration (system settings + platform directories + print forms)",
-                done: false
+                done: true,
+                note: "v0.9.0; owner OK 2026-08-02; nav Платформа; compact topbar OK"
               },
               {
                 code: "18.1.2",
                 title: "System settings workspace (platform-level parameters)",
-                done: false
+                done: true,
+                note: "v0.9.0; owner OK 2026-08-02; brand+logo; PageToolbar"
               },
               {
                 code: "18.1.3",
                 title: "Placement rules: platform directories vs domain catalogs (nomenclature, pattern base, organizations)",
-                done: false
+                done: true,
+                note: "v0.9.0; administration-placement.md"
               },
               {
                 code: "18.1.4",
                 title: "Page template mapping for Administration list/card routes (PT-02 / PT-05 as applicable)",
-                done: false
+                done: true,
+                note: "v0.9.0; administration-page-templates.md"
               }
             ]
           },
@@ -6035,22 +6560,26 @@
               {
                 code: "18.2.1",
                 title: "Platform directories registry and domain contracts",
-                done: false
+                done: true,
+                note: "v0.9.0; platform-directories.md; cities first"
               },
               {
                 code: "18.2.2",
                 title: "Persistent CRUD API for platform directories under Administration",
-                done: false
+                done: true,
+                note: "v0.9.0; cities CRUD; y2z3a4b5c678; platform_directories.write"
               },
               {
                 code: "18.2.3",
                 title: "Administration UI for platform directories (list/card, no demo substitution)",
-                done: false
+                done: true,
+                note: "v0.9.0; owner visual OK 2026-08-02; hub + cities list/card"
               },
               {
                 code: "18.2.4",
                 title: "Cross-links from consuming modules to platform directories",
-                done: false
+                done: true,
+                note: "v0.9.0; owner visual OK 2026-08-02; CRM lead city pickers use platform directories API + direct link to /settings/platform-directories/cities"
               }
             ]
           },
@@ -6060,87 +6589,104 @@
               {
                 code: "18.3.1",
                 title: "Print-form domain contract: entity binding (model / directory / document type), status, versioning",
-                done: false
+                done: true,
+                note: "v0.9.0; print-forms-domain.md; task v0.9.0-stage-18.3.1-print-forms-contract.md"
               },
               {
                 code: "18.3.2",
                 title: "Database model, migration, and schemas for print-form registry and templates",
-                done: false
+                done: true,
+                note: "v0.9.0; print_form.py; Alembic z3a4b5c6d789; task v0.9.0-stage-18.3.2-print-forms-persistence.md"
               },
               {
                 code: "18.3.3",
                 title: "Service and API: list/create/update, bind to model or directory, activate/archive",
-                done: false
+                done: true,
+                note: "v0.9.0; api/print_forms.py + services/print_forms.py; perm print_forms.write; test_print_forms_18_3_3.py; task v0.9.0-stage-18.3.3-print-forms-api.md"
               },
               {
                 code: "18.3.4",
                 title: "Template storage, preview, and generation pipeline",
-                done: false
+                done: true,
+                note: "v0.9.0; version CRUD/publish/current + preview/generate in api/print_forms.py and services/print_forms.py; schemas print_forms.py; test_print_forms_18_3_3.py; task v0.9.0-stage-18.3.4-print-forms-pipeline.md"
               },
               {
                 code: "18.3.5",
                 title: "Administration UI: print forms list and card under Administration → Печатные формы",
-                done: false
+                done: true,
+                note: "v0.9.0; owner visual OK 2026-08-02; live registry list/card + preview; task v0.9.0-stage-18.3.5-print-forms-ui.md"
               },
               {
                 code: "18.3.6",
                 title: "Integration points: sales order / quotation / invoice print output uses registry (link from 3.3.3)",
-                done: false
+                done: true,
+                note: "v0.9.0; owner visual OK 2026-08-02; /sales/orders/[id] documents panel uses registry generate for sales_order / sales_quotation / sales_invoice; task v0.9.0-stage-18.3.6-print-output-integration.md"
               },
               {
                 code: "18.3.7",
                 title: "Documentation checkpoint (ADR or domain note) and regression tests",
-                done: false
+                done: true,
+                note: "v0.9.0; print-forms-domain.md consumer note; commercial-print.test.mjs; backend generate regression kept in test_print_forms_18_3_3.py; task v0.9.0-stage-18.3.7-print-forms-docs-tests.md"
               },
               {
                 code: "18.3.8",
-                title: "Technical card print «Техкарта A4 ×2» (Side1 header+mockup+sizes; Side2 materials+op volumes); Excel = print visual SoT",
-                done: false
+                title: "Technical card print «Техкарта A4 ×2» (Side1 landscape order+mockup 30%/units 70%; Side2 model photo + assembly scheme + materials+ops)",
+                done: true,
+                note: "layout v3 2026-08-03; seed a4b5c6d7e891 + Alembic e8f9a0b1c234/f9a0b1c2d345; poshtuchno unit fields in PDF; owner visual OK 2026-08-03"
               }
             ]
           },
           {
             title: "18.4 — Глобальный журнал операций",
+            note: "Moved → v1.00 full (2026-08-01). No minimum close in v0.9 — stubs remain until journal ships. Admin 18.1–18.3 stay here.",
             items: [
               {
                 code: "18.4.1",
                 title: "Domain contract: OperationJournal entry fields, sources (sales / production), idempotency, retention",
-                done: false
+                done: false,
+                note: "moved → v1.00"
               },
               {
                 code: "18.4.2",
                 title: "Database model, migration, schemas for global operations journal",
-                done: false
+                done: false,
+                note: "moved → v1.00"
               },
               {
                 code: "18.4.3",
                 title: "Service API: append / query by entity (product_model_id, …); has_operations(entity) helper",
-                done: false
+                done: false,
+                note: "moved → v1.00"
               },
               {
                 code: "18.4.4",
                 title: "Write path: sales order uses model → append journal row (no write if model not used)",
-                done: false
+                done: false,
+                note: "moved → v1.00"
               },
               {
                 code: "18.4.5",
                 title: "Write path: production / ТК uses model → append journal row",
-                done: false
+                done: false,
+                note: "moved → v1.00"
               },
               {
                 code: "18.4.6",
                 title: "Wire product-model guards (revert_to_draft, size-grid change) to real has_operations (replace Stage-6 stub)",
-                done: false
+                done: false,
+                note: "moved → v1.00"
               },
               {
                 code: "18.4.7",
                 title: "Administration UI: journal list/filter (PT-02) under Администрирование → Журнал операций",
-                done: false
+                done: false,
+                note: "moved → v1.00"
               },
               {
                 code: "18.4.8",
                 title: "Regression tests + documentation checkpoint",
-                done: false
+                done: false,
+                note: "moved → v1.00"
               }
             ]
           }
@@ -6161,17 +6707,20 @@
                   {
                     code: "19.0.1",
                     title: "ADR: InternalCollaboration / OrderChat domain (thread, message, mention, microtask; ≠ LeadTask / ≠ external NormalizedMessage)",
-                    done: false
+                    done: true,
+                    note: "v0.9.0; ADR-026; task v0.9.0-stage-19.0.1-internal-collaboration-adr.md"
                   },
                   {
                     code: "19.0.2",
                     title: "Docs: amend order-card field-links + ADR-016 cross-ref (TC as optional thread context)",
-                    done: false
+                    done: true,
+                    note: "v0.9.0; order-card-field-links.md + ADR-016 amend; task v0.9.0-stage-19.0.2-19.0.3-collaboration-docs.md"
                   },
                   {
                     code: "19.0.3",
                     title: "Dedupe note: 3.5 Коммуникация = surface; 1.2.4 = CRM; 10.1.2 = design comments may attach later",
-                    done: false
+                    done: true,
+                    note: "v0.9.0; field-links § Dedupe"
                   }
                 ]
               }
@@ -6193,28 +6742,33 @@
                 microtasks: [
                   {
                     code: "19.1.1",
-                    title: "Domain model: CollaborationThread (sales_order_id; optional technical_card_id); Message; Mention",
-                    done: false
+                    title: "Domain model: CollaborationThread (sales_order_id); Message (+ optional TC); Mention",
+                    done: true,
+                    note: "v0.9.0; models/collaboration.py; TC on message (ADR-026)"
                   },
                   {
                     code: "19.1.2",
                     title: "Migration + schemas (upgrade/downgrade); indexes by order / card / created_at",
-                    done: false
+                    done: true,
+                    note: "v0.9.0; Alembic g0a1b2c3d456"
                   },
                   {
                     code: "19.1.3",
                     title: "Service + API: list/create messages; filter by TC; parse/store @mentions",
-                    done: false
+                    done: true,
+                    note: "v0.9.0; services/api collaboration"
                   },
                   {
                     code: "19.1.4",
                     title: "Access: authenticated staff only; optional read scope = users who can open order/TC",
-                    done: false
+                    done: true,
+                    note: "v0.9.0; MVP get_current_platform_user"
                   },
                   {
                     code: "19.1.5",
                     title: "Regression tests (create/list/mention; foreign order 404; unauthenticated 401)",
-                    done: false
+                    done: true,
+                    note: "v0.9.0; test_collaboration_19_1_19_2.py"
                   }
                 ]
               }
@@ -6235,22 +6789,26 @@
                   {
                     code: "19.2.1",
                     title: "Domain: CollaborationMicrotask (title, status, assignee, order, optional TC, source_message)",
-                    done: false
+                    done: true,
+                    note: "v0.9.0; same models/migration"
                   },
                   {
                     code: "19.2.2",
                     title: "API: create from chat; list by order/assignee; complete/reopen",
-                    done: false
+                    done: true,
+                    note: "v0.9.0; collaboration microtasks API"
                   },
                   {
                     code: "19.2.3",
                     title: "Optional template titles (layout fix, missing material) + free-text",
-                    done: false
+                    done: true,
+                    note: "v0.9.0; /collaboration/microtask-title-templates"
                   },
                   {
                     code: "19.2.4",
                     title: "Regression tests (assign, complete, order-scoped list)",
-                    done: false
+                    done: true,
+                    note: "v0.9.0; test_collaboration_19_1_19_2.py"
                   }
                 ]
               }
@@ -6273,27 +6831,32 @@
                   {
                     code: "19.3.1",
                     title: "Order card: persistent thread UI under Коммуникация",
-                    done: false
+                    done: true,
+                    note: "v0.9.0; OrderCollaborationPanel"
                   },
                   {
                     code: "19.3.2",
                     title: "Mention picker (employees/users) + highlight in message body",
-                    done: false
+                    done: true,
+                    note: "v0.9.0; @ autocomplete"
                   },
                   {
                     code: "19.3.3",
                     title: "Create microtask drawer/action from chat (prefill order + optional TC)",
-                    done: false
+                    done: true,
+                    note: "v0.9.0; panel form + templates"
                   },
                   {
                     code: "19.3.4",
                     title: "Technical card document: collaboration panel / deep-link into order thread with TC context",
-                    done: false
+                    done: true,
+                    note: "v0.9.0; tech-card-detail-workspace"
                   },
                   {
                     code: "19.3.5",
                     title: "Owner visual (desktop + mobile matrix) on order + TC",
-                    done: false
+                    done: true,
+                    note: "owner visual OK 2026-08-04"
                   }
                 ]
               }
@@ -6314,22 +6877,26 @@
                   {
                     code: "19.4.1",
                     title: "Notification events: mention, microtask_assigned, microtask_completed",
-                    done: false
+                    done: true,
+                    note: "v0.9.0; emit in services/collaboration.py"
                   },
                   {
                     code: "19.4.2",
                     title: "Persist + list unread for current user; mark read",
-                    done: false
+                    done: true,
+                    note: "v0.9.0; Alembic h1b2c3d4e567"
                   },
                   {
                     code: "19.4.3",
                     title: "UI badge / inbox entry with deep-link to order/TC thread",
-                    done: false
+                    done: true,
+                    note: "v0.9.0; /sales/collaboration-notifications"
                   },
                   {
                     code: "19.4.4",
                     title: "Tests + docs checkpoint",
-                    done: false
+                    done: true,
+                    note: "v0.9.0; test_collaboration_notifications_19_4.py"
                   }
                 ]
               }
@@ -6341,17 +6908,20 @@
               {
                 code: "19.5.1",
                 title: "erp-check / project-structure checklist close for internal collaboration",
-                done: false
+                done: true,
+                note: "v0.9.0; erp-check + project-structure [x]"
               },
               {
                 code: "19.5.2",
                 title: "Focused backend + frontend regression pack",
-                done: false
+                done: true,
+                note: "v0.9.0; collaboration tests 3 passed"
               },
               {
                 code: "19.5.3",
                 title: "Owner stage sign-off",
-                done: false
+                done: true,
+                note: "owner OK 2026-08-04; message send verified"
               }
             ]
           }

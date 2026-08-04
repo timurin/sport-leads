@@ -54,6 +54,28 @@ class Settings:
         "text",
     )
 
+    # Auth session (ADR-023 / 17.1.1.2)
+    auth_session_ttl_hours: int = int(os.getenv("AUTH_SESSION_TTL_HOURS", "12"))
+    auth_session_max_hours: int = int(os.getenv("AUTH_SESSION_MAX_HOURS", "24"))
+    auth_cookie_secure: bool = (
+        os.getenv("AUTH_COOKIE_SECURE", "false").strip().lower()
+        in {"1", "true", "yes", "on"}
+    )
+    auth_cookie_samesite: str = os.getenv("AUTH_COOKIE_SAMESITE", "lax").strip().lower()
+    auth_bootstrap_login: str | None = os.getenv("AUTH_BOOTSTRAP_LOGIN")
+    auth_bootstrap_password: str | None = os.getenv("AUTH_BOOTSTRAP_PASSWORD")
+    auth_bootstrap_display_name: str | None = os.getenv(
+        "AUTH_BOOTSTRAP_DISPLAY_NAME"
+    )
+    cors_origins: list[str] = [
+        item.strip()
+        for item in os.getenv(
+            "SPORT_LEADS_CORS_ORIGINS",
+            "http://127.0.0.1:3001,http://localhost:3001",
+        ).split(",")
+        if item.strip()
+    ]
+
     @property
     def database_url(self) -> str:
         explicit_database_url = os.getenv(

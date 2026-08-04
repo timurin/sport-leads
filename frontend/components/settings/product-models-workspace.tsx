@@ -2,13 +2,25 @@
 
 import Link from "next/link";
 import {
+  ArrowDown,
+  ArrowDownUp,
+  ArrowUp,
+  ChevronDown,
+  ChevronRight,
   Copy,
   Download,
   ExternalLink,
   Filter,
   FilterX,
+  Folder,
+  FolderInput,
+  FolderOpen,
+  FolderPlus,
+  Layers,
+  Pencil,
   Plus,
   Printer,
+  Trash2,
   Upload,
   X,
 } from "lucide-react";
@@ -17,8 +29,15 @@ import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 
 import {
   copyProductModel,
+  createProductModelFolder,
+  deleteProductModelFolder,
   downloadProductModelExport,
+  moveProductModelFolderSibling,
+  moveProductModelsToFolder,
+  updateProductModelFolder,
 } from "@/app/(workspace)/settings/catalogs/product-models/product-model-actions";
+import { CatalogFolderMoveModal } from "@/components/settings/catalog-folder-move-modal";
+import { CatalogFolderTemplateModal } from "@/components/settings/catalog-folder-template-modal";
 import { ProductModelCreateDrawer } from "@/components/settings/product-model-create-drawer";
 import { ProductModelImportDrawer } from "@/components/settings/product-model-import-drawer";
 import { Button, IconButton } from "@/components/ui/button";
@@ -42,13 +61,20 @@ import {
   PRODUCT_MODEL_SIZE_TYPE_LABELS,
   PRODUCT_MODEL_STATUS_FILTER_ITEMS,
   PRODUCT_MODEL_STATUS_LABELS,
+  buildProductModelCatalogTreeRows,
+  compareProductModelsByListSort,
   filterProductModels,
   productModelCoverUrl,
   productModelStatusTone,
+  visibleProductModelCatalogTreeRows,
   type ProductModel,
+  type ProductModelFolder,
+  type ProductModelListSortDirection,
+  type ProductModelListSortField,
   type ProductModelStatus,
 } from "@/lib/product-models";
 import type { ProductType } from "@/lib/product-types";
+import type { SewingOperationTemplate } from "@/lib/sewing-operation-templates";
 import type { SizeGridListItem } from "@/lib/size-grids";
 
 const ROW_ICON_LINK =
@@ -91,21 +117,44 @@ function CoverThumb({
   );
 }
 
-/** PT-02 product-model catalog list (`DS-PT-02`). */
+function isDescendantFolder(
+  folders: ProductModelFolder[],
+  folderId: number,
+  ancestorId: number,
+): boolean {
+  const byId = new Map(folders.map((folder) => [folder.id, folder]));
+  let current: number | null = folderId;
+  const seen = new Set<number>();
+  while (current != null) {
+    if (current === ancestorId) return true;
+    if (seen.has(current)) return false;
+    seen.add(current);
+    current = byId.get(current)?.parent_id ?? null;
+  }
+  return false;
+}
+
+/** PT-02 product-model catalog list with folder tree (`DS-PT-02`, `6.1.18`). */
 export function ProductModelsWorkspace({
   models,
+  folders = [],
   sizeGrids,
   productTypes = [],
+  sewingTemplates = [],
   costByModelId = {},
 }: {
   models: ProductModel[];
+  folders?: ProductModelFolder[];
   sizeGrids: SizeGridListItem[];
   productTypes?: ProductType[];
+  sewingTemplates?: SewingOperationTemplate[];
   /** Precomputed «от–до» labels from assembly variant totals. */
   costByModelId?: Record<number, string>;
 }) {
   const router = useRouter();
   const [created, setCreated] = useState<ProductModel[]>([]);
+  const [patched, setPatched] = useState<Record<number, ProductModel>>({});
+  const [localFolders, setLocalFolders] = useState<ProductModelFolder[]>(folders);
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<"" | ProductModelStatus>("");
   const [productTypeFilter, setProductTypeFilter] = useState<number | null>(
@@ -113,16 +162,29 @@ export function ProductModelsWorkspace({
   );
   const [filterOpen, setFilterOpen] = useState(false);
   const [printSelectMode, setPrintSelectMode] = useState(false);
+  const [moveSelectMode, setMoveSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<number>>(() => new Set());
   const [lightbox, setLightbox] = useState<{ src: string; alt: string } | null>(
     null,
   );
   const [busyId, setBusyId] = useState<number | null>(null);
+  const [saving, setSaving] = useState(false);
   const [rowError, setRowError] = useState<string | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
+  const [createFolderId, setCreateFolderId] = useState<number | null>(null);
   const [importOpen, setImportOpen] = useState(false);
+  const [expandedIds, setExpandedIds] = useState<Set<number>>(() => new Set());
+  const [moveModalIds, setMoveModalIds] = useState<number[] | null>(null);
+  const [templateFolder, setTemplateFolder] = useState<ProductModelFolder | null>(
+    null,
+  );
   const [exportPending, startExportTransition] = useTransition();
   const [exportError, setExportError] = useState<string | null>(null);
+  const [sortField, setSortField] = useState<ProductModelListSortField | null>(
+    null,
+  );
+  const [sortDirection, setSortDirection] =
+    useState<ProductModelListSortDirection>("asc");
   const filterRef = useRef<HTMLDivElement>(null);
   const [mounted, setMounted] = useState(false);
 
@@ -130,11 +192,17 @@ export function ProductModelsWorkspace({
     setMounted(true);
   }, []);
 
+  useEffect(() => {
+    setLocalFolders(folders);
+  }, [folders]);
+
   const rows = useMemo(() => {
-    const knownIds = new Set(models.map((model) => model.id));
-    const pending = created.filter((model) => !knownIds.has(model.id));
-    return [...pending, ...models];
-  }, [created, models]);
+    const byId = new Map<number, ProductModel>();
+    for (const model of models) byId.set(model.id, model);
+    for (const model of created) byId.set(model.id, model);
+    for (const model of Object.values(patched)) byId.set(model.id, model);
+    return Array.from(byId.values());
+  }, [created, models, patched]);
 
   const filtered = useMemo(
     () =>
@@ -145,6 +213,73 @@ export function ProductModelsWorkspace({
       }),
     [rows, query, statusFilter, productTypeFilter],
   );
+
+  const sortLabels = useMemo(
+    () => ({
+      productType: (model: ProductModel) =>
+        model.product_type_name?.trim() ||
+        productTypes.find((row) => row.id === model.product_type_id)?.name ||
+        "",
+      sizeGrid: (model: ProductModel) => {
+        const grid = sizeGrids.find((row) => row.id === model.size_grid_id);
+        return grid
+          ? `${grid.name} · ${PRODUCT_MODEL_SIZE_TYPE_LABELS[grid.size_type]}`
+          : PRODUCT_MODEL_SIZE_TYPE_LABELS[model.size_type];
+      },
+      cost: (model: ProductModel): number | null => {
+        if (model.assembly_cost_min == null) return null;
+        const amount = Number(
+          String(model.assembly_cost_min).replace(",", "."),
+        );
+        return Number.isFinite(amount) ? amount : null;
+      },
+    }),
+    [productTypes, sizeGrids],
+  );
+
+  const changeSort = (field: ProductModelListSortField) => {
+    if (sortField === field) {
+      setSortDirection((current) => (current === "asc" ? "desc" : "asc"));
+      return;
+    }
+    setSortField(field);
+    setSortDirection("asc");
+  };
+
+  const treeRows = useMemo(
+    () =>
+      buildProductModelCatalogTreeRows(localFolders, filtered, {
+        compareModels:
+          sortField == null
+            ? undefined
+            : (a, b) =>
+                compareProductModelsByListSort(
+                  a,
+                  b,
+                  sortField,
+                  sortDirection,
+                  sortLabels,
+                ),
+      }),
+    [filtered, localFolders, sortDirection, sortField, sortLabels],
+  );
+
+  const searchActive = Boolean(query.trim()) || Boolean(statusFilter) || productTypeFilter != null;
+
+  const visibleRows = useMemo(() => {
+    if (searchActive) {
+      return treeRows.filter((row) => {
+        if (row.kind === "model") return true;
+        return filtered.some(
+          (model) =>
+            model.folder_id != null &&
+            (model.folder_id === row.id ||
+              isDescendantFolder(localFolders, model.folder_id, row.id)),
+        );
+      });
+    }
+    return visibleProductModelCatalogTreeRows(treeRows, expandedIds);
+  }, [expandedIds, filtered, localFolders, searchActive, treeRows]);
 
   const filtersActive = Boolean(statusFilter) || productTypeFilter != null;
 
@@ -167,14 +302,26 @@ export function ProductModelsWorkspace({
   }, [filterOpen]);
 
   const emptyDescription =
-    models.length === 0
-      ? "Каталог пуст. Создайте первую модель через кнопку «+»."
+    models.length === 0 && localFolders.length === 0
+      ? "Каталог пуст. Создайте папку или первую модель."
       : "Измените поиск, фильтр или сбросьте их.";
 
   const openLightbox = (src: string, alt: string) => setLightbox({ src, alt });
 
+  const toggleFolder = (folderId: number) => {
+    setExpandedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(folderId)) next.delete(folderId);
+      else next.add(folderId);
+      return next;
+    });
+  };
+
   const handleCreated = (model: ProductModel) => {
     setCreated((prev) => [model, ...prev.filter((row) => row.id !== model.id)]);
+    if (model.folder_id != null) {
+      setExpandedIds((prev) => new Set(prev).add(model.folder_id!));
+    }
     router.refresh();
   };
 
@@ -197,6 +344,171 @@ export function ProductModelsWorkspace({
     }
   };
 
+  const onCreateFolder = async (parentId: number | null) => {
+    const name = window.prompt(
+      parentId == null ? "Название папки (корень)" : "Название вложенной папки",
+    );
+    if (name == null) return;
+    setSaving(true);
+    setRowError(null);
+    try {
+      const result = await createProductModelFolder({
+        name,
+        parent_id: parentId,
+      });
+      if (!result.ok) {
+        setRowError(result.message);
+        setSaving(false);
+        return;
+      }
+      setLocalFolders((prev) => [...prev, result.folder]);
+      if (parentId != null) {
+        setExpandedIds((prev) => new Set(prev).add(parentId));
+      }
+      router.refresh();
+    } catch {
+      setRowError("Не удалось создать папку.");
+    }
+    setSaving(false);
+  };
+
+  const onRenameFolder = async (folder: ProductModelFolder) => {
+    const name = window.prompt("Переименовать папку", folder.name);
+    if (name == null || name.trim() === folder.name) return;
+    setSaving(true);
+    setRowError(null);
+    try {
+      const result = await updateProductModelFolder(folder.id, { name });
+      if (!result.ok) {
+        setRowError(result.message);
+        setSaving(false);
+        return;
+      }
+      setLocalFolders((prev) =>
+        prev.map((item) => (item.id === folder.id ? result.folder : item)),
+      );
+      router.refresh();
+    } catch {
+      setRowError("Не удалось переименовать папку.");
+    }
+    setSaving(false);
+  };
+
+  const onSaveFolderTemplate = async (templateId: number | null) => {
+    if (templateFolder == null) return;
+    setSaving(true);
+    setRowError(null);
+    try {
+      const result = await updateProductModelFolder(templateFolder.id, {
+        default_sewing_operation_template_id: templateId,
+      });
+      if (!result.ok) {
+        setRowError(result.message);
+        setSaving(false);
+        return;
+      }
+      setLocalFolders((prev) =>
+        prev.map((item) =>
+          item.id === templateFolder.id ? result.folder : item,
+        ),
+      );
+      setTemplateFolder(null);
+      router.refresh();
+    } catch {
+      setRowError("Не удалось сохранить шаблон папки.");
+    }
+    setSaving(false);
+  };
+
+  const onDeleteFolder = async (folder: ProductModelFolder) => {
+    if (!window.confirm(`Удалить папку «${folder.name}»? Она должна быть пустой.`)) {
+      return;
+    }
+    setSaving(true);
+    setRowError(null);
+    try {
+      const result = await deleteProductModelFolder(folder.id);
+      if (!result.ok) {
+        setRowError(result.message);
+        setSaving(false);
+        return;
+      }
+      setLocalFolders((prev) => prev.filter((item) => item.id !== folder.id));
+      router.refresh();
+    } catch {
+      setRowError("Не удалось удалить папку.");
+    }
+    setSaving(false);
+  };
+
+  const onMoveFolder = async (folderId: number, direction: "up" | "down") => {
+    setSaving(true);
+    setRowError(null);
+    try {
+      const result = await moveProductModelFolderSibling(folderId, direction);
+      if (!result.ok) {
+        setRowError(result.message);
+        setSaving(false);
+        return;
+      }
+      router.refresh();
+    } catch {
+      setRowError("Не удалось переместить папку.");
+    }
+    setSaving(false);
+  };
+
+  const onMoveModels = async (folderId: number | null) => {
+    if (moveModalIds == null || moveModalIds.length === 0) return;
+    setSaving(true);
+    setRowError(null);
+    try {
+      const result = await moveProductModelsToFolder(moveModalIds, folderId);
+      if (!result.ok) {
+        setRowError(result.message);
+        setSaving(false);
+        return;
+      }
+      setPatched((prev) => {
+        const next = { ...prev };
+        for (const model of result.models) next[model.id] = model;
+        return next;
+      });
+      setMoveModalIds(null);
+      setMoveSelectMode(false);
+      setSelectedIds(new Set());
+      if (folderId != null) {
+        setExpandedIds((prev) => new Set(prev).add(folderId));
+      }
+      router.refresh();
+    } catch {
+      setRowError("Не удалось переместить модели.");
+    }
+    setSaving(false);
+  };
+
+  const openMoveModal = (ids: number[]) => {
+    if (ids.length === 0) return;
+    setMoveModalIds(ids);
+    setRowError(null);
+  };
+
+  const onMoveToolbar = () => {
+    if (!moveSelectMode) {
+      setMoveSelectMode(true);
+      setPrintSelectMode(false);
+      setSelectedIds(new Set());
+      return;
+    }
+    if (selectedIds.size === 0) {
+      setMoveSelectMode(false);
+      return;
+    }
+    openMoveModal([...selectedIds]);
+  };
+
+  const selectMode = printSelectMode || moveSelectMode;
+
   const clearFilters = () => {
     setStatusFilter("");
     setProductTypeFilter(null);
@@ -212,19 +524,25 @@ export function ProductModelsWorkspace({
     });
   };
 
+  const filteredModels = useMemo(
+    () => visibleRows.filter((row) => row.kind === "model").map((row) => row.model),
+    [visibleRows],
+  );
+
   const allFilteredSelected =
-    filtered.length > 0 && filtered.every((model) => selectedIds.has(model.id));
+    filteredModels.length > 0 &&
+    filteredModels.every((model) => selectedIds.has(model.id));
 
   const toggleSelectAllFiltered = () => {
     setSelectedIds((prev) => {
-      if (filtered.length === 0) return prev;
-      if (filtered.every((model) => prev.has(model.id))) {
+      if (filteredModels.length === 0) return prev;
+      if (filteredModels.every((model) => prev.has(model.id))) {
         const next = new Set(prev);
-        for (const model of filtered) next.delete(model.id);
+        for (const model of filteredModels) next.delete(model.id);
         return next;
       }
       const next = new Set(prev);
-      for (const model of filtered) next.add(model.id);
+      for (const model of filteredModels) next.add(model.id);
       return next;
     });
   };
@@ -232,11 +550,12 @@ export function ProductModelsWorkspace({
   const onPrint = () => {
     if (!printSelectMode) {
       setPrintSelectMode(true);
+      setMoveSelectMode(false);
+      setSelectedIds(new Set());
       return;
     }
     if (selectedIds.size === 0) {
       setPrintSelectMode(false);
-      setSelectedIds(new Set());
       return;
     }
     window.alert(
@@ -267,11 +586,54 @@ export function ProductModelsWorkspace({
 
   const costLabel = (modelId: number) => costByModelId[modelId] ?? "—";
 
+  const folderMoveOptions = buildProductModelCatalogTreeRows(
+    localFolders,
+    [],
+  )
+    .filter((row) => row.kind === "folder")
+    .map((row) =>
+      row.kind === "folder"
+        ? { id: row.id, name: row.name, depth: row.depth }
+        : null,
+    )
+    .filter((row): row is { id: number; name: string; depth: number } => row != null);
+
+  const modelCountLabel = (count: number) => {
+    const mod10 = count % 10;
+    const mod100 = count % 100;
+    if (mod10 === 1 && mod100 !== 11) return `${count} модель`;
+    if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) {
+      return `${count} модели`;
+    }
+    return `${count} моделей`;
+  };
+
+  const modelMeta = (model: ProductModel) => {
+    const href = `/settings/catalogs/product-models/${model.id}`;
+    const grid = sizeGrids.find((row) => row.id === model.size_grid_id);
+    const gridLabel = grid
+      ? `${grid.name} · ${PRODUCT_MODEL_SIZE_TYPE_LABELS[grid.size_type]}`
+      : PRODUCT_MODEL_SIZE_TYPE_LABELS[model.size_type];
+    const productTypeLabel =
+      model.product_type_name?.trim() ||
+      productTypes.find((row) => row.id === model.product_type_id)?.name ||
+      "—";
+    return { href, gridLabel, productTypeLabel };
+  };
+
   const rowActions = (model: ProductModel) => {
     const href = `/settings/catalogs/product-models/${model.id}`;
-    const busy = busyId === model.id;
+    const busy = busyId === model.id || saving;
     return (
-      <div className="flex items-center gap-1" role="group" aria-label="Действия">
+      <div className="flex flex-wrap items-center justify-end gap-1" role="group" aria-label="Действия">
+        <IconButton
+          label={`Переместить ${model.name}`}
+          variant="secondary"
+          disabled={busy}
+          onClick={() => openMoveModal([model.id])}
+        >
+          <FolderInput className="size-4" aria-hidden="true" />
+        </IconButton>
         <IconButton
           label={`Копировать ${model.name}`}
           variant="secondary"
@@ -292,6 +654,72 @@ export function ProductModelsWorkspace({
     );
   };
 
+  const folderActions = (folder: ProductModelFolder) => (
+    <div className="flex items-center justify-end gap-0.5">
+      <IconButton
+        type="button"
+        label="Шаблон операций папки"
+        disabled={saving}
+        onClick={() => setTemplateFolder(folder)}
+      >
+        <Layers className="size-3.5" />
+      </IconButton>
+      <IconButton
+        type="button"
+        label="Создать вложенную папку"
+        disabled={saving}
+        onClick={() => void onCreateFolder(folder.id)}
+      >
+        <FolderPlus className="size-3.5" />
+      </IconButton>
+      <IconButton
+        type="button"
+        label="Создать модель в папке"
+        onClick={() => {
+          setCreateFolderId(folder.id);
+          setCreateOpen(true);
+          setExpandedIds((prev) => new Set(prev).add(folder.id));
+        }}
+      >
+        <Plus className="size-3.5" />
+      </IconButton>
+      <IconButton
+        type="button"
+        label="Переименовать папку"
+        disabled={saving}
+        onClick={() => void onRenameFolder(folder)}
+      >
+        <Pencil className="size-3.5" />
+      </IconButton>
+      <IconButton
+        type="button"
+        label="Папка выше"
+        disabled={saving}
+        onClick={() => void onMoveFolder(folder.id, "up")}
+      >
+        <ArrowUp className="size-3.5" />
+      </IconButton>
+      <IconButton
+        type="button"
+        label="Папка ниже"
+        disabled={saving}
+        onClick={() => void onMoveFolder(folder.id, "down")}
+      >
+        <ArrowDown className="size-3.5" />
+      </IconButton>
+      <IconButton
+        type="button"
+        label="Удалить папку"
+        disabled={saving}
+        onClick={() => void onDeleteFolder(folder)}
+      >
+        <Trash2 className="size-3.5" />
+      </IconButton>
+    </div>
+  );
+
+  const dataColSpan = selectMode ? 7 : 7;
+
   return (
     <div className="flex min-h-0 min-w-0 flex-1 flex-col">
       {lightbox ? (
@@ -304,14 +732,50 @@ export function ProductModelsWorkspace({
 
       <ProductModelCreateDrawer
         open={createOpen}
-        onClose={() => setCreateOpen(false)}
+        onClose={() => {
+          setCreateOpen(false);
+          setCreateFolderId(null);
+        }}
         onCreated={handleCreated}
         sizeGrids={sizeGrids}
+        folders={localFolders}
+        defaultFolderId={createFolderId}
       />
 
       <ProductModelImportDrawer
         open={importOpen}
         onClose={() => setImportOpen(false)}
+      />
+
+      <CatalogFolderTemplateModal
+        open={templateFolder != null}
+        folder={templateFolder}
+        templates={sewingTemplates}
+        busy={saving}
+        onClose={() => {
+          if (saving) return;
+          setTemplateFolder(null);
+        }}
+        onSave={onSaveFolderTemplate}
+      />
+
+      <CatalogFolderMoveModal
+        open={moveModalIds != null}
+        onClose={() => {
+          if (saving) return;
+          setMoveModalIds(null);
+        }}
+        onConfirm={onMoveModels}
+        folders={folderMoveOptions}
+        itemCount={moveModalIds?.length ?? 0}
+        itemLabel={modelCountLabel}
+        busy={saving}
+        initialFolderId={
+          moveModalIds?.length === 1
+            ? (rows.find((model) => model.id === moveModalIds[0])?.folder_id ??
+              null)
+            : null
+        }
       />
 
       <PageToolbar
@@ -418,6 +882,21 @@ export function ProductModelsWorkspace({
               >
                 <Printer className="size-4" aria-hidden="true" />
               </IconButton>
+              <IconButton
+                label={
+                  moveSelectMode
+                    ? selectedIds.size > 0
+                      ? `Переместить (${selectedIds.size})`
+                      : "Выйти из режима переноса"
+                    : "Переместить в папку"
+                }
+                variant={moveSelectMode ? "primary" : "secondary"}
+                aria-pressed={moveSelectMode}
+                disabled={saving}
+                onClick={onMoveToolbar}
+              >
+                <FolderInput className="size-4" aria-hidden="true" />
+              </IconButton>
               <Button
                 type="button"
                 size="compact"
@@ -441,11 +920,22 @@ export function ProductModelsWorkspace({
           </div>
         }
         end={
-          <div className="!w-auto shrink-0">
+          <div className="flex !w-auto shrink-0 items-center gap-1">
+            <IconButton
+              label="Создать папку"
+              variant="secondary"
+              disabled={saving}
+              onClick={() => void onCreateFolder(null)}
+            >
+              <FolderPlus className="size-4" aria-hidden="true" />
+            </IconButton>
             <IconButton
               label="Создать модель"
               variant="primary"
-              onClick={() => setCreateOpen(true)}
+              onClick={() => {
+                setCreateFolderId(null);
+                setCreateOpen(true);
+              }}
             >
               <Plus className="size-4" aria-hidden="true" />
             </IconButton>
@@ -476,7 +966,7 @@ export function ProductModelsWorkspace({
             <DataTable minWidthClassName="min-w-[860px]">
               <DataTableHead>
                 <tr>
-                  {printSelectMode ? (
+                  {selectMode ? (
                     <DataTableHeaderCell className="w-10">
                       <Checkbox
                         checked={allFilteredSelected}
@@ -486,169 +976,313 @@ export function ProductModelsWorkspace({
                     </DataTableHeaderCell>
                   ) : null}
                   <DataTableHeaderCell>Фото</DataTableHeaderCell>
-                  <DataTableHeaderCell>Артикул</DataTableHeaderCell>
-                  <DataTableHeaderCell>Название</DataTableHeaderCell>
-                  <DataTableHeaderCell>Вид изделия</DataTableHeaderCell>
-                  <DataTableHeaderCell>Размерная сетка</DataTableHeaderCell>
-                  <DataTableHeaderCell>Статус</DataTableHeaderCell>
-                  <DataTableHeaderCell>Стоимость от–до</DataTableHeaderCell>
+                  <SortableHeading
+                    label="Артикул"
+                    active={sortField === "article"}
+                    direction={sortDirection}
+                    onClick={() => changeSort("article")}
+                  />
+                  <SortableHeading
+                    label="Название"
+                    active={sortField === "name"}
+                    direction={sortDirection}
+                    onClick={() => changeSort("name")}
+                  />
+                  <SortableHeading
+                    label="Вид изделия"
+                    active={sortField === "product_type"}
+                    direction={sortDirection}
+                    onClick={() => changeSort("product_type")}
+                  />
+                  <SortableHeading
+                    label="Размерная сетка"
+                    active={sortField === "size_grid"}
+                    direction={sortDirection}
+                    onClick={() => changeSort("size_grid")}
+                  />
+                  <SortableHeading
+                    label="Статус"
+                    active={sortField === "status"}
+                    direction={sortDirection}
+                    onClick={() => changeSort("status")}
+                  />
+                  <SortableHeading
+                    label="Стоимость от–до"
+                    active={sortField === "cost"}
+                    direction={sortDirection}
+                    onClick={() => changeSort("cost")}
+                  />
                   <DataTableHeaderCell>Действие</DataTableHeaderCell>
                 </tr>
               </DataTableHead>
               <DataTableBody>
-                {filtered.map((model) => {
-                  const href = `/settings/catalogs/product-models/${model.id}`;
-                  const grid = sizeGrids.find(
-                    (row) => row.id === model.size_grid_id,
-                  );
-                  const gridLabel = grid
-                    ? `${grid.name} · ${PRODUCT_MODEL_SIZE_TYPE_LABELS[grid.size_type]}`
-                    : PRODUCT_MODEL_SIZE_TYPE_LABELS[model.size_type];
-                  const productTypeLabel =
-                    model.product_type_name?.trim() ||
-                    productTypes.find((row) => row.id === model.product_type_id)
-                      ?.name ||
-                    "—";
-                  const checked = selectedIds.has(model.id);
+                {visibleRows.length === 0 ? (
+                  <DataTableRow>
+                    <DataTableCell colSpan={selectMode ? 9 : 8}>
+                      <EmptyState
+                        title={
+                          models.length === 0 && localFolders.length === 0
+                            ? "Моделей изделий пока нет"
+                            : "Модели не найдены"
+                        }
+                        description={emptyDescription}
+                        size="compact"
+                      />
+                    </DataTableCell>
+                  </DataTableRow>
+                ) : (
+                  visibleRows.map((row) => {
+                    if (row.kind === "folder") {
+                      const expanded =
+                        expandedIds.has(row.id) || searchActive;
+                      return (
+                        <DataTableRow
+                          key={`folder-${row.id}`}
+                          className="bg-portal-surface-2/40"
+                        >
+                          {selectMode ? <DataTableCell /> : null}
+                          <DataTableCell colSpan={dataColSpan}>
+                            <div
+                              className="flex items-center gap-1"
+                              style={{ paddingLeft: `${row.depth * 1.25}rem` }}
+                            >
+                              <IconButton
+                                type="button"
+                                label={expanded ? "Свернуть" : "Развернуть"}
+                                onClick={() => toggleFolder(row.id)}
+                              >
+                                {expanded ? (
+                                  <ChevronDown className="size-4" />
+                                ) : (
+                                  <ChevronRight className="size-4" />
+                                )}
+                              </IconButton>
+                              {expanded ? (
+                                <FolderOpen className="size-4 text-portal-muted" />
+                              ) : (
+                                <Folder className="size-4 text-portal-muted" />
+                              )}
+                              <div className="min-w-0">
+                                <span className="font-medium">{row.name}</span>
+                                {row.folder.default_sewing_operation_template_name ? (
+                                  <p className="truncate text-portal-caption text-portal-muted">
+                                    Шаблон: {row.folder.default_sewing_operation_template_name}
+                                  </p>
+                                ) : null}
+                              </div>
+                            </div>
+                          </DataTableCell>
+                          <DataTableCell>
+                            {folderActions(row.folder)}
+                          </DataTableCell>
+                        </DataTableRow>
+                      );
+                    }
 
-                  return (
-                    <DataTableRow key={model.id}>
-                      {printSelectMode ? (
+                    const model = row.model;
+                    const { href, gridLabel, productTypeLabel } =
+                      modelMeta(model);
+                    const checked = selectedIds.has(model.id);
+
+                    return (
+                      <DataTableRow key={`model-${model.id}`}>
+                        {selectMode ? (
+                          <DataTableCell>
+                            <Checkbox
+                              checked={checked}
+                              aria-label={`Выбрать ${model.name}`}
+                              onChange={() => toggleSelected(model.id)}
+                            />
+                          </DataTableCell>
+                        ) : null}
                         <DataTableCell>
-                          <Checkbox
-                            checked={checked}
-                            aria-label={`Выбрать ${model.name}`}
-                            onChange={() => toggleSelected(model.id)}
-                          />
+                          <div
+                            style={{ paddingLeft: `${row.depth * 1.25}rem` }}
+                          >
+                            <CoverThumb model={model} onOpen={openLightbox} />
+                          </div>
                         </DataTableCell>
-                      ) : null}
-                      <DataTableCell>
-                        <CoverThumb model={model} onOpen={openLightbox} />
-                      </DataTableCell>
-                      <DataTableCell className="font-medium">
-                        <Link
-                          href={href}
-                          className="font-mono text-portal-text hover:text-portal-primary hover:underline"
-                        >
-                          {model.article}
-                        </Link>
-                      </DataTableCell>
-                      <DataTableCell>
-                        <Link
-                          href={href}
-                          className="font-medium text-portal-text hover:text-portal-primary hover:underline"
-                        >
-                          {model.name}
-                        </Link>
-                      </DataTableCell>
-                      <DataTableCell>{productTypeLabel}</DataTableCell>
-                      <DataTableCell>{gridLabel}</DataTableCell>
-                      <DataTableCell>
-                        <StatusBadge
-                          size="compact"
-                          tone={productModelStatusTone(model.status)}
-                        >
-                          {PRODUCT_MODEL_STATUS_LABELS[model.status]}
-                        </StatusBadge>
-                      </DataTableCell>
-                      <DataTableCell>{costLabel(model.id)}</DataTableCell>
-                      <DataTableCell>{rowActions(model)}</DataTableCell>
-                    </DataTableRow>
-                  );
-                })}
+                        <DataTableCell className="font-medium">
+                          <Link
+                            href={href}
+                            className="font-mono text-portal-text hover:text-portal-primary hover:underline"
+                          >
+                            {model.article}
+                          </Link>
+                        </DataTableCell>
+                        <DataTableCell>
+                          <Link
+                            href={href}
+                            className="font-medium text-portal-text hover:text-portal-primary hover:underline"
+                          >
+                            {model.name}
+                          </Link>
+                        </DataTableCell>
+                        <DataTableCell>{productTypeLabel}</DataTableCell>
+                        <DataTableCell>{gridLabel}</DataTableCell>
+                        <DataTableCell>
+                          <StatusBadge
+                            size="compact"
+                            tone={productModelStatusTone(model.status)}
+                          >
+                            {PRODUCT_MODEL_STATUS_LABELS[model.status]}
+                          </StatusBadge>
+                        </DataTableCell>
+                        <DataTableCell>{costLabel(model.id)}</DataTableCell>
+                        <DataTableCell>{rowActions(model)}</DataTableCell>
+                      </DataTableRow>
+                    );
+                  })
+                )}
               </DataTableBody>
             </DataTable>
-            {filtered.length === 0 ? (
-              <div className="p-portal-6">
-                <EmptyState
-                  title={
-                    models.length === 0
-                      ? "Моделей изделий пока нет"
-                      : "Модели не найдены"
-                  }
-                  description={emptyDescription}
-                  size="compact"
-                />
-              </div>
-            ) : null}
           </DataTableFrame>
         </div>
 
         {mounted ? (
-        <div className="min-w-0 space-y-portal-3 border-b border-portal-border bg-portal-surface-secondary p-portal-3 md:hidden">
-          {filtered.length === 0 ? (
-            <EmptyState
-              title={
-                models.length === 0
-                  ? "Моделей изделий пока нет"
-                  : "Модели не найдены"
-              }
-              description={emptyDescription}
-              size="compact"
-            />
-          ) : (
-            filtered.map((model) => {
-              const href = `/settings/catalogs/product-models/${model.id}`;
-              const grid = sizeGrids.find((row) => row.id === model.size_grid_id);
-              const gridLabel = grid
-                ? `${grid.name} · ${PRODUCT_MODEL_SIZE_TYPE_LABELS[grid.size_type]}`
-                : PRODUCT_MODEL_SIZE_TYPE_LABELS[model.size_type];
-              const productTypeLabel =
-                model.product_type_name?.trim() ||
-                productTypes.find((row) => row.id === model.product_type_id)
-                  ?.name ||
-                "—";
-
-              return (
-                <article
-                  key={model.id}
-                  className="min-w-0 rounded-portal-lg border border-portal-border bg-portal-surface p-portal-4 shadow-portal-sm"
-                >
-                  <div className="flex min-w-0 items-start justify-between gap-portal-3">
-                    <div className="flex min-w-0 flex-1 items-start gap-portal-3">
-                      {printSelectMode ? (
-                        <Checkbox
-                          checked={selectedIds.has(model.id)}
-                          aria-label={`Выбрать ${model.name}`}
-                          onChange={() => toggleSelected(model.id)}
-                          className="mt-1 shrink-0"
-                        />
-                      ) : null}
-                      <CoverThumb model={model} onOpen={openLightbox} />
-                      <div className="min-w-0 flex-1 space-y-portal-2">
-                        <h3 className="truncate text-portal-body font-semibold text-portal-text">
-                          <Link
-                            href={href}
-                            className="hover:text-portal-primary hover:underline"
-                          >
-                            {model.name}
-                          </Link>
-                        </h3>
-                        <p className="truncate text-portal-caption text-portal-muted">
-                          {model.article} · {productTypeLabel} · {gridLabel}
-                        </p>
-                        <p className="text-portal-caption text-portal-muted">
-                          Стоимость от–до: {costLabel(model.id)}
-                        </p>
-                        {rowActions(model)}
-                      </div>
-                    </div>
-                    <StatusBadge
-                      size="compact"
-                      tone={productModelStatusTone(model.status)}
+          <div className="min-w-0 space-y-portal-3 border-b border-portal-border bg-portal-surface-secondary p-portal-3 md:hidden">
+            {visibleRows.length === 0 ? (
+              <EmptyState
+                title={
+                  models.length === 0 && localFolders.length === 0
+                    ? "Моделей изделий пока нет"
+                    : "Модели не найдены"
+                }
+                description={emptyDescription}
+                size="compact"
+              />
+            ) : (
+              visibleRows.map((row) => {
+                if (row.kind === "folder") {
+                  const expanded = expandedIds.has(row.id) || searchActive;
+                  return (
+                    <article
+                      key={`folder-m-${row.id}`}
+                      className="min-w-0 rounded-portal-lg border border-portal-border bg-portal-surface-2/40 p-portal-3"
+                      style={{ marginLeft: `${row.depth * 0.75}rem` }}
                     >
-                      {PRODUCT_MODEL_STATUS_LABELS[model.status]}
-                    </StatusBadge>
-                  </div>
-                </article>
-              );
-            })
-          )}
-        </div>
+                      <div className="flex items-center justify-between gap-2">
+                        <button
+                          type="button"
+                          className="flex min-w-0 flex-1 items-center gap-1 text-left"
+                          onClick={() => toggleFolder(row.id)}
+                        >
+                          {expanded ? (
+                            <ChevronDown className="size-4 shrink-0" />
+                          ) : (
+                            <ChevronRight className="size-4 shrink-0" />
+                          )}
+                          {expanded ? (
+                            <FolderOpen className="size-4 shrink-0 text-portal-muted" />
+                          ) : (
+                            <Folder className="size-4 shrink-0 text-portal-muted" />
+                          )}
+                          <div className="min-w-0">
+                          <span className="truncate font-medium">{row.name}</span>
+                          {row.folder.default_sewing_operation_template_name ? (
+                            <p className="truncate text-portal-caption text-portal-muted">
+                              Шаблон: {row.folder.default_sewing_operation_template_name}
+                            </p>
+                          ) : null}
+                        </div>
+                        </button>
+                        {folderActions(row.folder)}
+                      </div>
+                    </article>
+                  );
+                }
+
+                const model = row.model;
+                const { href, gridLabel, productTypeLabel } = modelMeta(model);
+
+                return (
+                  <article
+                    key={`model-m-${model.id}`}
+                    className="min-w-0 rounded-portal-lg border border-portal-border bg-portal-surface p-portal-4 shadow-portal-sm"
+                    style={{ marginLeft: `${row.depth * 0.75}rem` }}
+                  >
+                    <div className="flex min-w-0 items-start justify-between gap-portal-3">
+                      <div className="flex min-w-0 flex-1 items-start gap-portal-3">
+                        {selectMode ? (
+                          <Checkbox
+                            checked={selectedIds.has(model.id)}
+                            aria-label={`Выбрать ${model.name}`}
+                            onChange={() => toggleSelected(model.id)}
+                            className="mt-1 shrink-0"
+                          />
+                        ) : null}
+                        <CoverThumb model={model} onOpen={openLightbox} />
+                        <div className="min-w-0 flex-1 space-y-portal-2">
+                          <h3 className="truncate text-portal-body font-semibold text-portal-text">
+                            <Link
+                              href={href}
+                              className="hover:text-portal-primary hover:underline"
+                            >
+                              {model.name}
+                            </Link>
+                          </h3>
+                          <p className="truncate text-portal-caption text-portal-muted">
+                            {model.article} · {productTypeLabel} · {gridLabel}
+                          </p>
+                          <p className="text-portal-caption text-portal-muted">
+                            Стоимость от–до: {costLabel(model.id)}
+                          </p>
+                          {rowActions(model)}
+                        </div>
+                      </div>
+                      <StatusBadge
+                        size="compact"
+                        tone={productModelStatusTone(model.status)}
+                      >
+                        {PRODUCT_MODEL_STATUS_LABELS[model.status]}
+                      </StatusBadge>
+                    </div>
+                  </article>
+                );
+              })
+            )}
+          </div>
         ) : null}
 
-        <ListTotals primary={`Всего: ${filtered.length} моделей`} />
+        <ListTotals
+          primary={`Всего: ${filtered.length} моделей · Папок: ${localFolders.length}`}
+        />
       </section>
     </div>
+  );
+}
+
+function SortableHeading({
+  label,
+  active,
+  direction,
+  onClick,
+}: {
+  label: string;
+  active: boolean;
+  direction: ProductModelListSortDirection;
+  onClick: () => void;
+}) {
+  const Icon = !active ? ArrowDownUp : direction === "asc" ? ArrowUp : ArrowDown;
+  return (
+    <DataTableHeaderCell
+      aria-sort={
+        active ? (direction === "asc" ? "ascending" : "descending") : "none"
+      }
+    >
+      <button
+        type="button"
+        onClick={onClick}
+        className={[
+          "inline-flex items-center gap-1.5 whitespace-nowrap font-inherit text-inherit uppercase tracking-wide",
+          "text-portal-caption font-semibold",
+          active ? "text-portal-primary" : "text-portal-muted",
+          "hover:text-portal-primary",
+        ].join(" ")}
+      >
+        {label}
+        <Icon size={13} aria-hidden="true" />
+      </button>
+    </DataTableHeaderCell>
   );
 }

@@ -30,6 +30,8 @@
 | `constructor_name` | string, nullable | Конструктор (card, 1 col) — `6.1.10.6` |
 | `patterns_created_on` | date, nullable | Дата создания лекал (card, 1 col) — `6.1.10.6` |
 | `cover_image_url` | string, nullable | Optional cover/thumbnail URL (list + card preview; full media gallery later) |
+| `folder_id` | FK → `ProductModelFolder`, nullable | `NULL` = root of catalog (`6.1.18`) |
+| `sort_order` | integer | `≥ 0`; sibling order among models in the same folder (or root) |
 | `status` | enum | See §4 (`draft` \| `active` \| `archived`) |
 | `size_grid_id` | FK, nullable | Single UI field «Размерная сетка»; required before activate — see §3 |
 | `created_at` / `updated_at` | timestamptz | Timezone-aware |
@@ -46,6 +48,32 @@ create → draft
 ```
 
 Default on create: `draft`.
+
+### 2.3 ProductModelFolder (`6.1.18`)
+
+Navigation folders for the product-models catalog list (parent/child), same pattern as sewing-ops folders (`6.3.11`). Folders are **not** snapshot targets and do **not** change the flat `1 model = 1 size_type = 1 article` rule.
+
+| Field | Type | Rules |
+|---|---|---|
+| `id` | PK | Surrogate key |
+| `name` | string | Required; trim; non-empty; **unique among siblings** (same `parent_id`, case-insensitive) |
+| `parent_id` | FK → self, nullable | `NULL` = root folder; cycle-safe moves |
+| `sort_order` | integer | `≥ 0`; sibling order among folders under the same parent |
+| `default_sewing_operation_template_id` | FK → `SewingOperationTemplate`, nullable (`6.1.19`) | At most **one** default template per folder; `ON DELETE SET NULL`; not a snapshot target |
+| `created_at` / `updated_at` | timestamptz | Timezone-aware |
+
+Delete folder only when it has **no child folders** and **no product models** (RESTRICT).
+
+**Default template seed (`6.1.19`):** when a **new** product model is created with `folder_id` pointing at a folder that has `default_sewing_operation_template_id`, the service creates one assembly variant named «Базовый» and copy-on-pick snapshots the template’s sewing ops (same contour as `6.3.13`). Empty template → no variant. Later edits to the template or folder default **do not** rewrite existing variants. Moving a model into a folder **does not** replace non-empty assembly lines.
+
+**Tree order** within one parent (including catalog root):
+
+1. Folders by `sort_order ASC`, then `lower(name)`, then `id`
+2. Then models by `sort_order ASC`, then `lower(name)`, then `id`
+
+Sibling ↑/↓ swaps `sort_order` among folders under the same parent. Moving a model sets `folder_id` (nullable root) via `PATCH /product-models/{id}` `{ folder_id }`.
+
+**API:** `/product-model-folders` CRUD + `POST .../move-sibling`; models carry `folder_id` / `sort_order` on create/update/list.
 
 ## 3. Links to size grid and pattern set (`6.1.1.2`)
 

@@ -22,6 +22,7 @@ from app.models.nomenclature import Nomenclature, NomenclatureType
 from app.models.product_model import ProductModel, ProductModelOperationNorm
 from app.models.production_stage import ProductionStage
 from app.models.sales import Client, SalesOrder, SalesOrderItem, SalesUser
+from app.models.size_grid import SizeGrid
 from app.models.tech_operation import TechOperation, TechOperationRequiredMaterial
 from app.models.technical_card import (
     TechnicalCard,
@@ -52,8 +53,10 @@ from app.schemas.technical_card import (
     TechnicalCardUnitLineImportRow,
     TechnicalCardUnitLineUpdate,
     TechnicalCardUnitLineWrite,
+    map_product_model_size_type_to_unit_line,
 )
 from app.services.technical_card_settings import get_technical_card_settings
+from app.services.file_io import FileIoParseError, parse_tabular_bytes
 
 MEDIA_ROOT = Path("storage/technical-card-media").resolve()
 MAX_TECH_CARD_MEDIA = 3
@@ -224,6 +227,12 @@ def to_technical_card_read(db: Session, card: TechnicalCard) -> TechnicalCardRea
         for snap in snapshots
     ]
 
+    product_model_cover_image_url: str | None = None
+    if card.product_model_id is not None:
+        model = db.get(ProductModel, card.product_model_id)
+        if model is not None and model.cover_image_url and model.cover_image_url.strip():
+            product_model_cover_image_url = model.cover_image_url.strip()
+
     data = {column.name: getattr(card, column.name) for column in TechnicalCard.__table__.columns}
     data["composition_lines"] = list(card.composition_lines)
     data["unit_lines"] = list(card.unit_lines)
@@ -231,6 +240,7 @@ def to_technical_card_read(db: Session, card: TechnicalCard) -> TechnicalCardRea
     data["stage_results"] = list(card.stage_results)
     data["media_items"] = media_items
     data["assembly_sewing_operations"] = assembly_sewing_operations
+    data["product_model_cover_image_url"] = product_model_cover_image_url
     data["order_number"] = order_number
     data["client_name"] = client_name
     data["responsible_name"] = responsible_name
@@ -378,7 +388,7 @@ def _default_unit_line(
     return TechnicalCardUnitLine(
         unit_index=unit_index,
         size_type=(
-            item.product_model_size_type
+            map_product_model_size_type_to_unit_line(item.product_model_size_type)
             if settings.unit_field_size_type_enabled
             else None
         ),
@@ -621,21 +631,54 @@ def _sync_sewing_operation_lines(db: Session, card: TechnicalCard) -> None:
     db.flush()
 
 
-def _apply_routing_snapshot_from_model(db: Session, card: TechnicalCard) -> None:
-    """Snapshot ProductModel.default routing into TC header, stage_results, op-volume lines."""
-    if card.product_model_id is None:
-        _sync_sewing_operation_lines(db, card)
+def _ensure_routing_template_allowed_for_model(
+    db: Session,
+    product_model_id: int | None,
+    routing_template_id: int,
+) -> None:
+    """Reject foreign routings when the model whitelist is non-empty (`8.2.3.7` / `6.1.17`).
+
+    Empty whitelist (or no model) keeps the global `/shop-routings` catalog usable.
+    """
+    if product_model_id is None:
         return
-    model = db.get(ProductModel, card.product_model_id)
-    if model is None or model.default_routing_template_id is None:
+    allowed = product_model_routings_repo.list_template_ids(
+        db, product_model_id, active_only=True
+    )
+    if not allowed:
+        return
+    if routing_template_id not in allowed:
+        raise TechnicalCardValidationError(
+            "Routing template is not in the product model routing whitelist"
+        )
+
+
+def _apply_routing_snapshot_from_model(
+    db: Session,
+    card: TechnicalCard,
+    *,
+    item: SalesOrderItem | None = None,
+) -> None:
+    """Snapshot routing into TC: prefer order-item template, else model default."""
+    if item is None and card.sales_order_item_id is not None:
+        item = db.get(SalesOrderItem, card.sales_order_item_id)
+
+    template_id: int | None = None
+    if item is not None and item.routing_template_id is not None:
+        template_id = item.routing_template_id
+    elif card.product_model_id is not None:
+        model = db.get(ProductModel, card.product_model_id)
+        if model is not None and model.default_routing_template_id is not None:
+            template_id = model.default_routing_template_id
+
+    if template_id is None:
         _sync_sewing_operation_lines(db, card)
         return
 
     from app.repositories import shop_routings as shop_routings_repo
 
-    template = shop_routings_repo.get_routing_template(
-        db, model.default_routing_template_id
-    )
+    _ensure_routing_template_allowed_for_model(db, card.product_model_id, template_id)
+    template = shop_routings_repo.get_routing_template(db, template_id)
     if template is None or not template.is_active:
         _sync_sewing_operation_lines(db, card)
         return
@@ -672,6 +715,10 @@ def apply_routing_template(
         raise TechnicalCardNotFoundError("Routing template not found")
     if not template.is_active:
         raise TechnicalCardValidationError("Routing template is inactive")
+
+    _ensure_routing_template_allowed_for_model(
+        db, card.product_model_id, routing_template_id
+    )
 
     _apply_routing_template(db, card, template)
     _sync_sewing_operation_lines(db, card)
@@ -1055,7 +1102,7 @@ def _build_new_card(
     for index in range(1, unit_line_count_from_quantity(item.quantity) + 1):
         card.unit_lines.append(_default_unit_line(item, index, settings=settings))
     _seed_pattern_line_from_model(db, card)
-    _apply_routing_snapshot_from_model(db, card)
+    _apply_routing_snapshot_from_model(db, card, item=item)
     _sync_route_required_materials_to_composition(db, card)
     # MATERIAL planned_qty hints apply when materials are added with stage (`9.3.4.2`).
     _apply_planned_qty_hints_to_composition(db, card)
@@ -1094,7 +1141,7 @@ def _revive_cancelled_card(
     for index in range(1, unit_line_count_from_quantity(item.quantity) + 1):
         card.unit_lines.append(_default_unit_line(item, index, settings=settings))
     _seed_pattern_line_from_model(db, card)
-    _apply_routing_snapshot_from_model(db, card)
+    _apply_routing_snapshot_from_model(db, card, item=item)
     _sync_route_required_materials_to_composition(db, card)
     _apply_planned_qty_hints_to_composition(db, card)
     db.flush()
@@ -1688,7 +1735,7 @@ def reset_unit_lines_from_order_defaults(db: Session, card_id: int) -> Technical
     sync_unit_lines(db, card, item)
     for line in card.unit_lines:
         line.size_type = (
-            item.product_model_size_type
+            map_product_model_size_type_to_unit_line(item.product_model_size_type)
             if settings.unit_field_size_type_enabled
             else None
         )
@@ -1717,7 +1764,7 @@ def import_unit_lines(
     total = sum(row.quantity for row in items)
     if total != expected:
         raise TechnicalCardValidationError(
-            f"Imported quantity total must equal order quantity ({expected})"
+            f"Сумма значений в колонке «Количество» должна совпадать с количеством в техкарте ({expected})"
         )
 
     expanded: list[TechnicalCardUnitLineWrite] = []
@@ -1747,6 +1794,204 @@ def import_unit_lines(
             )
             next_index += 1
     return replace_unit_lines(db, card_id, expanded)
+
+
+_UNIT_LINE_IMPORT_TEMPLATE_COLUMNS = {
+    "Номер": "print_number",
+    "Имя": "personalization",
+    "Тип размера": "size_type",
+    "Размер": "size",
+    "Рост": "height",
+    "Количество": "quantity",
+}
+
+
+def import_unit_lines_from_template_file(
+    db: Session,
+    card_id: int,
+    data: bytes,
+    *,
+    filename: str | None = None,
+    content_type: str | None = None,
+    sheet_name: str | None = None,
+) -> TechnicalCard:
+    """Import aggregate unit-line rows from the technical-card XLSX template."""
+    try:
+        table = parse_tabular_bytes(
+            data,
+            filename=filename,
+            content_type=content_type,
+            sheet_name=sheet_name,
+        )
+    except FileIoParseError as error:
+        raise TechnicalCardValidationError(str(error)) from error
+
+    present_headers = {header.strip() for header in table.headers}
+    missing = [
+        header
+        for header in _UNIT_LINE_IMPORT_TEMPLATE_COLUMNS
+        if header not in present_headers
+    ]
+    if missing:
+        raise TechnicalCardValidationError(
+            "Missing required import columns: " + ", ".join(missing)
+        )
+
+    rows: list[TechnicalCardUnitLineImportRow] = []
+    for index, raw in enumerate(table.rows, start=1):
+        mapped = {
+            target: raw.get(source)
+            for source, target in _UNIT_LINE_IMPORT_TEMPLATE_COLUMNS.items()
+        }
+        _validate_unit_line_template_size(
+            db,
+            size_type_label=raw.get("Тип размера"),
+            size_value=raw.get("Размер"),
+            row_number=index,
+        )
+        rows.append(_unit_line_import_row_from_template(mapped, row_number=index))
+
+    if not rows:
+        raise TechnicalCardValidationError("Import file has no data rows")
+
+    return import_unit_lines(db, card_id, rows)
+
+
+def _unit_line_import_row_from_template(
+    row: dict[str, str | None],
+    *,
+    row_number: int,
+) -> TechnicalCardUnitLineImportRow:
+    return TechnicalCardUnitLineImportRow(
+        size_type=_normalize_unit_line_template_size_type(
+            row.get("size_type"), row_number=row_number
+        ),
+        size=_optional_template_text(row.get("size")),
+        personalization=_optional_template_text(row.get("personalization")),
+        print_number=_optional_template_print_number(row.get("print_number")),
+        quantity=_parse_unit_line_import_quantity(
+            row.get("quantity"), row_number=row_number
+        ),
+        notes=None,
+    )
+
+
+def _parse_unit_line_import_quantity(
+    value: str | None,
+    *,
+    row_number: int,
+) -> int:
+    if value is None or not str(value).strip():
+        raise TechnicalCardValidationError(
+            f"Row {row_number}: column 'Количество' is required"
+        )
+    normalized = str(value).strip().replace(" ", "").replace(",", ".")
+    try:
+        quantity = Decimal(normalized)
+    except InvalidOperation as error:
+        raise TechnicalCardValidationError(
+            f"Row {row_number}: column 'Количество' must be a whole number >= 1"
+        ) from error
+    if quantity < 1 or quantity != quantity.to_integral_value():
+        raise TechnicalCardValidationError(
+            f"Row {row_number}: column 'Количество' must be a whole number >= 1"
+        )
+    return int(quantity)
+
+
+def _normalize_unit_line_template_size_type(
+    value: str | None,
+    *,
+    row_number: int,
+) -> str | None:
+    normalized = _optional_template_text(value)
+    if normalized is None:
+        raise TechnicalCardValidationError(
+            f"Row {row_number}: column 'Тип размера' is required"
+        )
+    lowered = normalized.casefold()
+    if "муж" in lowered or lowered in {"male", "men"}:
+        return "male"
+    if "жен" in lowered or lowered in {"female", "women"}:
+        return "female"
+    raise TechnicalCardValidationError(
+        f"Row {row_number}: unsupported 'Тип размера' value '{normalized}'"
+    )
+
+
+def _validate_unit_line_template_size(
+    db: Session,
+    *,
+    size_type_label: str | None,
+    size_value: str | None,
+    row_number: int,
+) -> None:
+    grid_name = _optional_template_text(size_type_label)
+    if grid_name is None:
+        raise TechnicalCardValidationError(
+            f"Строка {row_number}: колонка «Тип размера» обязательна"
+        )
+
+    grid = _find_size_grid_for_unit_line_import(db, grid_name)
+    if grid is None:
+        raise TechnicalCardValidationError(
+            f"Строка {row_number}: размерная сетка «{grid_name}» не найдена"
+        )
+
+    ru_size, int_label = _split_unit_line_template_size(size_value, row_number=row_number)
+    if not any(
+        row.ru_size.strip() == ru_size and row.int_label.strip() == int_label
+        for row in grid.rows
+    ):
+        raise TechnicalCardValidationError(
+            f"Строка {row_number}: размер не найден в сетке «{grid.name}»"
+        )
+
+
+def _find_size_grid_for_unit_line_import(
+    db: Session,
+    grid_name: str,
+) -> SizeGrid | None:
+    normalized = grid_name.strip()
+    if not normalized:
+        return None
+    return db.scalar(
+        select(SizeGrid)
+        .options(selectinload(SizeGrid.rows))
+        .where(func.lower(SizeGrid.name) == normalized.lower())
+    )
+
+
+def _split_unit_line_template_size(
+    value: str | None,
+    *,
+    row_number: int,
+) -> tuple[str, str]:
+    normalized = _optional_template_text(value)
+    if normalized is None:
+        raise TechnicalCardValidationError(
+            f"Строка {row_number}: колонка «Размер» обязательна"
+        )
+    parts = [part.strip() for part in normalized.split("/", 1)]
+    if len(parts) != 2 or not parts[0] or not parts[1]:
+        raise TechnicalCardValidationError(
+            f"Строка {row_number}: размер должен быть в формате RU/INT, например 32/134"
+        )
+    return parts[0], parts[1]
+
+
+def _optional_template_print_number(value: str | None) -> str | None:
+    normalized = _optional_template_text(value)
+    if normalized in {None, "-"}:
+        return None
+    return normalized
+
+
+def _optional_template_text(value: str | None) -> str | None:
+    if value is None:
+        return None
+    text = str(value).strip()
+    return text or None
 
 
 def _assert_operation_lines_editable(card: TechnicalCard) -> None:

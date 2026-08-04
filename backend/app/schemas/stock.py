@@ -31,7 +31,7 @@ class StockDocumentLineCreate(BaseModel):
 
 
 class StockDocumentCreate(BaseModel):
-    doc_type: str = Field(pattern="^(receipt|issue)$")
+    doc_type: str = Field(pattern="^(receipt|issue|fg_receipt|fg_issue)$")
     warehouse_id: int = Field(ge=1)
     lines: list[StockDocumentLineCreate] = Field(min_length=1)
     notes: str | None = Field(default=None, max_length=4000)

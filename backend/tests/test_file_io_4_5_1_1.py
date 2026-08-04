@@ -55,6 +55,21 @@ def test_parse_csv_semicolon_and_empty_cells() -> None:
     assert table.rows[1]["price"] is None
 
 
+def test_parse_csv_semicolon_when_cells_contain_commas() -> None:
+    """Regression: RU `;` export must not collapse when names include commas."""
+    raw = (
+        "id;article;name;size_type\n"
+        "1;106.1.1;Волейбольная ф-ка, О-обр;men\n"
+        "2;106.1.2;Волейбольная ф-ка, V-обр;women\n"
+    ).encode("utf-8")
+    table = parse_tabular_bytes(raw, filename="product-model-export.csv")
+    assert table.headers == ["id", "article", "name", "size_type"]
+    assert len(table.rows) == 2
+    assert table.rows[0]["article"] == "106.1.1"
+    assert table.rows[0]["name"] == "Волейбольная ф-ка, О-обр"
+    assert table.rows[1]["size_type"] == "women"
+
+
 def test_parse_xlsx_and_sheet_name() -> None:
     data = _xlsx_bytes(
         [

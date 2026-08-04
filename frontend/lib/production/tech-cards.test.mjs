@@ -268,8 +268,9 @@ test("techCardDocumentNumberLabel joins order and card", () => {
 });
 
 test("unitLineSizeTypeLabel localizes known size types", () => {
+  assert.equal(unitLineSizeTypeLabel("male"), "Мужской");
+  assert.equal(unitLineSizeTypeLabel("female"), "Женский");
   assert.equal(unitLineSizeTypeLabel("men"), "Мужской");
-  assert.equal(unitLineSizeTypeLabel("women"), "Женский");
   assert.equal(unitLineSizeTypeLabel(null), "—");
 });
 

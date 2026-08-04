@@ -55,6 +55,7 @@ from app.models.product_model import (
     AssemblyOperationLine,
     AssemblyVariant,
     ProductModel,
+    ProductModelFolder,
     ProductModelHistoryEntry,
     ProductModelMedia,
     ProductModelOperationNorm,
@@ -66,7 +67,15 @@ from app.models.product_model import (
     NomenclatureProductModel,
 )
 from app.models.product_type import ProductType
-from app.models.sewing_operation import SewingOperation, sewing_operation_work_centers
+from app.models.sewing_operation import (
+    SewingOperation,
+    SewingOperationFolder,
+    sewing_operation_work_centers,
+)
+from app.models.sewing_operation_template import (
+    SewingOperationTemplate,
+    SewingOperationTemplateLine,
+)
 from app.models.size_grid import SizeGrid, SizeGridRow, SizeGridSizeType
 from app.models.vat_rate import VatRate
 from app.models.warehouse import Warehouse
@@ -84,6 +93,15 @@ from app.models.production_order import (
     ProductionBatchStatus,
     ProductionOrder,
     ProductionOrderStatus,
+)
+from app.models.design_project import (
+    DesignProject,
+    DesignProjectStatus,
+    DesignVersion,
+    DesignVersionAsset,
+    DesignVersionAssetKind,
+    DesignVersionComment,
+    DesignVersionStatus,
 )
 from app.models.shop_routing import (
     ShopRoutingStageLine,
@@ -104,6 +122,31 @@ from app.models.technical_card import (
     TechOperationVolumeUnit,
 )
 from app.models.technical_card_settings import TechnicalCardSettings
+from app.models.platform_system_settings import PlatformSystemSettings
+from app.models.platform_city import PlatformCity
+from app.models.print_form import (
+    PrintForm,
+    PrintFormBindingType,
+    PrintFormOutputFormat,
+    PrintFormStatus,
+    PrintFormVersion,
+    PrintFormVersioningMode,
+    PrintFormVersionStatus,
+    PrintFormVersionStorageKind,
+)
+from app.models.auth import AuthSession, PlatformUser
+from app.models.audit import AuditEvent
+from app.models.collaboration import (
+    CollaborationMention,
+    CollaborationMessage,
+    CollaborationMicrotask,
+    CollaborationMicrotaskStatus,
+    CollaborationNotification,
+    CollaborationNotificationKind,
+    CollaborationThread,
+)
+from app.models.rbac import Permission, Role, platform_user_roles, role_permissions
+from app.models.stage_executors import platform_user_stage_access
 
 
 __all__ = [
@@ -155,6 +198,7 @@ __all__ = [
     "AssemblyOperationLine",
     "AssemblyVariant",
     "ProductModel",
+    "ProductModelFolder",
     "ProductModelHistoryEntry",
     "ProductModelMedia",
     "ProductModelOperationNorm",
@@ -166,6 +210,9 @@ __all__ = [
     "NomenclatureProductModel",
     "ProductType",
     "SewingOperation",
+    "SewingOperationFolder",
+    "SewingOperationTemplate",
+    "SewingOperationTemplateLine",
     "sewing_operation_work_centers",
     "SizeGrid",
     "SizeGridRow",
@@ -182,6 +229,13 @@ __all__ = [
     "ProductionBatch",
     "ProductionBatchStatus",
     "ProductionBatchCardLink",
+    "DesignProject",
+    "DesignProjectStatus",
+    "DesignVersion",
+    "DesignVersionAsset",
+    "DesignVersionAssetKind",
+    "DesignVersionComment",
+    "DesignVersionStatus",
     "TechOperation",
     "TechOperationRequiredMaterial",
     "WorkCenter",
@@ -199,6 +253,31 @@ __all__ = [
     "TechnicalCardUnitLine",
     "TechOperationVolumeUnit",
     "TechnicalCardSettings",
+    "PlatformSystemSettings",
+    "PlatformCity",
+    "PrintForm",
+    "PrintFormBindingType",
+    "PrintFormStatus",
+    "PrintFormOutputFormat",
+    "PrintFormVersioningMode",
+    "PrintFormVersion",
+    "PrintFormVersionStatus",
+    "PrintFormVersionStorageKind",
+    "PlatformUser",
+    "AuthSession",
+    "AuditEvent",
+    "CollaborationThread",
+    "CollaborationMessage",
+    "CollaborationMention",
+    "CollaborationMicrotask",
+    "CollaborationMicrotaskStatus",
+    "CollaborationNotification",
+    "CollaborationNotificationKind",
+    "Permission",
+    "Role",
+    "platform_user_roles",
+    "role_permissions",
+    "platform_user_stage_access",
     "SalesOrderStatus",
     "DesignApprovalStatus",
     "MaterialReserveStatus",

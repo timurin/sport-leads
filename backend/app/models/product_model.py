@@ -45,10 +45,59 @@ class ProductModelVersionState(str, Enum):
     ARCHIVED = "archived"
 
 
+class ProductModelFolder(Base):
+    """Navigation folder for product-models catalog (6.1.18). Not a snapshot target."""
+
+    __tablename__ = "product_model_folders"
+    __table_args__ = (
+        CheckConstraint(
+            "sort_order >= 0",
+            name="ck_product_model_folders_sort_order_nonnegative",
+        ),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    parent_id: Mapped[int | None] = mapped_column(
+        ForeignKey("product_model_folders.id", ondelete="RESTRICT"),
+        nullable=True,
+        index=True,
+    )
+    name: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
+    sort_order: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    default_sewing_operation_template_id: Mapped[int | None] = mapped_column(
+        ForeignKey("sewing_operation_templates.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+        onupdate=func.now(),
+    )
+
+    parent: Mapped[ProductModelFolder | None] = relationship(
+        remote_side="ProductModelFolder.id",
+        back_populates="children",
+    )
+    children: Mapped[list[ProductModelFolder]] = relationship(
+        back_populates="parent",
+    )
+    product_models: Mapped[list[ProductModel]] = relationship(
+        back_populates="folder",
+    )
+
+
 class ProductModel(Base):
     """Flat product-model catalog (ADR-014 / product-model-domain.md).
 
     Size-grid FK: `6.2.7` (`size_grid_id`, same `size_type`). PatternSet withdrawn (`6.3` = sewing ops).
+    Folder hierarchy: `6.1.18` (`folder_id`, `sort_order`).
     """
 
     __tablename__ = "product_models"
@@ -61,6 +110,10 @@ class ProductModel(Base):
         CheckConstraint(
             "status IN ('draft', 'active', 'archived')",
             name="ck_product_models_status",
+        ),
+        CheckConstraint(
+            "sort_order >= 0",
+            name="ck_product_models_sort_order_nonnegative",
         ),
     )
 
@@ -90,6 +143,12 @@ class ProductModel(Base):
     cover_image_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
     cover_storage_key: Mapped[str | None] = mapped_column(String(500), nullable=True)
     cover_mime_type: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    folder_id: Mapped[int | None] = mapped_column(
+        ForeignKey("product_model_folders.id", ondelete="RESTRICT"),
+        nullable=True,
+        index=True,
+    )
+    sort_order: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     status: Mapped[ProductModelStatus] = mapped_column(
         String(20),
         nullable=False,
@@ -108,6 +167,9 @@ class ProductModel(Base):
         onupdate=func.now(),
     )
 
+    folder: Mapped[ProductModelFolder | None] = relationship(
+        back_populates="product_models",
+    )
     size_grid: Mapped[SizeGrid | None] = relationship("SizeGrid")
     product_type: Mapped[ProductType | None] = relationship("ProductType")
     versions: Mapped[list[ProductModelVersion]] = relationship(

@@ -17,8 +17,25 @@ export type ProductModel = {
   /** ISO date `YYYY-MM-DD` or null. */
   patterns_created_on: string | null;
   cover_image_url: string | null;
+  folder_id: number | null;
+  sort_order: number;
   status: ProductModelStatus;
   has_journal_operations?: boolean;
+  /** Catalog list: min assembly variant total (null when no variants). */
+  assembly_cost_min?: string | number | null;
+  /** Catalog list: max assembly variant total (null when no variants). */
+  assembly_cost_max?: string | number | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type ProductModelFolder = {
+  id: number;
+  name: string;
+  parent_id: number | null;
+  sort_order: number;
+  default_sewing_operation_template_id?: number | null;
+  default_sewing_operation_template_name?: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -130,6 +147,8 @@ export type ProductModelCreateDraft = {
   size_type: ProductModelSizeType;
   description: string;
   size_grid_id: number | null;
+  /** Optional catalog folder (`6.1.18`); omit on card requisites draft. */
+  folder_id?: number | null;
 };
 
 export type ProductModelRequisitesDraft = ProductModelCreateDraft & {
@@ -308,6 +327,17 @@ function apiBaseUrl(): string {
   return (process.env.SPORT_LEADS_API_URL ?? "http://127.0.0.1:8000").replace(/\/$/, "");
 }
 
+function normalizeProductModel(row: ProductModel): ProductModel {
+  return {
+    ...row,
+    folder_id:
+      row.folder_id == null || Number(row.folder_id) <= 0
+        ? null
+        : Number(row.folder_id),
+    sort_order: Number(row.sort_order ?? 0) || 0,
+  };
+}
+
 export async function getProductModels(
   params: ProductModelListParams = {},
 ): Promise<ProductModel[]> {
@@ -328,7 +358,217 @@ export async function getProductModels(
   if (!response.ok) {
     throw new Error(`Не удалось загрузить модели изделий (${response.status}).`);
   }
-  return (await response.json()) as ProductModel[];
+  const rows = (await response.json()) as ProductModel[];
+  return rows.map(normalizeProductModel);
+}
+
+export async function getProductModelFolders(): Promise<ProductModelFolder[]> {
+  const response = await fetch(`${apiBaseUrl()}/product-model-folders`, {
+    cache: "no-store",
+  });
+  if (!response.ok) {
+    throw new Error(
+      `Не удалось загрузить папки моделей изделий (${response.status}).`,
+    );
+  }
+  const rows = (await response.json()) as ProductModelFolder[];
+  return rows.map((row) => ({
+    ...row,
+    parent_id:
+      row.parent_id == null || Number(row.parent_id) <= 0
+        ? null
+        : Number(row.parent_id),
+    sort_order: Number(row.sort_order ?? 0) || 0,
+    default_sewing_operation_template_id:
+      row.default_sewing_operation_template_id == null ||
+      Number(row.default_sewing_operation_template_id) <= 0
+        ? null
+        : Number(row.default_sewing_operation_template_id),
+    default_sewing_operation_template_name:
+      row.default_sewing_operation_template_name?.trim() || null,
+  }));
+}
+
+export type ProductModelCatalogTreeRow =
+  | {
+      kind: "folder";
+      id: number;
+      name: string;
+      parent_id: number | null;
+      sort_order: number;
+      depth: number;
+      folder: ProductModelFolder;
+    }
+  | {
+      kind: "model";
+      id: number;
+      name: string;
+      parent_id: number | null;
+      sort_order: number;
+      depth: number;
+      model: ProductModel;
+    };
+
+/** Build depth-first catalog rows: folders then models under each parent. */
+export function buildProductModelCatalogTreeRows(
+  folders: ProductModelFolder[],
+  models: ProductModel[],
+  options?: {
+    /** When set, replaces default `sort_order` ordering for models in each folder. */
+    compareModels?: (a: ProductModel, b: ProductModel) => number;
+  },
+): ProductModelCatalogTreeRow[] {
+  const childrenOf = new Map<number | null, ProductModelFolder[]>();
+  for (const folder of folders) {
+    const key = folder.parent_id;
+    const list = childrenOf.get(key) ?? [];
+    list.push(folder);
+    childrenOf.set(key, list);
+  }
+  for (const list of childrenOf.values()) {
+    list.sort(
+      (a, b) =>
+        a.sort_order - b.sort_order ||
+        a.name.localeCompare(b.name, "ru") ||
+        a.id - b.id,
+    );
+  }
+
+  const modelsOf = new Map<number | null, ProductModel[]>();
+  for (const model of models) {
+    const key = model.folder_id;
+    const list = modelsOf.get(key) ?? [];
+    list.push(model);
+    modelsOf.set(key, list);
+  }
+  const compareModels =
+    options?.compareModels ??
+    ((a: ProductModel, b: ProductModel) =>
+      a.sort_order - b.sort_order ||
+      a.name.localeCompare(b.name, "ru") ||
+      a.id - b.id);
+  for (const list of modelsOf.values()) {
+    list.sort(compareModels);
+  }
+
+  const rows: ProductModelCatalogTreeRow[] = [];
+
+  const walk = (parentId: number | null, depth: number) => {
+    for (const folder of childrenOf.get(parentId) ?? []) {
+      rows.push({
+        kind: "folder",
+        id: folder.id,
+        name: folder.name,
+        parent_id: folder.parent_id,
+        sort_order: folder.sort_order,
+        depth,
+        folder,
+      });
+      walk(folder.id, depth + 1);
+    }
+    for (const model of modelsOf.get(parentId) ?? []) {
+      rows.push({
+        kind: "model",
+        id: model.id,
+        name: model.name,
+        parent_id: model.folder_id,
+        sort_order: model.sort_order,
+        depth,
+        model,
+      });
+    }
+  };
+
+  walk(null, 0);
+  return rows;
+}
+
+export type ProductModelListSortField =
+  | "article"
+  | "name"
+  | "product_type"
+  | "size_grid"
+  | "status"
+  | "cost";
+
+export type ProductModelListSortDirection = "asc" | "desc";
+
+/** Comparator for catalog column sort (models within each folder). */
+export function compareProductModelsByListSort(
+  a: ProductModel,
+  b: ProductModel,
+  field: ProductModelListSortField,
+  direction: ProductModelListSortDirection,
+  labels: {
+    productType: (model: ProductModel) => string;
+    sizeGrid: (model: ProductModel) => string;
+    cost: (model: ProductModel) => number | null;
+  },
+): number {
+  const dir = direction === "asc" ? 1 : -1;
+  let comparison = 0;
+  switch (field) {
+    case "article":
+      comparison = a.article.localeCompare(b.article, "ru", { sensitivity: "base" });
+      break;
+    case "name":
+      comparison = a.name.localeCompare(b.name, "ru", { sensitivity: "base" });
+      break;
+    case "product_type":
+      comparison = labels
+        .productType(a)
+        .localeCompare(labels.productType(b), "ru", { sensitivity: "base" });
+      break;
+    case "size_grid":
+      comparison = labels
+        .sizeGrid(a)
+        .localeCompare(labels.sizeGrid(b), "ru", { sensitivity: "base" });
+      break;
+    case "status":
+      comparison = PRODUCT_MODEL_STATUS_LABELS[a.status].localeCompare(
+        PRODUCT_MODEL_STATUS_LABELS[b.status],
+        "ru",
+        { sensitivity: "base" },
+      );
+      break;
+    case "cost": {
+      const costA = labels.cost(a);
+      const costB = labels.cost(b);
+      if (costA == null && costB == null) comparison = 0;
+      else if (costA == null) comparison = 1;
+      else if (costB == null) comparison = -1;
+      else comparison = costA - costB;
+      break;
+    }
+  }
+  if (comparison === 0) {
+    comparison =
+      a.sort_order - b.sort_order ||
+      a.name.localeCompare(b.name, "ru") ||
+      a.id - b.id;
+    return comparison;
+  }
+  return comparison * dir;
+}
+
+export function visibleProductModelCatalogTreeRows(
+  rows: ProductModelCatalogTreeRow[],
+  expandedFolderIds: Set<number>,
+): ProductModelCatalogTreeRow[] {
+  const visible: ProductModelCatalogTreeRow[] = [];
+  const collapsedSubtree = new Set<number>();
+
+  for (const row of rows) {
+    if (row.parent_id != null && collapsedSubtree.has(row.parent_id)) {
+      if (row.kind === "folder") collapsedSubtree.add(row.id);
+      continue;
+    }
+    visible.push(row);
+    if (row.kind === "folder" && !expandedFolderIds.has(row.id)) {
+      collapsedSubtree.add(row.id);
+    }
+  }
+  return visible;
 }
 
 export async function getProductModelById(
@@ -343,7 +583,7 @@ export async function getProductModelById(
   if (!response.ok) {
     throw new Error(`Не удалось загрузить модель изделия (${response.status}).`);
   }
-  return (await response.json()) as ProductModel;
+  return normalizeProductModel((await response.json()) as ProductModel);
 }
 
 export async function getProductModelVersions(
@@ -462,6 +702,18 @@ export function formatAssemblyVariantCostRange(
     return `${formatAssemblyCost(range.min)} ₽`;
   }
   return `от ${formatAssemblyCost(range.min)} — до ${formatAssemblyCost(range.max)} ₽`;
+}
+
+/** Format list cost column from API `assembly_cost_min` / `assembly_cost_max`. */
+export function formatAssemblyCostBounds(
+  min: string | number | null | undefined,
+  max: string | number | null | undefined,
+): string {
+  if (min == null || max == null) return "—";
+  return formatAssemblyVariantCostRange([
+    { total_cost: String(min) },
+    { total_cost: String(max) },
+  ]);
 }
 
 /** Normalize user cost input to API decimal string, or null if invalid. */

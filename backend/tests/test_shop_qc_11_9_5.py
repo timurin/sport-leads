@@ -12,6 +12,7 @@ from sqlalchemy.pool import StaticPool
 from app.database.base import Base
 from app.database.session import get_db
 from app.main import app
+from tests.auth_test_helpers import ensure_user_with_role, login_client
 from app.models.production_stage import ProductionStage
 from app.models.sales import (
     Client,
@@ -128,7 +129,10 @@ def test_qc_shop_stage_completion_accepts_scrap_rework_notes() -> None:
         with factory() as db:
             card_id = _seed_qc_current_pending_card(db)
 
+        with factory() as _auth_db:
+            ensure_user_with_role(_auth_db, login="ops", role_code="shop_operator")
         with TestClient(app) as client:
+            login_client(client, login="ops")
             done = client.post(
                 f"/technical-cards/{card_id}/stages/1/complete",
                 json={

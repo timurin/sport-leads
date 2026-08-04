@@ -2,10 +2,12 @@ import { notFound } from "next/navigation";
 
 import { TechCardDetailWorkspace } from "@/components/production/tech-card-detail-workspace";
 import { getNomenclature } from "@/lib/nomenclature";
+import { getProductModelById } from "@/lib/product-models";
 import { getShopStageModule } from "@/lib/production/shop-stage-modules";
 import { getProductionStages } from "@/lib/production-stages";
 import { fetchTechnicalCard } from "@/lib/sales/order-tech-cards-api";
 import { getShopRoutings, getWorkCenters } from "@/lib/shop-routings";
+import { getSizeGrid } from "@/lib/size-grids";
 
 function parseCardId(raw: string): number | null {
   const id = Number(raw);
@@ -98,6 +100,18 @@ export default async function ProductionTechCardDocumentPage({
     workCenters = [];
   }
 
+  let unitSizeGrid = null;
+  if (card.product_model_id != null) {
+    try {
+      const productModel = await getProductModelById(card.product_model_id);
+      if (productModel?.size_grid_id != null) {
+        unitSizeGrid = await getSizeGrid(productModel.size_grid_id);
+      }
+    } catch {
+      unitSizeGrid = null;
+    }
+  }
+
   return (
     <TechCardDetailWorkspace
       card={card}
@@ -107,6 +121,7 @@ export default async function ProductionTechCardDocumentPage({
       listOrderId={listOrderId}
       shopStageCode={shopStageCode}
       workCenters={workCenters}
+      unitSizeGrid={unitSizeGrid}
     />
   );
 }

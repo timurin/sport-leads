@@ -140,8 +140,8 @@
   --portal-avatar-lg: 40px;
 
   /* Shell reference sizes (DS-SHELL); do not restyle shell without visual task */
-  --portal-shell-topbar-sm: 64px;
-  --portal-shell-topbar: 72px;
+  --portal-shell-topbar-sm: 52px;
+  --portal-shell-topbar: 56px;
   --portal-shell-sidebar-expanded: 260px;
   --portal-shell-sidebar-compact: 72px;
   /* DS-SHELL-01 local neutrals (exact approved hex; do not restyle) */

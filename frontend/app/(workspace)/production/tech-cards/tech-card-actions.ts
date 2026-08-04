@@ -2,6 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 
+import { sessionAuthHeaders } from "@/lib/auth/api-headers";
+import type { TechnicalCardPrintRequest } from "@/lib/production/tech-card-print";
 import { shopStageCodeByTitle } from "@/lib/production/shop-stage-modules";
 import {
   TECH_CARD_IMAGE_RULE,
@@ -15,7 +17,9 @@ import {
   deleteTechnicalCardCompositionLine,
   deleteTechnicalCardMedia,
   generateOrderTechnicalCards,
+  importTechnicalCardUnitLinesFile,
   importTechnicalCardUnitLines,
+  replaceTechnicalCardUnitLines,
   replaceTechnicalCardComposition,
   rollbackTechnicalCardStage,
   rollbackTechnicalCardStageKanban,
@@ -33,6 +37,8 @@ import {
   type TechnicalCardStageFactPayload,
   type TechnicalCardStageStartPayload,
   type TechnicalCardUnitLineAggregateImportRow,
+  type TechnicalCardUnitLineBulkUpdateItem,
+  type TechnicalCardUnitLineWriteItem,
 } from "@/lib/sales/order-tech-cards-api";
 
 export type TechCardActionResult = {
@@ -335,10 +341,93 @@ export async function importUnitLinesAction(
   }
 }
 
+export async function importUnitLinesFileAction(
+  cardId: number,
+  formData: FormData,
+  orderId?: number,
+): Promise<TechCardActionResult> {
+  const file = formData.get("file");
+  if (!(file instanceof File) || file.size <= 0) {
+    return failure("Выберите XLSX-файл для импорта");
+  }
+  try {
+    const payload = new FormData();
+    payload.append("file", file);
+    const card = await importTechnicalCardUnitLinesFile(cardId, payload);
+    revalidateTechCardPaths(cardId, orderId ?? card.sales_order_id);
+    return success(card, "Поштучные данные импортированы из XLSX");
+  } catch (error) {
+    return failure(
+      error instanceof Error ? error.message : "Не удалось импортировать XLSX-файл",
+    );
+  }
+}
+
+export async function bulkUpdateUnitLinesAction(
+  cardId: number,
+  lines: TechnicalCardUnitLineBulkUpdateItem[],
+  orderId?: number,
+): Promise<TechCardActionResult> {
+  if (lines.length === 0) {
+    return failure("Нет строк для сохранения");
+  }
+  try {
+    const card = await bulkUpdateTechnicalCardUnitLines(cardId, lines);
+    revalidateTechCardPaths(cardId, orderId ?? card.sales_order_id);
+    return success(card, "Поштучные строки сохранены");
+  } catch (error) {
+    return failure(
+      error instanceof Error
+        ? error.message
+        : "Не удалось сохранить поштучные строки",
+    );
+  }
+}
+
+export async function replaceUnitLinesAction(
+  cardId: number,
+  lines: TechnicalCardUnitLineWriteItem[],
+  orderId?: number,
+): Promise<TechCardActionResult> {
+  if (lines.length === 0) {
+    return failure("Нет строк для сохранения");
+  }
+  try {
+    const card = await replaceTechnicalCardUnitLines(cardId, lines);
+    revalidateTechCardPaths(cardId, orderId ?? card.sales_order_id);
+    return success(card, "Поштучные строки сохранены");
+  } catch (error) {
+    return failure(
+      error instanceof Error
+        ? error.message
+        : "Не удалось сохранить поштучные строки",
+    );
+  }
+}
+
 export type TechCardMediaActionResult = {
   ok: boolean;
   message: string | null;
   media: ApiTechnicalCardMedia[];
+};
+
+export type TechCardPrintFormRender = {
+  print_form_id: number;
+  print_form_code: string;
+  version_id: number;
+  version_no: number;
+  output_format: string;
+  content_type: string;
+  file_name: string;
+  content: string;
+  content_encoding?: string;
+  is_preview: boolean;
+};
+
+export type TechCardPrintActionResult = {
+  ok: boolean;
+  message: string;
+  render: TechCardPrintFormRender | null;
 };
 
 function mediaSuccess(
@@ -350,6 +439,57 @@ function mediaSuccess(
 
 function mediaFailure(message: string): TechCardMediaActionResult {
   return { ok: false, message, media: [] };
+}
+
+function apiBaseUrl(): string {
+  return (
+    process.env.SPORT_LEADS_API_URL ??
+    process.env.NEXT_PUBLIC_SPORT_LEADS_API_URL ??
+    "http://127.0.0.1:8000"
+  ).replace(/\/$/, "");
+}
+
+export async function generateTechnicalCardPrintForm(
+  request: TechnicalCardPrintRequest,
+): Promise<TechCardPrintActionResult> {
+  try {
+    const auth = await sessionAuthHeaders();
+    const response = await fetch(`${apiBaseUrl()}/print-forms/generate`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        ...auth,
+      },
+      body: JSON.stringify(request),
+      cache: "no-store",
+    });
+    if (!response.ok) {
+      const payload = (await response.json().catch(() => null)) as
+        | { detail?: string }
+        | null;
+      return {
+        ok: false,
+        message:
+          payload?.detail ??
+          `Не удалось сформировать печатную форму (${response.status}).`,
+        render: null,
+      };
+    }
+    return {
+      ok: true,
+      message: "Печатная форма сформирована.",
+      render: (await response.json()) as TechCardPrintFormRender,
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      message:
+        error instanceof Error
+          ? error.message
+          : "Не удалось сформировать печатную форму",
+      render: null,
+    };
+  }
 }
 
 export async function uploadTechCardMediaAction(

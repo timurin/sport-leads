@@ -214,12 +214,12 @@ return () => {
 
 return ( <header className="relative z-portal-shell border-b border-portal-border bg-portal-surface">
   {searchOpen ? (
-    <div className="relative flex h-[var(--portal-shell-topbar-sm)] items-center px-3 sm:px-4 md:h-[var(--portal-shell-topbar)] lg:px-6">
+    <div className="relative flex h-[var(--portal-shell-topbar-sm)] items-center px-2.5 sm:px-3 md:h-[var(--portal-shell-topbar)] lg:px-4">
       <div className="relative w-full">
         <Search
-          size={19}
+          size={16}
           aria-hidden="true"
-          className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-portal-subtle"
+          className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-portal-subtle"
         />
 
         <input
@@ -230,7 +230,7 @@ return ( <header className="relative z-portal-shell border-b border-portal-borde
             setSearchQuery(event.target.value);
           }}
           placeholder="Поиск по разделам и страницам..."
-          className="h-11 w-full rounded-xl border border-portal-primary bg-portal-surface pl-11 pr-12 text-sm text-portal-text outline-none transition placeholder:text-portal-subtle focus:border-portal-primary focus:ring-4 focus:ring-portal-primary-soft"
+          className="h-9 w-full rounded-lg border border-portal-primary bg-portal-surface pl-9 pr-10 text-[13px] text-portal-text outline-none transition placeholder:text-portal-subtle focus:border-portal-primary focus:ring-2 focus:ring-portal-primary-soft"
           aria-label="Глобальный поиск"
           aria-autocomplete="list"
           aria-controls="platform-search-suggestions"
@@ -242,10 +242,10 @@ return ( <header className="relative z-portal-shell border-b border-portal-borde
             setSearchOpen(false);
             setSearchQuery("");
           }}
-          className="absolute right-1.5 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-lg text-portal-muted outline-none transition-colors hover:bg-portal-surface-secondary hover:text-portal-text focus-visible:ring-2 focus-visible:ring-portal-focus-ring"
+          className="absolute right-1 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-md text-portal-muted outline-none transition-colors hover:bg-portal-surface-secondary hover:text-portal-text focus-visible:ring-2 focus-visible:ring-portal-focus-ring"
           aria-label="Закрыть поиск"
         >
-          <X size={18} aria-hidden="true" />
+          <X size={16} aria-hidden="true" />
         </button>
 
         <div
@@ -308,13 +308,13 @@ return ( <header className="relative z-portal-shell border-b border-portal-borde
       </div>
     </div>
   ) : (
-    <div className="flex h-[var(--portal-shell-topbar-sm)] min-w-0 items-center gap-2 px-3 sm:px-4 md:h-[var(--portal-shell-topbar)] lg:gap-4 lg:px-6">
+    <div className="flex h-[var(--portal-shell-topbar-sm)] min-w-0 items-center gap-1.5 px-2.5 sm:px-3 md:h-[var(--portal-shell-topbar)] lg:gap-2 lg:px-4">
       <div
         ref={navigationRef}
-        className="hidden h-full min-w-0 flex-1 items-center lg:flex"
+        className="hidden h-full min-w-0 flex-1 items-center overflow-x-auto lg:flex"
       >
         <nav
-          className="flex h-full min-w-0 items-center gap-0.5"
+          className="flex h-full min-w-0 items-center gap-0"
           aria-label={`Навигация раздела ${section.title}`}
         >
           {section.topNavigation.map((item) => {
@@ -340,7 +340,7 @@ return ( <header className="relative z-portal-shell border-b border-portal-borde
                       );
                     }}
                     className={[
-                      "flex h-full items-center gap-1.5 whitespace-nowrap border-b-2 px-3 text-sm font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-portal-focus-ring xl:px-4",
+                      "flex h-full items-center gap-1 whitespace-nowrap border-b-2 px-2 text-[13px] font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-portal-focus-ring xl:px-2.5",
                       active || menuOpen
                         ? "border-portal-primary text-portal-primary-hover"
                         : "border-transparent text-portal-muted hover:text-portal-text",
@@ -351,7 +351,7 @@ return ( <header className="relative z-portal-shell border-b border-portal-borde
                     <span>{item.title}</span>
 
                     <ChevronDown
-                      size={15}
+                      size={13}
                       aria-hidden="true"
                       className={[
                         "shrink-0 transition-transform",
@@ -364,7 +364,7 @@ return ( <header className="relative z-portal-shell border-b border-portal-borde
 
                   {menuOpen ? (
                     <div
-                      className="absolute left-0 top-[calc(100%-1px)] z-portal-popover w-[300px] max-w-[calc(100vw-24px)] rounded-xl border border-portal-border bg-portal-surface p-2 shadow-portal-overlay"
+                      className="absolute left-0 top-[calc(100%-1px)] z-portal-popover w-[260px] max-w-[calc(100vw-24px)] rounded-lg border border-portal-border bg-portal-surface p-1.5 shadow-portal-overlay"
                       role="menu"
                     >
                       {item.children.map((child) => {
@@ -382,19 +382,19 @@ return ( <header className="relative z-portal-shell border-b border-portal-borde
                               setOpenMenuId(null);
                             }}
                             className={[
-                              "block rounded-lg px-4 py-3 outline-none transition-colors focus-visible:ring-2 focus-visible:ring-portal-focus-ring",
+                              "block rounded-md px-3 py-2 outline-none transition-colors focus-visible:ring-2 focus-visible:ring-portal-focus-ring",
                               childActive
                                 ? "bg-portal-primary-soft text-portal-primary-hover"
                                 : "text-portal-text hover:bg-portal-surface-secondary hover:text-portal-text",
                             ].join(" ")}
                             role="menuitem"
                           >
-                            <div className="text-sm font-medium">
+                            <div className="text-[13px] font-medium">
                               {child.title}
                             </div>
 
                             {child.description ? (
-                              <div className="mt-1 text-xs leading-4 text-portal-muted">
+                              <div className="mt-0.5 text-[11px] leading-4 text-portal-muted">
                                 {child.description}
                               </div>
                             ) : null}
@@ -416,7 +416,7 @@ return ( <header className="relative z-portal-shell border-b border-portal-borde
                 key={item.id}
                 href={item.href}
                 className={[
-                  "flex h-full items-center whitespace-nowrap border-b-2 px-3 text-sm font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-portal-focus-ring xl:px-4",
+                  "flex h-full items-center whitespace-nowrap border-b-2 px-2 text-[13px] font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-portal-focus-ring xl:px-2.5",
                   active
                     ? "border-portal-primary text-portal-primary-hover"
                     : "border-transparent text-portal-muted hover:text-portal-text",
@@ -429,7 +429,7 @@ return ( <header className="relative z-portal-shell border-b border-portal-borde
         </nav>
       </div>
 
-      <div className="ml-auto flex shrink-0 items-center gap-2">
+      <div className="ml-auto flex shrink-0 items-center gap-1.5">
         <button
           type="button"
           onClick={() => {
@@ -437,18 +437,18 @@ return ( <header className="relative z-portal-shell border-b border-portal-borde
             setOpenMenuId(null);
             setMobileMenuOpen(false);
           }}
-          className="hidden h-10 min-w-0 items-center gap-2 rounded-lg border border-portal-border bg-portal-surface px-3 text-sm text-portal-muted outline-none transition-colors hover:border-portal-border-strong hover:text-portal-text focus-visible:ring-2 focus-visible:ring-portal-focus-ring xl:flex xl:w-[230px]"
+          className="hidden h-8 min-w-0 items-center gap-1.5 rounded-md border border-portal-border bg-portal-surface px-2.5 text-[13px] text-portal-muted outline-none transition-colors hover:border-portal-border-strong hover:text-portal-text focus-visible:ring-2 focus-visible:ring-portal-focus-ring xl:flex xl:w-[168px]"
           aria-label="Открыть глобальный поиск"
         >
           <Search
-            size={17}
+            size={15}
             className="shrink-0"
             aria-hidden="true"
           />
 
           <span className="truncate">Поиск...</span>
 
-          <span className="ml-auto shrink-0 rounded bg-portal-surface-secondary px-2 py-1 text-[11px] text-portal-muted">
+          <span className="ml-auto shrink-0 rounded bg-portal-surface-secondary px-1.5 py-0.5 text-[10px] text-portal-muted">
             Ctrl K
           </span>
         </button>
@@ -460,25 +460,25 @@ return ( <header className="relative z-portal-shell border-b border-portal-borde
             setOpenMenuId(null);
             setMobileMenuOpen(false);
           }}
-          className="flex h-10 w-10 items-center justify-center rounded-lg border border-portal-border bg-portal-surface text-portal-muted outline-none transition-colors hover:border-portal-border-strong hover:bg-portal-surface-secondary hover:text-portal-text focus-visible:ring-2 focus-visible:ring-portal-focus-ring xl:hidden"
+          className="flex h-8 w-8 items-center justify-center rounded-md border border-portal-border bg-portal-surface text-portal-muted outline-none transition-colors hover:border-portal-border-strong hover:bg-portal-surface-secondary hover:text-portal-text focus-visible:ring-2 focus-visible:ring-portal-focus-ring xl:hidden"
           aria-label="Открыть глобальный поиск"
         >
-          <Search size={18} aria-hidden="true" />
+          <Search size={16} aria-hidden="true" />
         </button>
 
         <button
           type="button"
-          className="flex h-10 items-center justify-center gap-2 rounded-lg bg-portal-primary px-3 text-sm font-medium text-white outline-none transition-colors hover:bg-portal-primary-hover focus-visible:ring-2 focus-visible:ring-portal-focus-ring focus-visible:ring-offset-2 sm:px-4"
+          className="flex h-8 items-center justify-center gap-1.5 rounded-md bg-portal-primary px-2.5 text-[13px] font-medium text-white outline-none transition-colors hover:bg-portal-primary-hover focus-visible:ring-2 focus-visible:ring-portal-focus-ring focus-visible:ring-offset-2 sm:px-3"
           aria-label="Создать"
         >
-          <Plus size={17} aria-hidden="true" />
+          <Plus size={15} aria-hidden="true" />
 
           <span className="hidden sm:inline">
             Создать
           </span>
 
           <ChevronDown
-            size={14}
+            size={12}
             className="hidden sm:block"
             aria-hidden="true"
           />
@@ -495,7 +495,7 @@ return ( <header className="relative z-portal-shell border-b border-portal-borde
               setOpenMenuId(null);
             }}
             className={[
-              "flex h-10 w-10 items-center justify-center rounded-lg border outline-none transition-colors focus-visible:ring-2 focus-visible:ring-portal-focus-ring",
+              "flex h-8 w-8 items-center justify-center rounded-md border outline-none transition-colors focus-visible:ring-2 focus-visible:ring-portal-focus-ring",
               mobileMenuOpen
                 ? "border-portal-primary/30 bg-portal-primary-soft text-portal-primary-hover"
                 : "border-portal-border bg-portal-surface text-portal-muted hover:border-portal-border-strong hover:bg-portal-surface-secondary hover:text-portal-text",
@@ -508,9 +508,9 @@ return ( <header className="relative z-portal-shell border-b border-portal-borde
             aria-expanded={mobileMenuOpen}
           >
             {mobileMenuOpen ? (
-              <X size={19} aria-hidden="true" />
+              <X size={16} aria-hidden="true" />
             ) : (
-              <Menu size={19} aria-hidden="true" />
+              <Menu size={16} aria-hidden="true" />
             )}
           </button>
 

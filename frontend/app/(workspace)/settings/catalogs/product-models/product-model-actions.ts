@@ -6,6 +6,7 @@ import {
   PRODUCT_MODEL_IMAGE_MAX_BYTES,
   PRODUCT_MODEL_IMAGE_RULE,
   type ProductModel,
+  type ProductModelFolder,
   type ProductModelMedia,
   type ProductModelSizeType,
 } from "@/lib/product-models";
@@ -59,11 +60,41 @@ export type ProductModelRequisitesInput = {
   patterns_path?: string | null;
   constructor_name?: string | null;
   patterns_created_on?: string | null;
+  folder_id?: number | null;
 };
 
 export type ProductModelCreateResult =
   | { ok: true; model: ProductModel }
   | { ok: false; message: string };
+
+function normalizeProductModel(model: ProductModel): ProductModel {
+  return {
+    ...model,
+    folder_id:
+      model.folder_id == null || Number(model.folder_id) <= 0
+        ? null
+        : Number(model.folder_id),
+    sort_order: Number(model.sort_order ?? 0) || 0,
+  };
+}
+
+function normalizeFolder(folder: ProductModelFolder): ProductModelFolder {
+  return {
+    ...folder,
+    parent_id:
+      folder.parent_id == null || Number(folder.parent_id) <= 0
+        ? null
+        : Number(folder.parent_id),
+    sort_order: Number(folder.sort_order ?? 0) || 0,
+    default_sewing_operation_template_id:
+      folder.default_sewing_operation_template_id == null ||
+      Number(folder.default_sewing_operation_template_id) <= 0
+        ? null
+        : Number(folder.default_sewing_operation_template_id),
+    default_sewing_operation_template_name:
+      folder.default_sewing_operation_template_name?.trim() || null,
+  };
+}
 
 export async function createProductModel(
   payload: ProductModelRequisitesInput,
@@ -86,6 +117,9 @@ export async function createProductModel(
       size_type: payload.size_type,
       size_grid_id: payload.size_grid_id,
       description: payload.description?.trim() || null,
+      ...(payload.folder_id !== undefined
+        ? { folder_id: payload.folder_id }
+        : {}),
     }),
     cache: "no-store",
   });
@@ -94,7 +128,7 @@ export async function createProductModel(
     return { ok: false, message: await readError(response) };
   }
 
-  const model = (await response.json()) as ProductModel;
+  const model = normalizeProductModel((await response.json()) as ProductModel);
   revalidateModel(model.id);
   return { ok: true, model };
 }
@@ -639,4 +673,139 @@ export async function downloadProductModelImportTemplate(
   return fetchProductModelFileDownload(
     `/import-template?format=${encodeURIComponent(format)}`,
   );
+}
+
+export type ProductModelFolderActionResult =
+  | { ok: true; folder: ProductModelFolder }
+  | { ok: false; message: string };
+
+export type ProductModelMoveResult =
+  | { ok: true; model: ProductModel }
+  | { ok: false; message: string };
+
+export async function createProductModelFolder(input: {
+  name: string;
+  parent_id: number | null;
+}): Promise<ProductModelFolderActionResult> {
+  const name = input.name.trim();
+  if (!name) return { ok: false, message: "Укажите название папки" };
+  const response = await fetch(`${apiBaseUrl()}/product-model-folders`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name, parent_id: input.parent_id }),
+    cache: "no-store",
+  });
+  if (!response.ok) {
+    return { ok: false, message: await readError(response) };
+  }
+  const folder = normalizeFolder((await response.json()) as ProductModelFolder);
+  revalidatePath("/settings/catalogs/product-models");
+  return { ok: true, folder };
+}
+
+export async function updateProductModelFolder(
+  folderId: number,
+  input: {
+    name?: string;
+    parent_id?: number | null;
+    default_sewing_operation_template_id?: number | null;
+  },
+): Promise<ProductModelFolderActionResult> {
+  const body: Record<string, unknown> = {};
+  if (input.name != null) body.name = input.name.trim();
+  if ("parent_id" in input) body.parent_id = input.parent_id ?? null;
+  if ("default_sewing_operation_template_id" in input) {
+    body.default_sewing_operation_template_id =
+      input.default_sewing_operation_template_id ?? null;
+  }
+  const response = await fetch(
+    `${apiBaseUrl()}/product-model-folders/${folderId}`,
+    {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+      cache: "no-store",
+    },
+  );
+  if (!response.ok) {
+    return { ok: false, message: await readError(response) };
+  }
+  const folder = normalizeFolder((await response.json()) as ProductModelFolder);
+  revalidatePath("/settings/catalogs/product-models");
+  return { ok: true, folder };
+}
+
+export async function deleteProductModelFolder(
+  folderId: number,
+): Promise<{ ok: true } | { ok: false; message: string }> {
+  const response = await fetch(
+    `${apiBaseUrl()}/product-model-folders/${folderId}`,
+    { method: "DELETE", cache: "no-store" },
+  );
+  if (!response.ok && response.status !== 204) {
+    return { ok: false, message: await readError(response) };
+  }
+  revalidatePath("/settings/catalogs/product-models");
+  return { ok: true };
+}
+
+export async function moveProductModelFolderSibling(
+  folderId: number,
+  direction: "up" | "down",
+): Promise<ProductModelFolderActionResult> {
+  const response = await fetch(
+    `${apiBaseUrl()}/product-model-folders/${folderId}/move-sibling`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ direction }),
+      cache: "no-store",
+    },
+  );
+  if (!response.ok) {
+    return { ok: false, message: await readError(response) };
+  }
+  const folder = normalizeFolder((await response.json()) as ProductModelFolder);
+  revalidatePath("/settings/catalogs/product-models");
+  return { ok: true, folder };
+}
+
+export async function moveProductModelToFolder(
+  modelId: number,
+  folderId: number | null,
+): Promise<ProductModelMoveResult> {
+  const response = await fetch(`${apiBaseUrl()}/product-models/${modelId}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ folder_id: folderId }),
+    cache: "no-store",
+  });
+  if (!response.ok) {
+    return { ok: false, message: await readError(response) };
+  }
+  const model = normalizeProductModel((await response.json()) as ProductModel);
+  revalidateModel(model.id);
+  return { ok: true, model };
+}
+
+export async function moveProductModelsToFolder(
+  modelIds: number[],
+  folderId: number | null,
+): Promise<{ ok: true; models: ProductModel[] } | { ok: false; message: string }> {
+  const uniqueIds = [...new Set(modelIds)].filter(
+    (id) => Number.isSafeInteger(id) && id > 0,
+  );
+  if (uniqueIds.length === 0) {
+    return { ok: false, message: "Выберите хотя бы одну модель" };
+  }
+  const models: ProductModel[] = [];
+  for (const modelId of uniqueIds) {
+    const result = await moveProductModelToFolder(modelId, folderId);
+    if (!result.ok) {
+      return { ok: false, message: result.message };
+    }
+    models.push(result.model);
+  }
+  revalidatePath("/settings/catalogs/product-models");
+  return { ok: true, models };
 }

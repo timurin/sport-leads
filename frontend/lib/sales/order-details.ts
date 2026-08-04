@@ -357,7 +357,7 @@ export function fromApiSalesOrder(order: ApiSalesOrderDetails): SalesOrderDetail
     desiredDate: formatDate(order.desired_date),
     source: order.source ?? "Не указан",
     sourceLeadHref: `/sales/leads/${order.lead_id}`,
-    clientHref: "/sales/clients",
+    clientHref: `/sales/clients/${order.client_id}`,
     organizationHref: order.organization_id === null ? null : "/settings/organizations",
     description: order.description ?? "Описание пока не добавлено.",
     productCategory: order.product_category ?? "Не указана",

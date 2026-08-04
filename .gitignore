@@ -36,6 +36,7 @@ venv/
 .env
 .env.*
 !.env.example
+!.env.production.example
 
 # ==========================================
 # Logs
@@ -75,6 +76,29 @@ docker-compose.yml.backup
 # ==========================================
 
 project_import_files.txt
+docs-diff-stat.txt
+git-log-out.txt
+tmp_sync_chunks/
+
+# Local probe / test / command output captures
+backend/alembic-*.txt
+backend/*-out.txt
+backend/*-exit.txt
+backend/*-trace*.txt
+backend/*-capture.txt
+backend/*-detail*.txt
+backend/openapi-*.json
+backend/pip-*.txt
+backend/pytest-*.txt
+backend/stock-balances-*.txt
+backend/tc-*.txt
+frontend/*-out.txt
+frontend/*-exit.txt
+frontend/*-result*.txt
+frontend/*-filtered.txt
+frontend/fe-*.txt
+frontend/node-*.txt
+frontend/tsc-*.txt
 
 # ==========================================
 # Windows

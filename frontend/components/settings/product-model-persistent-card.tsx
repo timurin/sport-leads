@@ -50,7 +50,11 @@ import {
 import type { ProductModelRoutingLink } from "@/lib/product-model-routings";
 import { whitelistedRoutingTemplateIds } from "@/lib/product-model-routings";
 import type { ProductionStage } from "@/lib/production-stages";
-import type { SewingOperation } from "@/lib/sewing-operations";
+import type { SewingOperationTemplate } from "@/lib/sewing-operation-templates";
+import type {
+  SewingOperation,
+  SewingOperationFolder,
+} from "@/lib/sewing-operations";
 import type { ShopRoutingTemplate } from "@/lib/shop-routings";
 import type { TechOperation } from "@/lib/tech-operations";
 import type { ProductType } from "@/lib/product-types";
@@ -68,6 +72,8 @@ export function ProductModelPersistentCard({
   history,
   assemblyVariants,
   sewingOperations,
+  sewingFolders = [],
+  sewingTemplates = [],
   sizeGrids,
   productTypes,
   shopRoutings,
@@ -83,6 +89,8 @@ export function ProductModelPersistentCard({
   history: ProductModelHistoryEntry[];
   assemblyVariants: AssemblyVariant[];
   sewingOperations: SewingOperation[];
+  sewingFolders?: SewingOperationFolder[];
+  sewingTemplates?: SewingOperationTemplate[];
   sizeGrids: SizeGridListItem[];
   productTypes: ProductType[];
   shopRoutings: ShopRoutingTemplate[];
@@ -985,6 +993,8 @@ export function ProductModelPersistentCard({
                 modelId={current.id}
                 variants={assemblyVariants}
                 sewingOperations={sewingOperations}
+                sewingFolders={sewingFolders}
+                sewingTemplates={sewingTemplates}
               />
 
               <ProductModelRoutingsBlock

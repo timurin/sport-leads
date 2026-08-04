@@ -66,6 +66,7 @@ type TechCardShopFloorBodyProps = {
   canRollbackActiveStage: boolean;
   factPerformer: string;
   factPerformerOptions: { value: string; label: string }[];
+  factPerformerSource?: "api" | "demo";
   factWorkDone: string;
   factDuration: string;
   scrapQty: string;
@@ -128,6 +129,7 @@ export function TechCardShopFloorBody({
   canRollbackActiveStage,
   factPerformer,
   factPerformerOptions,
+  factPerformerSource = "demo",
   factWorkDone,
   factDuration,
   scrapQty,
@@ -308,6 +310,11 @@ export function TechCardShopFloorBody({
                         </option>
                       ))}
                     </Select>
+                    <p className="mt-1 text-portal-caption text-portal-muted">
+                      {factPerformerSource === "api"
+                        ? "Список из platform users (справочник / роли)."
+                        : "Временный demo-список: API исполнителей недоступен — перезапустите backend :8000 и обновите страницу."}
+                    </p>
                   </Field>
                   <Field label="Длительность, сек">
                     <Input

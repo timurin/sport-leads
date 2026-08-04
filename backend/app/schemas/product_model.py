@@ -1,5 +1,6 @@
 from datetime import date, datetime
 from decimal import Decimal
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -23,6 +24,8 @@ class ProductModelBase(BaseModel):
     constructor_name: str | None = Field(default=None, max_length=255)
     patterns_created_on: date | None = None
     cover_image_url: str | None = Field(default=None, max_length=500)
+    folder_id: int | None = None
+    sort_order: int = Field(default=0, ge=0)
     status: ProductModelStatus = ProductModelStatus.DRAFT
 
     @field_validator("article", "name", mode="before")
@@ -61,6 +64,8 @@ class ProductModelUpdate(BaseModel):
     constructor_name: str | None = Field(default=None, max_length=255)
     patterns_created_on: date | None = None
     cover_image_url: str | None = Field(default=None, max_length=500)
+    folder_id: int | None = None
+    sort_order: int | None = Field(default=None, ge=0)
 
     @field_validator("article", "name", mode="before")
     @classmethod
@@ -90,6 +95,57 @@ class ProductModelRead(ProductModelBase):
     created_at: datetime
     updated_at: datetime
     has_journal_operations: bool = False
+    assembly_cost_min: Decimal | None = Field(
+        default=None,
+        description="Min assembly variant total for catalog list; null when no variants",
+    )
+    assembly_cost_max: Decimal | None = Field(
+        default=None,
+        description="Max assembly variant total for catalog list; null when no variants",
+    )
+
+
+class ProductModelFolderBase(BaseModel):
+    name: str = Field(min_length=1, max_length=255)
+    parent_id: int | None = None
+    sort_order: int = Field(default=0, ge=0)
+    default_sewing_operation_template_id: int | None = Field(default=None, ge=1)
+
+    @field_validator("name", mode="before")
+    @classmethod
+    def strip_name(cls, value: object) -> object:
+        return value.strip() if isinstance(value, str) else value
+
+
+class ProductModelFolderCreate(ProductModelFolderBase):
+    pass
+
+
+class ProductModelFolderUpdate(BaseModel):
+    name: str | None = Field(default=None, min_length=1, max_length=255)
+    parent_id: int | None = None
+    sort_order: int | None = Field(default=None, ge=0)
+    default_sewing_operation_template_id: int | None = Field(default=None, ge=1)
+
+    @field_validator("name", mode="before")
+    @classmethod
+    def strip_name(cls, value: object) -> object:
+        return value.strip() if isinstance(value, str) else value
+
+
+class ProductModelFolderRead(ProductModelFolderBase):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    created_at: datetime
+    updated_at: datetime
+    default_sewing_operation_template_name: str | None = None
+
+
+class ProductModelSiblingMove(BaseModel):
+    """Move one step among siblings of the same kind under the same parent."""
+
+    direction: str = Field(pattern="^(up|down)$")
 
 
 class ProductModelImportResult(BaseModel):
@@ -271,6 +327,11 @@ class AssemblyVariantCreate(BaseModel):
 
 class AssemblyVariantAddSewingOperations(BaseModel):
     sewing_operation_ids: list[int] = Field(min_length=1)
+
+
+class AssemblyVariantApplySewingTemplate(BaseModel):
+    template_id: int = Field(ge=1)
+    mode: Literal["append", "replace"] = "append"
 
 
 class AssemblyVariantUpdate(BaseModel):

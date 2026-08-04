@@ -6,7 +6,7 @@ import { useMemo, useState } from "react";
 import { ComplexEntityCard } from "@/components/entity/complex-entity-card";
 import { PageActions, PageContent, PageLayout } from "@/components/layout/page-layout";
 import { LeadActivityTimeline } from "@/components/sales/lead-activity-timeline";
-import { LeadCommunicationPanel, type LeadMessageDraft } from "@/components/sales/lead-communication-panel";
+import { OrderCollaborationPanel } from "@/components/sales/order-collaboration-panel";
 import { SalesOrderDocumentsTree } from "@/components/sales/sales-order-documents-tree";
 import { OrderDesignApprovalField } from "@/components/sales/order-design-approval-field";
 import { OrderMaterialReserveField } from "@/components/sales/order-material-reserve-field";
@@ -25,7 +25,7 @@ import { EntityLink } from "@/components/ui/entity-link";
 import { SectionCard } from "@/components/ui/section-card";
 import { mockCurrentUser, salesManagers } from "@/lib/demo-data/sales";
 import { getNotePermissions, isInternalNote, sortLeadActivities } from "@/lib/sales/lead-activity";
-import { formatAttachmentSize, leadMessageChannelLabels } from "@/lib/sales/lead-message";
+import { leadMessageChannelLabels } from "@/lib/sales/lead-message";
 import {
   formatTaskDate,
   getTaskTimingLabel,
@@ -137,7 +137,7 @@ export function SalesOrderPage({
 }) {
   const [order, setOrder] = useState(initialOrder);
   const [activities, setActivities] = useState(() => cloneActivities(initialActivities));
-  const [messages, setMessages] = useState(() => cloneMessages(sourceLead?.messages ?? []));
+  const [messages] = useState(() => cloneMessages(sourceLead?.messages ?? []));
   const [tasks] = useState(() => cloneTasks(sourceLead?.tasks ?? []));
   const [viewMode, setViewMode] = useState<OrderCardViewMode>("all");
   const visibility = getOrderCardSectionVisibility(viewMode);
@@ -229,43 +229,6 @@ export function SalesOrderPage({
     )));
   }
 
-  function sendMessage(draft: LeadMessageDraft) {
-    const sentAt = new Date().toISOString();
-    const messageId = createLocalId("order-message");
-    const message: LeadMessage = {
-      id: messageId,
-      leadId: order.leadId,
-      channel: draft.channel,
-      direction: "outgoing",
-      text: draft.text,
-      author: { ...mockCurrentUser },
-      recipientName: draft.recipientName,
-      sentAt,
-      status: "sent",
-      attachments: draft.attachments.map((attachment) => ({ ...attachment })),
-      isMock: true,
-    };
-    const activity: LeadActivity = {
-      id: createLocalId("order-activity"),
-      type: draft.channel === "email" ? "email_sent" : "outgoing_message",
-      occurredAt: sentAt,
-      author: { id: mockCurrentUser.id, name: mockCurrentUser.name },
-      title: draft.channel === "email" ? "Отправлено письмо клиенту" : "Отправлено сообщение клиенту",
-      description: draft.text || "Сообщение содержит вложение.",
-      direction: "outgoing",
-      channel: draft.channel,
-      metadata: { messageId, orderId: order.id },
-      attachments: draft.attachments.map((attachment) => ({
-        id: attachment.id,
-        name: attachment.name,
-        mediaType: attachment.type || "Файл",
-        sizeLabel: formatAttachmentSize(attachment.size),
-      })),
-    };
-    setMessages((current) => [...current, message]);
-    setActivities((current) => [activity, ...current]);
-  }
-
   function handleStatusChange(status: OrderStatus) {
     const occurredAt = new Date().toISOString();
     setOrder((current) => ({
@@ -323,12 +286,10 @@ export function SalesOrderPage({
       data-lead-communication-column
       className={`order-card-comms lead-communication-column min-w-0 self-start overflow-hidden rounded-portal-lg border border-portal-border bg-portal-surface shadow-portal-card ${sectionClass(visibility.communication)}`}
     >
-      <LeadCommunicationPanel
+      <OrderCollaborationPanel
         embedded
-        messages={messages}
-        primaryContact={primaryContact}
-        customerWebsite={sourceLead?.customer.website}
-        onSend={sendMessage}
+        orderId={order.id}
+        title="Внутренняя переписка"
         customerSummary={(
           <div className="flex h-full min-w-0 flex-col p-3.5">
             <h3 className="text-sm font-bold text-portal-text">Карточка клиента</h3>

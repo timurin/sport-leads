@@ -120,12 +120,20 @@ def _validate_routing_template_link(
             raise ProductModelValidationError(str(error)) from error
 
 
+def _ensure_folder_exists(db: Session, folder_id: int | None) -> None:
+    if folder_id is None:
+        return
+    if repo.get_product_model_folder(db, folder_id) is None:
+        raise ProductModelValidationError("Папка моделей изделий не найдена")
+
+
 def list_product_models(
     db: Session,
     search: str | None = None,
     status: ProductModelStatus | None = None,
     size_type: ProductModelSizeType | None = None,
     product_type_id: int | None = None,
+    folder_id: int | None = None,
     limit: int = 100,
     offset: int = 0,
 ) -> list[ProductModel]:
@@ -135,6 +143,7 @@ def list_product_models(
         status=status,
         size_type=size_type,
         product_type_id=product_type_id,
+        folder_id=folder_id,
         limit=limit,
         offset=offset,
     )
@@ -164,6 +173,13 @@ def create_product_model(db: Session, payload: ProductModelCreate) -> ProductMod
 
     _validate_product_type_link(db, payload.product_type_id)
     _validate_routing_template_link(db, payload.default_routing_template_id)
+    _ensure_folder_exists(db, payload.folder_id)
+    fields_set = getattr(payload, "model_fields_set", set())
+    sort_order = (
+        payload.sort_order
+        if "sort_order" in fields_set
+        else repo.next_model_sort_order(db, payload.folder_id)
+    )
 
     row = ProductModel(
         article=payload.article,
@@ -177,6 +193,8 @@ def create_product_model(db: Session, payload: ProductModelCreate) -> ProductMod
         constructor_name=payload.constructor_name,
         patterns_created_on=payload.patterns_created_on,
         cover_image_url=payload.cover_image_url,
+        folder_id=payload.folder_id,
+        sort_order=sort_order,
         status=status,
     )
     try:
@@ -196,7 +214,54 @@ def create_product_model(db: Session, payload: ProductModelCreate) -> ProductMod
         db.rollback()
         raise ProductModelArticleConflictError("Модель с таким артикулом уже существует") from error
     db.refresh(row)
-    return row
+    _seed_folder_default_sewing_template(db, row)
+    return get_product_model(db, row.id)
+
+
+def _seed_folder_default_sewing_template(db: Session, model: ProductModel) -> None:
+    """Create «Базовый» assembly from folder default template (`6.1.19`). Non-fatal if empty."""
+    if model.folder_id is None:
+        return
+    folder = repo.get_product_model_folder(db, model.folder_id)
+    if folder is None or folder.default_sewing_operation_template_id is None:
+        return
+
+    from app.repositories import sewing_operation_templates as templates_repo
+    from app.schemas.product_model import AssemblyVariantCreate
+    from app.services.assembly_variants import (
+        AssemblyVariantConflictError,
+        AssemblyVariantValidationError,
+        create_assembly_variant,
+    )
+
+    template = templates_repo.get_template(
+        db, folder.default_sewing_operation_template_id
+    )
+    if template is None:
+        return
+    ordered_ids = [
+        line.sewing_operation_id
+        for line in sorted(template.lines, key=lambda item: (item.sequence, item.id))
+    ]
+    if not ordered_ids:
+        return
+    try:
+        create_assembly_variant(
+            db,
+            model.id,
+            AssemblyVariantCreate(
+                name="Базовый",
+                sewing_operation_ids=ordered_ids,
+            ),
+        )
+        _append_history(
+            db,
+            model.id,
+            f"Создан вариант «Базовый» из шаблона папки «{template.name}»",
+        )
+        db.commit()
+    except (AssemblyVariantConflictError, AssemblyVariantValidationError):
+        db.rollback()
 
 
 def update_product_model(db: Session, model_id: int, payload: ProductModelUpdate) -> ProductModel:
@@ -254,6 +319,14 @@ def update_product_model(db: Session, model_id: int, payload: ProductModelUpdate
             changes["default_routing_template_id"],
             product_model_id=row.id,
         )
+    if "folder_id" in changes:
+        _ensure_folder_exists(db, changes["folder_id"])
+        if changes["folder_id"] != row.folder_id and "sort_order" not in changes:
+            changes["sort_order"] = repo.next_model_sort_order(db, changes["folder_id"])
+    if "sort_order" in changes and changes["sort_order"] is not None:
+        if int(changes["sort_order"]) < 0:
+            raise ProductModelValidationError("Порядок не может быть отрицательным")
+
     repo.apply_product_model_updates(row, changes)
     summary = ", ".join(sorted(changes.keys()))
     _append_history(db, row.id, f"Обновлены поля: {summary}")

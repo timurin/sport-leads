@@ -78,6 +78,16 @@ def test_assembly_variants_ordering_totals_and_inactive_filter() -> None:
             second_id = second.json()["id"]
             assert Decimal(second.json()["total_cost"]) == Decimal("0")
 
+            listed = client.get("/product-models")
+            assert listed.status_code == 200, listed.text
+            listed_by_id = {row["id"]: row for row in listed.json()}
+            assert Decimal(listed_by_id[model_id]["assembly_cost_min"]) == Decimal("0")
+            assert Decimal(listed_by_id[model_id]["assembly_cost_max"]) == Decimal(
+                "150.50"
+            )
+            assert listed_by_id[other_id]["assembly_cost_min"] is None
+            assert listed_by_id[other_id]["assembly_cost_max"] is None
+
             duplicate = client.post(
                 f"/product-models/{model_id}/assembly-variants",
                 json={"name": "С отстрочкой"},

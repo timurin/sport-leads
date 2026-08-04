@@ -2,8 +2,11 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  buildProductModelCatalogTreeRows,
+  compareProductModelsByListSort,
   filterProductModels,
   formatAssemblyCost,
+  formatAssemblyCostBounds,
   formatAssemblyVariantCostRange,
   isProductModelRequisitesDirty,
   parseAssemblyCostInput,
@@ -16,6 +19,7 @@ import {
   validateAssemblyOperationLineDraft,
   validateAssemblyVariantDraft,
   validateProductModelCreateDraft,
+  visibleProductModelCatalogTreeRows,
 } from "./product-models.ts";
 
 const sample = [
@@ -279,6 +283,15 @@ test("formatAssemblyVariantCostRange shows min–max across variants", () => {
   );
 });
 
+test("formatAssemblyCostBounds uses list API min/max fields", () => {
+  assert.equal(formatAssemblyCostBounds(null, null), "—");
+  assert.equal(formatAssemblyCostBounds("100.00", "100.00"), "100,00 ₽");
+  assert.equal(
+    formatAssemblyCostBounds("50.50", "150.00"),
+    "от 50,50 — до 150,00 ₽",
+  );
+});
+
 test("sumSelectedSewingOperationCosts totals selected catalog rows", () => {
   assert.equal(
     sumSelectedSewingOperationCosts([
@@ -311,5 +324,124 @@ test("validateAssemblyVariantDraft and operation line draft", () => {
   assert.equal(
     validateAssemblyOperationLineDraft({ operation_name: "Отстрочка", cost: "50,00" }),
     null,
+  );
+});
+
+test("buildProductModelCatalogTreeRows folders then models by sort_order", () => {
+  const folders = [
+    {
+      id: 1,
+      name: "Root",
+      parent_id: null,
+      sort_order: 0,
+      created_at: "",
+      updated_at: "",
+    },
+    {
+      id: 2,
+      name: "Child",
+      parent_id: 1,
+      sort_order: 0,
+      created_at: "",
+      updated_at: "",
+    },
+  ];
+  const models = [
+    {
+      id: 10,
+      article: "R-1",
+      name: "Model root",
+      size_type: "men",
+      size_grid_id: null,
+      product_type_id: null,
+      product_type_name: null,
+      default_routing_template_id: null,
+      description: null,
+      patterns_path: null,
+      constructor_name: null,
+      patterns_created_on: null,
+      cover_image_url: null,
+      folder_id: null,
+      sort_order: 0,
+      status: "draft",
+      created_at: "",
+      updated_at: "",
+    },
+    {
+      id: 11,
+      article: "C-1",
+      name: "Model child",
+      size_type: "men",
+      size_grid_id: null,
+      product_type_id: null,
+      product_type_name: null,
+      default_routing_template_id: null,
+      description: null,
+      patterns_path: null,
+      constructor_name: null,
+      patterns_created_on: null,
+      cover_image_url: null,
+      folder_id: 2,
+      sort_order: 0,
+      status: "draft",
+      created_at: "",
+      updated_at: "",
+    },
+  ];
+  const rows = buildProductModelCatalogTreeRows(folders, models);
+  assert.deepEqual(
+    rows.map((row) => `${row.kind}:${row.id}:${row.depth}`),
+    ["folder:1:0", "folder:2:1", "model:11:2", "model:10:0"],
+  );
+  const collapsed = visibleProductModelCatalogTreeRows(rows, new Set());
+  assert.deepEqual(
+    collapsed.map((row) => `${row.kind}:${row.id}`),
+    ["folder:1", "model:10"],
+  );
+});
+test("compareProductModelsByListSort orders by article and cost", () => {
+  const labels = {
+    productType: () => "",
+    sizeGrid: () => "",
+    cost: (model) =>
+      model.assembly_cost_min == null
+        ? null
+        : Number(model.assembly_cost_min),
+  };
+  const a = {
+    ...sample[0],
+    id: 1,
+    article: "B-10",
+    name: "B",
+    folder_id: null,
+    sort_order: 0,
+    assembly_cost_min: "200",
+    assembly_cost_max: "200",
+  };
+  const b = {
+    ...sample[0],
+    id: 2,
+    article: "A-10",
+    name: "A",
+    folder_id: null,
+    sort_order: 1,
+    assembly_cost_min: "50",
+    assembly_cost_max: "50",
+  };
+  assert.ok(
+    compareProductModelsByListSort(a, b, "article", "asc", labels) > 0,
+  );
+  assert.ok(
+    compareProductModelsByListSort(a, b, "article", "desc", labels) < 0,
+  );
+  assert.ok(compareProductModelsByListSort(a, b, "cost", "asc", labels) > 0);
+
+  const sorted = buildProductModelCatalogTreeRows([], [a, b], {
+    compareModels: (left, right) =>
+      compareProductModelsByListSort(left, right, "article", "asc", labels),
+  });
+  assert.deepEqual(
+    sorted.filter((row) => row.kind === "model").map((row) => row.id),
+    [2, 1],
   );
 });

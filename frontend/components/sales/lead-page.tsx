@@ -28,7 +28,7 @@ import { PageActions, PageContent, PageLayout, ResponsiveGrid } from "@/componen
 import { Button } from "@/components/ui/button";
 import { CompactTabs } from "@/components/ui/compact-tabs";
 import { MetricCard, SectionCard } from "@/components/ui/section-card";
-import { mockCurrentUser } from "@/lib/demo-data/sales";
+
 import { getNotePermissions, isInternalNote } from "@/lib/sales/lead-activity";
 import { formatCurrency } from "@/lib/sales/lead-commercial";
 import type { LeadDetails } from "@/lib/sales/lead-details";
@@ -150,7 +150,7 @@ export function LeadPage({
   const [noteActionError, setNoteActionError] = useState("");
   const taskDialogTriggerRef = useRef<HTMLElement | null>(null);
   const taskManagers = lead.taskManagers;
-  const currentActor = lead.currentActor ?? mockCurrentUser;
+  const currentActor = lead.currentActor;
   const taskPersistent = true;
   const noteManagers = taskManagers;
 

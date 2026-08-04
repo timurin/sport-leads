@@ -1,11 +1,14 @@
 """Technical cards API (Stage 9.2.1 generate + Stage 9.2.2 stage machine)."""
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, status
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 
+from app.api.deps_auth import require_permission
 from app.database.session import get_db
+from app.models.auth import PlatformUser
 from app.models.technical_card import TechnicalCard
+from app.services import rbac as rbac_service
 from app.schemas.technical_card import (
     OrderManufacturingCompletenessRead,
     TechnicalCardApplyRoutingRequest,
@@ -67,6 +70,7 @@ from app.services.technical_cards import (
     get_technical_card,
     get_technical_card_media,
     import_unit_lines,
+    import_unit_lines_from_template_file,
     list_operation_lines,
     list_technical_card_media,
     list_technical_cards,
@@ -91,6 +95,7 @@ from app.services.technical_cards import (
 )
 
 router = APIRouter(tags=["Technical cards"])
+_MAX_UNIT_LINE_IMPORT_BYTES = 5 * 1024 * 1024
 
 
 def _http_error(error: Exception) -> HTTPException:
@@ -456,9 +461,14 @@ def complete_stage_endpoint(
     stage_order: int,
     payload: TechnicalCardStageCompleteRequest | None = None,
     db: Session = Depends(get_db),
+    actor: PlatformUser = Depends(
+        require_permission(rbac_service.PERM_SHOP_KANBAN_TRANSITION)
+    ),
 ) -> TechnicalCardRead:
     try:
-        return _card_read(db, complete_stage(db, card_id, stage_order, payload))
+        return _card_read(
+            db, complete_stage(db, card_id, stage_order, payload, actor=actor)
+        )
     except (
         TechnicalCardNotFoundError,
         TechnicalCardConflictError,
@@ -496,6 +506,9 @@ def rollback_stage_for_shop_kanban_endpoint(
     card_id: int,
     stage_order: int,
     db: Session = Depends(get_db),
+    actor: PlatformUser = Depends(
+        require_permission(rbac_service.PERM_SHOP_KANBAN_TRANSITION)
+    ),
 ) -> TechnicalCardRead:
     """Kanban rollback variant for shop testing.
 
@@ -503,7 +516,8 @@ def rollback_stage_for_shop_kanban_endpoint(
     """
     try:
         return _card_read(
-            db, rollback_stage_for_shop_kanban(db, card_id, stage_order)
+            db,
+            rollback_stage_for_shop_kanban(db, card_id, stage_order, actor=actor),
         )
     except (
         TechnicalCardNotFoundError,
@@ -759,6 +773,42 @@ def import_unit_lines_endpoint(
 ) -> TechnicalCardRead:
     try:
         return _card_read(db, import_unit_lines(db, card_id, payload.lines))
+    except (
+        TechnicalCardNotFoundError,
+        TechnicalCardValidationError,
+    ) as error:
+        raise _http_error(error) from error
+
+
+@router.post(
+    "/technical-cards/{card_id}/unit-lines/import-file",
+    response_model=TechnicalCardRead,
+    operation_id="import_technical_card_unit_lines_file",
+)
+async def import_unit_lines_file_endpoint(
+    card_id: int,
+    file: UploadFile = File(...),
+    sheet_name: str | None = Query(default=None, max_length=120),
+    db: Session = Depends(get_db),
+) -> TechnicalCardRead:
+    data = await file.read()
+    if len(data) > _MAX_UNIT_LINE_IMPORT_BYTES:
+        raise HTTPException(
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            detail="Import file exceeds 5 MB limit",
+        )
+    try:
+        return _card_read(
+            db,
+            import_unit_lines_from_template_file(
+                db,
+                card_id,
+                data,
+                filename=file.filename,
+                content_type=file.content_type,
+                sheet_name=sheet_name,
+            ),
+        )
     except (
         TechnicalCardNotFoundError,
         TechnicalCardValidationError,

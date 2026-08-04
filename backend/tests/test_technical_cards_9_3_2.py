@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+import io
 from decimal import Decimal
 
 from fastapi.testclient import TestClient
+from openpyxl import Workbook
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
@@ -14,6 +16,7 @@ from app.database.session import get_db
 from app.main import app
 from app.models.nomenclature import Nomenclature, NomenclatureType
 from app.models.sales import Lead, LeadTask, SalesUser
+from app.services.size_grids_seed import seed_mosmade_reference_grids
 
 
 def _session_factory() -> sessionmaker[Session]:
@@ -147,7 +150,7 @@ def test_unit_lines_patch_bulk_replace_import_reset() -> None:
                     "lines": [
                         {
                             "unit_index": 1,
-                            "size_type": "men",
+                            "size_type": "male",
                             "size": "S",
                             "personalization": "А",
                             "print_number": "1",
@@ -155,14 +158,14 @@ def test_unit_lines_patch_bulk_replace_import_reset() -> None:
                         },
                         {
                             "unit_index": 2,
-                            "size_type": "women",
+                            "size_type": "female",
                             "size": "M",
                             "personalization": "Б",
                             "print_number": "2",
                         },
                         {
                             "unit_index": 3,
-                            "size_type": "women",
+                            "size_type": "female",
                             "size": "L",
                             "personalization": "В",
                             "print_number": "3",
@@ -172,9 +175,9 @@ def test_unit_lines_patch_bulk_replace_import_reset() -> None:
             )
             assert replaced.status_code == 200, replaced.text
             assert [
-                (row["size"], row["print_number"])
+                (row["size_type"], row["size"], row["print_number"])
                 for row in replaced.json()["unit_lines"]
-            ] == [("S", "1"), ("M", "2"), ("L", "3")]
+            ] == [("male", "S", "1"), ("female", "M", "2"), ("female", "L", "3")]
 
             bad_count = client.put(
                 f"/technical-cards/{card_id}/unit-lines",
@@ -187,7 +190,7 @@ def test_unit_lines_patch_bulk_replace_import_reset() -> None:
                 json={
                     "lines": [
                         {
-                            "size_type": "men",
+                            "size_type": "male",
                             "size": "M",
                             "personalization": "Иванов",
                             "print_number": "10",
@@ -195,7 +198,7 @@ def test_unit_lines_patch_bulk_replace_import_reset() -> None:
                             "notes": "основа",
                         },
                         {
-                            "size_type": "women",
+                            "size_type": "female",
                             "size": "S",
                             "personalization": "Петрова",
                             "print_number": "7",
@@ -208,9 +211,9 @@ def test_unit_lines_patch_bulk_replace_import_reset() -> None:
             assert imported.status_code == 200, imported.text
             unit_lines = imported.json()["unit_lines"]
             assert [(row["size_type"], row["size"], row["print_number"]) for row in unit_lines] == [
-                ("men", "M", "10"),
-                ("men", "M", "10"),
-                ("women", "S", "7"),
+                ("male", "M", "10"),
+                ("male", "M", "10"),
+                ("female", "S", "7"),
             ]
             assert unit_lines[0]["notes"] == "основа"
             assert unit_lines[2]["notes"] == "резерв"
@@ -220,7 +223,7 @@ def test_unit_lines_patch_bulk_replace_import_reset() -> None:
                 json={
                     "lines": [
                         {
-                            "size_type": "men",
+                            "size_type": "male",
                             "size": "M",
                             "personalization": "Иванов",
                             "print_number": "10",
@@ -248,5 +251,107 @@ def test_unit_lines_patch_bulk_replace_import_reset() -> None:
                 json={"size": "XL"},
             )
             assert blocked.status_code == 422
+    finally:
+        app.dependency_overrides.clear()
+
+
+def test_unit_lines_import_from_xlsx_template() -> None:
+    factory = _session_factory()
+
+    def override_get_db():
+        with factory() as db:
+            yield db
+
+    app.dependency_overrides[get_db] = override_get_db
+    try:
+        with factory() as db:
+            product_id = _seed_product(db)
+            seed_mosmade_reference_grids(db)
+            db.commit()
+        lead_id = _add_lead(factory)
+
+        workbook = Workbook()
+        sheet = workbook.active
+        assert sheet is not None
+        sheet.title = "TechCard"
+        sheet.append(
+            ["Номер", "Имя", "Тип размера", "Размер", "Рост", "Количество"]
+        )
+        sheet.append([10, "Иванов", "Мужской (Mosmade)", "48 / M", "", 2])
+        sheet.append([7, "Петрова", "Женский (Mosmade)", "44 / S", "", 1])
+        payload = io.BytesIO()
+        workbook.save(payload)
+
+        with TestClient(app) as client:
+            order_id = client.post(
+                f"/leads/{lead_id}/convert",
+                json={"completed_by_id": 1},
+            ).json()["order"]["id"]
+            item = client.post(
+                f"/orders/{order_id}/items",
+                json={
+                    "nomenclature_id": product_id,
+                    "snapshot_name": "Футболка PRO",
+                    "size_range": "M",
+                    "personalization": "Иванов",
+                    "color": "Белый",
+                    "unit": "шт",
+                    "quantity": "3",
+                    "unit_price": "1500",
+                },
+            )
+            assert item.status_code == 201, item.text
+
+            card = client.post(
+                f"/orders/{order_id}/technical-cards/generate"
+            ).json()["created"][0]
+            card_id = card["id"]
+
+            imported = client.post(
+                f"/technical-cards/{card_id}/unit-lines/import-file",
+                files={
+                    "file": (
+                        "techcard-example.xlsx",
+                        payload.getvalue(),
+                        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    )
+                },
+            )
+            assert imported.status_code == 200, imported.text
+            unit_lines = imported.json()["unit_lines"]
+            assert [(row["size_type"], row["size"], row["print_number"]) for row in unit_lines] == [
+                ("male", "48 / M", "10"),
+                ("male", "48 / M", "10"),
+                ("female", "44 / S", "7"),
+            ]
+            assert [row["personalization"] for row in unit_lines] == [
+                "Иванов",
+                "Иванов",
+                "Петрова",
+            ]
+
+            bad_workbook = Workbook()
+            bad_sheet = bad_workbook.active
+            assert bad_sheet is not None
+            bad_sheet.title = "TechCard"
+            bad_sheet.append(
+                ["Номер", "Имя", "Тип размера", "Размер", "Рост", "Количество"]
+            )
+            bad_sheet.append([10, "Иванов", "Мужская (Mosmade)", "99/999", "", 3])
+            bad_payload = io.BytesIO()
+            bad_workbook.save(bad_payload)
+
+            bad_import = client.post(
+                f"/technical-cards/{card_id}/unit-lines/import-file",
+                files={
+                    "file": (
+                        "techcard-example-bad.xlsx",
+                        bad_payload.getvalue(),
+                        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    )
+                },
+            )
+            assert bad_import.status_code == 422, bad_import.text
+            assert "размер не найден" in bad_import.json()["detail"].lower()
     finally:
         app.dependency_overrides.clear()

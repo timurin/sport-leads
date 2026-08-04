@@ -1,6 +1,12 @@
 import { ClientsTable } from "@/components/tables/clients-table";
-import { clients } from "@/lib/demo-data/sales";
+import { getClientList } from "@/lib/sales/client-list-api";
 
-export default function ClientsPage() {
-  return <ClientsTable clients={clients} />;
+export default async function ClientsPage() {
+  const clientList = await getClientList();
+  return (
+    <ClientsTable
+      clients={clientList.clients}
+      loadError={clientList.ok ? undefined : clientList.message}
+    />
+  );
 }

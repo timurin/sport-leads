@@ -1,6 +1,6 @@
 "use client";
 
-import { type FormEvent, useState } from "react";
+import { type FormEvent, useEffect, useState } from "react";
 
 import {
   createSewingOperation,
@@ -12,38 +12,59 @@ import { CreateDrawer } from "@/components/ui/create-drawer";
 import { Field, Input } from "@/components/ui/form-controls";
 import { useToast } from "@/components/ui/toast";
 import {
+  buildSewingCatalogTreeRows,
   validateSewingOperationDraft,
   type SewingOperation,
   type SewingOperationCreateDraft,
+  type SewingOperationFolder,
 } from "@/lib/sewing-operations";
 import type { WorkCenter } from "@/lib/shop-routings";
 
-const emptyDraft: SewingOperationCreateDraft = {
-  name: "",
-  cost: "",
-  quantity_per_item: "1",
-  duration_seconds: "0",
-  work_center_ids: [],
-};
+function emptyDraft(folderId: number | null = null): SewingOperationCreateDraft {
+  return {
+    name: "",
+    cost: "",
+    quantity_per_item: "1",
+    duration_seconds: "0",
+    folder_id: folderId,
+    work_center_ids: [],
+  };
+}
 
 type SewingOperationCreateDrawerProps = {
   open: boolean;
   onClose: () => void;
   onCreated?: (operation: SewingOperation) => void;
   sewingWorkCenters: WorkCenter[];
+  folders?: SewingOperationFolder[];
+  defaultFolderId?: number | null;
 };
 
-/** CreateDrawer host for sewing operations (`6.3.5` / `6.3.10.4`, ADR-013). */
+/** CreateDrawer host for sewing operations (`6.3.5` / `6.3.10.4` / `6.3.11`, ADR-013). */
 export function SewingOperationCreateDrawer({
   open,
   onClose,
   onCreated,
   sewingWorkCenters,
+  folders = [],
+  defaultFolderId = null,
 }: SewingOperationCreateDrawerProps) {
   const { push: pushToast } = useToast();
-  const [draft, setDraft] = useState<SewingOperationCreateDraft>(emptyDraft);
+  const [draft, setDraft] = useState<SewingOperationCreateDraft>(() =>
+    emptyDraft(defaultFolderId),
+  );
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (!open) return;
+    setDraft(emptyDraft(defaultFolderId));
+    setError("");
+  }, [open, defaultFolderId]);
+
+  const folderOptions = buildSewingCatalogTreeRows(folders, []).filter(
+    (row) => row.kind === "folder",
+  );
 
   function update<K extends keyof SewingOperationCreateDraft>(
     field: K,
@@ -55,7 +76,7 @@ export function SewingOperationCreateDrawer({
 
   function handleClose() {
     if (saving) return;
-    setDraft(emptyDraft);
+    setDraft(emptyDraft(null));
     setError("");
     onClose();
   }
@@ -71,15 +92,9 @@ export function SewingOperationCreateDrawer({
     setSaving(true);
     setError("");
     try {
-      const result: SewingOperationActionResult = await createSewingOperation({
-        name: draft.name,
-        cost: draft.cost,
-        quantity_per_item: draft.quantity_per_item,
-        duration_seconds: draft.duration_seconds,
-        work_center_ids: draft.work_center_ids,
-      });
+      const result: SewingOperationActionResult = await createSewingOperation(draft);
       if (result.ok) {
-        setDraft(emptyDraft);
+        setDraft(emptyDraft(null));
         setSaving(false);
         pushToast("Операция создана", "success");
         onCreated?.(result.operation);
@@ -97,7 +112,7 @@ export function SewingOperationCreateDrawer({
     <CreateDrawer
       open={open}
       title="Новая операция пошива"
-      description="Плоский справочник: наименование, стоимость, количество, время и оборудование цеха Пошив."
+      description="Операция в каталоге с папками: наименование, стоимость, количество, время и оборудование цеха Пошив."
       onClose={handleClose}
       variant="overlay"
     >
@@ -108,6 +123,27 @@ export function SewingOperationCreateDrawer({
               Реквизиты
             </h3>
             <div className="grid gap-portal-4">
+              <Field label="Папка">
+                <select
+                  className="w-full rounded-portal-sm border border-portal-border bg-portal-surface px-2 py-1.5 text-portal-body"
+                  value={draft.folder_id ?? ""}
+                  disabled={saving}
+                  onChange={(event) => {
+                    const raw = event.target.value;
+                    update("folder_id", raw === "" ? null : Number(raw));
+                  }}
+                  aria-label="Папка"
+                >
+                  <option value="">Корень каталога</option>
+                  {folderOptions.map((row) =>
+                    row.kind === "folder" ? (
+                      <option key={row.id} value={row.id}>
+                        {"—".repeat(row.depth)} {row.name}
+                      </option>
+                    ) : null,
+                  )}
+                </select>
+              </Field>
               <Field label="Наименование" required>
                 <Input
                   autoFocus

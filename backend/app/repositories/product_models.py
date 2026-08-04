@@ -1,8 +1,9 @@
 from sqlalchemy import func, or_, select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from app.models.product_model import (
     ProductModel,
+    ProductModelFolder,
     ProductModelHistoryEntry,
     ProductModelMedia,
     ProductModelSizeType,
@@ -19,10 +20,11 @@ def list_product_models(
     status: ProductModelStatus | None = None,
     size_type: ProductModelSizeType | None = None,
     product_type_id: int | None = None,
+    folder_id: int | None = None,
     limit: int = 100,
     offset: int = 0,
 ) -> list[ProductModel]:
-    statement = select(ProductModel)
+    statement = select(ProductModel).options(joinedload(ProductModel.product_type))
     if search and search.strip():
         pattern = f"%{search.strip()}%"
         statement = statement.where(
@@ -37,11 +39,14 @@ def list_product_models(
         statement = statement.where(ProductModel.size_type == size_type)
     if product_type_id is not None:
         statement = statement.where(ProductModel.product_type_id == product_type_id)
+    if folder_id is not None:
+        statement = statement.where(ProductModel.folder_id == folder_id)
     statement = statement.order_by(
+        ProductModel.sort_order,
         func.lower(ProductModel.article),
         ProductModel.id,
     ).offset(offset).limit(limit)
-    return list(db.scalars(statement).all())
+    return list(db.scalars(statement).unique().all())
 
 
 def get_product_model(db: Session, model_id: int) -> ProductModel | None:
@@ -54,6 +59,15 @@ def get_product_model_by_article(db: Session, article: str) -> ProductModel | No
     ).first()
 
 
+def next_model_sort_order(db: Session, folder_id: int | None) -> int:
+    statement = select(func.coalesce(func.max(ProductModel.sort_order), -1) + 1)
+    if folder_id is None:
+        statement = statement.where(ProductModel.folder_id.is_(None))
+    else:
+        statement = statement.where(ProductModel.folder_id == folder_id)
+    return int(db.scalar(statement) or 0)
+
+
 def add_product_model(db: Session, row: ProductModel) -> ProductModel:
     db.add(row)
     db.flush()
@@ -64,6 +78,100 @@ def apply_product_model_updates(row: ProductModel, changes: dict) -> ProductMode
     for field_name, value in changes.items():
         setattr(row, field_name, value)
     return row
+
+
+def list_product_model_folders(db: Session) -> list[ProductModelFolder]:
+    statement = select(ProductModelFolder).order_by(
+        ProductModelFolder.sort_order,
+        func.lower(ProductModelFolder.name),
+        ProductModelFolder.id,
+    )
+    return list(db.scalars(statement).all())
+
+
+def get_product_model_folder(db: Session, folder_id: int) -> ProductModelFolder | None:
+    return db.get(ProductModelFolder, folder_id)
+
+
+def find_sibling_folder_by_name(
+    db: Session,
+    *,
+    parent_id: int | None,
+    name: str,
+    exclude_id: int | None = None,
+) -> ProductModelFolder | None:
+    siblings = list_sibling_folders(db, parent_id)
+    needle = name.casefold()
+    for sibling in siblings:
+        if exclude_id is not None and sibling.id == exclude_id:
+            continue
+        if sibling.name.casefold() == needle:
+            return sibling
+    return None
+
+
+def next_folder_sort_order(db: Session, parent_id: int | None) -> int:
+    statement = select(func.coalesce(func.max(ProductModelFolder.sort_order), -1) + 1)
+    if parent_id is None:
+        statement = statement.where(ProductModelFolder.parent_id.is_(None))
+    else:
+        statement = statement.where(ProductModelFolder.parent_id == parent_id)
+    return int(db.scalar(statement) or 0)
+
+
+def count_folder_children(db: Session, folder_id: int) -> int:
+    folders = db.scalar(
+        select(func.count())
+        .select_from(ProductModelFolder)
+        .where(ProductModelFolder.parent_id == folder_id)
+    )
+    models = db.scalar(
+        select(func.count())
+        .select_from(ProductModel)
+        .where(ProductModel.folder_id == folder_id)
+    )
+    return int(folders or 0) + int(models or 0)
+
+
+def add_product_model_folder(db: Session, row: ProductModelFolder) -> ProductModelFolder:
+    db.add(row)
+    db.flush()
+    return row
+
+
+def delete_product_model_folder(db: Session, row: ProductModelFolder) -> None:
+    db.delete(row)
+    db.flush()
+
+
+def list_sibling_folders(
+    db: Session, parent_id: int | None
+) -> list[ProductModelFolder]:
+    statement = select(ProductModelFolder)
+    if parent_id is None:
+        statement = statement.where(ProductModelFolder.parent_id.is_(None))
+    else:
+        statement = statement.where(ProductModelFolder.parent_id == parent_id)
+    statement = statement.order_by(
+        ProductModelFolder.sort_order,
+        func.lower(ProductModelFolder.name),
+        ProductModelFolder.id,
+    )
+    return list(db.scalars(statement).all())
+
+
+def list_sibling_models(db: Session, folder_id: int | None) -> list[ProductModel]:
+    statement = select(ProductModel)
+    if folder_id is None:
+        statement = statement.where(ProductModel.folder_id.is_(None))
+    else:
+        statement = statement.where(ProductModel.folder_id == folder_id)
+    statement = statement.order_by(
+        ProductModel.sort_order,
+        func.lower(ProductModel.article),
+        ProductModel.id,
+    )
+    return list(db.scalars(statement).all())
 
 
 def list_product_model_versions(db: Session, product_model_id: int) -> list[ProductModelVersion]:

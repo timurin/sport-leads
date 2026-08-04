@@ -15,7 +15,7 @@ Approved look and behaviour:
 - on viewports below `md` (≤767 px) the sidebar is not shown; platform and section navigation use the topbar compact menu;
 - on viewports `md`–`1299` px the sidebar is **always compact** (icons only); expand control is hidden; stored `expanded` preference is restored from `1300` px up (owner visual `3.5.9`, `2026-07-31`);
 - light background and SPORT-LEAD visual system;
-- logo `SL` and title `SPORT-LEAD`;
+- brand mark (`SL` fallback / uploaded logo) and title from platform system settings (`18.1.2`), default `SPORT-LEAD`;
 - section/subsection grouping;
 - expand/collapse on the full row click;
 - active section and route highlighting;
@@ -71,13 +71,14 @@ Navigation report fields:
 
 Approved composition and behaviour:
 
-- height `64px` on small screens, `72px` from `md`;
+- height `52px` on small screens, `56px` from `md` (compacted owner ask `2026-08-02`; was 64/72);
 - light background, bottom border, SPORT-LEAD visual system;
 - active top-level section title removed (product `2026-07-21`);
 - in-section navigation from `frontend/lib/navigation.ts`;
+- desktop section links use tighter horizontal padding (`px-2` / `xl:px-2.5`) and `13px` type so long Settings menus fit;
 - desktop nav from `lg`; tablet/mobile use compact section menu;
 - on mobile (≤767 px) the compact menu also lists top-level `appSections` (sidebar is hidden);
-- global Search and Create actions;
+- global Search and Create actions (compact control height `32px`);
 - dropdown closes on toggle, item select, outside click, route change, `Escape`;
 - popups stay in viewport; no horizontal page scroll from topbar;
 - focus/hover/active states are part of the contract.
