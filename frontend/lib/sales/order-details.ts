@@ -48,7 +48,7 @@ export type { DesignApprovalStatus, MaterialReserveStatus, OrderPaymentStatus };
 export type ApiSalesOrderDetails = {
   id: number;
   number: string;
-  lead_id: number;
+  lead_id: number | null;
   client_id: number;
   organization_id: number | null;
   organization_name: string | null;
@@ -125,7 +125,7 @@ export type ApiSalesOrderItem = {
 /** Same event contract as lead history; order `/history` returns lead ∪ order events. */
 export type ApiSalesOrderEvent = {
   id: number;
-  lead_id: number;
+  lead_id: number | null;
   order_id: number | null;
   event_type:
     | "lead_created"
@@ -187,7 +187,7 @@ export type SalesOrderDetails = {
   paymentStatus: OrderPaymentStatus;
   paidAmountValue: string;
   materialReserveStatus: MaterialReserveStatus;
-  leadId: string;
+  leadId: string | null;
   clientId: string;
   clientName: string;
   organizationId: string | null;
@@ -199,14 +199,21 @@ export type SalesOrderDetails = {
   createdAtIso: string;
   updatedAtIso: string;
   desiredDate: string;
+  /** ISO date `YYYY-MM-DD` or empty for editors (`20.4.2`). */
+  desiredDateValue: string;
   source: string;
-  sourceLeadHref: string;
+  sourceValue: string;
+  sourceLeadHref: string | null;
   clientHref: string;
   organizationHref: string | null;
   description: string;
+  descriptionValue: string;
   productCategory: string;
+  productCategoryValue: string;
   sport: string;
+  sportValue: string;
   quantity: string;
+  quantityValue: string;
   itemCount: number;
   /** Raw order total after order-level discount (API `amount`). */
   amountValue: string;
@@ -329,7 +336,7 @@ export function fromApiSalesOrder(order: ApiSalesOrderDetails): SalesOrderDetail
     materialReserveStatus:
       (order.material_reserve_status as MaterialReserveStatus | null | undefined)
       ?? "not_required",
-    leadId: String(order.lead_id),
+    leadId: order.lead_id == null ? null : String(order.lead_id),
     clientId: String(order.client_id),
     clientName: order.client_name ?? `Клиент #${order.client_id}`,
     organizationId: order.organization_id === null ? null : String(order.organization_id),
@@ -355,56 +362,65 @@ export function fromApiSalesOrder(order: ApiSalesOrderDetails): SalesOrderDetail
     createdAtIso: order.created_at,
     updatedAtIso: order.updated_at,
     desiredDate: formatDate(order.desired_date),
+    desiredDateValue: order.desired_date ?? "",
     source: order.source ?? "Не указан",
-    sourceLeadHref: `/sales/leads/${order.lead_id}`,
+    sourceValue: order.source ?? "",
+    sourceLeadHref:
+      order.lead_id == null ? null : `/sales/leads/${order.lead_id}`,
     clientHref: `/sales/clients/${order.client_id}`,
     organizationHref: order.organization_id === null ? null : "/settings/organizations",
     description: order.description ?? "Описание пока не добавлено.",
+    descriptionValue: order.description ?? "",
     productCategory: order.product_category ?? "Не указана",
+    productCategoryValue: order.product_category ?? "",
     sport: order.sport ?? "Не указан",
+    sportValue: order.sport ?? "",
     quantity: order.quantity === null ? "Не указано" : `${order.quantity} ед.`,
+    quantityValue: order.quantity === null ? "" : String(order.quantity),
     itemCount: items.length,
-    items: items.map((item) => {
-      const lineTotalRaw = item.line_total ?? item.line_amount;
-      return {
-      id: item.id,
-      nomenclatureId: item.nomenclature_id,
-      nomenclatureVariantId: item.nomenclature_variant_id,
-      productModelId: item.product_model_id ?? null,
-      productModelArticle: item.product_model_article ?? "",
-      productModelName: item.product_model_name ?? "",
-      productModelSizeType: item.product_model_size_type ?? "",
-      assemblyVariantId: item.assembly_variant_id ?? null,
-      assemblyVariantName: item.assembly_variant_name ?? "",
-      assemblyVariantTotalCost:
-        item.assembly_variant_total_cost == null
-          ? ""
-          : String(item.assembly_variant_total_cost),
-      routingTemplateId: item.routing_template_id ?? null,
-      routingTemplateName: item.routing_template_name ?? "",
-      vatRateId: item.vat_rate_id ?? null,
-      vatRatePercent: item.vat_rate_percent == null ? "" : String(item.vat_rate_percent),
-      priceIncludesVat: item.price_includes_vat !== false,
-      vatAmount: formatCurrency(item.vat_amount ?? 0),
-      vatAmountValue: String(item.vat_amount ?? 0),
-      lineTotal: formatCurrency(lineTotalRaw),
-      lineTotalValue: String(lineTotalRaw),
-      variantSnapshots: item.variant_snapshots ?? [],
-      snapshotName: item.snapshot_name,
-      sizeRange: item.size_range ?? "",
-      personalization: item.personalization ?? "",
-      color: item.color ?? "",
-      unit: item.unit,
-      quantity: String(item.quantity),
-      unitPrice: formatCurrency(item.unit_price),
-      unitPriceValue: String(item.unit_price),
-      grossAmount: formatCurrency(item.gross_amount),
-      discountPercent: item.discount_percent === null ? "" : String(item.discount_percent),
-      discountAmount: formatCurrency(item.discount_amount),
-      lineAmount: formatCurrency(item.line_amount),
-      lineAmountValue: String(item.line_amount),
-    };
-    }),
+    items: items.map(fromApiSalesOrderItem),
+  };
+}
+
+export function fromApiSalesOrderItem(item: ApiSalesOrderItem): SalesOrderItem {
+  const lineTotalRaw = item.line_total ?? item.line_amount;
+  return {
+    id: item.id,
+    nomenclatureId: item.nomenclature_id,
+    nomenclatureVariantId: item.nomenclature_variant_id,
+    productModelId: item.product_model_id ?? null,
+    productModelArticle: item.product_model_article ?? "",
+    productModelName: item.product_model_name ?? "",
+    productModelSizeType: item.product_model_size_type ?? "",
+    assemblyVariantId: item.assembly_variant_id ?? null,
+    assemblyVariantName: item.assembly_variant_name ?? "",
+    assemblyVariantTotalCost:
+      item.assembly_variant_total_cost == null
+        ? ""
+        : String(item.assembly_variant_total_cost),
+    routingTemplateId: item.routing_template_id ?? null,
+    routingTemplateName: item.routing_template_name ?? "",
+    vatRateId: item.vat_rate_id ?? null,
+    vatRatePercent: item.vat_rate_percent == null ? "" : String(item.vat_rate_percent),
+    priceIncludesVat: item.price_includes_vat !== false,
+    vatAmount: formatCurrency(item.vat_amount ?? 0),
+    vatAmountValue: String(item.vat_amount ?? 0),
+    lineTotal: formatCurrency(lineTotalRaw),
+    lineTotalValue: String(lineTotalRaw),
+    variantSnapshots: item.variant_snapshots ?? [],
+    snapshotName: item.snapshot_name,
+    sizeRange: item.size_range ?? "",
+    personalization: item.personalization ?? "",
+    color: item.color ?? "",
+    unit: item.unit,
+    quantity: String(item.quantity),
+    unitPrice: formatCurrency(item.unit_price),
+    unitPriceValue: String(item.unit_price),
+    grossAmount: formatCurrency(item.gross_amount),
+    discountPercent: item.discount_percent === null ? "" : String(item.discount_percent),
+    discountAmount: formatCurrency(item.discount_amount),
+    lineAmount: formatCurrency(item.line_amount),
+    lineAmountValue: String(item.line_amount),
   };
 }
 

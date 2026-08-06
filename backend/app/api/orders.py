@@ -9,7 +9,10 @@ from app.schemas.sales import (
     LeadRead,
     SalesInvoiceCreate,
     SalesInvoiceRead,
+    SalesOrderCreate,
     SalesOrderRead,
+    SalesOrderClientNeedUpdate,
+    SalesOrderClientUpdate,
     SalesOrderDesignApprovalUpdate,
     SalesOrderDiscountUpdate,
     SalesOrderMaterialReserveUpdate,
@@ -21,6 +24,15 @@ from app.schemas.sales import (
     SalesOrderStatusUpdate,
     SalesQuotationRead,
 )
+from app.services.sales_order_create import (
+    SalesOrderCreateValidationError,
+    SalesOrderNumberConflictError,
+    create_sales_order,
+)
+from app.services.sales_order_client_need import (
+    SalesOrderClientNeedError,
+    update_sales_order_client_need,
+)
 from app.services.sales_order_status import (
     InvalidSalesOrderPaymentUpdate,
     InvalidSalesOrderStatusTransition,
@@ -29,6 +41,10 @@ from app.services.sales_order_status import (
     update_sales_order_material_reserve,
     update_sales_order_payment,
     update_sales_order_status,
+)
+from app.services.sales_order_client import (
+    SalesOrderClientError,
+    update_sales_order_client,
 )
 from app.services.sales_order_organization import (
     SalesOrderOrganizationError,
@@ -132,6 +148,37 @@ def list_orders(
     ]
 
 
+@router.post("", response_model=SalesOrderRead, status_code=201)
+def create_order(
+    payload: SalesOrderCreate,
+    db: Session = Depends(get_db),
+) -> dict[str, object]:
+    try:
+        order = create_sales_order(
+            db,
+            client_id=payload.client_id,
+            organization_id=payload.organization_id,
+            responsible_id=payload.responsible_id,
+            title=payload.title,
+            number=payload.number,
+            description=payload.description,
+            product_category=payload.product_category,
+            sport=payload.sport,
+            quantity=payload.quantity,
+            amount=payload.amount,
+            desired_date=payload.desired_date,
+            source=payload.source,
+            currency_code=payload.currency_code,
+        )
+    except SalesOrderNumberConflictError as error:
+        raise HTTPException(status_code=409, detail=str(error)) from error
+    except SalesOrderCreateValidationError as error:
+        raise HTTPException(status_code=400, detail=str(error)) from error
+
+    db.commit()
+    return get_order(order.id, db)
+
+
 @router.get("/{order_id}", response_model=SalesOrderRead)
 def get_order(order_id: int, db: Session = Depends(get_db)) -> dict[str, object]:
     row = db.execute(
@@ -162,6 +209,21 @@ def update_order_organization(
     return get_order(order_id, db)
 
 
+@router.patch("/{order_id}/client", response_model=SalesOrderRead)
+def update_order_client(
+    order_id: int,
+    payload: SalesOrderClientUpdate,
+    db: Session = Depends(get_db),
+) -> dict[str, object]:
+    try:
+        update_sales_order_client(db, order_id, payload.client_id)
+    except SalesOrderClientError as error:
+        status_code = 404 if str(error) in {"Order not found", "Active client not found"} else 400
+        raise HTTPException(status_code=status_code, detail=str(error)) from error
+    db.commit()
+    return get_order(order_id, db)
+
+
 @router.patch("/{order_id}/discount", response_model=SalesOrderRead)
 def patch_order_discount(
     order_id: int,
@@ -174,6 +236,24 @@ def patch_order_discount(
     except SalesOrderItemError as error:
         db.rollback()
         raise HTTPException(status_code=_item_error_status(error), detail=str(error)) from error
+    return get_order(order_id, db)
+
+
+@router.patch("/{order_id}/client-need", response_model=SalesOrderRead)
+def patch_order_client_need(
+    order_id: int,
+    payload: SalesOrderClientNeedUpdate,
+    db: Session = Depends(get_db),
+) -> dict[str, object]:
+    try:
+        update_sales_order_client_need(db, order_id, payload)
+        db.commit()
+    except SalesOrderNotFoundError as error:
+        db.rollback()
+        raise HTTPException(status_code=404, detail=str(error)) from error
+    except SalesOrderClientNeedError as error:
+        db.rollback()
+        raise HTTPException(status_code=422, detail=str(error)) from error
     return get_order(order_id, db)
 
 
@@ -389,6 +469,8 @@ def get_order_source_lead(order_id: int, db: Session = Depends(get_db)) -> Lead:
     order = db.get(SalesOrder, order_id)
     if order is None:
         raise HTTPException(status_code=404, detail="Order not found")
+    if order.lead_id is None:
+        raise HTTPException(status_code=404, detail="Order has no source lead")
     lead = db.get(Lead, order.lead_id)
     if lead is None:
         raise HTTPException(status_code=404, detail="Source lead not found")
@@ -400,10 +482,16 @@ def get_order_history(order_id: int, db: Session = Depends(get_db)) -> list[Lead
     order = db.get(SalesOrder, order_id)
     if order is None:
         raise HTTPException(status_code=404, detail="Order not found")
-    return list(
-        db.scalars(
+    if order.lead_id is None:
+        statement = (
+            select(LeadEvent)
+            .where(LeadEvent.order_id == order.id)
+            .order_by(LeadEvent.created_at, LeadEvent.id)
+        )
+    else:
+        statement = (
             select(LeadEvent)
             .where(or_(LeadEvent.order_id == order.id, LeadEvent.lead_id == order.lead_id))
             .order_by(LeadEvent.created_at, LeadEvent.id)
-        ).all()
-    )
+        )
+    return list(db.scalars(statement).all())

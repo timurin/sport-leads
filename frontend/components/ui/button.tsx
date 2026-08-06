@@ -31,7 +31,7 @@ const sizeClasses = {
 } as const;
 
 const baseClasses = [
-  "portal-focus-ring inline-flex shrink-0 items-center justify-center font-medium",
+  "portal-focus-ring inline-flex shrink-0 cursor-pointer items-center justify-center font-medium",
   "transition-colors duration-[var(--portal-motion-normal)] ease-[var(--portal-motion-ease)]",
   "disabled:cursor-not-allowed disabled:opacity-[var(--portal-state-disabled-opacity)]",
   "disabled:pointer-events-none",
@@ -90,6 +90,7 @@ export function IconButton({
       type="button"
       {...props}
       aria-label={label}
+      title={props.title ?? label}
       className={[
         baseClasses,
         "size-portal-control-icon rounded-portal-md",

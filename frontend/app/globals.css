@@ -494,7 +494,7 @@ body {
 
 .lead-compact-details > div > div > dl > div:has(> dt) {
   display: grid;
-  grid-template-columns: minmax(112px, 0.75fr) minmax(0, 1.25fr);
+  grid-template-columns: minmax(7rem, max-content) minmax(0, 1fr);
   align-items: start;
   column-gap: 0.75rem;
 }
@@ -506,7 +506,7 @@ body {
 
 .lead-compact-details .lead-detail-pair {
   display: grid;
-  grid-template-columns: minmax(112px, 0.75fr) minmax(0, 1.25fr);
+  grid-template-columns: minmax(7rem, max-content) minmax(0, 1fr);
   align-items: start;
   column-gap: 0.75rem;
 }
@@ -514,6 +514,24 @@ body {
 .lead-compact-details .lead-detail-pair > dd {
   min-width: 0;
   margin-top: 0;
+}
+
+.lead-commercial-extra-grid {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.lead-commercial-extra-span {
+  grid-column: auto;
+}
+
+@container (min-width: 28rem) {
+  .lead-commercial-extra-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .lead-commercial-extra-span {
+    grid-column: 1 / -1;
+  }
 }
 
 .lead-compact-details > div > div > dl > div:not(:has(> dt)) {
@@ -542,6 +560,7 @@ body {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
+  /* 20.2.1: tasks | notes 50/50; history full-width below */
   .lead-bottom-grid {
     grid-template-columns: repeat(2, minmax(280px, 1fr));
   }
@@ -558,11 +577,11 @@ body {
   }
 
   .lead-bottom-grid {
-    grid-template-columns: minmax(300px, 1.12fr) minmax(280px, 0.94fr) minmax(300px, 0.94fr);
+    grid-template-columns: repeat(2, minmax(280px, 1fr));
   }
 
   .lead-history-card {
-    grid-column: auto;
+    grid-column: 1 / -1;
   }
 }
 }
@@ -825,4 +844,115 @@ body {
     padding: 14px;
     border-radius: 12px;
   }
+}
+
+/* ===== Stage 22 Design v1.0 Soft UI (page content only; DS-SHELL untouched) ===== */
+.sl-design-v1 {
+  --sl-soft-radius: 20px;
+  --sl-soft-shadow:
+    0 1px 2px rgba(15, 23, 42, 0.04),
+    0 8px 24px rgba(15, 23, 42, 0.06);
+  --sl-soft-line: rgba(15, 23, 42, 0.08);
+}
+
+.sl-design-v1 .rounded-portal-lg.border.border-portal-border,
+.sl-design-v1 [class*="shadow-portal-card"] {
+  border-radius: var(--sl-soft-radius);
+  border-color: var(--sl-soft-line);
+  box-shadow: var(--sl-soft-shadow);
+}
+
+.sl-design-v1 .sl-soft-panel {
+  border-radius: var(--sl-soft-radius);
+  border: 1px solid var(--sl-soft-line);
+  background: var(--portal-surface, #fff);
+  box-shadow: var(--sl-soft-shadow);
+}
+
+/* Flat buttons: no heavy elevation; soft secondary surface */
+.sl-design-v1 button.border.border-portal-border {
+  box-shadow: none;
+  background: rgba(255, 255, 255, 0.92);
+  border-color: var(--sl-soft-line);
+}
+
+.sl-design-v1 button.border.border-portal-border:hover {
+  background: #f8fafc;
+}
+
+.sl-design-v1 a.inline-flex.h-9.rounded-\[var\(--portal-radius-md\)\],
+.sl-design-v1 a.flex.h-9.rounded-lg {
+  box-shadow: none;
+  border-color: var(--sl-soft-line);
+}
+
+/* Order: left stack + permanent right finance aside */
+.order-v1-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.5rem;
+  align-items: start;
+}
+
+.order-v1-main {
+  display: grid;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.order-v1-aside {
+  display: grid;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.order-finance-rail {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+}
+
+@media (min-width: 1100px) {
+  .order-v1-layout {
+    grid-template-columns: minmax(0, 1.55fr) minmax(380px, 26rem);
+  }
+
+  .order-v1-aside {
+    position: sticky;
+    top: 0.75rem;
+  }
+}
+
+.order-aside-tabs {
+  flex-wrap: wrap;
+  overflow-x: visible;
+  gap: 0.5rem;
+}
+
+/* Order card: pointer + native tooltips on interactive controls */
+[data-order-workspace] a,
+[data-order-workspace] button:not(:disabled),
+[data-order-workspace] [role="button"],
+[data-order-workspace] [role="tab"],
+[data-order-workspace] [role="menuitem"],
+[data-order-workspace] summary,
+[data-order-workspace] label,
+[data-order-workspace] select,
+[data-order-workspace] input[type="checkbox"],
+[data-order-workspace] input[type="radio"],
+[data-order-workspace] input[type="date"],
+[data-order-workspace] input[type="number"] {
+  cursor: pointer;
+}
+
+[data-order-workspace] input:not([type="checkbox"]):not([type="radio"]):not([type="date"]):not([type="number"]),
+[data-order-workspace] textarea {
+  cursor: text;
+}
+
+[data-order-workspace] button:disabled,
+[data-order-workspace] input:disabled,
+[data-order-workspace] select:disabled,
+[data-order-workspace] textarea:disabled {
+  cursor: not-allowed;
 }

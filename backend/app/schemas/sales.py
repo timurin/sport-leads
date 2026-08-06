@@ -305,7 +305,7 @@ class LeadRejectRequest(BaseModel):
 class SalesOrderRead(SalesSchema):
     id: int
     number: str
-    lead_id: int
+    lead_id: int | None
     client_id: int
     organization_id: int | None
     status: SalesOrderStatus
@@ -336,8 +336,64 @@ class SalesOrderRead(SalesSchema):
     items: list["SalesOrderItemRead"] = []
 
 
+class SalesOrderCreate(BaseModel):
+    """Direct create without Lead (`0.4` / SL-ORDER-WITHOUT-LEAD-v1)."""
+
+    client_id: int
+    organization_id: int | None = None
+    responsible_id: int
+    title: str = Field(min_length=1, max_length=255)
+    number: str | None = Field(default=None, max_length=50)
+    description: str | None = None
+    product_category: str | None = Field(default=None, max_length=150)
+    sport: str | None = Field(default=None, max_length=150)
+    quantity: int | None = Field(default=None, ge=0)
+    amount: Decimal | None = None
+    desired_date: date | None = None
+    source: str | None = Field(default=None, max_length=150)
+    currency_code: str = Field(default="RUB", min_length=3, max_length=3)
+
+    @field_validator("title", "number", "description", "product_category", "sport", "source", mode="before")
+    @classmethod
+    def _strip_optional_text(cls, value: object) -> object:
+        if isinstance(value, str):
+            return value.strip()
+        return value
+
+    @field_validator("currency_code")
+    @classmethod
+    def _currency_upper(cls, value: str) -> str:
+        return value.strip().upper()
+
+
 class SalesOrderDiscountUpdate(BaseModel):
     discount_percent: Decimal | None = Field(default=None, ge=0, le=100, max_digits=5, decimal_places=2)
+
+
+class SalesOrderClientNeedUpdate(BaseModel):
+    """Need / commercial parity fields on order (`20.4.2`); optional sync to source lead."""
+
+    description: str | None = None
+    product_category: str | None = Field(default=None, max_length=150)
+    sport: str | None = Field(default=None, max_length=150)
+    quantity: int | None = Field(default=None, ge=0)
+    desired_date: date | None = None
+    source: str | None = Field(default=None, max_length=150)
+    sync_to_lead: bool = True
+
+    @field_validator(
+        "description",
+        "product_category",
+        "sport",
+        "source",
+        mode="before",
+    )
+    @classmethod
+    def _strip_optional_text(cls, value: object) -> object:
+        if isinstance(value, str):
+            stripped = value.strip()
+            return stripped or None
+        return value
 
 
 class SalesOrderItemVariantSnapshotRead(SalesSchema):
@@ -442,6 +498,7 @@ class OrganizationRead(SalesSchema):
     name: str
     legal_form: str | None
     tax_id: str | None
+    ogrn: str | None = None
     kpp: str | None
     tax_system: str | None
     director: str | None
@@ -462,11 +519,54 @@ class ClientListItem(SalesSchema):
     city: str | None
     responsible_id: int | None
     responsible_name: str | None = None
+    organization_id: int | None = None
+    organization_name: str | None = None
+    """Resolved for order create: FK, else last order org, else name match."""
+    default_organization_id: int | None = None
     orders_count: int = 0
     sales_amount: Decimal = Decimal("0.00")
     primary_sport: str | None = None
     created_at: datetime
     updated_at: datetime
+
+
+class ClientCreate(BaseModel):
+    """Create client (+ optional default organization) for order-without-lead UX."""
+
+    contact_name: str = Field(min_length=1, max_length=255)
+    company_name: str | None = Field(default=None, max_length=255)
+    phone: str | None = Field(default=None, max_length=50)
+    email: EmailStr | None = None
+    city: str | None = Field(default=None, max_length=150)
+    responsible_id: int | None = None
+    organization_id: int | None = None
+    organization_name: str | None = Field(default=None, max_length=255)
+    tax_id: str | None = Field(default=None, max_length=12)
+    ogrn: str | None = Field(default=None, max_length=15)
+
+    @field_validator("contact_name")
+    @classmethod
+    def _require_contact(cls, value: str) -> str:
+        value = value.strip()
+        if not value:
+            raise ValueError("Contact name cannot be blank")
+        return value
+
+    @field_validator(
+        "company_name",
+        "phone",
+        "city",
+        "organization_name",
+        "tax_id",
+        "ogrn",
+        mode="before",
+    )
+    @classmethod
+    def _blank_to_none(cls, value: object) -> object:
+        if isinstance(value, str):
+            stripped = value.strip()
+            return stripped or None
+        return value
 
 
 class ClientOrderSummary(SalesSchema):
@@ -487,6 +587,10 @@ class ClientDetailRead(ClientListItem):
 
 class SalesOrderOrganizationUpdate(BaseModel):
     organization_id: int | None = None
+
+
+class SalesOrderClientUpdate(BaseModel):
+    client_id: int
 
 
 class SalesOrderStatusUpdate(BaseModel):
@@ -580,7 +684,7 @@ class LeadConversionRead(BaseModel):
 
 class LeadEventRead(SalesSchema):
     id: int
-    lead_id: int
+    lead_id: int | None
     order_id: int | None
     event_type: LeadEventType
     actor_id: int | None

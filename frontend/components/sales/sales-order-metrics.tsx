@@ -3,10 +3,8 @@
 import { useRouter } from "next/navigation";
 import { type ReactNode, useEffect, useState } from "react";
 import {
-  CalendarClock,
   Factory,
   ListTodo,
-  MessageSquare,
   Package,
   Percent,
   Scissors,
@@ -109,9 +107,11 @@ const paymentTone: Record<OrderPaymentStatus, StatusBadgeTone> = {
 export function SalesOrderMetrics({
   orderId,
   metrics,
+  variant = "slim",
 }: {
   orderId: string;
   metrics: OrderCardMetricsModel;
+  variant?: "full" | "slim";
 }) {
   const router = useRouter();
   const { push: pushToast } = useToast();
@@ -199,41 +199,40 @@ export function SalesOrderMetrics({
   }
 
   return (
-    <div className="space-y-3" data-order-metrics="">
-      <div className="rounded-portal-lg border border-portal-border bg-gradient-to-br from-portal-surface-secondary/80 to-portal-surface p-3.5 shadow-portal-sm">
+    <div className="space-y-3" data-order-metrics="" data-order-metrics-variant={variant}>
+      <div className="rounded-portal-lg border border-portal-border bg-portal-surface p-3 shadow-portal-sm">
         <div className="flex min-w-0 flex-wrap items-start justify-between gap-2">
           <div className="min-w-0">
             <p className="inline-flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide text-portal-muted">
               <Wallet size={13} aria-hidden="true" /> Итого по заказу
             </p>
-            <p className="mt-1 text-2xl font-bold tracking-tight text-portal-success tabular-nums">
+            <p className="mt-1 text-xl font-bold tracking-tight text-portal-success tabular-nums">
               {metrics.amountLabel}
               <span className="ml-1.5 text-sm font-semibold text-portal-muted">
                 {metrics.currencyCode}
               </span>
             </p>
-            <p className="mt-1 text-[11px] text-portal-muted">
-              Позиции {metrics.itemsSubtotalLabel}
-              {metrics.discountAmountValue > 0
-                ? ` − скидка ${metrics.discountAmountLabel}`
-                : ""}
-              {" · "}
-              без НДС {metrics.amountNetLabel}
-              {" · "}
-              НДС {metrics.vatAmountLabel}
-              {" · "}
-              оплачено {metrics.paidAmountLabel}
-              {metrics.isDemoEnriched
-                ? ` · маржа (демо) ${metrics.marginPercent}%`
-                : ""}
-            </p>
+            <dl className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 text-[11px]">
+              <div className="flex justify-between gap-2">
+                <dt className="text-portal-muted">Без НДС</dt>
+                <dd className="font-semibold tabular-nums text-portal-text">{metrics.amountNetLabel}</dd>
+              </div>
+              <div className="flex justify-between gap-2">
+                <dt className="text-portal-muted">НДС</dt>
+                <dd className="font-semibold tabular-nums text-portal-text">{metrics.vatAmountLabel}</dd>
+              </div>
+              <div className="flex justify-between gap-2 col-span-2">
+                <dt className="text-portal-muted">Позиции</dt>
+                <dd className="font-semibold tabular-nums text-portal-text">{metrics.itemsSubtotalLabel}</dd>
+              </div>
+            </dl>
           </div>
           <StatusBadge tone={paymentTone[metrics.paymentStatus]} size="compact">
             {metrics.paymentLabel}
           </StatusBadge>
         </div>
 
-        <div className="mt-3 rounded-portal-md border border-portal-border/80 bg-portal-surface/80 p-2.5">
+        <div className="mt-3 rounded-portal-md border border-portal-border/80 bg-portal-surface-secondary/40 p-2.5">
           <p className="text-[11px] font-medium text-portal-muted">
             Скидка на заказ, %
           </p>
@@ -260,8 +259,7 @@ export function SalesOrderMetrics({
             </Button>
           </div>
           <p className="mt-1.5 text-[11px] text-portal-muted">
-            Сумма скидки: {metrics.discountAmountLabel}. Считается от суммы позиций
-            после скидок строк.
+            Сумма скидки: {metrics.discountAmountLabel}
           </p>
           {error ? (
             <p className="mt-1.5 text-[11px] text-portal-danger" role="alert">
@@ -270,7 +268,7 @@ export function SalesOrderMetrics({
           ) : null}
         </div>
 
-        <div className="mt-3 rounded-portal-md border border-portal-border/80 bg-portal-surface/80 p-2.5">
+        <div className="mt-3 rounded-portal-md border border-portal-border/80 bg-portal-surface-secondary/40 p-2.5">
           <p className="text-[11px] font-medium text-portal-muted">Оплата</p>
           <div className="mt-1.5 flex flex-wrap items-center gap-2">
             <Select
@@ -311,9 +309,6 @@ export function SalesOrderMetrics({
               {savingPayment ? "Сохранение…" : "Сохранить"}
             </Button>
           </div>
-          <p className="mt-1.5 text-[11px] text-portal-muted">
-            Sales-маркер оплаты. Полный ledger — Stage 14. Закрытие заказа требует «Оплачен».
-          </p>
           {paymentError ? (
             <p className="mt-1.5 text-[11px] text-portal-danger" role="alert">
               {paymentError}
@@ -321,72 +316,60 @@ export function SalesOrderMetrics({
           ) : null}
         </div>
 
-        <div className="mt-3 space-y-2.5">
-          <ProgressBar value={metrics.paidPercent} tone={paymentProgressTone} label="Оплата" />
-          <ProgressBar value={metrics.productionPercent} tone={productionTone} label={metrics.productionLabel} />
-        </div>
+        {variant === "full" ? (
+          <div className="mt-3 space-y-2.5">
+            <ProgressBar value={metrics.paidPercent} tone={paymentProgressTone} label="Оплата" />
+            <ProgressBar value={metrics.productionPercent} tone={productionTone} label={metrics.productionLabel} />
+          </div>
+        ) : (
+          <div className="mt-3">
+            <ProgressBar value={metrics.paidPercent} tone={paymentProgressTone} label="Оплата" />
+          </div>
+        )}
       </div>
 
-      <div className="grid grid-cols-2 gap-2">
-        <MiniStat
-          icon={<Package size={14} aria-hidden="true" />}
-          label="Позиции / изделия"
-          value={`${metrics.itemCount} / ${metrics.unitsPlanned}`}
-          detail="строки и план единиц"
-        />
-        <MiniStat
-          icon={<Scissors size={14} aria-hidden="true" />}
-          label="Стоимость пошива"
-          value={metrics.sewingCostLabel}
-          detail={metrics.sewingCostSource === "items" ? "из вариантов сборки" : "демо-оценка 18%"}
-          tone="primary"
-        />
-        <MiniStat
-          icon={<Factory size={14} aria-hidden="true" />}
-          label="Производство"
-          value={`${metrics.productionPercent}%`}
-          detail={metrics.productionLabel}
-        />
-        <MiniStat
-          icon={<Percent size={14} aria-hidden="true" />}
-          label="Маржа (демо)"
-          value={`${metrics.marginPercent}%`}
-          detail="после ткани и пошива"
-          tone={metrics.marginPercent >= 30 ? "success" : metrics.marginPercent >= 15 ? "warning" : "danger"}
-        />
-        <MiniStat
-          icon={<CalendarClock size={14} aria-hidden="true" />}
-          label="Срок / SLA"
-          value={metrics.slaLabel}
-          detail={`Желаемая: ${metrics.desiredDateLabel}`}
-          tone={metrics.slaTone === "default" ? "default" : metrics.slaTone}
-        />
-        <MiniStat
-          icon={<CalendarClock size={14} aria-hidden="true" />}
-          label="Дней в работе"
-          value={`${metrics.daysInWork} дн.`}
-          detail={`с ${metrics.createdAtLabel}`}
-        />
-        <MiniStat
-          icon={<MessageSquare size={14} aria-hidden="true" />}
-          label="Активность"
-          value={String(metrics.activityCount)}
-          detail={metrics.communicationCount
-            ? `${metrics.communicationCount} коммуникаций · ${metrics.lastActivityLabel}`
-            : metrics.lastActivityLabel}
-        />
-        <MiniStat
-          icon={<ListTodo size={14} aria-hidden="true" />}
-          label="Открытые задачи"
-          value={String(metrics.openTasksCount)}
-          detail="из исходного лида"
-          tone={metrics.openTasksCount > 0 ? "warning" : "success"}
-        />
-      </div>
-
-      <p className="text-[11px] leading-4 text-portal-muted">
-        Скидка заказа — живое поле `3.3.1`. Оплата, маржа и SLA — демо до `3.3.2` / `3.4`. Пошив берётся из снимков вариантов сборки, если они есть на позициях.
-      </p>
+      {variant === "full" ? (
+        <>
+          <div className="grid grid-cols-2 gap-2">
+            <MiniStat
+              icon={<Package size={14} aria-hidden="true" />}
+              label="Позиции / изделия"
+              value={`${metrics.itemCount} / ${metrics.unitsPlanned}`}
+              detail="строки и план единиц"
+            />
+            <MiniStat
+              icon={<Scissors size={14} aria-hidden="true" />}
+              label="Стоимость пошива"
+              value={metrics.sewingCostLabel}
+              detail={metrics.sewingCostSource === "items" ? "из вариантов сборки" : "демо-оценка 18%"}
+              tone="primary"
+            />
+            <MiniStat
+              icon={<Factory size={14} aria-hidden="true" />}
+              label="Производство"
+              value={`${metrics.productionPercent}%`}
+              detail={metrics.productionLabel}
+            />
+            <MiniStat
+              icon={<Percent size={14} aria-hidden="true" />}
+              label="Маржа (демо)"
+              value={`${metrics.marginPercent}%`}
+              detail="после ткани и пошива"
+              tone={metrics.marginPercent >= 30 ? "success" : metrics.marginPercent >= 15 ? "warning" : "danger"}
+            />
+            <MiniStat
+              icon={<ListTodo size={14} aria-hidden="true" />}
+              label="Открытые задачи"
+              value={String(metrics.openTasksCount)}
+              detail="из исходного лида"
+              tone={metrics.openTasksCount > 0 ? "warning" : "success"}
+            />
+          </div>
+          <p className="text-[11px] leading-4 text-portal-muted">
+            Скидка и оплата — редакторы. Пошив/маржа — до полного costing.
+          </p>
+        </>
+      ) : null}
     </div>
   );
 }

@@ -135,6 +135,9 @@ class Client(Base):
     responsible_id: Mapped[int | None] = mapped_column(
         ForeignKey("sales_users.id", ondelete="SET NULL")
     )
+    organization_id: Mapped[int | None] = mapped_column(
+        ForeignKey("organizations.id", ondelete="SET NULL"), index=True
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )
@@ -168,6 +171,7 @@ class Organization(Base):
     name: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
     legal_form: Mapped[str | None] = mapped_column(String(50))
     tax_id: Mapped[str | None] = mapped_column(String(12), unique=True, index=True)
+    ogrn: Mapped[str | None] = mapped_column(String(15), index=True)
     kpp: Mapped[str | None] = mapped_column(String(9))
     tax_system: Mapped[str | None] = mapped_column(String(100))
     director: Mapped[str | None] = mapped_column(String(255))
@@ -357,8 +361,8 @@ class SalesOrder(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     number: Mapped[str] = mapped_column(String(50), nullable=False, unique=True, index=True)
-    lead_id: Mapped[int] = mapped_column(
-        ForeignKey("leads.id", ondelete="RESTRICT"), nullable=False
+    lead_id: Mapped[int | None] = mapped_column(
+        ForeignKey("leads.id", ondelete="RESTRICT"), nullable=True
     )
     client_id: Mapped[int] = mapped_column(
         ForeignKey("clients.id", ondelete="RESTRICT"), nullable=False, index=True
@@ -581,10 +585,16 @@ class SalesOrderItemAssemblyOperationSnapshot(Base):
 
 class LeadEvent(Base):
     __tablename__ = "lead_events"
+    __table_args__ = (
+        CheckConstraint(
+            "lead_id IS NOT NULL OR order_id IS NOT NULL",
+            name="ck_lead_events_lead_or_order",
+        ),
+    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    lead_id: Mapped[int] = mapped_column(
-        ForeignKey("leads.id", ondelete="CASCADE"), nullable=False, index=True
+    lead_id: Mapped[int | None] = mapped_column(
+        ForeignKey("leads.id", ondelete="CASCADE"), nullable=True, index=True
     )
     order_id: Mapped[int | None] = mapped_column(
         ForeignKey("sales_orders.id", ondelete="CASCADE"), index=True

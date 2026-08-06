@@ -2,6 +2,12 @@
 
 import { revalidatePath } from "next/cache";
 
+import {
+  fromApiSalesOrderItem,
+  type ApiSalesOrderItem,
+  type SalesOrderItem,
+} from "@/lib/sales/order-details";
+
 const apiBaseUrl = () => (process.env.SPORT_LEADS_API_URL ?? "http://127.0.0.1:8000").replace(/\/$/, "");
 
 export type OrderItemPayload = {
@@ -24,12 +30,16 @@ export type OrderItemPayload = {
   discount_percent?: string | null;
 };
 
+export type OrderItemMutationResult =
+  | { ok: true; message: string; item?: SalesOrderItem }
+  | { ok: false; message: string };
+
 async function callItems(
   orderId: string,
   path: string,
   method: string,
   body?: Record<string, unknown>,
-) {
+): Promise<OrderItemMutationResult> {
   const response = await fetch(`${apiBaseUrl()}/orders/${orderId}/items${path}`, {
     method,
     headers: body ? { "content-type": "application/json" } : undefined,
@@ -41,7 +51,15 @@ async function callItems(
     return { ok: false as const, message: payload?.detail ?? `Backend вернул ${response.status}.` };
   }
   revalidatePath(`/sales/orders/${orderId}`);
-  return { ok: true as const, message: "Позиции заказа сохранены." };
+  if (method === "DELETE" || response.status === 204) {
+    return { ok: true as const, message: "Позиции заказа сохранены." };
+  }
+  const raw = await response.json().catch(() => null) as ApiSalesOrderItem | null;
+  return {
+    ok: true as const,
+    message: "Позиции заказа сохранены.",
+    item: raw ? fromApiSalesOrderItem(raw) : undefined,
+  };
 }
 
 function toBody(payload: OrderItemPayload): Record<string, unknown> {

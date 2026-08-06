@@ -176,6 +176,8 @@ export function SalesOrderItemsUnfDemo({
   documentTotal,
   collapsed = false,
   headerActions,
+  onItemsChange,
+  onItemCreated,
 }: {
   orderId: string;
   items: SalesOrderItem[];
@@ -185,6 +187,8 @@ export function SalesOrderItemsUnfDemo({
   documentTotal: string;
   collapsed?: boolean;
   headerActions?: ReactNode;
+  onItemsChange?: (items: SalesOrderItem[]) => void;
+  onItemCreated?: (item: SalesOrderItem) => void;
 }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -442,11 +446,18 @@ export function SalesOrderItemsUnfDemo({
     return null;
   }
 
-  function runSave(action: () => Promise<{ ok: boolean; message: string }>) {
+  function runSave(
+    action: () => Promise<{ ok: boolean; message: string; item?: SalesOrderItem }>,
+    options?: { onCreated?: (item: SalesOrderItem) => void },
+  ) {
     startTransition(async () => {
       const result = await action();
       setMessage(result.message);
-      if (result.ok) router.refresh();
+      if (!result.ok) return;
+      if (result.item && options?.onCreated) {
+        options.onCreated(result.item);
+      }
+      router.refresh();
     });
   }
 
@@ -472,21 +483,32 @@ export function SalesOrderItemsUnfDemo({
     runSave(() => updateOrderItemPayload(orderId, rowId, payloadFromRow(snapshot)));
   }
 
+  function appendCreatedItem(item: SalesOrderItem) {
+    setRows((current) => {
+      if (current.some((row) => row.id === item.id)) return current;
+      return [...current, toDraft(item, current.length, vatRates)];
+    });
+    setActiveRowId(item.id);
+    onItemCreated?.(item);
+  }
+
   function addRow() {
     const vatRateId = defaultVatRateId(activeVatRates);
-    runSave(() =>
-      createOrderItemPayload(orderId, {
-        nomenclature_id: null,
-        product_model_id: null,
-        assembly_variant_id: null,
-        routing_template_id: null,
-        vat_rate_id: vatRateId,
-        price_includes_vat: true,
-        snapshot_name: "Новая позиция",
-        unit: "шт",
-        quantity: "1",
-        unit_price: "0",
-      }),
+    runSave(
+      () =>
+        createOrderItemPayload(orderId, {
+          nomenclature_id: null,
+          product_model_id: null,
+          assembly_variant_id: null,
+          routing_template_id: null,
+          vat_rate_id: vatRateId,
+          price_includes_vat: true,
+          snapshot_name: "Новая позиция",
+          unit: "шт",
+          quantity: "1",
+          unit_price: "0",
+        }),
+      { onCreated: appendCreatedItem },
     );
     setActiveTab("goods");
     setSearch("");
@@ -540,7 +562,10 @@ export function SalesOrderItemsUnfDemo({
       setMessage(error);
       return;
     }
-    runSave(() => createOrderItemPayload(orderId, payloadFromRow(source)));
+    runSave(
+      () => createOrderItemPayload(orderId, payloadFromRow(source)),
+      { onCreated: appendCreatedItem },
+    );
   }
 
   function deleteSelected() {
@@ -557,6 +582,11 @@ export function SalesOrderItemsUnfDemo({
         }
       }
       setMessage(lastMessage);
+      const remaining = items.filter((item) => !ids.includes(item.id));
+      setRows(remaining.map((item, index) => toDraft(item, index, vatRates)));
+      setSelectedIds([]);
+      setActiveRowId(null);
+      onItemsChange?.(remaining);
       router.refresh();
     });
   }

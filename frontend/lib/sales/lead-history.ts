@@ -13,7 +13,7 @@ export type ApiLeadEventType =
 
 export type ApiLeadEvent = {
   id: number;
-  lead_id: number;
+  lead_id: number | null;
   order_id: number | null;
   event_type: ApiLeadEventType;
   actor_id: number | null;

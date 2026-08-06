@@ -22,7 +22,7 @@ export function EntityLink({
     <Link
       {...props}
       className={[
-        "inline-flex max-w-full items-center gap-1.5 font-semibold text-portal-primary hover:text-portal-primary-hover",
+        "inline-flex max-w-full cursor-pointer items-center gap-1.5 font-semibold text-portal-primary hover:text-portal-primary-hover",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-portal-focus-ring rounded-sm",
         className,
       ].join(" ")}

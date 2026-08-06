@@ -1,32 +1,104 @@
 "use client";
 
-export type CompactTabItem = { id: string; label: string; count?: number };
+import type { ReactNode } from "react";
 
-export function CompactTabs({ items, value, onChange, label, size = "default", className = "" }: {
+export type CompactTabItem = {
+  id: string;
+  label: string;
+  count?: number;
+  icon?: ReactNode;
+};
+
+export function CompactTabs({
+  items,
+  value,
+  onChange,
+  label,
+  size = "default",
+  wrap = false,
+  iconOnly = false,
+  className = "",
+}: {
   items: readonly CompactTabItem[];
   value: string;
   onChange: (id: string) => void;
   label: string;
   size?: "compact" | "default";
+  /** Prefer wrapping over horizontal scroll (order aside tabs). */
+  wrap?: boolean;
+  /** Show icons instead of text labels (label stays as title/aria). */
+  iconOnly?: boolean;
   className?: string;
 }) {
   return (
-    <div className={`flex max-w-full gap-1 overflow-x-auto ${className}`} role="tablist" aria-label={label}>
-      {items.map((item) => (
-        <button
-          key={item.id}
-          type="button"
-          role="tab"
-          aria-selected={value === item.id}
-          onClick={() => onChange(item.id)}
-          className={`shrink-0 rounded-portal-md font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-portal-focus-ring ${size === "compact" ? "px-2.5 py-1.5 text-portal-caption" : "px-3 py-2 text-portal-body"} ${value === item.id ? "bg-portal-primary text-portal-primary-on" : "bg-portal-surface-secondary text-portal-muted hover:bg-portal-primary-soft hover:text-portal-text"}`}
-        >
-          {item.label}
-          {item.count === undefined ? null : (
-            <span className="ml-1 opacity-75">{item.count}</span>
-          )}
-        </button>
-      ))}
+    <div
+      className={[
+        "flex max-w-full gap-1.5",
+        wrap ? "flex-wrap" : "overflow-x-auto",
+        className,
+      ].join(" ")}
+      role="tablist"
+      aria-label={label}
+    >
+      {items.map((item) => {
+        const selected = value === item.id;
+        const tip =
+          item.count === undefined ? item.label : `${item.label} (${item.count})`;
+        return (
+          <button
+            key={item.id}
+            type="button"
+            role="tab"
+            aria-selected={selected}
+            aria-label={tip}
+            title={tip}
+            onClick={() => onChange(item.id)}
+            className={[
+              "relative inline-flex shrink-0 cursor-pointer items-center justify-center gap-1.5 rounded-portal-md font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-portal-focus-ring",
+              iconOnly
+                ? size === "compact"
+                  ? "size-9"
+                  : "size-10"
+                : size === "compact"
+                  ? "px-2.5 py-1.5 text-portal-caption"
+                  : "px-3.5 py-2 text-sm",
+              selected
+                ? "bg-portal-primary text-portal-primary-on"
+                : "bg-portal-surface-secondary text-portal-muted hover:bg-portal-primary-soft hover:text-portal-text",
+            ].join(" ")}
+          >
+            {item.icon ? (
+              <span
+                className="inline-flex size-4 shrink-0 items-center justify-center [&>svg]:size-4"
+                aria-hidden="true"
+              >
+                {item.icon}
+              </span>
+            ) : null}
+            {iconOnly ? null : (
+              <>
+                {item.label}
+                {item.count === undefined ? null : (
+                  <span className="opacity-75">{item.count}</span>
+                )}
+              </>
+            )}
+            {iconOnly && item.count !== undefined && item.count > 0 ? (
+              <span
+                className={[
+                  "absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-semibold leading-none",
+                  selected
+                    ? "bg-white text-portal-primary"
+                    : "bg-portal-primary text-portal-primary-on",
+                ].join(" ")}
+                aria-hidden="true"
+              >
+                {item.count}
+              </span>
+            ) : null}
+          </button>
+        );
+      })}
     </div>
   );
 }

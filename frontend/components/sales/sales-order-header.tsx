@@ -117,15 +117,23 @@ export function SalesOrderHeader({
               </StatusBadge>
             )}
             description={order.title}
+            meta={(
+              <span>
+                Ответственный:{" "}
+                <span className="font-medium text-portal-text">{order.responsibleName}</span>
+              </span>
+            )}
             actions={(
               <div className="relative flex flex-wrap items-center gap-1">
-                <IconButton
-                  label="Открыть исходный лид"
-                  variant="secondary"
-                  onClick={() => router.push(order.sourceLeadHref)}
-                >
-                  <ExternalLink className="size-4" aria-hidden="true" />
-                </IconButton>
+                {order.sourceLeadHref ? (
+                  <IconButton
+                    label="Открыть исходный лид"
+                    variant="secondary"
+                    onClick={() => router.push(order.sourceLeadHref!)}
+                  >
+                    <ExternalLink className="size-4" aria-hidden="true" />
+                  </IconButton>
+                ) : null}
                 <IconButton
                   label="Копировать ссылку"
                   variant="secondary"
@@ -147,14 +155,20 @@ export function SalesOrderHeader({
                     className="absolute right-0 top-full z-30 mt-2 w-60 rounded-[var(--portal-radius-lg)] border border-portal-border bg-portal-surface p-2 text-left shadow-[var(--portal-shadow-overlay)]"
                     role="menu"
                   >
-                    <Link
-                      href={order.sourceLeadHref}
-                      role="menuitem"
-                      className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
-                      onClick={() => setOpenMenu(null)}
-                    >
-                      <ExternalLink size={15} /> Открыть исходный лид
-                    </Link>
+                    {order.sourceLeadHref ? (
+                      <Link
+                        href={order.sourceLeadHref}
+                        role="menuitem"
+                        className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
+                        onClick={() => setOpenMenu(null)}
+                      >
+                        <ExternalLink size={15} /> Открыть исходный лид
+                      </Link>
+                    ) : (
+                      <p className="px-3 py-2 text-sm text-slate-500">
+                        Заказ создан без лида
+                      </p>
+                    )}
                     <button
                       type="button"
                       role="menuitem"

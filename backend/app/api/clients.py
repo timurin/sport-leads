@@ -2,8 +2,8 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from app.database.session import get_db
-from app.schemas.sales import ClientDetailRead, ClientListItem
-from app.services.clients import get_client, list_clients
+from app.schemas.sales import ClientCreate, ClientDetailRead, ClientListItem
+from app.services.clients import ClientCreateError, create_client, get_client, list_clients
 
 
 router = APIRouter(prefix="/clients", tags=["Clients"])
@@ -24,6 +24,19 @@ def get_clients(
         limit=limit,
         offset=offset,
     )
+
+
+@router.post("", response_model=ClientDetailRead, status_code=201)
+def post_client(payload: ClientCreate, db: Session = Depends(get_db)) -> ClientDetailRead:
+    try:
+        client = create_client(db, payload)
+    except ClientCreateError as error:
+        raise HTTPException(status_code=400, detail=str(error)) from error
+    db.commit()
+    detail = get_client(db, client.id)
+    if detail is None:
+        raise HTTPException(status_code=500, detail="Client created but not readable")
+    return detail
 
 
 @router.get("/{client_id}", response_model=ClientDetailRead)

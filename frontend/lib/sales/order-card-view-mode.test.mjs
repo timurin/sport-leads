@@ -1,45 +1,50 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { getOrderCardSectionVisibility } from "./order-card-view-mode.ts";
+import {
+  getOrderCardSectionVisibility,
+  orderCardViewModeOptions,
+} from "./order-card-view-mode.ts";
 
-test("all mode shows core sections but hides documents", () => {
+test("filter toolbar drops Сведения and Коммуникация", () => {
+  const ids = orderCardViewModeOptions.map((option) => option.id);
+  assert.deepEqual(ids, ["all", "items", "documents", "techCards"]);
+  assert.equal(orderCardViewModeOptions.find((option) => option.id === "all")?.label, "Документ");
+});
+
+test("document (all) mode shows items+metrics; party/CRM off left stack", () => {
   const visibility = getOrderCardSectionVisibility("all");
-  assert.equal(visibility.info, true);
+  assert.equal(visibility.info, false);
   assert.equal(visibility.metrics, true);
   assert.equal(visibility.items, true);
-  assert.equal(visibility.history, true);
-  assert.equal(visibility.comments, true);
-  assert.equal(visibility.tasks, true);
-  assert.equal(visibility.communication, true);
+  assert.equal(visibility.history, false);
+  assert.equal(visibility.comments, false);
+  assert.equal(visibility.tasks, false);
+  assert.equal(visibility.communication, false);
   assert.equal(visibility.documents, false);
-  assert.equal(visibility.techCards, true);
+  assert.equal(visibility.techCards, false);
 });
 
-test("info mode keeps requisites, metrics, comments and tasks", () => {
-  assert.deepEqual(getOrderCardSectionVisibility("info"), {
-    info: true,
-    metrics: true,
-    items: false,
-    history: false,
-    comments: true,
-    tasks: true,
-    communication: false,
-    documents: false,
-    techCards: false,
-  });
-});
-
-test("items mode keeps Товары and line-adjacent tech cards strip", () => {
+test("items mode keeps Товары, metrics rail, and line-adjacent tech cards", () => {
   const visibility = getOrderCardSectionVisibility("items");
   assert.equal(visibility.items, true);
+  assert.equal(visibility.metrics, true);
   assert.equal(visibility.techCards, true);
   assert.equal(visibility.info, false);
   assert.equal(visibility.documents, false);
 });
 
-test("communication, documents and techCards modes stay exclusive", () => {
-  assert.equal(getOrderCardSectionVisibility("communication").communication, true);
+test("finance metrics stay visible in exclusive filter modes (22.2)", () => {
+  for (const mode of ["documents", "techCards", "items", "all"]) {
+    assert.equal(
+      getOrderCardSectionVisibility(mode).metrics,
+      true,
+      `metrics must stay on for ${mode}`,
+    );
+  }
+});
+
+test("documents and techCards modes stay exclusive", () => {
   assert.equal(getOrderCardSectionVisibility("documents").documents, true);
   assert.equal(getOrderCardSectionVisibility("documents").techCards, false);
   assert.equal(getOrderCardSectionVisibility("techCards").techCards, true);
