@@ -9,17 +9,14 @@ import {
   formatCommercialDate,
   formatCurrency,
   formatQuantity,
-  getEventDateWarning,
   parseNonNegativeNumber,
   parsePercent,
   parsePositiveInteger,
-  validateCommercialDates,
 } from "@/lib/sales/lead-commercial";
 import {
   deliveryMethods,
   leadDirections,
   productCategories,
-  productTypes,
   sports,
   type LeadCommercialDetailsData,
   type Priority,
@@ -44,18 +41,12 @@ type CommercialDraft = {
   direction: string;
   sport: string;
   productCategory: string;
-  productType: string;
   needDescription: string;
   estimatedQuantity: string;
-  kitQuantity: string;
-  sizeComment: string;
   preliminaryBudget: string;
-  estimatedAmount: string;
   discountPercent: string;
   probability: string;
   plannedOrderDate: string;
-  desiredReadyDate: string;
-  eventDate: string;
   deliveryCity: string;
   deliveryAddress: string;
   deliveryMethod: string;
@@ -67,7 +58,7 @@ type CommercialDraft = {
 };
 
 type CommercialErrors = Partial<Record<
-  "estimatedQuantity" | "kitQuantity" | "preliminaryBudget" | "estimatedAmount" | "discountPercent" | "probability" | "desiredReadyDate",
+  "estimatedQuantity" | "preliminaryBudget" | "discountPercent" | "probability",
   string
 >>;
 
@@ -85,25 +76,18 @@ function optionalText(value: string) {
 function createDraft(
   commercial: LeadCommercialDetailsData,
   source: string | null,
-  estimatedAmount: number | null,
   probability: number | null,
 ): CommercialDraft {
   return {
     direction: commercial.direction ?? "",
     sport: commercial.sport ?? "",
     productCategory: commercial.productCategory ?? "",
-    productType: commercial.productType ?? "",
     needDescription: commercial.needDescription ?? "",
     estimatedQuantity: commercial.estimatedQuantity?.toString() ?? "",
-    kitQuantity: commercial.kitQuantity?.toString() ?? "",
-    sizeComment: commercial.sizeComment ?? "",
     preliminaryBudget: commercial.preliminaryBudget?.toString() ?? "",
-    estimatedAmount: estimatedAmount?.toString() ?? "",
     discountPercent: commercial.discountPercent?.toString() ?? "",
     probability: probability?.toString() ?? "",
     plannedOrderDate: commercial.plannedOrderDate ?? "",
-    desiredReadyDate: commercial.desiredReadyDate ?? "",
-    eventDate: commercial.eventDate ?? "",
     deliveryCity: commercial.deliveryCity ?? "",
     deliveryAddress: commercial.deliveryAddress ?? "",
     deliveryMethod: commercial.deliveryMethod ?? "",
@@ -123,7 +107,7 @@ function DataItem({ label, children, emphasized = false }: { label: string; chil
   return (
     <div className="lead-detail-pair min-w-0">
       <dt className="min-w-0 text-xs font-medium text-slate-500">{label}</dt>
-      <dd className={`mt-1 min-w-0 break-words ${emphasized ? "text-base font-semibold text-slate-950" : "text-sm font-medium text-slate-900"}`}>{children}</dd>
+      <dd className={`mt-1 min-w-0 break-normal ${emphasized ? "text-base font-semibold text-slate-950" : "text-sm font-medium text-slate-900"}`}>{children}</dd>
     </div>
   );
 }
@@ -213,7 +197,7 @@ export function LeadCommercialDetails({
   compact?: boolean;
 }) {
   const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState(() => createDraft(commercial, source, estimatedAmount, probability));
+  const [draft, setDraft] = useState(() => createDraft(commercial, source, probability));
   const [errors, setErrors] = useState<CommercialErrors>({});
   const [notice, setNotice] = useState("");
   const [saveError, setSaveError] = useState("");
@@ -227,7 +211,7 @@ export function LeadCommercialDetails({
   }
 
   function startEditing() {
-    setDraft(createDraft(commercial, source, estimatedAmount, probability));
+    setDraft(createDraft(commercial, source, probability));
     setErrors({});
     setNotice("");
     setSaveError("");
@@ -235,7 +219,7 @@ export function LeadCommercialDetails({
   }
 
   function cancelEditing() {
-    setDraft(createDraft(commercial, source, estimatedAmount, probability));
+    setDraft(createDraft(commercial, source, probability));
     setErrors({});
     setSaveError("");
     setEditing(false);
@@ -244,44 +228,39 @@ export function LeadCommercialDetails({
   async function save(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const estimatedQuantity = parsePositiveInteger(draft.estimatedQuantity);
-    const kitQuantity = parsePositiveInteger(draft.kitQuantity);
     const preliminaryBudget = parseNonNegativeNumber(draft.preliminaryBudget);
-    const nextEstimatedAmount = parseNonNegativeNumber(draft.estimatedAmount);
     const discountPercent = parsePercent(draft.discountPercent);
     const nextProbability = parsePercent(draft.probability);
-    const desiredReadyDateError = validateCommercialDates(draft.plannedOrderDate, draft.desiredReadyDate);
     const nextErrors: CommercialErrors = {
       estimatedQuantity: estimatedQuantity.error,
-      kitQuantity: kitQuantity.error,
       preliminaryBudget: preliminaryBudget.error,
-      estimatedAmount: nextEstimatedAmount.error,
       discountPercent: discountPercent.error,
       probability: nextProbability.error,
-      desiredReadyDate: desiredReadyDateError,
     };
     setErrors(nextErrors);
     if (Object.values(nextErrors).some(Boolean)) {
       return;
     }
 
+    // Preserve hidden SoT fields (`20.1`) — not editable here, not cleared on save.
     let change: LeadCommercialChange = {
       source: draft.source.trim() || null,
-      estimatedAmount: nextEstimatedAmount.value ?? null,
+      estimatedAmount,
       probability: nextProbability.value ?? null,
       commercial: {
         direction: draft.direction ? draft.direction as LeadCommercialDetailsData["direction"] : undefined,
         sport: draft.sport ? draft.sport as LeadCommercialDetailsData["sport"] : undefined,
         productCategory: draft.productCategory ? draft.productCategory as LeadCommercialDetailsData["productCategory"] : undefined,
-        productType: draft.productType ? draft.productType as LeadCommercialDetailsData["productType"] : undefined,
+        productType: commercial.productType,
         needDescription: optionalText(draft.needDescription),
         estimatedQuantity: estimatedQuantity.value,
-        kitQuantity: kitQuantity.value,
-        sizeComment: optionalText(draft.sizeComment),
+        kitQuantity: commercial.kitQuantity,
+        sizeComment: commercial.sizeComment,
         preliminaryBudget: preliminaryBudget.value,
         discountPercent: discountPercent.value,
         plannedOrderDate: optionalText(draft.plannedOrderDate),
-        desiredReadyDate: optionalText(draft.desiredReadyDate),
-        eventDate: optionalText(draft.eventDate),
+        desiredReadyDate: commercial.desiredReadyDate,
+        eventDate: commercial.eventDate,
         deliveryCity: optionalText(draft.deliveryCity),
         deliveryAddress: optionalText(draft.deliveryAddress),
         deliveryMethod: draft.deliveryMethod ? draft.deliveryMethod as LeadCommercialDetailsData["deliveryMethod"] : undefined,
@@ -300,18 +279,13 @@ export function LeadCommercialDetails({
         direction: change.commercial.direction,
         sport: change.commercial.sport,
         productCategory: change.commercial.productCategory,
-        productType: change.commercial.productType,
         needDescription: change.commercial.needDescription,
         estimatedQuantity: change.commercial.estimatedQuantity,
-        kitQuantity: change.commercial.kitQuantity,
-        sizeComment: change.commercial.sizeComment,
         preliminaryBudget: change.commercial.preliminaryBudget ?? null,
         estimatedAmount: change.estimatedAmount,
         discountPercent: change.commercial.discountPercent ?? null,
         probability: change.probability,
         plannedOrderDate: change.commercial.plannedOrderDate,
-        desiredReadyDate: change.commercial.desiredReadyDate,
-        eventDate: change.commercial.eventDate,
         deliveryCity: change.commercial.deliveryCity,
         deliveryAddress: change.commercial.deliveryAddress,
         deliveryMethod: change.commercial.deliveryMethod,
@@ -347,7 +321,6 @@ export function LeadCommercialDetails({
     || estimatedAmount !== null
     || probability !== null,
   );
-  const dateWarning = getEventDateWarning(commercial.desiredReadyDate ?? "", commercial.eventDate ?? "");
 
   return (
     <section className={`${embedded ? `min-w-0 ${compact ? "p-3.5" : "p-4 sm:p-5"}` : "min-w-0 rounded-xl border border-slate-200 bg-white p-4 sm:p-5"} lead-commercial-details ${compact ? "lead-compact-details" : ""}`}>
@@ -365,7 +338,6 @@ export function LeadCommercialDetails({
             <SelectField id="commercial-direction" label="Направление" value={draft.direction} options={leadDirections} onChange={(value) => updateDraft("direction", value)} />
             <SelectField id="commercial-sport" label="Вид спорта" value={draft.sport} options={sports} onChange={(value) => updateDraft("sport", value)} />
             <SelectField id="commercial-category" label="Категория продукции" value={draft.productCategory} options={productCategories} onChange={(value) => updateDraft("productCategory", value)} />
-            <SelectField id="commercial-product" label="Тип продукции" value={draft.productType} options={productTypes} onChange={(value) => updateDraft("productType", value)} />
             <label htmlFor="commercial-description" className="min-w-0 text-sm font-medium text-slate-700 sm:col-span-2">
               Описание потребности
               <textarea id="commercial-description" rows={4} maxLength={3000} value={draft.needDescription} onChange={(event) => updateDraft("needDescription", event.target.value)} className="mt-1 w-full resize-y rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100" />
@@ -375,19 +347,13 @@ export function LeadCommercialDetails({
 
           <FormSection title="Количество и бюджет">
             <TextField id="commercial-quantity" label="Количество изделий" type="number" min={1} step={1} value={draft.estimatedQuantity} error={errors.estimatedQuantity} onChange={(value) => updateDraft("estimatedQuantity", value)} />
-            <TextField id="commercial-kit-quantity" label="Количество комплектов" type="number" min={1} step={1} value={draft.kitQuantity} error={errors.kitQuantity} onChange={(value) => updateDraft("kitQuantity", value)} />
             <TextField id="commercial-budget" label="Предварительный бюджет, ₽" type="number" min={0} step={0.01} value={draft.preliminaryBudget} error={errors.preliminaryBudget} onChange={(value) => updateDraft("preliminaryBudget", value)} />
-            <TextField id="commercial-amount" label="Предполагаемая сумма, ₽" type="number" min={0} step={0.01} value={draft.estimatedAmount} error={errors.estimatedAmount} onChange={(value) => updateDraft("estimatedAmount", value)} />
             <TextField id="commercial-discount" label="Скидка, %" type="number" min={0} max={100} step={0.01} value={draft.discountPercent} error={errors.discountPercent} onChange={(value) => updateDraft("discountPercent", value)} />
             <TextField id="commercial-probability" label="Вероятность сделки, %" type="number" min={0} max={100} step={0.01} value={draft.probability} error={errors.probability} onChange={(value) => updateDraft("probability", value)} />
-            <div className="sm:col-span-2"><TextField id="commercial-sizes" label="Размерный ряд или комментарий" value={draft.sizeComment} onChange={(value) => updateDraft("sizeComment", value)} /></div>
           </FormSection>
 
           <FormSection title="Сроки">
             <TextField id="commercial-order-date" label="Планируемая дата заказа" type="date" value={draft.plannedOrderDate} onChange={(value) => updateDraft("plannedOrderDate", value)} />
-            <TextField id="commercial-ready-date" label="Желаемая дата готовности" type="date" value={draft.desiredReadyDate} error={errors.desiredReadyDate} onChange={(value) => updateDraft("desiredReadyDate", value)} />
-            <TextField id="commercial-event-date" label="Дата мероприятия" type="date" value={draft.eventDate} onChange={(value) => updateDraft("eventDate", value)} />
-            {getEventDateWarning(draft.desiredReadyDate, draft.eventDate) ? <p className="text-sm text-amber-800 sm:col-span-2" role="status">{getEventDateWarning(draft.desiredReadyDate, draft.eventDate)}</p> : null}
           </FormSection>
 
           <FormSection title="Доставка">
@@ -405,7 +371,7 @@ export function LeadCommercialDetails({
           </FormSection>
 
           {persistence === "api" ? (
-            <p className="text-xs text-slate-500">Backend сохраняет вид спорта, категорию, описание, количество, сумму, дату готовности, источник и город. Остальные поля остаются в текущей сессии.</p>
+            <p className="text-xs text-slate-500">Backend сохраняет направление, спорт, категорию, описание, количество, бюджет, скидку, вероятность, дату заказа, доставку, источник и приоритет. Скрытые поля потребности (тип/комплекты/сумма/размеры/даты готовности и мероприятия) не перезаписываются.</p>
           ) : null}
           {saveError ? <p className="text-sm text-red-700" role="alert">{saveError}</p> : null}
 
@@ -422,40 +388,33 @@ export function LeadCommercialDetails({
               <DataItem label="Направление">{display(commercial.direction)}</DataItem>
               <DataItem label="Вид спорта">{display(commercial.sport)}</DataItem>
               <DataItem label="Категория">{display(commercial.productCategory)}</DataItem>
-              <DataItem label="Тип продукции">{display(commercial.productType)}</DataItem>
               <DataItem label="Количество изделий">{formatQuantity(commercial.estimatedQuantity)}</DataItem>
-              <DataItem label="Количество комплектов">{formatQuantity(commercial.kitQuantity, "kit")}</DataItem>
-              <div className="sm:col-span-2"><DataItem label="Размеры">{display(commercial.sizeComment)}</DataItem></div>
             </dl>
           </div>
           <div className="border-t border-slate-200 pt-3">
             <h3 className="text-sm font-semibold text-slate-950">Финансовые параметры</h3>
             <dl className="mt-2.5 grid gap-x-5 gap-y-3 sm:grid-cols-2">
               <DataItem label="Предварительный бюджет" emphasized>{formatCurrency(commercial.preliminaryBudget)}</DataItem>
-              <DataItem label="Предполагаемая сумма" emphasized>{formatCurrency(estimatedAmount)}</DataItem>
               <DataItem label="Скидка" emphasized>{commercial.discountPercent === undefined ? "Не указано" : `${commercial.discountPercent}%`}</DataItem>
               <DataItem label="Вероятность" emphasized>{probability === null ? "Не указано" : `${probability}%`}</DataItem>
             </dl>
           </div>
           <details open={!compact} className="border-t border-slate-200 pt-3">
             <summary className={`${compact ? "cursor-pointer text-xs font-semibold text-blue-700" : "sr-only"}`}>Дополнительные коммерческие параметры</summary>
-          <div className={`${compact ? "mt-3" : ""} grid gap-5 sm:grid-cols-2`}>
+          <div className={`${compact ? "mt-3" : ""} grid gap-5`}>
             <div>
               <h3 className="text-sm font-semibold text-slate-950">Сроки</h3>
-              <dl className="mt-3 grid gap-4 sm:grid-cols-2">
+              <dl className="mt-3 grid gap-3">
                 <DataItem label="Дата заказа">{formatCommercialDate(commercial.plannedOrderDate)}</DataItem>
-                <DataItem label="Дата готовности">{formatCommercialDate(commercial.desiredReadyDate)}</DataItem>
-                <DataItem label="Дата мероприятия">{formatCommercialDate(commercial.eventDate)}</DataItem>
               </dl>
-              {dateWarning ? <p className="mt-3 text-sm text-amber-800">{dateWarning}</p> : null}
             </div>
             <div>
               <h3 className="text-sm font-semibold text-slate-950">Доставка</h3>
-              <dl className="mt-3 grid gap-4 sm:grid-cols-2">
+              <dl className="lead-commercial-extra-grid mt-3 grid gap-x-5 gap-y-3">
                 <DataItem label="Город">{display(commercial.deliveryCity)}</DataItem>
                 <DataItem label="Способ">{display(commercial.deliveryMethod)}</DataItem>
-                <div className="sm:col-span-2"><DataItem label="Адрес">{display(commercial.deliveryAddress)}</DataItem></div>
-                <div className="sm:col-span-2"><DataItem label="Комментарий">{display(commercial.deliveryComment)}</DataItem></div>
+                <div className="lead-commercial-extra-span"><DataItem label="Адрес">{display(commercial.deliveryAddress)}</DataItem></div>
+                <div className="lead-commercial-extra-span"><DataItem label="Комментарий">{display(commercial.deliveryComment)}</DataItem></div>
               </dl>
             </div>
           </div>

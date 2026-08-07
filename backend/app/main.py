@@ -7,6 +7,8 @@ from sqlalchemy import text
 
 from app.api.auth import router as auth_router
 from app.api.collaboration import router as collaboration_router
+from app.api.work_tasks import embeds_router as work_tasks_embeds_router
+from app.api.work_tasks import router as work_tasks_router
 from app.api.platform_users_rbac import router as platform_users_rbac_router
 from app.api.stage_executors import router as stage_executors_router
 from app.api.audit_events import router as audit_events_router
@@ -109,6 +111,8 @@ async def log_requests(
 
 app.include_router(auth_router)
 app.include_router(collaboration_router)
+app.include_router(work_tasks_router)
+app.include_router(work_tasks_embeds_router)
 app.include_router(platform_users_rbac_router)
 app.include_router(stage_executors_router)
 app.include_router(audit_events_router)

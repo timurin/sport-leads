@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SPORT-LEAD — Дашборд</title>
+  <link rel="stylesheet" href="../shared/preview.css">
+</head>
+<body
+  data-shell-section="dashboard"
+  data-top-nav="overview"
+  data-base="../"
+  data-page-title="Главная · Обзор"
+  data-create-label="Новый лид"
+  data-create-href="../sales/lead-card-reference-v1.html?id=1042"
+>
+  <div class="shell">
+    <aside class="rail" data-shell-rail aria-label="Левое меню"></aside>
+    <div class="workspace">
+      <header class="topbar" data-shell-topbar></header>
+      <main class="main">
+        <div class="banner" role="status">
+          <span>Типовой шаблон Dashboard · Soft UI · Stage 22.8 · demo KPI (не live API)</span>
+        </div>
+
+        <section class="panel header-panel">
+          <div>
+            <div class="title-row">
+              <h1>Обзор платформы</h1>
+              <span class="badge">Сегодня</span>
+            </div>
+            <div class="meta-row">
+              <span>Роль <b>Менеджер продаж</b></span>
+              <span>Смена <b>день</b></span>
+              <span>Обновлено <b>только что</b></span>
+            </div>
+          </div>
+          <div class="actions">
+            <button type="button" class="btn">Отчёт</button>
+            <a class="btn is-primary" href="../sales/lead-card-reference-v1.html?id=1042">Новый лид</a>
+          </div>
+        </section>
+
+        <div class="dash-grid" id="analytics">
+          <div class="metric span-3"><span class="k">Лиды в работе</span><strong>48</strong><span class="small">+6 за неделю</span></div>
+          <div class="metric span-3"><span class="k">Заказы open</span><strong>23</strong><span class="small">сумма 4,2 млн ₽</span></div>
+          <div class="metric span-3"><span class="k">В производстве</span><strong>11</strong><span class="small">3 на критическом сроке</span></div>
+          <div class="metric span-3"><span class="k">Склад · риск</span><strong>7</strong><span class="small">SKU ниже min</span></div>
+
+          <section class="panel span-8">
+            <div class="toolbar-row">
+              <h2 style="margin:0;font-size:15px">Динамика заказов</h2>
+              <span class="status-dot is-ok">Live preview stub</span>
+            </div>
+            <div class="chart-stub" role="img" aria-label="Заглушка графика">Area / line chart · Recharts later</div>
+          </section>
+
+          <section class="panel span-4" id="activity">
+            <h2 style="margin:0 0 8px;font-size:15px">Активность</h2>
+            <div class="list-row">
+              <div><b>Лид #1042</b><div class="small">Коммерческое предложение отправлено</div></div>
+              <span class="small">12 мин</span>
+            </div>
+            <div class="list-row">
+              <div><b>SO-2026-000142</b><div class="small">Статус → В производстве</div></div>
+              <span class="small">1 ч</span>
+            </div>
+            <div class="list-row">
+              <div><b>Склад</b><div class="small">Приход ткани · док #M-882</div></div>
+              <span class="small">3 ч</span>
+            </div>
+          </section>
+
+          <section class="panel span-6">
+            <h2 style="margin:0 0 8px;font-size:15px">Быстрые переходы</h2>
+            <div class="hub-grid">
+              <a class="hub-card" href="../sales/lead-card-reference-v1.html?id=1042"><strong>Лиды</strong><span class="small">Карточка + воронка</span></a>
+              <a class="hub-card" href="../production/orders-workspace-reference-v1.html"><strong>Производство</strong><span class="small">Заказы / канбан</span></a>
+              <a class="hub-card" href="../warehouse/stock-workspace-reference-v1.html"><strong>Склад</strong><span class="small">Остатки / движения</span></a>
+              <a class="hub-card" href="../purchases/hub-reference-v1.html"><strong>Закупки</strong><span class="small">Поставщики / ЗП</span></a>
+            </div>
+          </section>
+
+          <section class="panel span-6">
+            <h2 style="margin:0 0 8px;font-size:15px">Задачи на сегодня</h2>
+            <div class="list-row">
+              <div><span class="status-dot is-warn">Связаться с клиентом · Лид #1042</span></div>
+              <button type="button" class="btn">Открыть</button>
+            </div>
+            <div class="list-row">
+              <div><span class="status-dot">Согласовать спецификацию · SO-142</span></div>
+              <button type="button" class="btn">Открыть</button>
+            </div>
+            <div class="list-row">
+              <div><span class="status-dot is-ok">Проверить остаток ткани · арт. TX-12</span></div>
+              <button type="button" class="btn">Открыть</button>
+            </div>
+          </section>
+        </div>
+      </main>
+    </div>
+  </div>
+  <script src="../shared/shell.js"></script>
+</body>
+</html>

@@ -87,6 +87,35 @@ def list_media(db: Session, nomenclature_id: int) -> list[NomenclatureMedia]:
     return list(db.scalars(select(NomenclatureMedia).where(NomenclatureMedia.nomenclature_id == nomenclature_id).order_by(NomenclatureMedia.sort_order, NomenclatureMedia.id)).all())
 
 
+def primary_cover_urls_by_nomenclature_ids(
+    db: Session, nomenclature_ids: list[int]
+) -> dict[int, str | None]:
+    """Primary (else first) media content URL keyed by nomenclature id."""
+    if not nomenclature_ids:
+        return {}
+    unique_ids = list(dict.fromkeys(nomenclature_ids))
+    rows = list(
+        db.scalars(
+            select(NomenclatureMedia)
+            .where(NomenclatureMedia.nomenclature_id.in_(unique_ids))
+            .order_by(
+                NomenclatureMedia.nomenclature_id,
+                NomenclatureMedia.is_primary.desc(),
+                NomenclatureMedia.sort_order,
+                NomenclatureMedia.id,
+            )
+        ).all()
+    )
+    covers: dict[int, str | None] = {item_id: None for item_id in unique_ids}
+    for row in rows:
+        if covers.get(row.nomenclature_id) is not None:
+            continue
+        covers[row.nomenclature_id] = (
+            f"/nomenclatures/{row.nomenclature_id}/media/{row.id}/content"
+        )
+    return covers
+
+
 def create_media(db: Session, nomenclature_id: int, payload: NomenclatureMediaCreate) -> NomenclatureMedia:
     _nomenclature(db, nomenclature_id)
     _assert_allowed_mime(payload.mime_type)

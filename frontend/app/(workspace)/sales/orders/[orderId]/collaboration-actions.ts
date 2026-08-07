@@ -15,7 +15,8 @@ export type CollaborationMention = {
 export type CollaborationMessage = {
   id: number;
   thread_id: number;
-  sales_order_id: number;
+  sales_order_id: number | null;
+  lead_id?: number | null;
   author_platform_user_id: number;
   author_login: string;
   author_display_name: string;
@@ -28,7 +29,8 @@ export type CollaborationMessage = {
 
 export type CollaborationMicrotask = {
   id: number;
-  sales_order_id: number;
+  sales_order_id: number | null;
+  lead_id?: number | null;
   title: string;
   status: "open" | "done" | string;
   assignee_platform_user_id: number;
@@ -318,4 +320,92 @@ export async function markAllCollaborationNotificationsRead(): Promise<
     ok: true,
     data: (await response.json()) as { marked: number },
   };
+}
+
+export async function listLeadCollaborationMessages(
+  leadId: number | string,
+): Promise<ActionResult<CollaborationMessage[]>> {
+  const auth = await sessionAuthHeaders();
+  const response = await fetch(
+    `${apiBaseUrl()}/leads/${leadId}/collaboration/messages`,
+    { headers: { ...auth }, cache: "no-store" },
+  );
+  if (!response.ok) {
+    return {
+      ok: false,
+      message: await readError(response, "Не удалось загрузить переписку лида"),
+    };
+  }
+  return { ok: true, data: (await response.json()) as CollaborationMessage[] };
+}
+
+export async function createLeadCollaborationMessage(
+  leadId: number | string,
+  payload: { body: string },
+): Promise<ActionResult<CollaborationMessage>> {
+  const auth = await sessionAuthHeaders();
+  const response = await fetch(
+    `${apiBaseUrl()}/leads/${leadId}/collaboration/messages`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...auth },
+      body: JSON.stringify({ body: payload.body }),
+      cache: "no-store",
+    },
+  );
+  if (!response.ok) {
+    return {
+      ok: false,
+      message: await readError(response, "Не удалось отправить сообщение"),
+    };
+  }
+  return { ok: true, data: (await response.json()) as CollaborationMessage };
+}
+
+export async function listLeadCollaborationMicrotasks(
+  leadId: number | string,
+): Promise<ActionResult<CollaborationMicrotask[]>> {
+  const auth = await sessionAuthHeaders();
+  const response = await fetch(
+    `${apiBaseUrl()}/leads/${leadId}/collaboration/microtasks`,
+    { headers: { ...auth }, cache: "no-store" },
+  );
+  if (!response.ok) {
+    return {
+      ok: false,
+      message: await readError(response, "Не удалось загрузить микрозадачи лида"),
+    };
+  }
+  return { ok: true, data: (await response.json()) as CollaborationMicrotask[] };
+}
+
+export async function createLeadCollaborationMicrotask(
+  leadId: number | string,
+  payload: {
+    title: string;
+    assignee_platform_user_id: number;
+    source_message_id?: number | null;
+  },
+): Promise<ActionResult<CollaborationMicrotask>> {
+  const auth = await sessionAuthHeaders();
+  const response = await fetch(
+    `${apiBaseUrl()}/leads/${leadId}/collaboration/microtasks`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...auth },
+      body: JSON.stringify({
+        title: payload.title,
+        assignee_platform_user_id: payload.assignee_platform_user_id,
+        source_message_id: payload.source_message_id ?? null,
+      }),
+      cache: "no-store",
+    },
+  );
+  if (!response.ok) {
+    return {
+      ok: false,
+      message: await readError(response, "Не удалось создать микрозадачу"),
+    };
+  }
+  return { ok: true, data: (await response.json()) as CollaborationMicrotask };
 }

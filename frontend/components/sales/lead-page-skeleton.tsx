@@ -51,8 +51,8 @@ export function LeadPageSkeleton() {
         <div className="lead-main-grid grid min-w-0 gap-4">
           <div className="lead-left-column min-w-0 space-y-3">
             <SkeletonLine className="w-56" />
-            <ResponsiveGrid minItemWidth="large" className="lead-reference-grid"><DataCardSkeleton /><DataCardSkeleton /></ResponsiveGrid>
             <div className="rounded-[var(--portal-radius-lg)] border border-portal-border bg-portal-surface p-3 shadow-[var(--portal-shadow-card)]"><SkeletonLine className="w-40" /><ResponsiveGrid minItemWidth="small" gap="compact" className="lead-metrics-grid mt-3">{[0, 1, 2, 3, 4, 5].map((item) => <div key={item} className="rounded-[var(--portal-radius-md)] border border-portal-border bg-portal-surface-secondary p-3"><SkeletonLine className="h-3 w-20" /><SkeletonLine className="mt-2 h-5 w-24 max-w-full" /></div>)}</ResponsiveGrid></div>
+            <ResponsiveGrid minItemWidth="large" className="lead-reference-grid"><DataCardSkeleton /><DataCardSkeleton /></ResponsiveGrid>
             <div className="lead-bottom-grid grid gap-3"><WorkCardSkeleton /><WorkCardSkeleton /><WorkCardSkeleton /></div>
           </div>
           <CommunicationSkeleton />

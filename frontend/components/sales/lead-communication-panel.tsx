@@ -24,7 +24,7 @@ export type LeadMessageDraft = {
   attachments: LeadMessageAttachment[];
 };
 
-const channels: LeadMessageChannel[] = ["phone", "email", "telegram", "whatsapp", "vk", "website", "internal"];
+const channels: LeadMessageChannel[] = ["phone", "email", "telegram", "whatsapp", "vk", "website"];
 const filters: Array<{ id: LeadMessageFilter; label: string }> = [
   { id: "all", label: "Все" },
   { id: "telegram", label: "Telegram" },
@@ -72,7 +72,11 @@ export function LeadCommunicationPanel({
 }) {
   const initialChannel = primaryContact?.preferredChannel;
   const [channel, setChannel] = useState<LeadMessageChannel>(
-    initialChannel && initialChannel !== "unspecified" ? initialChannel : "email",
+    initialChannel &&
+      initialChannel !== "unspecified" &&
+      (channels as ReadonlyArray<string>).includes(initialChannel)
+      ? initialChannel
+      : "email",
   );
   const [filter, setFilter] = useState<LeadMessageFilter>("all");
   const [drafts, setDrafts] = useState(emptyDrafts);

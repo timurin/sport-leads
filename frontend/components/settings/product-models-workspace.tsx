@@ -37,7 +37,20 @@ import {
   updateProductModelFolder,
 } from "@/app/(workspace)/settings/catalogs/product-models/product-model-actions";
 import { CatalogFolderMoveModal } from "@/components/settings/catalog-folder-move-modal";
+import {
+  CatalogTreeDepthCell,
+  CatalogTreeDndProvider,
+  CatalogTreeDraggableFolder,
+  CatalogTreeDraggableItem,
+  CatalogTreeRootDropZone,
+} from "@/components/settings/catalog-folder-tree-dnd";
 import { CatalogFolderTemplateModal } from "@/components/settings/catalog-folder-template-modal";
+import {
+  canNestCatalogFolder,
+  catalogFolderRowSurfaceClass,
+  catalogFolderWouldChangeParent,
+  isCatalogFolderDescendant,
+} from "@/lib/catalog-folder-dnd";
 import { ProductModelCreateDrawer } from "@/components/settings/product-model-create-drawer";
 import { ProductModelImportDrawer } from "@/components/settings/product-model-import-drawer";
 import { Button, IconButton } from "@/components/ui/button";
@@ -115,23 +128,6 @@ function CoverThumb({
       <img src={src} alt={alt} className="size-10 object-cover" />
     </button>
   );
-}
-
-function isDescendantFolder(
-  folders: ProductModelFolder[],
-  folderId: number,
-  ancestorId: number,
-): boolean {
-  const byId = new Map(folders.map((folder) => [folder.id, folder]));
-  let current: number | null = folderId;
-  const seen = new Set<number>();
-  while (current != null) {
-    if (current === ancestorId) return true;
-    if (seen.has(current)) return false;
-    seen.add(current);
-    current = byId.get(current)?.parent_id ?? null;
-  }
-  return false;
 }
 
 /** PT-02 product-model catalog list with folder tree (`DS-PT-02`, `6.1.18`). */
@@ -274,12 +270,107 @@ export function ProductModelsWorkspace({
           (model) =>
             model.folder_id != null &&
             (model.folder_id === row.id ||
-              isDescendantFolder(localFolders, model.folder_id, row.id)),
+              isCatalogFolderDescendant(localFolders, model.folder_id, row.id)),
         );
       });
     }
     return visibleProductModelCatalogTreeRows(treeRows, expandedIds);
   }, [expandedIds, filtered, localFolders, searchActive, treeRows]);
+
+  const dndEnabled =
+    !searchActive && !saving && !moveSelectMode && !printSelectMode;
+
+  const folderNodes = useMemo(
+    () =>
+      localFolders.map((folder) => ({
+        id: folder.id,
+        parent_id: folder.parent_id,
+      })),
+    [localFolders],
+  );
+
+  const onCatalogDrop = async ({
+    active,
+    over,
+  }: {
+    active: { kind: string; id?: number };
+    over: { kind: string; id?: number };
+  }) => {
+    setRowError(null);
+    if (active.kind === "folder" && typeof active.id === "number") {
+      const targetParentId =
+        over.kind === "root"
+          ? null
+          : over.kind === "folder" && typeof over.id === "number"
+            ? over.id
+            : undefined;
+      if (targetParentId === undefined) return;
+      if (!canNestCatalogFolder(folderNodes, active.id, targetParentId)) {
+        setRowError("Нельзя вложить папку в себя или в своего потомка.");
+        return;
+      }
+      if (!catalogFolderWouldChangeParent(folderNodes, active.id, targetParentId)) {
+        return;
+      }
+      setSaving(true);
+      try {
+        const result = await updateProductModelFolder(active.id, {
+          parent_id: targetParentId,
+        });
+        if (!result.ok) {
+          setRowError(result.message);
+          return;
+        }
+        setLocalFolders((prev) =>
+          prev.map((folder) =>
+            folder.id === result.folder.id ? result.folder : folder,
+          ),
+        );
+        if (targetParentId != null) {
+          setExpandedIds((prev) => new Set(prev).add(targetParentId));
+        }
+        router.refresh();
+      } catch {
+        setRowError("Не удалось переместить папку.");
+      } finally {
+        setSaving(false);
+      }
+      return;
+    }
+    if (active.kind === "item" && typeof active.id === "number") {
+      const folderId =
+        over.kind === "root"
+          ? null
+          : over.kind === "folder" && typeof over.id === "number"
+            ? over.id
+            : undefined;
+      if (folderId === undefined) return;
+      const current = rows.find((row) => row.id === active.id);
+      if (current && current.folder_id === folderId) return;
+      setSaving(true);
+      try {
+        const result = await moveProductModelsToFolder([active.id], folderId);
+        if (!result.ok) {
+          setRowError(result.message);
+          return;
+        }
+        setPatched((prev) => {
+          const next = { ...prev };
+          for (const model of result.models) next[model.id] = model;
+          return next;
+        });
+        if (folderId != null) {
+          setExpandedIds((prev) => new Set(prev).add(folderId));
+        }
+        router.refresh();
+      } catch {
+        setRowError("Не удалось переместить модель.");
+      } finally {
+        setSaving(false);
+      }
+    }
+  };
+
 
   const filtersActive = Boolean(statusFilter) || productTypeFilter != null;
 
@@ -962,6 +1053,8 @@ export function ProductModelsWorkspace({
         ) : null}
 
         <div className="hidden min-w-0 md:block">
+          <CatalogTreeDndProvider enabled={dndEnabled} onDrop={onCatalogDrop}>
+            {dndEnabled ? <CatalogTreeRootDropZone /> : null}
           <DataTableFrame className="rounded-none border-x-0 border-b-0 shadow-none">
             <DataTable minWidthClassName="min-w-[860px]">
               <DataTableHead>
@@ -1036,16 +1129,19 @@ export function ProductModelsWorkspace({
                       const expanded =
                         expandedIds.has(row.id) || searchActive;
                       return (
-                        <DataTableRow
+                        <CatalogTreeDraggableFolder
                           key={`folder-${row.id}`}
-                          className="bg-portal-surface-2/40"
+                          folderId={row.id}
+                          label={row.name}
+                          disabled={!dndEnabled}
+                          className={catalogFolderRowSurfaceClass()}
                         >
+                          {({ handle }) => (
+                            <>
                           {selectMode ? <DataTableCell /> : null}
                           <DataTableCell colSpan={dataColSpan}>
-                            <div
-                              className="flex items-center gap-1"
-                              style={{ paddingLeft: `${row.depth * 1.25}rem` }}
-                            >
+                            <CatalogTreeDepthCell depth={row.depth}>
+                              {handle}
                               <IconButton
                                 type="button"
                                 label={expanded ? "Свернуть" : "Развернуть"}
@@ -1058,9 +1154,9 @@ export function ProductModelsWorkspace({
                                 )}
                               </IconButton>
                               {expanded ? (
-                                <FolderOpen className="size-4 text-portal-muted" />
+                                <FolderOpen className="size-4 shrink-0 text-portal-muted" />
                               ) : (
-                                <Folder className="size-4 text-portal-muted" />
+                                <Folder className="size-4 shrink-0 text-portal-muted" />
                               )}
                               <div className="min-w-0">
                                 <span className="font-medium">{row.name}</span>
@@ -1070,12 +1166,14 @@ export function ProductModelsWorkspace({
                                   </p>
                                 ) : null}
                               </div>
-                            </div>
+                            </CatalogTreeDepthCell>
                           </DataTableCell>
                           <DataTableCell>
                             {folderActions(row.folder)}
                           </DataTableCell>
-                        </DataTableRow>
+                            </>
+                          )}
+                        </CatalogTreeDraggableFolder>
                       );
                     }
 
@@ -1085,7 +1183,14 @@ export function ProductModelsWorkspace({
                     const checked = selectedIds.has(model.id);
 
                     return (
-                      <DataTableRow key={`model-${model.id}`}>
+                      <CatalogTreeDraggableItem
+                        key={`model-${model.id}`}
+                        itemId={model.id}
+                        label={model.name}
+                        disabled={!dndEnabled}
+                      >
+                        {({ handle }) => (
+                          <>
                         {selectMode ? (
                           <DataTableCell>
                             <Checkbox
@@ -1096,11 +1201,10 @@ export function ProductModelsWorkspace({
                           </DataTableCell>
                         ) : null}
                         <DataTableCell>
-                          <div
-                            style={{ paddingLeft: `${row.depth * 1.25}rem` }}
-                          >
+                          <CatalogTreeDepthCell depth={row.depth}>
+                            {handle}
                             <CoverThumb model={model} onOpen={openLightbox} />
-                          </div>
+                          </CatalogTreeDepthCell>
                         </DataTableCell>
                         <DataTableCell className="font-medium">
                           <Link
@@ -1130,13 +1234,16 @@ export function ProductModelsWorkspace({
                         </DataTableCell>
                         <DataTableCell>{costLabel(model.id)}</DataTableCell>
                         <DataTableCell>{rowActions(model)}</DataTableCell>
-                      </DataTableRow>
+                          </>
+                        )}
+                      </CatalogTreeDraggableItem>
                     );
                   })
                 )}
               </DataTableBody>
             </DataTable>
           </DataTableFrame>
+          </CatalogTreeDndProvider>
         </div>
 
         {mounted ? (

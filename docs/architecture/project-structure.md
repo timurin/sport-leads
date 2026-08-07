@@ -1,8 +1,8 @@
 # Sport-Lead — Project Structure Checklist
 
 **Code:** `SL-PROJECT-STRUCTURE-v1`
-**Updated:** `2026-08-04` (Stage 19 closed — owner sign-off `19.5.3`)
-**Project version:** `v0.9.0`
+**Updated:** `2026-08-06` (v1.00 Stage `23` Unified Work Tasks — ADR-028 / `23.0.1`; Stage `22` Design v1.0 in progress)  
+**Project version:** `v0.9.0` / early `v1.00` Stages 0 + 20 + 21 + 22 + 23
 **Git branch:** `feature/v0.8.1-nomenclature-core`
 
 ## Rules
@@ -24,8 +24,11 @@
 - [x] CI pipeline for mandatory checks (GitHub Actions + `scripts/check_project.py`)
 - [x] Dev/staging database backup and restore scripts
 - [x] Structured application logging baseline
+- [x] List-page data rules (`v1.00` `0.2.1`–`0.2.8`) — `SL-LIST-PAGE-RULES-v1`; product-models/characteristics/warehouse/tech-cards list N+1; PO batch rollups; stock `nomenclature_name`; nomenclature card options-batch
+- [x] LAN local-stack access (`v1.00` `0.3.1`–`0.3.3`) — `dev-servers.ps1 -Lan`; CORS/`NEXT_PUBLIC_*` notes; owner smoke OK `2026-08-05`
+- [x] Create SalesOrder without Lead (`v1.00` `0.4.1`–`0.4.3`) — nullable `lead_id`; `POST /orders`; FE create drawer; convert intact; owner visual OK `2026-08-05`
 - [x] Authentication (`17.1.1`) — ADR-023 + API + `/login` gate shipped (owner visual OK `2026-08-01`)
-- [x] System users, roles, and permissions (`17.1.2`) — ADR-024; Alembic `t7u8v9w0x123` + `u8v9w0x1y234`; owner visuals OK `2026-08-01`
+- [x] System users, roles, and permissions (`17.1.2`) — ADR-024; Alembic `t7u8v9w0x123` + `u8v9w0x1y234`; owner visuals OK `2026-08-01`; **Users cabinet UX** → Stage `21`
 - [x] Universal audit trail (`17.1.3`) — ADR-025; Alembic `v9w0x1y2z345`; size-grid «Журнал аудита»; owner visual OK `2026-08-01`
 - [x] Administration shell and system settings workspace (`18.1`) — nav «Платформа», system settings workspace, placement rules, and PT mapping; owner visuals OK `2026-08-02`
 - [x] Platform directories under Administration (`18.2`) — cities first live directory, persistent API/UI, and CRM consumer cross-links; Alembic `y2z3a4b5c678`; owner visual OK `2026-08-02`
@@ -33,6 +36,10 @@
 - [ ] Universal file subsystem beyond nomenclature images
 - [ ] Notifications and background jobs
 - [x] Internal staff collaboration chat on sales order + technical card (Stage `19`: threads, @mentions, chat-microtasks, in-app notifications) — ≠ CRM lead comms `1.2.4`; Alembic `g0a1b2c3d456`/`h1b2c3d4e567`; owner visual OK `19.3.5`; **stage sign-off OK** `19.5.3` (`2026-08-04`)
+- [x] Lead / order card UX + unified messaging (`v1.00` Stage `20`) — need-cleanup `20.1`; lead layout `20.2`; ADR-027 lead XOR collaboration + shared shell `20.3`; order parity client-need/metrics/comms `20.4`; Alembic `l5m6n7o8p901`; owner visual OK `20.4.5` (`2026-08-05`)
+- [x] Settings / Users cabinet (`v1.00` Stage `21`) — nav «Пользователи» `/settings/users` (≠ org «Сотрудники» `2.4.2`); invite/list/profile PATCH; access matrix; extends `17.1.2`; Alembic `m6n7o8p9q012`; owner visual OK `21.5.1` (`2026-08-05`); contract `SL-USERS-CABINET-v1`
+- [ ] Design v1.0 (`v1.00` Stage `22`) — Soft UI etalons → platform; `SL-DESIGN-V1-PROCESS-v1`; approved Lead + Order (`22.1`/`22.2`); draft `22.4`–`22.9` (modules + shell); TBD boards `22.3`; task `docs/tasks/v1.00-stage-22-design-v1.md`
+- [ ] Unified Work Tasks (`v1.00` Stage `23`) — `WorkTask` replaces `LeadTask` + `CollaborationMicrotask`; ADR-028; chat + images; `storage/task-media`; live `/sales/tasks`; `23.0.1` closed `2026-08-06`; next `23.1`
 - [ ] Production secrets management (Vault/etc.) — monitoring + DR covered in `17.2.2`/`17.2.3`; file `.env.production` remains host SoT for secrets MVP
 
 ## 2. CRM and Leads
@@ -55,7 +62,7 @@
 
 - [x] Persistent organizations API and `SalesOrder.organization_id` binding
 - [ ] Persistent organizations workspace on backend data
-- [ ] Persistent employees directory, org structure, and user linkage
+- [ ] Persistent employees directory, org structure, and user linkage (`2.4.2`) — org HR «Сотрудники»; **≠** platform Users cabinet Stage `21` / `/settings/users`
 - [x] Clients and contacts linked to leads and orders
 - [x] Customer and contact saving from the lead workflow
 - [ ] Separate persistent client history, deduplication, and settlements (`2.2.3`+ / `2.3`; → v1.00)
@@ -63,7 +70,7 @@
 ## 4. Sales Orders
 
 - [x] Persistent sales-order model, list, detail route, and status history
-- [x] Manual order creation and order creation from lead conversion
+- [x] Manual order creation without lead (`v1.00` `0.4`) + order creation from lead conversion — `POST /orders`; Alembic `i2j3k4l5m678`; owner visual OK `2026-08-05`
 - [x] Organization, client, contact, and responsible bindings in order data
 - [x] Order card field-link map and compact UX code (`3.5.1`–`3.5.8`, `3.5.10`) — evidence: `docs/architecture/order-card-field-links.md`, `sales-order-page.tsx`
 - [x] Order card owner visual verification (`3.5.9`) — owner OK `2026-07-31` (responsive stack + collapse + sidebar compact ≤1299)

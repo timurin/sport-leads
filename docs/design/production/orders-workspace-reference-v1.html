@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SPORT-LEAD — Производство</title>
+  <link rel="stylesheet" href="../shared/preview.css">
+</head>
+<body
+  data-shell-section="production"
+  data-top-nav="orders"
+  data-base="../"
+  data-page-title="Производство · Заказы"
+  data-create-label="Новый заказ"
+  data-create-href="../sales/order-card-reference-v1.html?id=8801"
+>
+  <div class="shell">
+    <aside class="rail" data-shell-rail aria-label="Левое меню"></aside>
+    <div class="workspace">
+      <header class="topbar" data-shell-topbar></header>
+      <main class="main">
+        <div class="banner" role="status">
+          <span>Production workspace · Soft UI · Stage 22.4 · demo (не live API)</span>
+        </div>
+
+        <section class="panel header-panel">
+          <div>
+            <div class="title-row">
+              <h1>Заказы в производстве</h1>
+              <span class="badge">11 open</span>
+            </div>
+            <div class="meta-row">
+              <span>Цех <b>все</b></span>
+              <span>Срок <b>эта неделя</b></span>
+              <span>Фильтр <b>критичные сверху</b></span>
+            </div>
+          </div>
+          <div class="actions">
+            <button type="button" class="btn">Канбан</button>
+            <button type="button" class="btn is-primary">План смены</button>
+          </div>
+        </section>
+
+        <div class="dash-grid">
+          <div class="metric span-3"><span class="k">В работе</span><strong>11</strong></div>
+          <div class="metric span-3"><span class="k">На критическом сроке</span><strong>3</strong></div>
+          <div class="metric span-3"><span class="k">Готовы к отгрузке</span><strong>4</strong></div>
+          <div class="metric span-3"><span class="k">Загрузка цеха</span><strong>78%</strong></div>
+        </div>
+
+        <section class="panel" id="kanban">
+          <div class="toolbar-row">
+            <h2 style="margin:0;font-size:15px">Список заказов</h2>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <button type="button" class="btn">Фильтры</button>
+              <button type="button" class="btn">Экспорт</button>
+            </div>
+          </div>
+          <div class="list-row">
+            <div>
+              <b>PO-2026-0041</b> · SO-2026-000142
+              <div class="small">Раскрой → Печать · срок 08.08 · ответственный Смена А</div>
+            </div>
+            <span class="status-dot is-warn">критично</span>
+          </div>
+          <div class="list-row">
+            <div>
+              <b>PO-2026-0038</b> · SO-2026-000128
+              <div class="small">Пошив · срок 12.08 · 240 шт</div>
+            </div>
+            <span class="status-dot">в работе</span>
+          </div>
+          <div class="list-row">
+            <div>
+              <b>PO-2026-0035</b> · SO-2026-000119
+              <div class="small">ОТК · готово к упаковке</div>
+            </div>
+            <span class="status-dot is-ok">ОК</span>
+          </div>
+        </section>
+
+        <div class="dash-grid" id="tech">
+          <section class="panel span-6">
+            <h2 style="margin:0 0 8px;font-size:15px">Цеховые этапы</h2>
+            <div class="hub-grid">
+              <div class="hub-card"><strong>Раскрой</strong><span class="small">2 заказа</span></div>
+              <div class="hub-card"><strong>Печать</strong><span class="small">3 заказа</span></div>
+              <div class="hub-card"><strong>Пошив</strong><span class="small">4 заказа</span></div>
+              <div class="hub-card"><strong>ОТК</strong><span class="small">2 заказа</span></div>
+            </div>
+          </section>
+          <section class="panel span-6">
+            <h2 style="margin:0 0 8px;font-size:15px">Техкарты · быстрый доступ</h2>
+            <div class="list-row">
+              <div><b>TC-Футболка-Pro</b><div class="small">v3 · активна</div></div>
+              <button type="button" class="btn">Открыть</button>
+            </div>
+            <div class="list-row">
+              <div><b>TC-Шорты-Match</b><div class="small">v1 · черновик</div></div>
+              <button type="button" class="btn">Открыть</button>
+            </div>
+          </section>
+        </div>
+      </main>
+    </div>
+  </div>
+  <script src="../shared/shell.js"></script>
+</body>
+</html>

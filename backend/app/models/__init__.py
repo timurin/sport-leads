@@ -147,6 +147,12 @@ from app.models.collaboration import (
 )
 from app.models.rbac import Permission, Role, platform_user_roles, role_permissions
 from app.models.stage_executors import platform_user_stage_access
+from app.models.work_tasks import (
+    WorkTask,
+    WorkTaskAttachment,
+    WorkTaskMessage,
+    WorkTaskStatus,
+)
 
 
 __all__ = [
@@ -278,6 +284,10 @@ __all__ = [
     "platform_user_roles",
     "role_permissions",
     "platform_user_stage_access",
+    "WorkTask",
+    "WorkTaskMessage",
+    "WorkTaskAttachment",
+    "WorkTaskStatus",
     "SalesOrderStatus",
     "DesignApprovalStatus",
     "MaterialReserveStatus",

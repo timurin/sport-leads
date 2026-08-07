@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SPORT-LEAD — Закупки</title>
+  <link rel="stylesheet" href="../shared/preview.css">
+</head>
+<body
+  data-shell-section="purchases"
+  data-top-nav="dashboard"
+  data-base="../"
+  data-page-title="Закупки · Обзор"
+  data-create-label="Заказ поставщику"
+  data-create-href="#orders"
+>
+  <div class="shell">
+    <aside class="rail" data-shell-rail aria-label="Левое меню"></aside>
+    <div class="workspace">
+      <header class="topbar" data-shell-topbar></header>
+      <main class="main">
+        <div class="banner" role="status">
+          <span>Purchases hub · Soft UI · Stage 22.6 · demo</span>
+        </div>
+
+        <section class="panel header-panel">
+          <div>
+            <div class="title-row">
+              <h1>Закупки</h1>
+              <span class="badge">5 open</span>
+            </div>
+            <div class="meta-row">
+              <span>Период <b>август 2026</b></span>
+              <span>Валюта <b>RUB</b></span>
+            </div>
+          </div>
+          <div class="actions">
+            <button type="button" class="btn">Поставщики</button>
+            <button type="button" class="btn is-primary">Новый заказ</button>
+          </div>
+        </section>
+
+        <div class="dash-grid">
+          <div class="metric span-4"><span class="k">Заказы open</span><strong>5</strong><span class="small">1,1 млн ₽</span></div>
+          <div class="metric span-4"><span class="k">Ожидают поставки</span><strong>2</strong><span class="small">срок ≤ 3 дн</span></div>
+          <div class="metric span-4"><span class="k">Поставщики</span><strong>18</strong><span class="small">3 активных</span></div>
+        </div>
+
+        <div class="hub-grid" style="margin-bottom:4px">
+          <a class="hub-card" href="#orders"><strong>Заказы поставщикам</strong><span class="small">Список · статусы · суммы</span></a>
+          <a class="hub-card" href="#suppliers"><strong>Поставщики</strong><span class="small">Карточки · реквизиты</span></a>
+          <a class="hub-card" href="../warehouse/stock-workspace-reference-v1.html"><strong>Связь со складом</strong><span class="small">Приходы из ЗП</span></a>
+        </div>
+
+        <section class="panel" id="orders">
+          <div class="toolbar-row">
+            <h2 style="margin:0;font-size:15px">Заказы поставщикам</h2>
+            <button type="button" class="btn">Фильтр</button>
+          </div>
+          <div class="list-row">
+            <div>
+              <b>PO-S-2026-019</b> · ООО «Текстиль-Опт»
+              <div class="small">TX-12 · 200 м · сумма 186 000 ₽ · срок 07.08</div>
+            </div>
+            <span class="status-dot is-warn">ожидает</span>
+          </div>
+          <div class="list-row">
+            <div>
+              <b>PO-S-2026-017</b> · ИП Молниин
+              <div class="small">Фурнитура · 42 000 ₽ · частично получен</div>
+            </div>
+            <span class="status-dot">частично</span>
+          </div>
+          <div class="list-row">
+            <div>
+              <b>PO-S-2026-014</b> · ООО «УпакПром»
+              <div class="small">Закрыт · 15 400 ₽</div>
+            </div>
+            <span class="status-dot is-ok">закрыт</span>
+          </div>
+        </section>
+
+        <section class="panel" id="suppliers">
+          <h2 style="margin:0 0 8px;font-size:15px">Поставщики</h2>
+          <div class="list-row">
+            <div><b>ООО «Текстиль-Опт»</b><div class="small">Ткани · ИНН 7700… · отсрочка 14 дн</div></div>
+            <button type="button" class="btn">Карточка</button>
+          </div>
+          <div class="list-row">
+            <div><b>ИП Молниин</b><div class="small">Фурнитура · предоплата</div></div>
+            <button type="button" class="btn">Карточка</button>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+  <script src="../shared/shell.js"></script>
+</body>
+</html>

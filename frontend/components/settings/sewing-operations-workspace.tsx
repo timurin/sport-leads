@@ -33,10 +33,23 @@ import {
   updateSewingOperationFolder,
 } from "@/app/(workspace)/settings/catalogs/sewing_operations/sewing-operation-actions";
 import { CatalogFolderMoveModal } from "@/components/settings/catalog-folder-move-modal";
+import {
+  CatalogTreeDepthCell,
+  CatalogTreeDndProvider,
+  CatalogTreeDraggableFolder,
+  CatalogTreeDraggableItem,
+  CatalogTreeRootDropZone,
+} from "@/components/settings/catalog-folder-tree-dnd";
 import { SewingOperationCreateDrawer } from "@/components/settings/sewing-operation-create-drawer";
 import { SewingOperationEquipmentPicker } from "@/components/settings/sewing-operation-equipment-picker";
 import { SewingOperationTemplatesModal } from "@/components/settings/sewing-operation-templates-modal";
 import { IconButton } from "@/components/ui/button";
+import {
+  canNestCatalogFolder,
+  catalogFolderRowSurfaceClass,
+  catalogFolderWouldChangeParent,
+  isCatalogFolderDescendant,
+} from "@/lib/catalog-folder-dnd";
 import type { SewingOperationTemplate } from "@/lib/sewing-operation-templates";
 import {
   DataTable,
@@ -129,12 +142,117 @@ export function SewingOperationsWorkspace({
           (op) =>
             op.folder_id != null &&
             (op.folder_id === row.id ||
-              isDescendantFolder(localFolders, op.folder_id, row.id)),
+              isCatalogFolderDescendant(localFolders, op.folder_id, row.id)),
         );
       });
     }
     return visibleSewingCatalogTreeRows(treeRows, expandedIds);
   }, [expandedIds, filteredOps, localFolders, query, treeRows]);
+
+  const dndEnabled =
+    query.trim().length === 0 &&
+    editingId == null &&
+    !saving &&
+    !moveSelectMode;
+
+  const folderNodes = useMemo(
+    () =>
+      localFolders.map((folder) => ({
+        id: folder.id,
+        parent_id: folder.parent_id,
+      })),
+    [localFolders],
+  );
+
+  const onCatalogDrop = async ({
+    active,
+    over,
+  }: {
+    active: { kind: string; id?: number };
+    over: { kind: string; id?: number };
+  }) => {
+    setRowError(null);
+    if (active.kind === "folder" && typeof active.id === "number") {
+      const targetParentId =
+        over.kind === "root"
+          ? null
+          : over.kind === "folder" && typeof over.id === "number"
+            ? over.id
+            : undefined;
+      if (targetParentId === undefined) return;
+      if (!canNestCatalogFolder(folderNodes, active.id, targetParentId)) {
+        setRowError("Нельзя вложить папку в себя или в своего потомка.");
+        return;
+      }
+      if (
+        !catalogFolderWouldChangeParent(folderNodes, active.id, targetParentId)
+      ) {
+        return;
+      }
+      setSaving(true);
+      try {
+        const result = await updateSewingOperationFolder(active.id, {
+          parent_id: targetParentId,
+        });
+        if (!result.ok) {
+          setRowError(result.message);
+          return;
+        }
+        setLocalFolders((prev) =>
+          prev.map((folder) =>
+            folder.id === result.folder.id ? result.folder : folder,
+          ),
+        );
+        if (targetParentId != null) {
+          setExpandedIds((prev) => new Set(prev).add(targetParentId));
+        }
+        router.refresh();
+      } catch {
+        setRowError("Не удалось переместить папку.");
+      } finally {
+        setSaving(false);
+      }
+      return;
+    }
+
+    if (active.kind === "item" && typeof active.id === "number") {
+      const folderId =
+        over.kind === "root"
+          ? null
+          : over.kind === "folder" && typeof over.id === "number"
+            ? over.id
+            : undefined;
+      if (folderId === undefined) return;
+      const current = rows.find((row) => row.id === active.id);
+      if (current && current.folder_id === folderId) return;
+      setSaving(true);
+      try {
+        const result = await moveSewingOperationsToFolder(
+          [active.id],
+          folderId,
+        );
+        if (!result.ok) {
+          setRowError(result.message);
+          return;
+        }
+        setPatched((prev) => {
+          const next = { ...prev };
+          for (const operation of result.operations) {
+            next[operation.id] = operation;
+          }
+          return next;
+        });
+        if (folderId != null) {
+          setExpandedIds((prev) => new Set(prev).add(folderId));
+        }
+        router.refresh();
+      } catch {
+        setRowError("Не удалось переместить операцию.");
+      } finally {
+        setSaving(false);
+      }
+    }
+  };
 
   const clearFilters = () => setQuery("");
 
@@ -559,333 +677,356 @@ export function SewingOperationsWorkspace({
         </div>
       ) : null}
 
-      <DataTableFrame className="min-h-0 flex-1">
-        <DataTable>
-          <DataTableHead>
-            <DataTableRow>
-              {moveSelectMode ? (
-                <DataTableHeaderCell className="w-[2.5rem]">
-                  <Checkbox
-                    checked={allVisibleSelected}
-                    onChange={toggleSelectAllVisible}
-                    aria-label="Выбрать все видимые операции"
-                  />
-                </DataTableHeaderCell>
-              ) : null}
-              <DataTableHeaderCell>Наименование</DataTableHeaderCell>
-              <DataTableHeaderCell className="w-[7rem]">Стоимость</DataTableHeaderCell>
-              <DataTableHeaderCell className="w-[5rem]">Кол-во</DataTableHeaderCell>
-              <DataTableHeaderCell className="w-[7rem]">Сумма</DataTableHeaderCell>
-              <DataTableHeaderCell className="w-[6rem]">Время</DataTableHeaderCell>
-              <DataTableHeaderCell>Оборудование</DataTableHeaderCell>
-              <DataTableHeaderCell className="w-[12rem]" />
-            </DataTableRow>
-          </DataTableHead>
-          <DataTableBody>
-            {visibleRows.length === 0 ? (
+      <CatalogTreeDndProvider enabled={dndEnabled} onDrop={onCatalogDrop}>
+        {dndEnabled ? <CatalogTreeRootDropZone /> : null}
+        <DataTableFrame className="min-h-0 flex-1">
+          <DataTable>
+            <DataTableHead>
               <DataTableRow>
-                <DataTableCell colSpan={moveSelectMode ? 8 : 7}>
-                  <EmptyState
-                    title="Нет строк"
-                    description={
-                      rows.length === 0
-                        ? "Создайте папку или операцию."
-                        : "Измените поиск или сбросьте фильтр."
-                    }
-                  />
-                </DataTableCell>
+                {moveSelectMode ? (
+                  <DataTableHeaderCell className="w-[2.5rem]">
+                    <Checkbox
+                      checked={allVisibleSelected}
+                      onChange={toggleSelectAllVisible}
+                      aria-label="Выбрать все видимые операции"
+                    />
+                  </DataTableHeaderCell>
+                ) : null}
+                <DataTableHeaderCell>Наименование</DataTableHeaderCell>
+                <DataTableHeaderCell className="w-[7rem]">
+                  Стоимость
+                </DataTableHeaderCell>
+                <DataTableHeaderCell className="w-[5rem]">
+                  Кол-во
+                </DataTableHeaderCell>
+                <DataTableHeaderCell className="w-[7rem]">Сумма</DataTableHeaderCell>
+                <DataTableHeaderCell className="w-[6rem]">Время</DataTableHeaderCell>
+                <DataTableHeaderCell>Оборудование</DataTableHeaderCell>
+                <DataTableHeaderCell className="w-[12rem]" />
               </DataTableRow>
-            ) : (
-              visibleRows.map((row) => {
-                if (row.kind === "folder") {
-                  const expanded = expandedIds.has(row.id) || Boolean(query.trim());
-                  return (
-                    <DataTableRow key={`folder-${row.id}`} className="bg-portal-surface-2/40">
-                      {moveSelectMode ? <DataTableCell /> : null}
-                      <DataTableCell colSpan={6}>
-                        <div
-                          className="flex items-center gap-1"
-                          style={{ paddingLeft: `${row.depth * 1.25}rem` }}
-                        >
-                          <IconButton
-                            type="button"
-                            label={expanded ? "Свернуть" : "Развернуть"}
-                            onClick={() => toggleFolder(row.id)}
-                          >
-                            {expanded ? (
-                              <ChevronDown className="size-4" />
-                            ) : (
-                              <ChevronRight className="size-4" />
-                            )}
-                          </IconButton>
-                          {expanded ? (
-                            <FolderOpen className="size-4 text-portal-muted" />
-                          ) : (
-                            <Folder className="size-4 text-portal-muted" />
-                          )}
-                          <span className="font-medium">{row.name}</span>
-                        </div>
-                      </DataTableCell>
-                      <DataTableCell>
-                        <div className="flex items-center justify-end gap-0.5">
-                          <IconButton
-                            type="button"
-                            label="Создать вложенную папку"
-                            disabled={saving}
-                            onClick={() => void onCreateFolder(row.id)}
-                          >
-                            <FolderPlus className="size-3.5" />
-                          </IconButton>
-                          <IconButton
-                            type="button"
-                            label="Создать операцию в папке"
-                            onClick={() => {
-                              setCreateFolderId(row.id);
-                              setCreateOpen(true);
-                              setExpandedIds((prev) => new Set(prev).add(row.id));
-                            }}
-                          >
-                            <Plus className="size-3.5" />
-                          </IconButton>
-                          <IconButton
-                            type="button"
-                            label="Переименовать папку"
-                            disabled={saving}
-                            onClick={() => void onRenameFolder(row.folder)}
-                          >
-                            <Pencil className="size-3.5" />
-                          </IconButton>
-                          <IconButton
-                            type="button"
-                            label="Папка выше"
-                            disabled={saving}
-                            onClick={() => void onMoveFolder(row.id, "up")}
-                          >
-                            <ArrowUp className="size-3.5" />
-                          </IconButton>
-                          <IconButton
-                            type="button"
-                            label="Папка ниже"
-                            disabled={saving}
-                            onClick={() => void onMoveFolder(row.id, "down")}
-                          >
-                            <ArrowDown className="size-3.5" />
-                          </IconButton>
-                          <IconButton
-                            type="button"
-                            label="Удалить папку"
-                            disabled={saving}
-                            onClick={() => void onDeleteFolder(row.folder)}
-                          >
-                            <Trash2 className="size-3.5" />
-                          </IconButton>
-                        </div>
-                      </DataTableCell>
-                    </DataTableRow>
-                  );
-                }
-
-                const op = row.operation;
-                const editing = editingId === op.id && draft != null;
-                return (
-                  <DataTableRow key={`op-${op.id}`}>
-                    {moveSelectMode ? (
-                      <DataTableCell>
-                        <Checkbox
-                          checked={selectedIds.has(op.id)}
-                          onChange={() => toggleSelected(op.id)}
-                          aria-label={`Выбрать ${op.name}`}
-                        />
-                      </DataTableCell>
-                    ) : null}
-                    <DataTableCell>
-                      <div
-                        className="space-y-1"
-                        style={{ paddingLeft: `${row.depth * 1.25}rem` }}
+            </DataTableHead>
+            <DataTableBody>
+              {visibleRows.length === 0 ? (
+                <DataTableRow>
+                  <DataTableCell colSpan={moveSelectMode ? 8 : 7}>
+                    <EmptyState
+                      title="Нет строк"
+                      description={
+                        rows.length === 0
+                          ? "Создайте папку или операцию."
+                          : "Измените поиск или сбросьте фильтр."
+                      }
+                    />
+                  </DataTableCell>
+                </DataTableRow>
+              ) : (
+                visibleRows.map((row) => {
+                  if (row.kind === "folder") {
+                    const expanded =
+                      expandedIds.has(row.id) || Boolean(query.trim());
+                    return (
+                      <CatalogTreeDraggableFolder
+                        key={`folder-${row.id}`}
+                        folderId={row.id}
+                        label={row.name}
+                        disabled={!dndEnabled}
+                        className={catalogFolderRowSurfaceClass()}
                       >
-                        {editing ? (
-                          <Input
-                            value={draft.name}
-                            onChange={(event) =>
-                              setDraft({ ...draft, name: event.target.value })
-                            }
-                            aria-label="Наименование"
-                          />
-                        ) : (
-                          op.name
-                        )}
-                      </div>
-                    </DataTableCell>
-                    <DataTableCell>
-                      {editing ? (
-                        <Input
-                          value={draft.cost}
-                          onChange={(event) =>
-                            setDraft({ ...draft, cost: event.target.value })
-                          }
-                          aria-label="Стоимость"
-                        />
-                      ) : (
-                        formatSewingCost(op.cost)
-                      )}
-                    </DataTableCell>
-                    <DataTableCell>
-                      {editing ? (
-                        <Input
-                          value={draft.quantity_per_item}
-                          onChange={(event) =>
-                            setDraft({
-                              ...draft,
-                              quantity_per_item: event.target.value,
-                            })
-                          }
-                          aria-label="Количество"
-                        />
-                      ) : (
-                        op.quantity_per_item
-                      )}
-                    </DataTableCell>
-                    <DataTableCell>
-                      {formatSewingCost(
-                        sewingOperationLineTotal(op.cost, op.quantity_per_item),
-                      )}
-                    </DataTableCell>
-                    <DataTableCell>
-                      {editing ? (
-                        <Input
-                          value={draft.duration_seconds}
-                          onChange={(event) =>
-                            setDraft({
-                              ...draft,
-                              duration_seconds: event.target.value,
-                            })
-                          }
-                          aria-label="Время, с"
-                        />
-                      ) : (
-                        formatDurationSecondsLabel(op.duration_seconds)
-                      )}
-                    </DataTableCell>
-                    <DataTableCell>
-                      {editing ? (
-                        <SewingOperationEquipmentPicker
-                          idPrefix={`edit-sewing-wc-${op.id}`}
-                          workCenters={sewingWorkCenters}
-                          selectedIds={draft.work_center_ids}
-                          disabled={saving}
-                          onChange={(work_center_ids) =>
-                            setDraft({ ...draft, work_center_ids })
-                          }
-                          compact
-                        />
-                      ) : (
-                        formatSewingEquipmentLabels(
-                          op.work_center_ids,
-                          sewingWorkCenters,
-                        )
-                      )}
-                    </DataTableCell>
-                    <DataTableCell>
-                      <div className="flex items-center justify-end gap-0.5">
-                        {editing ? (
+                        {({ handle }) => (
                           <>
-                            <IconButton
-                              type="button"
-                              label="Сохранить"
-                              disabled={saving}
-                              onClick={() => void saveEdit()}
-                            >
-                              <Check className="size-3.5" />
-                            </IconButton>
-                            <IconButton
-                              type="button"
-                              label="Отмена"
-                              disabled={saving}
-                              onClick={cancelEdit}
-                            >
-                              <X className="size-3.5" />
-                            </IconButton>
-                          </>
-                        ) : (
-                          <>
-                            <IconButton
-                              type="button"
-                              label={`Переместить ${op.name}`}
-                              disabled={saving}
-                              onClick={() => openMoveModal([op.id])}
-                            >
-                              <FolderInput className="size-3.5" />
-                            </IconButton>
-                            <IconButton
-                              type="button"
-                              label={`Копировать ${op.name}`}
-                              disabled={saving}
-                              onClick={() => void onCopyOp(op)}
-                            >
-                              <Copy className="size-3.5" />
-                            </IconButton>
-                            <IconButton
-                              type="button"
-                              label="Выше"
-                              disabled={saving}
-                              onClick={() => void onMoveOp(op.id, "up")}
-                            >
-                              <ArrowUp className="size-3.5" />
-                            </IconButton>
-                            <IconButton
-                              type="button"
-                              label="Ниже"
-                              disabled={saving}
-                              onClick={() => void onMoveOp(op.id, "down")}
-                            >
-                              <ArrowDown className="size-3.5" />
-                            </IconButton>
-                            <IconButton
-                              type="button"
-                              label="Изменить"
-                              disabled={saving}
-                              onClick={() => startEdit(op)}
-                            >
-                              <Pencil className="size-3.5" />
-                            </IconButton>
-                            <IconButton
-                              type="button"
-                              label="Удалить"
-                              disabled={saving}
-                              onClick={() => void onDeleteOp(op)}
-                            >
-                              <Trash2 className="size-3.5" />
-                            </IconButton>
+                            {moveSelectMode ? <DataTableCell /> : null}
+                            <DataTableCell colSpan={6}>
+                              <CatalogTreeDepthCell depth={row.depth}>
+                                {handle}
+                                <IconButton
+                                  type="button"
+                                  label={expanded ? "Свернуть" : "Развернуть"}
+                                  onClick={() => toggleFolder(row.id)}
+                                >
+                                  {expanded ? (
+                                    <ChevronDown className="size-4" />
+                                  ) : (
+                                    <ChevronRight className="size-4" />
+                                  )}
+                                </IconButton>
+                                {expanded ? (
+                                  <FolderOpen className="size-4 shrink-0 text-portal-muted" />
+                                ) : (
+                                  <Folder className="size-4 shrink-0 text-portal-muted" />
+                                )}
+                                <span className="font-medium">{row.name}</span>
+                              </CatalogTreeDepthCell>
+                            </DataTableCell>
+                            <DataTableCell>
+                              <div className="flex items-center justify-end gap-0.5">
+                                <IconButton
+                                  type="button"
+                                  label="Создать вложенную папку"
+                                  disabled={saving}
+                                  onClick={() => void onCreateFolder(row.id)}
+                                >
+                                  <FolderPlus className="size-3.5" />
+                                </IconButton>
+                                <IconButton
+                                  type="button"
+                                  label="Создать операцию в папке"
+                                  onClick={() => {
+                                    setCreateFolderId(row.id);
+                                    setCreateOpen(true);
+                                    setExpandedIds((prev) =>
+                                      new Set(prev).add(row.id),
+                                    );
+                                  }}
+                                >
+                                  <Plus className="size-3.5" />
+                                </IconButton>
+                                <IconButton
+                                  type="button"
+                                  label="Переименовать папку"
+                                  disabled={saving}
+                                  onClick={() => void onRenameFolder(row.folder)}
+                                >
+                                  <Pencil className="size-3.5" />
+                                </IconButton>
+                                <IconButton
+                                  type="button"
+                                  label="Папка выше"
+                                  disabled={saving}
+                                  onClick={() => void onMoveFolder(row.id, "up")}
+                                >
+                                  <ArrowUp className="size-3.5" />
+                                </IconButton>
+                                <IconButton
+                                  type="button"
+                                  label="Папка ниже"
+                                  disabled={saving}
+                                  onClick={() =>
+                                    void onMoveFolder(row.id, "down")
+                                  }
+                                >
+                                  <ArrowDown className="size-3.5" />
+                                </IconButton>
+                                <IconButton
+                                  type="button"
+                                  label="Удалить папку"
+                                  disabled={saving}
+                                  onClick={() => void onDeleteFolder(row.folder)}
+                                >
+                                  <Trash2 className="size-3.5" />
+                                </IconButton>
+                              </div>
+                            </DataTableCell>
                           </>
                         )}
-                      </div>
-                    </DataTableCell>
-                  </DataTableRow>
-                );
-              })
-            )}
-          </DataTableBody>
-        </DataTable>
-      </DataTableFrame>
+                      </CatalogTreeDraggableFolder>
+                    );
+                  }
+
+                  const op = row.operation;
+                  const editing = editingId === op.id && draft != null;
+                  return (
+                    <CatalogTreeDraggableItem
+                      key={`op-${op.id}`}
+                      itemId={op.id}
+                      label={op.name}
+                      disabled={!dndEnabled || editing}
+                    >
+                      {({ handle }) => (
+                        <>
+                          {moveSelectMode ? (
+                            <DataTableCell>
+                              <Checkbox
+                                checked={selectedIds.has(op.id)}
+                                onChange={() => toggleSelected(op.id)}
+                                aria-label={`Выбрать ${op.name}`}
+                              />
+                            </DataTableCell>
+                          ) : null}
+                          <DataTableCell>
+                            <CatalogTreeDepthCell depth={row.depth}>
+                              {handle}
+                              <div className="min-w-0 flex-1 space-y-1">
+                                {editing ? (
+                                  <Input
+                                    value={draft.name}
+                                    onChange={(event) =>
+                                      setDraft({
+                                        ...draft,
+                                        name: event.target.value,
+                                      })
+                                    }
+                                    aria-label="Наименование"
+                                  />
+                                ) : (
+                                  <span className="text-portal-text">
+                                    {op.name}
+                                  </span>
+                                )}
+                              </div>
+                            </CatalogTreeDepthCell>
+                          </DataTableCell>
+                          <DataTableCell>
+                            {editing ? (
+                              <Input
+                                value={draft.cost}
+                                onChange={(event) =>
+                                  setDraft({
+                                    ...draft,
+                                    cost: event.target.value,
+                                  })
+                                }
+                                aria-label="Стоимость"
+                              />
+                            ) : (
+                              formatSewingCost(op.cost)
+                            )}
+                          </DataTableCell>
+                          <DataTableCell>
+                            {editing ? (
+                              <Input
+                                value={draft.quantity_per_item}
+                                onChange={(event) =>
+                                  setDraft({
+                                    ...draft,
+                                    quantity_per_item: event.target.value,
+                                  })
+                                }
+                                aria-label="Количество"
+                              />
+                            ) : (
+                              op.quantity_per_item
+                            )}
+                          </DataTableCell>
+                          <DataTableCell>
+                            {formatSewingCost(
+                              sewingOperationLineTotal(
+                                op.cost,
+                                op.quantity_per_item,
+                              ),
+                            )}
+                          </DataTableCell>
+                          <DataTableCell>
+                            {editing ? (
+                              <Input
+                                value={draft.duration_seconds}
+                                onChange={(event) =>
+                                  setDraft({
+                                    ...draft,
+                                    duration_seconds: event.target.value,
+                                  })
+                                }
+                                aria-label="Время, с"
+                              />
+                            ) : (
+                              formatDurationSecondsLabel(op.duration_seconds)
+                            )}
+                          </DataTableCell>
+                          <DataTableCell>
+                            {editing ? (
+                              <SewingOperationEquipmentPicker
+                                idPrefix={`edit-sewing-wc-${op.id}`}
+                                workCenters={sewingWorkCenters}
+                                selectedIds={draft.work_center_ids}
+                                disabled={saving}
+                                onChange={(work_center_ids) =>
+                                  setDraft({ ...draft, work_center_ids })
+                                }
+                                compact
+                              />
+                            ) : (
+                              formatSewingEquipmentLabels(
+                                op.work_center_ids,
+                                sewingWorkCenters,
+                              )
+                            )}
+                          </DataTableCell>
+                          <DataTableCell>
+                            <div className="flex items-center justify-end gap-0.5">
+                              {editing ? (
+                                <>
+                                  <IconButton
+                                    type="button"
+                                    label="Сохранить"
+                                    disabled={saving}
+                                    onClick={() => void saveEdit()}
+                                  >
+                                    <Check className="size-3.5" />
+                                  </IconButton>
+                                  <IconButton
+                                    type="button"
+                                    label="Отмена"
+                                    disabled={saving}
+                                    onClick={cancelEdit}
+                                  >
+                                    <X className="size-3.5" />
+                                  </IconButton>
+                                </>
+                              ) : (
+                                <>
+                                  <IconButton
+                                    type="button"
+                                    label={`Переместить ${op.name}`}
+                                    disabled={saving}
+                                    onClick={() => openMoveModal([op.id])}
+                                  >
+                                    <FolderInput className="size-3.5" />
+                                  </IconButton>
+                                  <IconButton
+                                    type="button"
+                                    label={`Копировать ${op.name}`}
+                                    disabled={saving}
+                                    onClick={() => void onCopyOp(op)}
+                                  >
+                                    <Copy className="size-3.5" />
+                                  </IconButton>
+                                  <IconButton
+                                    type="button"
+                                    label="Выше"
+                                    disabled={saving}
+                                    onClick={() => void onMoveOp(op.id, "up")}
+                                  >
+                                    <ArrowUp className="size-3.5" />
+                                  </IconButton>
+                                  <IconButton
+                                    type="button"
+                                    label="Ниже"
+                                    disabled={saving}
+                                    onClick={() => void onMoveOp(op.id, "down")}
+                                  >
+                                    <ArrowDown className="size-3.5" />
+                                  </IconButton>
+                                  <IconButton
+                                    type="button"
+                                    label="Изменить"
+                                    disabled={saving}
+                                    onClick={() => startEdit(op)}
+                                  >
+                                    <Pencil className="size-3.5" />
+                                  </IconButton>
+                                  <IconButton
+                                    type="button"
+                                    label="Удалить"
+                                    disabled={saving}
+                                    onClick={() => void onDeleteOp(op)}
+                                  >
+                                    <Trash2 className="size-3.5" />
+                                  </IconButton>
+                                </>
+                              )}
+                            </div>
+                          </DataTableCell>
+                        </>
+                      )}
+                    </CatalogTreeDraggableItem>
+                  );
+                })
+              )}
+            </DataTableBody>
+          </DataTable>
+        </DataTableFrame>
+      </CatalogTreeDndProvider>
 
       <ListTotals primary={`Операций: ${filteredOps.length} / ${rows.length}`} />
     </div>
   );
-}
-
-function isDescendantFolder(
-  folders: SewingOperationFolder[],
-  folderId: number,
-  ancestorId: number,
-): boolean {
-  const byId = new Map(folders.map((folder) => [folder.id, folder]));
-  let current: number | null = folderId;
-  const seen = new Set<number>();
-  while (current != null) {
-    if (current === ancestorId) return true;
-    if (seen.has(current)) return false;
-    seen.add(current);
-    current = byId.get(current)?.parent_id ?? null;
-  }
-  return false;
 }

@@ -1,26 +1,34 @@
-"""Platform user role assignment API (ADR-024 / 17.1.2.3–17.1.2.5)."""
+"""Platform user role assignment API (ADR-024 / 17.1.2.3–17.1.2.5 / 21.2.2)."""
 
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.orm import Session, selectinload
 
 from app.api.deps_auth import require_permission
 from app.database.session import get_db
 from app.models.auth import PlatformUser
 from app.models.rbac import Role
-from app.schemas.auth import PlatformUserMeRead
+from app.schemas.auth import (
+    PlatformUserInviteRequest,
+    PlatformUserInviteResponse,
+    PlatformUserMeRead,
+    PlatformUserProfileUpdateRequest,
+)
 from app.schemas.rbac import (
     PlatformUserListRead,
     RoleAssignRequest,
     RoleListRead,
     RoleRead,
 )
+from app.services import auth as auth_service
 from app.services import rbac as rbac_service
 from app.services.auth import to_me_read
 
 router = APIRouter(tags=["Platform users / RBAC"])
+
+_STATUS_FILTERS = frozenset({"all", "active", "inactive", "invited", "pending"})
 
 
 @router.get(
@@ -35,17 +43,143 @@ def list_platform_users(
     ),
     limit: int = Query(default=100, ge=1, le=500),
     offset: int = Query(default=0, ge=0),
+    q: str | None = Query(default=None, max_length=200),
+    status_filter: str = Query(
+        default="all",
+        alias="status",
+        max_length=20,
+        description="all | active | inactive | invited | pending",
+    ),
 ) -> PlatformUserListRead:
-    rows = db.scalars(
-        select(PlatformUser)
-        .options(
-            selectinload(PlatformUser.roles).selectinload(Role.permissions),
+    normalized_status = (status_filter or "all").strip().lower()
+    if normalized_status not in _STATUS_FILTERS:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="status: ожидается all|active|inactive|invited|pending",
         )
-        .order_by(PlatformUser.login.asc())
-        .offset(offset)
-        .limit(limit)
+
+    stmt = select(PlatformUser).options(
+        selectinload(PlatformUser.roles).selectinload(Role.permissions),
+    )
+
+    needle = (q or "").strip()
+    if needle:
+        like = f"%{needle}%"
+        clauses = [
+            PlatformUser.login.ilike(like),
+            PlatformUser.display_name.ilike(like),
+            PlatformUser.email.ilike(like),
+            PlatformUser.department.ilike(like),
+            PlatformUser.phone.ilike(like),
+        ]
+        if needle.isdigit():
+            clauses.append(PlatformUser.id == int(needle))
+        stmt = stmt.where(or_(*clauses))
+
+    if normalized_status == "active":
+        stmt = stmt.where(
+            PlatformUser.is_active.is_(True),
+            PlatformUser.invite_status == auth_service.INVITE_STATUS_ACTIVE,
+        )
+    elif normalized_status == "inactive":
+        stmt = stmt.where(PlatformUser.is_active.is_(False))
+    elif normalized_status == "invited":
+        stmt = stmt.where(
+            PlatformUser.invite_status == auth_service.INVITE_STATUS_INVITED
+        )
+    elif normalized_status == "pending":
+        stmt = stmt.where(
+            PlatformUser.invite_status == auth_service.INVITE_STATUS_PENDING
+        )
+
+    rows = db.scalars(
+        stmt.order_by(PlatformUser.login.asc()).offset(offset).limit(limit)
     ).all()
     return PlatformUserListRead(items=[to_me_read(user) for user in rows])
+
+
+@router.post(
+    "/platform-users/invite",
+    response_model=PlatformUserInviteResponse,
+    status_code=status.HTTP_201_CREATED,
+    operation_id="invite_platform_user",
+)
+def invite_platform_user(
+    payload: PlatformUserInviteRequest,
+    db: Session = Depends(get_db),
+    actor: PlatformUser = Depends(
+        require_permission(rbac_service.PERM_ADMIN_ROLES_ASSIGN)
+    ),
+) -> PlatformUserInviteResponse:
+    try:
+        user, temporary_password = auth_service.invite_platform_user(
+            db,
+            login=payload.login,
+            display_name=payload.display_name,
+            email=payload.email,
+            phone=payload.phone,
+            department=payload.department,
+            position=payload.position,
+            language=payload.language or "ru",
+            role_codes=payload.role_codes,
+            temporary_password=payload.temporary_password,
+            actor=actor,
+        )
+    except auth_service.AuthValidationError as error:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=str(error),
+        ) from error
+    except rbac_service.RbacValidationError as error:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=str(error),
+        ) from error
+    except rbac_service.RbacNotFoundError as error:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(error),
+        ) from error
+    return PlatformUserInviteResponse(
+        user=to_me_read(user),
+        temporary_password=temporary_password,
+    )
+
+
+@router.patch(
+    "/platform-users/{platform_user_id}",
+    response_model=PlatformUserMeRead,
+    operation_id="update_platform_user_profile",
+)
+def update_platform_user_profile(
+    platform_user_id: int,
+    payload: PlatformUserProfileUpdateRequest,
+    db: Session = Depends(get_db),
+    _: PlatformUser = Depends(
+        require_permission(rbac_service.PERM_ADMIN_ROLES_ASSIGN)
+    ),
+) -> PlatformUserMeRead:
+    fields = payload.model_dump(exclude_unset=True)
+    if not fields:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Нет полей для обновления",
+        )
+    try:
+        user = auth_service.update_platform_user_profile(
+            db,
+            platform_user_id=platform_user_id,
+            fields=fields,
+        )
+    except auth_service.AuthValidationError as error:
+        message = str(error)
+        code = (
+            status.HTTP_404_NOT_FOUND
+            if "не найден" in message.lower()
+            else status.HTTP_422_UNPROCESSABLE_ENTITY
+        )
+        raise HTTPException(status_code=code, detail=message) from error
+    return to_me_read(user)
 
 
 @router.get(

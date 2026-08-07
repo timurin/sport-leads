@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SPORT-LEAD — Design preview</title>
+  <link rel="stylesheet" href="shared/preview.css">
+</head>
+<body
+  data-shell-section="design"
+  data-top-nav="index"
+  data-base=""
+  data-page-title="Design preview · Stage 22"
+  data-create-label="Dashboard"
+  data-create-href="dashboard/home-reference-v1.html"
+>
+  <div class="shell">
+    <aside class="rail" data-shell-rail aria-label="Левое меню"></aside>
+    <div class="workspace">
+      <header class="topbar" data-shell-topbar></header>
+
+      <main class="main">
+        <div class="banner" role="status">
+          <span>Design v1.0 · Soft UI + flat · Stage 22 · HTML preview (не live API / не live DS-SHELL)</span>
+          <nav>
+            <a href="/docs/design/index.html">/docs/design/</a>
+          </nav>
+        </div>
+
+        <section class="panel">
+          <h1 style="margin:0 0 8px;font-size:26px;letter-spacing:-0.03em">Эталоны Soft UI</h1>
+          <p class="small" style="margin:0 0 16px;max-width:62ch;font-size:14px;line-height:1.55">
+            Открывать через frontend:
+            <code>http://127.0.0.1:3001/docs/design/index.html</code>
+            (не <code>file://</code>). Process:
+            <code>docs/design/design-v1-process.md</code> (<code>SL-DESIGN-V1-PROCESS-v1</code>).
+            Approved for FE: Lead + Order. Live shell frozen until <b>22.9</b> owner gate.
+          </p>
+        </section>
+
+        <section class="panel" id="sales">
+          <h2 style="margin:0 0 10px;font-size:16px">Утверждены · Sales</h2>
+          <ul class="route-list">
+            <li>
+              <a href="sales/lead-card-reference-v1.html?id=1042">
+                <span>Лид #1042 · approved · 22.1</span>
+                <span class="path">/sales/leads/1042</span>
+              </a>
+            </li>
+            <li>
+              <a href="sales/order-card-reference-v1.html?id=8801">
+                <span>Заказ SO-2026-000142 · approved · 22.2</span>
+                <span class="path">/sales/orders/8801</span>
+              </a>
+            </li>
+          </ul>
+        </section>
+
+        <section class="panel">
+          <h2 style="margin:0 0 10px;font-size:16px">Shell chrome · await owner</h2>
+          <ul class="route-list">
+            <li>
+              <a href="shared/shell-reference-v1.html">
+                <span>Левое + топ меню Soft UI · 22.9</span>
+                <span class="path">DS-SHELL preview only</span>
+              </a>
+            </li>
+          </ul>
+        </section>
+
+        <section class="panel">
+          <h2 style="margin:0 0 10px;font-size:16px">Модули · etalon draft (owner visual)</h2>
+          <ul class="route-list">
+            <li>
+              <a href="dashboard/home-reference-v1.html">
+                <span>Dashboard / Home · 22.8</span>
+                <span class="path">/dashboard</span>
+              </a>
+            </li>
+            <li>
+              <a href="production/orders-workspace-reference-v1.html">
+                <span>Production · workspace · 22.4</span>
+                <span class="path">/production/orders</span>
+              </a>
+            </li>
+            <li>
+              <a href="warehouse/stock-workspace-reference-v1.html">
+                <span>Warehouse · stock tree+list · 22.5</span>
+                <span class="path">/warehouse/stock</span>
+              </a>
+            </li>
+            <li>
+              <a href="purchases/hub-reference-v1.html">
+                <span>Purchases · hub · 22.6</span>
+                <span class="path">/purchases</span>
+              </a>
+            </li>
+            <li>
+              <a href="settings/hub-reference-v1.html">
+                <span>Settings · hub · 22.7</span>
+                <span class="path">/settings</span>
+              </a>
+            </li>
+          </ul>
+        </section>
+      </main>
+    </div>
+  </div>
+  <script src="shared/shell.js"></script>
+</body>
+</html>

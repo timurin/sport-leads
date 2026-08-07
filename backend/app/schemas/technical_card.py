@@ -417,10 +417,53 @@ class TechnicalCardRead(BaseModel):
     updated_at: datetime
 
 
-class TechnicalCardListRead(TechnicalCardRead):
-    """Production list row with order number (Stage 9.4.2)."""
+class TechnicalCardListRead(BaseModel):
+    """Slim production list row (`0.2.3.3`) — scalars + stage_results only."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    sales_order_id: int
+    sales_order_item_id: int
+    number: str
+    card_seq: int
+    status: TechnicalCardStatus
+    quantity: Decimal
+
+    nomenclature_id: int | None = None
+    nomenclature_name: str | None = None
+    nomenclature_type: str | None = None
+
+    product_model_id: int | None = None
+    product_model_article: str | None = None
+    product_model_name: str | None = None
+    product_model_size_type: str | None = None
+    product_model_cover_image_url: str | None = None
+
+    assembly_variant_id: int | None = None
+    assembly_variant_name: str | None = None
+    assembly_variant_total_cost: Decimal | None = None
+
+    specification_version_id: int | None = None
+    specification_version_label: str | None = None
+    routing_template_id: int | None = None
+    routing_template_name: str | None = None
+
+    current_stage_order: int | None = None
+    current_stage_label: str | None = None
+
+    design_mockup_url: str | None = None
+    notes: str | None = None
 
     order_number: str | None = None
+    client_name: str | None = None
+    responsible_name: str | None = None
+    desired_date: date | None = None
+
+    stage_results: list[TechnicalCardStageResultRead] = Field(default_factory=list)
+
+    created_at: datetime
+    updated_at: datetime
 
 
 class TechnicalCardGenerateRequest(BaseModel):

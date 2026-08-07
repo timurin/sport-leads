@@ -229,6 +229,25 @@ export function toApiLeadCommercialPayload(input: LeadCommercialCoreInput) {
   };
 }
 
+/**
+ * Commercial save after `20.1` need-cleanup: omit hidden SoT fields so PATCH
+ * `exclude_unset` does not clear convert-critical / retained columns.
+ */
+export function toApiLeadCommercialPayloadOmittingNeedCleanup(
+  input: LeadCommercialCoreInput,
+) {
+  const {
+    product_type: _productType,
+    kit_quantity: _kitQuantity,
+    size_comment: _sizeComment,
+    estimated_amount: _estimatedAmount,
+    desired_date: _desiredDate,
+    event_date: _eventDate,
+    ...rest
+  } = toApiLeadCommercialPayload(input);
+  return rest;
+}
+
 export function fromApiLeadCommercial(lead: ApiLeadCommercialFields): LeadCommercialCore {
   return {
     source: lead.source,

@@ -22,6 +22,8 @@
 - `[x]` `Organization` и связь `SalesOrder.organization_id`;
 - `[x]` `SalesOrder` list/detail, status workflow и history;
 - `[x]` order card UX `3.5`: compact header + view filters + field-link map; owner visual OK `3.5.9` (`2026-07-31`); tasks panel reuses source-lead `LeadTask` (API tasks via `1.2.4`); filter «Коммуникация» = surface for **Stage `19` internal collaboration** — **Stage 19 closed** `2026-08-04` (owner sign-off `19.5.3`; message send verified); ≠ CRM `1.2.4`, ≠ external connectors;
+- `[x]` **v1.00 Stage `20` closed** (`2026-08-05` owner visual `20.4.5`): lead need-cleanup `20.1`; lead card layout `20.2`; unified internal messaging ADR-027 / lead XOR collaboration thread `20.3`; order card parity (hide reserve/design, client-need sync, metrics MetricCard grid, shared collaboration shell) `20.4`;
+- `[ ]` **v1.00 Stage `23` Unified Work Tasks** — ADR-028 / `23.0.1` closed `2026-08-06`; `WorkTask` replaces `LeadTask` + `CollaborationMicrotask` (migrate later `23.6`); live `/sales/tasks` still demo until `23.3`; next `23.1` DB + storage;
 - `[x]` `SalesOrderItem` CRUD, snapshot-наименование, размеры (`size_range`), персонализация (`personalization`), цвет (`color`), процентная скидка строки (`discount_percent`), вычисляемая сумма скидки (`discount_amount`) и пересчёт `line_amount` через `Decimal/Numeric`; **скидка заказа** `3.3.1` shipped (`SalesOrder.discount_percent` / `discount_amount` / `items_subtotal`; UI на карточке); **НДС** `3.3.2` shipped (`price_includes_vat` per line, line/order `vat_amount`, API `amount_net` / `line_total`; UI toolbar `BadgePercent` apply-all; transfer rule для price-доков; Alembic `e2f3a4b5c678`); полный pytest, frontend tests, TypeScript, lint, production build, project check 9/9 и Alembic проходят;
 - `[!]` прежняя связь `SalesOrderItem → Material` была архитектурной ошибкой и удалена отдельным patch; `Material` не является номенклатурой заказа.
 
@@ -94,8 +96,13 @@
 
 ## Платформа и доступ
 
+- `[x]` **List-page data rules (`v1.00` `0.2.1`–`0.2.8`)** — `SL-LIST-PAGE-RULES-v1`; embed/batch for product-models cost, characteristic `option_count`, warehouse `list-extras`, slim tech-cards list; PO `batch-fact-rollups` (`0.2.6`); stock `nomenclature_name` (`0.2.7`); nomenclature card `options-batch` (`0.2.8`); evidence `test_list_performance_0_2.py`, `test_technical_cards_9_4_2.py`, `test_production_fact_rollup_11_2_1_2.py`, `test_stock_documents_12_2_2.py`;
+- `[x]` **LAN local-stack access (`v1.00` `0.3.1`–`0.3.3`)** — `scripts/dev-servers.ps1 -Lan` binds `0.0.0.0:3001`/`8000`; `.env.example` + AGENTS CORS/`NEXT_PUBLIC_*` notes; owner smoke OK `2026-08-05` (`192.168.2.98:3001`); ≠ public internet / production Caddy;
+- `[x]` **Create SalesOrder without Lead (`v1.00` `0.4.1`–`0.4.3`)** — nullable `lead_id`; `POST /orders` (number auto|freeform unique); FE create drawer; convert intact; org optional + client checkbox «Создать организацию?»; owner visual OK `2026-08-05`; evidence `test_order_without_lead_0_4.py`, `SL-ORDER-WITHOUT-LEAD-v1`;
 - `[x]` **Authentication (`17.1.1`)** — ADR-023 + API + `/login` workspace gate; owner visual OK `2026-08-01`; evidence `test_auth_17_1_1_2.py`, `session.test.mjs`;
-- `[x]` System users / roles / permissions (`17.1.2`) — ADR-024 + RBAC + size-grid/kanban/admin gates + stage executors; owner visuals OK `2026-08-01`;
+- `[x]` System users / roles / permissions (`17.1.2`) — ADR-024 + RBAC + size-grid/kanban/admin gates + stage executors; owner visuals OK `2026-08-01`; **Users cabinet list/profile/access** → Stage `21`;
+- `[x]` **Settings / Users cabinet (`v1.00` Stage `21` closed)** — nav «Пользователи» `/settings/users` (≠ org «Сотрудники» `2.4.2`); invite + list/filter + profile PATCH + access matrix; Alembic `m6n7o8p9q012`; owner visual OK `21.5.1` (`2026-08-05`); `SL-USERS-CABINET-v1`; extends `17.1.2` without new permission codes;
+- `[ ]` **Design v1.0 (`v1.00` Stage `22`)** — Soft UI HTML etalons → platform; process `SL-DESIGN-V1-PROCESS-v1`; approved Lead + Sales order (`22.1`/`22.2`); draft etalons Production/Warehouse/Purchases/Settings/Dashboard (`22.4`–`22.8`) + shell chrome (`22.9`); Sales boards TBD `22.3`; do not re-open Stage `20` data contracts; live `DS-SHELL` only after `22.9` owner gate;
 - `[x]` Universal audit trail (`17.1.3`) — ADR-025 + `audit_events` + size-grid UI journal; owner visual OK `2026-08-01`;
 - `[x]` Production ops (`17.2`) — `17.2.1`–`17.2.3` shipped (Compose/Caddy, deploy/health/logs, backup/DR runbooks); live VPS/secrets = owner apply.
 

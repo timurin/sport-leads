@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { NomenclatureCard } from "@/components/settings/nomenclature-card";
 import {
   getCharacteristicDefinitions,
-  getCharacteristicOptions,
+  getCharacteristicOptionsBatch,
   getCharacteristicUsedValues,
   getNomenclatureAvailableModels,
   getNomenclatureCategories,
@@ -48,13 +48,8 @@ export default async function NomenclatureCardPage({
     const kind = field.kind;
     return kind === "LIST" || kind === "MULTI_SELECT" || kind === "COLOR";
   });
-  const fieldOptions = Object.fromEntries(
-    await Promise.all(
-      selectDefinitions.map(
-        async (field) =>
-          [field.id, await getCharacteristicOptions(field.id)] as const,
-      ),
-    ),
+  const fieldOptions = await getCharacteristicOptionsBatch(
+    selectDefinitions.map((field) => field.id),
   );
   const usedValuesById = Object.fromEntries(
     await Promise.all(

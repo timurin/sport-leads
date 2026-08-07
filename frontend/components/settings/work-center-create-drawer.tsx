@@ -1,6 +1,6 @@
 "use client";
 
-import { type FormEvent, useState } from "react";
+import { type FormEvent, useEffect, useState } from "react";
 
 import {
   createWorkCenter,
@@ -17,29 +17,43 @@ import {
   type WorkCenterDraft,
 } from "@/lib/shop-routings";
 
-const emptyDraft: WorkCenterDraft = {
-  name: "",
-  code: "",
-  production_stage_id: null,
-  is_active: true,
-};
+function emptyDraft(
+  productionStageId: number | null = null,
+): WorkCenterDraft {
+  return {
+    name: "",
+    code: "",
+    production_stage_id: productionStageId,
+    is_active: true,
+  };
+}
 
 /** CreateDrawer host for work centers (PT-02 catalog / 11.1.2.3). */
 export function WorkCenterCreateDrawer({
   open,
   productionStages,
+  defaultProductionStageId = null,
   onClose,
   onCreated,
 }: {
   open: boolean;
   productionStages: ProductionStage[];
+  defaultProductionStageId?: number | null;
   onClose: () => void;
   onCreated?: (workCenter: WorkCenter) => void;
 }) {
   const { push: pushToast } = useToast();
-  const [draft, setDraft] = useState<WorkCenterDraft>(emptyDraft);
+  const [draft, setDraft] = useState<WorkCenterDraft>(() =>
+    emptyDraft(defaultProductionStageId),
+  );
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (!open) return;
+    setDraft(emptyDraft(defaultProductionStageId));
+    setError("");
+  }, [open, defaultProductionStageId]);
 
   const update = <K extends keyof WorkCenterDraft>(
     field: K,
@@ -51,7 +65,7 @@ export function WorkCenterCreateDrawer({
 
   const close = () => {
     if (saving) return;
-    setDraft(emptyDraft);
+    setDraft(emptyDraft());
     setError("");
     onClose();
   };
@@ -72,7 +86,7 @@ export function WorkCenterCreateDrawer({
       }
       pushToast("Оборудование создано", "success");
       onCreated?.(result.workCenter);
-      setDraft(emptyDraft);
+      setDraft(emptyDraft());
       setError("");
       onClose();
     } catch {

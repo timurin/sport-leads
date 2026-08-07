@@ -7,6 +7,7 @@
   powershell -File scripts/dev-servers.ps1 -Action status
   powershell -File scripts/dev-servers.ps1 -Action stop
   powershell -File scripts/dev-servers.ps1 -Action start
+  powershell -File scripts/dev-servers.ps1 -Action start -Lan
 #>
 param(
   [ValidateSet("status", "stop", "start-backend", "start-frontend", "start")]
@@ -14,13 +15,35 @@ param(
 
   [int]$BackendPort = 8000,
   [int]$FrontendPort = 3001,
-  [int]$ReadyTimeoutSec = 45
+  [int]$ReadyTimeoutSec = 45,
+
+  # Bind FE+BE on 0.0.0.0 for trusted LAN access (v1.00 0.3). Default remains loopback-only.
+  [switch]$Lan
 )
 
 $ErrorActionPreference = "Stop"
 $RepoRoot = Resolve-Path (Join-Path $PSScriptRoot "..")
 $BackendDir = Join-Path $RepoRoot "backend"
 $FrontendDir = Join-Path $RepoRoot "frontend"
+$BindHost = if ($Lan) { "0.0.0.0" } else { "127.0.0.1" }
+
+function Get-LanIPv4Addresses {
+  $addresses = @()
+  try {
+    $addresses = @(
+      Get-NetIPAddress -AddressFamily IPv4 -ErrorAction SilentlyContinue |
+        Where-Object {
+          $_.IPAddress -notlike "127.*" -and
+          $_.PrefixOrigin -ne "WellKnown" -and
+          $_.IPAddress -notlike "169.254.*"
+        } |
+        Select-Object -ExpandProperty IPAddress -Unique
+    )
+  } catch {
+    $addresses = @()
+  }
+  return $addresses
+}
 
 function Get-ListenersOnPort {
   param([int]$Port)
@@ -180,20 +203,25 @@ function Start-Backend {
   $errLog = Join-Path $logDir "uvicorn.err.log"
 
   $proc = Start-Process -FilePath "python" `
-    -ArgumentList @("-m", "uvicorn", "app.main:app", "--reload", "--host", "127.0.0.1", "--port", "$BackendPort") `
+    -ArgumentList @("-m", "uvicorn", "app.main:app", "--reload", "--host", $BindHost, "--port", "$BackendPort") `
     -WorkingDirectory $BackendDir `
     -WindowStyle Hidden `
     -RedirectStandardOutput $outLog `
     -RedirectStandardError $errLog `
     -PassThru
 
-  Write-Host ("Started backend PID={0} (logs: {1})" -f $proc.Id, $logDir)
+  Write-Host ("Started backend PID={0} host={1} (logs: {2})" -f $proc.Id, $BindHost, $logDir)
   $ok = (Wait-HttpReady -Url "http://127.0.0.1:$BackendPort/docs" -TimeoutSec $ReadyTimeoutSec) -or `
         (Wait-HttpReady -Url "http://127.0.0.1:$BackendPort/health" -TimeoutSec 5)
   if (-not $ok) {
     throw "Backend did not become ready within ${ReadyTimeoutSec}s. See $errLog"
   }
-  Write-Host "Backend ready: http://127.0.0.1:$BackendPort"
+  Write-Host ("Backend ready: http://127.0.0.1:{0} (bind {1})" -f $BackendPort, $BindHost)
+  if ($Lan) {
+    foreach ($ip in @(Get-LanIPv4Addresses)) {
+      Write-Host ("  LAN backend: http://{0}:{1}" -f $ip, $BackendPort)
+    }
+  }
 }
 
 function Start-Frontend {
@@ -212,19 +240,28 @@ function Start-Frontend {
   $errLog = Join-Path $logDir "next.err.log"
 
   $proc = Start-Process -FilePath "cmd.exe" `
-    -ArgumentList @("/c", "npm", "run", "dev", "--", "-H", "127.0.0.1", "-p", "$FrontendPort") `
+    -ArgumentList @("/c", "npm", "run", "dev", "--", "-H", $BindHost, "-p", "$FrontendPort") `
     -WorkingDirectory $FrontendDir `
     -WindowStyle Hidden `
     -RedirectStandardOutput $outLog `
     -RedirectStandardError $errLog `
     -PassThru
 
-  Write-Host ("Started frontend PID={0} (logs: {1})" -f $proc.Id, $logDir)
+  Write-Host ("Started frontend PID={0} host={1} (logs: {2})" -f $proc.Id, $BindHost, $logDir)
   $ok = Wait-HttpReady -Url "http://127.0.0.1:$FrontendPort/" -TimeoutSec $ReadyTimeoutSec
   if (-not $ok) {
     throw "Frontend did not become ready within ${ReadyTimeoutSec}s. See $errLog"
   }
-  Write-Host "Frontend ready: http://127.0.0.1:$FrontendPort"
+  Write-Host ("Frontend ready: http://127.0.0.1:{0} (bind {1})" -f $FrontendPort, $BindHost)
+  if ($Lan) {
+    foreach ($ip in @(Get-LanIPv4Addresses)) {
+      Write-Host ("  LAN frontend: http://{0}:{1}" -f $ip, $FrontendPort)
+      Write-Host ("  Hint: set SPORT_LEADS_CORS_ORIGINS to include http://{0}:{1}" -f $ip, $FrontendPort)
+      Write-Host ("  Hint: for browser client fetches set NEXT_PUBLIC_SPORT_LEADS_API_URL=http://{0}:{1}" -f $ip, $BackendPort)
+    }
+    Write-Host ("  Windows firewall: allow inbound TCP {0} and {1} on private profiles if blocked." -f $FrontendPort, $BackendPort)
+    Write-Host "  Threat: LAN bind is trusted-network only - not public internet / production Caddy."
+  }
 }
 
 switch ($Action) {

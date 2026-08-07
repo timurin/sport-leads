@@ -90,6 +90,7 @@ from app.services.technical_cards import (
     tech_card_media_content_url,
     technical_card_media_path,
     to_technical_card_read,
+    to_technical_card_list_read,
     update_operation_line_volume,
     update_unit_line,
 )
@@ -255,13 +256,10 @@ def read_technical_cards(
         limit=limit,
         offset=offset,
     )
-    result: list[TechnicalCardListRead] = []
-    for card, order_number in rows:
-        read_card = _card_read(db, card)
-        data = read_card.model_dump()
-        data["order_number"] = order_number
-        result.append(TechnicalCardListRead.model_validate(data))
-    return result
+    return [
+        to_technical_card_list_read(card, order_number=order_number)
+        for card, order_number in rows
+    ]
 
 
 @router.get(

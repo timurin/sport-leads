@@ -16,6 +16,7 @@ from app.schemas.production_order import (
 from app.services.production_fact_rollup import (
     get_production_batch_fact_rollup,
     get_production_order_fact_rollup,
+    list_production_order_batch_fact_rollups,
 )
 from app.services.production_orders import (
     ProductionBatchNotFoundError,
@@ -115,6 +116,22 @@ def read_production_order_fact_rollup(
 ) -> ProductionFactRollupRead:
     try:
         return get_production_order_fact_rollup(db, order_id)
+    except ProductionOrderNotFoundError as error:
+        raise _http_error(error) from error
+
+
+@router.get(
+    "/{order_id}/batch-fact-rollups",
+    response_model=list[ProductionFactRollupRead],
+    operation_id="list_production_order_batch_fact_rollups",
+)
+def read_production_order_batch_fact_rollups(
+    order_id: int,
+    db: Session = Depends(get_db),
+) -> list[ProductionFactRollupRead]:
+    """All per-batch fact rollups in one response (avoids N× `/production-batches/{id}/fact-rollup`)."""
+    try:
+        return list_production_order_batch_fact_rollups(db, order_id)
     except ProductionOrderNotFoundError as error:
         raise _http_error(error) from error
 

@@ -11,6 +11,7 @@ from app.schemas.characteristics import (
     CharacteristicDefinitionUpdate,
     CharacteristicOptionCreate,
     CharacteristicOptionRead,
+    CharacteristicOptionsBatchRead,
     CharacteristicOptionUpdate,
     NomenclatureCharacteristicAssignmentInput,
     NomenclatureCharacteristicCreate,
@@ -43,8 +44,10 @@ from app.services.characteristics import (
     list_definitions,
     list_nomenclature_characteristics,
     list_options,
+    list_options_by_definition_ids,
     list_used_value_labels,
     list_variants,
+    option_counts_by_definition_ids,
     remove_category_characteristic,
     remove_nomenclature_value,
     save_nomenclature_values,
@@ -60,6 +63,23 @@ from app.services.characteristics import (
 router = APIRouter(prefix="/characteristics", tags=["Characteristics"])
 
 
+def _definition_read(
+    db: Session, item, *, option_count: int | None = None
+) -> CharacteristicDefinitionRead:
+    count = (
+        option_count
+        if option_count is not None
+        else option_counts_by_definition_ids(db, [item.id]).get(item.id, 0)
+    )
+    return CharacteristicDefinitionRead.model_validate(
+        {
+            **{c.name: getattr(item, c.name) for c in item.__table__.columns},
+            "can_delete": can_delete_definition(db, item.id),
+            "option_count": count,
+        }
+    )
+
+
 def _error(error: CharacteristicError) -> HTTPException:
     if isinstance(error, CharacteristicNotFoundError) or str(error).endswith("not found") or str(error) == "Category not found":
         return HTTPException(status_code=404, detail=str(error))
@@ -68,15 +88,6 @@ def _error(error: CharacteristicError) -> HTTPException:
     if isinstance(error, CharacteristicRuleError) or "required" in str(error) or "available only" in str(error) or "не соответствует" in str(error):
         return HTTPException(status_code=422, detail=str(error))
     return HTTPException(status_code=422, detail=str(error))
-
-
-def _definition_read(db: Session, item) -> CharacteristicDefinitionRead:
-    return CharacteristicDefinitionRead.model_validate(
-        {
-            **{c.name: getattr(item, c.name) for c in item.__table__.columns},
-            "can_delete": can_delete_definition(db, item.id),
-        }
-    )
 
 
 def _option_read(db: Session, item) -> CharacteristicOptionRead:
@@ -113,7 +124,34 @@ def get_definitions(
     is_active: bool | None = None,
     db: Session = Depends(get_db),
 ):
-    return [_definition_read(db, item) for item in list_definitions(db, search=search, kind=kind, is_active=is_active)]
+    rows = list_definitions(db, search=search, kind=kind, is_active=is_active)
+    counts = option_counts_by_definition_ids(db, [row.id for row in rows])
+    return [
+        _definition_read(db, item, option_count=counts.get(item.id, 0)) for item in rows
+    ]
+
+
+@router.get(
+    "/options-batch",
+    response_model=CharacteristicOptionsBatchRead,
+    operation_id="get_characteristic_options_batch",
+)
+def get_options_batch(
+    characteristic_id: list[int] | None = Query(
+        default=None,
+        description="Characteristic definition ids (LIST/MULTI_SELECT/COLOR)",
+    ),
+    db: Session = Depends(get_db),
+) -> CharacteristicOptionsBatchRead:
+    """One response for many definition option lists — kills FE N× options (`0.2.8`)."""
+    ids = list(dict.fromkeys(characteristic_id or []))
+    grouped = list_options_by_definition_ids(db, ids)
+    return CharacteristicOptionsBatchRead(
+        options={
+            str(definition_id): [_option_read(db, row) for row in rows]
+            for definition_id, rows in grouped.items()
+        }
+    )
 
 
 @router.post("/definitions", response_model=CharacteristicDefinitionRead, status_code=201)

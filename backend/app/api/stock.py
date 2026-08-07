@@ -20,6 +20,8 @@ from app.services.stock_documents import (
     get_stock_document,
     list_stock_documents,
     post_stock_document,
+    serialize_stock_document,
+    serialize_stock_documents,
 )
 
 router = APIRouter(prefix="/stock", tags=["Stock"])
@@ -76,7 +78,7 @@ def read_stock_documents(
 ) -> list[StockDocumentRead]:
     """Stock document journal for `/warehouse/movements` (`12.3.3`)."""
     try:
-        return list_stock_documents(
+        rows = list_stock_documents(
             db,
             doc_type=doc_type,
             status=status_filter,
@@ -86,6 +88,7 @@ def read_stock_documents(
             limit=limit,
             offset=offset,
         )
+        return serialize_stock_documents(db, rows)
     except StockDocumentValidationError as error:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(error)
@@ -103,7 +106,7 @@ def create_stock_document_endpoint(
     db: Session = Depends(get_db),
 ) -> StockDocumentRead:
     try:
-        return create_stock_document(db, payload)
+        return serialize_stock_document(db, create_stock_document(db, payload))
     except StockDocumentConflictError as error:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT, detail=str(error)
@@ -124,7 +127,7 @@ def read_stock_document(
     db: Session = Depends(get_db),
 ) -> StockDocumentRead:
     try:
-        return get_stock_document(db, document_id)
+        return serialize_stock_document(db, get_stock_document(db, document_id))
     except StockDocumentNotFoundError as error:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail=str(error)
@@ -141,7 +144,7 @@ def post_stock_document_endpoint(
     db: Session = Depends(get_db),
 ) -> StockDocumentRead:
     try:
-        return post_stock_document(db, document_id)
+        return serialize_stock_document(db, post_stock_document(db, document_id))
     except StockDocumentNotFoundError as error:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail=str(error)

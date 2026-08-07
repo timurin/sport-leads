@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SPORT-LEAD — Soft UI Shell</title>
+  <link rel="stylesheet" href="preview.css">
+</head>
+<body
+  data-shell-section="design"
+  data-top-nav="shell"
+  data-base="../"
+  data-page-title="Shell Soft UI v2"
+  data-create-label="Создать"
+  data-create-href="../index.html"
+>
+  <div class="shell">
+    <aside class="rail" data-shell-rail aria-label="Левое меню"></aside>
+    <div class="workspace">
+      <header class="topbar" data-shell-topbar></header>
+      <main class="main">
+        <div class="banner" role="status">
+          <span>Эталон chrome: левое меню + топ-меню · Soft UI · не live DS-SHELL</span>
+        </div>
+
+        <section class="panel">
+          <h1 style="margin:0 0 8px;font-size:24px;letter-spacing:-0.03em">Platform shell Soft UI</h1>
+          <p class="small" style="margin:0 0 14px;max-width:62ch;font-size:14px;line-height:1.55">
+            Preview-only redesign of left rail (labeled sections) and top bar (search, section tabs, create, avatar).
+            Live <code>DS-SHELL-01</code> / <code>DS-SHELL-02</code> stay frozen until owner approves this etalon and Stage <b>22.9</b> FE migration.
+          </p>
+          <div class="metrics" style="margin:0">
+            <div class="metric"><span class="k">Rail</span><strong>220px · labels + icons</strong></div>
+            <div class="metric"><span class="k">Top</span><strong>Search · section pills · CTA</strong></div>
+            <div class="metric"><span class="k">Source</span><strong>navigation.ts sections</strong></div>
+            <div class="metric"><span class="k">Gate</span><strong>Owner visual → FE</strong></div>
+          </div>
+        </section>
+
+        <div class="dash-grid">
+          <section class="panel span-6">
+            <h2 style="margin:0 0 8px;font-size:15px">Left menu</h2>
+            <ul class="small" style="margin:0;padding-left:18px;line-height:1.6">
+              <li>Labeled rows: Главная, Продажи, Производство, Склад, Закупки, Настройки</li>
+              <li>Active = soft primary fill (not only icon circle)</li>
+              <li>Brand block in rail; Design index in foot</li>
+              <li>Mobile: rail hidden (top-nav carries section)</li>
+            </ul>
+          </section>
+          <section class="panel span-6">
+            <h2 style="margin:0 0 8px;font-size:15px">Top menu</h2>
+            <ul class="small" style="margin:0;padding-left:18px;line-height:1.6">
+              <li>Search field (disabled in preview)</li>
+              <li>Section tabs from <code>topNavigation</code> of active section</li>
+              <li>Primary create CTA + notifications + avatar chip</li>
+              <li>Page title as meta text (not competing with brand)</li>
+            </ul>
+          </section>
+        </div>
+      </main>
+    </div>
+  </div>
+  <script src="shell.js"></script>
+</body>
+</html>

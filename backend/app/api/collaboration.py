@@ -75,6 +75,79 @@ def create_order_collaboration_message(
 
 
 @router.get(
+    "/leads/{lead_id}/collaboration/messages",
+    response_model=list[CollaborationMessageRead],
+    operation_id="list_lead_collaboration_messages",
+)
+def list_lead_collaboration_messages(
+    lead_id: int,
+    db: Session = Depends(get_db),
+    _user: PlatformUser = Depends(get_current_platform_user),
+) -> list[CollaborationMessageRead]:
+    try:
+        return collab_svc.list_lead_messages(db, lead_id)
+    except (collab_svc.CollaborationNotFoundError, collab_svc.CollaborationValidationError) as error:
+        raise _map_error(error) from error
+
+
+@router.post(
+    "/leads/{lead_id}/collaboration/messages",
+    response_model=CollaborationMessageRead,
+    status_code=status.HTTP_201_CREATED,
+    operation_id="create_lead_collaboration_message",
+)
+def create_lead_collaboration_message(
+    lead_id: int,
+    payload: CollaborationMessageCreate,
+    db: Session = Depends(get_db),
+    user: PlatformUser = Depends(get_current_platform_user),
+) -> CollaborationMessageRead:
+    try:
+        return collab_svc.create_lead_message(db, lead_id, user, payload)
+    except (collab_svc.CollaborationNotFoundError, collab_svc.CollaborationValidationError) as error:
+        raise _map_error(error) from error
+
+
+@router.get(
+    "/leads/{lead_id}/collaboration/microtasks",
+    response_model=list[CollaborationMicrotaskRead],
+    operation_id="list_lead_collaboration_microtasks",
+)
+def list_lead_collaboration_microtasks(
+    lead_id: int,
+    assignee_platform_user_id: int | None = Query(default=None, ge=1),
+    db: Session = Depends(get_db),
+    _user: PlatformUser = Depends(get_current_platform_user),
+) -> list[CollaborationMicrotaskRead]:
+    try:
+        return collab_svc.list_lead_microtasks(
+            db,
+            lead_id,
+            assignee_platform_user_id=assignee_platform_user_id,
+        )
+    except collab_svc.CollaborationNotFoundError as error:
+        raise _map_error(error) from error
+
+
+@router.post(
+    "/leads/{lead_id}/collaboration/microtasks",
+    response_model=CollaborationMicrotaskRead,
+    status_code=status.HTTP_201_CREATED,
+    operation_id="create_lead_collaboration_microtask",
+)
+def create_lead_collaboration_microtask(
+    lead_id: int,
+    payload: CollaborationMicrotaskCreate,
+    db: Session = Depends(get_db),
+    user: PlatformUser = Depends(get_current_platform_user),
+) -> CollaborationMicrotaskRead:
+    try:
+        return collab_svc.create_lead_microtask(db, lead_id, user, payload)
+    except (collab_svc.CollaborationNotFoundError, collab_svc.CollaborationValidationError) as error:
+        raise _map_error(error) from error
+
+
+@router.get(
     "/orders/{order_id}/collaboration/microtasks",
     response_model=list[CollaborationMicrotaskRead],
     operation_id="list_order_collaboration_microtasks",

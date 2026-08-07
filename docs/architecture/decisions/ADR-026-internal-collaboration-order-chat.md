@@ -1,10 +1,11 @@
 # ADR-026 — Internal collaboration (order / technical-card chat)
 
-**Status:** принято (`2026-08-03`)  
+**Status:** принято (`2026-08-03`); **amended** `2026-08-05` by ADR-027 (lead XOR anchor / Stage `20.3`)  
 **Date:** `2026-08-03`  
 **Roadmap:** Stage `19.0.1` (contract); feeds `19.0.2`–`19.5`  
 **Depends on:** ADR-023 (session `platform_user_id` author), ADR-024 (authenticated staff), ADR-016 (optional `technical_card_id` context), ADR-001 / order card surface `3.5.7`  
-**Evidence:** `docs/roadmap/roadmap.md` Stage 19; task `docs/tasks/v0.9.0-stage-19.0.1-internal-collaboration-adr.md`
+**Evidence:** `docs/roadmap/roadmap.md` Stage 19; task `docs/tasks/v0.9.0-stage-19.0.1-internal-collaboration-adr.md`  
+**Later:** lead host + XOR `lead_id` — **ADR-027** / `docs/tasks/v1.00-stage-20.3-unified-messaging.md` (does not reopen Stage 19 sign-off)
 
 ## Контекст
 
@@ -80,3 +81,4 @@
 - ADR-016 technical card domain
 - ADR-023 authentication session
 - ADR-022 design version assets/comments (boundary only)
+- **ADR-027** — lead XOR anchor + shared UI shell (`20.3`)

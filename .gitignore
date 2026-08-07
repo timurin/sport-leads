@@ -112,3 +112,12 @@ Desktop.ini
 # ==========================================
 
 .DS_Store
+
+# ==========================================
+# Local agent / swarm tooling (not product source)
+# ==========================================
+
+.claude/
+.claude-flow/
+.swarm/
+scripts/_encoding_report.txt

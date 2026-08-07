@@ -1,12 +1,13 @@
 # Sport-Lead — Global Roadmap
 
 **Code:** `SL-ROADMAP-v1`
-**Updated:** `2026-08-04` (Stage 19 closed — owner sign-off `19.5.3`; prior: `0.4` → `v1.00` Stage 0; carry → `v1.00`: 1.4.3, Stage 2 group, 7, 12.4–12.5, 13, 14, 15, 16, 18.4)
+**Updated:** `2026-08-06` (v1.00 Stage 23 Unified Work Tasks pointer; prior `0.4` / Stage 21–22 carry)  
 **Project version:** `v0.9.0`
 **Git branch:** `feature/v0.8.1-nomenclature-core`
 
 **Canonical files:**
 - roadmap: `docs/roadmap/roadmap.md`
+- v1.00 roadmap (active early): `docs/roadmap/roadmap-v1.00.md` (+ HTML twin) — includes Stage **23** Work Tasks
 - structure: `docs/architecture/project-structure.md`
 - ERP-check: `docs/architecture/erp-check.md`
 
@@ -174,12 +175,13 @@ Dedupe notes (Sales Orders):
   - [x] 2.2.2.4 — Regression + docs sync — `v0.9.0`
   - [x] 2.2.2.5 — Owner visual verification — owner OK `2026-08-01`
 - [ ] 2.2.3 — Client lead and order history — **moved → v1.00** (microtasks `2.2.3.1`–`2.2.3.5` in `docs/roadmap/roadmap-v1.00.md`)
+- [ ] 2.2.4 — Client folders on `/sales/clients` — **planned in v1.00** (`2.2.4.1`–`2.2.4.4`)
 
 ### 2.3 — Business data and quality
 
 > **Moved to `v1.00`** (`2026-08-01`): entire `2.3` block carried with Stage 2 group (`2.2.3` + `2.3` + `2.4`) to `docs/roadmap/roadmap-v1.00.md` (+ HTML twin). Do not execute under `v0.9.0`.
 
-- [ ] 2.3.1 — Legal details and banking data — **moved → v1.00** (`2.3.1.1`–`2.3.1.4`)
+- [ ] 2.3.1 — Legal details and banking data — **moved → v1.00** (`2.3.1.1`–`2.3.1.4`; INN / bank accounts / legal+actual address on card)
 - [ ] 2.3.2 — Segmentation and duplicate detection — **moved → v1.00** (`2.3.2.1`–`2.3.2.4`)
 - [ ] 2.3.3 — Settlements and financial client state — **moved → v1.00** (`2.3.3.1`–`2.3.3.4`)
 
@@ -351,7 +353,7 @@ Completion criteria:
 Goal:
 Compact header (stage rail above; no meta strip; no header «Написать»/«Статус»); merged requisites + source lead; metrics on the right; full-width history; comments left + order tasks beside; view filters Все / Сведения / Товары / Коммуникация; wire existing platform FKs; create new catalog/model only if a gap remains.
 
-> Boundary (`2026-07-28`): filter «Коммуникация» and current comments/tasks panels stay UX chrome from `3.5`. **Persistent internal colleague chat** on the order (and linked technical cards), `@mention`, and chat-spawned microtasks are owned by Stage **`19`** — do not re-open closed `3.5.*` for that domain.
+> Boundary (`2026-07-28`): filter «Коммуникация» and current comments/tasks panels stay UX chrome from `3.5`. **Persistent internal colleague chat** on the order (and linked technical cards), `@mention`, and chat-spawned microtasks are owned by Stage **`19`** — do not re-open closed `3.5.*` for that domain. Further lead/order card UX parity and messaging unify → **Stage `20`** in `docs/roadmap/roadmap-v1.00.md` (`2026-08-05`).
 
 Dependencies:
 - 3.1.3
@@ -2691,7 +2693,7 @@ Microtasks:
 
 ### 16.2 — Enterprise exchange
 
-- [ ] 16.2.1 — 1C:UNF exchange — contour **D** (ADR-020); neighbor to universal job shell, not catalog Excel buttons — **moved → v1.00**
+- [ ] 16.2.1 — 1C:UNF exchange — contour **D** (ADR-020); neighbor to universal job shell, not catalog Excel buttons — **moved → v1.00** (MVP first: SalesOrder Excel from UNF; depends `0.4`; column map after sample)
 - [ ] 16.2.2 — Delivery and payment-system integrations — **moved → v1.00**
 - [ ] 16.2.3 — External API for third-party systems — **moved → v1.00**
 
@@ -2729,7 +2731,7 @@ Microtasks:
 - [x] 17.1.2.2 — Persist users, roles, and role↔permission links — `v0.9.0`; Alembic `t7u8v9w0x123`; models `Role`/`Permission`; seed admin/catalog_editor/shop_operator
 - [x] 17.1.2.3 — Enforce permission checks in API (deny-by-default for protected writes) — `v0.9.0`; `require_permission`; `/roles` + assign/revoke; `/auth/me` roles+permissions; `test_rbac_17_1_2.py`
 - [x] 17.1.2.4 — Size-grid mutation (create/update/delete grids and rows): role-gated API + UI — supersedes cancelled Stage `6.2.3` write / `6.2.6` edit; catalog stays readable without this permission — `v0.9.0`; owner visual OK (`2026-08-01`); `size_grids.write`; `test_size_grids_write_17_1_2_4.py`
-- [x] 17.1.2.5 — Administration UI for assigning roles to users — `v0.9.0`; owner visual OK (`2026-08-01`); `/settings/users`; `GET /platform-users`; `admin.roles.assign`
+- [x] 17.1.2.5 — Administration UI for assigning roles to users — `v0.9.0`; owner visual OK (`2026-08-01`); `/settings/users`; `GET /platform-users`; `admin.roles.assign` — further Users cabinet / flexible access UX → **Stage 21** in `docs/roadmap/roadmap-v1.00.md`
 - [x] 17.1.2.6 — Regression tests (forbidden without role; allowed with role) — `v0.9.0`; `test_rbac_regression_17_1_2_6.py`; size-grid/role-assign/kanban permission matrix; shop complete suites auth-aware
 - [x] 17.1.2.7 — Shop-stage kanban DnD / stage transitions: role-gated API + UI — only authorized users may move cards between allowed ProductionStages; removes temporary open DnD from `11.3.6` debug period — `v0.9.0`; owner visual OK (`2026-08-01`); `shop.kanban.transition`
 - [x] 17.1.2.8 — Stage executors (performer list) for shop-stage execution: platform users with access rights per stage — API + UI (demo fallback until permissions directory is released) — `v0.9.0`; Alembic `u8v9w0x1y234`; `GET /shop-stage-executors` + `GET|PUT /production-stages/{id}/executors`; role_fallback; FE Select; `test_stage_executors_17_1_2_8.py`; owner OK (`2026-08-01`) after BE :8000 orphan cleanup
@@ -2843,6 +2845,8 @@ Completion criteria:
 ## Stage 19 — Внутренние коммуникации (сотрудники)
 
 > Owner ask `2026-07-28`: **Заказ покупателя** must show an **internal chat with colleagues** and the correspondence about the **order and its technical cards**. In chat: **@mention** an employee and **send microtasks** (examples: «Правка по макету», «Не хватает материала»).
+>
+> **Follow-up (`2026-08-05`):** Lead/Order card UX parity and unifying CRM lead communications UX with this platform → **Stage `20`** in `docs/roadmap/roadmap-v1.00.md` (+ HTML twin). Do not re-open closed Stage 19 microtasks for that package.
 
 ### Boundary
 

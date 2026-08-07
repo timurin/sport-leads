@@ -192,8 +192,41 @@ export type ApiTechnicalCard = {
   updated_at: string;
 };
 
-export type ApiTechnicalCardListItem = ApiTechnicalCard & {
+export type ApiTechnicalCardListItem = {
+  id: number;
+  sales_order_id: number;
+  sales_order_item_id: number;
+  number: string;
+  card_seq: number;
+  status: TechnicalCardStatus | string;
+  quantity: string | number;
+  nomenclature_id: number | null;
+  nomenclature_name: string | null;
+  nomenclature_type?: string | null;
+  product_model_id?: number | null;
+  product_model_article: string | null;
+  product_model_name: string | null;
+  product_model_size_type?: string | null;
+  product_model_cover_image_url?: string | null;
+  assembly_variant_id?: number | null;
+  assembly_variant_name: string | null;
+  assembly_variant_total_cost?: string | number | null;
+  specification_version_id?: number | null;
+  specification_version_label?: string | null;
+  routing_template_id?: number | null;
+  routing_template_name?: string | null;
+  current_stage_order: number | null;
+  current_stage_label: string | null;
+  design_mockup_url?: string | null;
+  notes?: string | null;
   order_number: string | null;
+  client_name?: string | null;
+  responsible_name?: string | null;
+  desired_date?: string | null;
+  /** Present for kanban/shop stage status; list omits fat nested collections (`0.2.3.3`). */
+  stage_results?: ApiTechnicalCardStageResult[];
+  created_at: string;
+  updated_at: string;
 };
 
 export type TechnicalCardsListParams = {

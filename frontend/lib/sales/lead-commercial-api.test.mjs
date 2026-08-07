@@ -4,6 +4,7 @@ import test from "node:test";
 import {
   fromApiLeadCommercial,
   toApiLeadCommercialPayload,
+  toApiLeadCommercialPayloadOmittingNeedCleanup,
   validateLeadCommercialCore,
 } from "./lead-commercial-api.ts";
 
@@ -91,6 +92,29 @@ test("normalizes empty commercial values to explicit API nulls", () => {
     utm_description: null,
     priority: null,
   });
+});
+
+test("20.1 need-cleanup omit strips hidden SoT fields from PATCH payload", () => {
+  const payload = toApiLeadCommercialPayloadOmittingNeedCleanup({
+    source: "website",
+    estimatedAmount: 250000,
+    productType: "Игровой комплект",
+    kitQuantity: 2,
+    sizeComment: "XS-XL",
+    desiredReadyDate: "2026-09-15",
+    eventDate: "2026-09-30",
+    estimatedQuantity: 25,
+    probability: 70,
+  });
+  assert.equal("product_type" in payload, false);
+  assert.equal("kit_quantity" in payload, false);
+  assert.equal("size_comment" in payload, false);
+  assert.equal("estimated_amount" in payload, false);
+  assert.equal("desired_date" in payload, false);
+  assert.equal("event_date" in payload, false);
+  assert.equal(payload.source, "website");
+  assert.equal(payload.estimated_quantity, 25);
+  assert.equal(payload.probability, 70);
 });
 
 test("validates untrusted commercial mutation input", () => {

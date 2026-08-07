@@ -1,7 +1,7 @@
 "use client";
 
 import { FilterX, Search } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 
 import { KanbanBoard } from "@/components/kanban/kanban-board";
 import {
@@ -32,6 +32,8 @@ type KanbanPageProps<TStatus extends string> = {
   filters: KanbanFilter[];
   loadError?: string;
   onMove?: (move: KanbanMove<TStatus>) => Promise<{ ok: boolean; message: string }>;
+  /** When set, replaces DemoCreateDrawer (e.g. real order create `0.4.2`). */
+  renderCreateDrawer?: (ctx: { open: boolean; onClose: () => void }) => ReactNode;
 };
 
 type MetricSelection<TStatus extends string> = {
@@ -84,6 +86,7 @@ export function KanbanPage<TStatus extends string>({
   filters,
   loadError,
   onMove,
+  renderCreateDrawer,
 }: KanbanPageProps<TStatus>) {
   const [query, setQuery] = useState("");
   const [selectedFilters, setSelectedFilters] = useState<Record<string, string>>({});
@@ -227,11 +230,18 @@ export function KanbanPage<TStatus extends string>({
           />
         )}
       </div>
-      <DemoCreateDrawer
-        open={dialogOpen}
-        title={actionLabel}
-        onClose={() => setDialogOpen(false)}
-      />
+      {renderCreateDrawer ? (
+        renderCreateDrawer({
+          open: dialogOpen,
+          onClose: () => setDialogOpen(false),
+        })
+      ) : (
+        <DemoCreateDrawer
+          open={dialogOpen}
+          title={actionLabel}
+          onClose={() => setDialogOpen(false)}
+        />
+      )}
     </PageLayout>
   );
 }

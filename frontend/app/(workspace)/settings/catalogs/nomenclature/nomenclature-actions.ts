@@ -230,6 +230,19 @@ export async function updateNomenclatureCategory(formData: FormData) {
   revalidatePath("/warehouse/stock");
 }
 
+/** Nest category under another parent (catalog folder DnD). */
+export async function moveNomenclatureCategoryToParent(
+  categoryId: number,
+  parentId: number | null,
+): Promise<void> {
+  await mutate(`/categories/${categoryId}`, "PATCH", {
+    parent_id: parentId,
+  });
+  revalidatePath("/settings/catalogs/nomenclature");
+  revalidatePath("/settings/catalogs/nomenclature-categories");
+  revalidatePath("/warehouse/stock");
+}
+
 /** Sibling ↑/↓ reorder — dense sort_order 0..n-1 under the same parent. */
 export async function reorderNomenclatureCategorySibling(
   categoryId: number,

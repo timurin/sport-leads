@@ -3,7 +3,7 @@
 **Code:** `SL-ORDER-CARD-FIELD-LINKS-v1`  
 **Roadmap:** `3.5.1` (+ Stage `9.0.4` / `9.4.1` for tech-card gap `#4`)  
 **Route:** `/sales/orders/[id]`  
-**Updated:** `2026-08-04` (`19.0.2` — Stage 19 internal collaboration surface)
+**Updated:** `2026-08-05` (`0.4.3` — Source lead optional FK for without-lead create)
 
 ## Purpose
 
@@ -13,7 +13,7 @@ Inventory every field shown on the customer order card and classify its platform
 
 ```mermaid
 flowchart LR
-  SalesOrder --> Lead
+  SalesOrder -.-> Lead
   SalesOrder --> Client
   SalesOrder --> Organization
   SalesOrder --> SalesUser
@@ -35,7 +35,7 @@ flowchart LR
 
 `TechnicalCard` (Stage 9): one document per manufacturable `SalesOrderItem`; DB core `9.1.2` + generate API `9.2.1` + order UI `9.4.1` shipped. Wiring plan: § Gap `#4` below.
 
-**Internal staff chat (Stage 19 / ADR-026):** one `CollaborationThread` per `SalesOrder`; messages may carry optional `technical_card_id` (TC context / filter). Order card filter «Коммуникация» (`3.5.7`) and TC document panel are **UI surfaces** only — domain SoT is Stage 19, not CRM `LeadTask` / `LeadMessage`.
+**Internal staff chat (Stage 19 / ADR-026 + ADR-027):** `CollaborationThread` anchored XOR to `SalesOrder` **or** `Lead`. Messages on order threads may carry optional `technical_card_id`. Order card filter «Коммуникация» (`3.5.7`) and TC document panel are **UI surfaces** only. Lead card hosts the same `OrderCollaborationPanel` shell on `lead_id` (`20.3`). External CRM channels remain `LeadMessage` / `1.4.3` — ≠ staff chat.
 
 ## Header / document fields
 
@@ -43,7 +43,7 @@ flowchart LR
 |----------|--------|------------|-----------------|-------|
 | Number / title | `SalesOrder.number` / `title` | live | order row | |
 | Status | `SalesOrder.status` | live | enum + `PATCH /orders/{id}/status` | Stage rail |
-| Source lead | `SalesOrder.lead_id` | live FK | `/sales/leads/{id}` | Required |
+| Source lead | `SalesOrder.lead_id` | live FK (nullable) | `/sales/leads/{id}` | Optional — null when created without lead (`0.4`) |
 | Client | `client_id` + `client_name` | live FK + joined name | Client; UI → `/sales/clients` (list; card `2.2.2`) | No dedicated client card yet |
 | Organization | `organization_id` + `organization_name` | live FK + joined name | `/settings/organizations` | `PATCH .../organization` exists; display+link in `3.5.2` |
 | Responsible | `responsible_id` + `responsible_name` | live FK + joined name | `SalesUser`; employees dir `2.4.2` | Name only until employees card |
@@ -52,7 +52,7 @@ flowchart LR
 | Tasks panel | `LeadTask` via `lead_id` | live model / empty for API leads | Lead tasks | CRM only; order chat microtasks → `CollaborationMicrotask` (`19.2`) |
 | History | `LeadEvent` lead ∪ order | live | `GET /orders/{id}/history` | |
 | Manufacturing / ТК summary | technical cards by order | live | Production `/production/tech-cards?orderId=` | Gap `#4` closed `9.4.1`; not commercial status |
-| Internal collaboration (staff) | `CollaborationThread` / messages / microtasks | live (Stage 19) | Order «Коммуникация» + TC panel | ADR-026; optional `technical_card_id` on messages |
+| Internal collaboration (staff) | `CollaborationThread` / messages / microtasks | live (Stage 19 + `20.3`) | Order «Коммуникация» + TC panel + lead panel | ADR-026/027; XOR `sales_order_id`\|`lead_id`; optional `technical_card_id` on order messages only |
 
 ## Order line fields
 

@@ -221,3 +221,35 @@ def get_production_order_fact_rollup(
         production_order_id=order.id,
         production_batch_id=None,
     )
+
+
+def list_production_order_batch_fact_rollups(
+    db: Session, order_id: int
+) -> list[ProductionFactRollupRead]:
+    """One-shot batch rollups for all parties of a production order (`0.2.6`)."""
+    order = repo.get_production_order(db, order_id)
+    if order is None:
+        raise ProductionOrderNotFoundError("Производственный заказ не найден")
+
+    batch_card_ids: list[tuple[int, list[int]]] = []
+    all_card_ids: list[int] = []
+    seen: set[int] = set()
+    for batch in order.batches:
+        ids = [link.technical_card_id for link in batch.card_links]
+        batch_card_ids.append((batch.id, ids))
+        for card_id in ids:
+            if card_id in seen:
+                continue
+            seen.add(card_id)
+            all_card_ids.append(card_id)
+
+    cards_by_id = {card.id: card for card in _load_cards(db, all_card_ids)}
+    return [
+        _rollup_cards(
+            [cards_by_id[card_id] for card_id in ids if card_id in cards_by_id],
+            scope="batch",
+            production_order_id=order.id,
+            production_batch_id=batch_id,
+        )
+        for batch_id, ids in batch_card_ids
+    ]

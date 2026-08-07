@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SPORT-LEAD — Лид {id}</title>
+  <link rel="stylesheet" href="../shared/preview.css">
+</head>
+<body
+  data-preview-page="lead"
+  data-shell-section="sales"
+  data-top-nav="leads"
+  data-base="../"
+  data-page-title="Продажи · Лид"
+  data-create-label="Оформить заказ"
+  data-create-href="order-card-reference-v1.html?id=8801"
+>
+  <div class="shell">
+    <aside class="rail" data-shell-rail aria-label="Левое меню"></aside>
+
+    <div class="workspace">
+      <header class="topbar" data-shell-topbar></header>
+
+      <main class="main">
+        <div class="banner" role="status">
+          <span>UI UX Pro Max · Soft UI + Flat buttons · demo</span>
+          <nav>
+            <a href="../index.html">Оглавление</a>
+            <a href="lead-card-reference-v1.html?id=1042">Лид #1042</a>
+            <a href="order-card-reference-v1.html?id=8801">Заказ SO-2026-000142</a>
+          </nav>
+        </div>
+
+        <nav class="crumb" aria-label="Хлебные крошки">
+          <a href="../index.html">Оглавление</a>
+          <span>/</span>
+          <span>Продажи</span>
+          <span>/</span>
+          <span>Лиды</span>
+          <span>/</span>
+          <span>#<span data-bind="lead.id">1042</span></span>
+        </nav>
+
+        <section class="panel header-panel">
+          <div>
+            <div class="title-row">
+              <h1 data-bind="lead.title">Лид</h1>
+              <span class="badge" data-bind="lead.stage">—</span>
+              <span class="badge is-warning" data-bind="lead.priority">—</span>
+            </div>
+            <div class="meta-row">
+              <span>ID <b data-bind="lead.id">—</b></span>
+              <span>Ответственный <b data-bind="lead.responsible">—</b></span>
+              <span>Источник <b data-bind="lead.source">—</b></span>
+              <span>Активность <b data-bind="lead.lastActivity">—</b></span>
+            </div>
+            <div class="stages" data-stage-rail aria-label="Этапы лида"></div>
+          </div>
+          <div class="actions">
+            <button type="button" class="btn is-icon" aria-label="Ещё">⋮</button>
+            <button type="button" class="btn">Написать</button>
+            <button type="button" class="btn">Задача</button>
+            <button type="button" class="btn is-danger">Закрыть с отказом</button>
+            <button type="button" class="btn is-primary">Оформить заказ</button>
+          </div>
+        </section>
+
+        <div class="metrics" aria-label="Метрики">
+          <div class="metric"><div class="label">Оценка суммы</div><div class="value is-success" data-bind="lead.amount">—</div></div>
+          <div class="metric"><div class="label">Вероятность</div><div class="value" data-bind="lead.probability">—</div></div>
+          <div class="metric"><div class="label">Приоритет</div><div class="value" data-bind="lead.priority">—</div></div>
+          <div class="metric"><div class="label">Активность</div><div class="value" style="font-size:16px" data-bind="lead.lastActivity">—</div></div>
+        </div>
+
+        <div class="link-card">
+          <div>
+            <strong>Связанный заказ покупателя</strong>
+            <div class="hint">Маршрут платформы: <code>/sales/orders/{id}</code></div>
+          </div>
+          <a class="btn is-primary" data-order-link href="order-card-reference-v1.html?id=8801">
+            Открыть <span data-bind="order.number">SO-…</span> →
+          </a>
+        </div>
+
+        <div class="tabs" role="tablist" aria-label="Разделы лида">
+          <button type="button" class="tab is-active" role="tab" aria-selected="true" data-tab="customer">Клиент и контакты</button>
+          <button type="button" class="tab" role="tab" aria-selected="false" data-tab="commercial">Коммерция</button>
+          <button type="button" class="tab" role="tab" aria-selected="false" data-tab="communication">Коммуникации</button>
+          <button type="button" class="tab" role="tab" aria-selected="false" data-tab="history">История</button>
+          <button type="button" class="tab" role="tab" aria-selected="false" data-tab="tasks">Задачи</button>
+          <button type="button" class="tab" role="tab" aria-selected="false" data-tab="collab">Сотрудничество</button>
+        </div>
+
+        <div class="layout">
+          <div class="stack">
+            <section class="panel" data-panel="customer">
+              <div class="panel-head">
+                <h2>Клиент и контакты</h2>
+                <button type="button" class="btn">Редактировать</button>
+              </div>
+              <div class="form-grid">
+                <label class="field"><span class="label">Тип клиента</span><input class="input" readonly data-bind-input="customer.typeLabel"></label>
+                <label class="field"><span class="label">Организация <span class="req">*</span></span><input class="input" readonly data-bind-input="customer.organizationName"></label>
+                <label class="field"><span class="label">Город</span><input class="input" readonly data-bind-input="customer.city"></label>
+                <label class="field"><span class="label">Регион</span><input class="input" readonly data-bind-input="customer.region"></label>
+                <label class="field is-full"><span class="label">Адрес</span><input class="input" readonly data-bind-input="customer.address"></label>
+                <label class="field"><span class="label">ИНН</span><input class="input" readonly data-bind-input="customer.taxId"></label>
+                <label class="field"><span class="label">Сайт</span><input class="input" readonly data-bind-input="customer.website"></label>
+                <label class="field"><span class="label">Контакт <span class="req">*</span></span><input class="input" readonly data-bind-input="customer.contactName"></label>
+                <label class="field"><span class="label">Должность</span><input class="input" readonly data-bind-input="customer.position"></label>
+                <label class="field"><span class="label">Телефон</span><input class="input" readonly data-bind-input="customer.phone"></label>
+                <label class="field"><span class="label">Email</span><input class="input" readonly data-bind-input="customer.email"></label>
+                <label class="field"><span class="label">Канал</span><input class="input" readonly data-bind-input="customer.preferredChannelLabel"></label>
+                <label class="field is-full"><span class="label">Комментарий</span><textarea class="textarea" readonly data-bind-input="customer.comment"></textarea></label>
+              </div>
+            </section>
+
+            <section class="panel is-hidden" data-panel="commercial">
+              <div class="panel-head">
+                <h2>Коммерческие параметры</h2>
+                <button type="button" class="btn">Редактировать</button>
+              </div>
+              <div class="form-grid">
+                <label class="field"><span class="label">Направление</span><input class="input" readonly data-bind-input="commercial.direction"></label>
+                <label class="field"><span class="label">Вид спорта</span><input class="input" readonly data-bind-input="commercial.sport"></label>
+                <label class="field"><span class="label">Категория</span><input class="input" readonly data-bind-input="commercial.productCategory"></label>
+                <label class="field"><span class="label">Источник</span><input class="input" readonly data-bind-input="lead.source"></label>
+                <label class="field is-full"><span class="label">Потребность</span><textarea class="textarea" readonly data-bind-input="commercial.needDescription"></textarea></label>
+                <label class="field"><span class="label">Кол-во</span><input class="input" readonly data-bind-input="commercial.estimatedQuantity"></label>
+                <label class="field"><span class="label">Бюджет</span><input class="input" readonly data-bind-input="commercial.preliminaryBudget"></label>
+                <label class="field"><span class="label">Скидка %</span><input class="input" readonly data-bind-input="commercial.discountPercent"></label>
+                <label class="field"><span class="label">План. дата</span><input class="input" readonly data-bind-input="commercial.plannedOrderDate"></label>
+                <label class="field"><span class="label">Город доставки</span><input class="input" readonly data-bind-input="commercial.deliveryCity"></label>
+                <label class="field"><span class="label">Способ</span><input class="input" readonly data-bind-input="commercial.deliveryMethod"></label>
+                <label class="field is-full"><span class="label">Адрес доставки</span><input class="input" readonly data-bind-input="commercial.deliveryAddress"></label>
+                <label class="field is-full"><span class="label">Комментарий доставки</span><textarea class="textarea" readonly data-bind-input="commercial.deliveryComment"></textarea></label>
+                <label class="field is-full"><span class="label">Кампания</span><input class="input" readonly data-bind-input="commercial.campaign"></label>
+              </div>
+            </section>
+
+            <section class="panel is-hidden" data-panel="communication">
+              <div class="panel-head">
+                <h2>Коммуникации</h2>
+                <button type="button" class="btn is-primary">Написать</button>
+              </div>
+              <div class="msg" data-messages></div>
+              <div class="composer">
+                <textarea class="textarea" placeholder="Черновик сообщения…"></textarea>
+                <button type="button" class="btn is-primary" disabled>Отправить</button>
+              </div>
+            </section>
+
+            <section class="panel is-hidden" data-panel="history">
+              <div class="panel-head"><h2>История</h2></div>
+              <div class="timeline" data-timeline></div>
+            </section>
+
+            <section class="panel is-hidden" data-panel="tasks">
+              <div class="panel-head">
+                <h2>Задачи</h2>
+                <button type="button" class="btn is-primary">+ Задача</button>
+              </div>
+              <div class="table-wrap">
+                <table class="table">
+                  <thead><tr><th>Задача</th><th>Срок</th><th>Статус</th></tr></thead>
+                  <tbody data-tasks></tbody>
+                </table>
+              </div>
+            </section>
+
+            <section class="panel is-hidden" data-panel="collab">
+              <div class="panel-head"><h2>Внутреннее сотрудничество</h2></div>
+              <p class="small" style="margin-top:0">Тот же контур, что на заказе (ADR-027).</p>
+              <div class="msg" data-collab></div>
+            </section>
+          </div>
+
+          <aside class="stack">
+            <section class="panel">
+              <div class="panel-head"><h2>Карточка клиента</h2></div>
+              <dl class="dl">
+                <div><dt>Организация</dt><dd data-bind="customer.organizationName">—</dd></div>
+                <div><dt>Ответственный</dt><dd data-bind="lead.responsible">—</dd></div>
+                <div><dt>Канал</dt><dd data-bind="customer.preferredChannelLabel">—</dd></div>
+              </dl>
+              <div class="actions" style="margin-top:14px">
+                <button type="button" class="btn" style="flex:1">Позвонить</button>
+                <button type="button" class="btn" style="flex:1">Email</button>
+              </div>
+            </section>
+            <section class="panel">
+              <div class="panel-head"><h2>Быстрые действия</h2></div>
+              <div class="stack" style="gap:8px">
+                <a class="btn is-primary" data-order-link href="order-card-reference-v1.html?id=8801">Открыть заказ</a>
+                <button type="button" class="btn">Скопировать ссылку</button>
+                <button type="button" class="btn is-danger">Закрыть с отказом</button>
+              </div>
+            </section>
+          </aside>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <div class="mobile-bar">
+    <button type="button" class="btn">Написать</button>
+    <button type="button" class="btn is-primary">Оформить заказ</button>
+  </div>
+
+  <script src="../shared/demo-data.js"></script>
+  <script src="../shared/shell.js"></script>
+  <script src="../shared/preview.js"></script>
+</body>
+</html>

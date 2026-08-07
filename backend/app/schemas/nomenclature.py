@@ -4,6 +4,7 @@ from decimal import Decimal
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from app.models.nomenclature import NomenclatureType, UnitCategory
+from app.schemas.characteristics import NomenclatureCharacteristicValueRead
 from app.schemas.file_io import FileIoRowError
 
 
@@ -173,3 +174,14 @@ class NomenclatureImportResult(BaseModel):
     updated_ids: list[int] = Field(default_factory=list)
     created: list[NomenclatureRead] = Field(default_factory=list)
     updated: list[NomenclatureRead] = Field(default_factory=list)
+
+
+class NomenclatureListExtrasRead(BaseModel):
+    """Batch covers + characteristic values for warehouse/catalog list (`0.2.3.2`)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    covers: dict[str, str | None] = Field(default_factory=dict)
+    values: dict[str, list[NomenclatureCharacteristicValueRead]] = Field(
+        default_factory=dict
+    )

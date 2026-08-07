@@ -2,7 +2,6 @@
 
 import {
   ClipboardList,
-  ExternalLink,
   ChevronDown,
   ChevronRight,
   FileText,
@@ -14,6 +13,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import { ComplexEntityCard } from "@/components/entity/complex-entity-card";
 import { PageContent, PageLayout } from "@/components/layout/page-layout";
+import { HostWorkTasksPanel } from "@/components/sales/host-work-tasks-panel";
 import { LeadActivityTimeline } from "@/components/sales/lead-activity-timeline";
 import { OrderCollaborationPanel } from "@/components/sales/order-collaboration-panel";
 import { OrderClientNeedDetails } from "@/components/sales/order-client-need-details";
@@ -22,23 +22,18 @@ import { SalesOrderHeader } from "@/components/sales/sales-order-header";
 import { SalesOrderItemsUnfDemo } from "@/components/sales/sales-order-items-unf-demo";
 import { SalesOrderMetrics } from "@/components/sales/sales-order-metrics";
 import { SalesOrderTechCardsPanel } from "@/components/sales/sales-order-tech-cards-panel";
+import {
+  WorkTaskCreateDrawer,
+  type WorkTaskAnchorOption,
+} from "@/components/sales/work-task-create-drawer";
 import type {
   SalesInvoice,
   SalesQuotation,
 } from "@/app/(workspace)/sales/orders/[orderId]/order-commercial-doc-actions";
 import { Button } from "@/components/ui/button";
 import { CompactTabs } from "@/components/ui/compact-tabs";
-import { EmptyState } from "@/components/ui/empty-state";
-import { EntityLink } from "@/components/ui/entity-link";
-import { SectionCard } from "@/components/ui/section-card";
 import { mockCurrentUser, salesManagers } from "@/lib/demo-data/sales";
 import { getNotePermissions, isInternalNote, sortLeadActivities } from "@/lib/sales/lead-activity";
-import {
-  formatTaskDate,
-  getTaskTimingLabel,
-  leadTaskTypeLabels,
-  sortLeadTasks,
-} from "@/lib/sales/lead-task";
 import type { Nomenclature, NomenclatureCategory } from "@/lib/nomenclature";
 import { buildOrderCardMetrics } from "@/lib/sales/order-card-metrics";
 import {
@@ -49,7 +44,8 @@ import {
 import type { SalesOrderDetails, SalesOrderSourceLead } from "@/lib/sales/order-details";
 import { orderStatusPresentation } from "@/lib/sales/order-list-api";
 import type { VatRate } from "@/lib/vat-rates";
-import type { LeadActivity, LeadMessage, LeadTask, OrderStatus } from "@/types/sales";
+import type { WorkTaskListItem } from "@/lib/work-tasks";
+import type { LeadActivity, LeadMessage, OrderStatus } from "@/types/sales";
 
 type AsideTab = "finance" | "info" | "chat" | "notes" | "tasks";
 
@@ -85,14 +81,6 @@ function cloneMessages(messages: LeadMessage[]): LeadMessage[] {
     ...message,
     author: message.author ? { ...message.author } : undefined,
     attachments: message.attachments?.map((attachment) => ({ ...attachment })),
-  }));
-}
-
-function cloneTasks(tasks: LeadTask[]): LeadTask[] {
-  return tasks.map((task) => ({
-    ...task,
-    assignedTo: { ...task.assignedTo },
-    createdBy: { ...task.createdBy },
   }));
 }
 
@@ -142,6 +130,10 @@ export function SalesOrderPage({
   vatRates,
   quotations = [],
   invoices = [],
+  workTasks: initialWorkTasks = [],
+  workTasksError = null,
+  workTaskStages = [],
+  workTaskUsers = [],
 }: {
   order: SalesOrderDetails;
   activities: LeadActivity[];
@@ -151,14 +143,22 @@ export function SalesOrderPage({
   vatRates: VatRate[];
   quotations?: SalesQuotation[];
   invoices?: SalesInvoice[];
+  workTasks?: WorkTaskListItem[];
+  workTasksError?: string | null;
+  workTaskStages?: WorkTaskAnchorOption[];
+  workTaskUsers?: WorkTaskAnchorOption[];
 }) {
   const [order, setOrder] = useState(initialOrder);
   const [activities, setActivities] = useState(() => cloneActivities(initialActivities));
   const [messages] = useState(() => cloneMessages(sourceLead?.messages ?? []));
-  const [tasks] = useState(() => cloneTasks(sourceLead?.tasks ?? []));
+  const [workTasks, setWorkTasks] = useState(initialWorkTasks);
+  const [workTaskCreateOpen, setWorkTaskCreateOpen] = useState(false);
   const [viewMode, setViewMode] = useState<OrderCardViewMode>("all");
   const visibility = getOrderCardSectionVisibility(viewMode);
-  const taskReferenceAt = sourceLead?.taskReferenceAt ?? order.updatedAtIso;
+
+  useEffect(() => {
+    setWorkTasks(initialWorkTasks);
+  }, [initialWorkTasks]);
 
   /** Keep line items / totals in sync after router.refresh() without wiping local need/status edits. */
   const orderItemsServerKey = useMemo(
@@ -218,13 +218,12 @@ export function SalesOrderPage({
     || activity.type === "outgoing_call"
     || activity.type === "comment_added"
   )).length + messages.length;
-  const visibleTasks = useMemo(
-    () => sortLeadTasks(tasks, "open", taskReferenceAt).slice(0, 6),
-    [taskReferenceAt, tasks],
-  );
   const openTasksCount = useMemo(
-    () => tasks.filter((task) => task.status === "open").length,
-    [tasks],
+    () =>
+      workTasks.filter(
+        (task) => task.status === "open" || task.status === "in_progress",
+      ).length,
+    [workTasks],
   );
   const metrics = useMemo(() => buildOrderCardMetrics({
     order,
@@ -336,42 +335,14 @@ export function SalesOrderPage({
 
   const tasksPanel = (
     <div id="order-workspace-panel-tasks">
-      <SectionCard
+      <HostWorkTasksPanel
+        embedded
+        compact
         title="Задачи"
-        description="Из исходного лида"
-        size="compact"
-        className="min-w-0"
-      >
-        {visibleTasks.length === 0 ? (
-          <EmptyState
-            title="Нет открытых задач"
-            description={
-              order.sourceLeadHref
-                ? "Управление задачами — в карточке лида."
-                : "Заказ без лида — CRM-задачи недоступны."
-            }
-            action={
-              order.sourceLeadHref ? (
-                <EntityLink href={order.sourceLeadHref} className="inline-flex items-center gap-1 text-sm font-medium text-portal-primary">
-                  Открыть лид <ExternalLink size={14} aria-hidden="true" />
-                </EntityLink>
-              ) : undefined
-            }
-          />
-        ) : (
-          <ul className="divide-y divide-portal-border">
-            {visibleTasks.map((task) => (
-              <li key={task.id} className="py-2 first:pt-0 last:pb-0">
-                <p className="text-xs font-medium text-slate-500">{leadTaskTypeLabels[task.type]}</p>
-                <p className="mt-0.5 text-sm font-semibold text-slate-900">{task.title}</p>
-                <p className="mt-0.5 text-xs text-slate-500">
-                  {formatTaskDate(task.dueAt)} · {getTaskTimingLabel(task, taskReferenceAt)} · {task.assignedTo.name}
-                </p>
-              </li>
-            ))}
-          </ul>
-        )}
-      </SectionCard>
+        tasks={workTasks}
+        loadError={workTasksError}
+        onAdd={() => setWorkTaskCreateOpen(true)}
+      />
     </div>
   );
 
@@ -566,6 +537,23 @@ export function SalesOrderPage({
           </ComplexEntityCard>
         </PageContent>
       </div>
+      <WorkTaskCreateDrawer
+        open={workTaskCreateOpen}
+        onClose={() => setWorkTaskCreateOpen(false)}
+        stages={workTaskStages}
+        users={workTaskUsers}
+        lockedAnchor={{
+          type: "sales_order",
+          id: Number(order.id),
+          label: `Заказ ${order.number}`,
+        }}
+        navigateOnCreate={false}
+        onCreated={(task) => {
+          setWorkTasks((current) => [task, ...current]);
+          setWorkTaskCreateOpen(false);
+          setAsideTab("tasks");
+        }}
+      />
     </PageLayout>
   );
 }

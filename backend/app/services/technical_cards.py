@@ -42,6 +42,7 @@ from app.schemas.technical_card import (
     TechnicalCardApplySpecification,
     TechnicalCardAssemblySewingOpRead,
     TechnicalCardCompositionLineWrite,
+    TechnicalCardListRead,
     TechnicalCardMediaCreate,
     TechnicalCardMediaRead,
     TechnicalCardOperationLineWrite,
@@ -157,6 +158,11 @@ def _card_load_options(db: Session):
     return tuple(options)
 
 
+def _list_card_load_options():
+    """Slim list load — stage_results only (`0.2.3.3`)."""
+    return (selectinload(TechnicalCard.stage_results),)
+
+
 def tech_card_media_content_url(card_id: int, media_id: int) -> str:
     return f"/technical-cards/{card_id}/media/{media_id}/content"
 
@@ -248,6 +254,23 @@ def to_technical_card_read(db: Session, card: TechnicalCard) -> TechnicalCardRea
     return TechnicalCardRead.model_validate(data)
 
 
+def to_technical_card_list_read(
+    card: TechnicalCard, *, order_number: str | None = None
+) -> TechnicalCardListRead:
+    """Slim list mapper — no composition/unit/media/sewing, no per-row Client lookups."""
+    data = {
+        column.name: getattr(card, column.name)
+        for column in TechnicalCard.__table__.columns
+    }
+    data["stage_results"] = list(card.stage_results)
+    data["order_number"] = order_number
+    data["client_name"] = None
+    data["responsible_name"] = None
+    data["desired_date"] = None
+    data["product_model_cover_image_url"] = None
+    return TechnicalCardListRead.model_validate(data)
+
+
 def get_technical_card(db: Session, card_id: int) -> TechnicalCard:
     card = db.scalar(
         select(TechnicalCard)
@@ -287,7 +310,7 @@ def list_technical_cards(
     statement = (
         select(TechnicalCard, SalesOrder.number)
         .join(SalesOrder, SalesOrder.id == TechnicalCard.sales_order_id)
-        .options(*_card_load_options(db))
+        .options(*_list_card_load_options())
     )
     if sales_order_id is not None:
         statement = statement.where(TechnicalCard.sales_order_id == sales_order_id)

@@ -4,8 +4,13 @@ import {
   listOrderInvoices,
   listOrderQuotations,
 } from "@/app/(workspace)/sales/orders/[orderId]/order-commercial-doc-actions";
+import {
+  listOrderWorkTasks,
+  listWorkTaskFilterUsers,
+} from "@/app/(workspace)/sales/tasks/work-task-actions";
 import { SalesOrderPage } from "@/components/sales/sales-order-page";
 import { getNomenclature, getNomenclatureCategories } from "@/lib/nomenclature";
+import { getProductionStages } from "@/lib/production-stages";
 import { getLeadDetails } from "@/lib/sales/lead-details";
 import { fromApiLeadEvent } from "@/lib/sales/lead-history";
 import {
@@ -21,6 +26,10 @@ type OrderRouteProps = {
 
 export default async function OrderRoute({ params }: OrderRouteProps) {
   const { orderId } = await params;
+  if (!/^\d+$/.test(orderId)) {
+    notFound();
+  }
+
   const [
     result,
     historyResult,
@@ -29,31 +38,41 @@ export default async function OrderRoute({ params }: OrderRouteProps) {
     vatRates,
     quotations,
     invoices,
+    workTasksLoaded,
+    stagesCatalog,
+    usersLoaded,
   ] = await Promise.all([
-      getOrderDetails(orderId),
-      getOrderHistory(orderId),
-      getNomenclature(),
-      getNomenclatureCategories(),
-      getVatRates({ is_active: true }),
-      listOrderQuotations(orderId),
-      listOrderInvoices(orderId),
-    ]);
+    getOrderDetails(orderId),
+    getOrderHistory(orderId),
+    getNomenclature(),
+    getNomenclatureCategories(),
+    getVatRates({ is_active: true }),
+    listOrderQuotations(orderId),
+    listOrderInvoices(orderId),
+    listOrderWorkTasks(Number(orderId)),
+    getProductionStages({ active_only: true, limit: 200 }).catch(() => []),
+    listWorkTaskFilterUsers(),
+  ]);
   if (result.kind === "not-found") notFound();
   if (result.kind === "error") throw new Error(result.message);
   if (historyResult.kind === "not-found") notFound();
   if (historyResult.kind === "error") throw new Error(historyResult.message);
 
-  const sourceLeadDetails = await getLeadDetails(result.order.leadId);
+  const sourceLeadDetails = result.order.leadId
+    ? await getLeadDetails(result.order.leadId)
+    : null;
   const sourceLead: SalesOrderSourceLead | null = sourceLeadDetails
     ? {
-      id: sourceLeadDetails.id,
-      contactName: sourceLeadDetails.contactName,
-      customer: sourceLeadDetails.customer,
-      messages: sourceLeadDetails.messages,
-      primaryContact: sourceLeadDetails.customer.contacts.find((contact) => contact.isPrimary),
-      tasks: sourceLeadDetails.tasks,
-      taskReferenceAt: sourceLeadDetails.taskReferenceAt,
-    }
+        id: sourceLeadDetails.id,
+        contactName: sourceLeadDetails.contactName,
+        customer: sourceLeadDetails.customer,
+        messages: sourceLeadDetails.messages,
+        primaryContact: sourceLeadDetails.customer.contacts.find(
+          (contact) => contact.isPrimary,
+        ),
+        tasks: sourceLeadDetails.tasks,
+        taskReferenceAt: sourceLeadDetails.taskReferenceAt,
+      }
     : null;
 
   return (
@@ -66,6 +85,13 @@ export default async function OrderRoute({ params }: OrderRouteProps) {
       vatRates={vatRates}
       quotations={quotations}
       invoices={invoices}
+      workTasks={workTasksLoaded.ok ? workTasksLoaded.data : []}
+      workTasksError={workTasksLoaded.ok ? null : workTasksLoaded.message}
+      workTaskStages={stagesCatalog.map((stage) => ({
+        id: stage.id,
+        label: stage.name,
+      }))}
+      workTaskUsers={usersLoaded.ok ? usersLoaded.data : []}
     />
   );
 }

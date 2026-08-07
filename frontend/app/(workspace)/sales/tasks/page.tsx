@@ -1,18 +1,72 @@
-import { KanbanPage } from "@/components/kanban/kanban-page";
-import { salesManagers, salesTasks, taskColumns } from "@/lib/demo-data/sales";
+import {
+  listWorkTaskFilterUsers,
+  listWorkTasks,
+} from "@/app/(workspace)/sales/tasks/work-task-actions";
+import { WorkTasksWorkspace } from "@/components/sales/work-tasks-workspace";
+import { fetchProductionOrders } from "@/lib/production/production-orders";
+import { getProductionStages } from "@/lib/production-stages";
+import { getLeadList } from "@/lib/sales/lead-list-api";
+import { getOrderList } from "@/lib/sales/order-list-api";
+import { parseWorkTaskListFilters } from "@/lib/work-tasks";
 
-export default function TasksPage() {
-  return <KanbanPage title="Задачи" description="Работа менеджеров и контроль следующих действий" actionLabel="Создать задачу" columns={taskColumns}
-    metrics={[
-      { label: "Всего задач", kind: "count" },
-      { label: "На сегодня", kind: "count", statuses: ["today"] },
-      { label: "В работе", kind: "count", statuses: ["progress"] },
-      { label: "Просрочено", kind: "count", statuses: ["overdue"] },
-    ]}
-    filters={[
-      { id: "responsible", label: "Исполнитель", options: salesManagers.map((manager) => manager.name) },
-      { id: "priority", label: "Приоритет", options: ["Высокий", "Средний", "Низкий"] },
-      { id: "type", label: "Тип задачи", options: [...new Set(salesTasks.map((task) => task.type))] },
-    ]}
-  />;
+type Props = {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+};
+
+export default async function TasksPage({ searchParams }: Props) {
+  const params = await searchParams;
+  const filters = parseWorkTaskListFilters(params);
+
+  const [loaded, stages, usersLoaded, leadsLoaded, ordersLoaded, productionOrders] =
+    await Promise.all([
+      listWorkTasks(filters),
+      getProductionStages({ active_only: true, limit: 200 }).catch(() => []),
+      listWorkTaskFilterUsers(),
+      getLeadList(),
+      getOrderList(),
+      fetchProductionOrders({ limit: 500 }).catch(() => []),
+    ]);
+
+  const stageOptions = stages.map((stage) => ({
+    id: stage.id,
+    label: stage.name,
+  }));
+  const userOptions = usersLoaded.ok ? usersLoaded.data : [];
+  const leadOptions = leadsLoaded.ok
+    ? leadsLoaded.leads.map((lead) => ({
+        id: Number(lead.id),
+        label: `${lead.clientName || lead.contact} (#${lead.id})`,
+      }))
+    : [];
+  const orderOptions = ordersLoaded.ok
+    ? ordersLoaded.orders.map((order) => ({
+        id: order.id,
+        label: `${order.number}${order.title ? ` — ${order.title}` : ""}`,
+      }))
+    : [];
+  const productionOrderOptions = productionOrders.map((order) => ({
+    id: order.id,
+    label: order.number,
+  }));
+
+  const shared = {
+    filters,
+    stages: stageOptions,
+    users: userOptions,
+    leads: leadOptions,
+    orders: orderOptions,
+    productionOrders: productionOrderOptions,
+  };
+
+  if (!loaded.ok) {
+    return (
+      <WorkTasksWorkspace
+        tasks={[]}
+        {...shared}
+        loadError={loaded.message}
+      />
+    );
+  }
+
+  return <WorkTasksWorkspace tasks={loaded.data} {...shared} />;
 }

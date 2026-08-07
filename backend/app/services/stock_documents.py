@@ -5,6 +5,7 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from decimal import Decimal
 
+from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -19,7 +20,11 @@ from app.models.stock import (
 from app.models.technical_card import TechnicalCard
 from app.repositories import stock_documents as repo
 from app.repositories import warehouses as warehouse_repo
-from app.schemas.stock import StockDocumentCreate
+from app.schemas.stock import (
+    StockDocumentCreate,
+    StockDocumentRead,
+    StockLedgerLineRead,
+)
 
 
 class StockDocumentNotFoundError(RuntimeError):
@@ -234,3 +239,63 @@ def post_stock_document(db: Session, document_id: int) -> StockDocument:
         raise StockDocumentConflictError(
             "Не удалось провести складской документ"
         ) from error
+
+
+def _nomenclature_names_by_ids(db: Session, ids: list[int]) -> dict[int, str]:
+    unique = list(dict.fromkeys(ids))
+    if not unique:
+        return {}
+    rows = db.execute(
+        select(Nomenclature.id, Nomenclature.name).where(Nomenclature.id.in_(unique))
+    ).all()
+    return {int(row.id): str(row.name) for row in rows}
+
+
+def to_stock_document_read(
+    document: StockDocument, names: dict[int, str]
+) -> StockDocumentRead:
+    return StockDocumentRead(
+        id=document.id,
+        number=document.number,
+        doc_type=document.doc_type,
+        status=document.status,
+        warehouse_id=document.warehouse_id,
+        posted_at=document.posted_at,
+        technical_card_id=document.technical_card_id,
+        sales_order_id=document.sales_order_id,
+        notes=document.notes,
+        created_at=document.created_at,
+        updated_at=document.updated_at,
+        ledger_lines=[
+            StockLedgerLineRead(
+                id=line.id,
+                line_no=line.line_no,
+                warehouse_id=line.warehouse_id,
+                nomenclature_id=line.nomenclature_id,
+                nomenclature_name=names.get(line.nomenclature_id),
+                quantity=line.quantity,
+                posted_at=line.posted_at,
+                technical_card_id=line.technical_card_id,
+                sales_order_id=line.sales_order_id,
+            )
+            for line in document.ledger_lines
+        ],
+    )
+
+
+def serialize_stock_document(db: Session, document: StockDocument) -> StockDocumentRead:
+    """Embed nomenclature display names — one batch lookup (`0.2.7`)."""
+    ids = [line.nomenclature_id for line in document.ledger_lines]
+    return to_stock_document_read(document, _nomenclature_names_by_ids(db, ids))
+
+
+def serialize_stock_documents(
+    db: Session, documents: list[StockDocument]
+) -> list[StockDocumentRead]:
+    ids = [
+        line.nomenclature_id
+        for document in documents
+        for line in document.ledger_lines
+    ]
+    names = _nomenclature_names_by_ids(db, ids)
+    return [to_stock_document_read(document, names) for document in documents]

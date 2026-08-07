@@ -2,7 +2,7 @@
 
 import {
   fromApiLeadCommercial,
-  toApiLeadCommercialPayload,
+  toApiLeadCommercialPayloadOmittingNeedCleanup,
   validateLeadCommercialCore,
   type LeadCommercialCore,
   type LeadCommercialCoreInput,
@@ -26,7 +26,10 @@ export async function saveLeadCommercialDetails(
   }
 
   try {
-    const result = await updateApiLead(leadId, toApiLeadCommercialPayload(input));
+    const result = await updateApiLead(
+      leadId,
+      toApiLeadCommercialPayloadOmittingNeedCleanup(input),
+    );
     return result.ok
       ? {
         ok: true,

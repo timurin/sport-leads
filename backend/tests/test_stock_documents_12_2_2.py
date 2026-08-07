@@ -79,7 +79,12 @@ def test_post_receipt_and_issue_updates_balances_not_nomenclature() -> None:
             assert body["doc_type"] == "receipt"
             assert len(body["ledger_lines"]) == 1
             assert body["ledger_lines"][0]["quantity"] == "10.000"
+            assert body["ledger_lines"][0]["nomenclature_name"] == "Футболка PRO"
             assert body["posted_at"] is not None
+
+            detail = client.get(f"/stock/documents/{body['id']}")
+            assert detail.status_code == 200, detail.text
+            assert detail.json()["ledger_lines"][0]["nomenclature_name"] == "Футболка PRO"
 
             balances = client.get("/stock/balances")
             assert balances.status_code == 200

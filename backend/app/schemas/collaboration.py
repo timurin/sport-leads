@@ -31,7 +31,8 @@ class CollaborationMessageRead(BaseModel):
 
     id: int
     thread_id: int
-    sales_order_id: int
+    sales_order_id: int | None = None
+    lead_id: int | None = None
     author_platform_user_id: int
     author_login: str
     author_display_name: str
@@ -62,7 +63,8 @@ class CollaborationMicrotaskRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
-    sales_order_id: int
+    sales_order_id: int | None = None
+    lead_id: int | None = None
     title: str
     status: str
     assignee_platform_user_id: int
@@ -91,7 +93,8 @@ class CollaborationNotificationRead(BaseModel):
     kind: str
     title: str
     body: str
-    sales_order_id: int
+    sales_order_id: int | None = None
+    lead_id: int | None = None
     technical_card_id: int | None = None
     source_message_id: int | None = None
     microtask_id: int | None = None

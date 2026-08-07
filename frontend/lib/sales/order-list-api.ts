@@ -4,7 +4,7 @@ import type { OrderStatus } from "@/types/sales";
 export type ApiSalesOrder = {
   id: number;
   number: string;
-  lead_id: number;
+  lead_id: number | null;
   client_id: number;
   organization_id: number | null;
   organization_name: string | null;
@@ -151,4 +151,52 @@ export async function updateApiOrderStatus(
   }
 
   return { ok: true, order: await response.json() as ApiSalesOrder };
+}
+
+export type CreateSalesOrderPayload = {
+  client_id: number;
+  organization_id?: number | null;
+  responsible_id: number;
+  title: string;
+  number?: string | null;
+  description?: string | null;
+  product_category?: string | null;
+  sport?: string | null;
+  quantity?: number | null;
+  amount?: number | null;
+  desired_date?: string | null;
+  source?: string | null;
+};
+
+export type CreateSalesOrderResult =
+  | { ok: true; order: ApiSalesOrder }
+  | { ok: false; message: string };
+
+export async function createApiSalesOrder(
+  payload: CreateSalesOrderPayload,
+): Promise<CreateSalesOrderResult> {
+  const response = await fetch(`${apiBaseUrl()}/orders`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(payload),
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    const body = (await response.json().catch(() => null)) as
+      | { detail?: string | { msg?: string }[] }
+      | null;
+    const detail =
+      typeof body?.detail === "string"
+        ? body.detail
+        : Array.isArray(body?.detail)
+          ? body.detail.map((item) => item.msg).filter(Boolean).join("; ")
+          : null;
+    return {
+      ok: false,
+      message: detail || `Backend не создал заказ (${response.status}).`,
+    };
+  }
+
+  return { ok: true, order: (await response.json()) as ApiSalesOrder };
 }

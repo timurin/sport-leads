@@ -274,9 +274,20 @@ def test_production_fact_rollup_batch_and_order() -> None:
             assert order_body["technical_card_count"] == 2
             assert order_body["duration_seconds_total"] == 190
 
+            batch_list = client.get(f"/production-orders/{order_id}/batch-fact-rollups")
+            assert batch_list.status_code == 200, batch_list.text
+            batch_items = batch_list.json()
+            assert len(batch_items) == 1
+            assert batch_items[0]["production_batch_id"] == batch_id
+            assert batch_items[0]["technical_card_count"] == 2
+            assert batch_items[0]["quantity_total"] == body["quantity_total"]
+            assert batch_items[0]["duration_seconds_total"] == body["duration_seconds_total"]
+
             missing = client.get("/production-batches/999999/fact-rollup")
             assert missing.status_code == 404
             missing_order = client.get("/production-orders/999999/fact-rollup")
             assert missing_order.status_code == 404
+            missing_batch_list = client.get("/production-orders/999999/batch-fact-rollups")
+            assert missing_batch_list.status_code == 404
     finally:
         app.dependency_overrides.clear()

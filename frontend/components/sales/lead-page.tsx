@@ -7,7 +7,7 @@ import {
   Plus,
   ShoppingBag,
 } from "lucide-react";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { LeadActivityTimeline } from "@/components/sales/lead-activity-timeline";
 import {
@@ -21,8 +21,10 @@ import { LeadHeader } from "@/components/sales/lead-header";
 import { LeadCommercialDetails } from "@/components/sales/lead-commercial-details";
 import { LeadCommunicationPanel, type LeadMessageDraft } from "@/components/sales/lead-communication-panel";
 import { LeadCustomerDetails } from "@/components/sales/lead-customer-details";
+import { HostWorkTasksPanel } from "@/components/sales/host-work-tasks-panel";
+import { OrderCollaborationPanel } from "@/components/sales/order-collaboration-panel";
 import { LeadTaskCompleteDialog, LeadTaskDeleteDialog, LeadTaskEditDialog, type LeadTaskDraft } from "@/components/sales/lead-task-dialog";
-import { LeadTasks } from "@/components/sales/lead-tasks";
+import { WorkTaskCreateDrawer, type WorkTaskAnchorOption } from "@/components/sales/work-task-create-drawer";
 import { ComplexEntityCard } from "@/components/entity/complex-entity-card";
 import { PageActions, PageContent, PageLayout, ResponsiveGrid } from "@/components/layout/page-layout";
 import { Button } from "@/components/ui/button";
@@ -51,7 +53,8 @@ import { leadMessageToActivity } from "@/lib/sales/lead-message-api";
 import type { LeadFinalActionId } from "@/lib/sales/lead-final-actions";
 import type { LeadStageConfig } from "@/lib/sales/lead-stages";
 import { formatAttachmentSize, leadMessageChannelLabels } from "@/lib/sales/lead-message";
-import { formatTaskDate, getNearestLeadTask, rescheduleTaskDueAt, type LeadTaskFilter } from "@/lib/sales/lead-task";
+import { formatTaskDate, getNearestLeadTask, rescheduleTaskDueAt } from "@/lib/sales/lead-task";
+import type { WorkTaskListItem } from "@/lib/work-tasks";
 import type { Lead, LeadActivity, LeadMessage, LeadTask, Priority } from "@/types/sales";
 
 const dateFormatter = new Intl.DateTimeFormat("ru-RU", {
@@ -136,23 +139,36 @@ function createLocalMessageId() {
 export function LeadPage({
   lead: initialLead,
   stages,
+  workTasks: initialWorkTasks = [],
+  workTasksError = null,
+  workTaskStages = [],
+  workTaskUsers = [],
 }: {
   lead: LeadDetails;
   stages: LeadStageConfig[];
+  workTasks?: WorkTaskListItem[];
+  workTasksError?: string | null;
+  workTaskStages?: WorkTaskAnchorOption[];
+  workTaskUsers?: WorkTaskAnchorOption[];
 }) {
   const [lead, setLead] = useState<LeadDetails>(() => cloneLead(initialLead));
   const [workspaceTab, setWorkspaceTab] = useState<WorkspaceTab>("communication");
   const [referenceTab, setReferenceTab] = useState<ReferenceTab>("customer");
   const [taskDialog, setTaskDialog] = useState<TaskDialogState>(null);
   const [completionMode, setCompletionMode] = useState<LeadCompletionMode | null>(null);
-  const [taskFilter, setTaskFilter] = useState<LeadTaskFilter>("open");
   const [taskActionError, setTaskActionError] = useState("");
   const [noteActionError, setNoteActionError] = useState("");
+  const [workTasks, setWorkTasks] = useState(initialWorkTasks);
+  const [workTaskCreateOpen, setWorkTaskCreateOpen] = useState(false);
   const taskDialogTriggerRef = useRef<HTMLElement | null>(null);
   const taskManagers = lead.taskManagers;
   const currentActor = lead.currentActor;
   const taskPersistent = true;
   const noteManagers = taskManagers;
+
+  useEffect(() => {
+    setWorkTasks(initialWorkTasks);
+  }, [initialWorkTasks]);
 
   function applyPersistedActivities(activities: LeadActivity[]) {
     const occurredAt = activities.reduce((latest, activity) => {
@@ -738,7 +754,7 @@ export function LeadPage({
 
   return (
     <PageLayout>
-    <div data-lead-workspace data-complex-entity-card-page className="w-full min-w-0 bg-portal-page text-portal-text">
+    <div data-lead-workspace data-complex-entity-card-page className="sl-design-v1 w-full min-w-0 bg-portal-page text-portal-text">
       <LeadHeader
         key={`${lead.id}-${lead.status}-${lead.stageId ?? "final"}`}
         lead={lead}
@@ -757,6 +773,17 @@ export function LeadPage({
             <nav className="sr-only" aria-label="Данные лида">
               {referenceTabs.map(({ id, label }) => <button key={id} id={`lead-reference-tab-${id}`} type="button" aria-current={referenceTab === id ? "page" : undefined} onClick={() => openReferenceSection(id)} onKeyDown={(event) => moveReferenceTab(event, id)} className={`shrink-0 rounded-lg px-3 py-1.5 text-xs font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${referenceTab === id ? "bg-blue-50 text-blue-700" : "text-slate-500 hover:bg-white hover:text-slate-800"}`}>{label}</button>)}
             </nav>
+
+            <SectionCard title="Ключевые метрики лида" size="compact">
+              <ResponsiveGrid minItemWidth="small" gap="compact" className="lead-metrics-grid">
+                <MetricCard label="Вероятность конверсии" value={lead.probability === null ? "Не указана" : `${lead.probability}%`} size="compact" />
+                <MetricCard label="Последний контакт" value={formatDate(lead.lastActivityAt)} size="compact" />
+                <MetricCard label="Следующий контакт" value={nearestTask ? formatTaskDate(nearestTask.dueAt) : "Не запланирован"} detail={nearestTask?.title} size="compact" />
+                <MetricCard label="Дней в работе" value={`${daysInWork} дн.`} detail={`с ${formatDate(lead.createdAt)}`} size="compact" />
+                <MetricCard label="Количество касаний" value={String(lead.activities.length)} detail="событий в истории" size="compact" />
+                <MetricCard label="Потенциальная сумма" value={formatCurrency(lead.estimatedAmount)} tone="success" size="compact" />
+              </ResponsiveGrid>
+            </SectionCard>
 
             <ResponsiveGrid minItemWidth="large" gap="default" className="lead-reference-grid">
               <div id="lead-reference-panel-customer" className="min-w-0 rounded-portal-lg border border-portal-border bg-portal-surface shadow-portal-card">
@@ -784,17 +811,6 @@ export function LeadPage({
               </div>
             </ResponsiveGrid>
 
-            <SectionCard title="Ключевые метрики лида" size="compact">
-              <ResponsiveGrid minItemWidth="small" gap="compact" className="lead-metrics-grid">
-                <MetricCard label="Вероятность конверсии" value={lead.probability === null ? "Не указана" : `${lead.probability}%`} size="compact" />
-                <MetricCard label="Последний контакт" value={formatDate(lead.lastActivityAt)} size="compact" />
-                <MetricCard label="Следующий контакт" value={nearestTask ? formatTaskDate(nearestTask.dueAt) : "Не запланирован"} detail={nearestTask?.title} size="compact" />
-                <MetricCard label="Дней в работе" value={`${daysInWork} дн.`} detail={`с ${formatDate(lead.createdAt)}`} size="compact" />
-                <MetricCard label="Количество касаний" value={String(lead.activities.length)} detail="событий в истории" size="compact" />
-                <MetricCard label="Потенциальная сумма" value={formatCurrency(lead.estimatedAmount)} tone="success" size="compact" />
-              </ResponsiveGrid>
-            </SectionCard>
-
             <div className="lg:hidden">
               <CompactTabs
                 label="Рабочие разделы лида"
@@ -812,11 +828,22 @@ export function LeadPage({
             </nav>
 
             <div className="lead-bottom-grid grid min-w-0 items-start gap-3">
-              <div id="lead-workspace-panel-history" className={`lead-history-card min-w-0 rounded-portal-lg border border-portal-border bg-portal-surface shadow-portal-card ${workspaceTab === "history" ? "block" : "hidden"} lg:block`}>
+              <div id="lead-workspace-panel-tasks" className={`lead-tasks-card min-w-0 rounded-portal-lg border border-portal-border bg-portal-surface shadow-portal-card ${workspaceTab === "tasks" ? "block" : "hidden"} lg:block`}>
+                {taskActionError ? <p className="border-b border-red-100 bg-red-50 px-4 py-2 text-sm text-red-700" role="alert">{taskActionError}</p> : null}
+                <HostWorkTasksPanel
+                  embedded
+                  compact
+                  tasks={workTasks}
+                  loadError={workTasksError}
+                  onAdd={() => setWorkTaskCreateOpen(true)}
+                />
+              </div>
+              <div id="lead-workspace-panel-notes" className={`lead-notes-card min-w-0 rounded-portal-lg border border-portal-border bg-portal-surface shadow-portal-card ${workspaceTab === "notes" ? "block" : "hidden"} lg:block`}>
+                {noteActionError ? <p className="border-b border-red-100 bg-red-50 px-4 py-2 text-sm text-red-700" role="alert">{noteActionError}</p> : null}
                 <LeadActivityTimeline
                   embedded
                   compact
-                  mode="history"
+                  mode="notes"
                   activities={lead.activities}
                   currentUser={currentActor}
                   managers={noteManagers}
@@ -827,16 +854,11 @@ export function LeadPage({
                   onTogglePin={toggleNotePin}
                 />
               </div>
-              <div id="lead-workspace-panel-tasks" className={`lead-tasks-card min-w-0 rounded-portal-lg border border-portal-border bg-portal-surface shadow-portal-card ${workspaceTab === "tasks" ? "block" : "hidden"} lg:block`}>
-                {taskActionError ? <p className="border-b border-red-100 bg-red-50 px-4 py-2 text-sm text-red-700" role="alert">{taskActionError}</p> : null}
-                <LeadTasks embedded compact tasks={lead.tasks} referenceAt={lead.taskReferenceAt} filter={taskFilter} onFilterChange={setTaskFilter} onAdd={(trigger) => openTaskDialog({ kind: "edit", task: null }, trigger)} onEdit={(task, trigger) => openTaskDialog({ kind: "edit", task }, trigger)} onComplete={(task, trigger) => openTaskDialog({ kind: "complete", task }, trigger)} onDelete={(task, trigger) => openTaskDialog({ kind: "delete", task }, trigger)} onReopen={reopenTask} onReschedule={rescheduleTask} />
-              </div>
-              <div id="lead-workspace-panel-notes" className={`lead-notes-card min-w-0 rounded-portal-lg border border-portal-border bg-portal-surface shadow-portal-card ${workspaceTab === "notes" ? "block" : "hidden"} lg:block`}>
-                {noteActionError ? <p className="border-b border-red-100 bg-red-50 px-4 py-2 text-sm text-red-700" role="alert">{noteActionError}</p> : null}
+              <div id="lead-workspace-panel-history" className={`lead-history-card min-w-0 rounded-portal-lg border border-portal-border bg-portal-surface shadow-portal-card ${workspaceTab === "history" ? "block" : "hidden"} lg:block`}>
                 <LeadActivityTimeline
                   embedded
                   compact
-                  mode="notes"
+                  mode="history"
                   activities={lead.activities}
                   currentUser={currentActor}
                   managers={noteManagers}
@@ -875,9 +897,16 @@ export function LeadPage({
                 </div>
               )}
             />
+            <div className="border-t border-portal-border">
+              <OrderCollaborationPanel
+                embedded
+                leadId={lead.id}
+                title="Внутренняя переписка"
+              />
+            </div>
             <PageActions className="border-t border-portal-border bg-portal-surface-secondary p-3" align="start">
               <Button type="button" variant="primary" onClick={() => openWorkspaceSection("communication")} className="h-9 basis-[calc(50%-0.25rem)] px-2 sm:basis-auto"><MessageCircle size={15} /> Написать</Button>
-              <Button type="button" onClick={(event) => openTaskDialog({ kind: "edit", task: null }, event.currentTarget)} className="h-9 basis-[calc(50%-0.25rem)] px-2 sm:basis-auto"><Plus size={15} /> Задача</Button>
+              <Button type="button" onClick={() => setWorkTaskCreateOpen(true)} className="h-9 basis-[calc(50%-0.25rem)] px-2 sm:basis-auto"><Plus size={15} /> Задача</Button>
               {primaryContact?.phone ? <a href={`tel:${primaryContact.phone}`} className="inline-flex h-9 basis-[calc(50%-0.25rem)] items-center justify-center gap-2 rounded-[var(--portal-radius-md)] border border-portal-border bg-portal-surface px-2 text-sm font-medium text-portal-text hover:bg-portal-surface-secondary sm:basis-auto"><PhoneCall size={15} /> Позвонить</a> : <Button type="button" disabled className="h-9 basis-[calc(50%-0.25rem)] px-2 sm:basis-auto"><PhoneCall size={15} /> Позвонить</Button>}
               <Button type="button" disabled title="Создание заказа будет доступно позже" className="h-9 basis-[calc(50%-0.25rem)] px-2 sm:basis-auto"><ShoppingBag size={15} /> Заказ</Button>
             </PageActions>
@@ -913,6 +942,23 @@ export function LeadPage({
           onConfirm={() => deleteTask(taskDialog.task.id)}
         />
       ) : null}
+      <WorkTaskCreateDrawer
+        open={workTaskCreateOpen}
+        onClose={() => setWorkTaskCreateOpen(false)}
+        stages={workTaskStages}
+        users={workTaskUsers}
+        lockedAnchor={{
+          type: "lead",
+          id: Number(lead.id),
+          label: `Лид #${lead.id}`,
+        }}
+        navigateOnCreate={false}
+        onCreated={(task) => {
+          setWorkTasks((current) => [task, ...current]);
+          setWorkTaskCreateOpen(false);
+          setWorkspaceTab("tasks");
+        }}
+      />
       {completionMode ? (
         <LeadCompletionDialog
           key={`${lead.id}-${completionMode}`}

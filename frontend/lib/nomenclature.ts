@@ -325,6 +325,8 @@ export type CharacteristicDefinition = {
   is_active: boolean;
   is_system: boolean;
   can_delete?: boolean;
+  /** Embedded on list (`0.2.3.1`); optional for older payloads. */
+  option_count?: number;
   created_at: string;
   updated_at: string;
 };
@@ -530,6 +532,34 @@ export async function getCharacteristicOptions(
   return getCharacteristicApi<CharacteristicOption[]>(
     `/definitions/${id}/options`,
   );
+}
+
+/** Batch options for many definitions (`0.2.8`) — one HTTP round-trip. */
+export async function getCharacteristicOptionsBatch(
+  ids: number[],
+): Promise<Record<number, CharacteristicOption[]>> {
+  const unique = [...new Set(ids.filter((id) => Number.isSafeInteger(id) && id > 0))];
+  if (unique.length === 0) {
+    return {};
+  }
+  const url = new URL(`${apiBaseUrl()}${characteristicsApiPath("/options-batch")}`);
+  for (const id of unique) {
+    url.searchParams.append("characteristic_id", String(id));
+  }
+  const response = await fetch(url, { cache: "no-store" });
+  if (!response.ok) {
+    throw new Error(
+      `Не удалось загрузить options характеристик (${response.status}).`,
+    );
+  }
+  const payload = (await response.json()) as {
+    options?: Record<string, CharacteristicOption[]>;
+  };
+  const result: Record<number, CharacteristicOption[]> = {};
+  for (const id of unique) {
+    result[id] = payload.options?.[String(id)] ?? [];
+  }
+  return result;
 }
 
 export async function getCharacteristicUsedValues(

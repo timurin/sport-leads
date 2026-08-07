@@ -1,4 +1,4 @@
-"""Internal collaboration / order chat (ADR-026 / Stage 19)."""
+"""Internal collaboration / order chat (ADR-026 / Stage 19; lead XOR ADR-027)."""
 
 from __future__ import annotations
 
@@ -7,6 +7,7 @@ from enum import Enum
 from typing import TYPE_CHECKING
 
 from sqlalchemy import (
+    CheckConstraint,
     DateTime,
     ForeignKey,
     Index,
@@ -22,7 +23,7 @@ from app.database.base import Base
 
 if TYPE_CHECKING:
     from app.models.auth import PlatformUser
-    from app.models.sales import SalesOrder
+    from app.models.sales import Lead, SalesOrder
     from app.models.technical_card import TechnicalCard
 
 
@@ -32,18 +33,29 @@ class CollaborationMicrotaskStatus(str, Enum):
 
 
 class CollaborationThread(Base):
-    """One staff collaboration thread per sales order (ADR-026)."""
+    """Staff collaboration thread: XOR sales_order_id | lead_id (ADR-026/027)."""
 
     __tablename__ = "collaboration_threads"
     __table_args__ = (
         UniqueConstraint("sales_order_id", name="uq_collaboration_threads_sales_order_id"),
+        UniqueConstraint("lead_id", name="uq_collaboration_threads_lead_id"),
         Index("ix_collaboration_threads_sales_order_id", "sales_order_id"),
+        Index("ix_collaboration_threads_lead_id", "lead_id"),
+        CheckConstraint(
+            "(sales_order_id IS NOT NULL AND lead_id IS NULL) "
+            "OR (sales_order_id IS NULL AND lead_id IS NOT NULL)",
+            name="ck_collaboration_threads_anchor_xor",
+        ),
     )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    sales_order_id: Mapped[int] = mapped_column(
+    sales_order_id: Mapped[int | None] = mapped_column(
         ForeignKey("sales_orders.id", ondelete="CASCADE"),
-        nullable=False,
+        nullable=True,
+    )
+    lead_id: Mapped[int | None] = mapped_column(
+        ForeignKey("leads.id", ondelete="CASCADE"),
+        nullable=True,
     )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
@@ -57,7 +69,8 @@ class CollaborationThread(Base):
         onupdate=func.now(),
     )
 
-    sales_order: Mapped[SalesOrder] = relationship("SalesOrder")
+    sales_order: Mapped[SalesOrder | None] = relationship("SalesOrder")
+    lead: Mapped[Lead | None] = relationship("Lead")
     messages: Mapped[list[CollaborationMessage]] = relationship(
         back_populates="thread",
         cascade="all, delete-orphan",
@@ -149,20 +162,30 @@ class CollaborationMention(Base):
 
 
 class CollaborationMicrotask(Base):
-    """Platform microtask created from order chat (ADR-026)."""
+    """Platform microtask from staff chat (ADR-026/027); XOR order | lead."""
 
     __tablename__ = "collaboration_microtasks"
     __table_args__ = (
         Index("ix_collaboration_microtasks_sales_order_id", "sales_order_id"),
+        Index("ix_collaboration_microtasks_lead_id", "lead_id"),
         Index("ix_collaboration_microtasks_assignee", "assignee_platform_user_id"),
         Index("ix_collaboration_microtasks_status", "status"),
         Index("ix_collaboration_microtasks_technical_card_id", "technical_card_id"),
+        CheckConstraint(
+            "(sales_order_id IS NOT NULL AND lead_id IS NULL) "
+            "OR (sales_order_id IS NULL AND lead_id IS NOT NULL)",
+            name="ck_collaboration_microtasks_anchor_xor",
+        ),
     )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    sales_order_id: Mapped[int] = mapped_column(
+    sales_order_id: Mapped[int | None] = mapped_column(
         ForeignKey("sales_orders.id", ondelete="CASCADE"),
-        nullable=False,
+        nullable=True,
+    )
+    lead_id: Mapped[int | None] = mapped_column(
+        ForeignKey("leads.id", ondelete="CASCADE"),
+        nullable=True,
     )
     title: Mapped[str] = mapped_column(String(255), nullable=False)
     status: Mapped[str] = mapped_column(
@@ -203,7 +226,8 @@ class CollaborationMicrotask(Base):
         nullable=True,
     )
 
-    sales_order: Mapped[SalesOrder] = relationship("SalesOrder")
+    sales_order: Mapped[SalesOrder | None] = relationship("SalesOrder")
+    lead: Mapped[Lead | None] = relationship("Lead")
     assignee: Mapped[PlatformUser] = relationship(
         "PlatformUser",
         foreign_keys=[assignee_platform_user_id],
@@ -225,7 +249,7 @@ class CollaborationNotificationKind(str, Enum):
 
 
 class CollaborationNotification(Base):
-    """In-app notification for order-chat mentions / microtasks (Stage 19.4)."""
+    """In-app notification for staff chat mentions / microtasks (Stage 19.4 / ADR-027)."""
 
     __tablename__ = "collaboration_notifications"
     __table_args__ = (
@@ -233,6 +257,12 @@ class CollaborationNotification(Base):
         Index("ix_collaboration_notifications_created_at", "created_at"),
         Index("ix_collaboration_notifications_read_at", "read_at"),
         Index("ix_collaboration_notifications_kind", "kind"),
+        Index("ix_collaboration_notifications_lead_id", "lead_id"),
+        CheckConstraint(
+            "(sales_order_id IS NOT NULL AND lead_id IS NULL) "
+            "OR (sales_order_id IS NULL AND lead_id IS NOT NULL)",
+            name="ck_collaboration_notifications_anchor_xor",
+        ),
     )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -243,9 +273,13 @@ class CollaborationNotification(Base):
     kind: Mapped[str] = mapped_column(String(40), nullable=False)
     title: Mapped[str] = mapped_column(String(255), nullable=False)
     body: Mapped[str] = mapped_column(Text, nullable=False)
-    sales_order_id: Mapped[int] = mapped_column(
+    sales_order_id: Mapped[int | None] = mapped_column(
         ForeignKey("sales_orders.id", ondelete="CASCADE"),
-        nullable=False,
+        nullable=True,
+    )
+    lead_id: Mapped[int | None] = mapped_column(
+        ForeignKey("leads.id", ondelete="CASCADE"),
+        nullable=True,
     )
     technical_card_id: Mapped[int | None] = mapped_column(
         ForeignKey("technical_cards.id", ondelete="SET NULL"),

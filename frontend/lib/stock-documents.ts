@@ -15,6 +15,7 @@ export type StockLedgerLine = {
   line_no: number;
   warehouse_id: number;
   nomenclature_id: number;
+  nomenclature_name?: string | null;
   quantity: string | number;
   posted_at: string | null;
   technical_card_id: number | null;

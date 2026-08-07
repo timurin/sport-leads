@@ -76,6 +76,34 @@ export type WorkCenterDraft = {
   is_active: boolean;
 };
 
+/** Virtual folder id for work centers without `production_stage_id`. */
+export const WORK_CENTER_UNASSIGNED_FOLDER_ID = 0;
+
+export type WorkCenterStageFolder = {
+  id: number;
+  name: string;
+  sort_order: number;
+};
+
+export type WorkCenterCatalogTreeRow =
+  | {
+      kind: "folder";
+      id: number;
+      name: string;
+      depth: number;
+      production_stage_id: number | null;
+      sort_order: number;
+    }
+  | {
+      kind: "work_center";
+      id: number;
+      name: string;
+      depth: number;
+      parent_id: number;
+      sort_order: number;
+      workCenter: WorkCenter;
+    };
+
 export function filterWorkCenters(
   rows: WorkCenter[],
   query: string,
@@ -87,6 +115,125 @@ export function filterWorkCenters(
       row.name.toLocaleLowerCase("ru").includes(needle) ||
       row.code.toLocaleLowerCase("ru").includes(needle),
   );
+}
+
+/**
+ * Flat catalog tree: production stages as folders, equipment nested under them
+ * (same UX idea as sewing-operation folders; stages are the folders).
+ */
+export function buildWorkCenterCatalogTreeRows(
+  stages: WorkCenterStageFolder[],
+  workCenters: WorkCenter[],
+): WorkCenterCatalogTreeRow[] {
+  const sortedStages = [...stages].sort(
+    (a, b) =>
+      a.sort_order - b.sort_order ||
+      a.name.localeCompare(b.name, "ru") ||
+      a.id - b.id,
+  );
+
+  const byStage = new Map<number | null, WorkCenter[]>();
+  for (const row of workCenters) {
+    const key = row.production_stage_id;
+    const list = byStage.get(key) ?? [];
+    list.push(row);
+    byStage.set(key, list);
+  }
+  for (const list of byStage.values()) {
+    list.sort(
+      (a, b) =>
+        a.name.localeCompare(b.name, "ru") || a.id - b.id,
+    );
+  }
+
+  const rows: WorkCenterCatalogTreeRow[] = [];
+  const knownIds = new Set(sortedStages.map((stage) => stage.id));
+
+  for (const stage of sortedStages) {
+    rows.push({
+      kind: "folder",
+      id: stage.id,
+      name: stage.name,
+      depth: 0,
+      production_stage_id: stage.id,
+      sort_order: stage.sort_order,
+    });
+    for (const workCenter of byStage.get(stage.id) ?? []) {
+      rows.push({
+        kind: "work_center",
+        id: workCenter.id,
+        name: workCenter.name,
+        depth: 1,
+        parent_id: stage.id,
+        sort_order: 0,
+        workCenter,
+      });
+    }
+  }
+
+  for (const [stageId, list] of byStage) {
+    if (stageId == null || knownIds.has(stageId)) continue;
+    rows.push({
+      kind: "folder",
+      id: stageId,
+      name: `Цех #${stageId}`,
+      depth: 0,
+      production_stage_id: stageId,
+      sort_order: Number.MAX_SAFE_INTEGER - 1,
+    });
+    for (const workCenter of list) {
+      rows.push({
+        kind: "work_center",
+        id: workCenter.id,
+        name: workCenter.name,
+        depth: 1,
+        parent_id: stageId,
+        sort_order: 0,
+        workCenter,
+      });
+    }
+  }
+
+  rows.push({
+    kind: "folder",
+    id: WORK_CENTER_UNASSIGNED_FOLDER_ID,
+    name: "Без цеха",
+    depth: 0,
+    production_stage_id: null,
+    sort_order: Number.MAX_SAFE_INTEGER,
+  });
+  for (const workCenter of byStage.get(null) ?? []) {
+    rows.push({
+      kind: "work_center",
+      id: workCenter.id,
+      name: workCenter.name,
+      depth: 1,
+      parent_id: WORK_CENTER_UNASSIGNED_FOLDER_ID,
+      sort_order: 0,
+      workCenter,
+    });
+  }
+
+  return rows;
+}
+
+export function visibleWorkCenterCatalogTreeRows(
+  rows: WorkCenterCatalogTreeRow[],
+  expandedFolderIds: Set<number>,
+): WorkCenterCatalogTreeRow[] {
+  const visible: WorkCenterCatalogTreeRow[] = [];
+  const collapsed = new Set<number>();
+
+  for (const row of rows) {
+    if (row.kind === "work_center" && collapsed.has(row.parent_id)) {
+      continue;
+    }
+    visible.push(row);
+    if (row.kind === "folder" && !expandedFolderIds.has(row.id)) {
+      collapsed.add(row.id);
+    }
+  }
+  return visible;
 }
 
 export function validateWorkCenterDraft(draft: WorkCenterDraft): string | null {

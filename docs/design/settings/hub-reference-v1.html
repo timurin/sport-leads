@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SPORT-LEAD — Настройки</title>
+  <link rel="stylesheet" href="../shared/preview.css">
+</head>
+<body
+  data-shell-section="settings"
+  data-top-nav="hub"
+  data-base="../"
+  data-page-title="Настройки · Обзор"
+  data-create-label="Справочник"
+  data-create-href="#catalogs"
+>
+  <div class="shell">
+    <aside class="rail" data-shell-rail aria-label="Левое меню"></aside>
+    <div class="workspace">
+      <header class="topbar" data-shell-topbar></header>
+      <main class="main">
+        <div class="banner" role="status">
+          <span>Settings hub · Soft UI · Stage 22.7 · demo (каталоги / org / users)</span>
+        </div>
+
+        <section class="panel header-panel">
+          <div>
+            <div class="title-row">
+              <h1>Настройки платформы</h1>
+              <span class="badge">Hub</span>
+            </div>
+            <div class="meta-row">
+              <span>Доступ <b>админ</b></span>
+              <span>Орг. <b>Sport-Lead Demo</b></span>
+            </div>
+          </div>
+          <div class="actions">
+            <button type="button" class="btn">Аудит</button>
+            <button type="button" class="btn is-primary">Пользователи</button>
+          </div>
+        </section>
+
+        <div class="hub-grid" id="catalogs">
+          <a class="hub-card" href="#"><strong>Склады</strong><span class="small">/settings/catalogs/warehouses</span></a>
+          <a class="hub-card" href="#"><strong>Контрагенты</strong><span class="small">/settings/catalogs/contractors</span></a>
+          <a class="hub-card" href="#"><strong>Единицы измерения</strong><span class="small">units-of-measure</span></a>
+          <a class="hub-card" href="#"><strong>Характеристики</strong><span class="small">product-characteristics</span></a>
+          <a class="hub-card" href="#"><strong>Типы номенклатуры</strong><span class="small">nomenclature-types</span></a>
+          <a class="hub-card" href="#"><strong>Ставки НДС</strong><span class="small">vat-rates</span></a>
+        </div>
+
+        <div class="dash-grid">
+          <section class="panel span-6" id="org">
+            <h2 style="margin:0 0 8px;font-size:15px">Организации</h2>
+            <div class="list-row">
+              <div><b>Организации</b><div class="small">Юрлица / реквизиты</div></div>
+              <button type="button" class="btn">Открыть</button>
+            </div>
+            <div class="list-row">
+              <div><b>Подразделения</b><div class="small">Структура</div></div>
+              <button type="button" class="btn">Открыть</button>
+            </div>
+          </section>
+          <section class="panel span-6" id="users">
+            <h2 style="margin:0 0 8px;font-size:15px">Пользователи · Stage 21</h2>
+            <div class="list-row">
+              <div><b>Кабинет пользователей</b><div class="small">/settings/users · роли / invite</div></div>
+              <button type="button" class="btn is-primary">Открыть</button>
+            </div>
+            <div class="list-row">
+              <div><b>Профиль</b><div class="small">Имя · контакты · сессии</div></div>
+              <button type="button" class="btn">Открыть</button>
+            </div>
+          </section>
+        </div>
+      </main>
+    </div>
+  </div>
+  <script src="../shared/shell.js"></script>
+</body>
+</html>

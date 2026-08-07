@@ -305,6 +305,65 @@ def list_options(db: Session, characteristic_id: int) -> list[CharacteristicOpti
     )
 
 
+def option_counts_by_definition_ids(
+    db: Session, definition_ids: list[int]
+) -> dict[int, int]:
+    """Batch option counts keyed by characteristic definition id (list embed)."""
+    if not definition_ids:
+        return {}
+    unique_ids = list(dict.fromkeys(definition_ids))
+    rows = db.execute(
+        select(
+            CharacteristicOption.characteristic_id,
+            func.count(CharacteristicOption.id),
+        )
+        .where(CharacteristicOption.characteristic_id.in_(unique_ids))
+        .group_by(CharacteristicOption.characteristic_id)
+    ).all()
+    counts = {int(definition_id): int(count) for definition_id, count in rows}
+    return {definition_id: counts.get(definition_id, 0) for definition_id in unique_ids}
+
+
+def list_options_by_definition_ids(
+    db: Session, definition_ids: list[int]
+) -> dict[int, list[CharacteristicOption]]:
+    """Batch options for many definitions — one query (`0.2.8`)."""
+    unique_ids = list(dict.fromkeys(definition_ids))
+    if not unique_ids:
+        return {}
+
+    definitions = list(
+        db.scalars(
+            select(CharacteristicDefinition).where(
+                CharacteristicDefinition.id.in_(unique_ids)
+            )
+        ).all()
+    )
+    if any(item.code == "color" for item in definitions):
+        from app.services.characteristic_colors_seed import seed_standard_color_options
+
+        seed_standard_color_options(db)
+        db.commit()
+
+    rows = list(
+        db.scalars(
+            select(CharacteristicOption)
+            .where(CharacteristicOption.characteristic_id.in_(unique_ids))
+            .order_by(
+                CharacteristicOption.characteristic_id,
+                CharacteristicOption.sort_order,
+                CharacteristicOption.id,
+            )
+        ).all()
+    )
+    grouped: dict[int, list[CharacteristicOption]] = {
+        definition_id: [] for definition_id in unique_ids
+    }
+    for row in rows:
+        grouped.setdefault(row.characteristic_id, []).append(row)
+    return grouped
+
+
 def list_used_value_labels(
     db: Session,
     characteristic_id: int,

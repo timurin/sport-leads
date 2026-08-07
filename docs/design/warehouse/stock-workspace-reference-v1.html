@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SPORT-LEAD — Склад</title>
+  <link rel="stylesheet" href="../shared/preview.css">
+</head>
+<body
+  data-shell-section="warehouse"
+  data-top-nav="stock"
+  data-base="../"
+  data-page-title="Склад · Номенклатура"
+  data-create-label="Движение"
+  data-create-href="#movements"
+>
+  <div class="shell">
+    <aside class="rail" data-shell-rail aria-label="Левое меню"></aside>
+    <div class="workspace">
+      <header class="topbar" data-shell-topbar></header>
+      <main class="main">
+        <div class="banner" role="status">
+          <span>Warehouse workspace · дерево + список · Soft UI · Stage 22.5 · demo</span>
+        </div>
+
+        <section class="panel header-panel">
+          <div>
+            <div class="title-row">
+              <h1>Остатки номенклатуры</h1>
+              <span class="badge is-warning">7 ниже min</span>
+            </div>
+            <div class="meta-row">
+              <span>Склад <b>Основной</b></span>
+              <span>Группа <b>Ткани</b></span>
+              <span>Ед. <b>м / шт</b></span>
+            </div>
+          </div>
+          <div class="actions">
+            <button type="button" class="btn">Инвентаризация</button>
+            <button type="button" class="btn is-primary">Оформить приход</button>
+          </div>
+        </section>
+
+        <div class="split-workspace">
+          <aside class="tree-pane" aria-label="Группы">
+            <div class="rail-label" style="margin-top:0">Каталог</div>
+            <a class="tree-item is-active" href="#">Ткани</a>
+            <a class="tree-item" href="#">Фурнитура</a>
+            <a class="tree-item" href="#">Готовая продукция</a>
+            <a class="tree-item" href="#">Упаковка</a>
+            <div class="rail-label">Склады</div>
+            <a class="tree-item" href="#">Основной</a>
+            <a class="tree-item" href="#">Цех раскроя</a>
+          </aside>
+
+          <section class="panel">
+            <div class="toolbar-row">
+              <label class="topbar-search" style="max-width:280px">
+                <span aria-hidden="true">⌕</span>
+                <input type="search" placeholder="Артикул / название…" disabled>
+              </label>
+              <div style="display:flex;gap:8px">
+                <button type="button" class="btn">Колонки</button>
+                <button type="button" class="btn">Фильтр</button>
+              </div>
+            </div>
+            <div class="list-row">
+              <div>
+                <b>TX-12 · Интерлок 180</b>
+                <div class="small">Остаток 42 м · min 80 м · ячейка A-12</div>
+              </div>
+              <span class="status-dot is-warn">ниже min</span>
+            </div>
+            <div class="list-row">
+              <div>
+                <b>TX-08 · Кулир 160</b>
+                <div class="small">Остаток 210 м · min 50 м · ячейка A-04</div>
+              </div>
+              <span class="status-dot is-ok">норма</span>
+            </div>
+            <div class="list-row">
+              <div>
+                <b>HD-01 · Молния №5</b>
+                <div class="small">Остаток 860 шт · min 200 · ячейка B-02</div>
+              </div>
+              <span class="status-dot is-ok">норма</span>
+            </div>
+          </section>
+        </div>
+
+        <div class="dash-grid">
+          <section class="panel span-6" id="movements">
+            <h2 style="margin:0 0 8px;font-size:15px">Последние движения</h2>
+            <div class="list-row">
+              <div><b>Приход M-882</b><div class="small">TX-12 · +120 м · сегодня</div></div>
+              <button type="button" class="btn">Открыть</button>
+            </div>
+            <div class="list-row">
+              <div><b>Списание M-871</b><div class="small">В производство PO-41 · −18 м</div></div>
+              <button type="button" class="btn">Открыть</button>
+            </div>
+          </section>
+          <section class="panel span-6" id="inventory">
+            <h2 style="margin:0 0 8px;font-size:15px">Инвентаризация</h2>
+            <p class="small" style="margin:0 0 10px">Черновик INV-2026-03 · склад Основной · 12 позиций расхождения</p>
+            <button type="button" class="btn is-primary">Продолжить</button>
+          </section>
+        </div>
+      </main>
+    </div>
+  </div>
+  <script src="../shared/shell.js"></script>
+</body>
+</html>

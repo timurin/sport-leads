@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { ChevronDown, ChevronRight, Plus, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { type FormEvent, useState } from "react";
+import { type FormEvent, useEffect, useState } from "react";
 
 import {
   attachTechnicalCardToBatchAction,
@@ -11,6 +11,11 @@ import {
   detachTechnicalCardFromBatchAction,
 } from "@/app/(workspace)/production/orders/production-order-actions";
 import { ProductionFactRollupPanel } from "@/components/production/production-fact-rollup-panel";
+import { HostWorkTasksPanel } from "@/components/sales/host-work-tasks-panel";
+import {
+  WorkTaskCreateDrawer,
+  type WorkTaskAnchorOption,
+} from "@/components/sales/work-task-create-drawer";
 import { Button, IconButton } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Field, Select } from "@/components/ui/form-controls";
@@ -26,6 +31,7 @@ import {
   type ProductionOrderDetail,
 } from "@/lib/production/production-orders";
 import type { ApiTechnicalCardListItem } from "@/lib/sales/order-tech-cards-api";
+import type { WorkTaskListItem } from "@/lib/work-tasks";
 
 function CollapseToggleButton({
   collapsed,
@@ -57,11 +63,19 @@ export function ProductionOrderDetailWorkspace({
   technicalCards,
   orderRollup,
   batchRollups,
+  workTasks: initialWorkTasks = [],
+  workTasksError = null,
+  workTaskStages = [],
+  workTaskUsers = [],
 }: {
   order: ProductionOrderDetail;
   technicalCards: ApiTechnicalCardListItem[];
   orderRollup: ProductionFactRollup;
   batchRollups: Record<number, ProductionFactRollup>;
+  workTasks?: WorkTaskListItem[];
+  workTasksError?: string | null;
+  workTaskStages?: WorkTaskAnchorOption[];
+  workTaskUsers?: WorkTaskAnchorOption[];
 }) {
   const router = useRouter();
   const { push: pushToast } = useToast();
@@ -75,6 +89,12 @@ export function ProductionOrderDetailWorkspace({
   const [batchFactCollapsed, setBatchFactCollapsed] = useState<
     Record<number, boolean>
   >({});
+  const [workTasks, setWorkTasks] = useState(initialWorkTasks);
+  const [workTaskCreateOpen, setWorkTaskCreateOpen] = useState(false);
+
+  useEffect(() => {
+    setWorkTasks(initialWorkTasks);
+  }, [initialWorkTasks]);
 
   const refresh = () => router.refresh();
 
@@ -205,6 +225,20 @@ export function ProductionOrderDetailWorkspace({
             </div>
           </dl>
         </SectionCard>
+
+        <div
+          id="production-order-panel-tasks"
+          className="min-w-0 rounded-portal-lg border border-portal-border bg-portal-surface shadow-portal-card"
+        >
+          <HostWorkTasksPanel
+            embedded
+            compact
+            title="Задачи"
+            tasks={workTasks}
+            loadError={workTasksError}
+            onAdd={() => setWorkTaskCreateOpen(true)}
+          />
+        </div>
 
         <SectionCard
           title="Сводка факта заказа"
@@ -377,6 +411,22 @@ export function ProductionOrderDetailWorkspace({
           })
         )}
       </div>
+      <WorkTaskCreateDrawer
+        open={workTaskCreateOpen}
+        onClose={() => setWorkTaskCreateOpen(false)}
+        stages={workTaskStages}
+        users={workTaskUsers}
+        lockedAnchor={{
+          type: "production_order",
+          id: order.id,
+          label: `ПО ${order.number}`,
+        }}
+        navigateOnCreate={false}
+        onCreated={(task) => {
+          setWorkTasks((current) => [task, ...current]);
+          setWorkTaskCreateOpen(false);
+        }}
+      />
     </div>
   );
 }

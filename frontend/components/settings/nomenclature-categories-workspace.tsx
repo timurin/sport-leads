@@ -14,9 +14,21 @@ import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 
 import {
+  moveNomenclatureCategoryToParent,
   reorderNomenclatureCategorySibling,
   updateNomenclatureCategory,
 } from "@/app/(workspace)/settings/catalogs/nomenclature/nomenclature-actions";
+import {
+  CatalogTreeDepthCell,
+  CatalogTreeDndProvider,
+  CatalogTreeDraggableFolder,
+  CatalogTreeRootDropZone,
+} from "@/components/settings/catalog-folder-tree-dnd";
+import {
+  canNestCatalogFolder,
+  catalogFolderRowSurfaceClass,
+  catalogFolderWouldChangeParent,
+} from "@/lib/catalog-folder-dnd";
 import { NomenclatureSectionCreateHost } from "@/components/settings/nomenclature-section-create-host";
 import type { NomenclatureCreateKind } from "@/components/settings/nomenclature-section-create-menu";
 import { Button, IconButton } from "@/components/ui/button";
@@ -168,6 +180,63 @@ export function NomenclatureCategoriesWorkspace({
     });
   };
 
+  const dndEnabled = query.trim().length === 0 && editingId == null && !pending;
+
+  const folderNodes = useMemo(
+    () =>
+      categories.map((category) => ({
+        id: category.id,
+        parent_id: category.parent_id,
+      })),
+    [categories],
+  );
+
+  const onCatalogDrop = ({
+    active,
+    over,
+  }: {
+    active: { kind: string; id?: number };
+    over: { kind: string; id?: number };
+  }) => {
+    if (active.kind !== "folder" || typeof active.id !== "number") return;
+    const targetParentId =
+      over.kind === "root"
+        ? null
+        : over.kind === "folder" && typeof over.id === "number"
+          ? over.id
+          : undefined;
+    if (targetParentId === undefined) return;
+    if (!canNestCatalogFolder(folderNodes, active.id, targetParentId)) {
+      setActionError("Нельзя вложить категорию в себя или в своего потомка.");
+      return;
+    }
+    if (!catalogFolderWouldChangeParent(folderNodes, active.id, targetParentId)) {
+      return;
+    }
+    setActionError(null);
+    const dragId = active.id;
+    startTransition(async () => {
+      try {
+        await moveNomenclatureCategoryToParent(dragId, targetParentId);
+        if (targetParentId != null) {
+          setExpandedIds((current) => {
+            const next = new Set(current);
+            next.add(targetParentId);
+            return next;
+          });
+        }
+        router.refresh();
+      } catch (caught) {
+        setActionError(
+          caught instanceof Error
+            ? caught.message
+            : "Не удалось переместить категорию",
+        );
+      }
+    });
+  };
+
+
   return (
     <NomenclatureSectionCreateHost
       categories={categories}
@@ -292,6 +361,8 @@ export function NomenclatureCategoriesWorkspace({
             </p>
           ) : null}
 
+          <CatalogTreeDndProvider enabled={dndEnabled} onDrop={onCatalogDrop}>
+            {dndEnabled ? <CatalogTreeRootDropZone /> : null}
           <DataTableFrame className="rounded-none border-x-0 border-b-0 shadow-none">
             <DataTable minWidthClassName="min-w-[640px]">
               <DataTableHead>
@@ -323,19 +394,25 @@ export function NomenclatureCategoriesWorkspace({
                     1,
                   );
                   return (
-                    <DataTableRow
+                    <CatalogTreeDraggableFolder
                       key={category.id}
+                      folderId={category.id}
+                      label={category.name}
+                      disabled={!dndEnabled}
                       className={
                         editingId === category.id || selected
                           ? "bg-portal-primary-soft/50"
-                          : undefined
+                          : catalogFolderRowSurfaceClass()
                       }
                     >
+                      {({ handle }) => (
+                        <>
                       <DataTableCell>
-                        <div
-                          className="flex min-w-0 items-center gap-portal-1"
-                          style={{ paddingLeft: `${depth * 16}px` }}
+                        <CatalogTreeDepthCell
+                          depth={depth}
+                          className="gap-portal-1"
                         >
+                          {handle}
                           {hasChildren ? (
                             <IconButton
                               label={
@@ -404,7 +481,7 @@ export function NomenclatureCategoriesWorkspace({
                           >
                             {category.name}
                           </button>
-                        </div>
+                        </CatalogTreeDepthCell>
                       </DataTableCell>
                       <DataTableCell>
                         {NOMENCLATURE_TYPE_LABELS[category.nomenclature_type]}
@@ -458,7 +535,9 @@ export function NomenclatureCategoriesWorkspace({
                           </IconButton>
                         </div>
                       </DataTableCell>
-                    </DataTableRow>
+                        </>
+                      )}
+                    </CatalogTreeDraggableFolder>
                   );
                 })}
               </DataTableBody>
@@ -473,6 +552,7 @@ export function NomenclatureCategoriesWorkspace({
               </div>
             ) : null}
           </DataTableFrame>
+          </CatalogTreeDndProvider>
           <ListTotals primary={`Всего: ${filteredRows.length} категорий`} />
         </div>
       </div>

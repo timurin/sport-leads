@@ -1,8 +1,13 @@
 import { notFound } from "next/navigation";
 
+import {
+  listLeadWorkTasks,
+  listWorkTaskFilterUsers,
+} from "@/app/(workspace)/sales/tasks/work-task-actions";
 import { LeadPage } from "@/components/sales/lead-page";
 import { getLeadDetails } from "@/lib/sales/lead-details";
 import { getLeadStages } from "@/lib/sales/lead-stage-api";
+import { getProductionStages } from "@/lib/production-stages";
 
 type LeadRouteProps = {
   params: Promise<{ leadId: string }>;
@@ -14,10 +19,14 @@ export default async function LeadRoute({ params }: LeadRouteProps) {
     notFound();
   }
 
-  const [lead, stageResult] = await Promise.all([
-    getLeadDetails(leadId),
-    getLeadStages(),
-  ]);
+  const [lead, stageResult, workTasksLoaded, stagesCatalog, usersLoaded] =
+    await Promise.all([
+      getLeadDetails(leadId),
+      getLeadStages(),
+      listLeadWorkTasks(Number(leadId)),
+      getProductionStages({ active_only: true, limit: 200 }).catch(() => []),
+      listWorkTaskFilterUsers(),
+    ]);
 
   if (!lead) {
     notFound();
@@ -26,5 +35,18 @@ export default async function LeadRoute({ params }: LeadRouteProps) {
     throw new Error(stageResult.message);
   }
 
-  return <LeadPage key={lead.id} lead={lead} stages={stageResult.stages} />;
+  return (
+    <LeadPage
+      key={lead.id}
+      lead={lead}
+      stages={stageResult.stages}
+      workTasks={workTasksLoaded.ok ? workTasksLoaded.data : []}
+      workTasksError={workTasksLoaded.ok ? null : workTasksLoaded.message}
+      workTaskStages={stagesCatalog.map((stage) => ({
+        id: stage.id,
+        label: stage.name,
+      }))}
+      workTaskUsers={usersLoaded.ok ? usersLoaded.data : []}
+    />
+  );
 }

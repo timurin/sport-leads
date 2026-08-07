@@ -99,6 +99,12 @@ def test_list_technical_cards_global_and_filters() -> None:
             assert len(body) >= 1
             assert body[0]["order_number"]
             assert body[0]["number"]
+            # Slim list DTO (`0.2.3.3`): no fat nested collections
+            assert "composition_lines" not in body[0]
+            assert "unit_lines" not in body[0]
+            assert "media_items" not in body[0]
+            assert "assembly_sewing_operations" not in body[0]
+            assert "stage_results" in body[0]
 
             by_order = client.get(
                 "/technical-cards", params={"sales_order_id": order_id}

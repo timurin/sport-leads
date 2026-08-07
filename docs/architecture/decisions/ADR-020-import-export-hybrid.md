@@ -23,7 +23,7 @@
 |---------|-----------|----|-------------|
 | **A — Catalog file I/O** | Section services (nomenclature first: `4.5`) | Toolbar на workspace раздела (`/warehouse/stock` и т.п.) | Thin shared lib: parse CSV/XLSX, row-error DTO, dry-run |
 | **B — Domain inline** | Domain service (TC, SizeGrid, …) | Только внутри документа/карточки | Может переиспользовать parse helpers; **не** job hub |
-| **C — Lead ingest** | Collectors (`1.4`) | CRM pipelines | Отдельно от A/B |
+| **C — Lead ingest** | Collectors + CRM adapters (`1.4`; contract `SL-EXTERNAL-ADAPTERS-v1` / `1.4.3.1`) | CRM pipelines | Отдельно от A/B; messaging SoT = `LeadMessage` ≠ Stage 19 |
 | **D — Exchange + universal jobs** | Stage `16.2` / `16.3` | Позже: Administration job shell (раздел + журнал) | Те же section **adapters**, что и A; 1С — соседний adapter |
 
 ### 2. Near-term (`4.5`)

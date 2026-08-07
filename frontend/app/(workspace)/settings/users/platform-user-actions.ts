@@ -5,14 +5,25 @@ import { revalidatePath } from "next/cache";
 import { sessionAuthHeaders } from "@/lib/auth/api-headers";
 import type {
   PlatformUserAdmin,
+  PlatformUserInviteDraft,
+  PlatformUserProfileDraft,
   RoleCatalogItem,
 } from "@/lib/platform-users";
+import { profileDraftToPayload } from "@/lib/platform-users";
 
 export type PlatformUsersLoadResult =
   | { ok: true; users: PlatformUserAdmin[]; roles: RoleCatalogItem[] }
   | { ok: false; status: number; message: string };
 
 export type RoleToggleResult =
+  | { ok: true; user: PlatformUserAdmin }
+  | { ok: false; message: string };
+
+export type InviteUserResult =
+  | { ok: true; user: PlatformUserAdmin; temporary_password: string }
+  | { ok: false; message: string };
+
+export type ProfileUpdateResult =
   | { ok: true; user: PlatformUserAdmin }
   | { ok: false; message: string };
 
@@ -42,6 +53,14 @@ async function readError(response: Response): Promise<string> {
 function normalizeUser(raw: PlatformUserAdmin): PlatformUserAdmin {
   return {
     ...raw,
+    email: raw.email ?? null,
+    phone: raw.phone ?? null,
+    department: raw.department ?? null,
+    position: raw.position ?? null,
+    manager_platform_user_id: raw.manager_platform_user_id ?? null,
+    language: raw.language ?? "ru",
+    invite_status: raw.invite_status ?? "active",
+    last_activity_at: raw.last_activity_at ?? null,
     roles: raw.roles ?? [],
     permissions: raw.permissions ?? [],
   };
@@ -86,6 +105,66 @@ export async function loadPlatformUsersAdmin(): Promise<PlatformUsersLoadResult>
     users: usersBody.items.map(normalizeUser),
     roles: rolesBody.items,
   };
+}
+
+export async function invitePlatformUser(
+  draft: PlatformUserInviteDraft,
+): Promise<InviteUserResult> {
+  const auth = await sessionAuthHeaders();
+  const payload: Record<string, unknown> = {
+    login: draft.login.trim(),
+    display_name: draft.display_name.trim(),
+    email: draft.email.trim() || null,
+    phone: draft.phone.trim() || null,
+    department: draft.department.trim() || null,
+    position: draft.position.trim() || null,
+    role_codes: draft.role_codes,
+  };
+  const password = draft.temporary_password.trim();
+  if (password) {
+    payload.temporary_password = password;
+  }
+  const response = await fetch(`${apiBaseUrl()}/platform-users/invite`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...auth },
+    body: JSON.stringify(payload),
+    cache: "no-store",
+  });
+  if (!response.ok) {
+    return { ok: false, message: await readError(response) };
+  }
+  const body = (await response.json()) as {
+    user: PlatformUserAdmin;
+    temporary_password: string;
+  };
+  revalidatePath(USERS_PATH);
+  return {
+    ok: true,
+    user: normalizeUser(body.user),
+    temporary_password: body.temporary_password,
+  };
+}
+
+export async function updatePlatformUserProfile(
+  platformUserId: number,
+  draft: PlatformUserProfileDraft,
+): Promise<ProfileUpdateResult> {
+  const auth = await sessionAuthHeaders();
+  const response = await fetch(
+    `${apiBaseUrl()}/platform-users/${platformUserId}`,
+    {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", ...auth },
+      body: JSON.stringify(profileDraftToPayload(draft)),
+      cache: "no-store",
+    },
+  );
+  if (!response.ok) {
+    return { ok: false, message: await readError(response) };
+  }
+  const user = normalizeUser((await response.json()) as PlatformUserAdmin);
+  revalidatePath(USERS_PATH);
+  return { ok: true, user };
 }
 
 export async function assignPlatformUserRole(

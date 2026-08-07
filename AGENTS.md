@@ -23,6 +23,17 @@ Python: 4 spaces, type hints, `snake_case` modules/functions, `PascalCase` class
 
 No formal coverage gate yet. Required suite: `scripts/check_project.py`. Add focused `backend/tests/test_*.py`; avoid live network; use mock collector when needed. Run full check before submitting.
 
+### List / catalog pages (Stage 0 / `SL-LIST-PAGE-RULES-v1`)
+
+Before shipping a new list RSC page or list DTO:
+
+1. No per-row `map` → `fetch` / `get*` on Server Components.
+2. Summary columns use embed on list DTO or one batch endpoint.
+3. List schema stays slim vs detail (no fat nested arrays by default).
+4. Add a focused test for non-trivial batch/embed paths.
+
+Canonical rules: `docs/architecture/list-page-data-rules.md`.
+
 ## Commit & Pull Request Guidelines
 
 Short imperative sentence-case subjects (e.g. `Add materials catalog API and database model`). PRs explain change + validation, link issues, call out migrations/config, include UI screenshots. Never commit `.env`, credentials, logs, downloads, or generated storage.
@@ -66,6 +77,7 @@ While working: minimal diff; keep architecture and compatibility; no visual chan
 - Do **not** start, stop, kill, probe, curl, or repurpose port `3000` as part of Sport-Lead work unless the user explicitly asks for that exact action.
 - If port `3000` is occupied by another local product or service, treat it as foreign and out of scope; report it, but do not touch it by default.
 - When checking local readiness, use only the canonical project endpoints above; do not waste time rediscovering project paths or trying alternate frontend ports first.
+- **LAN (v1.00 `0.3`):** default start stays loopback. For trusted LAN: `powershell -File scripts/dev-servers.ps1 -Action start -Lan` (binds `0.0.0.0`). Extend `SPORT_LEADS_CORS_ORIGINS` with `http://<LAN-IP>:3001`; set `NEXT_PUBLIC_SPORT_LEADS_API_URL=http://<LAN-IP>:8000` for browser client fetches. LAN ≠ public internet / production Caddy. See `docs/tasks/v1.00-stage-0.3-lan-access.md`.
 
 ## Protected Platform Shell
 

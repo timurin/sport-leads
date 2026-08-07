@@ -5,10 +5,14 @@ import type { ReactNode } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import {
+  createLeadCollaborationMessage,
+  createLeadCollaborationMicrotask,
   createOrderCollaborationMessage,
   createOrderCollaborationMicrotask,
   listCollaborationMentionCandidates,
   listCollaborationMicrotaskTitleTemplates,
+  listLeadCollaborationMessages,
+  listLeadCollaborationMicrotasks,
   listOrderCollaborationMessages,
   listOrderCollaborationMicrotasks,
   updateCollaborationMicrotaskStatus,
@@ -58,7 +62,8 @@ function highlightMentions(body: string, mentions: CollaborationMessage["mention
 }
 
 type OrderCollaborationPanelProps = {
-  orderId: number | string;
+  orderId?: number | string;
+  leadId?: number | string;
   technicalCardId?: number | null;
   embedded?: boolean;
   customerSummary?: ReactNode;
@@ -68,12 +73,17 @@ type OrderCollaborationPanelProps = {
 
 export function OrderCollaborationPanel({
   orderId,
+  leadId,
   technicalCardId = null,
   embedded = false,
   customerSummary,
   title = "Внутренняя переписка",
   deepLinkHref = null,
 }: OrderCollaborationPanelProps) {
+  if ((orderId == null) === (leadId == null)) {
+    throw new Error("OrderCollaborationPanel requires exactly one of orderId or leadId");
+  }
+  const isLead = leadId != null;
   const [messages, setMessages] = useState<CollaborationMessage[]>([]);
   const [microtasks, setMicrotasks] = useState<CollaborationMicrotask[]>([]);
   const [templates, setTemplates] = useState<string[]>([]);
@@ -100,8 +110,12 @@ export function OrderCollaborationPanel({
     setLoading(true);
     setError("");
     const [msgRes, taskRes, tplRes, candRes] = await Promise.all([
-      listOrderCollaborationMessages(orderId, technicalCardId),
-      listOrderCollaborationMicrotasks(orderId),
+      isLead
+        ? listLeadCollaborationMessages(leadId)
+        : listOrderCollaborationMessages(orderId!, technicalCardId),
+      isLead
+        ? listLeadCollaborationMicrotasks(leadId)
+        : listOrderCollaborationMicrotasks(orderId!),
       listCollaborationMicrotaskTitleTemplates(),
       listCollaborationMentionCandidates(),
     ]);
@@ -125,7 +139,7 @@ export function OrderCollaborationPanel({
       );
     }
     setLoading(false);
-  }, [orderId, technicalCardId]);
+  }, [isLead, leadId, orderId, technicalCardId]);
 
   useEffect(() => {
     void refresh();
@@ -184,10 +198,12 @@ export function OrderCollaborationPanel({
     if (!body || busy) return;
     setBusy(true);
     setError("");
-    const result = await createOrderCollaborationMessage(orderId, {
-      body,
-      technical_card_id: technicalCardId,
-    });
+    const result = isLead
+      ? await createLeadCollaborationMessage(leadId!, { body })
+      : await createOrderCollaborationMessage(orderId!, {
+          body,
+          technical_card_id: technicalCardId,
+        });
     setBusy(false);
     if (!result.ok) {
       setError(result.message);
@@ -201,12 +217,18 @@ export function OrderCollaborationPanel({
     if (!taskTitle.trim() || assigneeId === "" || busy) return;
     setBusy(true);
     setError("");
-    const result = await createOrderCollaborationMicrotask(orderId, {
-      title: taskTitle.trim(),
-      assignee_platform_user_id: Number(assigneeId),
-      technical_card_id: technicalCardId,
-      source_message_id: sourceMessageId,
-    });
+    const result = isLead
+      ? await createLeadCollaborationMicrotask(leadId!, {
+          title: taskTitle.trim(),
+          assignee_platform_user_id: Number(assigneeId),
+          source_message_id: sourceMessageId,
+        })
+      : await createOrderCollaborationMicrotask(orderId!, {
+          title: taskTitle.trim(),
+          assignee_platform_user_id: Number(assigneeId),
+          technical_card_id: technicalCardId,
+          source_message_id: sourceMessageId,
+        });
     setBusy(false);
     if (!result.ok) {
       setError(result.message);
@@ -244,7 +266,9 @@ export function OrderCollaborationPanel({
           <p className="text-[11px] text-slate-500">
             {technicalCardId
               ? `Контекст ТК #${technicalCardId}`
-              : "По заказу (все сообщения)"}
+              : isLead
+                ? "Внутренний чат по лиду"
+                : "По заказу (все сообщения)"}
             {openTasks.length > 0 ? ` · открытых задач: ${openTasks.length}` : ""}
           </p>
         </div>

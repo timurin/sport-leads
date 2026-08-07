@@ -58,6 +58,7 @@ class StockLedgerLineRead(BaseModel):
     line_no: int
     warehouse_id: int
     nomenclature_id: int
+    nomenclature_name: str | None = None
     quantity: Decimal
     posted_at: datetime | None
     technical_card_id: int | None

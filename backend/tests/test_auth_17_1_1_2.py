@@ -58,12 +58,13 @@ def test_auth_login_me_logout_flow() -> None:
             body = ok.json()
             assert body["user"]["login"] == "admin"
             assert body["user"]["display_name"] == "Админ"
+            assert body["user"]["sales_user_id"] is not None
             assert SESSION_COOKIE_NAME in client.cookies
 
             me = client.get("/auth/me")
             assert me.status_code == 200, me.text
             assert me.json()["id"] == body["user"]["id"]
-            assert me.json()["sales_user_id"] is None
+            assert me.json()["sales_user_id"] == body["user"]["sales_user_id"]
 
             logout = client.post("/auth/logout")
             assert logout.status_code == 204

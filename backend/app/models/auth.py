@@ -35,6 +35,28 @@ class PlatformUser(Base):
     login: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
     password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
     display_name: Mapped[str] = mapped_column(String(255), nullable=False)
+    email: Mapped[str | None] = mapped_column(String(255), nullable=True, index=True)
+    phone: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    department: Mapped[str | None] = mapped_column(String(150), nullable=True)
+    position: Mapped[str | None] = mapped_column(String(150), nullable=True)
+    manager_platform_user_id: Mapped[int | None] = mapped_column(
+        ForeignKey("platform_users.id", ondelete="SET NULL"),
+        nullable=True,
+    )
+    language: Mapped[str] = mapped_column(
+        String(16), nullable=False, default="ru", server_default="ru"
+    )
+    invite_status: Mapped[str] = mapped_column(
+        String(20),
+        nullable=False,
+        default="active",
+        server_default="active",
+        index=True,
+    )
+    last_activity_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+    )
     is_active: Mapped[bool] = mapped_column(
         Boolean, nullable=False, default=True, server_default="true"
     )
@@ -56,6 +78,10 @@ class PlatformUser(Base):
     )
 
     sales_user: Mapped[SalesUser | None] = relationship()
+    manager: Mapped[PlatformUser | None] = relationship(
+        remote_side="PlatformUser.id",
+        foreign_keys=[manager_platform_user_id],
+    )
     sessions: Mapped[list[AuthSession]] = relationship(
         back_populates="platform_user",
         cascade="all, delete-orphan",

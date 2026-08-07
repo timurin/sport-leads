@@ -10,6 +10,7 @@ from app.schemas.nomenclature import (
     NomenclatureCreate,
     NomenclatureHistoryRead,
     NomenclatureImportResult,
+    NomenclatureListExtrasRead,
     NomenclatureRead,
     NomenclatureUpdate,
     UnitOfMeasureCreate,
@@ -249,6 +250,42 @@ async def import_nomenclatures(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=str(error),
         ) from error
+
+
+@router.get(
+    "/list-extras",
+    response_model=NomenclatureListExtrasRead,
+    operation_id="get_nomenclature_list_extras",
+)
+def read_nomenclature_list_extras(
+    nomenclature_id: list[int] | None = Query(
+        default=None,
+        description="Nomenclature ids to enrich (covers + characteristic values)",
+    ),
+    db: Session = Depends(get_db),
+) -> NomenclatureListExtrasRead:
+    """Batch covers + values for list pages — kills FE 2N HTTP (`0.2.3.2`)."""
+    from app.schemas.characteristics import NomenclatureCharacteristicValueRead
+    from app.services.characteristics import get_nomenclature_values, value_read_payload
+    from app.services.media import primary_cover_urls_by_nomenclature_ids
+
+    ids = list(dict.fromkeys(nomenclature_id or []))
+    covers_raw = primary_cover_urls_by_nomenclature_ids(db, ids)
+    covers = {str(key): value for key, value in covers_raw.items()}
+    values: dict[str, list[NomenclatureCharacteristicValueRead]] = {}
+    for item_id in ids:
+        try:
+            rows = get_nomenclature_values(db, item_id)
+        except Exception:
+            values[str(item_id)] = []
+            continue
+        values[str(item_id)] = [
+            NomenclatureCharacteristicValueRead.model_validate(
+                value_read_payload(assignment, definition, row, source_id, inherited)
+            )
+            for assignment, definition, row, source_id, inherited in rows
+        ]
+    return NomenclatureListExtrasRead(covers=covers, values=values)
 
 
 @router.get("/{nomenclature_id}", response_model=NomenclatureRead)

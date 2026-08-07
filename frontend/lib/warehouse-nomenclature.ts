@@ -1,8 +1,6 @@
 import {
   getNomenclature,
   getNomenclatureCategories,
-  getNomenclatureCharacteristicValues,
-  getNomenclatureMedia,
   getUnitsOfMeasure,
   nomenclatureMediaUrl,
   type Nomenclature,
@@ -25,9 +23,52 @@ export type WarehouseNomenclatureCatalog = {
 
 export { primaryNomenclatureCoverContentUrl };
 
+function apiBaseUrl(): string {
+  return (process.env.SPORT_LEADS_API_URL ?? "http://127.0.0.1:8000").replace(
+    /\/$/,
+    "",
+  );
+}
+
+type NomenclatureListExtrasResponse = {
+  covers: Record<string, string | null>;
+  values: Record<string, NomenclatureCharacteristicValue[]>;
+};
+
+async function getNomenclatureListExtras(
+  nomenclatureIds: number[],
+): Promise<{
+  covers: Record<number, string | null>;
+  values: Record<number, NomenclatureCharacteristicValue[]>;
+}> {
+  if (nomenclatureIds.length === 0) {
+    return { covers: {}, values: {} };
+  }
+  const url = new URL(`${apiBaseUrl()}/nomenclatures/list-extras`);
+  for (const id of nomenclatureIds) {
+    url.searchParams.append("nomenclature_id", String(id));
+  }
+  const response = await fetch(url, { cache: "no-store" });
+  if (!response.ok) {
+    throw new Error(
+      `Не удалось загрузить covers/values номенклатуры (${response.status}).`,
+    );
+  }
+  const payload = (await response.json()) as NomenclatureListExtrasResponse;
+  const covers: Record<number, string | null> = {};
+  const values: Record<number, NomenclatureCharacteristicValue[]> = {};
+  for (const [key, value] of Object.entries(payload.covers ?? {})) {
+    covers[Number(key)] = value;
+  }
+  for (const [key, rows] of Object.entries(payload.values ?? {})) {
+    values[Number(key)] = rows;
+  }
+  return { covers, values };
+}
+
 /**
  * Catalog payload for `/warehouse/stock` (`4.10.2`–`4.10.6`, live remainder `12.2.3`).
- * Media/characteristic failures do not fail the whole page (covers stay empty).
+ * Covers/values loaded via one batch `GET /nomenclatures/list-extras` (`0.2.3.2`).
  */
 export async function loadWarehouseNomenclatureCatalog(): Promise<WarehouseNomenclatureCatalog> {
   const [items, categories, units] = await Promise.all([
@@ -35,43 +76,26 @@ export async function loadWarehouseNomenclatureCatalog(): Promise<WarehouseNomen
     getNomenclatureCategories(),
     getUnitsOfMeasure(),
   ]);
-  const [coverEntries, valuesEntries, stockBalances] = await Promise.all([
-    Promise.all(
-      items.map(async (item) => {
-        try {
-          const media = await getNomenclatureMedia(item.id);
-          const contentUrl = primaryNomenclatureCoverContentUrl(media);
-          return [
-            item.id,
-            contentUrl ? nomenclatureMediaUrl(contentUrl) : null,
-          ] as const;
-        } catch {
-          return [item.id, null] as const;
-        }
-      }),
-    ),
-    Promise.all(
-      items.map(async (item) => {
-        try {
-          return [
-            item.id,
-            await getNomenclatureCharacteristicValues(item.id),
-          ] as const;
-        } catch {
-          return [item.id, []] as const;
-        }
-      }),
-    ),
-    getNomenclatureStockBalances(items.map((item) => item.id)).catch(
+  const ids = items.map((item) => item.id);
+  const [extras, stockBalances] = await Promise.all([
+    getNomenclatureListExtras(ids).catch(() => ({
+      covers: {} as Record<number, string | null>,
+      values: {} as Record<number, NomenclatureCharacteristicValue[]>,
+    })),
+    getNomenclatureStockBalances(ids).catch(
       () => ({}) as Record<number, string>,
     ),
   ]);
+  const coverUrls: Record<number, string | null> = {};
+  for (const [id, url] of Object.entries(extras.covers)) {
+    coverUrls[Number(id)] = url ? nomenclatureMediaUrl(url) : null;
+  }
   return {
     items,
     categories,
     units,
-    coverUrls: Object.fromEntries(coverEntries),
-    fieldValues: Object.fromEntries(valuesEntries),
+    coverUrls,
+    fieldValues: extras.values,
     stockBalances,
   };
 }

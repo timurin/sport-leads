@@ -2,7 +2,6 @@ import { notFound } from "next/navigation";
 
 import { WarehouseMovementDocumentCard } from "@/components/warehouse/warehouse-movement-document-card";
 import { PageLayout } from "@/components/layout/page-layout";
-import { getNomenclatureById } from "@/lib/nomenclature";
 import { getStockDocument } from "@/lib/stock-documents";
 import { getWarehouses } from "@/lib/warehouses";
 
@@ -28,15 +27,10 @@ export default async function WarehouseMovementDocumentPage({
     `Склад #${document.warehouse_id}`;
 
   const nomenclatureNames: Record<number, string> = {};
-  const uniqueNomIds = [
-    ...new Set(document.ledger_lines.map((line) => line.nomenclature_id)),
-  ];
-  await Promise.all(
-    uniqueNomIds.map(async (id) => {
-      const item = await getNomenclatureById(id);
-      nomenclatureNames[id] = item?.name ?? `#${id}`;
-    }),
-  );
+  for (const line of document.ledger_lines) {
+    const name = line.nomenclature_name?.trim();
+    nomenclatureNames[line.nomenclature_id] = name || `#${line.nomenclature_id}`;
+  }
 
   return (
     <PageLayout className="flex min-h-0 flex-1 flex-col">

@@ -67,6 +67,11 @@ class CharacteristicDefinitionRead(BaseModel):
     created_at: datetime
     updated_at: datetime
     can_delete: bool = True
+    option_count: int = Field(
+        default=0,
+        ge=0,
+        description="Count of options for LIST/MULTI_SELECT/COLOR (list embed, Stage 0.2.3.1)",
+    )
 
 
 class CharacteristicOptionCreate(BaseModel):
@@ -106,6 +111,12 @@ class CharacteristicOptionRead(BaseModel):
     created_at: datetime
     updated_at: datetime
     can_delete: bool = True
+
+
+class CharacteristicOptionsBatchRead(BaseModel):
+    """Batch options keyed by definition id string (`0.2.8`)."""
+
+    options: dict[str, list[CharacteristicOptionRead]] = Field(default_factory=dict)
 
 
 class CategoryCharacteristicCreate(BaseModel):

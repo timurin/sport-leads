@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SPORT-LEAD — Заказ покупателя [id]</title>
+  <link rel="stylesheet" href="../shared/preview.css">
+</head>
+<body
+  data-preview-page="order"
+  data-shell-section="sales"
+  data-top-nav="orders"
+  data-base="../"
+  data-page-title="Продажи · Заказ"
+  data-create-label="Сохранить"
+  data-create-href="#"
+>
+  <div class="shell">
+    <aside class="rail" data-shell-rail aria-label="Левое меню"></aside>
+
+    <div class="workspace">
+      <header class="topbar" data-shell-topbar></header>
+
+      <main class="main">
+        <div class="banner" role="status">
+          <span>UI UX Pro Max · Soft UI + Flat buttons · demo</span>
+          <nav>
+            <a href="../index.html">Оглавление</a>
+            <a href="lead-card-reference-v1.html?id=1042">Лид #1042</a>
+            <a href="order-card-reference-v1.html?id=8801">Заказ SO-2026-000142</a>
+          </nav>
+        </div>
+
+        <nav class="crumb" aria-label="Хлебные крошки">
+          <a href="../index.html">Оглавление</a>
+          <span>/</span>
+          <span>Продажи</span>
+          <span>/</span>
+          <span>Заказы</span>
+          <span>/</span>
+          <span data-bind="order.number">SO-…</span>
+        </nav>
+
+        <section class="panel header-panel">
+          <div>
+            <div class="title-row">
+              <h1>Заказ <span data-bind="order.number">—</span></h1>
+              <span class="badge is-success" data-bind="order.status">—</span>
+            </div>
+            <p class="meta-row" style="margin:6px 0 0" data-bind="order.title">—</p>
+            <div class="meta-row">
+              <span>ID <b data-bind="order.id">—</b></span>
+              <span>Клиент <b data-bind="order.client">—</b></span>
+              <span>Организация <b data-bind="order.organization">—</b></span>
+              <span>Ответственный <b data-bind="order.responsible">—</b></span>
+            </div>
+            <div class="stages" data-stage-rail aria-label="Этапы заказа"></div>
+          </div>
+          <div class="actions">
+            <button type="button" class="btn is-icon" aria-label="Ещё">⋮</button>
+            <button type="button" class="btn">Изменить статус</button>
+            <button type="button" class="btn is-primary">Сохранить</button>
+          </div>
+        </section>
+
+        <div class="link-card">
+          <div>
+            <strong>Исходный лид</strong>
+            <div class="hint">Маршрут: <code>/sales/leads/{id}</code> · FK <code>lead_id</code></div>
+          </div>
+          <a class="btn is-primary" data-lead-link href="lead-card-reference-v1.html?id=1042">
+            Открыть лид #<span data-bind="lead.id">1042</span> →
+          </a>
+        </div>
+
+        <div class="tabs" role="tablist" aria-label="Режим карточки заказа">
+          <button type="button" class="tab is-active" role="tab" aria-selected="true" data-view-mode="all">Все</button>
+          <button type="button" class="tab" role="tab" aria-selected="false" data-view-mode="info">Сведения</button>
+          <button type="button" class="tab" role="tab" aria-selected="false" data-view-mode="items">Товары</button>
+          <button type="button" class="tab" role="tab" aria-selected="false" data-view-mode="communication">Коммуникация</button>
+          <button type="button" class="tab" role="tab" aria-selected="false" data-view-mode="documents">Документы</button>
+          <button type="button" class="tab" role="tab" aria-selected="false" data-view-mode="techCards">Тех карты</button>
+        </div>
+
+        <div class="layout">
+          <div class="stack">
+            <section class="panel" data-section="info">
+              <div class="panel-head"><h2>Сведения о заказе</h2></div>
+              <div class="form-grid">
+                <div class="field"><span class="label">Клиент</span><div class="input" style="display:flex;align-items:center" data-bind="order.client">—</div></div>
+                <div class="field"><span class="label">Организация</span><div class="input" style="display:flex;align-items:center" data-bind="order.organization">—</div></div>
+                <div class="field"><span class="label">Ответственный</span><div class="input" style="display:flex;align-items:center" data-bind="order.responsible">—</div></div>
+                <div class="field"><span class="label">Источник</span><div class="input" style="display:flex;align-items:center" data-bind="order.source">—</div></div>
+                <div class="field"><span class="label">Категория</span><div class="input" style="display:flex;align-items:center" data-bind="order.category">—</div></div>
+                <div class="field"><span class="label">Спорт</span><div class="input" style="display:flex;align-items:center" data-bind="order.sport">—</div></div>
+                <div class="field"><span class="label">Сумма позиций</span><div class="input" style="display:flex;align-items:center" data-bind="order.itemsSubtotal">—</div></div>
+                <div class="field"><span class="label">Скидка</span><div class="input" style="display:flex;align-items:center" data-bind="order.discount">—</div></div>
+                <div class="field"><span class="label">Валюта</span><div class="input" style="display:flex;align-items:center" data-bind="order.currency">—</div></div>
+                <div class="field"><span class="label">Итого</span><div class="input" style="display:flex;align-items:center;font-weight:800" data-bind="order.amount">—</div></div>
+                <div class="field is-full"><span class="label">Описание</span><div class="textarea" style="min-height:56px" data-bind="order.description">—</div></div>
+              </div>
+            </section>
+
+            <section class="panel" data-section="items">
+              <div class="panel-head">
+                <h2>Товарные позиции</h2>
+                <button type="button" class="btn is-primary">+ Позиция</button>
+              </div>
+              <div class="table-wrap">
+                <table class="table">
+                  <thead>
+                    <tr>
+                      <th>Номенклатура</th>
+                      <th>Модель / сборка</th>
+                      <th>Кол-во</th>
+                      <th>Цена</th>
+                      <th>НДС</th>
+                      <th>Сумма</th>
+                      <th>ТК</th>
+                    </tr>
+                  </thead>
+                  <tbody data-order-items></tbody>
+                </table>
+              </div>
+            </section>
+
+            <section class="panel" data-section="techCards">
+              <div class="panel-head">
+                <h2>Техкарты</h2>
+                <div class="actions">
+                  <button type="button" class="btn">Список ТК</button>
+                  <button type="button" class="btn is-primary">Сгенерировать</button>
+                </div>
+              </div>
+              <p class="small" style="margin-top:0">
+                Completeness: <b data-bind="order.techCompleteness">—</b> ·
+                <code>/production/tech-cards?orderId=<span data-bind="order.id">8801</span></code>
+              </p>
+              <div class="chips">
+                <span class="chip">TC-1042-1 · В работе</span>
+                <span class="chip">TC-1042-2 · Черновик</span>
+                <span class="chip">Гетры · Нет ТК</span>
+              </div>
+            </section>
+
+            <section class="panel is-hidden" data-section="documents">
+              <div class="panel-head"><h2>Документы</h2></div>
+              <p class="small">Stub preview — в платформе часть контуров «скоро».</p>
+              <ul class="route-list">
+                <li><a href="#"><span>Счёт / КП</span><span class="path">скоро</span></a></li>
+                <li><a href="#"><span>Спецификация</span><span class="path">скоро</span></a></li>
+              </ul>
+            </section>
+
+            <section class="panel" data-section="history">
+              <div class="panel-head"><h2>История</h2></div>
+              <div class="timeline" data-timeline></div>
+            </section>
+
+            <section class="panel" data-section="tasks">
+              <div class="panel-head"><h2>Задачи CRM</h2></div>
+              <p class="small" style="margin:0">Через <code>lead_id</code>; staff microtasks — Stage 19.</p>
+            </section>
+
+            <section class="panel" data-section="comments">
+              <div class="panel-head"><h2>Заметки</h2></div>
+              <textarea class="textarea" placeholder="Внутренняя заметка…"></textarea>
+            </section>
+          </div>
+
+          <!-- Permanent right column: finance always above side cards -->
+          <aside class="order-aside" aria-label="Финансы и клиент">
+            <div class="finance-rail" aria-label="Финансовая часть">
+              <div class="metric">
+                <div class="label">Сумма</div>
+                <div class="value is-success" data-bind="order.amount">—</div>
+              </div>
+              <div class="metric">
+                <div class="label">Без НДС</div>
+                <div class="value is-sm" data-bind="order.amountNet">—</div>
+              </div>
+              <div class="metric">
+                <div class="label">НДС</div>
+                <div class="value is-sm" data-bind="order.vatAmount">—</div>
+              </div>
+              <div class="metric">
+                <div class="label">Активность</div>
+                <div class="value is-sm" data-bind="order.lastActivity">—</div>
+              </div>
+              <div class="metric">
+                <div class="label">Отгрузка</div>
+                <div class="value is-sm" data-bind="order.plannedShip">—</div>
+              </div>
+              <div class="metric">
+                <div class="label">ТК</div>
+                <div class="value is-sm" data-bind="order.techShort">—</div>
+                <div class="sub" data-bind="order.techSub">manufacturable</div>
+              </div>
+            </div>
+
+            <section class="panel">
+              <div class="panel-head"><h2>Карточка клиента</h2></div>
+              <dl class="dl">
+                <div><dt>Клиент заказа</dt><dd data-bind="order.client">—</dd></div>
+                <div><dt>Контакт</dt><dd data-bind="contact.name">—</dd></div>
+                <div><dt>Канал</dt><dd data-bind="contact.channel">—</dd></div>
+              </dl>
+              <div class="actions" style="margin-top:14px;flex-direction:column;align-items:stretch">
+                <button type="button" class="btn">Позвонить</button>
+                <button type="button" class="btn">Email</button>
+                <a class="btn" data-lead-link href="lead-card-reference-v1.html?id=1042">Открыть исходный лид</a>
+              </div>
+            </section>
+
+            <section class="panel">
+              <div class="panel-head"><h2>Внутренняя переписка</h2></div>
+              <div class="msg" data-collab></div>
+              <div class="composer">
+                <textarea class="textarea" placeholder="Сообщение… @login"></textarea>
+                <button type="button" class="btn is-primary" disabled>Отправить</button>
+              </div>
+            </section>
+          </aside>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <div class="mobile-bar">
+    <button type="button" class="btn">Статус</button>
+    <button type="button" class="btn is-primary">Сохранить</button>
+  </div>
+
+  <script src="../shared/demo-data.js"></script>
+  <script src="../shared/shell.js"></script>
+  <script src="../shared/preview.js"></script>
+</body>
+</html>

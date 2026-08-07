@@ -310,6 +310,27 @@ export async function fetchProductionBatchFactRollup(
   return (await response.json()) as ProductionFactRollup;
 }
 
+/** One request for all batch rollups of a production order (`0.2.6`). */
+export async function fetchProductionOrderBatchFactRollups(
+  orderId: number | string,
+): Promise<Record<number, ProductionFactRollup>> {
+  const response = await fetch(
+    `${apiBaseUrl()}/production-orders/${orderId}/batch-fact-rollups`,
+    { cache: "no-store" },
+  );
+  if (!response.ok) {
+    throw new Error(
+      await readError(response, "Не удалось загрузить сводки факта партий"),
+    );
+  }
+  const items = (await response.json()) as ProductionFactRollup[];
+  return Object.fromEntries(
+    items
+      .filter((item) => item.production_batch_id != null)
+      .map((item) => [item.production_batch_id as number, item]),
+  );
+}
+
 /** Strip trailing zeros from API decimal strings for compact UI. */
 export function formatRollupQty(value: string | null | undefined): string {
   if (value == null || value.trim() === "") return "—";
