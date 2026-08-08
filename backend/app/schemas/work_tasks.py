@@ -14,6 +14,7 @@ class WorkTaskCreate(BaseModel):
     title: str = Field(min_length=1, max_length=255)
     status: WorkTaskStatusLiteral = "open"
     production_stage_id: int | None = Field(default=None, ge=1)
+    board_stage_id: int | None = Field(default=None, ge=1)
     responsible_platform_user_id: int | None = Field(default=None, ge=1)
     executor_platform_user_id: int | None = Field(default=None, ge=1)
     lead_id: int | None = Field(default=None, ge=1)
@@ -44,6 +45,7 @@ class WorkTaskUpdate(BaseModel):
     title: str | None = Field(default=None, min_length=1, max_length=255)
     status: WorkTaskStatusLiteral | None = None
     production_stage_id: int | None = Field(default=None, ge=1)
+    board_stage_id: int | None = None
     responsible_platform_user_id: int | None = Field(default=None, ge=1)
     executor_platform_user_id: int | None = Field(default=None, ge=1)
     due_at: datetime | None = None
@@ -52,6 +54,13 @@ class WorkTaskUpdate(BaseModel):
     @classmethod
     def strip_title(cls, value: object) -> object:
         return value.strip() if isinstance(value, str) else value
+
+    @field_validator("board_stage_id", mode="after")
+    @classmethod
+    def board_stage_positive(cls, value: int | None) -> int | None:
+        if value is not None and value < 1:
+            raise ValueError("board_stage_id must be >= 1")
+        return value
 
 
 class WorkTaskListItem(BaseModel):
@@ -64,6 +73,10 @@ class WorkTaskListItem(BaseModel):
     status: str
     production_stage_id: int | None
     production_stage_name: str | None = None
+    board_stage_id: int | None = None
+    board_stage_name: str | None = None
+    created_by_platform_user_id: int | None = None
+    created_by_display_name: str | None = None
     responsible_platform_user_id: int | None
     responsible_display_name: str | None = None
     executor_platform_user_id: int | None
@@ -83,8 +96,15 @@ class WorkTaskRead(BaseModel):
     title: str
     status: str
     production_stage_id: int | None
+    production_stage_name: str | None = None
+    board_stage_id: int | None = None
+    board_stage_name: str | None = None
+    created_by_platform_user_id: int | None = None
+    created_by_display_name: str | None = None
     responsible_platform_user_id: int | None
+    responsible_display_name: str | None = None
     executor_platform_user_id: int | None
+    executor_display_name: str | None = None
     lead_id: int | None
     sales_order_id: int | None
     production_order_id: int | None
@@ -92,6 +112,38 @@ class WorkTaskRead(BaseModel):
     created_at: datetime
     updated_at: datetime
     completed_at: datetime | None
+
+
+class WorkTaskBoardStageRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    name: str
+    sort_order: int
+    is_active: bool
+    created_at: datetime
+    updated_at: datetime
+
+
+class WorkTaskBoardStageCreate(BaseModel):
+    name: str = Field(min_length=1, max_length=120)
+    sort_order: int | None = Field(default=None, ge=0)
+
+    @field_validator("name", mode="before")
+    @classmethod
+    def strip_name(cls, value: object) -> object:
+        return value.strip() if isinstance(value, str) else value
+
+
+class WorkTaskBoardStageUpdate(BaseModel):
+    name: str | None = Field(default=None, min_length=1, max_length=120)
+    sort_order: int | None = Field(default=None, ge=0)
+    is_active: bool | None = None
+
+    @field_validator("name", mode="before")
+    @classmethod
+    def strip_name(cls, value: object) -> object:
+        return value.strip() if isinstance(value, str) else value
 
 
 class WorkTaskAttachmentRead(BaseModel):

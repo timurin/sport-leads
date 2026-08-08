@@ -6,6 +6,7 @@ import {
 } from "@/app/(workspace)/sales/tasks/work-task-actions";
 import { ProductionOrderDetailWorkspace } from "@/components/production/production-order-detail-workspace";
 import { PageLayout } from "@/components/layout/page-layout";
+import { getMe } from "@/lib/auth/session";
 import {
   fetchProductionOrder,
   fetchProductionOrderBatchFactRollups,
@@ -40,10 +41,12 @@ export default async function ProductionOrderDetailPage({
   let workTasksLoaded;
   let stagesCatalog;
   let usersLoaded;
+  let me;
   try {
     order = await fetchProductionOrder(orderId);
-    const [cards, rollup, rollupsByBatch, tasksResult, stages, users] =
+    const [viewer, cards, rollup, rollupsByBatch, tasksResult, stages, users] =
       await Promise.all([
+        getMe(),
         fetchTechnicalCards({
           sales_order_id: order.sales_order_id,
           limit: 500,
@@ -54,6 +57,7 @@ export default async function ProductionOrderDetailPage({
         getProductionStages({ active_only: true, limit: 200 }).catch(() => []),
         listWorkTaskFilterUsers(),
       ]);
+    me = viewer;
     technicalCards = cards;
     orderRollup = rollup;
     batchRollups = rollupsByBatch;
@@ -82,6 +86,7 @@ export default async function ProductionOrderDetailPage({
           label: stage.name,
         }))}
         workTaskUsers={usersLoaded.ok ? usersLoaded.data : []}
+        viewerUserId={me?.id ?? null}
       />
     </PageLayout>
   );

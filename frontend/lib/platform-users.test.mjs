@@ -6,6 +6,7 @@ import {
   filterPlatformUsers,
   formatRoleSummary,
   formatUserActivity,
+  formatLoginHandle,
   groupPermissionsByModule,
   languageLabel,
   permissionLabel,
@@ -19,7 +20,9 @@ import {
   userInitials,
   userStatusLabel,
   validateInviteDraft,
+  validatePasswordChangeDraft,
   validateProfileDraft,
+  emptyPasswordChangeDraft,
 } from "../lib/platform-users.ts";
 
 function sampleUser(overrides = {}) {
@@ -199,4 +202,50 @@ test("buildAccessMatrix groups permissions by module", () => {
   ]);
   assert.equal(groups.length, 2);
   assert.ok(groups.some((g) => g.key === "admin"));
+});
+
+test("formatLoginHandle skips @ when login is email", () => {
+  assert.equal(formatLoginHandle("admin"), "@admin");
+  assert.equal(formatLoginHandle("lm@mosmade.ru"), "lm@mosmade.ru");
+  assert.equal(formatLoginHandle("  "), "");
+});
+
+test("validatePasswordChangeDraft self and admin", () => {
+  assert.match(
+    validatePasswordChangeDraft(emptyPasswordChangeDraft(), "self") ?? "",
+    /текущий/i,
+  );
+  assert.equal(
+    validatePasswordChangeDraft(
+      {
+        current_password: "old-pass-1",
+        new_password: "new-pass-1",
+        confirm_password: "new-pass-1",
+      },
+      "self",
+    ),
+    null,
+  );
+  assert.match(
+    validatePasswordChangeDraft(
+      {
+        current_password: "",
+        new_password: "short",
+        confirm_password: "short",
+      },
+      "admin",
+    ) ?? "",
+    /8/i,
+  );
+  assert.equal(
+    validatePasswordChangeDraft(
+      {
+        current_password: "",
+        new_password: "new-pass-99",
+        confirm_password: "new-pass-99",
+      },
+      "admin",
+    ),
+    null,
+  );
 });

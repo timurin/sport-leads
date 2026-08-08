@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from sqlalchemy import or_, select
 from sqlalchemy.orm import Session, selectinload
 
@@ -15,6 +15,7 @@ from app.schemas.auth import (
     PlatformUserInviteResponse,
     PlatformUserMeRead,
     PlatformUserProfileUpdateRequest,
+    PlatformUserSetPasswordRequest,
 )
 from app.schemas.rbac import (
     PlatformUserListRead,
@@ -144,6 +145,36 @@ def invite_platform_user(
         user=to_me_read(user),
         temporary_password=temporary_password,
     )
+
+
+@router.post(
+    "/platform-users/{platform_user_id}/set-password",
+    status_code=status.HTTP_204_NO_CONTENT,
+    operation_id="set_platform_user_password",
+)
+def set_platform_user_password(
+    platform_user_id: int,
+    payload: PlatformUserSetPasswordRequest,
+    db: Session = Depends(get_db),
+    _: PlatformUser = Depends(
+        require_permission(rbac_service.PERM_ADMIN_ROLES_ASSIGN)
+    ),
+) -> Response:
+    try:
+        auth_service.set_platform_user_password(
+            db,
+            platform_user_id=platform_user_id,
+            new_password=payload.new_password,
+        )
+    except auth_service.AuthValidationError as error:
+        message = str(error)
+        code = (
+            status.HTTP_404_NOT_FOUND
+            if "не найден" in message.lower()
+            else status.HTTP_422_UNPROCESSABLE_ENTITY
+        )
+        raise HTTPException(status_code=code, detail=message) from error
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.patch(

@@ -138,6 +138,48 @@ export function filterPlatformUsers(
   });
 }
 
+export function formatLoginHandle(login: string | null | undefined): string {
+  const trimmed = (login ?? "").trim();
+  if (!trimmed) return "";
+  return trimmed.includes("@") ? trimmed : `@${trimmed}`;
+}
+
+export type PasswordChangeMode = "self" | "admin";
+
+export type PasswordChangeDraft = {
+  current_password: string;
+  new_password: string;
+  confirm_password: string;
+};
+
+export function emptyPasswordChangeDraft(): PasswordChangeDraft {
+  return {
+    current_password: "",
+    new_password: "",
+    confirm_password: "",
+  };
+}
+
+export function validatePasswordChangeDraft(
+  draft: PasswordChangeDraft,
+  mode: PasswordChangeMode,
+): string | null {
+  if (mode === "self" && !draft.current_password) {
+    return "Укажите текущий пароль";
+  }
+  const next = draft.new_password;
+  if (next.length < 8) {
+    return "Новый пароль — минимум 8 символов";
+  }
+  if (next !== draft.confirm_password) {
+    return "Пароли не совпадают";
+  }
+  if (mode === "self" && draft.current_password === next) {
+    return "Новый пароль совпадает с текущим";
+  }
+  return null;
+}
+
 export function userInitials(displayName: string): string {
   const parts = displayName.trim().split(/\s+/).filter(Boolean);
   if (parts.length === 0) return "?";

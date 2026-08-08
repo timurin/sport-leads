@@ -6,7 +6,10 @@ import {
   emptyWorkTaskCreateDraft,
   fromApiWorkTaskListItem,
   fromApiWorkTaskMessage,
+  groupTasksByBoardStage,
+  isWorkTaskMessageMine,
   parseWorkTaskListFilters,
+  resolveWorkTasksView,
   validateWorkTaskComposer,
   validateWorkTaskCreateDraft,
   workTaskCreateDraftToPayload,
@@ -25,6 +28,10 @@ test("fromApiWorkTaskListItem uses embedded names", () => {
     status: "open",
     production_stage_id: 2,
     production_stage_name: "Раскрой",
+    board_stage_id: 3,
+    board_stage_name: "В работе",
+    created_by_platform_user_id: 5,
+    created_by_display_name: "Админ",
     responsible_platform_user_id: 1,
     responsible_display_name: "Менеджер",
     executor_platform_user_id: null,
@@ -38,6 +45,10 @@ test("fromApiWorkTaskListItem uses embedded names", () => {
   });
   assert.equal(item.href, "/sales/tasks/9");
   assert.equal(item.workshopLabel, "Раскрой");
+  assert.equal(item.boardStageId, 3);
+  assert.equal(item.boardStageLabel, "В работе");
+  assert.equal(item.createdByLabel, "Админ");
+  assert.equal(item.responsibleLabel, "Менеджер");
   assert.equal(item.responsibleLabel, "Менеджер");
   assert.equal(item.executorLabel, "Не назначен");
   assert.equal(item.objectHref, "/sales/leads/4");
@@ -55,6 +66,7 @@ test("parse and build list filter href", () => {
     production_stage_id: 3,
     responsible_platform_user_id: undefined,
     executor_platform_user_id: undefined,
+    view: undefined,
   });
   assert.equal(
     buildWorkTasksListHref(filters),
@@ -104,6 +116,7 @@ test("fromApiWorkTaskMessage maps author and attachments", () => {
     ],
   });
   assert.equal(view.authorLabel, "Менеджер");
+  assert.equal(view.authorPlatformUserId, 1);
   assert.equal(view.body, "Готово");
   assert.equal(view.attachments[0].filename, "cut.png");
   assert.equal(view.attachments[0].sizeLabel, "2.0 КБ");
@@ -120,4 +133,68 @@ test("validateWorkTaskComposer requires text or image", () => {
     "Введите текст или прикрепите изображение",
   );
   assert.equal(validateWorkTaskComposer({ body: "ok", file: null }), null);
+});
+
+test("view query and message mine helper", () => {
+  assert.equal(resolveWorkTasksView({}), "list");
+  assert.equal(resolveWorkTasksView({ view: "kanban" }), "kanban");
+  assert.equal(
+    buildWorkTasksListHref({ view: "kanban", status: "open" }),
+    "/sales/tasks?status=open&view=kanban",
+  );
+  assert.equal(parseWorkTaskListFilters({ view: "kanban" }).view, "kanban");
+  assert.equal(isWorkTaskMessageMine(2, 2), true);
+  assert.equal(isWorkTaskMessageMine(2, 3), false);
+});
+
+test("groupTasksByBoardStage puts unknown into Без стадии", () => {
+  const stages = [
+    { id: 1, name: "A", sort_order: 10, is_active: true },
+    { id: 2, name: "B", sort_order: 20, is_active: true },
+  ];
+  const tasks = [
+    {
+      id: "1",
+      title: "t1",
+      status: "open",
+      statusLabel: "Открыта",
+      workshopLabel: "—",
+      boardStageId: 1,
+      boardStageLabel: "A",
+      createdByLabel: "—",
+      responsibleLabel: "—",
+      executorLabel: "—",
+      objectLabel: "—",
+      objectHref: null,
+      href: "/sales/tasks/1",
+      dueLabel: "—",
+      dueAt: null,
+      dueSoon: false,
+      overdue: false,
+    },
+    {
+      id: "2",
+      title: "t2",
+      status: "open",
+      statusLabel: "Открыта",
+      workshopLabel: "—",
+      boardStageId: 99,
+      boardStageLabel: "?",
+      createdByLabel: "—",
+      responsibleLabel: "—",
+      executorLabel: "—",
+      objectLabel: "—",
+      objectHref: null,
+      href: "/sales/tasks/2",
+      dueLabel: "—",
+      dueAt: null,
+      dueSoon: false,
+      overdue: false,
+    },
+  ];
+  const columns = groupTasksByBoardStage(tasks, stages);
+  assert.equal(columns.length, 3);
+  assert.equal(columns[0].tasks.length, 1);
+  assert.equal(columns[2].stage, null);
+  assert.equal(columns[2].tasks[0].id, "2");
 });

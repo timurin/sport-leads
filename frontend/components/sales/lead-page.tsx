@@ -7,7 +7,7 @@ import {
   Plus,
   ShoppingBag,
 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 
 import { LeadActivityTimeline } from "@/components/sales/lead-activity-timeline";
 import {
@@ -23,7 +23,6 @@ import { LeadCommunicationPanel, type LeadMessageDraft } from "@/components/sale
 import { LeadCustomerDetails } from "@/components/sales/lead-customer-details";
 import { HostWorkTasksPanel } from "@/components/sales/host-work-tasks-panel";
 import { OrderCollaborationPanel } from "@/components/sales/order-collaboration-panel";
-import { LeadTaskCompleteDialog, LeadTaskDeleteDialog, LeadTaskEditDialog, type LeadTaskDraft } from "@/components/sales/lead-task-dialog";
 import { WorkTaskCreateDrawer, type WorkTaskAnchorOption } from "@/components/sales/work-task-create-drawer";
 import { ComplexEntityCard } from "@/components/entity/complex-entity-card";
 import { PageActions, PageContent, PageLayout, ResponsiveGrid } from "@/components/layout/page-layout";
@@ -36,13 +35,6 @@ import { formatCurrency } from "@/lib/sales/lead-commercial";
 import type { LeadDetails } from "@/lib/sales/lead-details";
 import { convertLead, rejectLead } from "@/app/(workspace)/sales/leads/[leadId]/lead-header-actions";
 import {
-  completeLeadTask as completeLeadTaskAction,
-  deleteLeadTask as deleteLeadTaskAction,
-  reopenLeadTask as reopenLeadTaskAction,
-  rescheduleLeadTask as rescheduleLeadTaskAction,
-  saveLeadTask as saveLeadTaskAction,
-} from "@/app/(workspace)/sales/leads/[leadId]/lead-task-actions";
-import {
   createLeadNote as createLeadNoteAction,
   deleteLeadNote as deleteLeadNoteAction,
   toggleLeadNotePin as toggleLeadNotePinAction,
@@ -53,9 +45,8 @@ import { leadMessageToActivity } from "@/lib/sales/lead-message-api";
 import type { LeadFinalActionId } from "@/lib/sales/lead-final-actions";
 import type { LeadStageConfig } from "@/lib/sales/lead-stages";
 import { formatAttachmentSize, leadMessageChannelLabels } from "@/lib/sales/lead-message";
-import { formatTaskDate, getNearestLeadTask, rescheduleTaskDueAt } from "@/lib/sales/lead-task";
 import type { WorkTaskListItem } from "@/lib/work-tasks";
-import type { Lead, LeadActivity, LeadMessage, LeadTask, Priority } from "@/types/sales";
+import type { Lead, LeadActivity, LeadMessage, Priority } from "@/types/sales";
 
 const dateFormatter = new Intl.DateTimeFormat("ru-RU", {
   dateStyle: "medium",
@@ -109,24 +100,11 @@ function cloneLead(lead: LeadDetails): LeadDetails {
   };
 }
 
-type TaskDialogState =
-  | { kind: "edit"; task: LeadTask | null }
-  | { kind: "complete"; task: LeadTask }
-  | { kind: "delete"; task: LeadTask }
-  | null;
-
 function createLocalActivityId() {
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
     return crypto.randomUUID();
   }
   return `lead-activity-${Date.now()}-${Math.random().toString(36).slice(2)}`;
-}
-
-function createLocalTaskId() {
-  if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
-    return crypto.randomUUID();
-  }
-  return `lead-task-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 }
 
 function createLocalMessageId() {
@@ -143,6 +121,7 @@ export function LeadPage({
   workTasksError = null,
   workTaskStages = [],
   workTaskUsers = [],
+  viewerUserId = null,
 }: {
   lead: LeadDetails;
   stages: LeadStageConfig[];
@@ -150,17 +129,15 @@ export function LeadPage({
   workTasksError?: string | null;
   workTaskStages?: WorkTaskAnchorOption[];
   workTaskUsers?: WorkTaskAnchorOption[];
+  viewerUserId?: number | null;
 }) {
   const [lead, setLead] = useState<LeadDetails>(() => cloneLead(initialLead));
   const [workspaceTab, setWorkspaceTab] = useState<WorkspaceTab>("communication");
   const [referenceTab, setReferenceTab] = useState<ReferenceTab>("customer");
-  const [taskDialog, setTaskDialog] = useState<TaskDialogState>(null);
   const [completionMode, setCompletionMode] = useState<LeadCompletionMode | null>(null);
-  const [taskActionError, setTaskActionError] = useState("");
   const [noteActionError, setNoteActionError] = useState("");
   const [workTasks, setWorkTasks] = useState(initialWorkTasks);
   const [workTaskCreateOpen, setWorkTaskCreateOpen] = useState(false);
-  const taskDialogTriggerRef = useRef<HTMLElement | null>(null);
   const taskManagers = lead.taskManagers;
   const currentActor = lead.currentActor;
   const taskPersistent = true;
@@ -180,27 +157,6 @@ export function LeadPage({
     }, new Date().toISOString());
     setLead((current) => ({
       ...current,
-      activities: activities.map((activity) => ({
-        ...activity,
-        author: activity.author ? { ...activity.author } : undefined,
-        metadata: activity.metadata ? { ...activity.metadata } : undefined,
-        attachments: activity.attachments?.map((attachment) => ({ ...attachment })),
-        mentionedUserIds: activity.mentionedUserIds ? [...activity.mentionedUserIds] : undefined,
-      })),
-      lastActivityAt: occurredAt,
-      taskReferenceAt: occurredAt,
-    }));
-  }
-
-  function applyPersistedTasks(tasks: LeadTask[], activities: LeadActivity[]) {
-    const occurredAt = activities.at(-1)?.occurredAt ?? new Date().toISOString();
-    setLead((current) => ({
-      ...current,
-      tasks: tasks.map((task) => ({
-        ...task,
-        assignedTo: { ...task.assignedTo },
-        createdBy: { ...task.createdBy },
-      })),
       activities: activities.map((activity) => ({
         ...activity,
         author: activity.author ? { ...activity.author } : undefined,
@@ -382,177 +338,6 @@ export function LeadPage({
     }));
   }
 
-  function openTaskDialog(dialog: Exclude<TaskDialogState, null>, trigger: HTMLElement) {
-    taskDialogTriggerRef.current = trigger;
-    setTaskDialog(dialog);
-  }
-
-  function closeTaskDialog() {
-    setTaskDialog(null);
-    window.requestAnimationFrame(() => {
-      const trigger = taskDialogTriggerRef.current;
-      if (trigger?.isConnected) trigger.focus();
-      else document.getElementById("lead-tasks-heading")?.focus();
-    });
-  }
-
-  function taskActivity(id: string, type: "task_created" | "task_updated" | "task_completed", title: string, description: string, occurredAt: string): LeadActivity {
-    return {
-      id,
-      type,
-      occurredAt,
-      author: { id: currentActor.id, name: currentActor.name },
-      title,
-      description,
-      isSystem: true,
-    };
-  }
-
-  async function saveTask(existingTask: LeadTask | null, draft: LeadTaskDraft): Promise<string | null> {
-    if (taskPersistent) {
-      const result = await saveLeadTaskAction(lead.id, existingTask?.id ?? null, {
-        title: draft.title,
-        type: draft.type,
-        priority: draft.priority,
-        description: draft.description,
-        dueAt: draft.dueAt,
-        assignedToId: draft.assignedToId,
-      });
-      if (!result.ok) return result.message;
-      applyPersistedTasks(result.tasks, result.activities);
-      setTaskActionError("");
-      closeTaskDialog();
-      return null;
-    }
-
-    const assignedTo = taskManagers.find((manager) => manager.id === draft.assignedToId);
-    if (!assignedTo) return "Выберите исполнителя.";
-    const occurredAt = new Date().toISOString();
-    const activityId = createLocalActivityId();
-    const newTaskId = existingTask ? null : createLocalTaskId();
-    setLead((current) => {
-      if (existingTask) {
-        const tasks = current.tasks.map((task) => task.id === existingTask.id
-          ? {
-            ...task,
-            title: draft.title,
-            type: draft.type,
-            priority: draft.priority,
-            assignedTo: { ...assignedTo },
-            dueAt: draft.dueAt,
-            description: draft.description,
-          }
-          : task);
-        const activity = taskActivity(activityId, "task_updated", "Задача обновлена", `Обновлена задача «${draft.title}». Новый срок: ${formatTaskDate(draft.dueAt)}.`, occurredAt);
-        return { ...current, tasks, activities: [activity, ...current.activities], lastActivityAt: occurredAt, taskReferenceAt: occurredAt };
-      }
-      if (!newTaskId) return current;
-      const task: LeadTask = {
-        id: newTaskId,
-        leadId: current.id,
-        title: draft.title,
-        type: draft.type,
-        status: "open",
-        priority: draft.priority,
-        assignedTo: { ...assignedTo },
-        dueAt: draft.dueAt,
-        description: draft.description,
-        createdAt: occurredAt,
-        createdBy: { ...currentActor },
-      };
-      const activity = taskActivity(activityId, "task_created", `Создана задача «${task.title}»`, `Срок: ${formatTaskDate(task.dueAt)}. Исполнитель: ${task.assignedTo.name}.`, occurredAt);
-      return { ...current, tasks: [...current.tasks, task], activities: [activity, ...current.activities], lastActivityAt: occurredAt, taskReferenceAt: occurredAt };
-    });
-    closeTaskDialog();
-    return null;
-  }
-
-  async function completeTask(taskId: string, result?: string): Promise<string | null> {
-    if (taskPersistent) {
-      const response = await completeLeadTaskAction(lead.id, taskId, result);
-      if (!response.ok) return response.message;
-      applyPersistedTasks(response.tasks, response.activities);
-      setTaskActionError("");
-      closeTaskDialog();
-      return null;
-    }
-    const occurredAt = new Date().toISOString();
-    const activityId = createLocalActivityId();
-    setLead((current) => {
-      const task = current.tasks.find((item) => item.id === taskId);
-      if (!task || task.status !== "open") return current;
-      const activity = taskActivity(activityId, "task_completed", `Завершена задача «${task.title}»`, result ? `Результат: ${result}` : "Задача отмечена выполненной.", occurredAt);
-      return {
-        ...current,
-        tasks: current.tasks.map((item) => item.id === taskId ? { ...item, status: "completed", completedAt: occurredAt, result } : item),
-        activities: [activity, ...current.activities],
-        lastActivityAt: occurredAt,
-        taskReferenceAt: occurredAt,
-      };
-    });
-    closeTaskDialog();
-    return null;
-  }
-
-  async function reopenTask(task: LeadTask) {
-    if (taskPersistent) {
-      const response = await reopenLeadTaskAction(lead.id, task.id);
-      if (!response.ok) {
-        setTaskActionError(response.message);
-        return;
-      }
-      applyPersistedTasks(response.tasks, response.activities);
-      setTaskActionError("");
-      return;
-    }
-    const occurredAt = new Date().toISOString();
-    const activity = taskActivity(createLocalActivityId(), "task_updated", `Задача «${task.title}» открыта повторно`, "Результат предыдущего выполнения очищен.", occurredAt);
-    setLead((current) => ({
-      ...current,
-      tasks: current.tasks.map((item) => item.id === task.id ? { ...item, status: "open", completedAt: undefined, result: undefined } : item),
-      activities: [activity, ...current.activities],
-      lastActivityAt: occurredAt,
-      taskReferenceAt: occurredAt,
-    }));
-  }
-
-  async function rescheduleTask(task: LeadTask, days: number) {
-    const occurredAt = new Date().toISOString();
-    const dueAt = rescheduleTaskDueAt(task.dueAt, occurredAt, days);
-    if (taskPersistent) {
-      const response = await rescheduleLeadTaskAction(lead.id, task.id, dueAt);
-      if (!response.ok) {
-        setTaskActionError(response.message);
-        return;
-      }
-      applyPersistedTasks(response.tasks, response.activities);
-      setTaskActionError("");
-      return;
-    }
-    const activity = taskActivity(createLocalActivityId(), "task_updated", `Срок задачи «${task.title}» перенесён`, `Новый срок: ${formatTaskDate(dueAt)}.`, occurredAt);
-    setLead((current) => ({
-      ...current,
-      tasks: current.tasks.map((item) => item.id === task.id ? { ...item, dueAt } : item),
-      activities: [activity, ...current.activities],
-      lastActivityAt: occurredAt,
-      taskReferenceAt: occurredAt,
-    }));
-  }
-
-  async function deleteTask(taskId: string): Promise<string | null> {
-    if (taskPersistent) {
-      const response = await deleteLeadTaskAction(lead.id, taskId);
-      if (!response.ok) return response.message;
-      applyPersistedTasks(response.tasks, response.activities);
-      setTaskActionError("");
-      closeTaskDialog();
-      return null;
-    }
-    setLead((current) => ({ ...current, tasks: current.tasks.filter((task) => task.id !== taskId) }));
-    closeTaskDialog();
-    return null;
-  }
-
   async function sendMessage(draft: LeadMessageDraft): Promise<string | null> {
     if (taskPersistent) {
       const result = await sendLeadMessageAction(lead.id, {
@@ -674,7 +459,9 @@ export function LeadPage({
     window.requestAnimationFrame(() => document.getElementById(`lead-reference-tab-${targetTab}`)?.focus());
   }
 
-  const nearestTask = getNearestLeadTask(lead.tasks, lead.taskReferenceAt);
+  const nearestWorkTask =
+    workTasks.find((task) => task.status === "open" || task.status === "in_progress") ??
+    null;
   const primaryContact = lead.customer.contacts.find((contact) => contact.isPrimary);
   const daysInWork = Math.max(0, Math.ceil((new Date(lead.taskReferenceAt).getTime() - new Date(lead.createdAt).getTime()) / 86_400_000));
   const preferredChannel = primaryContact?.preferredChannel && primaryContact.preferredChannel !== "unspecified"
@@ -693,7 +480,9 @@ export function LeadPage({
     responsible: lead.responsible
       ? { ...lead.responsible, initials: lead.responsible.name.slice(0, 2).toUpperCase() }
       : { id: "unassigned", name: "Не назначен", initials: "—" },
-    nextContact: nearestTask ? formatTaskDate(nearestTask.dueAt) : "Не запланирован",
+    nextContact: nearestWorkTask && nearestWorkTask.dueLabel !== "—"
+      ? nearestWorkTask.dueLabel
+      : "Не запланирован",
     priority: (lead.commercial.priority ?? "medium") as Priority,
     result: lead.result,
     completedAt: lead.completedAt ? formatDate(lead.completedAt) : undefined,
@@ -761,7 +550,7 @@ export function LeadPage({
         initialStages={stages}
         managers={taskManagers}
         lastActivityAtLabel={formatDate(lead.lastActivityAt)}
-        onAddTask={(trigger) => openTaskDialog({ kind: "edit", task: null }, trigger)}
+        onAddTask={() => setWorkTaskCreateOpen(true)}
         onWrite={() => openWorkspaceSection("communication")}
         onFinalAction={openFinalAction}
       />
@@ -778,7 +567,7 @@ export function LeadPage({
               <ResponsiveGrid minItemWidth="small" gap="compact" className="lead-metrics-grid">
                 <MetricCard label="Вероятность конверсии" value={lead.probability === null ? "Не указана" : `${lead.probability}%`} size="compact" />
                 <MetricCard label="Последний контакт" value={formatDate(lead.lastActivityAt)} size="compact" />
-                <MetricCard label="Следующий контакт" value={nearestTask ? formatTaskDate(nearestTask.dueAt) : "Не запланирован"} detail={nearestTask?.title} size="compact" />
+                <MetricCard label="Следующий контакт" value={nearestWorkTask && nearestWorkTask.dueLabel !== "—" ? nearestWorkTask.dueLabel : "Не запланирован"} detail={nearestWorkTask?.title} size="compact" />
                 <MetricCard label="Дней в работе" value={`${daysInWork} дн.`} detail={`с ${formatDate(lead.createdAt)}`} size="compact" />
                 <MetricCard label="Количество касаний" value={String(lead.activities.length)} detail="событий в истории" size="compact" />
                 <MetricCard label="Потенциальная сумма" value={formatCurrency(lead.estimatedAmount)} tone="success" size="compact" />
@@ -829,12 +618,12 @@ export function LeadPage({
 
             <div className="lead-bottom-grid grid min-w-0 items-start gap-3">
               <div id="lead-workspace-panel-tasks" className={`lead-tasks-card min-w-0 rounded-portal-lg border border-portal-border bg-portal-surface shadow-portal-card ${workspaceTab === "tasks" ? "block" : "hidden"} lg:block`}>
-                {taskActionError ? <p className="border-b border-red-100 bg-red-50 px-4 py-2 text-sm text-red-700" role="alert">{taskActionError}</p> : null}
                 <HostWorkTasksPanel
                   embedded
                   compact
                   tasks={workTasks}
                   loadError={workTasksError}
+                  viewerUserId={viewerUserId}
                   onAdd={() => setWorkTaskCreateOpen(true)}
                 />
               </div>
@@ -915,33 +704,6 @@ export function LeadPage({
         </ComplexEntityCard>
       </PageContent>
 
-      {taskDialog?.kind === "edit" ? (
-        <LeadTaskEditDialog
-          key={taskDialog.task?.id ?? "new-task"}
-          task={taskDialog.task}
-          referenceAt={lead.taskReferenceAt}
-          managers={taskManagers}
-          persistent={taskPersistent}
-          onClose={closeTaskDialog}
-          onSave={(draft) => saveTask(taskDialog.task, draft)}
-        />
-      ) : null}
-      {taskDialog?.kind === "complete" ? (
-        <LeadTaskCompleteDialog
-          task={taskDialog.task}
-          persistent={taskPersistent}
-          onClose={closeTaskDialog}
-          onConfirm={(result) => completeTask(taskDialog.task.id, result)}
-        />
-      ) : null}
-      {taskDialog?.kind === "delete" ? (
-        <LeadTaskDeleteDialog
-          task={taskDialog.task}
-          persistent={taskPersistent}
-          onClose={closeTaskDialog}
-          onConfirm={() => deleteTask(taskDialog.task.id)}
-        />
-      ) : null}
       <WorkTaskCreateDrawer
         open={workTaskCreateOpen}
         onClose={() => setWorkTaskCreateOpen(false)}

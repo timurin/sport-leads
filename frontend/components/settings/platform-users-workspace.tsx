@@ -51,9 +51,11 @@ const statusFilters: Array<{ id: PlatformUserListStatus; label: string }> = [
 export function PlatformUsersWorkspace({
   users: initialUsers,
   roles: initialRoles,
+  viewerUserId,
 }: {
   users: PlatformUserAdmin[];
   roles: RoleCatalogItem[];
+  viewerUserId: number | null;
 }) {
   const { push: pushToast } = useToast();
   const [users, setUsers] = useState(initialUsers);
@@ -298,6 +300,7 @@ export function PlatformUsersWorkspace({
         user={profileUser}
         users={users}
         roles={roles}
+        viewerUserId={viewerUserId}
         roleBusyKey={busyKey}
         onClose={() => setProfileUserId(null)}
         onSaved={(saved) => {

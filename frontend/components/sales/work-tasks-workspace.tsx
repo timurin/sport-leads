@@ -1,11 +1,12 @@
 "use client";
 
-import Link from "next/link";
 import { Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 
+import { WorkTaskChatModal } from "@/components/sales/work-task-chat-modal";
 import { WorkTaskCreateDrawer } from "@/components/sales/work-task-create-drawer";
+import { WorkTasksKanbanBoard } from "@/components/sales/work-tasks-kanban-board";
 import { PageContent, PageLayout } from "@/components/layout/page-layout";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -14,8 +15,10 @@ import { PageToolbar } from "@/components/ui/page-header";
 import { SectionCard } from "@/components/ui/section-card";
 import {
   buildWorkTasksListHref,
+  resolveWorkTasksView,
   workTaskAnchorTypeLabels,
   workTaskStatusLabels,
+  type WorkTaskBoardStage,
   type WorkTaskListFilters,
   type WorkTaskListItem,
 } from "@/lib/work-tasks";
@@ -26,11 +29,14 @@ type Props = {
   tasks: WorkTaskListItem[];
   filters: WorkTaskListFilters;
   stages: FilterOption[];
+  boardStages: WorkTaskBoardStage[];
   users: FilterOption[];
   leads: FilterOption[];
   orders: FilterOption[];
   productionOrders: FilterOption[];
   loadError?: string | null;
+  boardStagesError?: string | null;
+  viewerUserId?: number | null;
 };
 
 function FilterSelect({
@@ -60,17 +66,32 @@ function FilterSelect({
 }
 
 export function WorkTasksWorkspace({
-  tasks,
+  tasks: initialTasks,
   filters,
   stages,
+  boardStages: initialBoardStages,
   users,
   leads,
   orders,
   productionOrders,
   loadError = null,
+  boardStagesError = null,
+  viewerUserId = null,
 }: Props) {
   const router = useRouter();
   const [createOpen, setCreateOpen] = useState(false);
+  const [tasks, setTasks] = useState(initialTasks);
+  const [boardStages, setBoardStages] = useState(initialBoardStages);
+  const [openTaskId, setOpenTaskId] = useState<number | null>(null);
+  const view = resolveWorkTasksView(filters);
+
+  useEffect(() => {
+    setTasks(initialTasks);
+  }, [initialTasks]);
+
+  useEffect(() => {
+    setBoardStages(initialBoardStages);
+  }, [initialBoardStages]);
 
   const pushFilters = (patch: Partial<WorkTaskListFilters>) => {
     const next: WorkTaskListFilters = { ...filters, ...patch };
@@ -83,8 +104,20 @@ export function WorkTasksWorkspace({
     router.push(buildWorkTasksListHref(next));
   };
 
+  const openSeed =
+    openTaskId == null
+      ? null
+      : (tasks.find((task) => task.id === String(openTaskId)) ?? null);
+
   return (
     <PageLayout className="flex min-h-0 flex-1 flex-col">
+      <WorkTaskChatModal
+        open={openTaskId != null}
+        taskId={openTaskId}
+        seedTask={openSeed}
+        viewerUserId={viewerUserId}
+        onClose={() => setOpenTaskId(null)}
+      />
       <WorkTaskCreateDrawer
         open={createOpen}
         onClose={() => setCreateOpen(false)}
@@ -102,6 +135,28 @@ export function WorkTasksWorkspace({
               <p className="text-sm text-portal-muted">
                 Постановка в цех: статус, ответственный, исполнитель
               </p>
+            </div>
+            <div
+              className="inline-flex w-fit rounded-portal-md border border-portal-border p-0.5"
+              role="group"
+              aria-label="Вид задач"
+            >
+              <Button
+                type="button"
+                size="compact"
+                variant={view === "list" ? "primary" : "ghost"}
+                onClick={() => pushFilters({ view: "list" })}
+              >
+                Список
+              </Button>
+              <Button
+                type="button"
+                size="compact"
+                variant={view === "kanban" ? "primary" : "ghost"}
+                onClick={() => pushFilters({ view: "kanban" })}
+              >
+                Канбан
+              </Button>
             </div>
             <div className="flex flex-wrap gap-portal-2">
               <FilterSelect
@@ -204,9 +259,32 @@ export function WorkTasksWorkspace({
           </Button>
         }
       />
-      <PageContent className="space-y-portal-4 p-portal-4 sm:p-portal-6">
+      <PageContent
+        width="full"
+        className="space-y-portal-4 p-portal-4 sm:p-portal-6"
+      >
         {loadError ? (
           <EmptyState title="Не удалось загрузить задачи" description={loadError} />
+        ) : view === "kanban" ? (
+          boardStagesError ? (
+            <EmptyState
+              title="Не удалось загрузить стадии канбана"
+              description={boardStagesError}
+            />
+          ) : (
+            <SectionCard
+              title="Канбан"
+              description="Перетащите карточку между колонками. «+» в заголовке добавляет стадию."
+            >
+              <WorkTasksKanbanBoard
+                tasks={tasks}
+                stages={boardStages}
+                onStagesChange={setBoardStages}
+                onTasksChange={setTasks}
+                onOpenTask={setOpenTaskId}
+              />
+            </SectionCard>
+          )
         ) : tasks.length === 0 ? (
           <EmptyState
             title="Задач не найдено"
@@ -220,14 +298,16 @@ export function WorkTasksWorkspace({
         ) : (
           <SectionCard title="Список задач" description={`${tasks.length} записей`}>
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[640px] text-left text-sm">
+              <table className="w-full min-w-[720px] text-left text-sm">
                 <thead className="border-b border-portal-border text-portal-muted">
                   <tr>
                     <th className="px-2 py-2 font-medium">Задача</th>
                     <th className="px-2 py-2 font-medium">Статус</th>
-                    <th className="px-2 py-2 font-medium">Цех</th>
+                    <th className="px-2 py-2 font-medium">Канбан</th>
+                    <th className="px-2 py-2 font-medium">Назначил</th>
                     <th className="px-2 py-2 font-medium">Ответственный</th>
                     <th className="px-2 py-2 font-medium">Исполнитель</th>
+                    <th className="px-2 py-2 font-medium">Срок</th>
                     <th className="px-2 py-2 font-medium">Объект</th>
                   </tr>
                 </thead>
@@ -235,34 +315,40 @@ export function WorkTasksWorkspace({
                   {tasks.map((task) => (
                     <tr
                       key={task.id}
-                      className="border-b border-portal-border/70 last:border-0"
+                      className={`border-b border-portal-border/70 last:border-0 ${
+                        task.dueSoon ? "bg-portal-warning-soft/50" : ""
+                      }`}
                     >
                       <td className="px-2 py-2.5">
-                        <Link
-                          href={task.href}
-                          className="font-medium text-portal-text underline-offset-2 hover:underline"
+                        <button
+                          type="button"
+                          className="text-left font-medium text-portal-text underline-offset-2 hover:underline"
+                          onClick={() => setOpenTaskId(Number(task.id))}
                         >
                           {task.title}
-                        </Link>
+                        </button>
                       </td>
                       <td className="px-2 py-2.5 text-portal-text">{task.statusLabel}</td>
-                      <td className="px-2 py-2.5 text-portal-muted">{task.workshopLabel}</td>
+                      <td className="px-2 py-2.5 text-portal-muted">
+                        {task.boardStageLabel}
+                      </td>
+                      <td className="px-2 py-2.5 text-portal-muted">
+                        {task.createdByLabel}
+                      </td>
                       <td className="px-2 py-2.5 text-portal-muted">
                         {task.responsibleLabel}
                       </td>
                       <td className="px-2 py-2.5 text-portal-muted">{task.executorLabel}</td>
-                      <td className="px-2 py-2.5">
-                        {task.objectHref ? (
-                          <Link
-                            href={task.objectHref}
-                            className="text-portal-text underline-offset-2 hover:underline"
-                          >
-                            {task.objectLabel}
-                          </Link>
-                        ) : (
-                          <span className="text-portal-muted">{task.objectLabel}</span>
-                        )}
+                      <td
+                        className={`px-2 py-2.5 ${
+                          task.overdue || task.dueSoon
+                            ? "font-medium text-portal-danger"
+                            : "text-portal-muted"
+                        }`}
+                      >
+                        {task.dueLabel}
                       </td>
+                      <td className="px-2 py-2.5 text-portal-muted">{task.objectLabel}</td>
                     </tr>
                   ))}
                 </tbody>

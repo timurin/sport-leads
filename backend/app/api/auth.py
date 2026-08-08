@@ -7,11 +7,19 @@ from sqlalchemy.orm import Session
 
 from app.config.settings import settings
 from app.database.session import get_db
-from app.schemas.auth import AuthLoginRequest, AuthLoginResponse, PlatformUserMeRead
+from app.api.deps_auth import get_current_platform_user
+from app.models.auth import PlatformUser
+from app.schemas.auth import (
+    AuthChangePasswordRequest,
+    AuthLoginRequest,
+    AuthLoginResponse,
+    PlatformUserMeRead,
+)
 from app.services.auth import (
     SESSION_COOKIE_NAME,
     AuthUnauthorizedError,
     AuthValidationError,
+    change_own_password,
     ensure_bootstrap_admin,
     login,
     logout,
@@ -122,3 +130,28 @@ def auth_me(
             detail=str(error),
         ) from error
     return to_me_read(user)
+
+
+@router.post(
+    "/change-password",
+    status_code=status.HTTP_204_NO_CONTENT,
+    operation_id="auth_change_password",
+)
+def auth_change_password(
+    payload: AuthChangePasswordRequest,
+    db: Session = Depends(get_db),
+    user: PlatformUser = Depends(get_current_platform_user),
+) -> Response:
+    try:
+        change_own_password(
+            db,
+            user,
+            current_password=payload.current_password,
+            new_password=payload.new_password,
+        )
+    except AuthValidationError as error:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=str(error),
+        ) from error
+    return Response(status_code=status.HTTP_204_NO_CONTENT)

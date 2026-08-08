@@ -14,8 +14,11 @@ import {
 import { createWorkTaskMessage } from "@/app/(workspace)/sales/tasks/work-task-actions";
 import { Button, IconButton } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
+import { ImageLightbox } from "@/components/ui/image-lightbox";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { useToast } from "@/components/ui/toast";
 import {
+  isWorkTaskMessageMine,
   validateWorkTaskComposer,
   WORK_TASK_IMAGE_MAX_BYTES,
   WORK_TASK_IMAGE_MIMES,
@@ -27,12 +30,16 @@ type Props = {
   task: WorkTaskListItem;
   initialMessages: WorkTaskMessageView[];
   messagesError?: string | null;
+  viewerUserId?: number | null;
+  showBackLink?: boolean;
 };
 
 export function WorkTaskChatPanel({
   task,
   initialMessages,
   messagesError = null,
+  viewerUserId = null,
+  showBackLink = true,
 }: Props) {
   const { push: pushToast } = useToast();
   const [messages, setMessages] = useState(initialMessages);
@@ -41,6 +48,9 @@ export function WorkTaskChatPanel({
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [lightbox, setLightbox] = useState<{ src: string; alt: string } | null>(
+    null,
+  );
   const historyRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -135,47 +145,85 @@ export function WorkTaskChatPanel({
       className="flex min-h-[28rem] min-w-0 flex-1 flex-col overflow-hidden rounded-portal-lg border border-portal-border bg-portal-surface shadow-portal-card"
       data-work-task-chat
     >
+      {lightbox ? (
+        <ImageLightbox
+          src={lightbox.src}
+          alt={lightbox.alt}
+          onClose={() => setLightbox(null)}
+        />
+      ) : null}
       <header className="shrink-0 border-b border-portal-border px-portal-4 py-portal-3">
         <div className="flex flex-wrap items-start justify-between gap-portal-3">
-          <div className="min-w-0 space-y-1">
-            <h2 className="truncate text-base font-semibold text-portal-text">
-              {task.title}
-            </h2>
-            <p className="text-sm text-portal-muted">
-              {task.statusLabel}
-              <span aria-hidden> · </span>
-              {task.workshopLabel}
-              <span aria-hidden> · </span>
-              {task.responsibleLabel}
-              <span aria-hidden> · </span>
-              {task.executorLabel}
-            </p>
-            <p className="text-sm text-portal-muted">
-              Объект:{" "}
-              {task.objectHref ? (
-                <Link
-                  href={task.objectHref}
-                  className="text-portal-text underline-offset-2 hover:underline"
-                >
-                  {task.objectLabel}
-                </Link>
-              ) : (
-                task.objectLabel
-              )}
-              {task.dueLabel !== "—" ? (
-                <>
-                  <span aria-hidden> · </span>
-                  Срок: {task.dueLabel}
-                </>
+          <div className="min-w-0 space-y-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <h2 className="truncate text-base font-semibold text-portal-text">
+                {task.title}
+              </h2>
+              <StatusBadge size="compact" tone="neutral">
+                {task.statusLabel}
+              </StatusBadge>
+              {task.overdue ? (
+                <StatusBadge size="compact" tone="danger">
+                  Просрочено
+                </StatusBadge>
+              ) : task.dueSoon ? (
+                <StatusBadge size="compact" tone="warning">
+                  Срок &lt; 1 дня
+                </StatusBadge>
               ) : null}
-            </p>
+            </div>
+            <dl className="grid grid-cols-1 gap-x-portal-4 gap-y-1 text-sm sm:grid-cols-2">
+              <div className="min-w-0">
+                <dt className="text-portal-caption text-portal-muted">Назначил</dt>
+                <dd className="truncate text-portal-text">{task.createdByLabel}</dd>
+              </div>
+              <div className="min-w-0">
+                <dt className="text-portal-caption text-portal-muted">Ответственный</dt>
+                <dd className="truncate text-portal-text">{task.responsibleLabel}</dd>
+              </div>
+              <div className="min-w-0">
+                <dt className="text-portal-caption text-portal-muted">Исполнитель</dt>
+                <dd className="truncate text-portal-text">{task.executorLabel}</dd>
+              </div>
+              <div className="min-w-0">
+                <dt className="text-portal-caption text-portal-muted">Срок</dt>
+                <dd
+                  className={
+                    task.overdue || task.dueSoon
+                      ? "font-medium text-portal-danger"
+                      : "text-portal-text"
+                  }
+                >
+                  {task.dueLabel}
+                </dd>
+              </div>
+              <div className="min-w-0 sm:col-span-2">
+                <dt className="text-portal-caption text-portal-muted">Цех / объект</dt>
+                <dd className="truncate text-portal-text">
+                  {task.workshopLabel}
+                  <span aria-hidden> · </span>
+                  {task.objectHref ? (
+                    <Link
+                      href={task.objectHref}
+                      className="underline-offset-2 hover:underline"
+                    >
+                      {task.objectLabel}
+                    </Link>
+                  ) : (
+                    task.objectLabel
+                  )}
+                </dd>
+              </div>
+            </dl>
           </div>
-          <Link
-            href="/sales/tasks"
-            className="shrink-0 text-sm text-portal-muted underline-offset-2 hover:underline"
-          >
-            ← К списку
-          </Link>
+          {showBackLink ? (
+            <Link
+              href="/sales/tasks"
+              className="shrink-0 text-sm text-portal-muted underline-offset-2 hover:underline"
+            >
+              ← К списку
+            </Link>
+          ) : null}
         </div>
       </header>
 
@@ -197,51 +245,87 @@ export function WorkTaskChatPanel({
             size="compact"
           />
         ) : (
-          messages.map((message) => (
-            <article
-              key={message.id}
-              className="ml-auto max-w-[min(100%,28rem)] rounded-2xl rounded-br-md border border-portal-border bg-portal-surface px-3.5 py-2.5 shadow-sm"
-              aria-label={`Сообщение от ${message.authorLabel}`}
-            >
-              <div className="flex items-baseline justify-between gap-2 text-[11px] text-portal-muted">
-                <span className="font-semibold text-portal-text">
-                  {message.authorLabel}
-                </span>
-                <time dateTime={message.createdAt}>{message.createdLabel}</time>
+          messages.map((message) => {
+            const mine = isWorkTaskMessageMine(
+              message.authorPlatformUserId,
+              viewerUserId,
+            );
+            const authorLabel = mine ? "Вы" : message.authorLabel;
+            return (
+              <div
+                key={message.id}
+                className={`flex w-full ${mine ? "justify-end" : "justify-start"}`}
+              >
+                <article
+                  className={
+                    mine
+                      ? "max-w-[min(100%,28rem)] rounded-2xl rounded-br-md border border-portal-primary/30 bg-portal-primary-soft px-3.5 py-2.5 shadow-sm"
+                      : "max-w-[min(100%,28rem)] rounded-2xl rounded-bl-md border border-portal-border bg-portal-surface-secondary px-3.5 py-2.5 shadow-sm"
+                  }
+                  aria-label={`Сообщение от ${authorLabel}`}
+                  data-mine={mine ? "true" : "false"}
+                >
+                  <div
+                    className={`flex items-baseline justify-between gap-2 text-[11px] ${
+                      mine ? "text-portal-primary/80" : "text-portal-muted"
+                    }`}
+                  >
+                    <span
+                      className={`font-semibold ${
+                        mine ? "text-portal-primary" : "text-portal-text"
+                      }`}
+                    >
+                      {authorLabel}
+                    </span>
+                    <time dateTime={message.createdAt}>{message.createdLabel}</time>
+                  </div>
+                  {message.body ? (
+                    <p className="mt-1.5 whitespace-pre-wrap [overflow-wrap:anywhere] text-sm leading-5 text-portal-text">
+                      {message.body}
+                    </p>
+                  ) : null}
+                  {message.attachments.length > 0 ? (
+                    <ul className="mt-2 space-y-1.5">
+                      {message.attachments.map((item) => (
+                        <li key={item.id}>
+                          {item.isImage ? (
+                            <button
+                              type="button"
+                              className="block max-w-full text-left"
+                              onClick={() =>
+                                setLightbox({ src: item.href, alt: item.filename })
+                              }
+                            >
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img
+                                src={item.href}
+                                alt={item.filename}
+                                className="max-h-56 max-w-full cursor-zoom-in rounded-lg border border-portal-border object-contain"
+                              />
+                            </button>
+                          ) : (
+                            <a
+                              href={item.href}
+                              className="flex items-center gap-2 rounded-lg bg-portal-surface px-2.5 py-1.5 text-xs text-portal-text underline-offset-2 hover:underline"
+                              target="_blank"
+                              rel="noreferrer"
+                            >
+                              <span className="min-w-0 flex-1 truncate">
+                                {item.filename}
+                              </span>
+                              <span className="shrink-0 text-portal-muted">
+                                {item.sizeLabel}
+                              </span>
+                            </a>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  ) : null}
+                </article>
               </div>
-              {message.body ? (
-                <p className="mt-1.5 whitespace-pre-wrap [overflow-wrap:anywhere] text-sm leading-5 text-portal-text">
-                  {message.body}
-                </p>
-              ) : null}
-              {message.attachments.length > 0 ? (
-                <ul className="mt-2 space-y-1.5">
-                  {message.attachments.map((item) => (
-                    <li key={item.id}>
-                      {item.isImage ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
-                          src={item.href}
-                          alt={item.filename}
-                          className="max-h-56 max-w-full rounded-lg border border-portal-border object-contain"
-                        />
-                      ) : (
-                        <a
-                          href={item.href}
-                          className="flex items-center gap-2 rounded-lg bg-portal-surface-secondary px-2.5 py-1.5 text-xs text-portal-text underline-offset-2 hover:underline"
-                          target="_blank"
-                          rel="noreferrer"
-                        >
-                          <span className="min-w-0 flex-1 truncate">{item.filename}</span>
-                          <span className="shrink-0 text-portal-muted">{item.sizeLabel}</span>
-                        </a>
-                      )}
-                    </li>
-                  ))}
-                </ul>
-              ) : null}
-            </article>
-          ))
+            );
+          })
         )}
       </div>
 

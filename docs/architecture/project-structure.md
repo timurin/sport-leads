@@ -1,9 +1,9 @@
 # Sport-Lead — Project Structure Checklist
 
 **Code:** `SL-PROJECT-STRUCTURE-v1`
-**Updated:** `2026-08-06` (v1.00 Stage `23` Unified Work Tasks — ADR-028 / `23.0.1`; Stage `22` Design v1.0 in progress)  
+**Updated:** `2026-08-08` (v1.00 Stage `23` Unified Work Tasks — through `23.6.1` data migrate; next `23.6.2`/`23.6.3`)  
 **Project version:** `v0.9.0` / early `v1.00` Stages 0 + 20 + 21 + 22 + 23
-**Git branch:** `feature/v0.8.1-nomenclature-core`
+**Git branch:** `main`
 
 ## Rules
 
@@ -39,7 +39,7 @@
 - [x] Lead / order card UX + unified messaging (`v1.00` Stage `20`) — need-cleanup `20.1`; lead layout `20.2`; ADR-027 lead XOR collaboration + shared shell `20.3`; order parity client-need/metrics/comms `20.4`; Alembic `l5m6n7o8p901`; owner visual OK `20.4.5` (`2026-08-05`)
 - [x] Settings / Users cabinet (`v1.00` Stage `21`) — nav «Пользователи» `/settings/users` (≠ org «Сотрудники» `2.4.2`); invite/list/profile PATCH; access matrix; extends `17.1.2`; Alembic `m6n7o8p9q012`; owner visual OK `21.5.1` (`2026-08-05`); contract `SL-USERS-CABINET-v1`
 - [ ] Design v1.0 (`v1.00` Stage `22`) — Soft UI etalons → platform; `SL-DESIGN-V1-PROCESS-v1`; approved Lead + Order (`22.1`/`22.2`); draft `22.4`–`22.9` (modules + shell); TBD boards `22.3`; task `docs/tasks/v1.00-stage-22-design-v1.md`
-- [ ] Unified Work Tasks (`v1.00` Stage `23`) — `WorkTask` replaces `LeadTask` + `CollaborationMicrotask`; ADR-028; chat + images; `storage/task-media`; live `/sales/tasks`; `23.0.1` closed `2026-08-06`; next `23.1`
+- [ ] Unified Work Tasks (`v1.00` Stage `23`) — ADR-028; through `23.6.2` (API/FE/hosts, UI deprecate, data migrate `p9q0r1s2t345`, docs/regression); next `23.6.3` owner visual
 - [ ] Production secrets management (Vault/etc.) — monitoring + DR covered in `17.2.2`/`17.2.3`; file `.env.production` remains host SoT for secrets MVP
 
 ## 2. CRM and Leads

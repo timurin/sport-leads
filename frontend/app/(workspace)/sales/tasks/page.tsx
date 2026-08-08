@@ -1,8 +1,10 @@
 import {
+  listWorkTaskBoardStages,
   listWorkTaskFilterUsers,
   listWorkTasks,
 } from "@/app/(workspace)/sales/tasks/work-task-actions";
 import { WorkTasksWorkspace } from "@/components/sales/work-tasks-workspace";
+import { getMe } from "@/lib/auth/session";
 import { fetchProductionOrders } from "@/lib/production/production-orders";
 import { getProductionStages } from "@/lib/production-stages";
 import { getLeadList } from "@/lib/sales/lead-list-api";
@@ -17,15 +19,25 @@ export default async function TasksPage({ searchParams }: Props) {
   const params = await searchParams;
   const filters = parseWorkTaskListFilters(params);
 
-  const [loaded, stages, usersLoaded, leadsLoaded, ordersLoaded, productionOrders] =
-    await Promise.all([
-      listWorkTasks(filters),
-      getProductionStages({ active_only: true, limit: 200 }).catch(() => []),
-      listWorkTaskFilterUsers(),
-      getLeadList(),
-      getOrderList(),
-      fetchProductionOrders({ limit: 500 }).catch(() => []),
-    ]);
+  const [
+    me,
+    loaded,
+    stages,
+    boardStagesLoaded,
+    usersLoaded,
+    leadsLoaded,
+    ordersLoaded,
+    productionOrders,
+  ] = await Promise.all([
+    getMe(),
+    listWorkTasks(filters),
+    getProductionStages({ active_only: true, limit: 200 }).catch(() => []),
+    listWorkTaskBoardStages(),
+    listWorkTaskFilterUsers(),
+    getLeadList(),
+    getOrderList(),
+    fetchProductionOrders({ limit: 500 }).catch(() => []),
+  ]);
 
   const stageOptions = stages.map((stage) => ({
     id: stage.id,
@@ -52,10 +64,13 @@ export default async function TasksPage({ searchParams }: Props) {
   const shared = {
     filters,
     stages: stageOptions,
+    boardStages: boardStagesLoaded.ok ? boardStagesLoaded.data : [],
+    boardStagesError: boardStagesLoaded.ok ? null : boardStagesLoaded.message,
     users: userOptions,
     leads: leadOptions,
     orders: orderOptions,
     productionOrders: productionOrderOptions,
+    viewerUserId: me?.id ?? null,
   };
 
   if (!loaded.ok) {

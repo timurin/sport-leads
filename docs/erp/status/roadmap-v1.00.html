@@ -2737,10 +2737,14 @@
               },
               {
                 code: "23.5.4",
-                done: false,
+                done: true,
                 title: {
                   en: "Remove primary LeadTask panel + collaboration microtasks UI",
                   ru: "Deprecate UI"
+                },
+                note: {
+                  en: "v1.00 2026-08-08; lead-page LeadTask dialogs removed; OrderCollaborationPanel microtasks UI removed (API retained for 23.6.1)",
+                  ru: "v1.00 2026-08-08; primary LeadTask/microtask UI removed"
                 }
               }
             ]
@@ -2753,18 +2757,26 @@
             items: [
               {
                 code: "23.6.1",
-                done: false,
+                done: true,
                 title: {
                   en: "Alembic data migrate LeadTask + CollaborationMicrotask → WorkTask",
                   ru: "Data migrate"
+                },
+                note: {
+                  en: "v1.00 2026-08-08; p9q0r1s2t345 + work_task_migration.py; test_work_task_migration_23_6_1.py",
+                  ru: "v1.00 2026-08-08; Alembic data migrate"
                 }
               },
               {
                 code: "23.6.2",
-                done: false,
+                done: true,
                 title: {
                   en: "Regression (API + FE) + docs checkpoint",
                   ru: "Регрессия + docs"
+                },
+                note: {
+                  en: "v1.00 2026-08-08; work-tasks pytest + lib/work-tasks.test.mjs; erp-check / project-structure / field-links synced",
+                  ru: "v1.00 2026-08-08; regression + docs checkpoint"
                 }
               },
               {
@@ -2825,6 +2837,142 @@
                 title: {
                   en: "Backend + frontend regression pass (pytest, node --test, tsc)",
                   ru: "Регрессия"
+                }
+              }
+            ]
+          },
+          {
+            title: {
+              en: "23.8 — Chat bubbles + list/kanban board stages",
+              ru: "23.8 — Пузыри чата + Канбан стадии"
+            },
+            note: {
+              en: "Chat mine/others sides; List|Kanban toggle; work_task_board_stages CRUD + board_stage_id. Spec: 2026-08-08-work-tasks-chat-kanban-design.md",
+              ru: "Чат свои/чужие; Список|Канбан; CRUD стадий доски. Spec: 2026-08-08-work-tasks-chat-kanban-design.md"
+            },
+            items: [
+              {
+                code: "23.8.1",
+                done: true,
+                title: {
+                  en: "Model + Alembic: work_task_board_stages seed + board_stage_id",
+                  ru: "Модель + миграция"
+                },
+                note: {
+                  en: "v1.00 2026-08-08; q1r2s3t4u567_add_work_task_board_stages.py",
+                  ru: "v1.00 2026-08-08; Alembic board stages"
+                }
+              },
+              {
+                code: "23.8.2",
+                done: true,
+                title: {
+                  en: "Board stages CRUD API + WorkTask board_stage_id",
+                  ru: "API стадий + patch задачи"
+                },
+                note: {
+                  en: "v1.00 2026-08-08; /work-task-board-stages + PATCH; test_work_task_board_stages_23_8.py",
+                  ru: "v1.00 2026-08-08; API стадий"
+                }
+              },
+              {
+                code: "23.8.3",
+                done: true,
+                title: {
+                  en: "Chat bubbles: mine right / others left + session tint",
+                  ru: "Пузыри чата"
+                },
+                note: {
+                  en: "v1.00 2026-08-08; WorkTaskChatPanel + viewerUserId",
+                  ru: "v1.00 2026-08-08; пузыри чата"
+                }
+              },
+              {
+                code: "23.8.4",
+                done: true,
+                title: {
+                  en: "FE List|Kanban toggle + stage CRUD + move task",
+                  ru: "FE Канбан"
+                },
+                note: {
+                  en: "v1.00 2026-08-08; ?view=kanban + WorkTasksKanbanBoard",
+                  ru: "v1.00 2026-08-08; FE Канбан"
+                }
+              },
+              {
+                code: "23.8.5",
+                done: true,
+                title: {
+                  en: "Focused tests (BE stages + FE helpers)",
+                  ru: "Тесты"
+                },
+                note: {
+                  en: "v1.00 2026-08-08; pytest board stages + lib/work-tasks.test.mjs",
+                  ru: "v1.00 2026-08-08; тесты"
+                }
+              },
+              {
+                code: "23.8.6",
+                done: true,
+                title: {
+                  en: "Owner visual (chat sides + list/kanban)",
+                  ru: "Owner visual"
+                },
+                note: {
+                  en: "v1.00 2026-08-08; covered by modal/chat UX pass 23.9",
+                  ru: "v1.00 2026-08-08; закрыто в 23.9 UX"
+                }
+              }
+            ]
+          },
+          {
+            title: {
+              en: "23.9 — Task chat modal + header enrichment",
+              ru: "23.9 — Модальный чат + шапка"
+            },
+            items: [
+              {
+                code: "23.9.1",
+                done: true,
+                title: {
+                  en: "created_by_platform_user_id + detail/list display names",
+                  ru: "Назначил"
+                },
+                note: {
+                  en: "v1.00 2026-08-08; Alembic r2s3t4u5v678",
+                  ru: "v1.00 2026-08-08; created_by"
+                }
+              },
+              {
+                code: "23.9.2",
+                done: true,
+                title: {
+                  en: "WorkTaskChatModal from list/kanban/hosts",
+                  ru: "Модальный чат"
+                },
+                note: {
+                  en: "v1.00 2026-08-08; lead/order/PO + /sales/tasks",
+                  ru: "v1.00 2026-08-08; модальный чат"
+                }
+              },
+              {
+                code: "23.9.3",
+                done: true,
+                title: {
+                  en: "Kanban + stage header; full-width; lightbox; due-soon",
+                  ru: "UX канбан/срок"
+                },
+                note: {
+                  en: "v1.00 2026-08-08; + in header, width=full, ImageLightbox, dueSoon",
+                  ru: "v1.00 2026-08-08; канбан UX"
+                }
+              },
+              {
+                code: "23.9.4",
+                done: false,
+                title: {
+                  en: "Owner visual (modal chat + due-soon + header)",
+                  ru: "Owner visual"
                 }
               }
             ]

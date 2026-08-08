@@ -11,7 +11,7 @@ from app.models.auth import PlatformUser
 from app.models.production_order import ProductionOrder
 from app.models.production_stage import ProductionStage
 from app.models.sales import Lead, SalesOrder
-from app.models.work_tasks import WorkTask, WorkTaskAttachment, WorkTaskMessage, WorkTaskStatus
+from app.models.work_tasks import WorkTask, WorkTaskAttachment, WorkTaskBoardStage, WorkTaskMessage, WorkTaskStatus
 from app.schemas.work_tasks import (
     WorkTaskAttachmentRead,
     WorkTaskCreate,
@@ -20,6 +20,7 @@ from app.schemas.work_tasks import (
     WorkTaskRead,
     WorkTaskUpdate,
 )
+from app.services import work_task_board_stages as board_stage_svc
 from app.services.work_task_media import (
     WorkTaskMediaError,
     assert_allowed_task_image_mime,
@@ -37,14 +38,42 @@ class WorkTaskValidationError(RuntimeError):
     pass
 
 
-def _to_read(row: WorkTask) -> WorkTaskRead:
-    return WorkTaskRead.model_validate(row)
+def _to_read(row: WorkTask, db: Session | None = None) -> WorkTaskRead:
+    if db is None:
+        return WorkTaskRead.model_validate(row)
+    items = _to_list_items(db, [row])
+    item = items[0]
+    return WorkTaskRead(
+        id=row.id,
+        title=row.title,
+        status=row.status,
+        production_stage_id=row.production_stage_id,
+        production_stage_name=item.production_stage_name,
+        board_stage_id=row.board_stage_id,
+        board_stage_name=item.board_stage_name,
+        created_by_platform_user_id=row.created_by_platform_user_id,
+        created_by_display_name=item.created_by_display_name,
+        responsible_platform_user_id=row.responsible_platform_user_id,
+        responsible_display_name=item.responsible_display_name,
+        executor_platform_user_id=row.executor_platform_user_id,
+        executor_display_name=item.executor_display_name,
+        lead_id=row.lead_id,
+        sales_order_id=row.sales_order_id,
+        production_order_id=row.production_order_id,
+        due_at=row.due_at,
+        created_at=row.created_at,
+        updated_at=row.updated_at,
+        completed_at=row.completed_at,
+    )
 
 
 def _to_list_items(db: Session, rows: list[WorkTask]) -> list[WorkTaskListItem]:
     stage_ids = {row.production_stage_id for row in rows if row.production_stage_id is not None}
+    board_ids = {row.board_stage_id for row in rows if row.board_stage_id is not None}
     user_ids: set[int] = set()
     for row in rows:
+        if row.created_by_platform_user_id is not None:
+            user_ids.add(row.created_by_platform_user_id)
         if row.responsible_platform_user_id is not None:
             user_ids.add(row.responsible_platform_user_id)
         if row.executor_platform_user_id is not None:
@@ -56,6 +85,13 @@ def _to_list_items(db: Session, rows: list[WorkTask]) -> list[WorkTaskListItem]:
             select(ProductionStage).where(ProductionStage.id.in_(stage_ids))
         ).all():
             stage_names[stage.id] = stage.name
+
+    board_names: dict[int, str] = {}
+    if board_ids:
+        for stage in db.scalars(
+            select(WorkTaskBoardStage).where(WorkTaskBoardStage.id.in_(board_ids))
+        ).all():
+            board_names[stage.id] = stage.name
 
     user_names: dict[int, str] = {}
     if user_ids:
@@ -75,6 +111,18 @@ def _to_list_items(db: Session, rows: list[WorkTask]) -> list[WorkTaskListItem]:
                 production_stage_name=(
                     stage_names.get(row.production_stage_id)
                     if row.production_stage_id is not None
+                    else None
+                ),
+                board_stage_id=row.board_stage_id,
+                board_stage_name=(
+                    board_names.get(row.board_stage_id)
+                    if row.board_stage_id is not None
+                    else None
+                ),
+                created_by_platform_user_id=row.created_by_platform_user_id,
+                created_by_display_name=(
+                    user_names.get(row.created_by_platform_user_id)
+                    if row.created_by_platform_user_id is not None
                     else None
                 ),
                 responsible_platform_user_id=row.responsible_platform_user_id,
@@ -176,21 +224,44 @@ def get_work_task(db: Session, task_id: int) -> WorkTaskRead:
     row = db.get(WorkTask, task_id)
     if row is None:
         raise WorkTaskNotFoundError("Work task not found")
-    return _to_read(row)
+    return _to_read(row, db)
 
 
-def create_work_task(db: Session, payload: WorkTaskCreate) -> WorkTaskRead:
+def create_work_task(
+    db: Session,
+    payload: WorkTaskCreate,
+    *,
+    created_by_platform_user_id: int | None = None,
+) -> WorkTaskRead:
     _require_anchor(db, payload)
     _require_stage(db, payload.production_stage_id)
+    try:
+        board_stage_svc.require_board_stage(db, payload.board_stage_id)
+    except board_stage_svc.BoardStageValidationError as error:
+        raise WorkTaskValidationError(str(error)) from error
     _require_platform_user(
         db, payload.responsible_platform_user_id, label="Responsible user"
     )
     _require_platform_user(db, payload.executor_platform_user_id, label="Executor user")
+    _require_platform_user(
+        db, created_by_platform_user_id, label="Created-by user"
+    )
+
+    board_stage_id = payload.board_stage_id
+    if board_stage_id is None:
+        first = db.scalar(
+            select(WorkTaskBoardStage)
+            .where(WorkTaskBoardStage.is_active.is_(True))
+            .order_by(WorkTaskBoardStage.sort_order.asc(), WorkTaskBoardStage.id.asc())
+        )
+        board_stage_id = first.id if first is not None else None
 
     row = WorkTask(
         title=payload.title,
         status=payload.status,
         production_stage_id=payload.production_stage_id,
+        board_stage_id=board_stage_id,
+        created_by_platform_user_id=created_by_platform_user_id,
         responsible_platform_user_id=payload.responsible_platform_user_id,
         executor_platform_user_id=payload.executor_platform_user_id,
         lead_id=payload.lead_id,
@@ -206,7 +277,7 @@ def create_work_task(db: Session, payload: WorkTaskCreate) -> WorkTaskRead:
     db.add(row)
     db.commit()
     db.refresh(row)
-    return _to_read(row)
+    return _to_read(row, db)
 
 
 def update_work_task(db: Session, task_id: int, payload: WorkTaskUpdate) -> WorkTaskRead:
@@ -217,6 +288,11 @@ def update_work_task(db: Session, task_id: int, payload: WorkTaskUpdate) -> Work
     data = payload.model_dump(exclude_unset=True)
     if "production_stage_id" in data:
         _require_stage(db, data["production_stage_id"])
+    if "board_stage_id" in data:
+        try:
+            board_stage_svc.require_board_stage(db, data["board_stage_id"])
+        except board_stage_svc.BoardStageValidationError as error:
+            raise WorkTaskValidationError(str(error)) from error
     if "responsible_platform_user_id" in data:
         _require_platform_user(
             db, data["responsible_platform_user_id"], label="Responsible user"
@@ -237,7 +313,7 @@ def update_work_task(db: Session, task_id: int, payload: WorkTaskUpdate) -> Work
 
     db.commit()
     db.refresh(row)
-    return _to_read(row)
+    return _to_read(row, db)
 
 
 def _message_to_read(

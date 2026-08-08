@@ -9,6 +9,7 @@ import {
   listWorkTaskFilterUsers,
 } from "@/app/(workspace)/sales/tasks/work-task-actions";
 import { SalesOrderPage } from "@/components/sales/sales-order-page";
+import { getMe } from "@/lib/auth/session";
 import { getNomenclature, getNomenclatureCategories } from "@/lib/nomenclature";
 import { getProductionStages } from "@/lib/production-stages";
 import { getLeadDetails } from "@/lib/sales/lead-details";
@@ -31,6 +32,7 @@ export default async function OrderRoute({ params }: OrderRouteProps) {
   }
 
   const [
+    me,
     result,
     historyResult,
     nomenclature,
@@ -42,6 +44,7 @@ export default async function OrderRoute({ params }: OrderRouteProps) {
     stagesCatalog,
     usersLoaded,
   ] = await Promise.all([
+    getMe(),
     getOrderDetails(orderId),
     getOrderHistory(orderId),
     getNomenclature(),
@@ -92,6 +95,7 @@ export default async function OrderRoute({ params }: OrderRouteProps) {
         label: stage.name,
       }))}
       workTaskUsers={usersLoaded.ok ? usersLoaded.data : []}
+      viewerUserId={me?.id ?? null}
     />
   );
 }

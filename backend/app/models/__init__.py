@@ -150,6 +150,7 @@ from app.models.stage_executors import platform_user_stage_access
 from app.models.work_tasks import (
     WorkTask,
     WorkTaskAttachment,
+    WorkTaskBoardStage,
     WorkTaskMessage,
     WorkTaskStatus,
 )
@@ -285,6 +286,7 @@ __all__ = [
     "role_permissions",
     "platform_user_stage_access",
     "WorkTask",
+    "WorkTaskBoardStage",
     "WorkTaskMessage",
     "WorkTaskAttachment",
     "WorkTaskStatus",

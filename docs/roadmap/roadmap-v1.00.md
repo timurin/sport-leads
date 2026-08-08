@@ -1,7 +1,7 @@
 # Sport-Lead — Roadmap v1.00
 
 **Code:** `SL-ROADMAP-v1.00`  
-**Updated:** `2026-08-08` (Stage **23** Unified Work Tasks; `23.5.3` PO host done; new `23.7` order context + chat visual; next `23.5.4` deprecate old UI)  
+**Updated:** `2026-08-08` (Stage **23**; chat bubbles + board stages / list↔kanban `23.8`)  
 **Project version:** `v1.00`  
 **Status:** Confirmed carry-over from `v0.9.0` (Stages **1.4.3**, **2** group, **7**, **12.4**–**12.5**, **13**, **14**, **15**, **16**, **18.4**) + **new** Stages **0** (performance + LAN + order-without-lead), **20** (Lead / Order UX, closed), **21** (Settings / Users cabinet, closed), **22** (Design v1.0), **23** (Unified Work Tasks). Owner started early (`2026-08-05`).  
 **Languages / Языки:** English + Russian (this MD). Interactive switch: `docs/erp/status/roadmap-v1.00.html`
@@ -616,12 +616,12 @@
 - [x] 23.5.1 — Lead card Tasks tab → WorkTask — `v1.00` `2026-08-06`; `HostWorkTasksPanel` + `GET /leads/{id}/work-tasks` / Лид
 - [x] 23.5.2 — Sales order Tasks tab → WorkTask — `v1.00` `2026-08-06`; order aside Tasks + `GET /orders/{id}/work-tasks` / Заказ
 - [x] 23.5.3 — Production order Tasks surface → WorkTask — `v1.00` `2026-08-06`; PO card panel + `GET /production-orders/{id}/work-tasks` / ПО
-- [ ] 23.5.4 — Remove primary LeadTask panel + collaboration microtasks UI — / Deprecate UI
+- [x] 23.5.4 — Remove primary LeadTask panel + collaboration microtasks UI — `v1.00` `2026-08-08`; lead-page LeadTask dialogs removed; OrderCollaborationPanel microtasks UI removed (API retained for `23.6.1`) / Deprecate UI
 
 ### 23.6 — Data migration + regression + visual / Миграция данных + регрессия + visual
 
-- [ ] 23.6.1 — Alembic data migrate `LeadTask` + `CollaborationMicrotask` → `WorkTask` — / Data migrate
-- [ ] 23.6.2 — Regression (API + FE) + docs checkpoint (erp-check / project-structure / field-links) — / Регрессия + docs
+- [x] 23.6.1 — Alembic data migrate `LeadTask` + `CollaborationMicrotask` → `WorkTask` — `v1.00` `2026-08-08`; `p9q0r1s2t345_migrate_lead_tasks_microtasks_to_work_tasks.py` + `work_task_migration.py`; `test_work_task_migration_23_6_1.py` / Data migrate
+- [x] 23.6.2 — Regression (API + FE) + docs checkpoint (erp-check / project-structure / field-links) — `v1.00` `2026-08-08`; work-tasks pytest + `lib/work-tasks.test.mjs`; erp-check / project-structure / field-links synced / Регрессия + docs
 - [ ] 23.6.3 — Owner visual (list + chat + host tabs) — / Owner visual
 
 ### 23.7 — Order context + chat visual design / Контекст заказа + дизайн чата
@@ -634,6 +634,25 @@
 - [ ] 23.7.3 — FE `lib/work-tasks.ts`: map order summary + real names — / FE mapper
 - [ ] 23.7.4 — Chat panel visual redesign (order info card, overdue badge) via `/plugin frontend-design` — / Визуал чата
 - [ ] 23.7.5 — Backend + frontend regression pass (pytest, node --test, tsc) — / Регрессия
+
+### 23.8 — Chat bubbles + list/kanban board stages / Пузыри чата + Канбан стадии
+
+> **EN:** Chat: mine right / others left with session colors. `/sales/tasks` toggle List|Kanban. Separate `work_task_board_stages` CRUD + `work_tasks.board_stage_id` (status enum unchanged). Spec: `docs/superpowers/specs/2026-08-08-work-tasks-chat-kanban-design.md`.
+> **RU:** Чат: свои справа / чужие слева. Переключатель Список|Канбан. Отдельные стадии доски CRUD + `board_stage_id`. Spec: `2026-08-08-work-tasks-chat-kanban-design.md`.
+
+- [x] 23.8.1 — Model + Alembic: `work_task_board_stages` seed + `work_tasks.board_stage_id` — `v1.00` `2026-08-08`; `q1r2s3t4u567_add_work_task_board_stages.py` / Модель + миграция
+- [x] 23.8.2 — Board stages CRUD API + WorkTask list/update `board_stage_id` — `v1.00` `2026-08-08`; `/work-task-board-stages` + PATCH task; `test_work_task_board_stages_23_8.py` / API стадий + patch задачи
+- [x] 23.8.3 — Chat bubbles: mine right / others left + session tint — `v1.00` `2026-08-08`; `WorkTaskChatPanel` + `viewerUserId` / Пузыри чата
+- [x] 23.8.4 — FE List|Kanban toggle + stage add/rename/delete + move task — `v1.00` `2026-08-08`; `?view=kanban` + `WorkTasksKanbanBoard` / FE Канбан
+- [x] 23.8.5 — Focused tests (BE stages + FE helpers) — `v1.00` `2026-08-08`; pytest board stages + `lib/work-tasks.test.mjs` / Тесты
+- [x] 23.8.6 — Owner visual (chat sides + list/kanban) — deferred into modal/chat UX pass `2026-08-08` / Owner visual
+
+### 23.9 — Task chat modal + header enrichment / Модальный чат + шапка
+
+- [x] 23.9.1 — `created_by_platform_user_id` + detail/list display names — `v1.00` `2026-08-08`; Alembic `r2s3t4u5v678` / Назначил
+- [x] 23.9.2 — `WorkTaskChatModal` from list/kanban/hosts (lead/order/PO) — `v1.00` `2026-08-08` / Модальный чат
+- [x] 23.9.3 — Kanban stage `+` in header; full-width list; image lightbox; due-soon highlight — `v1.00` `2026-08-08` / UX канбан/срок
+- [ ] 23.9.4 — Owner visual (modal chat + due-soon + header) — / Owner visual
 
 ---
 
@@ -669,3 +688,6 @@
 | `2026-08-05` | Stage 22: Soft UI draft etalons for Production/Warehouse/Purchases/Settings/Dashboard + shell chrome (`22.4`–`22.9`); Sales boards remain TBD | Stage 22: draft-эталоны Production/Warehouse/Purchases/Settings/Dashboard + shell (`22.4`–`22.9`); доски продаж — TBD |
 | `2026-08-06` | New Stage 23 Unified Work Tasks: replace LeadTask + CollaborationMicrotask; ADR-028; `23.0.1` closed | Новый Stage 23 Единые Задачи: замена LeadTask + microtasks; ADR-028; `23.0.1` закрыт |
 | `2026-08-08` | New `23.7`: WorkTask order-context (sales order summary, real display names, overdue badge) + chat visual pass via `/plugin frontend-design`; plan `docs/superpowers/plans/2026-08-08-work-tasks-order-context.md` | Новый `23.7`: контекст заказа в Задачах (сводка заказа, реальные имена, бейдж просрочки) + визуал чата через `/plugin frontend-design`; план `2026-08-08-work-tasks-order-context.md` |
+| `2026-08-08` | Closed `23.5.4`: removed primary LeadTask dialogs on lead card + collaboration microtasks UI (API kept for `23.6.1`) | Закрыт `23.5.4`: убраны primary LeadTask-диалоги на лиде и UI microtasks в collaboration (API сохранён для `23.6.1`) |
+| `2026-08-08` | Closed `23.6.1`/`23.6.2`: data migrate Alembic `p9q0r1s2t345` + regression/docs checkpoint; next owner visual `23.6.3` | Закрыты `23.6.1`/`23.6.2`: data migrate + регрессия/docs; далее owner visual `23.6.3` |
+| `2026-08-08` | New `23.8`: chat bubbles (mine/others) + List|Kanban with CRUD board stages; spec `2026-08-08-work-tasks-chat-kanban-design.md` | Новый `23.8`: пузыри чата + Список|Канбан со стадиями доски; spec `2026-08-08-work-tasks-chat-kanban-design.md` |

@@ -134,6 +134,7 @@ export function SalesOrderPage({
   workTasksError = null,
   workTaskStages = [],
   workTaskUsers = [],
+  viewerUserId = null,
 }: {
   order: SalesOrderDetails;
   activities: LeadActivity[];
@@ -147,6 +148,7 @@ export function SalesOrderPage({
   workTasksError?: string | null;
   workTaskStages?: WorkTaskAnchorOption[];
   workTaskUsers?: WorkTaskAnchorOption[];
+  viewerUserId?: number | null;
 }) {
   const [order, setOrder] = useState(initialOrder);
   const [activities, setActivities] = useState(() => cloneActivities(initialActivities));
@@ -341,6 +343,7 @@ export function SalesOrderPage({
         title="Задачи"
         tasks={workTasks}
         loadError={workTasksError}
+        viewerUserId={viewerUserId}
         onAdd={() => setWorkTaskCreateOpen(true)}
       />
     </div>

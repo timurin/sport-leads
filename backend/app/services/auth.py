@@ -382,6 +382,51 @@ def logout(db: Session, raw_token: str | None) -> None:
         db.commit()
 
 
+MIN_PASSWORD_LENGTH = 8
+
+
+def _require_new_password(password: str) -> str:
+    cleaned = (password or "").strip()
+    if len(cleaned) < MIN_PASSWORD_LENGTH:
+        raise AuthValidationError(
+            f"Новый пароль — минимум {MIN_PASSWORD_LENGTH} символов"
+        )
+    return cleaned
+
+
+def change_own_password(
+    db: Session,
+    user: PlatformUser,
+    *,
+    current_password: str,
+    new_password: str,
+) -> None:
+    if not verify_password(user.password_hash, current_password):
+        raise AuthValidationError("Неверный текущий пароль")
+    cleaned = _require_new_password(new_password)
+    if verify_password(user.password_hash, cleaned):
+        raise AuthValidationError("Новый пароль совпадает с текущим")
+    row = db.get(PlatformUser, user.id)
+    if row is None:
+        raise AuthValidationError("Пользователь не найден")
+    row.password_hash = hash_password(cleaned)
+    db.commit()
+
+
+def set_platform_user_password(
+    db: Session,
+    *,
+    platform_user_id: int,
+    new_password: str,
+) -> None:
+    cleaned = _require_new_password(new_password)
+    row = db.get(PlatformUser, platform_user_id)
+    if row is None:
+        raise AuthValidationError("Пользователь не найден")
+    row.password_hash = hash_password(cleaned)
+    db.commit()
+
+
 def to_me_read(user: PlatformUser) -> PlatformUserMeRead:
     return PlatformUserMeRead(
         id=user.id,

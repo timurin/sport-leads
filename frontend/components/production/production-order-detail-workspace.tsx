@@ -67,6 +67,7 @@ export function ProductionOrderDetailWorkspace({
   workTasksError = null,
   workTaskStages = [],
   workTaskUsers = [],
+  viewerUserId = null,
 }: {
   order: ProductionOrderDetail;
   technicalCards: ApiTechnicalCardListItem[];
@@ -76,6 +77,7 @@ export function ProductionOrderDetailWorkspace({
   workTasksError?: string | null;
   workTaskStages?: WorkTaskAnchorOption[];
   workTaskUsers?: WorkTaskAnchorOption[];
+  viewerUserId?: number | null;
 }) {
   const router = useRouter();
   const { push: pushToast } = useToast();
@@ -236,6 +238,7 @@ export function ProductionOrderDetailWorkspace({
             title="Задачи"
             tasks={workTasks}
             loadError={workTasksError}
+            viewerUserId={viewerUserId}
             onAdd={() => setWorkTaskCreateOpen(true)}
           />
         </div>

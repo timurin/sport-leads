@@ -7,6 +7,7 @@ from enum import Enum
 from typing import TYPE_CHECKING
 
 from sqlalchemy import (
+    Boolean,
     CheckConstraint,
     DateTime,
     ForeignKey,
@@ -14,6 +15,7 @@ from sqlalchemy import (
     Integer,
     String,
     Text,
+    UniqueConstraint,
     func,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -34,6 +36,36 @@ class WorkTaskStatus(str, Enum):
     CANCELLED = "cancelled"
 
 
+class WorkTaskBoardStage(Base):
+    """Kanban column for /sales/tasks board (independent of WorkTask.status)."""
+
+    __tablename__ = "work_task_board_stages"
+    __table_args__ = (
+        UniqueConstraint("name", name="uq_work_task_board_stages_name"),
+        Index("ix_work_task_board_stages_sort_order", "sort_order"),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    name: Mapped[str] = mapped_column(String(120), nullable=False)
+    sort_order: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    is_active: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=True, server_default="true"
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+        onupdate=func.now(),
+    )
+
+    tasks: Mapped[list["WorkTask"]] = relationship(back_populates="board_stage")
+
+
 class WorkTask(Base):
     """Internal work assignment with optional workshop and chat thread."""
 
@@ -52,6 +84,8 @@ class WorkTask(Base):
         Index("ix_work_tasks_sales_order_id", "sales_order_id"),
         Index("ix_work_tasks_production_order_id", "production_order_id"),
         Index("ix_work_tasks_production_stage_id", "production_stage_id"),
+        Index("ix_work_tasks_board_stage_id", "board_stage_id"),
+        Index("ix_work_tasks_created_by_platform_user_id", "created_by_platform_user_id"),
         Index("ix_work_tasks_responsible_platform_user_id", "responsible_platform_user_id"),
         Index("ix_work_tasks_executor_platform_user_id", "executor_platform_user_id"),
     )
@@ -66,6 +100,14 @@ class WorkTask(Base):
     )
     production_stage_id: Mapped[int | None] = mapped_column(
         ForeignKey("production_stages.id", ondelete="SET NULL"),
+        nullable=True,
+    )
+    board_stage_id: Mapped[int | None] = mapped_column(
+        ForeignKey("work_task_board_stages.id", ondelete="SET NULL"),
+        nullable=True,
+    )
+    created_by_platform_user_id: Mapped[int | None] = mapped_column(
+        ForeignKey("platform_users.id", ondelete="SET NULL"),
         nullable=True,
     )
     responsible_platform_user_id: Mapped[int | None] = mapped_column(
@@ -106,6 +148,13 @@ class WorkTask(Base):
     )
 
     production_stage: Mapped[ProductionStage | None] = relationship("ProductionStage")
+    board_stage: Mapped[WorkTaskBoardStage | None] = relationship(
+        back_populates="tasks"
+    )
+    created_by: Mapped[PlatformUser | None] = relationship(
+        "PlatformUser",
+        foreign_keys=[created_by_platform_user_id],
+    )
     responsible: Mapped[PlatformUser | None] = relationship(
         "PlatformUser",
         foreign_keys=[responsible_platform_user_id],

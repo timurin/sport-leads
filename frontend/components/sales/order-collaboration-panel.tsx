@@ -1,24 +1,17 @@
 "use client";
 
-import { Check, ListTodo, Send } from "lucide-react";
+import { Send } from "lucide-react";
 import type { ReactNode } from "react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import {
   createLeadCollaborationMessage,
-  createLeadCollaborationMicrotask,
   createOrderCollaborationMessage,
-  createOrderCollaborationMicrotask,
   listCollaborationMentionCandidates,
-  listCollaborationMicrotaskTitleTemplates,
   listLeadCollaborationMessages,
-  listLeadCollaborationMicrotasks,
   listOrderCollaborationMessages,
-  listOrderCollaborationMicrotasks,
-  updateCollaborationMicrotaskStatus,
   type CollaborationMentionCandidate,
   type CollaborationMessage,
-  type CollaborationMicrotask,
 } from "@/app/(workspace)/sales/orders/[orderId]/collaboration-actions";
 import { Button } from "@/components/ui/button";
 
@@ -85,8 +78,6 @@ export function OrderCollaborationPanel({
   }
   const isLead = leadId != null;
   const [messages, setMessages] = useState<CollaborationMessage[]>([]);
-  const [microtasks, setMicrotasks] = useState<CollaborationMicrotask[]>([]);
-  const [templates, setTemplates] = useState<string[]>([]);
   const [candidates, setCandidates] = useState<CollaborationMentionCandidate[]>([]);
   const [draft, setDraft] = useState("");
   const [error, setError] = useState("");
@@ -94,29 +85,16 @@ export function OrderCollaborationPanel({
   const [loading, setLoading] = useState(true);
   const [showMentions, setShowMentions] = useState(false);
   const [mentionQuery, setMentionQuery] = useState("");
-  const [showMicrotaskForm, setShowMicrotaskForm] = useState(false);
-  const [taskTitle, setTaskTitle] = useState("");
-  const [assigneeId, setAssigneeId] = useState<number | "">("");
-  const [sourceMessageId, setSourceMessageId] = useState<number | null>(null);
   const historyRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-
-  const openTasks = useMemo(
-    () => microtasks.filter((row) => row.status === "open"),
-    [microtasks],
-  );
 
   const refresh = useCallback(async () => {
     setLoading(true);
     setError("");
-    const [msgRes, taskRes, tplRes, candRes] = await Promise.all([
+    const [msgRes, candRes] = await Promise.all([
       isLead
         ? listLeadCollaborationMessages(leadId)
         : listOrderCollaborationMessages(orderId!, technicalCardId),
-      isLead
-        ? listLeadCollaborationMicrotasks(leadId)
-        : listOrderCollaborationMicrotasks(orderId!),
-      listCollaborationMicrotaskTitleTemplates(),
       listCollaborationMentionCandidates(),
     ]);
     if (!msgRes.ok) {
@@ -124,20 +102,8 @@ export function OrderCollaborationPanel({
       setLoading(false);
       return;
     }
-    if (!taskRes.ok) {
-      setError(taskRes.message);
-      setLoading(false);
-      return;
-    }
     setMessages(msgRes.data);
-    setMicrotasks(taskRes.data);
-    if (tplRes.ok) setTemplates(tplRes.data);
-    if (candRes.ok) {
-      setCandidates(candRes.data);
-      setAssigneeId((current) =>
-        current === "" && candRes.data[0] ? candRes.data[0].id : current,
-      );
-    }
+    if (candRes.ok) setCandidates(candRes.data);
     setLoading(false);
   }, [isLead, leadId, orderId, technicalCardId]);
 
@@ -213,47 +179,6 @@ export function OrderCollaborationPanel({
     setMessages((current) => [...current, result.data]);
   }
 
-  async function createMicrotask() {
-    if (!taskTitle.trim() || assigneeId === "" || busy) return;
-    setBusy(true);
-    setError("");
-    const result = isLead
-      ? await createLeadCollaborationMicrotask(leadId!, {
-          title: taskTitle.trim(),
-          assignee_platform_user_id: Number(assigneeId),
-          source_message_id: sourceMessageId,
-        })
-      : await createOrderCollaborationMicrotask(orderId!, {
-          title: taskTitle.trim(),
-          assignee_platform_user_id: Number(assigneeId),
-          technical_card_id: technicalCardId,
-          source_message_id: sourceMessageId,
-        });
-    setBusy(false);
-    if (!result.ok) {
-      setError(result.message);
-      return;
-    }
-    setMicrotasks((current) => [result.data, ...current]);
-    setShowMicrotaskForm(false);
-    setTaskTitle("");
-    setSourceMessageId(null);
-  }
-
-  async function toggleMicrotask(task: CollaborationMicrotask) {
-    const next = task.status === "done" ? "open" : "done";
-    setBusy(true);
-    const result = await updateCollaborationMicrotaskStatus(task.id, next);
-    setBusy(false);
-    if (!result.ok) {
-      setError(result.message);
-      return;
-    }
-    setMicrotasks((current) =>
-      current.map((row) => (row.id === task.id ? result.data : row)),
-    );
-  }
-
   const shellClass = embedded
     ? "flex h-full min-h-[28rem] min-w-0 flex-col"
     : "flex min-h-[22rem] min-w-0 flex-col rounded-portal-lg border border-portal-border bg-portal-surface shadow-portal-card";
@@ -269,7 +194,6 @@ export function OrderCollaborationPanel({
               : isLead
                 ? "Внутренний чат по лиду"
                 : "По заказу (все сообщения)"}
-            {openTasks.length > 0 ? ` · открытых задач: ${openTasks.length}` : ""}
           </p>
         </div>
         <div className="flex shrink-0 gap-1.5">
@@ -281,17 +205,6 @@ export function OrderCollaborationPanel({
               Заказ
             </a>
           ) : null}
-          <Button
-            type="button"
-            variant="secondary"
-            className="h-8 px-2 text-xs"
-            onClick={() => {
-              setShowMicrotaskForm((v) => !v);
-              setSourceMessageId(null);
-            }}
-          >
-            <ListTodo size={14} /> Задача
-          </Button>
         </div>
       </div>
 
@@ -301,89 +214,6 @@ export function OrderCollaborationPanel({
             <p className="mx-3.5 mt-2 rounded-md border border-red-200 bg-red-50 px-2 py-1.5 text-xs text-red-700" role="alert">
               {error}
             </p>
-          ) : null}
-
-          {showMicrotaskForm ? (
-            <div className="mx-3.5 mt-2 space-y-2 rounded-md border border-portal-border bg-portal-surface-secondary p-2.5">
-              <p className="text-xs font-semibold text-portal-text">Новая микрозадача</p>
-              {templates.length > 0 ? (
-                <div className="flex flex-wrap gap-1">
-                  {templates.map((tpl) => (
-                    <button
-                      key={tpl}
-                      type="button"
-                      className="rounded border border-slate-200 bg-white px-2 py-0.5 text-[11px] text-slate-700 hover:bg-slate-50"
-                      onClick={() => setTaskTitle(tpl)}
-                    >
-                      {tpl}
-                    </button>
-                  ))}
-                </div>
-              ) : null}
-              <input
-                value={taskTitle}
-                onChange={(e) => setTaskTitle(e.target.value)}
-                placeholder="Заголовок"
-                className="h-8 w-full rounded-md border border-slate-200 px-2 text-sm"
-              />
-              <select
-                value={assigneeId === "" ? "" : String(assigneeId)}
-                onChange={(e) =>
-                  setAssigneeId(e.target.value ? Number(e.target.value) : "")
-                }
-                className="h-8 w-full rounded-md border border-slate-200 px-2 text-sm"
-              >
-                <option value="">Исполнитель…</option>
-                {candidates.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.display_name} (@{c.login})
-                  </option>
-                ))}
-              </select>
-              <div className="flex gap-2">
-                <Button
-                  type="button"
-                  variant="primary"
-                  className="h-8 px-3 text-xs"
-                  disabled={busy || !taskTitle.trim() || assigneeId === ""}
-                  onClick={() => void createMicrotask()}
-                >
-                  Создать
-                </Button>
-                <Button
-                  type="button"
-                  variant="secondary"
-                  className="h-8 px-3 text-xs"
-                  onClick={() => setShowMicrotaskForm(false)}
-                >
-                  Отмена
-                </Button>
-              </div>
-            </div>
-          ) : null}
-
-          {openTasks.length > 0 ? (
-            <ul className="mx-3.5 mt-2 space-y-1 border-b border-portal-border pb-2">
-              {openTasks.slice(0, 5).map((task) => (
-                <li
-                  key={task.id}
-                  className="flex items-center justify-between gap-2 rounded-md bg-amber-50 px-2 py-1 text-xs text-amber-950"
-                >
-                  <span className="min-w-0 truncate">
-                    {task.title}
-                    <span className="text-amber-700/80"> · @{task.assignee_login}</span>
-                  </span>
-                  <button
-                    type="button"
-                    className="inline-flex shrink-0 items-center gap-1 rounded border border-amber-200 bg-white px-1.5 py-0.5 text-[10px] font-semibold"
-                    disabled={busy}
-                    onClick={() => void toggleMicrotask(task)}
-                  >
-                    <Check size={12} /> Готово
-                  </button>
-                </li>
-              ))}
-            </ul>
           ) : null}
 
           <div ref={historyRef} className="min-h-0 flex-1 space-y-2 overflow-y-auto px-3.5 py-3">
@@ -417,16 +247,6 @@ export function OrderCollaborationPanel({
                   <p className="whitespace-pre-wrap text-sm text-slate-800">
                     {highlightMentions(message.body, message.mentions)}
                   </p>
-                  <button
-                    type="button"
-                    className="mt-1 text-[10px] font-semibold text-blue-700 hover:underline"
-                    onClick={() => {
-                      setShowMicrotaskForm(true);
-                      setSourceMessageId(message.id);
-                    }}
-                  >
-                    Создать задачу из сообщения
-                  </button>
                 </article>
               ))
             )}

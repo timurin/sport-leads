@@ -27,6 +27,10 @@ export type ProfileUpdateResult =
   | { ok: true; user: PlatformUserAdmin }
   | { ok: false; message: string };
 
+export type PasswordActionResult =
+  | { ok: true }
+  | { ok: false; message: string };
+
 const USERS_PATH = "/settings/users";
 
 function apiBaseUrl(): string {
@@ -165,6 +169,43 @@ export async function updatePlatformUserProfile(
   const user = normalizeUser((await response.json()) as PlatformUserAdmin);
   revalidatePath(USERS_PATH);
   return { ok: true, user };
+}
+
+export async function changeOwnPassword(payload: {
+  current_password: string;
+  new_password: string;
+}): Promise<PasswordActionResult> {
+  const auth = await sessionAuthHeaders();
+  const response = await fetch(`${apiBaseUrl()}/auth/change-password`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...auth },
+    body: JSON.stringify(payload),
+    cache: "no-store",
+  });
+  if (!response.ok) {
+    return { ok: false, message: await readError(response) };
+  }
+  return { ok: true };
+}
+
+export async function setPlatformUserPassword(
+  platformUserId: number,
+  newPassword: string,
+): Promise<PasswordActionResult> {
+  const auth = await sessionAuthHeaders();
+  const response = await fetch(
+    `${apiBaseUrl()}/platform-users/${platformUserId}/set-password`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...auth },
+      body: JSON.stringify({ new_password: newPassword }),
+      cache: "no-store",
+    },
+  );
+  if (!response.ok) {
+    return { ok: false, message: await readError(response) };
+  }
+  return { ok: true };
 }
 
 export async function assignPlatformUserRole(

@@ -41,7 +41,11 @@ export default async function PlatformUsersPage() {
 
   return (
     <PageLayout className="flex min-h-0 flex-1 flex-col">
-      <PlatformUsersWorkspace users={loaded.users} roles={loaded.roles} />
+      <PlatformUsersWorkspace
+        users={loaded.users}
+        roles={loaded.roles}
+        viewerUserId={me?.id ?? null}
+      />
     </PageLayout>
   );
 }

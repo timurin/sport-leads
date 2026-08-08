@@ -5,6 +5,7 @@ import {
   listWorkTaskFilterUsers,
 } from "@/app/(workspace)/sales/tasks/work-task-actions";
 import { LeadPage } from "@/components/sales/lead-page";
+import { getMe } from "@/lib/auth/session";
 import { getLeadDetails } from "@/lib/sales/lead-details";
 import { getLeadStages } from "@/lib/sales/lead-stage-api";
 import { getProductionStages } from "@/lib/production-stages";
@@ -19,8 +20,9 @@ export default async function LeadRoute({ params }: LeadRouteProps) {
     notFound();
   }
 
-  const [lead, stageResult, workTasksLoaded, stagesCatalog, usersLoaded] =
+  const [me, lead, stageResult, workTasksLoaded, stagesCatalog, usersLoaded] =
     await Promise.all([
+      getMe(),
       getLeadDetails(leadId),
       getLeadStages(),
       listLeadWorkTasks(Number(leadId)),
@@ -47,6 +49,7 @@ export default async function LeadRoute({ params }: LeadRouteProps) {
         label: stage.name,
       }))}
       workTaskUsers={usersLoaded.ok ? usersLoaded.data : []}
+      viewerUserId={me?.id ?? null}
     />
   );
 }

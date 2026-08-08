@@ -25,17 +25,17 @@ flowchart LR
   SalesOrderItem -.-> TechnicalCard
   TechnicalCard --> SalesOrder
   Lead --> LeadEvent
-  Lead --> LeadTask
+  Lead --> WorkTask
+  SalesOrder --> WorkTask
   LeadEvent --> SalesOrder
   SalesOrder --> CollaborationThread
   CollaborationThread --> CollaborationMessage
   CollaborationMessage --> CollaborationMention
-  SalesOrder --> CollaborationMicrotask
 ```
 
 `TechnicalCard` (Stage 9): one document per manufacturable `SalesOrderItem`; DB core `9.1.2` + generate API `9.2.1` + order UI `9.4.1` shipped. Wiring plan: § Gap `#4` below.
 
-**Internal staff chat (Stage 19 / ADR-026 + ADR-027):** `CollaborationThread` anchored XOR to `SalesOrder` **or** `Lead`. Messages on order threads may carry optional `technical_card_id`. Order card filter «Коммуникация» (`3.5.7`) and TC document panel are **UI surfaces** only. Lead card hosts the same `OrderCollaborationPanel` shell on `lead_id` (`20.3`). External CRM channels remain `LeadMessage` / `1.4.3` — ≠ staff chat.
+**Internal staff chat (Stage 19 / ADR-026 + ADR-027):** `CollaborationThread` anchored XOR to `SalesOrder` **or** `Lead`. Messages on order threads may carry optional `technical_card_id`. Order card filter «Коммуникация» (`3.5.7`) and TC document panel are **UI surfaces** only. Lead card hosts the same `OrderCollaborationPanel` shell on `lead_id` (`20.3`). Primary chat-microtasks UI removed (`23.5.4`); rows migrate to `WorkTask` (`23.6.1`). External CRM channels remain `LeadMessage` / `1.4.3` — ≠ staff chat.
 
 ## Header / document fields
 
@@ -49,10 +49,10 @@ flowchart LR
 | Responsible | `responsible_id` + `responsible_name` | live FK + joined name | `SalesUser`; employees dir `2.4.2` | Name only until employees card |
 | Amount / quantity / dates / source / category / sport / description | order columns | live | order row | Commercial totals also driven by items |
 | Communications / notes / managers | local UI state + demo fixtures (CRM lead channel chrome) | demo-local → live Stage 19 | Internal staff thread → ADR-026 / `19.3.1` | ≠ CRM lead external channels (`1.2.4`); surface filter `3.5.7` |
-| Tasks panel | `LeadTask` via `lead_id` | live model / empty for API leads | Lead tasks | CRM only; order chat microtasks → `CollaborationMicrotask` (`19.2`) |
+| Tasks panel | `WorkTask` via `sales_order_id` (Stage `23`) | live | `/sales/tasks` + host panel | Replaces primary `LeadTask` UI (`23.5.4`); data migrate `23.6.1` |
 | History | `LeadEvent` lead ∪ order | live | `GET /orders/{id}/history` | |
 | Manufacturing / ТК summary | technical cards by order | live | Production `/production/tech-cards?orderId=` | Gap `#4` closed `9.4.1`; not commercial status |
-| Internal collaboration (staff) | `CollaborationThread` / messages / microtasks | live (Stage 19 + `20.3`) | Order «Коммуникация» + TC panel + lead panel | ADR-026/027; XOR `sales_order_id`\|`lead_id`; optional `technical_card_id` on order messages only |
+| Internal collaboration (staff) | `CollaborationThread` / messages | live (Stage 19 + `20.3`) | Order «Коммуникация» + TC panel + lead panel | ADR-026/027; microtasks UI removed (`23.5.4`); rows migrate → `WorkTask` (`23.6.1`) |
 
 ## Order line fields
 

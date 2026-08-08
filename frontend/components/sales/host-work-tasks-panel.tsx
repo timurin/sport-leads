@@ -1,8 +1,8 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
+import { WorkTaskChatModal } from "@/components/sales/work-task-chat-modal";
 import { Button } from "@/components/ui/button";
 import { CompactTabs } from "@/components/ui/compact-tabs";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -33,6 +33,7 @@ type Props = {
   onAdd: () => void;
   embedded?: boolean;
   compact?: boolean;
+  viewerUserId?: number | null;
 };
 
 export function HostWorkTasksPanel({
@@ -42,9 +43,11 @@ export function HostWorkTasksPanel({
   onAdd,
   embedded = false,
   compact = false,
+  viewerUserId = null,
 }: Props) {
   const [tasks, setTasks] = useState(tasksProp);
   const [filter, setFilter] = useState<StatusFilter>("open_active");
+  const [openTaskId, setOpenTaskId] = useState<number | null>(null);
 
   useEffect(() => {
     setTasks(tasksProp);
@@ -63,94 +66,130 @@ export function HostWorkTasksPanel({
     }),
     [tasks],
   );
+  const openSeed =
+    openTaskId == null
+      ? null
+      : (tasks.find((task) => task.id === String(openTaskId)) ?? null);
 
   return (
-    <EntityPanel
-      embedded={embedded}
-      compact={compact}
-      title={
-        <span id="lead-tasks-heading" tabIndex={-1} className="outline-none">
-          {title}
-        </span>
-      }
-      description={
-        compact ? undefined : "Постановка в цех с чатом (WorkTask / ADR-028)."
-      }
-      actions={
-        <Button
-          type="button"
-          variant="primary"
-          onClick={onAdd}
-          className={compact ? "h-8 px-2.5 text-xs" : ""}
-        >
-          Добавить
-        </Button>
-      }
-      filter={
-        <CompactTabs
-          label="Фильтр задач"
-          size="compact"
-          value={filter}
-          onChange={(id) => setFilter(id as StatusFilter)}
-          items={filterOptions.map((option) => ({
-            id: option.id,
-            label: option.label,
-            count: counts[option.id],
-          }))}
-        />
-      }
-    >
-      {loadError ? (
-        <EmptyState
-          title="Не удалось загрузить задачи"
-          description={loadError}
-          size="compact"
-        />
-      ) : visible.length === 0 ? (
-        <EmptyState
-          title="Задач нет"
-          description="Создайте задачу в цех по этому объекту."
-          size="compact"
-          action={
-            <Button type="button" onClick={onAdd}>
-              Новая задача
-            </Button>
-          }
-        />
-      ) : (
-        <ul className="divide-y divide-portal-border">
-          {visible.map((task) => (
-            <li key={task.id} className="py-3 first:pt-0 last:pb-0">
-              <div className="flex flex-wrap items-start justify-between gap-2">
-                <div className="min-w-0">
-                  <Link
-                    href={task.href}
-                    className="text-sm font-semibold text-portal-text underline-offset-2 hover:underline"
-                  >
-                    {task.title}
-                  </Link>
-                  <p className="mt-1 text-xs text-portal-muted">
-                    {task.workshopLabel}
-                    <span aria-hidden> · </span>
-                    {task.executorLabel}
-                  </p>
+    <>
+      <WorkTaskChatModal
+        open={openTaskId != null}
+        taskId={openTaskId}
+        seedTask={openSeed}
+        viewerUserId={viewerUserId}
+        onClose={() => setOpenTaskId(null)}
+      />
+      <EntityPanel
+        embedded={embedded}
+        compact={compact}
+        title={
+          <span id="lead-tasks-heading" tabIndex={-1} className="outline-none">
+            {title}
+          </span>
+        }
+        description={
+          compact ? undefined : "Постановка в цех с чатом (WorkTask / ADR-028)."
+        }
+        actions={
+          <Button
+            type="button"
+            variant="primary"
+            onClick={onAdd}
+            className={compact ? "h-8 px-2.5 text-xs" : ""}
+          >
+            Добавить
+          </Button>
+        }
+        filter={
+          <CompactTabs
+            label="Фильтр задач"
+            size="compact"
+            value={filter}
+            onChange={(id) => setFilter(id as StatusFilter)}
+            items={filterOptions.map((option) => ({
+              id: option.id,
+              label: option.label,
+              count: counts[option.id],
+            }))}
+          />
+        }
+      >
+        {loadError ? (
+          <EmptyState
+            title="Не удалось загрузить задачи"
+            description={loadError}
+            size="compact"
+          />
+        ) : visible.length === 0 ? (
+          <EmptyState
+            title="Задач нет"
+            description="Создайте задачу в цех по этому объекту."
+            size="compact"
+            action={
+              <Button type="button" onClick={onAdd}>
+                Новая задача
+              </Button>
+            }
+          />
+        ) : (
+          <ul className="divide-y divide-portal-border">
+            {visible.map((task) => (
+              <li
+                key={task.id}
+                className={`py-3 first:pt-0 last:pb-0 ${
+                  task.dueSoon
+                    ? "rounded-portal-md bg-portal-warning-soft/60 px-2"
+                    : ""
+                }`}
+              >
+                <div className="flex flex-wrap items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <button
+                      type="button"
+                      className="text-left text-sm font-semibold text-portal-text underline-offset-2 hover:underline"
+                      onClick={() => setOpenTaskId(Number(task.id))}
+                    >
+                      {task.title}
+                    </button>
+                    <p className="mt-1 text-xs text-portal-muted">
+                      {task.workshopLabel}
+                      <span aria-hidden> · </span>
+                      {task.executorLabel}
+                      {task.dueLabel !== "—" ? (
+                        <>
+                          <span aria-hidden> · </span>
+                          <span
+                            className={
+                              task.overdue || task.dueSoon
+                                ? "font-medium text-portal-danger"
+                                : undefined
+                            }
+                          >
+                            Срок {task.dueLabel}
+                          </span>
+                        </>
+                      ) : null}
+                    </p>
+                  </div>
+                  <StatusBadge size="compact" tone="neutral">
+                    {task.statusLabel}
+                  </StatusBadge>
                 </div>
-                <StatusBadge size="compact" tone="neutral">
-                  {task.statusLabel}
-                </StatusBadge>
-              </div>
-              <div className="mt-2">
-                <Link
-                  href={task.href}
-                  className="text-xs font-medium text-portal-primary hover:underline"
-                >
-                  Открыть чат
-                </Link>
-              </div>
-            </li>
-          ))}
-        </ul>
-      )}
-    </EntityPanel>
+                <div className="mt-2">
+                  <button
+                    type="button"
+                    className="text-xs font-medium text-portal-primary hover:underline"
+                    onClick={() => setOpenTaskId(Number(task.id))}
+                  >
+                    Открыть чат
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </EntityPanel>
+    </>
   );
 }

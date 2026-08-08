@@ -8,7 +8,11 @@ import {
   type ReactNode,
 } from "react";
 
-import { updatePlatformUserProfile } from "@/app/(workspace)/settings/users/platform-user-actions";
+import {
+  changeOwnPassword,
+  setPlatformUserPassword,
+  updatePlatformUserProfile,
+} from "@/app/(workspace)/settings/users/platform-user-actions";
 import { Button } from "@/components/ui/button";
 import { CreateDrawer } from "@/components/ui/create-drawer";
 import { Checkbox, Field, Input, Select } from "@/components/ui/form-controls";
@@ -17,6 +21,8 @@ import { useToast } from "@/components/ui/toast";
 import {
   displayOrDash,
   effectivePermissionsForUser,
+  emptyPasswordChangeDraft,
+  formatLoginHandle,
   formatRoleSummary,
   formatUserActivity,
   groupPermissionsByModule,
@@ -28,7 +34,9 @@ import {
   userInitials,
   userStatusLabel,
   userStatusTone,
+  validatePasswordChangeDraft,
   validateProfileDraft,
+  type PasswordChangeDraft,
   type PlatformUserAdmin,
   type PlatformUserProfileDraft,
   type RoleCatalogItem,
@@ -82,6 +90,7 @@ export function PlatformUserProfilePanel({
   user,
   users,
   roles,
+  viewerUserId,
   onClose,
   onSaved,
   onToggleRole,
@@ -92,6 +101,7 @@ export function PlatformUserProfilePanel({
   user: PlatformUserAdmin | null;
   users: PlatformUserAdmin[];
   roles: RoleCatalogItem[];
+  viewerUserId: number | null;
   onClose: () => void;
   onSaved?: (user: PlatformUserAdmin) => void;
   onToggleRole?: (
@@ -106,24 +116,36 @@ export function PlatformUserProfilePanel({
   const securityId = useId();
   const [securityFocus, setSecurityFocus] = useState(false);
   const [draft, setDraft] = useState<PlatformUserProfileDraft | null>(null);
+  const [passwordDraft, setPasswordDraft] = useState<PasswordChangeDraft>(
+    emptyPasswordChangeDraft(),
+  );
   const [saving, setSaving] = useState(false);
+  const [passwordSaving, setPasswordSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!open || !user) {
       setSecurityFocus(false);
       setDraft(null);
+      setPasswordDraft(emptyPasswordChangeDraft());
       setError(null);
+      setPasswordError(null);
       return;
     }
     setDraft(profileDraftFromUser(user));
+    setPasswordDraft(emptyPasswordChangeDraft());
     setError(null);
+    setPasswordError(null);
     setSecurityFocus(false);
   }, [open, user]);
 
   if (!user || !draft) {
     return null;
   }
+
+  const passwordMode =
+    viewerUserId != null && viewerUserId === user.id ? "self" : "admin";
 
   const update = <K extends keyof PlatformUserProfileDraft>(
     field: K,
@@ -135,6 +157,14 @@ export function PlatformUserProfilePanel({
     setError(null);
   };
 
+  const updatePassword = <K extends keyof PasswordChangeDraft>(
+    field: K,
+    value: PasswordChangeDraft[K],
+  ) => {
+    setPasswordDraft((current) => ({ ...current, [field]: value }));
+    setPasswordError(null);
+  };
+
   const goSecurity = () => {
     setSecurityFocus(true);
     const node = document.getElementById(securityId);
@@ -142,7 +172,7 @@ export function PlatformUserProfilePanel({
   };
 
   const close = () => {
-    if (saving) return;
+    if (saving || passwordSaving) return;
     onClose();
   };
 
@@ -171,16 +201,52 @@ export function PlatformUserProfilePanel({
     }
   };
 
+  const submitPassword = async () => {
+    const validationError = validatePasswordChangeDraft(
+      passwordDraft,
+      passwordMode,
+    );
+    if (validationError) {
+      setPasswordError(validationError);
+      return;
+    }
+    setPasswordSaving(true);
+    setPasswordError(null);
+    try {
+      const result =
+        passwordMode === "self"
+          ? await changeOwnPassword({
+              current_password: passwordDraft.current_password,
+              new_password: passwordDraft.new_password,
+            })
+          : await setPlatformUserPassword(user.id, passwordDraft.new_password);
+      if (!result.ok) {
+        setPasswordError(result.message);
+        return;
+      }
+      pushToast(
+        passwordMode === "self" ? "Пароль изменён" : "Пароль задан",
+        "success",
+      );
+      setPasswordDraft(emptyPasswordChangeDraft());
+    } catch {
+      setPasswordError("Не удалось связаться с API. Пароль не изменён.");
+    } finally {
+      setPasswordSaving(false);
+    }
+  };
+
   const managerOptions = users.filter((row) => row.id !== user.id);
   const catalogRoles = sortRolesByCode(roles);
   const effectivePerms = effectivePermissionsForUser(user, catalogRoles);
   const permissionGroups = groupPermissionsByModule(effectivePerms);
+  const loginHandle = formatLoginHandle(user.login);
 
   return (
     <CreateDrawer
       open={open}
       title={user.display_name}
-      description={`Кабинет · @${user.login} · id ${user.id}`}
+      description={`Кабинет · ${loginHandle} · id ${user.id}`}
       onClose={close}
       variant="overlay"
     >
@@ -197,7 +263,7 @@ export function PlatformUserProfilePanel({
               <p className="truncate text-portal-page font-semibold text-portal-text">
                 {draft.display_name || user.display_name}
               </p>
-              <p className="text-portal-body text-portal-muted">@{user.login}</p>
+              <p className="text-portal-body text-portal-muted">{loginHandle}</p>
               <div className="mt-2">
                 <StatusBadge size="compact" tone={userStatusTone(user)}>
                   {userStatusLabel(user)}
@@ -209,7 +275,7 @@ export function PlatformUserProfilePanel({
               size="compact"
               variant="secondary"
               onClick={goSecurity}
-              disabled={saving}
+              disabled={saving || passwordSaving}
             >
               Безопасность
             </Button>
@@ -276,7 +342,7 @@ export function PlatformUserProfilePanel({
                   <option value="">— не указан —</option>
                   {managerOptions.map((row) => (
                     <option key={row.id} value={String(row.id)}>
-                      {row.display_name} (@{row.login})
+                      {row.display_name} ({formatLoginHandle(row.login)})
                     </option>
                   ))}
                 </Select>
@@ -375,6 +441,73 @@ export function PlatformUserProfilePanel({
                 />
               </dl>
 
+              <div className="mt-portal-4 rounded-portal-md border border-portal-border p-portal-3">
+                <h4 className="text-portal-body font-medium text-portal-text">
+                  Пароль
+                </h4>
+                <p className="mt-1 text-portal-caption text-portal-muted">
+                  {passwordMode === "self"
+                    ? "Смена своего пароля: нужен текущий пароль."
+                    : "Админ задаёт новый пароль пользователю без текущего."}
+                </p>
+                <div className="mt-portal-3 space-y-portal-3">
+                  {passwordMode === "self" ? (
+                    <Field label="Текущий пароль" required>
+                      <Input
+                        type="password"
+                        autoComplete="current-password"
+                        value={passwordDraft.current_password}
+                        onChange={(event) =>
+                          updatePassword("current_password", event.target.value)
+                        }
+                        disabled={passwordSaving || saving}
+                      />
+                    </Field>
+                  ) : null}
+                  <Field label="Новый пароль" required>
+                    <Input
+                      type="password"
+                      autoComplete="new-password"
+                      value={passwordDraft.new_password}
+                      onChange={(event) =>
+                        updatePassword("new_password", event.target.value)
+                      }
+                      disabled={passwordSaving || saving}
+                    />
+                  </Field>
+                  <Field label="Повтор нового пароля" required>
+                    <Input
+                      type="password"
+                      autoComplete="new-password"
+                      value={passwordDraft.confirm_password}
+                      onChange={(event) =>
+                        updatePassword("confirm_password", event.target.value)
+                      }
+                      disabled={passwordSaving || saving}
+                    />
+                  </Field>
+                  {passwordError ? (
+                    <p className="text-portal-caption text-portal-danger">
+                      {passwordError}
+                    </p>
+                  ) : null}
+                  <Button
+                    type="button"
+                    size="compact"
+                    disabled={passwordSaving || saving}
+                    onClick={() => {
+                      void submitPassword();
+                    }}
+                  >
+                    {passwordSaving
+                      ? "Сохранение…"
+                      : passwordMode === "self"
+                        ? "Сменить пароль"
+                        : "Задать пароль"}
+                  </Button>
+                </div>
+              </div>
+
               <fieldset className="mt-portal-4 space-y-2">
                 <legend className="text-portal-caption font-medium text-portal-muted">
                   Назначение ролей
@@ -464,13 +597,13 @@ export function PlatformUserProfilePanel({
         </div>
 
         <footer className="flex justify-end gap-portal-2 border-t border-portal-border bg-portal-surface px-portal-6 py-portal-4">
-          <Button type="button" variant="secondary" onClick={goSecurity} disabled={saving}>
+          <Button type="button" variant="secondary" onClick={goSecurity} disabled={saving || passwordSaving}>
             К безопасности
           </Button>
-          <Button type="button" onClick={close} disabled={saving}>
+          <Button type="button" onClick={close} disabled={saving || passwordSaving}>
             Отмена
           </Button>
-          <Button type="submit" variant="primary" disabled={saving}>
+          <Button type="submit" variant="primary" disabled={saving || passwordSaving}>
             {saving ? "Сохранение…" : "Сохранить"}
           </Button>
         </footer>

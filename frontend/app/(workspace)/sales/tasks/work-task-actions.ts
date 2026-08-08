@@ -8,6 +8,7 @@ import {
   type ApiWorkTask,
   type ApiWorkTaskListItem,
   type ApiWorkTaskMessage,
+  type WorkTaskBoardStage,
   type WorkTaskCreatePayload,
   type WorkTaskListFilters,
   type WorkTaskListItem,
@@ -259,4 +260,118 @@ export async function createWorkTaskMessage(
   }
   const row = (await response.json()) as ApiWorkTaskMessage;
   return { ok: true, data: fromApiWorkTaskMessage(row) };
+}
+
+export async function listWorkTaskBoardStages(): Promise<
+  ActionResult<WorkTaskBoardStage[]>
+> {
+  const headers = await sessionAuthHeaders();
+  if (!headers.Cookie) {
+    return { ok: false, message: "Нужна авторизация платформы." };
+  }
+  const response = await fetch(
+    `${apiBaseUrl()}/work-task-board-stages?active_only=true`,
+    { headers, cache: "no-store" },
+  );
+  if (!response.ok) {
+    return {
+      ok: false,
+      message: await readError(response, "Не удалось загрузить стадии канбана"),
+    };
+  }
+  const rows = (await response.json()) as WorkTaskBoardStage[];
+  return { ok: true, data: rows };
+}
+
+export async function createWorkTaskBoardStage(input: {
+  name: string;
+  sort_order?: number;
+}): Promise<ActionResult<WorkTaskBoardStage>> {
+  const headers = await sessionAuthHeaders();
+  if (!headers.Cookie) {
+    return { ok: false, message: "Нужна авторизация платформы." };
+  }
+  const response = await fetch(`${apiBaseUrl()}/work-task-board-stages`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...headers },
+    body: JSON.stringify(input),
+    cache: "no-store",
+  });
+  if (!response.ok) {
+    return {
+      ok: false,
+      message: await readError(response, "Не удалось создать стадию"),
+    };
+  }
+  return { ok: true, data: (await response.json()) as WorkTaskBoardStage };
+}
+
+export async function updateWorkTaskBoardStage(
+  stageId: number,
+  input: { name?: string; sort_order?: number },
+): Promise<ActionResult<WorkTaskBoardStage>> {
+  const headers = await sessionAuthHeaders();
+  if (!headers.Cookie) {
+    return { ok: false, message: "Нужна авторизация платформы." };
+  }
+  const response = await fetch(
+    `${apiBaseUrl()}/work-task-board-stages/${stageId}`,
+    {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", ...headers },
+      body: JSON.stringify(input),
+      cache: "no-store",
+    },
+  );
+  if (!response.ok) {
+    return {
+      ok: false,
+      message: await readError(response, "Не удалось обновить стадию"),
+    };
+  }
+  return { ok: true, data: (await response.json()) as WorkTaskBoardStage };
+}
+
+export async function deleteWorkTaskBoardStage(
+  stageId: number,
+): Promise<ActionResult<null>> {
+  const headers = await sessionAuthHeaders();
+  if (!headers.Cookie) {
+    return { ok: false, message: "Нужна авторизация платформы." };
+  }
+  const response = await fetch(
+    `${apiBaseUrl()}/work-task-board-stages/${stageId}`,
+    { method: "DELETE", headers, cache: "no-store" },
+  );
+  if (!response.ok) {
+    return {
+      ok: false,
+      message: await readError(response, "Не удалось удалить стадию"),
+    };
+  }
+  return { ok: true, data: null };
+}
+
+export async function moveWorkTaskToBoardStage(
+  taskId: number,
+  boardStageId: number | null,
+): Promise<ActionResult<WorkTaskListItem>> {
+  const headers = await sessionAuthHeaders();
+  if (!headers.Cookie) {
+    return { ok: false, message: "Нужна авторизация платформы." };
+  }
+  const response = await fetch(`${apiBaseUrl()}/work-tasks/${taskId}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...headers },
+    body: JSON.stringify({ board_stage_id: boardStageId }),
+    cache: "no-store",
+  });
+  if (!response.ok) {
+    return {
+      ok: false,
+      message: await readError(response, "Не удалось переместить задачу"),
+    };
+  }
+  const row = (await response.json()) as ApiWorkTask;
+  return { ok: true, data: fromApiWorkTask(row) };
 }

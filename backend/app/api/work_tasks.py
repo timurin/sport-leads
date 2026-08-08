@@ -81,10 +81,14 @@ def list_work_tasks(
 def create_work_task(
     payload: WorkTaskCreate,
     db: Session = Depends(get_db),
-    _user: PlatformUser = Depends(get_current_platform_user),
+    user: PlatformUser = Depends(get_current_platform_user),
 ) -> WorkTaskRead:
     try:
-        return work_task_svc.create_work_task(db, payload)
+        return work_task_svc.create_work_task(
+            db,
+            payload,
+            created_by_platform_user_id=user.id,
+        )
     except (
         work_task_svc.WorkTaskNotFoundError,
         work_task_svc.WorkTaskValidationError,

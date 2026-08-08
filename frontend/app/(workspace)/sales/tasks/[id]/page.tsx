@@ -9,6 +9,7 @@ import { WorkTaskChatPanel } from "@/components/sales/work-task-chat-panel";
 import { PageContent, PageLayout } from "@/components/layout/page-layout";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PageToolbar } from "@/components/ui/page-header";
+import { getMe } from "@/lib/auth/session";
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -19,7 +20,8 @@ export default async function WorkTaskDetailPage({ params }: Props) {
   if (!/^\d+$/.test(id)) notFound();
 
   const taskId = Number(id);
-  const [loaded, messagesLoaded] = await Promise.all([
+  const [me, loaded, messagesLoaded] = await Promise.all([
+    getMe(),
     getWorkTask(taskId),
     listWorkTaskMessages(taskId),
   ]);
@@ -48,6 +50,7 @@ export default async function WorkTaskDetailPage({ params }: Props) {
           task={loaded.data}
           initialMessages={messagesLoaded.ok ? messagesLoaded.data : []}
           messagesError={messagesLoaded.ok ? null : messagesLoaded.message}
+          viewerUserId={me?.id ?? null}
         />
       </PageContent>
     </PageLayout>

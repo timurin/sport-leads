@@ -11,6 +11,10 @@ export type ApiWorkTaskListItem = {
   status: WorkTaskStatus | string;
   production_stage_id: number | null;
   production_stage_name: string | null;
+  board_stage_id: number | null;
+  board_stage_name: string | null;
+  created_by_platform_user_id: number | null;
+  created_by_display_name: string | null;
   responsible_platform_user_id: number | null;
   responsible_display_name: string | null;
   executor_platform_user_id: number | null;
@@ -29,8 +33,15 @@ export type ApiWorkTask = {
   title: string;
   status: WorkTaskStatus | string;
   production_stage_id: number | null;
+  production_stage_name: string | null;
+  board_stage_id: number | null;
+  board_stage_name: string | null;
+  created_by_platform_user_id: number | null;
+  created_by_display_name: string | null;
   responsible_platform_user_id: number | null;
+  responsible_display_name: string | null;
   executor_platform_user_id: number | null;
+  executor_display_name: string | null;
   lead_id: number | null;
   sales_order_id: number | null;
   production_order_id: number | null;
@@ -40,12 +51,15 @@ export type ApiWorkTask = {
   completed_at: string | null;
 };
 
+export type WorkTaskListView = "list" | "kanban";
+
 export type WorkTaskListFilters = {
   status?: string;
   anchor_type?: WorkTaskAnchorType | string;
   production_stage_id?: number;
   responsible_platform_user_id?: number;
   executor_platform_user_id?: number;
+  view?: WorkTaskListView;
 };
 
 export type WorkTaskListItem = {
@@ -54,12 +68,25 @@ export type WorkTaskListItem = {
   status: WorkTaskStatus | string;
   statusLabel: string;
   workshopLabel: string;
+  boardStageId: number | null;
+  boardStageLabel: string;
+  createdByLabel: string;
   responsibleLabel: string;
   executorLabel: string;
   objectLabel: string;
   objectHref: string | null;
   href: string;
   dueLabel: string;
+  dueAt: string | null;
+  dueSoon: boolean;
+  overdue: boolean;
+};
+
+export type WorkTaskBoardStage = {
+  id: number;
+  name: string;
+  sort_order: number;
+  is_active: boolean;
 };
 
 export const workTaskStatusLabels: Record<WorkTaskStatus, string> = {
@@ -90,6 +117,34 @@ function formatDue(iso: string | null): string {
     dateStyle: "short",
     timeZone: "Europe/Moscow",
   }).format(date);
+}
+
+/** Due within next 24h (inclusive of overdue). */
+export function isWorkTaskDueSoon(dueAt: string | null | undefined): boolean {
+  if (!dueAt) return false;
+  const due = new Date(dueAt).getTime();
+  if (Number.isNaN(due)) return false;
+  const now = Date.now();
+  const dayMs = 24 * 60 * 60 * 1000;
+  return due - now <= dayMs;
+}
+
+export function isWorkTaskOverdue(dueAt: string | null | undefined): boolean {
+  if (!dueAt) return false;
+  const due = new Date(dueAt).getTime();
+  if (Number.isNaN(due)) return false;
+  return due < Date.now();
+}
+
+function userLabel(
+  name: string | null | undefined,
+  id: number | null | undefined,
+  empty: string,
+): string {
+  const trimmed = name?.trim();
+  if (trimmed) return trimmed;
+  if (id == null) return empty;
+  return `Пользователь #${id}`;
 }
 
 function objectFromAnchors(task: {
@@ -130,24 +185,36 @@ export function fromApiWorkTaskListItem(task: ApiWorkTaskListItem): WorkTaskList
       (task.production_stage_id == null
         ? "Цех не назначен"
         : `Цех #${task.production_stage_id}`),
-    responsibleLabel:
-      task.responsible_display_name?.trim() ||
-      (task.responsible_platform_user_id == null
-        ? "Не назначен"
-        : `Пользователь #${task.responsible_platform_user_id}`),
-    executorLabel:
-      task.executor_display_name?.trim() ||
-      (task.executor_platform_user_id == null
-        ? "Не назначен"
-        : `Пользователь #${task.executor_platform_user_id}`),
+    boardStageId: task.board_stage_id ?? null,
+    boardStageLabel:
+      task.board_stage_name?.trim() ||
+      (task.board_stage_id == null ? "Без стадии" : `Стадия #${task.board_stage_id}`),
+    createdByLabel: userLabel(
+      task.created_by_display_name,
+      task.created_by_platform_user_id,
+      "Не указан",
+    ),
+    responsibleLabel: userLabel(
+      task.responsible_display_name,
+      task.responsible_platform_user_id,
+      "Не назначен",
+    ),
+    executorLabel: userLabel(
+      task.executor_display_name,
+      task.executor_platform_user_id,
+      "Не назначен",
+    ),
     objectLabel,
     objectHref,
     href: `/sales/tasks/${task.id}`,
     dueLabel: formatDue(task.due_at),
+    dueAt: task.due_at,
+    dueSoon: isWorkTaskDueSoon(task.due_at),
+    overdue: isWorkTaskOverdue(task.due_at),
   };
 }
 
-/** Detail mapper without list embeds. */
+/** Detail mapper with embeds when API provides them. */
 export function fromApiWorkTask(task: ApiWorkTask): WorkTaskListItem {
   const { objectLabel, objectHref } = objectFromAnchors(task);
   return {
@@ -156,21 +223,36 @@ export function fromApiWorkTask(task: ApiWorkTask): WorkTaskListItem {
     status: task.status,
     statusLabel: workTaskStatusLabel(task.status),
     workshopLabel:
-      task.production_stage_id == null
+      task.production_stage_name?.trim() ||
+      (task.production_stage_id == null
         ? "Цех не назначен"
-        : `Цех #${task.production_stage_id}`,
-    responsibleLabel:
-      task.responsible_platform_user_id == null
-        ? "Не назначен"
-        : `Пользователь #${task.responsible_platform_user_id}`,
-    executorLabel:
-      task.executor_platform_user_id == null
-        ? "Не назначен"
-        : `Пользователь #${task.executor_platform_user_id}`,
+        : `Цех #${task.production_stage_id}`),
+    boardStageId: task.board_stage_id ?? null,
+    boardStageLabel:
+      task.board_stage_name?.trim() ||
+      (task.board_stage_id == null ? "Без стадии" : `Стадия #${task.board_stage_id}`),
+    createdByLabel: userLabel(
+      task.created_by_display_name,
+      task.created_by_platform_user_id,
+      "Не указан",
+    ),
+    responsibleLabel: userLabel(
+      task.responsible_display_name,
+      task.responsible_platform_user_id,
+      "Не назначен",
+    ),
+    executorLabel: userLabel(
+      task.executor_display_name,
+      task.executor_platform_user_id,
+      "Не назначен",
+    ),
     objectLabel,
     objectHref,
     href: `/sales/tasks/${task.id}`,
     dueLabel: formatDue(task.due_at),
+    dueAt: task.due_at,
+    dueSoon: isWorkTaskDueSoon(task.due_at),
+    overdue: isWorkTaskOverdue(task.due_at),
   };
 }
 
@@ -193,6 +275,9 @@ export function buildWorkTasksListHref(filters: WorkTaskListFilters): string {
       String(filters.executor_platform_user_id),
     );
   }
+  if (filters.view && filters.view !== "list") {
+    query.set("view", filters.view);
+  }
   const suffix = query.size > 0 ? `?${query.toString()}` : "";
   return `/sales/tasks${suffix}`;
 }
@@ -212,13 +297,60 @@ export function parseWorkTaskListFilters(
   };
   const status = one("status")?.trim() || undefined;
   const anchor_type = one("anchor_type")?.trim() || undefined;
+  const viewRaw = one("view")?.trim().toLowerCase();
+  const view: WorkTaskListView | undefined =
+    viewRaw === "kanban" ? "kanban" : viewRaw === "list" ? "list" : undefined;
   return {
     status,
     anchor_type,
     production_stage_id: intOrUndef(one("production_stage_id")),
     responsible_platform_user_id: intOrUndef(one("responsible_platform_user_id")),
     executor_platform_user_id: intOrUndef(one("executor_platform_user_id")),
+    view,
   };
+}
+
+export function resolveWorkTasksView(
+  filters: Pick<WorkTaskListFilters, "view">,
+): WorkTaskListView {
+  return filters.view === "kanban" ? "kanban" : "list";
+}
+
+export function isWorkTaskMessageMine(
+  authorPlatformUserId: number,
+  viewerUserId: number | null | undefined,
+): boolean {
+  return viewerUserId != null && authorPlatformUserId === viewerUserId;
+}
+
+export function groupTasksByBoardStage(
+  tasks: WorkTaskListItem[],
+  stages: WorkTaskBoardStage[],
+): Array<{ stage: WorkTaskBoardStage | null; tasks: WorkTaskListItem[] }> {
+  const byId = new Map<number | null, WorkTaskListItem[]>();
+  for (const stage of stages) {
+    byId.set(stage.id, []);
+  }
+  byId.set(null, []);
+  for (const task of tasks) {
+    const key =
+      task.boardStageId != null && byId.has(task.boardStageId)
+        ? task.boardStageId
+        : null;
+    byId.get(key)!.push(task);
+  }
+  const columns: Array<{
+    stage: WorkTaskBoardStage | null;
+    tasks: WorkTaskListItem[];
+  }> = stages.map((stage) => ({
+    stage,
+    tasks: byId.get(stage.id) ?? [],
+  }));
+  const unassigned = byId.get(null) ?? [];
+  if (unassigned.length > 0) {
+    columns.push({ stage: null, tasks: unassigned });
+  }
+  return columns;
 }
 
 export type WorkTaskCreateDraft = {
@@ -334,6 +466,7 @@ export type ApiWorkTaskMessage = {
 
 export type WorkTaskMessageView = {
   id: string;
+  authorPlatformUserId: number;
   authorLabel: string;
   body: string;
   createdLabel: string;
@@ -411,6 +544,7 @@ export function fromApiWorkTaskMessage(
   const taskId = message.work_task_id;
   return {
     id: String(message.id),
+    authorPlatformUserId: message.author_platform_user_id,
     authorLabel:
       message.author_display_name?.trim() ||
       `Пользователь #${message.author_platform_user_id}`,
