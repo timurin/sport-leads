@@ -2776,6 +2776,58 @@
                 }
               }
             ]
+          },
+          {
+            title: {
+              en: "23.7 — Order context + chat visual design",
+              ru: "23.7 — Контекст заказа + дизайн чата"
+            },
+            note: {
+              en: "Close list-vs-detail DTO gap (real stage/responsible/executor names); surface Sales Order context on tasks anchored to sales_order_id; overdue badge. Chat visual pass via /plugin frontend-design. Plan: docs/superpowers/plans/2026-08-08-work-tasks-order-context.md",
+              ru: "Закрыть разрыв list/detail DTO; контекст Заказа для задач с sales_order_id; бейдж просрочки. Визуал чата через /plugin frontend-design. План: 2026-08-08-work-tasks-order-context.md"
+            },
+            items: [
+              {
+                code: "23.7.1",
+                done: false,
+                title: {
+                  en: "WorkTaskRead schema: display names + sales_order_summary",
+                  ru: "Схема: имена + сводка заказа"
+                }
+              },
+              {
+                code: "23.7.2",
+                done: false,
+                title: {
+                  en: "Service enrichment _to_read (stage/user names, SalesOrder→Client join)",
+                  ru: "Обогащение сервиса"
+                }
+              },
+              {
+                code: "23.7.3",
+                done: false,
+                title: {
+                  en: "FE lib/work-tasks.ts: map order summary + real names",
+                  ru: "FE mapper"
+                }
+              },
+              {
+                code: "23.7.4",
+                done: false,
+                title: {
+                  en: "Chat panel visual redesign (order info card, overdue badge) via /plugin frontend-design",
+                  ru: "Визуал чата"
+                }
+              },
+              {
+                code: "23.7.5",
+                done: false,
+                title: {
+                  en: "Backend + frontend regression pass (pytest, node --test, tsc)",
+                  ru: "Регрессия"
+                }
+              }
+            ]
           }
         ]
       }

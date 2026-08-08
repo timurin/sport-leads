@@ -1,7 +1,7 @@
 # Sport-Lead — Roadmap v1.00
 
 **Code:** `SL-ROADMAP-v1.00`  
-**Updated:** `2026-08-06` (Stage **23** Unified Work Tasks; `23.5.3` PO host; next `23.5.4` deprecate old UI)  
+**Updated:** `2026-08-08` (Stage **23** Unified Work Tasks; `23.5.3` PO host done; new `23.7` order context + chat visual; next `23.5.4` deprecate old UI)  
 **Project version:** `v1.00`  
 **Status:** Confirmed carry-over from `v0.9.0` (Stages **1.4.3**, **2** group, **7**, **12.4**–**12.5**, **13**, **14**, **15**, **16**, **18.4**) + **new** Stages **0** (performance + LAN + order-without-lead), **20** (Lead / Order UX, closed), **21** (Settings / Users cabinet, closed), **22** (Design v1.0), **23** (Unified Work Tasks). Owner started early (`2026-08-05`).  
 **Languages / Языки:** English + Russian (this MD). Interactive switch: `docs/erp/status/roadmap-v1.00.html`
@@ -624,6 +624,17 @@
 - [ ] 23.6.2 — Regression (API + FE) + docs checkpoint (erp-check / project-structure / field-links) — / Регрессия + docs
 - [ ] 23.6.3 — Owner visual (list + chat + host tabs) — / Owner visual
 
+### 23.7 — Order context + chat visual design / Контекст заказа + дизайн чата
+
+> **EN:** Close the WorkTaskRead list-vs-detail DTO gap (real stage/responsible/executor names on the chat header) and surface Sales Order context (number, client, status, amount, desired date) on tasks anchored to `sales_order_id`, plus an overdue-deadline badge. Chat visual pass via `/plugin frontend-design`. Plan: `docs/superpowers/plans/2026-08-08-work-tasks-order-context.md`.
+> **RU:** Закрыть разрыв list/detail DTO в `WorkTaskRead` (реальные имена цеха/ответственного/исполнителя в шапке чата) и показать контекст Заказа покупателя (номер, клиент, статус, сумма, срок) для задач с якорем `sales_order_id`, плюс бейдж просроченного дедлайна. Визуальная доработка чата через `/plugin frontend-design`. План: `docs/superpowers/plans/2026-08-08-work-tasks-order-context.md`.
+
+- [ ] 23.7.1 — `WorkTaskRead` schema: display names + `sales_order_summary` — / Схема: имена + сводка заказа
+- [ ] 23.7.2 — Service enrichment `_to_read` (stage/user names, SalesOrder→Client join) — / Обогащение сервиса
+- [ ] 23.7.3 — FE `lib/work-tasks.ts`: map order summary + real names — / FE mapper
+- [ ] 23.7.4 — Chat panel visual redesign (order info card, overdue badge) via `/plugin frontend-design` — / Визуал чата
+- [ ] 23.7.5 — Backend + frontend regression pass (pytest, node --test, tsc) — / Регрессия
+
 ---
 
 ## Version gate / Шлюз версии
@@ -657,3 +668,4 @@
 | `2026-08-05` | New Stage 22 Design v1.0: process rules; Sales Lead + Order microtasks from approved HTML etalons; TBD scaffolds for other modules | Новый Stage 22 Design v1.0: правила процесса; микротаски Лид + Заказ; TBD-каркасы остальных модулей |
 | `2026-08-05` | Stage 22: Soft UI draft etalons for Production/Warehouse/Purchases/Settings/Dashboard + shell chrome (`22.4`–`22.9`); Sales boards remain TBD | Stage 22: draft-эталоны Production/Warehouse/Purchases/Settings/Dashboard + shell (`22.4`–`22.9`); доски продаж — TBD |
 | `2026-08-06` | New Stage 23 Unified Work Tasks: replace LeadTask + CollaborationMicrotask; ADR-028; `23.0.1` closed | Новый Stage 23 Единые Задачи: замена LeadTask + microtasks; ADR-028; `23.0.1` закрыт |
+| `2026-08-08` | New `23.7`: WorkTask order-context (sales order summary, real display names, overdue badge) + chat visual pass via `/plugin frontend-design`; plan `docs/superpowers/plans/2026-08-08-work-tasks-order-context.md` | Новый `23.7`: контекст заказа в Задачах (сводка заказа, реальные имена, бейдж просрочки) + визуал чата через `/plugin frontend-design`; план `2026-08-08-work-tasks-order-context.md` |
