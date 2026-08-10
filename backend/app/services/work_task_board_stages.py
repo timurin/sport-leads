@@ -13,6 +13,9 @@ from app.schemas.work_tasks import (
     WorkTaskBoardStageUpdate,
 )
 
+# Seed terminal column — sync contract with WorkTask.status=done (2026-08-10).
+DONE_BOARD_STAGE_NAME = "Готово"
+
 
 class BoardStageNotFoundError(RuntimeError):
     pass
@@ -110,3 +113,33 @@ def require_board_stage(db: Session, stage_id: int | None) -> None:
     stage = db.get(WorkTaskBoardStage, stage_id)
     if stage is None or not stage.is_active:
         raise BoardStageValidationError("Стадия канбана не найдена")
+
+
+def find_done_board_stage(db: Session) -> WorkTaskBoardStage | None:
+    return db.scalar(
+        select(WorkTaskBoardStage)
+        .where(
+            WorkTaskBoardStage.name == DONE_BOARD_STAGE_NAME,
+            WorkTaskBoardStage.is_active.is_(True),
+        )
+        .order_by(WorkTaskBoardStage.sort_order.asc(), WorkTaskBoardStage.id.asc())
+    )
+
+
+def find_reopen_board_stage(db: Session) -> WorkTaskBoardStage | None:
+    """First active stage that is not the terminal «Готово» column."""
+    return db.scalar(
+        select(WorkTaskBoardStage)
+        .where(
+            WorkTaskBoardStage.is_active.is_(True),
+            WorkTaskBoardStage.name != DONE_BOARD_STAGE_NAME,
+        )
+        .order_by(WorkTaskBoardStage.sort_order.asc(), WorkTaskBoardStage.id.asc())
+    )
+
+
+def is_done_board_stage_id(db: Session, stage_id: int | None) -> bool:
+    if stage_id is None:
+        return False
+    stage = db.get(WorkTaskBoardStage, stage_id)
+    return stage is not None and stage.name == DONE_BOARD_STAGE_NAME

@@ -4,12 +4,17 @@ import { useEffect, useState } from "react";
 
 import {
   getWorkTask,
+  listWorkTaskBoardStages,
   listWorkTaskMessages,
 } from "@/app/(workspace)/sales/tasks/work-task-actions";
 import { WorkTaskChatPanel } from "@/components/sales/work-task-chat-panel";
 import { CreateDrawer } from "@/components/ui/create-drawer";
 import { EmptyState } from "@/components/ui/empty-state";
-import type { WorkTaskListItem, WorkTaskMessageView } from "@/lib/work-tasks";
+import type {
+  WorkTaskBoardStage,
+  WorkTaskListItem,
+  WorkTaskMessageView,
+} from "@/lib/work-tasks";
 
 type Props = {
   open: boolean;
@@ -17,6 +22,7 @@ type Props = {
   viewerUserId?: number | null;
   seedTask?: WorkTaskListItem | null;
   onClose: () => void;
+  onTaskChange?: (task: WorkTaskListItem) => void;
 };
 
 export function WorkTaskChatModal({
@@ -25,9 +31,11 @@ export function WorkTaskChatModal({
   viewerUserId = null,
   seedTask = null,
   onClose,
+  onTaskChange,
 }: Props) {
   const [task, setTask] = useState<WorkTaskListItem | null>(seedTask);
   const [messages, setMessages] = useState<WorkTaskMessageView[]>([]);
+  const [boardStages, setBoardStages] = useState<WorkTaskBoardStage[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -46,9 +54,10 @@ export function WorkTaskChatModal({
       setTask(seedTask);
     }
     void (async () => {
-      const [taskResult, messagesResult] = await Promise.all([
+      const [taskResult, messagesResult, stagesResult] = await Promise.all([
         getWorkTask(taskId),
         listWorkTaskMessages(taskId),
+        listWorkTaskBoardStages(),
       ]);
       if (cancelled) return;
       if (!taskResult.ok) {
@@ -62,6 +71,9 @@ export function WorkTaskChatModal({
       } else {
         setMessages([]);
         setError(messagesResult.message);
+      }
+      if (stagesResult.ok) {
+        setBoardStages(stagesResult.data);
       }
       setLoading(false);
     })();
@@ -78,7 +90,7 @@ export function WorkTaskChatModal({
       onClose={onClose}
       variant="fullscreen"
     >
-      <div className="flex h-full min-h-0 flex-1 flex-col p-portal-4 sm:p-portal-6">
+      <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden p-portal-4 sm:p-portal-6">
         {loading && !task ? (
           <EmptyState title="Загрузка…" description="Открываем чат задачи." />
         ) : error && !task ? (
@@ -90,6 +102,11 @@ export function WorkTaskChatModal({
             messagesError={error}
             viewerUserId={viewerUserId}
             showBackLink={false}
+            boardStages={boardStages}
+            onTaskChange={(next) => {
+              setTask(next);
+              onTaskChange?.(next);
+            }}
           />
         ) : (
           <EmptyState title="Задача не найдена" description="Выберите задачу из списка." />

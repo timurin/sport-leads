@@ -79,6 +79,11 @@ export function HostWorkTasksPanel({
         seedTask={openSeed}
         viewerUserId={viewerUserId}
         onClose={() => setOpenTaskId(null)}
+        onTaskChange={(next) => {
+          setTasks((current) =>
+            current.map((task) => (task.id === next.id ? next : task)),
+          );
+        }}
       />
       <EntityPanel
         embedded={embedded}

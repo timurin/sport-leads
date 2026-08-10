@@ -143,6 +143,33 @@ export async function createWorkTask(
   return { ok: true, data: fromApiWorkTask(row) };
 }
 
+export async function updateWorkTask(
+  taskId: number,
+  patch: {
+    status?: string;
+    board_stage_id?: number | null;
+  },
+): Promise<ActionResult<WorkTaskListItem>> {
+  const headers = await sessionAuthHeaders();
+  if (!headers.Cookie) {
+    return { ok: false, message: "Нужна авторизация платформы." };
+  }
+  const response = await fetch(`${apiBaseUrl()}/work-tasks/${taskId}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...headers },
+    body: JSON.stringify(patch),
+    cache: "no-store",
+  });
+  if (!response.ok) {
+    return {
+      ok: false,
+      message: await readError(response, "Не удалось обновить задачу"),
+    };
+  }
+  const row = (await response.json()) as ApiWorkTask;
+  return { ok: true, data: fromApiWorkTask(row) };
+}
+
 export async function listWorkTaskMessages(
   taskId: number,
 ): Promise<ActionResult<WorkTaskMessageView[]>> {

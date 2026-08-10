@@ -1,7 +1,8 @@
 "use client";
 
 import { X } from "lucide-react";
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 
 import { IconButton } from "@/components/ui/button";
 
@@ -23,6 +24,9 @@ type CreateDrawerProps = {
  * Platform create shell (ADR-013).
  * Visual match: EntityInspector create mode in materials EntityWorkspace;
  * fullscreen extends the shell for dense catalog creates (nomenclature).
+ *
+ * Overlay/fullscreen mount via portal to `document.body` so `position: fixed`
+ * is not clipped by AppShell `overflow-hidden` (sticky thead bleed-through).
  */
 export function CreateDrawer({
   open,
@@ -32,6 +36,12 @@ export function CreateDrawer({
   children,
   variant = "docked",
 }: CreateDrawerProps) {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   useEffect(() => {
     if (!open) {
       return;
@@ -46,7 +56,7 @@ export function CreateDrawer({
   }, [open, onClose]);
 
   useEffect(() => {
-    if (!open || variant !== "fullscreen") {
+    if (!open || (variant !== "fullscreen" && variant !== "overlay")) {
       return;
     }
     const previous = document.body.style.overflow;
@@ -61,7 +71,8 @@ export function CreateDrawer({
   }
 
   if (variant === "fullscreen") {
-    return (
+    if (!mounted) return null;
+    return createPortal(
       <div
         className="fixed inset-0 z-portal-modal-2 flex flex-col bg-portal-surface"
         role="dialog"
@@ -84,7 +95,8 @@ export function CreateDrawer({
           </IconButton>
         </header>
         <div className="min-h-0 flex-1 overflow-hidden">{children}</div>
-      </div>
+      </div>,
+      document.body,
     );
   }
 
@@ -117,7 +129,8 @@ export function CreateDrawer({
   );
 
   if (variant === "overlay") {
-    return (
+    if (!mounted) return null;
+    return createPortal(
       <>
         <button
           type="button"
@@ -126,7 +139,8 @@ export function CreateDrawer({
           onClick={onClose}
         />
         {panel}
-      </>
+      </>,
+      document.body,
     );
   }
 

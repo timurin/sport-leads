@@ -11,9 +11,10 @@ import {
   type KeyboardEvent,
 } from "react";
 
-import { createWorkTaskMessage } from "@/app/(workspace)/sales/tasks/work-task-actions";
+import { createWorkTaskMessage, updateWorkTask } from "@/app/(workspace)/sales/tasks/work-task-actions";
 import { Button, IconButton } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
+import { Select } from "@/components/ui/form-controls";
 import { ImageLightbox } from "@/components/ui/image-lightbox";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { useToast } from "@/components/ui/toast";
@@ -22,8 +23,11 @@ import {
   validateWorkTaskComposer,
   WORK_TASK_IMAGE_MAX_BYTES,
   WORK_TASK_IMAGE_MIMES,
+  workTaskStatusLabels,
+  type WorkTaskBoardStage,
   type WorkTaskListItem,
   type WorkTaskMessageView,
+  type WorkTaskStatus,
 } from "@/lib/work-tasks";
 
 type Props = {
@@ -32,22 +36,28 @@ type Props = {
   messagesError?: string | null;
   viewerUserId?: number | null;
   showBackLink?: boolean;
+  boardStages?: WorkTaskBoardStage[];
+  onTaskChange?: (task: WorkTaskListItem) => void;
 };
 
 export function WorkTaskChatPanel({
-  task,
+  task: taskProp,
   initialMessages,
   messagesError = null,
   viewerUserId = null,
   showBackLink = true,
+  boardStages = [],
+  onTaskChange,
 }: Props) {
   const { push: pushToast } = useToast();
+  const [task, setTask] = useState(taskProp);
   const [messages, setMessages] = useState(initialMessages);
   const [draft, setDraft] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [metaBusy, setMetaBusy] = useState(false);
   const [lightbox, setLightbox] = useState<{ src: string; alt: string } | null>(
     null,
   );
@@ -55,8 +65,38 @@ export function WorkTaskChatPanel({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
+    setTask(taskProp);
+  }, [taskProp]);
+
+  useEffect(() => {
     setMessages(initialMessages);
   }, [initialMessages]);
+
+  const applyTask = (next: WorkTaskListItem) => {
+    setTask(next);
+    onTaskChange?.(next);
+  };
+
+  const patchTask = async (patch: {
+    status?: string;
+    board_stage_id?: number | null;
+  }) => {
+    if (metaBusy) return;
+    setMetaBusy(true);
+    try {
+      const result = await updateWorkTask(Number(task.id), patch);
+      if (!result.ok) {
+        pushToast(result.message, "danger");
+        return;
+      }
+      applyTask(result.data);
+      pushToast("Задача обновлена", "success");
+    } catch {
+      pushToast("Не удалось обновить задачу", "danger");
+    } finally {
+      setMetaBusy(false);
+    }
+  };
 
   useEffect(() => {
     if (!file) {
@@ -142,7 +182,7 @@ export function WorkTaskChatPanel({
 
   return (
     <div
-      className="flex min-h-[28rem] min-w-0 flex-1 flex-col overflow-hidden rounded-portal-lg border border-portal-border bg-portal-surface shadow-portal-card"
+      className="flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-portal-lg border border-portal-border bg-portal-surface shadow-portal-card"
       data-work-task-chat
     >
       {lightbox ? (
@@ -171,6 +211,73 @@ export function WorkTaskChatPanel({
                   Срок &lt; 1 дня
                 </StatusBadge>
               ) : null}
+            </div>
+            <div className="flex flex-wrap items-end gap-portal-3">
+              <label className="flex min-w-[10rem] flex-col gap-1 text-xs text-portal-muted">
+                <span>Статус</span>
+                <Select
+                  size="compact"
+                  value={String(task.status)}
+                  disabled={metaBusy}
+                  aria-label="Статус задачи"
+                  onChange={(event) => {
+                    void patchTask({ status: event.target.value });
+                  }}
+                >
+                  {(Object.keys(workTaskStatusLabels) as WorkTaskStatus[]).map(
+                    (status) => (
+                      <option key={status} value={status}>
+                        {workTaskStatusLabels[status]}
+                      </option>
+                    ),
+                  )}
+                </Select>
+              </label>
+              {boardStages.length > 0 ? (
+                <label className="flex min-w-[10rem] flex-col gap-1 text-xs text-portal-muted">
+                  <span>Стадия</span>
+                  <Select
+                    size="compact"
+                    value={task.boardStageId != null ? String(task.boardStageId) : ""}
+                    disabled={metaBusy}
+                    aria-label="Стадия канбана"
+                    onChange={(event) => {
+                      const raw = event.target.value;
+                      void patchTask({
+                        board_stage_id: raw === "" ? null : Number(raw),
+                      });
+                    }}
+                  >
+                    <option value="">Без стадии</option>
+                    {boardStages.map((stage) => (
+                      <option key={stage.id} value={stage.id}>
+                        {stage.name}
+                      </option>
+                    ))}
+                  </Select>
+                </label>
+              ) : null}
+              {task.status === "done" ? (
+                <Button
+                  type="button"
+                  size="compact"
+                  variant="secondary"
+                  disabled={metaBusy}
+                  onClick={() => void patchTask({ status: "open" })}
+                >
+                  Открыть снова
+                </Button>
+              ) : (
+                <Button
+                  type="button"
+                  size="compact"
+                  variant="primary"
+                  disabled={metaBusy}
+                  onClick={() => void patchTask({ status: "done" })}
+                >
+                  Закрыть задачу
+                </Button>
+              )}
             </div>
             <dl className="grid grid-cols-1 gap-x-portal-4 gap-y-1 text-sm sm:grid-cols-2">
               <div className="min-w-0">

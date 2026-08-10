@@ -274,6 +274,10 @@ def create_work_task(
             else None
         ),
     )
+    if payload.status in {WorkTaskStatus.DONE.value, "done"}:
+        done_stage = board_stage_svc.find_done_board_stage(db)
+        if done_stage is not None:
+            row.board_stage_id = done_stage.id
     db.add(row)
     db.commit()
     db.refresh(row)
@@ -302,18 +306,69 @@ def update_work_task(db: Session, task_id: int, payload: WorkTaskUpdate) -> Work
             db, data["executor_platform_user_id"], label="Executor user"
         )
 
+    previous_board_stage_id = row.board_stage_id
     for key, value in data.items():
         setattr(row, key, value)
 
-    if "status" in data:
-        if data["status"] == WorkTaskStatus.DONE.value:
-            row.completed_at = row.completed_at or datetime.now(UTC)
-        elif data["status"] != WorkTaskStatus.DONE.value:
-            row.completed_at = None
+    _sync_status_and_board_stage(
+        db,
+        row,
+        status_in_payload="status" in data,
+        board_in_payload="board_stage_id" in data,
+        previous_board_stage_id=previous_board_stage_id,
+    )
 
     db.commit()
     db.refresh(row)
     return _to_read(row, db)
+
+
+def _sync_status_and_board_stage(
+    db: Session,
+    row: WorkTask,
+    *,
+    status_in_payload: bool,
+    board_in_payload: bool,
+    previous_board_stage_id: int | None,
+) -> None:
+    """Keep status=done ↔ board stage «Готово» aligned (2026-08-10)."""
+    done_stage = board_stage_svc.find_done_board_stage(db)
+    done_stage_id = done_stage.id if done_stage is not None else None
+    now = datetime.now(UTC)
+
+    if status_in_payload:
+        if row.status == WorkTaskStatus.DONE.value:
+            row.completed_at = row.completed_at or now
+            if done_stage_id is not None:
+                row.board_stage_id = done_stage_id
+        else:
+            row.completed_at = None
+            if (
+                done_stage_id is not None
+                and row.board_stage_id == done_stage_id
+                and not board_in_payload
+            ):
+                reopen = board_stage_svc.find_reopen_board_stage(db)
+                row.board_stage_id = reopen.id if reopen is not None else None
+
+    if board_in_payload:
+        if (
+            done_stage_id is not None
+            and row.board_stage_id == done_stage_id
+        ):
+            row.status = WorkTaskStatus.DONE.value
+            row.completed_at = row.completed_at or now
+        elif (
+            board_stage_svc.is_done_board_stage_id(db, previous_board_stage_id)
+            or (
+                row.status == WorkTaskStatus.DONE.value
+                and not status_in_payload
+            )
+        ):
+            if row.board_stage_id != done_stage_id:
+                if not status_in_payload:
+                    row.status = WorkTaskStatus.OPEN.value
+                    row.completed_at = None
 
 
 def _message_to_read(

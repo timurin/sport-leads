@@ -61,7 +61,13 @@ export function WorkTasksKanbanBoard({
       onTasksChange(
         tasks.map((task) =>
           task.id === taskId
-            ? { ...task, boardStageId, boardStageLabel: stageName }
+            ? {
+                ...task,
+                boardStageId,
+                boardStageLabel: stageName,
+                status: result.data.status,
+                statusLabel: result.data.statusLabel,
+              }
             : task,
         ),
       );

@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 
 import {
   getWorkTask,
+  listWorkTaskBoardStages,
   listWorkTaskMessages,
 } from "@/app/(workspace)/sales/tasks/work-task-actions";
 import { WorkTaskChatPanel } from "@/components/sales/work-task-chat-panel";
@@ -20,10 +21,11 @@ export default async function WorkTaskDetailPage({ params }: Props) {
   if (!/^\d+$/.test(id)) notFound();
 
   const taskId = Number(id);
-  const [me, loaded, messagesLoaded] = await Promise.all([
+  const [me, loaded, messagesLoaded, stagesLoaded] = await Promise.all([
     getMe(),
     getWorkTask(taskId),
     listWorkTaskMessages(taskId),
+    listWorkTaskBoardStages(),
   ]);
 
   if (!loaded.ok) {
@@ -51,6 +53,7 @@ export default async function WorkTaskDetailPage({ params }: Props) {
           initialMessages={messagesLoaded.ok ? messagesLoaded.data : []}
           messagesError={messagesLoaded.ok ? null : messagesLoaded.message}
           viewerUserId={me?.id ?? null}
+          boardStages={stagesLoaded.ok ? stagesLoaded.data : []}
         />
       </PageContent>
     </PageLayout>

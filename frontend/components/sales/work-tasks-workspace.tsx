@@ -117,6 +117,11 @@ export function WorkTasksWorkspace({
         seedTask={openSeed}
         viewerUserId={viewerUserId}
         onClose={() => setOpenTaskId(null)}
+        onTaskChange={(next) => {
+          setTasks((current) =>
+            current.map((task) => (task.id === next.id ? next : task)),
+          );
+        }}
       />
       <WorkTaskCreateDrawer
         open={createOpen}

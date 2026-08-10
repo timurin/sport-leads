@@ -654,6 +654,13 @@
 - [x] 23.9.3 — Kanban stage `+` in header; full-width list; image lightbox; due-soon highlight — `v1.00` `2026-08-08` / UX канбан/срок
 - [ ] 23.9.4 — Owner visual (modal chat + due-soon + header) — / Owner visual
 
+### 23.10 — Status ↔ board stage sync / Статус ↔ стадия
+
+- [x] 23.10.1 — Server sync: `done` ↔ «Готово»; reopen leaves terminal column — `v1.00` `2026-08-10`; `update_work_task` + repair Alembic `s3t4u5v6w789` / Синхронизация
+- [x] 23.10.2 — Task chat UI: status + stage selects, close/reopen — `v1.00` `2026-08-10`; `WorkTaskChatPanel` / UI в задаче
+- [x] 23.10.3 — Focused tests (status/board sync) — `v1.00` `2026-08-10`; `test_work_task_status_board_sync.py` / Тесты
+- [ ] 23.10.4 — Owner visual (close → Готово on kanban) — / Owner visual
+
 ---
 
 ## Version gate / Шлюз версии
