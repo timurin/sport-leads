@@ -1,40 +1,37 @@
 ---
-description: Check and clear hung Sport-Lead backend/frontend terminal and port sessions before starting or restarting local servers.
+description: Start Sport-Lead local stack with one command — LAN + 127.0.0.1. Check hung sessions before start/restart.
 alwaysApply: true
 ---
 
 # Dev server sessions
 
+## One command
+
+```powershell
+powershell -File scripts/dev-servers.ps1 -Action start
+```
+
+This binds backend `:8000` and frontend `:3001` on `0.0.0.0` (reachable as `127.0.0.1` **and** LAN IPs such as `http://192.168.2.98:3001`). It also starts Docker Postgres if needed and merges CORS for loopback + LAN. Loopback-only: add `-LoopbackOnly`. Port `3000` stays out of scope.
+
 ## Ports
 
-- Backend: `127.0.0.1:8000` (`uvicorn app.main:app`)
-- Frontend: `127.0.0.1:3001` (`next dev` / `node`)
-- Port `3000` is out of scope for Sport-Lead by default; if occupied, treat it as a foreign service unless the user explicitly asks to inspect or stop it.
+- Backend: `:8000` (`uvicorn app.main:app`)
+- Frontend: `:3001` (`next dev` / `node`)
+- Do not start, stop, or reuse port `3000` unless the user asks.
 
 ## Before start or restart
 
-1. Run `powershell -File scripts/dev-servers.ps1 -Action status`.
-2. Inspect Cursor terminal metadata (`terminals/*.txt` headers: pid, cwd, last command, active command) for duplicate `uvicorn` / `npm run dev`.
-3. Treat as **hung** when any of:
-   - port listens but HTTP ready check fails for >15s;
-   - terminal marks an active command whose PID is dead;
-   - two listeners fight for the same port;
-   - process is orphaned (no matching healthy Cursor terminal).
-4. Clear hung/orphan Sport-Lead listeners with:
-   ```powershell
-   powershell -File scripts/dev-servers.ps1 -Action stop
-   ```
-5. Only then start via `scripts/dev-servers.ps1 -Action start` (or the start-dev-stack skill).
+1. `powershell -File scripts/dev-servers.ps1 -Action status`
+2. Inspect Cursor terminal metadata for duplicate `uvicorn` / `npm run dev`.
+3. Treat as **hung** when: port listens but HTTP ready fails >15s; terminal PID is dead; two listeners fight the same port; orphan with no healthy terminal.
+4. Clear hung/orphan Sport-Lead listeners: `-Action stop`
+5. Then `-Action start` (do **not** pass `-LoopbackOnly` unless the user asks). Use the start-dev-stack skill.
 
 ## Kill policy
 
 - Kill only listeners on **8000** / **3001** that belong to this repo.
-- Do **not** kill or reuse port `3000` for Sport-Lead unless the user explicitly requests work on `3000`.
-- If a process is listening on `3000`, report the PID/name as foreign context and continue using `3001`.
-- Do **not** `taskkill /F` broad process names system-wide.
-- Do **not** `git reset --hard`, `git clean -fd`, or delete unknown files.
-- Prefer the script over ad-hoc kills.
+- Do not `taskkill /F` broad process names. Prefer the script. No `git reset --hard` / `git clean -fd`.
 
-## After cleanup
+## After start
 
-Confirm ports free, then start. Report what was stopped (PIDs/ports) and final ready URLs for `http://127.0.0.1:3001` and `http://127.0.0.1:8000`.
+Report PIDs, `http://127.0.0.1:3001`, `http://127.0.0.1:8000`, and detected LAN URLs. Trusted LAN only — not public internet / production Caddy.

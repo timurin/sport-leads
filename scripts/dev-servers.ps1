@@ -4,10 +4,10 @@
   Status / stop hung / start Sport-Lead local backend (:8000) and frontend (:3001).
 
 .EXAMPLE
+  powershell -File scripts/dev-servers.ps1 -Action start
   powershell -File scripts/dev-servers.ps1 -Action status
   powershell -File scripts/dev-servers.ps1 -Action stop
-  powershell -File scripts/dev-servers.ps1 -Action start
-  powershell -File scripts/dev-servers.ps1 -Action start -Lan
+  powershell -File scripts/dev-servers.ps1 -Action start -LoopbackOnly
 #>
 param(
   [ValidateSet("status", "stop", "start-backend", "start-frontend", "start")]
@@ -15,17 +15,21 @@ param(
 
   [int]$BackendPort = 8000,
   [int]$FrontendPort = 3001,
-  [int]$ReadyTimeoutSec = 45,
+  [int]$ReadyTimeoutSec = 60,
 
-  # Bind FE+BE on 0.0.0.0 for trusted LAN access (v1.00 0.3). Default remains loopback-only.
-  [switch]$Lan
+  # Kept for compatibility. Default start already binds 0.0.0.0 (LAN + 127.0.0.1).
+  [switch]$Lan,
+
+  # Opt out of LAN bind (loopback only).
+  [switch]$LoopbackOnly
 )
 
 $ErrorActionPreference = "Stop"
 $RepoRoot = Resolve-Path (Join-Path $PSScriptRoot "..")
 $BackendDir = Join-Path $RepoRoot "backend"
 $FrontendDir = Join-Path $RepoRoot "frontend"
-$BindHost = if ($Lan) { "0.0.0.0" } else { "127.0.0.1" }
+$LanMode = -not $LoopbackOnly
+$BindHost = if ($LanMode) { "0.0.0.0" } else { "127.0.0.1" }
 
 function Get-LanIPv4Addresses {
   $addresses = @()
@@ -43,6 +47,123 @@ function Get-LanIPv4Addresses {
     $addresses = @()
   }
   return $addresses
+}
+
+function Get-PreferredLanIPv4 {
+  $all = @(Get-LanIPv4Addresses)
+  $preferred = $all | Where-Object { $_ -like "192.168.*" } | Select-Object -First 1
+  if ($preferred) { return $preferred }
+  $preferred = $all | Where-Object { $_ -like "10.*" } | Select-Object -First 1
+  if ($preferred) { return $preferred }
+  return ($all | Select-Object -First 1)
+}
+
+function Get-DotEnvValue {
+  param([string]$Name)
+  $envFile = Join-Path $RepoRoot ".env"
+  if (-not (Test-Path $envFile)) { return $null }
+  $line = Get-Content $envFile -ErrorAction SilentlyContinue |
+    Where-Object { $_ -match ("^\s*{0}\s*=" -f [regex]::Escape($Name)) } |
+    Select-Object -First 1
+  if (-not $line) { return $null }
+  return ($line -split "=", 2)[1].Trim().Trim('"').Trim("'")
+}
+
+function Get-MergedCorsOrigins {
+  $items = @()
+  $fromEnv = Get-DotEnvValue "SPORT_LEADS_CORS_ORIGINS"
+  if ($fromEnv) {
+    $items += ($fromEnv -split ",")
+  }
+  $items += @(
+    "http://127.0.0.1:$FrontendPort",
+    "http://localhost:$FrontendPort"
+  )
+  foreach ($ip in @(Get-LanIPv4Addresses)) {
+    $items += ("http://{0}:{1}" -f $ip, $FrontendPort)
+  }
+  return (
+    $items |
+      ForEach-Object { $_.Trim() } |
+      Where-Object { $_ } |
+      Select-Object -Unique
+  ) -join ","
+}
+
+function Test-DockerReady {
+  try {
+    $null = & docker info 2>$null
+    return ($LASTEXITCODE -eq 0)
+  } catch {
+    return $false
+  }
+}
+
+function Ensure-Postgres {
+  $portText = Get-DotEnvValue "POSTGRES_PORT"
+  if (-not $portText) { $portText = "5432" }
+  $pgPort = [int]$portText
+  $listening = @(Get-ListenersOnPort -Port $pgPort)
+  if ($listening.Count -gt 0) {
+    Write-Host ("Postgres already listening on :{0}" -f $pgPort)
+    return
+  }
+
+  if (-not (Test-DockerReady)) {
+    $dockerExe = "C:\Program Files\Docker\Docker\Docker Desktop.exe"
+    if (Test-Path $dockerExe) {
+      Write-Host "Starting Docker Desktop..."
+      Start-Process $dockerExe | Out-Null
+      $deadline = (Get-Date).AddSeconds(90)
+      while ((Get-Date) -lt $deadline) {
+        if (Test-DockerReady) { break }
+        Start-Sleep -Seconds 3
+      }
+    }
+  }
+
+  if (-not (Test-DockerReady)) {
+    Write-Warning "Docker is not ready. Start Docker Desktop if the API cannot reach Postgres."
+    return
+  }
+
+  Push-Location $RepoRoot
+  try {
+    & docker compose up -d postgres
+  } finally {
+    Pop-Location
+  }
+}
+
+function Ensure-DevFirewallRules {
+  if (-not $LanMode) { return }
+  foreach ($port in @($BackendPort, $FrontendPort)) {
+    $name = "Sport-Lead-dev-$port"
+    $existing = Get-NetFirewallRule -DisplayName $name -ErrorAction SilentlyContinue
+    if ($existing) { continue }
+    try {
+      New-NetFirewallRule `
+        -DisplayName $name `
+        -Direction Inbound `
+        -Action Allow `
+        -Protocol TCP `
+        -LocalPort $port `
+        -Profile Private `
+        -ErrorAction Stop | Out-Null
+      Write-Host ("Firewall: allowed inbound TCP {0} (Private)" -f $port)
+    } catch {
+      Write-Host ("Firewall: could not add rule for {0} (run elevated if LAN clients are blocked)" -f $port)
+    }
+  }
+}
+
+function Apply-LanProcessEnv {
+  if (-not $LanMode) { return }
+  $env:SPORT_LEADS_CORS_ORIGINS = Get-MergedCorsOrigins
+  $preferred = Get-PreferredLanIPv4
+  if ($preferred) {
+    $env:NEXT_PUBLIC_SPORT_LEADS_API_URL = ("http://{0}:{1}" -f $preferred, $BackendPort)
+  }
 }
 
 function Get-ListenersOnPort {
@@ -217,7 +338,7 @@ function Start-Backend {
     throw "Backend did not become ready within ${ReadyTimeoutSec}s. See $errLog"
   }
   Write-Host ("Backend ready: http://127.0.0.1:{0} (bind {1})" -f $BackendPort, $BindHost)
-  if ($Lan) {
+  if ($LanMode) {
     foreach ($ip in @(Get-LanIPv4Addresses)) {
       Write-Host ("  LAN backend: http://{0}:{1}" -f $ip, $BackendPort)
     }
@@ -253,14 +374,13 @@ function Start-Frontend {
     throw "Frontend did not become ready within ${ReadyTimeoutSec}s. See $errLog"
   }
   Write-Host ("Frontend ready: http://127.0.0.1:{0} (bind {1})" -f $FrontendPort, $BindHost)
-  if ($Lan) {
+  if ($LanMode) {
     foreach ($ip in @(Get-LanIPv4Addresses)) {
       Write-Host ("  LAN frontend: http://{0}:{1}" -f $ip, $FrontendPort)
-      Write-Host ("  Hint: set SPORT_LEADS_CORS_ORIGINS to include http://{0}:{1}" -f $ip, $FrontendPort)
-      Write-Host ("  Hint: for browser client fetches set NEXT_PUBLIC_SPORT_LEADS_API_URL=http://{0}:{1}" -f $ip, $BackendPort)
     }
-    Write-Host ("  Windows firewall: allow inbound TCP {0} and {1} on private profiles if blocked." -f $FrontendPort, $BackendPort)
-    Write-Host "  Threat: LAN bind is trusted-network only - not public internet / production Caddy."
+    Write-Host ("  CORS merged for loopback + LAN origins on :{0}" -f $FrontendPort)
+    Write-Host ("  Windows firewall: inbound TCP {0} and {1} on Private (rule added when possible)." -f $FrontendPort, $BackendPort)
+    Write-Host "  Threat: 0.0.0.0 bind is trusted-LAN only - not public internet / production Caddy."
   }
 }
 
@@ -273,14 +393,22 @@ switch ($Action) {
     [void](Write-Status)
   }
   "start-backend" {
+    Ensure-Postgres
+    Ensure-DevFirewallRules
+    Apply-LanProcessEnv
     Start-Backend
     [void](Write-Status)
   }
   "start-frontend" {
+    Ensure-DevFirewallRules
+    Apply-LanProcessEnv
     Start-Frontend
     [void](Write-Status)
   }
   "start" {
+    Ensure-Postgres
+    Ensure-DevFirewallRules
+    Apply-LanProcessEnv
     Start-Backend
     Start-Frontend
     [void](Write-Status)

@@ -70,14 +70,14 @@ While working: minimal diff; keep architecture and compatibility; no visual chan
 ## Local dev endpoints (hard rule)
 
 - Repository root for this project is `D:\Projects\sport-leads`.
-- Frontend dev URL for this project is `http://127.0.0.1:3001` and `http://localhost:3001`.
-- Backend dev URL for this project is `http://127.0.0.1:8000` and `http://localhost:8000`.
+- Frontend dev URL for this project is `http://127.0.0.1:3001` and `http://localhost:3001` (also LAN, e.g. `http://192.168.2.98:3001`).
+- Backend dev URL for this project is `http://127.0.0.1:8000` and `http://localhost:8000` (also LAN `:8000`).
 - Treat `3001` as the canonical frontend port for local agent work in this repository unless the user explicitly changes it.
 - Treat `8000` as the canonical backend port for local agent work in this repository unless the user explicitly changes it.
 - Do **not** start, stop, kill, probe, curl, or repurpose port `3000` as part of Sport-Lead work unless the user explicitly asks for that exact action.
 - If port `3000` is occupied by another local product or service, treat it as foreign and out of scope; report it, but do not touch it by default.
 - When checking local readiness, use only the canonical project endpoints above; do not waste time rediscovering project paths or trying alternate frontend ports first.
-- **LAN (v1.00 `0.3`):** default start stays loopback. For trusted LAN: `powershell -File scripts/dev-servers.ps1 -Action start -Lan` (binds `0.0.0.0`). Extend `SPORT_LEADS_CORS_ORIGINS` with `http://<LAN-IP>:3001`; set `NEXT_PUBLIC_SPORT_LEADS_API_URL=http://<LAN-IP>:8000` for browser client fetches. LAN ≠ public internet / production Caddy. See `docs/tasks/v1.00-stage-0.3-lan-access.md`.
+- **Start (one command):** `powershell -File scripts/dev-servers.ps1 -Action start` — binds `0.0.0.0` so both loopback and trusted LAN work; starts Docker Postgres if needed; merges CORS for LAN origins. Loopback-only: `-LoopbackOnly`. LAN ≠ public internet / production Caddy. See `docs/tasks/v1.00-stage-0.3-lan-access.md`.
 
 ## Protected Platform Shell
 
