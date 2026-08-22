@@ -27,6 +27,16 @@ export type ApiWorkTaskListItem = {
   updated_at: string;
 };
 
+export type WorkTaskSalesOrderSummary = {
+  id: number;
+  number: string;
+  client_company_name: string | null;
+  status: string;
+  amount: string | null;
+  currency_code: string;
+  desired_date: string | null;
+};
+
 /** Detail GET /work-tasks/{id} (fat relative to list; still no messages array). */
 export type ApiWorkTask = {
   id: number;
@@ -44,11 +54,22 @@ export type ApiWorkTask = {
   executor_display_name: string | null;
   lead_id: number | null;
   sales_order_id: number | null;
+  sales_order_summary?: WorkTaskSalesOrderSummary | null;
   production_order_id: number | null;
   due_at: string | null;
   created_at: string;
   updated_at: string;
   completed_at: string | null;
+};
+
+export type OrderSummaryView = {
+  id: number;
+  number: string;
+  clientCompanyName: string | null;
+  status: string;
+  amount: string | null;
+  currencyCode: string;
+  desiredDate: string | null;
 };
 
 export type WorkTaskListView = "list" | "kanban";
@@ -80,6 +101,7 @@ export type WorkTaskListItem = {
   dueAt: string | null;
   dueSoon: boolean;
   overdue: boolean;
+  orderSummary?: OrderSummaryView | null;
 };
 
 export type WorkTaskBoardStage = {
@@ -173,6 +195,21 @@ function objectFromAnchors(task: {
   return { objectLabel: "Без объекта", objectHref: null };
 }
 
+function mapOrderSummary(
+  summary: WorkTaskSalesOrderSummary | null | undefined,
+): OrderSummaryView | null {
+  if (!summary) return null;
+  return {
+    id: summary.id,
+    number: summary.number,
+    clientCompanyName: summary.client_company_name,
+    status: summary.status,
+    amount: summary.amount,
+    currencyCode: summary.currency_code,
+    desiredDate: summary.desired_date,
+  };
+}
+
 export function fromApiWorkTaskListItem(task: ApiWorkTaskListItem): WorkTaskListItem {
   const { objectLabel, objectHref } = objectFromAnchors(task);
   return {
@@ -253,6 +290,7 @@ export function fromApiWorkTask(task: ApiWorkTask): WorkTaskListItem {
     dueAt: task.due_at,
     dueSoon: isWorkTaskDueSoon(task.due_at),
     overdue: isWorkTaskOverdue(task.due_at),
+    orderSummary: mapOrderSummary(task.sales_order_summary),
   };
 }
 

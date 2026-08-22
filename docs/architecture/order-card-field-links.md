@@ -3,11 +3,13 @@
 **Code:** `SL-ORDER-CARD-FIELD-LINKS-v1`  
 **Roadmap:** `3.5.1` (+ Stage `9.0.4` / `9.4.1` for tech-card gap `#4`)  
 **Route:** `/sales/orders/[id]`  
-**Updated:** `2026-08-05` (`0.4.3` — Source lead optional FK for without-lead create)
+**Updated:** `2026-08-22` (`22.2.5` — live Soft UI owner visual; finance rail layout)
 
 ## Purpose
 
 Inventory every field shown on the customer order card and classify its platform link: live FK, joined display name, immutable snapshot, or demo/local until a later roadmap item.
+
+**Layout (`22.2` / Soft UI):** live host `/sales/orders/[id]` (`sales-order-page.tsx`, etalon `docs/design/sales/order-card-reference-v1.html`). Compact finance metrics sit in a **right** rail and stay visible in every view filter; filters hide **left** content only. Owner visual OK `2026-08-22` (`22.2.5`). Field SoT in this file is unchanged — Stage 22 restyles chrome, it does not reopen Stage `20` / `3.5` data contracts.
 
 ## Entity graph
 

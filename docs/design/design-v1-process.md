@@ -59,19 +59,18 @@ Do not reopen Stage **20** data contracts (`20.1`–`20.4`). Stage 22 may restyl
 |--------|--------|---------------|-------------|--------|
 | Lead card | `docs/design/sales/lead-card-reference-v1.html` | `/sales/leads/[id]` → `lead-page.tsx` | `22.1` | **Owner approved** |
 | Sales order card | `docs/design/sales/order-card-reference-v1.html` | `/sales/orders/[id]` → `sales-order-page.tsx` | `22.2` | **Owner approved** |
+| Production workspace | `docs/design/production/orders-workspace-reference-v1.html` | `/production/orders` → `production-orders-workspace.tsx` | `22.4` | **Owner approved** (`22.4.1`, `2026-08-22`) |
+| Warehouse stock | `docs/design/warehouse/stock-workspace-reference-v1.html` | `/warehouse/stock` | `22.5` | **Owner approved** (`22.5.1`, `2026-08-22`) |
+| Purchases hub | `docs/design/purchases/hub-reference-v1.html` | `/purchases` | `22.6` | **Owner approved** (`22.6.1`, `2026-08-22`) |
+| Settings hub | `docs/design/settings/hub-reference-v1.html` | `/settings` | `22.7` | **Owner approved** (`22.7.1`, `2026-08-22`) |
+| Dashboard / Home | `docs/design/dashboard/home-reference-v1.html` | `/dashboard` | `22.8` | **Owner approved** (`22.8.1`, `2026-08-22`) |
+| Soft UI shell (left + top) | `docs/design/shared/shell-reference-v1.html` (+ `shell.js`) | `app-sidebar.tsx` / `top-navigation.tsx` | `22.9` | **HTML owner approved** (`22.9.1`, `2026-08-22`); live FE after `22.9.2` |
 
 Order etalon specifics: compact **finance rail** on the right, always visible; view filters hide **left** content only.
 
 ## Draft etalons (await owner visual)
 
-| Screen | Etalon | ≈ Platform host | Stage block |
-|--------|--------|-----------------|-------------|
-| Soft UI shell (left + top) | `docs/design/shared/shell-reference-v1.html` (+ `shell.js`) | `app-sidebar.tsx` / `top-navigation.tsx` | `22.9` |
-| Dashboard / Home | `docs/design/dashboard/home-reference-v1.html` | `/dashboard` | `22.8` |
-| Production workspace | `docs/design/production/orders-workspace-reference-v1.html` | `/production` · `/production/orders` | `22.4` |
-| Warehouse stock | `docs/design/warehouse/stock-workspace-reference-v1.html` | `/warehouse/stock` | `22.5` |
-| Purchases hub | `docs/design/purchases/hub-reference-v1.html` | `/purchases` | `22.6` |
-| Settings hub | `docs/design/settings/hub-reference-v1.html` | `/settings` | `22.7` |
+None remaining except Sales boards (`22.3` — no HTML etalon yet).
 
 Shared: `docs/design/shared/preview.css`, `shell.js`, `demo-data.js`, `preview.js`, `docs/design/index.html`.
 
@@ -80,12 +79,12 @@ Shared: `docs/design/shared/preview.css`, `shell.js`, `demo-data.js`, `preview.j
 | Code | Module | Status |
 |------|--------|--------|
 | `22.0` | Process | Active |
-| `22.1` | Sales · Lead | Active (approved etalon) |
-| `22.2` | Sales · Order | Active (approved etalon) |
+| `22.1` | Sales · Lead | Live owner visual OK `22.1.4` (`2026-08-22`) |
+| `22.2` | Sales · Order | Live owner visual OK `22.2.5` (`2026-08-22`) |
 | `22.3` | Sales · boards/lists | TBD scaffold |
-| `22.4` | Production | Draft etalon — await owner visual |
-| `22.5` | Warehouse | Draft etalon — await owner visual |
-| `22.6` | Purchases | Draft etalon — await owner visual |
-| `22.7` | Settings / Platform | Draft etalon — await owner visual |
-| `22.8` | Dashboard / Home | Draft etalon — await owner visual |
-| `22.9` | Soft UI shell chrome | Draft etalon — await owner visual (gate for live DS-SHELL) |
+| `22.4` | Production | Live owner visual OK `22.4.4` (`2026-08-22`) |
+| `22.5` | Warehouse | Live owner visual OK `22.5.4` (`2026-08-22`) |
+| `22.6` | Purchases | Etalon owner OK; contract `22.6.2` |
+| `22.7` | Settings / Platform | Etalon owner OK; contract `22.7.2` |
+| `22.8` | Dashboard / Home | Etalon owner OK; contract `22.8.2` |
+| `22.9` | Soft UI shell chrome | HTML owner OK `22.9.1`; live DS-SHELL after `22.9.2`–`22.9.3` |

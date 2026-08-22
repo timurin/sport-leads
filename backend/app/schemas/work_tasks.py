@@ -2,12 +2,24 @@
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import date, datetime
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 WorkTaskStatusLiteral = Literal["open", "in_progress", "done", "cancelled"]
+
+
+class WorkTaskSalesOrderSummary(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    number: str
+    client_company_name: str | None = None
+    status: str
+    amount: str | None = None
+    currency_code: str
+    desired_date: date | None = None
 
 
 class WorkTaskCreate(BaseModel):
@@ -107,6 +119,7 @@ class WorkTaskRead(BaseModel):
     executor_display_name: str | None = None
     lead_id: int | None
     sales_order_id: int | None
+    sales_order_summary: WorkTaskSalesOrderSummary | None = None
     production_order_id: int | None
     due_at: datetime | None
     created_at: datetime

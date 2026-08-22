@@ -322,6 +322,24 @@ export function WorkTaskChatPanel({
                 </dd>
               </div>
             </dl>
+            {task.orderSummary ? (
+              <div className="rounded-portal-md border border-portal-border bg-portal-bg px-portal-3 py-portal-2 text-sm">
+                <div className="font-medium text-portal-text">
+                  Заказ {task.orderSummary.number}
+                </div>
+                <div className="text-portal-muted">
+                  {task.orderSummary.clientCompanyName ?? "Клиент не указан"}
+                  {" · "}
+                  {task.orderSummary.status}
+                  {task.orderSummary.amount
+                    ? ` · ${task.orderSummary.amount} ${task.orderSummary.currencyCode}`
+                    : ""}
+                  {task.orderSummary.desiredDate
+                    ? ` · до ${task.orderSummary.desiredDate}`
+                    : ""}
+                </div>
+              </div>
+            ) : null}
           </div>
           {showBackLink ? (
             <Link

@@ -30,6 +30,15 @@ export function hasPositiveStockBalance(quantity: string): boolean {
   return Number.isFinite(value) && value > 0;
 }
 
+export function countItemsWithPositiveStock<T extends { id: number }>(
+  items: ReadonlyArray<T>,
+  balances: Record<number, string>,
+): number {
+  return items.filter((item) =>
+    hasPositiveStockBalance(stockBalanceOrZero(balances, item.id)),
+  ).length;
+}
+
 export function filterByStockPresence<T extends { id: number }>(
   items: T[],
   balances: Record<number, string>,

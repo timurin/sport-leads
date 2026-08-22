@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  countItemsWithPositiveStock,
   filterByStockPresence,
   hasPositiveStockBalance,
   stockBalanceOrZero,
@@ -18,6 +19,15 @@ test("hasPositiveStockBalance rejects zero and non-numeric", () => {
   assert.equal(hasPositiveStockBalance("0.000"), false);
   assert.equal(hasPositiveStockBalance("1"), true);
   assert.equal(hasPositiveStockBalance("abc"), false);
+});
+
+test("countItemsWithPositiveStock uses ledger balances only", () => {
+  const items = [{ id: 1 }, { id: 2 }, { id: 3 }];
+  assert.equal(
+    countItemsWithPositiveStock(items, { 1: "0", 2: "3", 3: "0.5" }),
+    2,
+  );
+  assert.equal(countItemsWithPositiveStock(items, {}), 0);
 });
 
 test("filterByStockPresence keeps only positive balances", () => {

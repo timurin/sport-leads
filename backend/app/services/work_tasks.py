@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 from app.models.auth import PlatformUser
 from app.models.production_order import ProductionOrder
 from app.models.production_stage import ProductionStage
-from app.models.sales import Lead, SalesOrder
+from app.models.sales import Client, Lead, SalesOrder
 from app.models.work_tasks import WorkTask, WorkTaskAttachment, WorkTaskBoardStage, WorkTaskMessage, WorkTaskStatus
 from app.schemas.work_tasks import (
     WorkTaskAttachmentRead,
@@ -18,6 +18,7 @@ from app.schemas.work_tasks import (
     WorkTaskListItem,
     WorkTaskMessageRead,
     WorkTaskRead,
+    WorkTaskSalesOrderSummary,
     WorkTaskUpdate,
 )
 from app.services import work_task_board_stages as board_stage_svc
@@ -36,6 +37,33 @@ class WorkTaskNotFoundError(RuntimeError):
 
 class WorkTaskValidationError(RuntimeError):
     pass
+
+
+def _format_order_amount(amount: object) -> str | None:
+    if amount is None:
+        return None
+    return f"{amount:.2f}"
+
+
+def _sales_order_summary(
+    db: Session, sales_order_id: int | None
+) -> WorkTaskSalesOrderSummary | None:
+    if sales_order_id is None:
+        return None
+    order = db.get(SalesOrder, sales_order_id)
+    if order is None:
+        return None
+    client = db.get(Client, order.client_id) if order.client_id else None
+    status = order.status.value if hasattr(order.status, "value") else str(order.status)
+    return WorkTaskSalesOrderSummary(
+        id=order.id,
+        number=order.number,
+        client_company_name=client.company_name if client is not None else None,
+        status=status,
+        amount=_format_order_amount(order.amount),
+        currency_code=order.currency_code,
+        desired_date=order.desired_date,
+    )
 
 
 def _to_read(row: WorkTask, db: Session | None = None) -> WorkTaskRead:
@@ -59,6 +87,7 @@ def _to_read(row: WorkTask, db: Session | None = None) -> WorkTaskRead:
         executor_display_name=item.executor_display_name,
         lead_id=row.lead_id,
         sales_order_id=row.sales_order_id,
+        sales_order_summary=_sales_order_summary(db, row.sales_order_id),
         production_order_id=row.production_order_id,
         due_at=row.due_at,
         created_at=row.created_at,

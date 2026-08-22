@@ -1,7 +1,7 @@
 # Sport-Lead — Roadmap v1.00
 
 **Code:** `SL-ROADMAP-v1.00`  
-**Updated:** `2026-08-08` (Stage **23**; chat bubbles + board stages / list↔kanban `23.8`)  
+**Updated:** `2026-08-22` (Stage **22.5.4** live Warehouse OK; next `22.6.2` Purchases)  
 **Project version:** `v1.00`  
 **Status:** Confirmed carry-over from `v0.9.0` (Stages **1.4.3**, **2** group, **7**, **12.4**–**12.5**, **13**, **14**, **15**, **16**, **18.4**) + **new** Stages **0** (performance + LAN + order-without-lead), **20** (Lead / Order UX, closed), **21** (Settings / Users cabinet, closed), **22** (Design v1.0), **23** (Unified Work Tasks). Owner started early (`2026-08-05`).  
 **Languages / Языки:** English + Russian (this MD). Interactive switch: `docs/erp/status/roadmap-v1.00.html`
@@ -480,8 +480,8 @@
 **New in:** `v1.00` (owner approved HTML etalons `2026-08-05`)  
 **Новое в:** `v1.00` (утверждённые HTML-эталоны `2026-08-05`)
 
-> **EN:** Soft UI + flat buttons from `docs/design/` into live page content. Process SoT: `docs/design/design-v1-process.md` (`SL-DESIGN-V1-PROCESS-v1`). Task: `docs/tasks/v1.00-stage-22-design-v1.md`. Do **not** re-open Stage `20` data contracts. Live `DS-SHELL-01/02` frozen until Stage `22.9` owner visual on shell etalon. Approved FE path: Lead + Sales order; draft etalons: Production / Warehouse / Purchases / Settings / Dashboard / Shell.  
-> **RU:** Soft UI + flat из `docs/design/` в live-контент. Процесс: `design-v1-process.md`. Не переоткрывать Stage `20`. Live shell заморожен до owner visual по `22.9`. Утверждены для FE: Лид + Заказ; draft-эталоны: Производство / Склад / Закупки / Настройки / Дашборд / Shell.
+> **EN:** Soft UI + flat buttons from `docs/design/` into live page content. Process SoT: `docs/design/design-v1-process.md` (`SL-DESIGN-V1-PROCESS-v1`). Task: `docs/tasks/v1.00-stage-22-design-v1.md`. Do **not** re-open Stage `20` data contracts. Live `DS-SHELL-01/02` frozen until Stage `22.9` FE (`22.9.2`–`22.9.3`). Approved etalons: Lead + Order + Production/Warehouse/Purchases/Settings/Dashboard/Shell (`22.9.1` HTML OK). Sales boards TBD `22.3`.  
+> **RU:** Soft UI + flat из `docs/design/` в live-контент. Процесс: `design-v1-process.md`. Не переоткрывать Stage `20`. Live shell заморожен до FE `22.9.2`–`22.9.3` (HTML etalon owner OK `22.9.1`). Утверждены эталоны: Лид + Заказ + модули `22.4`–`22.8` + shell. Доски продаж TBD `22.3`.
 
 ### 22.0 — Process / Процесс
 
@@ -496,7 +496,7 @@
 - [x] 22.1.1 — Contract: etalon → host mapping; Soft UI + flat; field map; shell preserved; out-of-scope vs Stage `20` — `v1.00` `2026-08-05`; `SL-DESIGN-V1-LEAD-v1` in task `v1.00-stage-22-design-v1.md` / Контракт эталон → хост
 - [x] 22.1.2 — FE Soft UI layout: header / stages / metrics / tabs / panels per etalon — `v1.00` `2026-08-05`; `.sl-design-v1` on `lead-page.tsx` + Soft UI CSS / FE layout Soft UI
 - [x] 22.1.3 — FE flat buttons on lead card actions — `v1.00` `2026-08-05`; flat secondary via `.sl-design-v1` button rules / FE flat-кнопки
-- [ ] 22.1.4 — Owner visual (desktop + responsive matrix) + docs checkpoint — / Owner visual + docs
+- [x] 22.1.4 — Owner visual (desktop + responsive matrix) + docs checkpoint — `v1.00` `2026-08-22`; owner OK `/sales/leads/1001`; erp-check / project-structure / task / Design v1.0 process / Owner visual + docs
 
 ### 22.2 — Sales · Sales order card / Продажи · Заказ покупателя
 
@@ -507,7 +507,7 @@
 - [x] 22.2.2 — FE: relocate finance metrics to right rail (compact 2×3; always visible) — `v1.00` `2026-08-05`; `order-v1-layout` + `order-v1-aside` finance rail / FE финансы справа
 - [x] 22.2.3 — FE: view-mode filters must not hide right aside — `v1.00` `2026-08-05`; `metrics: true` all modes; aside not filter-gated / FE фильтры не скрывают правую колонку
 - [x] 22.2.4 — FE Soft UI panels + flat buttons on order card — `v1.00` `2026-08-05`; `.sl-design-v1` on order workspace / FE Soft UI + flat
-- [ ] 22.2.5 — Owner visual + docs (field-links layout note if needed) — / Owner visual + docs
+- [x] 22.2.5 — Owner visual + docs (field-links layout note if needed) — `v1.00` `2026-08-22`; owner OK `/sales/orders/1`; finance rail layout note in `order-card-field-links.md` / Owner visual + docs
 
 ### 22.3 — Sales · boards / lists (TBD) / Продажи · доски / списки (TBD)
 
@@ -515,60 +515,60 @@
 
 ### 22.4 — Production / Производство
 
-> **EN:** Draft etalon `docs/design/production/orders-workspace-reference-v1.html` (KPI + list + shop stage hubs). Await owner visual before FE. Hosts ≈ `/production`, `/production/orders`.  
-> **RU:** Draft-эталон производства. Owner visual → затем FE.
+> **EN:** Approved etalon `docs/design/production/orders-workspace-reference-v1.html` (KPI + list + shop stage hubs). Hosts ≈ `/production/orders` (primary; `/production` dashboard route has no page).  
+> **RU:** Утверждённый эталон производства. Хост `/production/orders`.
 
-- [ ] 22.4.1 — Owner visual OK on Production Soft UI etalon (desktop + responsive) — path `docs/design/production/orders-workspace-reference-v1.html` / Owner visual эталона производства
-- [ ] 22.4.2 — Contract: etalon → production hosts; Soft UI + flat; existing fields only; shell via `22.9` — / Контракт эталон → хосты
-- [ ] 22.4.3 — FE Soft UI migrate production workspace per approved etalon — / FE Soft UI производство
-- [ ] 22.4.4 — Owner visual on live production pages + docs checkpoint — / Owner visual live + docs
+- [x] 22.4.1 — Owner visual OK on Production Soft UI etalon (desktop + responsive) — `v1.00` `2026-08-22`; owner OK `docs/design/production/orders-workspace-reference-v1.html` / Owner visual эталона производства
+- [x] 22.4.2 — Contract: etalon → production hosts; Soft UI + flat; existing fields only; shell via `22.9` — `v1.00` `2026-08-22`; `SL-DESIGN-V1-PROD-v1` in task / Контракт эталон → хосты
+- [x] 22.4.3 — FE Soft UI migrate production workspace per approved etalon — `v1.00` `2026-08-22`; `production-orders-workspace.tsx` + `.sl-design-v1`; KPI from existing PO status / FE Soft UI производство
+- [x] 22.4.4 — Owner visual on live production pages + docs checkpoint — `v1.00` `2026-08-22`; owner OK `/production/orders`; erp-check / project-structure / task / Owner visual live + docs
 
 ### 22.5 — Warehouse / Склад
 
-> **EN:** Draft etalon `docs/design/warehouse/stock-workspace-reference-v1.html` (tree + list + movements). Host ≈ `/warehouse/stock`.  
-> **RU:** Draft-эталон склада (дерево + список).
+> **EN:** Approved etalon `docs/design/warehouse/stock-workspace-reference-v1.html` (tree + list + movements). Host ≈ `/warehouse/stock`.  
+> **RU:** Утверждённый эталон склада (дерево + список).
 
-- [ ] 22.5.1 — Owner visual OK on Warehouse Soft UI etalon — path `docs/design/warehouse/stock-workspace-reference-v1.html` / Owner visual эталона склада
-- [ ] 22.5.2 — Contract: tree+list Soft UI; existing stock fields; shell via `22.9` — / Контракт
-- [ ] 22.5.3 — FE Soft UI migrate warehouse stock workspace — / FE Soft UI склад
-- [ ] 22.5.4 — Owner visual on live warehouse + docs — / Owner visual live + docs
+- [x] 22.5.1 — Owner visual OK on Warehouse Soft UI etalon — `v1.00` `2026-08-22`; owner OK `docs/design/warehouse/stock-workspace-reference-v1.html` / Owner visual эталона склада
+- [x] 22.5.2 — Contract: tree+list Soft UI; existing stock fields; shell via `22.9` — `v1.00` `2026-08-22`; `SL-DESIGN-V1-WH-v1` in task / Контракт
+- [x] 22.5.3 — FE Soft UI migrate warehouse stock workspace — `v1.00` `2026-08-22`; `warehouse-nomenclature-workspace.tsx` + `.sl-design-v1`; in-stock count from ledger / FE Soft UI склад
+- [x] 22.5.4 — Owner visual on live warehouse + docs — `v1.00` `2026-08-22`; owner OK `/warehouse/stock`; erp-check / project-structure / task / Owner visual live + docs
 
 ### 22.6 — Purchases / Закупки
 
-> **EN:** Draft etalon `docs/design/purchases/hub-reference-v1.html`. Host ≈ `/purchases`.  
-> **RU:** Draft-эталон закупок.
+> **EN:** Approved etalon `docs/design/purchases/hub-reference-v1.html`. Host ≈ `/purchases`.  
+> **RU:** Утверждённый эталон закупок.
 
-- [ ] 22.6.1 — Owner visual OK on Purchases Soft UI etalon — path `docs/design/purchases/hub-reference-v1.html` / Owner visual эталона закупок
+- [x] 22.6.1 — Owner visual OK on Purchases Soft UI etalon — `v1.00` `2026-08-22`; owner OK `docs/design/purchases/hub-reference-v1.html` / Owner visual эталона закупок
 - [ ] 22.6.2 — Contract: hub + PO list Soft UI; existing fields; shell via `22.9` — / Контракт
 - [ ] 22.6.3 — FE Soft UI migrate purchases hub — / FE Soft UI закупки
 - [ ] 22.6.4 — Owner visual on live purchases + docs — / Owner visual live + docs
 
 ### 22.7 — Settings / Platform / Настройки / Платформа
 
-> **EN:** Draft etalon `docs/design/settings/hub-reference-v1.html`. Host ≈ `/settings` (+ Stage 21 users hub link).  
-> **RU:** Draft-эталон настроек.
+> **EN:** Approved etalon `docs/design/settings/hub-reference-v1.html`. Host ≈ `/settings` (+ Stage 21 users hub link).  
+> **RU:** Утверждённый эталон настроек.
 
-- [ ] 22.7.1 — Owner visual OK on Settings Soft UI etalon — path `docs/design/settings/hub-reference-v1.html` / Owner visual эталона настроек
+- [x] 22.7.1 — Owner visual OK on Settings Soft UI etalon — `v1.00` `2026-08-22`; owner OK `docs/design/settings/hub-reference-v1.html` / Owner visual эталона настроек
 - [ ] 22.7.2 — Contract: settings hub Soft UI; catalogs/org/users links; shell via `22.9` — / Контракт
 - [ ] 22.7.3 — FE Soft UI migrate settings hub — / FE Soft UI настройки
 - [ ] 22.7.4 — Owner visual on live settings + docs — / Owner visual live + docs
 
 ### 22.8 — Dashboard / Home / Главная / Дашборд
 
-> **EN:** Draft etalon `docs/design/dashboard/home-reference-v1.html` (typical Soft UI dashboard: KPI strip, chart stub, activity, shortcuts). Host ≈ `/dashboard`.  
+> **EN:** Approved etalon `docs/design/dashboard/home-reference-v1.html` (typical Soft UI dashboard: KPI strip, chart stub, activity, shortcuts). Host ≈ `/dashboard`.  
 > **RU:** Типовой Soft UI дашборд.
 
-- [ ] 22.8.1 — Owner visual OK on Dashboard Soft UI etalon — path `docs/design/dashboard/home-reference-v1.html` / Owner visual эталона дашборда
+- [x] 22.8.1 — Owner visual OK on Dashboard Soft UI etalon — `v1.00` `2026-08-22`; owner OK `docs/design/dashboard/home-reference-v1.html` / Owner visual эталона дашборда
 - [ ] 22.8.2 — Contract: dashboard template Soft UI; existing KPIs/widgets only; shell via `22.9` — / Контракт
 - [ ] 22.8.3 — FE Soft UI migrate dashboard home — / FE Soft UI дашборд
 - [ ] 22.8.4 — Owner visual on live dashboard + docs — / Owner visual live + docs
 
 ### 22.9 — Soft UI shell chrome (left + top) / Soft UI оболочка (лево + топ)
 
-> **EN:** Draft etalon `docs/design/shared/shell-reference-v1.html` (+ `shell.js` labeled rail + top search/tabs/CTA). **Gate:** owner HTML visual OK required before any change to live `DS-SHELL-01` / `DS-SHELL-02`. Nav structure still from `frontend/lib/navigation.ts`.  
-> **RU:** Draft-эталон левого и топ-меню. Live shell не трогать до owner visual.
+> **EN:** Approved etalon `docs/design/shared/shell-reference-v1.html` (+ `shell.js` labeled rail + top search/tabs/CTA). **Gate:** HTML owner visual OK (`22.9.1`). Live `DS-SHELL-01` / `DS-SHELL-02` still frozen until `22.9.2` contract + `22.9.3` FE. Nav structure still from `frontend/lib/navigation.ts`.  
+> **RU:** Эталон левого и топ-меню утверждён (`22.9.1`). Live shell не трогать до контракта/FE `22.9.2`–`22.9.3`.
 
-- [ ] 22.9.1 — Owner visual OK on Soft UI shell etalon (desktop + responsive) — path `docs/design/shared/shell-reference-v1.html` / Owner visual эталона shell
+- [x] 22.9.1 — Owner visual OK on Soft UI shell etalon (desktop + responsive) — `v1.00` `2026-08-22`; owner OK `docs/design/shared/shell-reference-v1.html` / Owner visual эталона shell
 - [ ] 22.9.2 — Contract: Soft UI rail+topbar vs `DS-SHELL-01/02`; preserve nav from `navigation.ts`; explicit owner gate — / Контракт shell
 - [ ] 22.9.3 — FE Soft UI migrate `app-sidebar.tsx` + `top-navigation.tsx` per approved etalon (only after `22.9.1`) — / FE Soft UI shell
 - [ ] 22.9.4 — Owner visual on live shell + report `DS-SHELL-01/02 visual contract preserved` or updated contracts — / Owner visual live + contracts
@@ -622,18 +622,18 @@
 
 - [x] 23.6.1 — Alembic data migrate `LeadTask` + `CollaborationMicrotask` → `WorkTask` — `v1.00` `2026-08-08`; `p9q0r1s2t345_migrate_lead_tasks_microtasks_to_work_tasks.py` + `work_task_migration.py`; `test_work_task_migration_23_6_1.py` / Data migrate
 - [x] 23.6.2 — Regression (API + FE) + docs checkpoint (erp-check / project-structure / field-links) — `v1.00` `2026-08-08`; work-tasks pytest + `lib/work-tasks.test.mjs`; erp-check / project-structure / field-links synced / Регрессия + docs
-- [ ] 23.6.3 — Owner visual (list + chat + host tabs) — / Owner visual
+- [x] 23.6.3 — Owner visual (list + chat + host tabs) — `v1.00` `2026-08-22`; owner OK / Owner visual
 
 ### 23.7 — Order context + chat visual design / Контекст заказа + дизайн чата
 
 > **EN:** Close the WorkTaskRead list-vs-detail DTO gap (real stage/responsible/executor names on the chat header) and surface Sales Order context (number, client, status, amount, desired date) on tasks anchored to `sales_order_id`, plus an overdue-deadline badge. Chat visual pass via `/plugin frontend-design`. Plan: `docs/superpowers/plans/2026-08-08-work-tasks-order-context.md`.
 > **RU:** Закрыть разрыв list/detail DTO в `WorkTaskRead` (реальные имена цеха/ответственного/исполнителя в шапке чата) и показать контекст Заказа покупателя (номер, клиент, статус, сумма, срок) для задач с якорем `sales_order_id`, плюс бейдж просроченного дедлайна. Визуальная доработка чата через `/plugin frontend-design`. План: `docs/superpowers/plans/2026-08-08-work-tasks-order-context.md`.
 
-- [ ] 23.7.1 — `WorkTaskRead` schema: display names + `sales_order_summary` — / Схема: имена + сводка заказа
-- [ ] 23.7.2 — Service enrichment `_to_read` (stage/user names, SalesOrder→Client join) — / Обогащение сервиса
-- [ ] 23.7.3 — FE `lib/work-tasks.ts`: map order summary + real names — / FE mapper
-- [ ] 23.7.4 — Chat panel visual redesign (order info card, overdue badge) via `/plugin frontend-design` — / Визуал чата
-- [ ] 23.7.5 — Backend + frontend regression pass (pytest, node --test, tsc) — / Регрессия
+- [x] 23.7.1 — `WorkTaskRead` schema: display names + `sales_order_summary` — `v1.00` `2026-08-22`; `WorkTaskSalesOrderSummary`; `test_work_tasks_api_23_2_1.py` / Схема: имена + сводка заказа
+- [x] 23.7.2 — Service enrichment `_to_read` (stage/user names, SalesOrder→Client join) — `v1.00` `2026-08-22`; `_sales_order_summary` in `work_tasks.py` / Обогащение сервиса
+- [x] 23.7.3 — FE `lib/work-tasks.ts`: map order summary + real names — `v1.00` `2026-08-22`; `fromApiWorkTask` + `lib/work-tasks.test.mjs` / FE mapper
+- [x] 23.7.4 — Chat panel visual redesign (order info card, overdue badge) via `/plugin frontend-design` — `v1.00` `2026-08-22`; order card + existing overdue badge in `WorkTaskChatPanel` / Визуал чата
+- [x] 23.7.5 — Backend + frontend regression pass (pytest, node --test, tsc) — `v1.00` `2026-08-22`; work-tasks pytest 16 passed; `lib/work-tasks.test.mjs` 9 passed / Регрессия
 
 ### 23.8 — Chat bubbles + list/kanban board stages / Пузыри чата + Канбан стадии
 
@@ -652,14 +652,14 @@
 - [x] 23.9.1 — `created_by_platform_user_id` + detail/list display names — `v1.00` `2026-08-08`; Alembic `r2s3t4u5v678` / Назначил
 - [x] 23.9.2 — `WorkTaskChatModal` from list/kanban/hosts (lead/order/PO) — `v1.00` `2026-08-08` / Модальный чат
 - [x] 23.9.3 — Kanban stage `+` in header; full-width list; image lightbox; due-soon highlight — `v1.00` `2026-08-08` / UX канбан/срок
-- [ ] 23.9.4 — Owner visual (modal chat + due-soon + header) — / Owner visual
+- [x] 23.9.4 — Owner visual (modal chat + due-soon + header) — `v1.00` `2026-08-22`; owner OK / Owner visual
 
 ### 23.10 — Status ↔ board stage sync / Статус ↔ стадия
 
 - [x] 23.10.1 — Server sync: `done` ↔ «Готово»; reopen leaves terminal column — `v1.00` `2026-08-10`; `update_work_task` + repair Alembic `s3t4u5v6w789` / Синхронизация
 - [x] 23.10.2 — Task chat UI: status + stage selects, close/reopen — `v1.00` `2026-08-10`; `WorkTaskChatPanel` / UI в задаче
 - [x] 23.10.3 — Focused tests (status/board sync) — `v1.00` `2026-08-10`; `test_work_task_status_board_sync.py` / Тесты
-- [ ] 23.10.4 — Owner visual (close → Готово on kanban) — / Owner visual
+- [x] 23.10.4 — Owner visual (close → Готово on kanban) — `v1.00` `2026-08-22`; owner OK / Owner visual
 
 ---
 
@@ -698,3 +698,8 @@
 | `2026-08-08` | Closed `23.5.4`: removed primary LeadTask dialogs on lead card + collaboration microtasks UI (API kept for `23.6.1`) | Закрыт `23.5.4`: убраны primary LeadTask-диалоги на лиде и UI microtasks в collaboration (API сохранён для `23.6.1`) |
 | `2026-08-08` | Closed `23.6.1`/`23.6.2`: data migrate Alembic `p9q0r1s2t345` + regression/docs checkpoint; next owner visual `23.6.3` | Закрыты `23.6.1`/`23.6.2`: data migrate + регрессия/docs; далее owner visual `23.6.3` |
 | `2026-08-08` | New `23.8`: chat bubbles (mine/others) + List|Kanban with CRUD board stages; spec `2026-08-08-work-tasks-chat-kanban-design.md` | Новый `23.8`: пузыри чата + Список|Канбан со стадиями доски; spec `2026-08-08-work-tasks-chat-kanban-design.md` |
+| `2026-08-22` | Closed owner visuals `23.6.3` / `23.9.4` / `23.10.4`; closed `23.7.1`–`23.7.5` order context + chat card | Закрыты owner visual `23.6.3` / `23.9.4` / `23.10.4`; закрыт `23.7` контекст заказа + карточка в чате |
+| `2026-08-22` | Closed `22.1.4` / `22.2.5`: owner visual OK on live Lead + Order Soft UI; field-links layout note | Закрыты `22.1.4` / `22.2.5`: owner visual live Лид + Заказ; заметка layout в field-links |
+| `2026-08-22` | Closed etalon visuals `22.4.1`–`22.9.1`; Production contract `22.4.2` + FE Soft UI `22.4.3`; `22.3` TBD | Закрыты visual эталонов `22.4.1`–`22.9.1`; контракт+FE производства `22.4.2`/`22.4.3`; `22.3` TBD |
+| `2026-08-22` | Closed `22.4.4` live Production visual; Warehouse contract `22.5.2` + FE Soft UI `22.5.3` | Закрыт `22.4.4` live производство; склад контракт+FE `22.5.2`/`22.5.3` |
+| `2026-08-22` | Closed `22.5.4`: owner visual OK on live Warehouse Soft UI `/warehouse/stock` | Закрыт `22.5.4`: owner visual live склад |

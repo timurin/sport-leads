@@ -12,7 +12,7 @@ from sqlalchemy.pool import StaticPool
 from app.database.base import Base
 from app.database.session import get_db
 from app.main import app
-from app.models.sales import Lead, SalesUser
+from app.models.sales import Client, Lead, SalesOrder, SalesOrderStatus, SalesUser
 from tests.auth_test_helpers import ensure_user_with_role, login_client
 
 
@@ -118,5 +118,71 @@ def test_work_task_crud_roundtrip() -> None:
 
         missing = client.get("/work-tasks/999999")
         assert missing.status_code == 404
+    finally:
+        app.dependency_overrides.clear()
+
+
+def test_work_task_detail_includes_order_summary_and_names() -> None:
+    SessionLocal = _session_factory()
+    db = SessionLocal()
+    if db.get(SalesUser, 1) is None:
+        db.add(SalesUser(id=1, name="Test"))
+        db.flush()
+    client_row = Client(
+        company_name="ООО Ромашка",
+        contact_name="Пётр",
+        phone="+79990001122",
+        responsible_id=1,
+    )
+    db.add(client_row)
+    db.flush()
+    order = SalesOrder(
+        number="SO-2026-001",
+        client_id=client_row.id,
+        status=SalesOrderStatus.NEW,
+        title="Комплект формы",
+        amount=Decimal("15000.00"),
+        currency_code="RUB",
+        responsible_id=1,
+    )
+    db.add(order)
+    db.flush()
+    order_id = order.id
+    user_id = ensure_user_with_role(db, login="mgr2", role_code="admin")
+    db.commit()
+    db.close()
+
+    def override_get_db():
+        session = SessionLocal()
+        try:
+            yield session
+        finally:
+            session.close()
+
+    app.dependency_overrides[get_db] = override_get_db
+    client = TestClient(app)
+    try:
+        login_client(client, login="mgr2")
+
+        created = client.post(
+            "/work-tasks",
+            json={
+                "title": "Уточнить срок",
+                "sales_order_id": order_id,
+                "responsible_platform_user_id": user_id,
+            },
+        )
+        assert created.status_code == 201, created.text
+        task_id = created.json()["id"]
+
+        detail = client.get(f"/work-tasks/{task_id}")
+        assert detail.status_code == 200, detail.text
+        body = detail.json()
+        assert body["responsible_display_name"]
+        summary = body["sales_order_summary"]
+        assert summary is not None
+        assert summary["number"] == "SO-2026-001"
+        assert summary["client_company_name"] == "ООО Ромашка"
+        assert summary["amount"] == "15000.00"
     finally:
         app.dependency_overrides.clear()

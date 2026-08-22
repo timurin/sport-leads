@@ -73,6 +73,7 @@ import {
 } from "@/lib/nomenclature-category-tree";
 import { formatAmountWithCurrency } from "@/lib/money";
 import {
+  countItemsWithPositiveStock,
   filterByStockPresence,
   stockBalanceOrZero,
   type StockPresenceFilter,
@@ -468,9 +469,32 @@ export function WarehouseNomenclatureWorkspace({
     );
   };
 
+  const inStockCount = useMemo(
+    () => countItemsWithPositiveStock(items, stockBalances),
+    [items, stockBalances],
+  );
+
   return (
     <PageLayout className="flex min-h-0 flex-1 flex-col">
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+      <div className="sl-design-v1 flex min-h-0 min-w-0 flex-1 flex-col gap-3 bg-portal-page p-portal-4 text-portal-text">
+        <section className="sl-soft-panel flex flex-wrap items-start justify-between gap-3 p-portal-4">
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <h1 className="text-xl font-semibold tracking-tight">
+                Остатки номенклатуры
+              </h1>
+              <span className="rounded-full border border-portal-border px-2 py-0.5 text-portal-caption text-portal-muted">
+                {inStockCount} с остатком
+              </span>
+            </div>
+          </div>
+          <Link
+            href="/warehouse/movements"
+            className="portal-focus-ring inline-flex h-9 items-center justify-center rounded-lg border border-portal-border bg-portal-primary px-3 text-sm font-medium text-portal-primary-on"
+          >
+            Движения
+          </Link>
+        </section>
         <PageToolbar
           start={
             <div className="flex min-w-0 w-full flex-1 items-center gap-1">

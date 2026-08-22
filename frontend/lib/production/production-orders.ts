@@ -117,6 +117,33 @@ async function readError(response: Response, fallback: string): Promise<string> 
   return `${fallback} (${response.status})`;
 }
 
+export const PRODUCTION_ORDER_STATUS_KPI: ReadonlyArray<{
+  status: "draft" | "in_progress" | "completed" | "cancelled";
+  label: string;
+}> = [
+  { status: "in_progress", label: "В работе" },
+  { status: "draft", label: "Черновик" },
+  { status: "completed", label: "Завершён" },
+  { status: "cancelled", label: "Отменён" },
+];
+
+export function countProductionOrdersByStatus(
+  orders: ReadonlyArray<{ status: string }>,
+): Record<(typeof PRODUCTION_ORDER_STATUS_KPI)[number]["status"], number> {
+  const counts = {
+    draft: 0,
+    in_progress: 0,
+    completed: 0,
+    cancelled: 0,
+  };
+  for (const row of orders) {
+    if (row.status in counts) {
+      counts[row.status as keyof typeof counts] += 1;
+    }
+  }
+  return counts;
+}
+
 export function productionOrderStatusLabel(status: string): string {
   switch (status) {
     case "draft":

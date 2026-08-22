@@ -4,6 +4,7 @@ import test from "node:test";
 import {
   buildWorkTasksListHref,
   emptyWorkTaskCreateDraft,
+  fromApiWorkTask,
   fromApiWorkTaskListItem,
   fromApiWorkTaskMessage,
   groupTasksByBoardStage,
@@ -52,6 +53,44 @@ test("fromApiWorkTaskListItem uses embedded names", () => {
   assert.equal(item.responsibleLabel, "Менеджер");
   assert.equal(item.executorLabel, "Не назначен");
   assert.equal(item.objectHref, "/sales/leads/4");
+});
+
+test("fromApiWorkTask surfaces order summary and real names", () => {
+  const task = fromApiWorkTask({
+    id: 12,
+    title: "Уточнить срок",
+    status: "open",
+    production_stage_id: null,
+    production_stage_name: null,
+    board_stage_id: null,
+    board_stage_name: null,
+    created_by_platform_user_id: null,
+    created_by_display_name: null,
+    responsible_platform_user_id: 1,
+    responsible_display_name: "Менеджер Иванов",
+    executor_platform_user_id: null,
+    executor_display_name: null,
+    lead_id: null,
+    sales_order_id: 7,
+    sales_order_summary: {
+      id: 7,
+      number: "SO-2026-001",
+      client_company_name: "ООО Ромашка",
+      status: "new",
+      amount: "15000.00",
+      currency_code: "RUB",
+      desired_date: "2026-09-01",
+    },
+    production_order_id: null,
+    due_at: null,
+    created_at: "2026-08-06T10:00:00Z",
+    updated_at: "2026-08-06T10:00:00Z",
+    completed_at: null,
+  });
+  assert.equal(task.responsibleLabel, "Менеджер Иванов");
+  assert.ok(task.orderSummary);
+  assert.equal(task.orderSummary.number, "SO-2026-001");
+  assert.equal(task.orderSummary.clientCompanyName, "ООО Ромашка");
 });
 
 test("parse and build list filter href", () => {

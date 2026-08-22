@@ -14,13 +14,25 @@ type SalesOrderOption = {
   technicalCardCount: number;
 };
 
+type TechCardQuickItem = {
+  id: number;
+  number: string;
+  status: string;
+};
+
 export default async function ProductionOrdersPage() {
   let orders: ProductionOrderListItem[] = [];
   let salesOrderOptions: SalesOrderOption[] = [];
+  let techCardsQuick: TechCardQuickItem[] = [];
   let loadError: string | null = null;
   try {
     orders = await fetchProductionOrders({ limit: 500 });
     const cards = await fetchTechnicalCards({ limit: 500 });
+    techCardsQuick = cards.slice(0, 4).map((card) => ({
+      id: card.id,
+      number: card.number,
+      status: String(card.status),
+    }));
     const byOrder = new Map<number, SalesOrderOption>();
     for (const card of cards) {
       const existing = byOrder.get(card.sales_order_id);
@@ -61,6 +73,7 @@ export default async function ProductionOrdersPage() {
           <ProductionOrdersWorkspace
             orders={orders}
             salesOrderOptions={salesOrderOptions}
+            techCardsQuick={techCardsQuick}
           />
         </Suspense>
       )}
