@@ -1,7 +1,7 @@
 # Sport-Lead — Roadmap v1.00
 
 **Code:** `SL-ROADMAP-v1.00`  
-**Updated:** `2026-08-22` (Stage **22.5.4** live Warehouse OK; next `22.6.2` Purchases)  
+**Updated:** `2026-08-22` (Stage **22.6.2**/**22.6.3** Purchases Soft UI hub; next live visual `22.6.4`)  
 **Project version:** `v1.00`  
 **Status:** Confirmed carry-over from `v0.9.0` (Stages **1.4.3**, **2** group, **7**, **12.4**–**12.5**, **13**, **14**, **15**, **16**, **18.4**) + **new** Stages **0** (performance + LAN + order-without-lead), **20** (Lead / Order UX, closed), **21** (Settings / Users cabinet, closed), **22** (Design v1.0), **23** (Unified Work Tasks). Owner started early (`2026-08-05`).  
 **Languages / Языки:** English + Russian (this MD). Interactive switch: `docs/erp/status/roadmap-v1.00.html`
@@ -539,8 +539,8 @@
 > **RU:** Утверждённый эталон закупок.
 
 - [x] 22.6.1 — Owner visual OK on Purchases Soft UI etalon — `v1.00` `2026-08-22`; owner OK `docs/design/purchases/hub-reference-v1.html` / Owner visual эталона закупок
-- [ ] 22.6.2 — Contract: hub + PO list Soft UI; existing fields; shell via `22.9` — / Контракт
-- [ ] 22.6.3 — FE Soft UI migrate purchases hub — / FE Soft UI закупки
+- [x] 22.6.2 — Contract: hub + PO list Soft UI; existing fields; shell via `22.9` — `v1.00` `2026-08-22`; `SL-DESIGN-V1-PUR-v1` in task; no Stage 13 API / Контракт
+- [x] 22.6.3 — FE Soft UI migrate purchases hub — `v1.00` `2026-08-22`; `/purchases` + `purchases-hub-workspace.tsx`; empty PO/suppliers (no demo) / FE Soft UI закупки
 - [ ] 22.6.4 — Owner visual on live purchases + docs — / Owner visual live + docs
 
 ### 22.7 — Settings / Platform / Настройки / Платформа
@@ -703,3 +703,4 @@
 | `2026-08-22` | Closed etalon visuals `22.4.1`–`22.9.1`; Production contract `22.4.2` + FE Soft UI `22.4.3`; `22.3` TBD | Закрыты visual эталонов `22.4.1`–`22.9.1`; контракт+FE производства `22.4.2`/`22.4.3`; `22.3` TBD |
 | `2026-08-22` | Closed `22.4.4` live Production visual; Warehouse contract `22.5.2` + FE Soft UI `22.5.3` | Закрыт `22.4.4` live производство; склад контракт+FE `22.5.2`/`22.5.3` |
 | `2026-08-22` | Closed `22.5.4`: owner visual OK on live Warehouse Soft UI `/warehouse/stock` | Закрыт `22.5.4`: owner visual live склад |
+| `2026-08-22` | Closed `22.6.2`/`22.6.3`: Purchases Soft UI hub without Stage 13 demo data | Закрыты `22.6.2`/`22.6.3`: хаб закупок Soft UI без demo Stage 13 |
