@@ -14,6 +14,7 @@ from app.api.platform_users_rbac import router as platform_users_rbac_router
 from app.api.stage_executors import router as stage_executors_router
 from app.api.audit_events import router as audit_events_router
 from app.api.platform_system_settings import router as platform_system_settings_router
+from app.api.mailbox_settings import router as mailbox_settings_router
 from app.api.platform_directories import router as platform_directories_router
 from app.api.print_forms import router as print_forms_router
 from app.api.sport_events import router as sport_events_router
@@ -119,6 +120,7 @@ app.include_router(platform_users_rbac_router)
 app.include_router(stage_executors_router)
 app.include_router(audit_events_router)
 app.include_router(platform_system_settings_router)
+app.include_router(mailbox_settings_router)
 app.include_router(platform_directories_router)
 app.include_router(print_forms_router)
 app.include_router(sport_events_router)

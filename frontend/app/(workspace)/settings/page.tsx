@@ -5,6 +5,7 @@ import {
   FileText,
   FolderCog,
   Layers,
+  Mail,
   MapPin,
   Package,
   Ruler,
@@ -215,6 +216,19 @@ const settingsGroups = [
         description: "PlatformUser и назначение ролей (ADR-024)",
         href: "/settings/users",
         icon: Users,
+      },
+    ],
+  },
+  {
+    title: "Интеграции",
+    description: "Внешние каналы CRM: почта, webhook, адаптеры",
+    icon: Mail,
+    items: [
+      {
+        title: "Почтовый ящик",
+        description: "IMAP/SMTP и создание лида из входящей почты",
+        href: "/settings/integrations",
+        icon: Mail,
       },
     ],
   },

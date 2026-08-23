@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
+from fastapi import APIRouter, Depends, Header, HTTPException, Query, Response, status
 from pydantic import EmailStr
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
@@ -27,7 +27,14 @@ from app.schemas.sales import (
     LeadMessageRead,
     LeadUpdate,
 )
+from app.config.settings import settings
+from app.schemas.lead_ingest import LeadIngestRead, WebsiteFormWebhookPayload
 from app.services.lead_creation import LeadResponsibleNotFoundError, create_lead
+from app.services.lead_ingest import (
+    LeadIngestSecretError,
+    ingest_website_form_lead,
+    verify_website_form_secret,
+)
 from app.services.lead_contacts import (
     LeadContactNotFoundError,
     LeadNotFoundError as ContactLeadNotFoundError,
@@ -45,11 +52,17 @@ from app.services.lead_conversion import (
     reject_lead,
 )
 from app.services.lead_duplicates import LeadDuplicateCriteriaError, find_duplicate_leads
+from app.communications.connectors.email import EmailInboundPayload
 from app.services.lead_messages import (
     LeadMessageAuthorNotFoundError,
+    LeadMessageInboundPayloadError,
+    LeadMessageInboundSecretError,
+    LeadMessageRecipientError,
+    LeadMessageSendError,
     LeadNotFoundError as MessageLeadNotFoundError,
     create_lead_message,
     list_lead_messages,
+    persist_inbound_email_messages,
     to_lead_message_read,
 )
 from app.services.lead_notes import (
@@ -108,6 +121,20 @@ def _note_http_error(error: Exception) -> HTTPException:
 def _message_http_error(error: Exception) -> HTTPException:
     if isinstance(error, (MessageLeadNotFoundError, LeadMessageAuthorNotFoundError)):
         return HTTPException(status_code=404, detail=str(error))
+    if isinstance(error, LeadMessageRecipientError):
+        return HTTPException(status_code=422, detail=str(error))
+    if isinstance(error, LeadMessageSendError):
+        return HTTPException(status_code=502, detail=str(error))
+    if isinstance(error, LeadMessageInboundPayloadError):
+        return HTTPException(status_code=422, detail=str(error))
+    if isinstance(error, LeadMessageInboundSecretError):
+        detail = str(error)
+        status_code = (
+            status.HTTP_503_SERVICE_UNAVAILABLE
+            if "not configured" in detail
+            else status.HTTP_401_UNAUTHORIZED
+        )
+        return HTTPException(status_code=status_code, detail=detail)
     return HTTPException(status_code=409, detail=str(error))
 
 
@@ -124,6 +151,49 @@ def create_lead_endpoint(payload: LeadCreate, db: Session = Depends(get_db)) -> 
         raise HTTPException(status_code=409, detail="Lead could not be created") from error
     db.refresh(lead)
     return LeadRead.model_validate(lead)
+
+
+@router.post(
+    "/ingest/website-form",
+    response_model=LeadIngestRead,
+    operation_id="ingest_website_form_lead",
+)
+def ingest_website_form_lead_endpoint(
+    payload: WebsiteFormWebhookPayload,
+    db: Session = Depends(get_db),
+    x_sport_lead_ingest_secret: str | None = Header(default=None),
+) -> LeadIngestRead:
+    try:
+        verify_website_form_secret(
+            x_sport_lead_ingest_secret,
+            settings.lead_form_webhook_secret,
+        )
+        result = ingest_website_form_lead(db, payload.model_dump())
+        db.commit()
+    except LeadIngestSecretError as error:
+        db.rollback()
+        detail = str(error)
+        status_code = (
+            status.HTTP_503_SERVICE_UNAVAILABLE
+            if "not configured" in detail
+            else status.HTTP_401_UNAUTHORIZED
+        )
+        raise HTTPException(status_code=status_code, detail=detail) from error
+    except LeadResponsibleNotFoundError as error:
+        db.rollback()
+        raise HTTPException(status_code=404, detail=str(error)) from error
+    except IntegrityError as error:
+        db.rollback()
+        raise HTTPException(status_code=409, detail="Lead ingest could not be saved") from error
+    db.refresh(result.lead)
+    return LeadIngestRead(
+        created=result.created,
+        matched_existing=result.matched_existing,
+        duplicate_ingest=result.duplicate_ingest,
+        adapter_type=result.adapter_type,
+        external_id=result.external_id,
+        lead=LeadRead.model_validate(result.lead),
+    )
 
 
 @router.get("", response_model=list[LeadRead])
@@ -514,6 +584,41 @@ def delete_note_endpoint(
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
+@router.post(
+    "/messages/inbound/email",
+    response_model=list[LeadMessageRead],
+    operation_id="ingest_inbound_email_lead_message",
+)
+def ingest_inbound_email_lead_message_endpoint(
+    payload: EmailInboundPayload,
+    db: Session = Depends(get_db),
+    x_sport_lead_email_secret: str | None = Header(default=None),
+) -> list[LeadMessageRead]:
+    headers: dict[str, str] = {}
+    if x_sport_lead_email_secret:
+        headers["X-Sport-Lead-Email-Secret"] = x_sport_lead_email_secret
+    try:
+        messages = persist_inbound_email_messages(
+            db,
+            payload.model_dump(mode="json"),
+            headers,
+        )
+        db.commit()
+    except (
+        MessageLeadNotFoundError,
+        LeadMessageInboundSecretError,
+        LeadMessageInboundPayloadError,
+    ) as error:
+        db.rollback()
+        raise _message_http_error(error) from error
+    except IntegrityError as error:
+        db.rollback()
+        raise HTTPException(
+            status_code=409, detail="Inbound email message could not be saved"
+        ) from error
+    return [to_lead_message_read(db, message) for message in messages]
+
+
 @router.get("/{lead_id}/messages", response_model=list[LeadMessageRead])
 def list_messages_endpoint(lead_id: int, db: Session = Depends(get_db)) -> list[LeadMessageRead]:
     try:
@@ -536,7 +641,12 @@ def create_message_endpoint(
     try:
         message = create_lead_message(db, lead_id, payload)
         db.commit()
-    except (MessageLeadNotFoundError, LeadMessageAuthorNotFoundError) as error:
+    except (
+        MessageLeadNotFoundError,
+        LeadMessageAuthorNotFoundError,
+        LeadMessageRecipientError,
+        LeadMessageSendError,
+    ) as error:
         db.rollback()
         raise _message_http_error(error) from error
     except IntegrityError as error:

@@ -1,5 +1,6 @@
 from app.collectors.mock import MockCollector
 from app.collectors.source_base import SourceCollector
+from app.collectors.webhook_form import WebhookFormCollector
 
 
 class UnsupportedSourceTypeError(ValueError):
@@ -15,6 +16,7 @@ class CollectorFactory:
 
     _collectors: dict[str, type[SourceCollector]] = {
         "mock": MockCollector,
+        "webhook_form": WebhookFormCollector,
     }
 
     @classmethod

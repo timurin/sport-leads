@@ -25,6 +25,7 @@ from app.models.sales import (
     LeadContactChannel,
     LeadEvent,
     LeadEventType,
+    LeadIngestReceipt,
     LeadRejectionReason,
     LeadResult,
     LeadStatus,
@@ -123,6 +124,7 @@ from app.models.technical_card import (
 )
 from app.models.technical_card_settings import TechnicalCardSettings
 from app.models.platform_system_settings import PlatformSystemSettings
+from app.models.mailbox_settings import MailboxSettings
 from app.models.platform_city import PlatformCity
 from app.models.print_form import (
     PrintForm,
@@ -180,6 +182,7 @@ __all__ = [
     "LeadContactChannel",
     "LeadEvent",
     "LeadEventType",
+    "LeadIngestReceipt",
     "LeadRejectionReason",
     "LeadResult",
     "LeadStatus",
@@ -261,6 +264,7 @@ __all__ = [
     "TechOperationVolumeUnit",
     "TechnicalCardSettings",
     "PlatformSystemSettings",
+    "MailboxSettings",
     "PlatformCity",
     "PrintForm",
     "PrintFormBindingType",

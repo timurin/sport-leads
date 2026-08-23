@@ -67,6 +67,25 @@ class Settings:
     auth_bootstrap_display_name: str | None = os.getenv(
         "AUTH_BOOTSTRAP_DISPLAY_NAME"
     )
+    # CRM website-form ingest (`1.4.3.2`). Empty = endpoint refuses traffic.
+    lead_form_webhook_secret: str | None = (
+        os.getenv("LEAD_FORM_WEBHOOK_SECRET") or None
+    )
+    # CRM email connector (`1.4.3.3`). Host + from required for outbound SMTP.
+    # Persist UI is `1.4.3.4`. Empty host/from keeps lead send on mock.
+    smtp_host: str | None = os.getenv("SMTP_HOST") or None
+    smtp_port: int = int(os.getenv("SMTP_PORT", "587"))
+    smtp_username: str | None = os.getenv("SMTP_USER") or None
+    smtp_password: str | None = os.getenv("SMTP_PASSWORD") or None
+    smtp_from: str | None = os.getenv("SMTP_FROM") or None
+    smtp_use_tls: bool = (
+        os.getenv("SMTP_USE_TLS", "true").strip().lower()
+        in {"1", "true", "yes", "on"}
+    )
+    lead_email_webhook_secret: str | None = (
+        os.getenv("LEAD_EMAIL_WEBHOOK_SECRET") or None
+    )
+
     cors_origins: list[str] = [
         item.strip()
         for item in os.getenv(

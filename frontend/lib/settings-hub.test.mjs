@@ -13,6 +13,8 @@ test("settings hub Soft UI keeps live catalog and users links", async () => {
   for (const marker of [
     "sl-design-v1",
     "/settings/users",
+    "/settings/integrations",
+    "Почтовый ящик",
     "/settings/catalogs/warehouses",
     "/settings/organizations",
     "Настройки платформы",

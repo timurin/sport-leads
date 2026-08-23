@@ -583,6 +583,29 @@ class SalesOrderItemAssemblyOperationSnapshot(Base):
     order_item: Mapped[SalesOrderItem] = relationship(back_populates="assembly_operation_snapshots")
 
 
+class LeadIngestReceipt(Base):
+    """Idempotency record for CRM lead-source ingest (`1.4.3.2`)."""
+
+    __tablename__ = "lead_ingest_receipts"
+    __table_args__ = (
+        UniqueConstraint(
+            "adapter_type",
+            "external_id",
+            name="uq_lead_ingest_receipts_adapter_external",
+        ),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    adapter_type: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    external_id: Mapped[str] = mapped_column(String(255), nullable=False)
+    lead_id: Mapped[int] = mapped_column(
+        ForeignKey("leads.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+
+
 class LeadEvent(Base):
     __tablename__ = "lead_events"
     __table_args__ = (

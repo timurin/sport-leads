@@ -611,8 +611,8 @@
           ru: "Этап 1.4.3 — Реальные адаптеры источников лидов и коммуникаций"
         },
         note: {
-          en: "Open remainder of 1.4. Core 1.4.1 + mock 1.4.2 stay done in v0.9. CRM ingest contour C; ≠ Stage 19; shared channel transport with 16.1.",
-          ru: "Открытый остаток 1.4. Ядро 1.4.1 + mock 1.4.2 закрыты в v0.9. Контур CRM ingest C; ≠ Stage 19; общий transport с 16.1."
+          en: "Closed 2026-08-23. Core 1.4.1 + mock 1.4.2 stay in v0.9. SMTP when mailbox/env set; mock fallback. Contour C; ≠ Stage 19; shared transport with 16.1.",
+          ru: "Закрыт 2026-08-23. Ядро 1.4.1 + mock 1.4.2 в v0.9. SMTP при конфиге, иначе mock. Контур C; ≠ Stage 19."
         },
         blocks: [
           {
@@ -635,34 +635,50 @@
               },
               {
                 code: "1.4.3.2",
-                done: false,
+                done: true,
                 title: {
                   en: "First real lead-source adapter (e.g. website form / webhook ingest) wired through normalization core",
                   ru: "Первый реальный lead-source адаптер (форма сайта / webhook) через normalization core"
+                },
+                note: {
+                  en: "v1.00 2026-08-23; webhook_form + POST /leads/ingest/website-form; test_lead_ingest_1_4_3_2.py",
+                  ru: "v1.00 2026-08-23; webhook формы сайта → Lead"
                 }
               },
               {
                 code: "1.4.3.3",
-                done: false,
+                done: true,
                 title: {
                   en: "First real communication adapter for lead outbound/inbound (replace mock path used by 1.2.4.8 send)",
                   ru: "Первый реальный communication адаптер (входящие/исходящие лида; заменить mock path 1.2.4.8)"
+                },
+                note: {
+                  en: "v1.00 2026-08-23; SMTP smtp-email + POST /leads/messages/inbound/email; mock fallback; test_lead_email_connector_1_4_3_3.py",
+                  ru: "v1.00 2026-08-23; SMTP исходящие + inbound email webhook; mock если SMTP не задан"
                 }
               },
               {
                 code: "1.4.3.4",
-                done: false,
+                done: true,
                 title: {
                   en: "Persist connector config + credentials (no secrets in repo); admin/settings surface as needed",
                   ru: "Персистентность config/credentials (без секретов в репо); admin/settings при необходимости"
+                },
+                note: {
+                  en: "v1.00 2026-08-23; mailbox_settings + /settings/integrations; owner visual OK; test_mailbox_settings_1_4_3_4.py",
+                  ru: "v1.00 2026-08-23; persist SMTP/IMAP + страница почтового ящика; owner visual OK"
                 }
               },
               {
                 code: "1.4.3.5",
-                done: false,
+                done: true,
                 title: {
                   en: "Regression tests + docs checkpoint (erp-check / import-export contour C)",
                   ru: "Регрессия + checkpoint документации (erp-check / контур C)"
+                },
+                note: {
+                  en: "v1.00 2026-08-23; 42 pytest + FE mailbox 5; test_external_adapters_1_4_3_5.py; contour C closed",
+                  ru: "v1.00 2026-08-23; регрессия контура C; Stage 1.4.3 закрыт"
                 }
               }
             ]

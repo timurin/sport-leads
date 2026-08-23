@@ -455,7 +455,7 @@ export function buildAppSections(
       },
       {
         id: "integrations",
-        title: "Интеграции",
+        title: "Почтовый ящик",
         href: "/settings/integrations",
       },
     ],

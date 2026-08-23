@@ -1,7 +1,7 @@
 # Sport-Lead — Project Structure Checklist
 
 **Code:** `SL-PROJECT-STRUCTURE-v1`
-**Updated:** `2026-08-23` (Stage `22` closed `22.3.4`; Stage `23` through `23.7`/`23.10.4`)  
+**Updated:** `2026-08-23` (Stage `1.4.3` closed `1.4.3.5`; Stage `22` closed)  
 **Project version:** `v0.9.0` / early `v1.00` Stages 0 + 20 + 21 + 22 + 23
 **Git branch:** `main`
 
@@ -53,7 +53,11 @@
 - [x] Sales dashboard pattern-model analysis (`1.1.5`) — live API panel; owner visual OK `2026-08-01`; other dashboard KPIs still demo
 - [x] Persistent lead tasks (`1.2.4.1`–`1.2.4.6`) — owner visual OK `2026-08-01`
 - [x] Persistent lead notes (`1.2.4.7`) — owner visual OK `2026-08-01`
-- [x] Persistent lead communications (`1.2.4.8`) — owner visual OK `2026-08-01`; mock send only; real connectors → `v1.00` / `1.4.3` (channel transport `16.1`)
+- [x] Persistent lead communications (`1.2.4.8`) — owner visual OK `2026-08-01`; mock send when SMTP unset; real email → `1.4.3.3`
+- [x] Website-form lead ingest (`1.4.3.2`) — `POST /leads/ingest/website-form` + `lead_ingest_receipts`; `2026-08-23`
+- [x] SMTP email connector (`1.4.3.3`) — outbound `POST /leads/{id}/messages` + inbound `POST /leads/messages/inbound/email` → `LeadMessage`; `2026-08-23`
+- [x] Mailbox settings persist (`1.4.3.4`) — `mailbox_settings` + `/settings/integrations`; secrets masked; owner visual OK `2026-08-23`
+- [x] External adapters checkpoint (`1.4.3.5`) — contour C regression + erp-check / import-export; Stage `1.4.3` closed `2026-08-23`
 - [x] Deals boundary + CRM access-control — `1.3.3`: no separate Deal; `/sales/deals` → orders; lead archive cancelled (converted/rejected); ACL → `17.1.1`; owner visual OK `2026-08-01`
 - [x] Persistent client list workspace (`2.2.1`) — `GET /clients` + `/sales/clients`; owner visual OK `2026-08-01`
 - [x] Separate client card (`2.2.2`) — PT-05 `/sales/clients/[id]`; owner visual OK `2026-08-01`; history → v1.00

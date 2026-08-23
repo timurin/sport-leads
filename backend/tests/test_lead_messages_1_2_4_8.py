@@ -3,11 +3,18 @@ from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
 
+from app.config.settings import settings
 from app.database.base import Base
 from app.database.session import get_db
 from app.main import app
 from app.models.sales import Lead, LeadMessage, LeadStatus, SalesUser
 import pytest
+
+
+@pytest.fixture(autouse=True)
+def disable_smtp(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(settings, "smtp_host", None)
+    monkeypatch.setattr(settings, "smtp_from", None)
 
 
 @pytest.fixture()

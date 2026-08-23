@@ -17,6 +17,10 @@
 
 - `[x]` `Lead`, `LeadContact`, `Client`, `LeadEvent`, `SalesUser` и их миграции;
 - `[x]` создание лида, contact CRUD, стадии, частичное редактирование, конвертация, отказ и история;
+- `[x]` **website-form ingest `1.4.3.2`** — `POST /leads/ingest/website-form` → `create_lead` + `lead_ingest_receipts` (secret header; contour C);
+- `[x]` **SMTP email connector `1.4.3.3`** — real outbound email + inbound webhook → `LeadMessage` (mock fallback if SMTP unset);
+- `[x]` **mailbox settings `1.4.3.4`** — persist SMTP/IMAP/CRM flags in `mailbox_settings`; admin UI `/settings/integrations`; secrets not returned; owner visual OK `2026-08-23`;
+- `[x]` **external adapters checkpoint `1.4.3.5`** — contour **C** closed (`2026-08-23`): website-form ingest + SMTP `LeadMessage` + mailbox persist; collectors ≠ connectors; ≠ Stage 19;
 - `[~]` список/Kanban, задачи, заметки, timeline и коммуникации частично local/demo; **лиды list/kanban** `1.1.3`/`1.1.4` closed (owner visual OK `2026-07-31`); **dashboard models** `1.1.5` closed (owner visual OK `2026-08-01`); **lead tasks/notes/communications** `1.2.4` closed (owner visual OK `2026-08-01`); lead **card demix** `1.2.5` closed (owner visual OK `2026-08-01`; production auth → `17.1.1`); **`1.3.3` closed** (owner visual OK `2026-08-01`): no Deal; deals→orders; lead archive cancelled; ACL → `17.1.1`; **`2.2.1`/`2.2.2` closed** (owner visual OK `2026-08-01`; history → v1.00);
 - `[x]` `Deal` как отдельная сущность **не вводится** (конверсия → `SalesOrder`); ACL CRM → `17.1.1`;
 - `[x]` `Organization` и связь `SalesOrder.organization_id`;

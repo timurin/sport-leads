@@ -1,7 +1,7 @@
 # Sport-Lead — Roadmap v1.00
 
 **Code:** `SL-ROADMAP-v1.00`  
-**Updated:** `2026-08-23` (Stage **22** closed: boards live visual `22.3.4`)  
+**Updated:** `2026-08-23` (Stage **1.4.3** closed: checkpoint `1.4.3.5`)  
 **Project version:** `v1.00`  
 **Status:** Confirmed carry-over from `v0.9.0` (Stages **1.4.3**, **2** group, **7**, **12.4**–**12.5**, **13**, **14**, **15**, **16**, **18.4**) + **new** Stages **0** (performance + LAN + order-without-lead), **20** (Lead / Order UX, closed), **21** (Settings / Users cabinet, closed), **22** (Design v1.0), **23** (Unified Work Tasks). Owner started early (`2026-08-05`).  
 **Languages / Языки:** English + Russian (this MD). Interactive switch: `docs/erp/status/roadmap-v1.00.html`
@@ -130,14 +130,14 @@
 **Moved from:** `v0.9.0` `1.4.3` (split into microtasks)  
 **Перенесено из:** `v0.9.0`, `1.4.3` (разбито на микротаски)
 
-> **EN:** `1.4.1` collectors/normalization + `1.4.2` mock connector remain closed in `v0.9.0`. Lead card send (`1.2.4.8`) stays on mock until these adapters ship. CRM ingest contour **C** (ADR-020 / import-export inventory). ≠ Stage `19` staff chat.  
-> **RU:** `1.4.1` + `1.4.2` остаются закрытыми в `v0.9.0`. Отправка с карточки лида (`1.2.4.8`) на mock до появления адаптеров. Контур CRM ingest **C**. ≠ Stage `19`.
+> **EN:** Stage closed `2026-08-23`. `1.4.1` collectors + `1.4.2` mock stay in `v0.9.0`. Lead card send uses SMTP when mailbox/env configured; mock fallback otherwise. Contour **C** (ADR-020). ≠ Stage `19`.  
+> **RU:** Этап закрыт `2026-08-23`. `1.4.1` + `1.4.2` остаются в `v0.9.0`. Отправка с карточки лида — SMTP при конфиге, иначе mock. Контур **C**. ≠ Stage `19`.
 
 - [x] 1.4.3.1 — Contract: adapter registry vs collectors (`1.4.1`); lead create/update mapping; ≠ Stage `19` staff chat; relation to `16.1` (shared channel transport, CRM ingest owned here) — `v1.00` `2026-08-05`; `SL-EXTERNAL-ADAPTERS-v1`; task `docs/tasks/v1.00-stage-1.4.3-external-adapters.md`; ADR-020 / contour C note / Контракт закрыт
-- [ ] 1.4.3.2 — First real lead-source adapter (e.g. website form / webhook ingest) wired through normalization core / Первый реальный lead-source адаптер (форма сайта / webhook) через normalization core
-- [ ] 1.4.3.3 — First real communication adapter for lead outbound/inbound (replace mock path used by `1.2.4.8` send) / Первый реальный communication адаптер (входящие/исходящие лида; заменить mock path `1.2.4.8`)
-- [ ] 1.4.3.4 — Persist connector config + credentials (no secrets in repo); admin/settings surface as needed / Персистентность config/credentials (без секретов в репо); admin/settings при необходимости
-- [ ] 1.4.3.5 — Regression tests + docs checkpoint (erp-check / import-export contour C) / Регрессия + checkpoint документации (erp-check / контур C)
+- [x] 1.4.3.2 — First real lead-source adapter (e.g. website form / webhook ingest) wired through normalization core — `v1.00` `2026-08-23`; `webhook_form` + `POST /leads/ingest/website-form`; `test_lead_ingest_1_4_3_2.py` / Первый реальный lead-source адаптер (форма сайта / webhook) через normalization core
+- [x] 1.4.3.3 — First real communication adapter for lead outbound/inbound (replace mock path used by `1.2.4.8` send) — `v1.00` `2026-08-23`; SMTP `smtp-email` + `POST /leads/messages/inbound/email`; mock fallback when SMTP unset; `test_lead_email_connector_1_4_3_3.py` / Первый реальный communication адаптер (входящие/исходящие лида; заменить mock path `1.2.4.8`)
+- [x] 1.4.3.4 — Persist connector config + credentials (no secrets in repo); admin/settings surface as needed — `v1.00` `2026-08-23`; `mailbox_settings` + `/settings/integrations`; owner visual OK; `test_mailbox_settings_1_4_3_4.py` / Персистентность config/credentials (без секретов в репо); admin/settings при необходимости
+- [x] 1.4.3.5 — Regression tests + docs checkpoint (erp-check / import-export contour C) — `v1.00` `2026-08-23`; 42 pytest (ingest/email/mailbox/messages/comms/collaboration + `test_external_adapters_1_4_3_5.py`); FE mailbox 5; contour C closed / Регрессия + checkpoint документации (erp-check / контур C)
 
 ---
 
@@ -718,3 +718,7 @@
 | `2026-08-23` | Closed `22.3.1`: owner visual OK on sales boards HTML etalon; open `22.3.2`–`22.3.4` | Закрыт `22.3.1`: owner visual эталона досок; открыты `22.3.2`–`22.3.4` |
 | `2026-08-23` | Closed `22.3.2`/`22.3.3`: boards contract `SL-DESIGN-V1-BOARDS-v1` + Soft UI FE; visual `22.3.4` | Закрыты `22.3.2`/`22.3.3`: контракт + Soft UI досок; visual `22.3.4` |
 | `2026-08-23` | Closed `22.3.4`: owner visual OK on live sales boards; Stage 22 complete | Закрыт `22.3.4`: owner visual live досок; Stage 22 закрыт |
+| `2026-08-23` | Closed `1.4.3.2`: website-form webhook → Lead via `create_lead` + ingest receipts | Закрыт `1.4.3.2`: webhook формы сайта → Lead |
+| `2026-08-23` | Closed `1.4.3.3`: SMTP email outbound/inbound → LeadMessage; mock fallback if SMTP unset | Закрыт `1.4.3.3`: SMTP email → LeadMessage; mock если SMTP не задан |
+| `2026-08-23` | Closed `1.4.3.4`: persist mailbox settings + `/settings/integrations` admin UI | Закрыт `1.4.3.4`: persist почтового ящика + UI настроек |
+| `2026-08-23` | Closed `1.4.3.5`: contour C regression + docs checkpoint; Stage 1.4.3 complete | Закрыт `1.4.3.5`: регрессия контура C; Stage 1.4.3 закрыт |
