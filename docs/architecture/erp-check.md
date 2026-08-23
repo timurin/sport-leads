@@ -102,7 +102,7 @@
 - `[x]` **Authentication (`17.1.1`)** — ADR-023 + API + `/login` workspace gate; owner visual OK `2026-08-01`; evidence `test_auth_17_1_1_2.py`, `session.test.mjs`;
 - `[x]` System users / roles / permissions (`17.1.2`) — ADR-024 + RBAC + size-grid/kanban/admin gates + stage executors; owner visuals OK `2026-08-01`; **Users cabinet list/profile/access** → Stage `21`;
 - `[x]` **Settings / Users cabinet (`v1.00` Stage `21` closed)** — nav «Пользователи» `/settings/users` (≠ org «Сотрудники» `2.4.2`); invite + list/filter + profile PATCH + access matrix; Alembic `m6n7o8p9q012`; owner visual OK `21.5.1` (`2026-08-05`); `SL-USERS-CABINET-v1`; extends `17.1.2` without new permission codes;
-- `[~]` **Design v1.0 (`v1.00` Stage `22`)** — Soft UI HTML etalons → platform; process `SL-DESIGN-V1-PROCESS-v1`; live Lead + Order + Production + Warehouse OK; Purchases hub FE `22.6.3` (live visual `22.6.4` open; no Stage 13 demo); live `DS-SHELL` frozen until `22.9.2`–`22.9.3`; Sales boards TBD `22.3`; do not re-open Stage `20` data contracts;
+- `[~]` **Design v1.0 (`v1.00` Stage `22`)** — Soft UI HTML etalons → platform; process `SL-DESIGN-V1-PROCESS-v1`; live through Dashboard OK `22.8.4` (no demo KPI; sales dynamics Recharts on `/sales/dashboard`); shell contract `SL-DESIGN-V1-SHELL-v1` (`22.9.2`); live `DS-SHELL` frozen until `22.9.3`; Sales boards TBD `22.3`; do not re-open Stage `20` data contracts;
 - `[x]` Universal audit trail (`17.1.3`) — ADR-025 + `audit_events` + size-grid UI journal; owner visual OK `2026-08-01`;
 - `[x]` Production ops (`17.2`) — `17.2.1`–`17.2.3` shipped (Compose/Caddy, deploy/health/logs, backup/DR runbooks); live VPS/secrets = owner apply.
 

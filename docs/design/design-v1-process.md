@@ -62,9 +62,9 @@ Do not reopen Stage **20** data contracts (`20.1`–`20.4`). Stage 22 may restyl
 | Production workspace | `docs/design/production/orders-workspace-reference-v1.html` | `/production/orders` → `production-orders-workspace.tsx` | `22.4` | **Owner approved** (`22.4.1`, `2026-08-22`) |
 | Warehouse stock | `docs/design/warehouse/stock-workspace-reference-v1.html` | `/warehouse/stock` | `22.5` | **Owner approved** (`22.5.1`, `2026-08-22`) |
 | Purchases hub | `docs/design/purchases/hub-reference-v1.html` | `/purchases` → `purchases-hub-workspace.tsx` | `22.6` | **Owner approved** (`22.6.1`, `2026-08-22`); FE `22.6.3` |
-| Settings hub | `docs/design/settings/hub-reference-v1.html` | `/settings` | `22.7` | **Owner approved** (`22.7.1`, `2026-08-22`) |
-| Dashboard / Home | `docs/design/dashboard/home-reference-v1.html` | `/dashboard` | `22.8` | **Owner approved** (`22.8.1`, `2026-08-22`) |
-| Soft UI shell (left + top) | `docs/design/shared/shell-reference-v1.html` (+ `shell.js`) | `app-sidebar.tsx` / `top-navigation.tsx` | `22.9` | **HTML owner approved** (`22.9.1`, `2026-08-22`); live FE after `22.9.2` |
+| Settings hub | `docs/design/settings/hub-reference-v1.html` | `/settings` → `settings/page.tsx` | `22.7` | **Owner approved** (`22.7.1`, `2026-08-22`); FE `22.7.3` |
+| Dashboard / Home | `docs/design/dashboard/home-reference-v1.html` | `/dashboard` → `home-workspace.tsx` | `22.8` | **Owner approved** (`22.8.1`, `2026-08-22`); FE `22.8.3` |
+| Soft UI shell (left + top) | `docs/design/shared/shell-reference-v1.html` (+ `shell.js`) | `app-sidebar.tsx` / `top-navigation.tsx` | `22.9` | **HTML owner approved** (`22.9.1`, `2026-08-22`); contract `SL-DESIGN-V1-SHELL-v1` (`22.9.2`); live FE `22.9.3` |
 
 Order etalon specifics: compact **finance rail** on the right, always visible; view filters hide **left** content only.
 
@@ -84,7 +84,7 @@ Shared: `docs/design/shared/preview.css`, `shell.js`, `demo-data.js`, `preview.j
 | `22.3` | Sales · boards/lists | TBD scaffold |
 | `22.4` | Production | Live owner visual OK `22.4.4` (`2026-08-22`) |
 | `22.5` | Warehouse | Live owner visual OK `22.5.4` (`2026-08-22`) |
-| `22.6` | Purchases | Etalon + contract + FE OK; live visual `22.6.4` open |
-| `22.7` | Settings / Platform | Etalon owner OK; contract `22.7.2` |
-| `22.8` | Dashboard / Home | Etalon owner OK; contract `22.8.2` |
-| `22.9` | Soft UI shell chrome | HTML owner OK `22.9.1`; live DS-SHELL after `22.9.2`–`22.9.3` |
+| `22.6` | Purchases | Live owner visual OK `22.6.4` (`2026-08-22`) |
+| `22.7` | Settings / Platform | Live owner visual OK `22.7.4` (`2026-08-23`) |
+| `22.8` | Dashboard / Home | Live owner visual OK `22.8.4` (`2026-08-23`) |
+| `22.9` | Soft UI shell chrome | HTML + contract OK; live FE `22.9.3` open |

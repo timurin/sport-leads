@@ -16,6 +16,8 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
+import { PageLayout } from "@/components/layout/page-layout";
+
 const settingsGroups = [
   {
     title: "Справочники",
@@ -220,30 +222,43 @@ const settingsGroups = [
 
 export default function SettingsPage() {
   return (
-    <div>
-      <div className="space-y-8 p-6">
+    <PageLayout className="flex min-h-0 flex-1 flex-col">
+      <div className="sl-design-v1 flex min-h-0 min-w-0 flex-1 flex-col gap-4 bg-portal-page p-portal-4 text-portal-text">
+        <section className="sl-soft-panel flex flex-wrap items-start justify-between gap-3 p-portal-4">
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <h1 className="text-xl font-semibold tracking-tight">
+                Настройки платформы
+              </h1>
+              <span className="rounded-full border border-portal-border px-2 py-0.5 text-portal-caption text-portal-muted">
+                Hub
+              </span>
+            </div>
+          </div>
+          <Link
+            href="/settings/users"
+            className="portal-focus-ring inline-flex h-9 items-center justify-center rounded-lg border border-portal-border bg-portal-primary px-3 text-sm font-medium text-portal-primary-on"
+          >
+            Пользователи
+          </Link>
+        </section>
+
         {settingsGroups.map((group) => {
           const GroupIcon = group.icon;
 
           return (
-            <section key={group.title}>
-              <div className="mb-4 flex items-center gap-3">
-                <div className="rounded-xl bg-blue-50 p-2.5 text-blue-600">
+            <section key={group.title} className="space-y-3">
+              <div className="flex items-center gap-3">
+                <div className="rounded-portal-lg border border-portal-border bg-portal-surface p-2.5 text-portal-primary">
                   <GroupIcon size={21} />
                 </div>
-
                 <div>
-                  <h2 className="text-lg font-semibold text-slate-950">
-                    {group.title}
-                  </h2>
-
-                  <p className="text-sm text-slate-500">
-                    {group.description}
-                  </p>
+                  <h2 className="text-lg font-semibold">{group.title}</h2>
+                  <p className="text-sm text-portal-muted">{group.description}</p>
                 </div>
               </div>
 
-              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+              <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
                 {group.items.map((item) => {
                   const Icon = item.icon;
 
@@ -251,25 +266,18 @@ export default function SettingsPage() {
                     <Link
                       key={item.href}
                       href={item.href}
-                      className="group rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-md"
+                      className="sl-soft-panel group flex items-start gap-4 p-portal-4 hover:bg-portal-state-hover"
                     >
-                      <div className="flex items-start gap-4">
-                        <div className="rounded-xl bg-slate-100 p-3 text-slate-600 transition group-hover:bg-blue-50 group-hover:text-blue-600">
-                          <Icon size={22} />
-                        </div>
-
-                        <div>
-                          <h3 className="font-semibold text-slate-900">
-                            {item.title}
-                          </h3>
-
-                          <p className="mt-1 text-sm leading-5 text-slate-500">
-                            {item.description}
-                          </p>
-
-                          <div className="mt-4 text-sm font-medium text-blue-600">
-                            Открыть →
-                          </div>
+                      <div className="rounded-portal-lg border border-portal-border bg-portal-page p-3 text-portal-muted">
+                        <Icon size={22} />
+                      </div>
+                      <div>
+                        <h3 className="font-semibold">{item.title}</h3>
+                        <p className="mt-1 text-sm leading-5 text-portal-muted">
+                          {item.description}
+                        </p>
+                        <div className="mt-3 text-sm font-medium text-portal-primary">
+                          Открыть →
                         </div>
                       </div>
                     </Link>
@@ -280,6 +288,6 @@ export default function SettingsPage() {
           );
         })}
       </div>
-    </div>
+    </PageLayout>
   );
 }
