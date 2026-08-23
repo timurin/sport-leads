@@ -24,7 +24,7 @@
 
 | Band | Width range | Primary matrix viewports | Shell expectations |
 |---|---|---|---|
-| Wide desktop | ≥ 1500 px content / ≥ 1920 viewport | **1920**, **1600** | Sidebar expanded 260px; topbar desktop nav (`lg+`) |
+| Wide desktop | ≥ 1500 px content / ≥ 1920 viewport | **1920**, **1600** | Sidebar expanded 220px; topbar desktop nav (`lg+`) |
 | Desktop | ~1200–1499 | **1440**, **1280** | Expanded or compact sidebar; desktop nav if ≥ `lg` |
 | Laptop | ~1024–1279 | **1280**, **1024** | Compact sidebar likely; topbar may use compact section menu below `lg` |
 | Tablet | 768–1199 | **1024**, **768** | Compact sidebar / tablet menu; no horizontal page scroll |
@@ -33,7 +33,7 @@
 Tailwind/shell anchors used in product code:
 
 - Topbar height / desktop nav: `md`, `lg` (see DS-SHELL-02)
-- Sidebar widths: expanded `260px`, compact `72px` (DS-SHELL-01)
+- Sidebar widths: expanded `220px`, compact `72px` (DS-SHELL-01)
 
 ### Mandatory pages (from ui-audit references)
 

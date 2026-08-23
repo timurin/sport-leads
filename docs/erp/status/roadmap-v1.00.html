@@ -2020,8 +2020,8 @@
           ru: "Этап 22 — Design v1.0"
         },
         note: {
-          en: "New in v1.00 (2026-08-05). Soft UI + flat from docs/design. Process SL-DESIGN-V1-PROCESS. No Stage 20 data reopen. Live through Dashboard OK 22.8.4; shell contract 22.9.2; live DS-SHELL until 22.9.3. Sales boards TBD 22.3.",
-          ru: "Новое в v1.00. Soft UI + flat. Live до Dashboard OK 22.8.4; контракт shell 22.9.2; live FE 22.9.3. Доски продаж TBD 22.3."
+          en: "New in v1.00 (2026-08-05). Soft UI + flat from docs/design. Process SL-DESIGN-V1-PROCESS. No Stage 20 data reopen. Stage 22 closed: boards 22.3.4 + shell 22.9.4.",
+          ru: "Новое в v1.00. Soft UI + flat. Stage 22 закрыт: доски 22.3.4 + shell 22.9.4."
         },
         blocks: [
           {
@@ -2190,16 +2190,60 @@
           },
           {
             title: {
-              en: "22.3 — Sales · boards / lists (TBD)",
-              ru: "22.3 — Продажи · доски / списки (TBD)"
+              en: "22.3 — Sales · boards / lists",
+              ru: "22.3 — Продажи · доски / списки"
+            },
+            note: {
+              en: "Live owner visual OK 22.3.4; Stage 22 boards closed",
+              ru: "Live owner OK 22.3.4; доски Stage 22 закрыты"
             },
             items: [
               {
                 code: "22.3.1",
-                done: false,
+                done: true,
                 title: {
-                  en: "Placeholder: await approved HTML etalon for sales boards/lists",
-                  ru: "Ждём утверждённый HTML-эталон"
+                  en: "Owner visual OK on Sales boards Soft UI etalon",
+                  ru: "Owner visual эталона досок"
+                },
+                note: {
+                  en: "v1.00 2026-08-23; owner OK HTML etalon",
+                  ru: "v1.00 2026-08-23; owner OK HTML эталон"
+                }
+              },
+              {
+                code: "22.3.2",
+                done: true,
+                title: {
+                  en: "Contract: etalon → leads/orders boards; Soft UI + flat; existing fields only; shell via 22.9",
+                  ru: "Контракт эталон → доски"
+                },
+                note: {
+                  en: "v1.00 2026-08-23; SL-DESIGN-V1-BOARDS-v1 in task",
+                  ru: "v1.00 2026-08-23; SL-DESIGN-V1-BOARDS-v1"
+                }
+              },
+              {
+                code: "22.3.3",
+                done: true,
+                title: {
+                  en: "FE Soft UI migrate /sales/leads + /sales/orders per approved etalon",
+                  ru: "FE Soft UI доски"
+                },
+                note: {
+                  en: "v1.00 2026-08-23; .sl-design-v1 on lead-workspace + kanban-page",
+                  ru: "v1.00 2026-08-23; Soft UI доски FE"
+                }
+              },
+              {
+                code: "22.3.4",
+                done: true,
+                title: {
+                  en: "Owner visual on live sales boards + docs",
+                  ru: "Owner visual live + docs"
+                },
+                note: {
+                  en: "v1.00 2026-08-23; owner OK /sales/leads + /sales/orders",
+                  ru: "v1.00 2026-08-23; owner OK live доски"
                 }
               }
             ]
@@ -2510,8 +2554,8 @@
               ru: "22.9 — Soft UI оболочка (лево + топ)"
             },
             note: {
-              en: "Approved etalon + SL-DESIGN-V1-SHELL-v1; live FE 22.9.3 open",
-              ru: "Эталон + контракт; live FE 22.9.3 открыт"
+              en: "Approved etalon + contract + FE; live owner visual OK 22.9.4",
+              ru: "Эталон + контракт + FE; live owner OK 22.9.4"
             },
             items: [
               {
@@ -2540,18 +2584,26 @@
               },
               {
                 code: "22.9.3",
-                done: false,
+                done: true,
                 title: {
                   en: "FE Soft UI migrate app-sidebar.tsx + top-navigation.tsx (only after 22.9.1)",
                   ru: "FE Soft UI shell"
+                },
+                note: {
+                  en: "v1.00 2026-08-23; sl-shell-v1 + rail 220px; navigation.ts",
+                  ru: "v1.00 2026-08-23; sl-shell-v1 + rail 220px"
                 }
               },
               {
                 code: "22.9.4",
-                done: false,
+                done: true,
                 title: {
                   en: "Owner visual on live shell + DS-SHELL-01/02 contract report",
                   ru: "Owner visual live + contracts"
+                },
+                note: {
+                  en: "v1.00 2026-08-23; owner OK live shell; contracts 220px + Soft UI",
+                  ru: "v1.00 2026-08-23; owner OK live shell; контракты обновлены"
                 }
               }
             ]

@@ -49,7 +49,7 @@ Do not reopen Stage **20** data contracts (`20.1`–`20.4`). Stage 22 may restyl
 
 - Soft UI **page content** migrates under `22.1`–`22.8` without changing live shell by default.
 - Soft UI **shell chrome** (left + top) has a dedicated preview etalon `docs/design/shared/shell-reference-v1.html` and Stage **`22.9`**. Live `DS-SHELL-01/02` stay frozen until owner HTML visual OK **and** an explicit FE microtask — never drive shell changes from content-only items.
-- ≠ Invent list/kanban boards until their etalon is approved (Sales boards still TBD `22.3`).
+- ≠ Invent list/kanban boards until their etalon is approved (Sales boards etalon OK `22.3.1`).
 - ≠ Demo substitution for live API on platform routes.
 - Prefer portal tokens / existing `Button`; Soft UI tokens land via Stage 22 FE items, not ad-hoc globals without a microtask.
 
@@ -64,13 +64,14 @@ Do not reopen Stage **20** data contracts (`20.1`–`20.4`). Stage 22 may restyl
 | Purchases hub | `docs/design/purchases/hub-reference-v1.html` | `/purchases` → `purchases-hub-workspace.tsx` | `22.6` | **Owner approved** (`22.6.1`, `2026-08-22`); FE `22.6.3` |
 | Settings hub | `docs/design/settings/hub-reference-v1.html` | `/settings` → `settings/page.tsx` | `22.7` | **Owner approved** (`22.7.1`, `2026-08-22`); FE `22.7.3` |
 | Dashboard / Home | `docs/design/dashboard/home-reference-v1.html` | `/dashboard` → `home-workspace.tsx` | `22.8` | **Owner approved** (`22.8.1`, `2026-08-22`); FE `22.8.3` |
-| Soft UI shell (left + top) | `docs/design/shared/shell-reference-v1.html` (+ `shell.js`) | `app-sidebar.tsx` / `top-navigation.tsx` | `22.9` | **HTML owner approved** (`22.9.1`, `2026-08-22`); contract `SL-DESIGN-V1-SHELL-v1` (`22.9.2`); live FE `22.9.3` |
+| Soft UI shell (left + top) | `docs/design/shared/shell-reference-v1.html` (+ `shell.js`) | `app-sidebar.tsx` / `top-navigation.tsx` | `22.9` | **Live owner approved** (`22.9.4`, `2026-08-23`) |
+| Sales boards | `docs/design/sales/leads-board-reference-v1.html` | `/sales/leads` + `/sales/orders` | `22.3` | **Live owner approved** (`22.3.4`, `2026-08-23`) |
 
 Order etalon specifics: compact **finance rail** on the right, always visible; view filters hide **left** content only.
 
 ## Draft etalons (await owner visual)
 
-None remaining except Sales boards (`22.3` — no HTML etalon yet).
+None.
 
 Shared: `docs/design/shared/preview.css`, `shell.js`, `demo-data.js`, `preview.js`, `docs/design/index.html`.
 
@@ -78,13 +79,13 @@ Shared: `docs/design/shared/preview.css`, `shell.js`, `demo-data.js`, `preview.j
 
 | Code | Module | Status |
 |------|--------|--------|
-| `22.0` | Process | Active |
+| `22.0` | Process | Closed with Stage 22 |
 | `22.1` | Sales · Lead | Live owner visual OK `22.1.4` (`2026-08-22`) |
 | `22.2` | Sales · Order | Live owner visual OK `22.2.5` (`2026-08-22`) |
-| `22.3` | Sales · boards/lists | TBD scaffold |
+| `22.3` | Sales · boards/lists | Live owner visual OK `22.3.4` (`2026-08-23`) |
 | `22.4` | Production | Live owner visual OK `22.4.4` (`2026-08-22`) |
 | `22.5` | Warehouse | Live owner visual OK `22.5.4` (`2026-08-22`) |
 | `22.6` | Purchases | Live owner visual OK `22.6.4` (`2026-08-22`) |
 | `22.7` | Settings / Platform | Live owner visual OK `22.7.4` (`2026-08-23`) |
 | `22.8` | Dashboard / Home | Live owner visual OK `22.8.4` (`2026-08-23`) |
-| `22.9` | Soft UI shell chrome | HTML + contract OK; live FE `22.9.3` open |
+| `22.9` | Soft UI shell chrome | Live owner visual OK `22.9.4` (`2026-08-23`) |

@@ -19,8 +19,8 @@
       { id: "analytics", title: "Аналитика", href: "dashboard/home-reference-v1.html#analytics" },
     ],
     sales: [
-      { id: "leads", title: "Лиды", href: "sales/lead-card-reference-v1.html?id=1042" },
-      { id: "orders", title: "Заказы", href: "sales/order-card-reference-v1.html?id=8801" },
+      { id: "leads", title: "Лиды", href: "sales/leads-board-reference-v1.html" },
+      { id: "orders", title: "Заказы", href: "sales/leads-board-reference-v1.html#orders" },
       { id: "clients", title: "Клиенты", href: "index.html#sales" },
       { id: "tasks", title: "Задачи", href: "index.html#sales" },
     ],

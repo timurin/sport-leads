@@ -10,7 +10,7 @@
 
 Tokenize sidebar chrome **without visual redesign**:
 
-- widths → `--portal-shell-sidebar-expanded|compact` (260 / 72)
+- widths → `--portal-shell-sidebar-expanded|compact` (220 / 72)
 - header height → `--portal-shell-topbar` (72)
 - colors → portal primary/page/border/text + shell-local neutrals (`--portal-shell-nav`, `--portal-shell-ink`, …)
 - radius 9px → `--portal-shell-radius`
@@ -41,7 +41,7 @@ Navigation still comes only from `frontend/lib/navigation.ts`.
 
 ## Verification (owner)
 
-1. Expanded sidebar 260px — active/hover look unchanged  
+1. Expanded sidebar 220px — Soft UI card + icon tiles (`22.9.4`)  
 2. Compact 72px — icons only  
 3. Toggle compact from top and bottom  
 4. Mobile ≤767 — sidebar absent  

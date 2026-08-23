@@ -30,7 +30,7 @@ Viewport breakpoints apply to **platform chrome only**. Nested workspaces prefer
 | Band | Sidebar (DS-SHELL-01) | Topbar section nav (DS-SHELL-02) | How user reaches other platform sections |
 |---|---|---|---|
 | **Mobile** ≤767 | Hidden (`hidden md:flex`) | Compact menu button (`lg:hidden`) | Compact menu lists **all** `appSections`, then current section `topNavigation` |
-| **Tablet** 768–1023 | Visible; expanded `260px` or compact `72px` (`localStorage` `sport-lead-sidebar-mode`) | Compact menu (desktop strip still `hidden` until `lg`) | Sidebar sections **or** compact menu (sections + section routes) |
+| **Tablet** 768–1023 | Visible; expanded `220px` or compact `72px` (`localStorage` `sport-lead-sidebar-mode`) | Compact menu (desktop strip still `hidden` until `lg`) | Sidebar sections **or** compact menu (sections + section routes) |
 | **Laptop+** ≥1024 | Same as tablet | Horizontal in-section nav (`lg:flex`) | Sidebar only for switching top-level sections |
 | **User hid sidebar** (`mode=hidden`, `md+` only) | Floating restore button top-left | Unchanged | Restore sidebar or use topbar routes |
 
@@ -72,7 +72,7 @@ Viewport breakpoints apply to **platform chrome only**. Nested workspaces prefer
 Confirm against matrix viewports **390 / 768 / 1024 / 1280** (spot 1440/1920 as needed):
 
 - [ ] ≤767: no left sidebar; hamburger opens sections + current section routes
-- [ ] ≥768: sidebar visible (unless user-hidden); compact/expanded widths 72/260
+- [ ] ≥768: sidebar visible (unless user-hidden); compact/expanded widths 72/220
 - [ ] &lt;1024: no desktop horizontal section strip; hamburger present
 - [ ] ≥1024: desktop section strip; hamburger hidden
 - [ ] Search / Create remain reachable; no horizontal page scroll

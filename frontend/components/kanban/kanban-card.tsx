@@ -39,7 +39,9 @@ export function KanbanCardContent({
   onSelect,
 }: KanbanCardContentProps) {
   return (
-    <article className={[
+    <article
+      data-pt03-card
+      className={[
       "rounded-xl border bg-white p-4 text-slate-900 shadow-sm transition",
       dragging
         ? "rotate-2 border-blue-400 shadow-2xl"

@@ -1,7 +1,7 @@
 # Sport-Lead — Roadmap v1.00
 
 **Code:** `SL-ROADMAP-v1.00`  
-**Updated:** `2026-08-23` (Stage **22.8.4** Dashboard live OK; shell contract `22.9.2`)  
+**Updated:** `2026-08-23` (Stage **22** closed: boards live visual `22.3.4`)  
 **Project version:** `v1.00`  
 **Status:** Confirmed carry-over from `v0.9.0` (Stages **1.4.3**, **2** group, **7**, **12.4**–**12.5**, **13**, **14**, **15**, **16**, **18.4**) + **new** Stages **0** (performance + LAN + order-without-lead), **20** (Lead / Order UX, closed), **21** (Settings / Users cabinet, closed), **22** (Design v1.0), **23** (Unified Work Tasks). Owner started early (`2026-08-05`).  
 **Languages / Языки:** English + Russian (this MD). Interactive switch: `docs/erp/status/roadmap-v1.00.html`
@@ -480,8 +480,8 @@
 **New in:** `v1.00` (owner approved HTML etalons `2026-08-05`)  
 **Новое в:** `v1.00` (утверждённые HTML-эталоны `2026-08-05`)
 
-> **EN:** Soft UI + flat buttons from `docs/design/` into live page content. Process SoT: `docs/design/design-v1-process.md` (`SL-DESIGN-V1-PROCESS-v1`). Task: `docs/tasks/v1.00-stage-22-design-v1.md`. Do **not** re-open Stage `20` data contracts. Live `DS-SHELL-01/02` frozen until `22.9.3` FE (`SL-DESIGN-V1-SHELL-v1` closed `22.9.2`). Sales boards TBD `22.3`.  
-> **RU:** Soft UI + flat из `docs/design/` в live-контент. Процесс: `design-v1-process.md`. Не переоткрывать Stage `20`. Live shell заморожен до FE `22.9.3`. Доски продаж TBD `22.3`.
+> **EN:** Soft UI + flat buttons from `docs/design/` into live page content. Process SoT: `docs/design/design-v1-process.md` (`SL-DESIGN-V1-PROCESS-v1`). Task: `docs/tasks/v1.00-stage-22-design-v1.md`. Do **not** re-open Stage `20` data contracts. Stage **22** closed: live through boards `22.3.4` + shell `22.9.4`.  
+> **RU:** Soft UI + flat из `docs/design/` в live-контент. Процесс: `design-v1-process.md`. Не переоткрывать Stage `20`. Stage **22** закрыт: live доски `22.3.4` + shell `22.9.4`.
 
 ### 22.0 — Process / Процесс
 
@@ -509,9 +509,15 @@
 - [x] 22.2.4 — FE Soft UI panels + flat buttons on order card — `v1.00` `2026-08-05`; `.sl-design-v1` on order workspace / FE Soft UI + flat
 - [x] 22.2.5 — Owner visual + docs (field-links layout note if needed) — `v1.00` `2026-08-22`; owner OK `/sales/orders/1`; finance rail layout note in `order-card-field-links.md` / Owner visual + docs
 
-### 22.3 — Sales · boards / lists (TBD) / Продажи · доски / списки (TBD)
+### 22.3 — Sales · boards / lists / Продажи · доски / списки
 
-- [ ] 22.3.1 — Placeholder: await approved HTML etalon for sales boards/lists — / Ждём утверждённый HTML-эталон
+> **EN:** Approved etalon `docs/design/sales/leads-board-reference-v1.html` (PT-03 Soft UI). Hosts ≈ `/sales/leads` (primary) + `/sales/orders` (same chrome). Existing fields only.  
+> **RU:** Утверждённый эталон досок продаж. Хосты `/sales/leads` и `/sales/orders`.
+
+- [x] 22.3.1 — Owner visual OK on Sales boards Soft UI etalon — `v1.00` `2026-08-23`; owner OK `docs/design/sales/leads-board-reference-v1.html` / Owner visual эталона досок
+- [x] 22.3.2 — Contract: etalon → leads/orders boards; Soft UI + flat; existing fields only; shell via `22.9` — `v1.00` `2026-08-23`; `SL-DESIGN-V1-BOARDS-v1` in task / Контракт эталон → доски
+- [x] 22.3.3 — FE Soft UI migrate `/sales/leads` + `/sales/orders` per approved etalon — `v1.00` `2026-08-23`; `.sl-design-v1` on `lead-workspace.tsx` + `kanban-page.tsx` / FE Soft UI доски
+- [x] 22.3.4 — Owner visual on live sales boards + docs — `v1.00` `2026-08-23`; owner OK `/sales/leads` + `/sales/orders` / Owner visual live + docs
 
 ### 22.4 — Production / Производство
 
@@ -565,13 +571,13 @@
 
 ### 22.9 — Soft UI shell chrome (left + top) / Soft UI оболочка (лево + топ)
 
-> **EN:** Approved etalon `docs/design/shared/shell-reference-v1.html` (+ `shell.js` labeled rail + top search/tabs/CTA). Contract `SL-DESIGN-V1-SHELL-v1` closed (`22.9.2`). Live `DS-SHELL-01` / `DS-SHELL-02` still frozen until `22.9.3` FE. Nav structure still from `frontend/lib/navigation.ts`.  
-> **RU:** Эталон и контракт оболочки закрыты. Live shell не трогать до FE `22.9.3`.
+> **EN:** Approved etalon `docs/design/shared/shell-reference-v1.html` (+ `shell.js` labeled rail + top search/tabs/CTA). Contract `SL-DESIGN-V1-SHELL-v1` + live FE + owner visual `22.9.4`. Nav structure still from `frontend/lib/navigation.ts`.  
+> **RU:** Эталон, контракт, FE и owner visual оболочки закрыты.
 
 - [x] 22.9.1 — Owner visual OK on Soft UI shell etalon (desktop + responsive) — `v1.00` `2026-08-22`; owner OK `docs/design/shared/shell-reference-v1.html` / Owner visual эталона shell
 - [x] 22.9.2 — Contract: Soft UI rail+topbar vs `DS-SHELL-01/02`; preserve nav from `navigation.ts`; explicit owner gate — `v1.00` `2026-08-23`; `SL-DESIGN-V1-SHELL-v1` in task; live files still frozen / Контракт shell
-- [ ] 22.9.3 — FE Soft UI migrate `app-sidebar.tsx` + `top-navigation.tsx` per approved etalon (only after `22.9.1`) — / FE Soft UI shell
-- [ ] 22.9.4 — Owner visual on live shell + report `DS-SHELL-01/02 visual contract preserved` or updated contracts — / Owner visual live + contracts
+- [x] 22.9.3 — FE Soft UI migrate `app-sidebar.tsx` + `top-navigation.tsx` per approved etalon (only after `22.9.1`) — `v1.00` `2026-08-23`; `.sl-shell-v1` + rail 220px; nav from `navigation.ts` / FE Soft UI shell
+- [x] 22.9.4 — Owner visual on live shell + report `DS-SHELL-01/02 visual contract preserved` or updated contracts — `v1.00` `2026-08-23`; owner OK live shell; `shell-contracts.md` 220px + Soft UI cards / Owner visual live + contracts
 
 ---
 
@@ -707,3 +713,8 @@
 | `2026-08-22` | Closed `22.6.4` live Purchases visual; Settings contract `22.7.2` + FE Soft UI `22.7.3` | Закрыт `22.6.4` live закупки; настройки контракт+FE `22.7.2`/`22.7.3` |
 | `2026-08-23` | Closed `22.7.4` live Settings visual; Dashboard contract `22.8.2` + FE Soft UI `22.8.3` | Закрыт `22.7.4` live настройки; дашборд контракт+FE `22.8.2`/`22.8.3` |
 | `2026-08-23` | Closed `22.8.4` live Dashboard visual; shell contract `22.9.2` (`SL-DESIGN-V1-SHELL-v1`) | Закрыт `22.8.4` live дашборд; контракт оболочки `22.9.2` |
+| `2026-08-23` | Closed `22.9.3`: Soft UI live shell FE (`app-sidebar` + `top-navigation`) | Закрыт `22.9.3`: Soft UI live оболочка |
+| `2026-08-23` | Closed `22.9.4`: owner visual OK on live Soft UI shell; DS-SHELL contracts updated | Закрыт `22.9.4`: owner visual live shell; контракты DS-SHELL обновлены |
+| `2026-08-23` | Closed `22.3.1`: owner visual OK on sales boards HTML etalon; open `22.3.2`–`22.3.4` | Закрыт `22.3.1`: owner visual эталона досок; открыты `22.3.2`–`22.3.4` |
+| `2026-08-23` | Closed `22.3.2`/`22.3.3`: boards contract `SL-DESIGN-V1-BOARDS-v1` + Soft UI FE; visual `22.3.4` | Закрыты `22.3.2`/`22.3.3`: контракт + Soft UI досок; visual `22.3.4` |
+| `2026-08-23` | Closed `22.3.4`: owner visual OK on live sales boards; Stage 22 complete | Закрыт `22.3.4`: owner visual live досок; Stage 22 закрыт |

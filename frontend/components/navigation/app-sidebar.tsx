@@ -90,6 +90,20 @@ function isSectionContentActive(
   );
 }
 
+function SectionGlyph({
+  icon: Icon,
+  active,
+}: {
+  icon: typeof Home;
+  active: boolean;
+}) {
+  return (
+    <span className={["sl-shell-ico", active ? "is-active" : ""].filter(Boolean).join(" ")}>
+      <Icon size={15} strokeWidth={active ? 2.2 : 1.8} />
+    </span>
+  );
+}
+
 function NavigationGroupContent({
   group,
   pathname,
@@ -330,16 +344,18 @@ function updateMode(nextMode: SidebarMode) {
     <aside
       data-platform-sidebar
       data-sidebar-mode={mode}
+      data-sl-shell="v1"
       className={[
         // Mobile (≤767): sidebar hidden — navigation via topbar menu (DS-SHELL-02).
-        "hidden h-full shrink-0 flex-col md:flex",
-        "border-r border-portal-border bg-portal-surface text-[color:var(--portal-shell-ink)]",
+        "sl-shell-v1 hidden h-full shrink-0 flex-col md:flex",
+        "bg-transparent text-[color:var(--portal-shell-ink)]",
         "transition-[width] duration-200 ease-out",
         expanded
-          ? "w-[var(--portal-shell-sidebar-expanded)]"
-          : "w-[var(--portal-shell-sidebar-compact)]",
+          ? "w-[var(--portal-shell-sidebar-expanded)] p-2 pr-1.5"
+          : "w-[var(--portal-shell-sidebar-compact)] p-1.5 pr-1",
       ].join(" ")}
     >
+      <div className="sl-shell-rail-card flex min-h-0 flex-1 flex-col overflow-hidden">
       <div
         className={[
           "flex h-[var(--portal-shell-topbar)] shrink-0 items-center border-b border-portal-border",
@@ -455,10 +471,7 @@ function updateMode(nextMode: SidebarMode) {
                       : "text-[color:var(--portal-shell-nav)] hover:bg-portal-page hover:text-portal-text",
                   ].join(" ")}
                 >
-                  <Icon
-                    size={19}
-                    strokeWidth={active ? 2.2 : 1.8}
-                  />
+                  <SectionGlyph icon={Icon} active={active} />
                 </Link>
               );
             }
@@ -478,11 +491,7 @@ function updateMode(nextMode: SidebarMode) {
         : "text-[color:var(--portal-shell-nav)] hover:bg-portal-page hover:text-portal-text",
     ].join(" ")}
   >
-    <Icon
-      size={19}
-      strokeWidth={active ? 2.2 : 1.8}
-      className="shrink-0"
-    />
+    <SectionGlyph icon={Icon} active={active} />
 
     <span
       className={[
@@ -521,11 +530,7 @@ function updateMode(nextMode: SidebarMode) {
         : "text-[color:var(--portal-shell-nav)] hover:bg-portal-page hover:text-portal-text",
     ].join(" ")}
   >
-    <Icon
-      size={19}
-      strokeWidth={active ? 2.2 : 1.8}
-      className="shrink-0"
-    />
+    <SectionGlyph icon={Icon} active={active} />
 
     <span className="ml-3 min-w-0 flex-1 truncate text-[13px]">
       {section.title}
@@ -626,6 +631,7 @@ function updateMode(nextMode: SidebarMode) {
             </span>
           ) : null}
         </button>
+      </div>
       </div>
     </aside>
   );

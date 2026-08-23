@@ -17,6 +17,7 @@ export function CompactTabs({
   size = "default",
   wrap = false,
   iconOnly = false,
+  variant = "default",
   className = "",
 }: {
   items: readonly CompactTabItem[];
@@ -28,13 +29,17 @@ export function CompactTabs({
   wrap?: boolean;
   /** Show icons instead of text labels (label stays as title/aria). */
   iconOnly?: boolean;
+  /** Soft UI pill track (sales boards `22.3`). Default chrome unchanged. */
+  variant?: "default" | "pills";
   className?: string;
 }) {
+  const pills = variant === "pills";
   return (
     <div
       className={[
-        "flex max-w-full gap-1.5",
-        wrap ? "flex-wrap" : "overflow-x-auto",
+        "flex max-w-full",
+        pills ? "gap-1 rounded-full bg-portal-surface-secondary p-0.5" : "gap-1.5",
+        wrap || pills ? "flex-wrap" : "overflow-x-auto",
         className,
       ].join(" ")}
       role="tablist"
@@ -54,18 +59,27 @@ export function CompactTabs({
             title={tip}
             onClick={() => onChange(item.id)}
             className={[
-              "relative inline-flex shrink-0 cursor-pointer items-center justify-center gap-1.5 rounded-portal-md font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-portal-focus-ring",
-              iconOnly
-                ? size === "compact"
-                  ? "size-9"
-                  : "size-10"
-                : size === "compact"
-                  ? "px-2.5 py-1.5 text-portal-caption"
-                  : "px-3.5 py-2 text-sm",
-              selected
-                ? "bg-portal-primary text-portal-primary-on"
-                : "bg-portal-surface-secondary text-portal-muted hover:bg-portal-primary-soft hover:text-portal-text",
-            ].join(" ")}
+              "relative inline-flex shrink-0 cursor-pointer items-center justify-center gap-1.5 font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-portal-focus-ring",
+              pills
+                ? "h-[30px] rounded-full px-3 text-sm"
+                : "rounded-portal-md",
+              pills
+                ? undefined
+                : iconOnly
+                  ? size === "compact"
+                    ? "size-9"
+                    : "size-10"
+                  : size === "compact"
+                    ? "px-2.5 py-1.5 text-portal-caption"
+                    : "px-3.5 py-2 text-sm",
+              pills
+                ? selected
+                  ? "bg-white text-portal-primary shadow-sm"
+                  : "bg-transparent text-portal-muted hover:text-portal-text"
+                : selected
+                  ? "bg-portal-primary text-portal-primary-on"
+                  : "bg-portal-surface-secondary text-portal-muted hover:bg-portal-primary-soft hover:text-portal-text",
+            ].filter(Boolean).join(" ")}
           >
             {item.icon ? (
               <span

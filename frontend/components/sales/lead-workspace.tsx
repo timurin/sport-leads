@@ -261,6 +261,7 @@ export function LeadWorkspace({
     return null;
   }
 
+  const activeCount = leads.filter((lead) => lead.status !== "completed").length;
   const metricItems: Array<{ label: string; value: string | number; tone?: "default" | "success" | "primary" }> = [
     { label: "Всего лидов", value: leads.length },
     { label: "Завершено", value: completed.length },
@@ -280,8 +281,31 @@ export function LeadWorkspace({
   ] as const;
 
   return (
-    <PageLayout>
+    <PageLayout className="flex min-h-0 flex-1 flex-col">
+      <div className="sl-design-v1 sl-boards-v1 flex min-h-0 min-w-0 flex-1 flex-col gap-3 bg-portal-page p-portal-4 text-portal-text">
+      <section className="sl-soft-panel flex flex-wrap items-start justify-between gap-3 p-portal-4">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <h1 className="text-xl font-semibold tracking-tight">Лиды</h1>
+            <span className="rounded-full border border-portal-border px-2 py-0.5 text-portal-caption text-portal-muted">
+              {activeCount} активных
+            </span>
+          </div>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button type="button" className="w-full sm:w-auto" onClick={() => setSettingsOpen(true)}>
+            <Settings2 size={16} />
+            Настроить стадии
+          </Button>
+          <Button variant="primary" className="w-full sm:w-auto" onClick={() => setCreateOpen(true)}>
+            Создать лид
+          </Button>
+        </div>
+      </section>
+
+      <section className="sl-soft-panel min-w-0 p-portal-4">
       <PageToolbar
+        className="sl-board-toolbar"
         start={(
           <>
             <CompactTabs
@@ -290,11 +314,8 @@ export function LeadWorkspace({
               value={view}
               onChange={(id) => setView(id as LeadView)}
               items={[...viewTabs]}
+              variant="pills"
             />
-            <Button type="button" className="w-full md:w-auto" onClick={() => setSettingsOpen(true)}>
-              <Settings2 size={16} />
-              Настроить стадии
-            </Button>
             <label className="relative flex h-portal-control-default w-full min-w-0 items-center md:min-w-56 md:flex-1 lg:max-w-sm">
               <Search
                 size={17}
@@ -336,16 +357,11 @@ export function LeadWorkspace({
             ) : null}
           </>
         )}
-        end={
-          <Button variant="primary" className="w-full sm:w-auto" onClick={() => setCreateOpen(true)}>
-            Создать лид
-          </Button>
-        }
       />
 
       {loadError ? (
         <InlineAlert
-          className="rounded-none border-x-0 border-t-0 border-b lg:px-portal-6"
+          className="mb-portal-4"
           tone="danger"
           size="compact"
         >
@@ -353,7 +369,7 @@ export function LeadWorkspace({
         </InlineAlert>
       ) : (
         <InlineAlert
-          className="rounded-none border-x-0 border-t-0 border-b lg:px-portal-6"
+          className="mb-portal-4"
           tone="success"
           size="compact"
         >
@@ -362,7 +378,7 @@ export function LeadWorkspace({
       )}
 
       <section
-        className="border-b border-portal-border bg-portal-surface-secondary px-portal-4 py-portal-4 lg:px-portal-6"
+        className="mb-portal-4"
         aria-label="Показатели"
       >
         <ResponsiveGrid minItemWidth="small" gap="default">
@@ -372,7 +388,7 @@ export function LeadWorkspace({
         </ResponsiveGrid>
       </section>
 
-      <div className="min-w-0 p-portal-4 lg:p-portal-6">
+      <div className="min-w-0">
         {moveError ? (
           <InlineAlert className="mb-portal-4" tone="danger">
             {moveError}
@@ -449,6 +465,8 @@ export function LeadWorkspace({
             });
           }}
         />
+      </div>
+      </section>
       </div>
 
       <LeadCompletionDialog

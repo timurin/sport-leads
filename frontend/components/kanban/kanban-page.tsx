@@ -17,7 +17,6 @@ import type {
 import { PageLayout, ResponsiveGrid } from "@/components/layout/page-layout";
 import { Button } from "@/components/ui/button";
 import { DemoCreateDrawer } from "@/components/ui/demo-create-drawer";
-import { EmptyState } from "@/components/ui/empty-state";
 import { Input, Select } from "@/components/ui/form-controls";
 import { InlineAlert } from "@/components/ui/inline-alert";
 import { PageToolbar } from "@/components/ui/page-header";
@@ -104,8 +103,25 @@ export function KanbanPage<TStatus extends string>({
     || Object.values(selectedFilters).some(Boolean);
 
   return (
-    <PageLayout>
+    <PageLayout className="flex min-h-0 flex-1 flex-col">
+      <div className="sl-design-v1 sl-boards-v1 flex min-h-0 min-w-0 flex-1 flex-col gap-3 bg-portal-page p-portal-4 text-portal-text">
+      <section className="sl-soft-panel flex flex-wrap items-start justify-between gap-3 p-portal-4">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <h1 className="text-xl font-semibold tracking-tight">{title}</h1>
+            <span className="rounded-full border border-portal-border px-2 py-0.5 text-portal-caption text-portal-muted">
+              {metricCards.length} заказов
+            </span>
+          </div>
+        </div>
+        <Button variant="primary" className="w-full sm:w-auto" onClick={() => setDialogOpen(true)}>
+          {actionLabel}
+        </Button>
+      </section>
+
+      <section className="sl-soft-panel min-w-0 p-portal-4">
       <PageToolbar
+        className="sl-board-toolbar"
         start={(
           <>
             <label className="relative flex h-portal-control-default w-full min-w-0 items-center md:min-w-56 md:flex-1 lg:max-w-sm">
@@ -157,15 +173,10 @@ export function KanbanPage<TStatus extends string>({
             ) : null}
           </>
         )}
-        end={(
-          <Button variant="primary" className="w-full sm:w-auto" onClick={() => setDialogOpen(true)}>
-            {actionLabel}
-          </Button>
-        )}
       />
 
       <section
-        className="border-b border-portal-border bg-portal-surface-secondary px-portal-4 py-portal-4 lg:px-portal-6"
+        className="mb-portal-4"
         aria-label="Показатели"
       >
         <ResponsiveGrid minItemWidth="small" gap="default">
@@ -180,55 +191,54 @@ export function KanbanPage<TStatus extends string>({
         </ResponsiveGrid>
       </section>
 
-      <div className="min-w-0 p-portal-4 lg:p-portal-6">
+      <div className="min-w-0">
         {moveError ? (
           <InlineAlert className="mb-portal-4" tone="danger">
             {moveError}
           </InlineAlert>
         ) : null}
         {loadError ? (
-          <EmptyState
-            title="Не удалось загрузить доску"
-            description={loadError}
-            size="default"
-          />
-        ) : (
-          <KanbanBoard
-            key={boardRevision}
-            columns={metricColumns}
-            query={query}
-            selectedFilters={selectedFilters}
-            onColumnsChange={setMetricColumns}
-            onMove={(move) => {
-              if (!onMove) {
+          <InlineAlert className="mb-portal-4" tone="danger">
+            {loadError}
+          </InlineAlert>
+        ) : null}
+        <KanbanBoard
+          key={boardRevision}
+          columns={metricColumns}
+          query={query}
+          selectedFilters={selectedFilters}
+          onColumnsChange={setMetricColumns}
+          onMove={(move) => {
+            if (!onMove) {
+              return;
+            }
+
+            const previousColumns = cloneKanbanColumns(metricColumns);
+            const previousCard = previousColumns
+              .flatMap((column) => column.cards)
+              .find((card) => card.id === move.cardId);
+            if (!previousCard || previousCard.status === move.targetColumnId) {
+              return;
+            }
+
+            setMoveError(null);
+            void onMove(move).then((result) => {
+              if (result.ok) {
                 return;
               }
 
-              const previousColumns = cloneKanbanColumns(metricColumns);
-              const previousCard = previousColumns
-                .flatMap((column) => column.cards)
-                .find((card) => card.id === move.cardId);
-              if (!previousCard || previousCard.status === move.targetColumnId) {
-                return;
-              }
-
-              setMoveError(null);
-              void onMove(move).then((result) => {
-                if (result.ok) {
-                  return;
-                }
-
-                setMetricColumns(previousColumns);
-                setBoardRevision((value) => value + 1);
-                setMoveError(`Не удалось сохранить статус заказа: ${result.message}`);
-              }).catch(() => {
-                setMetricColumns(previousColumns);
-                setBoardRevision((value) => value + 1);
-                setMoveError("Не удалось связаться с backend. Перемещение заказа отменено.");
-              });
-            }}
-          />
-        )}
+              setMetricColumns(previousColumns);
+              setBoardRevision((value) => value + 1);
+              setMoveError(`Не удалось сохранить статус заказа: ${result.message}`);
+            }).catch(() => {
+              setMetricColumns(previousColumns);
+              setBoardRevision((value) => value + 1);
+              setMoveError("Не удалось связаться с backend. Перемещение заказа отменено.");
+            });
+          }}
+        />
+      </div>
+      </section>
       </div>
       {renderCreateDrawer ? (
         renderCreateDrawer({

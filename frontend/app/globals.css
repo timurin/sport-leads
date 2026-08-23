@@ -139,10 +139,10 @@
   --portal-avatar-md: 32px;
   --portal-avatar-lg: 40px;
 
-  /* Shell reference sizes (DS-SHELL); do not restyle shell without visual task */
+  /* Shell reference sizes (DS-SHELL); Soft UI chrome via 22.9.3 */
   --portal-shell-topbar-sm: 52px;
   --portal-shell-topbar: 56px;
-  --portal-shell-sidebar-expanded: 260px;
+  --portal-shell-sidebar-expanded: 220px;
   --portal-shell-sidebar-compact: 72px;
   /* DS-SHELL-01 local neutrals (exact approved hex; do not restyle) */
   --portal-shell-nav: #475467;
@@ -846,7 +846,7 @@ body {
   }
 }
 
-/* ===== Stage 22 Design v1.0 Soft UI (page content only; DS-SHELL untouched) ===== */
+/* ===== Stage 22 Design v1.0 Soft UI (page content + 22.9.3 shell chrome) ===== */
 .sl-design-v1 {
   --sl-soft-radius: 20px;
   --sl-soft-shadow:
@@ -955,4 +955,70 @@ body {
 [data-order-workspace] select:disabled,
 [data-order-workspace] textarea:disabled {
   cursor: not-allowed;
+}
+
+/* ===== 22.9.3 Soft UI shell chrome (DS-SHELL hosts) ===== */
+.sl-shell-v1 {
+  --sl-soft-radius: 20px;
+  --sl-soft-shadow:
+    0 1px 2px rgba(15, 23, 42, 0.04),
+    0 8px 24px rgba(15, 23, 42, 0.06);
+  --sl-soft-line: rgba(15, 23, 42, 0.08);
+}
+
+.sl-shell-rail-card,
+.sl-shell-topbar-card {
+  border: 1px solid var(--sl-soft-line);
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: var(--sl-soft-shadow);
+  backdrop-filter: blur(14px);
+}
+
+.sl-shell-rail-card {
+  border-radius: var(--sl-soft-radius);
+}
+
+.sl-shell-topbar-card {
+  border-radius: var(--sl-soft-radius);
+}
+
+.sl-shell-ico {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  flex: 0 0 auto;
+  border-radius: 10px;
+  background: var(--portal-surface-secondary, #f1f5f9);
+  color: var(--portal-shell-nav);
+}
+
+.sl-shell-ico.is-active {
+  background: var(--portal-primary);
+  color: #fff;
+  box-shadow: 0 6px 14px rgba(37, 99, 235, 0.28);
+}
+
+/* Sales boards Soft UI (22.3) — scoped; shop/tasks boards stay unchanged */
+.sl-design-v1 .sl-board-toolbar {
+  border-bottom-width: 0;
+  background: transparent;
+  padding: 0 0 12px;
+}
+
+.sl-design-v1 [data-pt03-column] {
+  border-radius: 16px;
+  border-color: var(--sl-soft-line);
+  box-shadow: var(--sl-soft-shadow);
+}
+
+.sl-design-v1 [data-pt03-card] {
+  border-radius: 14px;
+  border-color: var(--sl-soft-line);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.sl-design-v1 [data-pt03-card]:hover {
+  border-color: rgba(37, 99, 235, 0.28);
+  box-shadow: var(--sl-soft-shadow);
 }

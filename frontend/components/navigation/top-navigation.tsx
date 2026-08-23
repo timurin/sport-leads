@@ -212,7 +212,8 @@ return () => {
 
 }, []);
 
-return ( <header className="relative z-portal-shell border-b border-portal-border bg-portal-surface">
+return ( <header data-sl-shell="v1" className="sl-shell-v1 relative z-portal-shell bg-transparent px-2 pb-2 pt-2 md:px-3 md:pt-3">
+  <div className="sl-shell-topbar-card">
   {searchOpen ? (
     <div className="relative flex h-[var(--portal-shell-topbar-sm)] items-center px-2.5 sm:px-3 md:h-[var(--portal-shell-topbar)] lg:px-4">
       <div className="relative w-full">
@@ -314,7 +315,7 @@ return ( <header className="relative z-portal-shell border-b border-portal-borde
         className="hidden h-full min-w-0 flex-1 items-center overflow-x-auto lg:flex"
       >
         <nav
-          className="flex h-full min-w-0 items-center gap-0"
+          className="flex min-w-0 items-center gap-0.5 rounded-full border border-[color:var(--sl-soft-line)] bg-portal-surface-secondary p-0.5"
           aria-label={`Навигация раздела ${section.title}`}
         >
           {section.topNavigation.map((item) => {
@@ -340,10 +341,10 @@ return ( <header className="relative z-portal-shell border-b border-portal-borde
                       );
                     }}
                     className={[
-                      "flex h-full items-center gap-1 whitespace-nowrap border-b-2 px-2 text-[13px] font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-portal-focus-ring xl:px-2.5",
+                      "flex h-[30px] items-center gap-1 whitespace-nowrap rounded-full px-3 text-[12px] font-semibold outline-none transition-colors focus-visible:ring-2 focus-visible:ring-portal-focus-ring",
                       active || menuOpen
-                        ? "border-portal-primary text-portal-primary-hover"
-                        : "border-transparent text-portal-muted hover:text-portal-text",
+                        ? "bg-white text-portal-primary-hover shadow-sm"
+                        : "text-portal-muted hover:bg-white/80 hover:text-portal-text",
                     ].join(" ")}
                     aria-expanded={menuOpen}
                     aria-haspopup="menu"
@@ -416,10 +417,10 @@ return ( <header className="relative z-portal-shell border-b border-portal-borde
                 key={item.id}
                 href={item.href}
                 className={[
-                  "flex h-full items-center whitespace-nowrap border-b-2 px-2 text-[13px] font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-portal-focus-ring xl:px-2.5",
+                  "flex h-[30px] items-center whitespace-nowrap rounded-full px-3 text-[12px] font-semibold outline-none transition-colors focus-visible:ring-2 focus-visible:ring-portal-focus-ring",
                   active
-                    ? "border-portal-primary text-portal-primary-hover"
-                    : "border-transparent text-portal-muted hover:text-portal-text",
+                    ? "bg-white text-portal-primary-hover shadow-sm"
+                    : "text-portal-muted hover:bg-white/80 hover:text-portal-text",
                 ].join(" ")}
               >
                 {item.title}
@@ -437,7 +438,7 @@ return ( <header className="relative z-portal-shell border-b border-portal-borde
             setOpenMenuId(null);
             setMobileMenuOpen(false);
           }}
-          className="hidden h-8 min-w-0 items-center gap-1.5 rounded-md border border-portal-border bg-portal-surface px-2.5 text-[13px] text-portal-muted outline-none transition-colors hover:border-portal-border-strong hover:text-portal-text focus-visible:ring-2 focus-visible:ring-portal-focus-ring xl:flex xl:w-[168px]"
+          className="hidden h-9 min-w-0 items-center gap-2 rounded-full border border-[color:var(--sl-soft-line)] bg-portal-surface-secondary px-3 text-[13px] text-portal-muted outline-none transition-colors hover:border-portal-border-strong hover:text-portal-text focus-visible:ring-2 focus-visible:ring-portal-focus-ring xl:flex xl:min-w-[200px] xl:max-w-[320px]"
           aria-label="Открыть глобальный поиск"
         >
           <Search
@@ -468,7 +469,7 @@ return ( <header className="relative z-portal-shell border-b border-portal-borde
 
         <button
           type="button"
-          className="flex h-8 items-center justify-center gap-1.5 rounded-md bg-portal-primary px-2.5 text-[13px] font-medium text-white outline-none transition-colors hover:bg-portal-primary-hover focus-visible:ring-2 focus-visible:ring-portal-focus-ring focus-visible:ring-offset-2 sm:px-3"
+          className="flex h-9 items-center justify-center gap-1.5 rounded-full bg-portal-primary px-3 text-[13px] font-medium text-white outline-none transition-colors hover:bg-portal-primary-hover focus-visible:ring-2 focus-visible:ring-portal-focus-ring focus-visible:ring-offset-2 sm:px-3.5"
           aria-label="Создать"
         >
           <Plus size={15} aria-hidden="true" />
@@ -695,6 +696,7 @@ return ( <header className="relative z-portal-shell border-b border-portal-borde
       </div>
     </div>
   )}
+  </div>
 </header>
 );
 }
