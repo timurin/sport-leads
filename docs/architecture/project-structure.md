@@ -69,7 +69,7 @@
 - [ ] Persistent employees directory, org structure, and user linkage (`2.4.2`) — org HR «Сотрудники»; **≠** platform Users cabinet Stage `21` / `/settings/users`
 - [x] Clients and contacts linked to leads and orders
 - [x] Customer and contact saving from the lead workflow
-- [ ] Separate persistent client history, deduplication, and settlements — history `2.2.3` + folders `2.2.4` owner OK `2026-08-23`; requisites `2.3.1` shipped; `2.3.2`/`2.3.3` open; → v1.00
+- [ ] Separate persistent client history, deduplication, and settlements — history `2.2.3` + folders `2.2.4` owner OK `2026-08-23`; requisites `2.3.1` shipped; segments/duplicates `2.3.2` shipped `2026-08-24` (awaiting owner visual); `2.3.3` open; → v1.00
 
 ## 4. Sales Orders
 

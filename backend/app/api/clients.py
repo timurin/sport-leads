@@ -9,7 +9,12 @@ from app.schemas.client_requisites import (
     ClientBankAccountUpdate,
     ClientUpdate,
 )
+from app.schemas.client_segments import ClientDuplicateCandidate, ClientSegmentsReplace
 from app.schemas.sales import ClientCreate, ClientDetailRead, ClientListItem
+from app.services.client_duplicates import (
+    ClientDuplicateCriteriaError,
+    find_duplicate_clients,
+)
 from app.services.client_history import (
     ClientHistoryNotFoundError,
     HistoryKind,
@@ -32,6 +37,7 @@ from app.services.clients import (
     list_clients,
     update_client,
 )
+from app.services.client_segments import replace_client_segments
 
 
 router = APIRouter(prefix="/clients", tags=["Clients"])
@@ -67,6 +73,32 @@ def post_client(payload: ClientCreate, db: Session = Depends(get_db)) -> ClientD
     if detail is None:
         raise HTTPException(status_code=500, detail="Client created but not readable")
     return detail
+
+
+@router.get(
+    "/duplicate-candidates",
+    response_model=list[ClientDuplicateCandidate],
+    operation_id="find_client_duplicate_candidates",
+)
+def get_client_duplicate_candidates(
+    name: str | None = Query(default=None, max_length=255),
+    phone: str | None = Query(default=None, max_length=50),
+    inn: str | None = Query(default=None, max_length=12),
+    exclude_client_id: int | None = Query(default=None, ge=1),
+    limit: int = Query(default=20, ge=1, le=50),
+    db: Session = Depends(get_db),
+) -> list[ClientDuplicateCandidate]:
+    try:
+        return find_duplicate_clients(
+            db,
+            name=name,
+            phone=phone,
+            inn=inn,
+            exclude_client_id=exclude_client_id,
+            limit=limit,
+        )
+    except ClientDuplicateCriteriaError as error:
+        raise HTTPException(status_code=422, detail=str(error)) from error
 
 
 @router.patch("/{client_id}", response_model=ClientDetailRead, operation_id="update_client")
@@ -115,6 +147,24 @@ def get_client_history(
         )
     except ClientHistoryNotFoundError as error:
         raise HTTPException(status_code=404, detail=str(error)) from error
+
+
+@router.put(
+    "/{client_id}/segments",
+    response_model=list[str],
+    operation_id="replace_client_segments",
+)
+def put_client_segments(
+    client_id: int,
+    payload: ClientSegmentsReplace,
+    db: Session = Depends(get_db),
+) -> list[str]:
+    try:
+        return replace_client_segments(db, client_id, payload.tags)
+    except ClientNotFoundError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+    except ValueError as error:
+        raise HTTPException(status_code=422, detail=str(error)) from error
 
 
 @router.post(

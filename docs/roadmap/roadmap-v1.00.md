@@ -146,8 +146,8 @@
 **Moved from:** `v0.9.0` items `2.2.3`, `2.3.*`, `2.4.*` (one group); **added** `2.2.4` folders (`2026-08-05`)  
 **Перенесено из:** `v0.9.0`, пункты `2.2.3`, `2.3.*`, `2.4.*`; **добавлено** `2.2.4` папки (`2026-08-05`)
 
-> **EN:** `2.2.1` / `2.2.2` closed in `v0.9.0` (list+card on `/sales/clients`). History `2.2.3` owner OK; **folders** `2.2.4` owner OK `2026-08-23`; legal requisites `2.3.1` shipped on card.  
-> **RU:** `2.2.1` / `2.2.2` закрыты в `v0.9.0`. История `2.2.3` owner OK; **папки** `2.2.4` owner OK `2026-08-23`; юр. реквизиты `2.3.1` на карточке.
+> **EN:** `2.2.1` / `2.2.2` closed in `v0.9.0` (list+card on `/sales/clients`). History `2.2.3` owner OK; **folders** `2.2.4` owner OK `2026-08-23`; legal requisites `2.3.1` shipped on card; **segments/duplicates** `2.3.2` shipped `2026-08-24` (stop at owner visual).
+> **RU:** `2.2.1` / `2.2.2` закрыты в `v0.9.0`. История `2.2.3` owner OK; **папки** `2.2.4` owner OK `2026-08-23`; юр. реквизиты `2.3.1` на карточке; **сегменты/дубли** `2.3.2` shipped `2026-08-24` (стоп на visual владельца).
 
 ### 2.2.3 — Client lead and order history / История лидов и заказов клиента
 
@@ -181,10 +181,10 @@
 
 #### 2.3.2 — Segmentation and duplicate detection / Сегментация и дедупликация
 
-- [ ] 2.3.2.1 — Contract: segment tags + duplicate match rules (name/phone/INN) / Контракт: сегменты + правила дублей (name/phone/INN)
-- [ ] 2.3.2.2 — Persist segments + duplicate-check service/API / Персистентность сегментов + service/API проверки дублей
-- [ ] 2.3.2.3 — FE: segment UI + duplicate warning on create/edit / FE: UI сегментов + предупреждение о дублях
-- [ ] 2.3.2.4 — Regression tests / Регрессионные тесты
+- [x] 2.3.2.1 — Contract: segment tags + duplicate match rules (name/phone/INN) — `v1.00` `2026-08-24`; `SL-CLIENT-SEGMENTS-v1` `docs/tasks/v1.00-stage-2.3.2-client-segments-duplicates.md` / Контракт: сегменты + правила дублей (name/phone/INN)
+- [x] 2.3.2.2 — Persist segments + duplicate-check service/API — `v1.00` `2026-08-24`; Alembic `x8y9z0a1b234`; `PUT /clients/{id}/segments`; `GET /clients/duplicate-candidates` / Персистентность сегментов + service/API проверки дублей
+- [x] 2.3.2.3 — FE: segment UI + duplicate warning on create/edit — `v1.00` `2026-08-24`; `ClientSegmentsSection` + `ClientCreateDrawer` + INN save warning / FE: UI сегментов + предупреждение о дублях
+- [x] 2.3.2.4 — Regression tests — `v1.00` `2026-08-24`; `test_client_segments_2_3_2.py` + `client-segments.test.mjs`; stop at owner visual / Регрессионные тесты
 
 #### 2.3.3 — Settlements and financial client state / Взаиморасчёты и фин. состояние клиента
 
@@ -727,3 +727,4 @@
 | `2026-08-23` | Closed `2.2.4.1`–`2.2.4.3`: client folders contract + API + list tree; stop at visual `2.2.4.4` | Закрыты `2.2.4.1`–`2.2.4.3`: папки клиентов; стоп на visual `2.2.4.4` |
 | `2026-08-23` | Closed `2.2.4.4`: owner visual OK on client folders | Закрыт `2.2.4.4`: owner visual папок клиентов |
 | `2026-08-23` | Closed `2.3.1.1`–`2.3.1.4`: client legal requisites + bank accounts on card | Закрыты `2.3.1.1`–`2.3.1.4`: юр. реквизиты и счета на карточке |
+| `2026-08-24` | Closed `2.3.2.1`–`2.3.2.4`: client segments + duplicate warning; stop at owner visual before `2.3.3` | Закрыты `2.3.2.1`–`2.3.2.4`: сегменты + предупреждение о дублях; стоп на visual до `2.3.3` |

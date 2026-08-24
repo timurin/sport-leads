@@ -547,6 +547,7 @@ class ClientCreate(BaseModel):
     organization_id: int | None = None
     organization_name: str | None = Field(default=None, max_length=255)
     tax_id: str | None = Field(default=None, max_length=12)
+    inn: str | None = Field(default=None, max_length=12, pattern=r"^(\d{10}|\d{12})$")
     ogrn: str | None = Field(default=None, max_length=15)
 
     @field_validator("contact_name")
@@ -563,6 +564,7 @@ class ClientCreate(BaseModel):
         "city",
         "organization_name",
         "tax_id",
+        "inn",
         "ogrn",
         mode="before",
     )
@@ -593,6 +595,7 @@ class ClientDetailRead(ClientListItem):
     legal_address: str | None = None
     actual_address: str | None = None
     bank_accounts: list[ClientBankAccountRead] = []
+    segments: list[str] = []
     recent_orders: list[ClientOrderSummary] = []
 
 

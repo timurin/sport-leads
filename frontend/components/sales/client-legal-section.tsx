@@ -8,6 +8,8 @@ import {
   saveClientRequisites,
   setPrimaryClientBankAccount,
 } from "@/app/(workspace)/sales/clients/[clientId]/client-requisites-actions";
+import { findClientDuplicates } from "@/app/(workspace)/sales/clients/client-segment-actions";
+import { ClientDuplicateWarning } from "@/components/sales/client-segments-section";
 import { Button } from "@/components/ui/button";
 import { Checkbox, Field, Input, Textarea } from "@/components/ui/form-controls";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -24,18 +26,32 @@ import {
   type ClientRequisitesDraft,
   type ClientRequisitesView,
 } from "@/lib/sales/client-requisites";
+import {
+  duplicateMatchLabel,
+  type ClientDuplicateCandidate,
+} from "@/lib/sales/client-segments";
 
 type Props = {
   clientId: number;
   requisites: ClientRequisitesView;
+  contactName: string;
+  companyName: string;
+  phone: string;
 };
 
-export function ClientLegalSection({ clientId, requisites }: Props) {
+export function ClientLegalSection({
+  clientId,
+  requisites,
+  contactName,
+  companyName,
+  phone,
+}: Props) {
   const [draft, setDraft] = useState<ClientRequisitesDraft>(() =>
     requisitesToDraft(requisites),
   );
   const [bankDraft, setBankDraft] = useState<ClientBankAccountDraft>(emptyBankDraft);
   const [error, setError] = useState<string | null>(null);
+  const [candidates, setCandidates] = useState<ClientDuplicateCandidate[]>([]);
   const [pending, startTransition] = useTransition();
 
   const run = (task: () => Promise<{ ok: true } | { ok: false; message: string }>) => {
@@ -57,6 +73,10 @@ export function ClientLegalSection({ clientId, requisites }: Props) {
           {error}
         </InlineAlert>
       ) : null}
+      <ClientDuplicateWarning
+        candidates={candidates}
+        labels={duplicateMatchLabel}
+      />
 
       <form
         className="grid min-w-0 gap-portal-3 sm:grid-cols-2"
@@ -70,7 +90,19 @@ export function ClientLegalSection({ clientId, requisites }: Props) {
             setError(message);
             return;
           }
-          run(() => saveClientRequisites(clientId, draft));
+          const phoneValue = phone.trim() === "—" ? "" : phone;
+          startTransition(async () => {
+            setError(null);
+            const dupes = await findClientDuplicates({
+              name: companyName || contactName,
+              phone: phoneValue,
+              inn: draft.inn,
+              excludeClientId: clientId,
+            });
+            if (dupes.ok) setCandidates(dupes.candidates);
+            const result = await saveClientRequisites(clientId, draft);
+            if (!result.ok) setError(result.message);
+          });
         }}
       >
         <Field label="ИНН" htmlFor="client-inn">

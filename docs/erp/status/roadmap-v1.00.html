@@ -247,7 +247,7 @@
       en: {
         brandTitle: "Roadmap v1.00",
         brandSub: "HTML twin for SL-ROADMAP-v1.00",
-        chipUpdated: "Updated: 2026-08-23",
+        chipUpdated: "Updated: 2026-08-24",
         chipCarry: "Carry: 1.4.3, 2 group, 7, 12.4–12.5, 13–16, 18.4 + Stages 0, 20, 21, 22",
         chipActive: "Active: v1.00 started early (0.1.1 done)",
         legendTitle: "Legend",
@@ -291,7 +291,7 @@
       ru: {
         brandTitle: "Roadmap v1.00",
         brandSub: "HTML-близнец SL-ROADMAP-v1.00",
-        chipUpdated: "Обновлено: 2026-08-23",
+        chipUpdated: "Обновлено: 2026-08-24",
         chipCarry: "Перенос: 1.4.3, группа 2, 7, 12.4–12.5, 13–16, 18.4 + Stages 0, 20, 21, 22",
         chipActive: "Активно: v1.00 начат раньше (0.1.1 закрыт)",
         legendTitle: "Легенда",
@@ -692,8 +692,8 @@
           ru: "Этап 2 — История клиента, бизнес-данные, организации"
         },
         note: {
-          en: "Carried from v0.9.0: 2.2.3 + 2.3 + 2.4; added 2.2.4 folders (2026-08-05). 2.2.1 / 2.2.2 closed in v0.9.0. History 2.2.3 owner OK 2026-08-23; folders 2.2.4 owner OK 2026-08-23; legal requisites 2.3.1 shipped on card.",
-          ru: "Перенос из v0.9.0: 2.2.3 + 2.3 + 2.4; добавлено 2.2.4 папки (2026-08-05). 2.2.1 / 2.2.2 закрыты в v0.9.0. История 2.2.3 owner OK 2026-08-23; папки 2.2.4 owner OK 2026-08-23; юр. реквизиты 2.3.1 на карточке."
+          en: "Carried from v0.9.0: 2.2.3 + 2.3 + 2.4; added 2.2.4 folders (2026-08-05). 2.2.1 / 2.2.2 closed in v0.9.0. History 2.2.3 owner OK 2026-08-23; folders 2.2.4 owner OK 2026-08-23; legal requisites 2.3.1 shipped on card; segments/duplicates 2.3.2 shipped 2026-08-24 (stop at owner visual).",
+          ru: "Перенос из v0.9.0: 2.2.3 + 2.3 + 2.4; добавлено 2.2.4 папки (2026-08-05). 2.2.1 / 2.2.2 закрыты в v0.9.0. История 2.2.3 owner OK 2026-08-23; папки 2.2.4 owner OK 2026-08-23; юр. реквизиты 2.3.1 на карточке; сегменты/дубли 2.3.2 shipped 2026-08-24 (стоп на visual владельца)."
         },
         blocks: [
           {
@@ -892,34 +892,50 @@
             items: [
               {
                 code: "2.3.2.1",
-                done: false,
+                done: true,
                 title: {
                   en: "Contract: segment tags + duplicate match rules (name/phone/INN)",
                   ru: "Контракт: сегменты + правила дублей (name/phone/INN)"
+                },
+                note: {
+                  en: "v1.00 2026-08-24; SL-CLIENT-SEGMENTS-v1; docs/tasks/v1.00-stage-2.3.2-client-segments-duplicates.md",
+                  ru: "v1.00 2026-08-24; SL-CLIENT-SEGMENTS-v1"
                 }
               },
               {
                 code: "2.3.2.2",
-                done: false,
+                done: true,
                 title: {
                   en: "Persist segments + duplicate-check service/API",
                   ru: "Персистентность сегментов + service/API проверки дублей"
+                },
+                note: {
+                  en: "v1.00 2026-08-24; Alembic x8y9z0a1b234; PUT /clients/{id}/segments; GET /clients/duplicate-candidates",
+                  ru: "v1.00 2026-08-24; Alembic x8y9z0a1b234; segments + duplicate-candidates"
                 }
               },
               {
                 code: "2.3.2.3",
-                done: false,
+                done: true,
                 title: {
                   en: "FE: segment UI + duplicate warning on create/edit",
                   ru: "FE: UI сегментов + предупреждение о дублях"
+                },
+                note: {
+                  en: "v1.00 2026-08-24; ClientSegmentsSection + ClientCreateDrawer + INN save warning",
+                  ru: "v1.00 2026-08-24; секция сегментов + drawer создания + warning ИНН"
                 }
               },
               {
                 code: "2.3.2.4",
-                done: false,
+                done: true,
                 title: {
                   en: "Regression tests",
                   ru: "Регрессионные тесты"
+                },
+                note: {
+                  en: "v1.00 2026-08-24; test_client_segments_2_3_2.py + client-segments.test.mjs; stop at owner visual",
+                  ru: "v1.00 2026-08-24; API + FE tests; стоп на visual владельца"
                 }
               }
             ]

@@ -15,7 +15,7 @@ import {
   DataTableHeaderCell,
   DataTableRow,
 } from "@/components/ui/data-table";
-import { DemoCreateDrawer } from "@/components/ui/demo-create-drawer";
+import { ClientCreateDrawer } from "@/components/sales/client-create-drawer";
 import { EmptyState } from "@/components/ui/empty-state";
 import { FilterToolbar } from "@/components/ui/filter-toolbar";
 import { Input, Select } from "@/components/ui/form-controls";
@@ -416,9 +416,8 @@ export function ClientsTable({
         />
       ) : null}
 
-      <DemoCreateDrawer
+      <ClientCreateDrawer
         open={dialogOpen}
-        title="Добавить клиента"
         onClose={() => setDialogOpen(false)}
       />
     </PageLayout>

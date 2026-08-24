@@ -206,6 +206,21 @@ class ClientBankAccount(Base):
     )
 
 
+class ClientSegment(Base):
+    """Free-form client segment tag (2.3.2)."""
+
+    __tablename__ = "client_segments"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    client_id: Mapped[int] = mapped_column(
+        ForeignKey("clients.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    name: Mapped[str] = mapped_column(String(64), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+
+
 class LeadRejectionReason(Base):
     __tablename__ = "lead_rejection_reasons"
 

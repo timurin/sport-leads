@@ -25,6 +25,7 @@ export type ApiClientDetail = ApiClientListItem & {
   legal_address?: string | null;
   actual_address?: string | null;
   bank_accounts?: ApiClientBankAccount[];
+  segments?: string[];
 };
 
 export type ClientOrderSummaryView = {
@@ -42,6 +43,7 @@ export type ClientOrderSummaryView = {
 export type ClientCardView = Client & {
   recentOrders: ClientOrderSummaryView[];
   requisites: ClientRequisitesView;
+  segments: string[];
 };
 
 const orderStatusLabels: Record<OrderStatus, string> = {
@@ -81,6 +83,7 @@ export function fromApiClientDetail(item: ApiClientDetail): ClientCardView {
       actualAddress: item.actual_address ?? null,
       bankAccounts: (item.bank_accounts ?? []).map(fromApiClientBankAccount),
     },
+    segments: Array.isArray(item.segments) ? item.segments : [],
     recentOrders: (item.recent_orders ?? []).map((order) => ({
       id: String(order.id),
       number: order.number,

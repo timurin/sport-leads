@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { ClientHistoryPanel } from "@/components/sales/client-history-panel";
 import { ClientLegalSection } from "@/components/sales/client-legal-section";
+import { ClientSegmentsSection } from "@/components/sales/client-segments-section";
 import { SimpleEntityCard } from "@/components/entity/simple-entity-card";
 import { EntityHeader } from "@/components/ui/entity-header";
 import { InlineAlert } from "@/components/ui/inline-alert";
@@ -89,7 +90,18 @@ export function ClientCard({
         </dl>
       </SectionCard>
 
-      <ClientLegalSection clientId={Number(client.id)} requisites={client.requisites} />
+      <ClientLegalSection
+        clientId={Number(client.id)}
+        requisites={client.requisites}
+        contactName={client.contact}
+        companyName={client.name}
+        phone={client.phone}
+      />
+
+      <ClientSegmentsSection
+        clientId={Number(client.id)}
+        segments={client.segments}
+      />
 
       <ClientHistoryPanel items={history} loadError={historyError} />
     </SimpleEntityCard>

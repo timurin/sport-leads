@@ -22,6 +22,7 @@ from app.schemas.sales import (
     ClientListItem,
     ClientOrderSummary,
 )
+from app.services.client_segments import list_segment_names
 
 
 class ClientCreateError(RuntimeError):
@@ -351,6 +352,7 @@ def get_client(db: Session, client_id: int) -> ClientDetailRead | None:
         legal_address=client.legal_address,
         actual_address=client.actual_address,
         bank_accounts=[ClientBankAccountRead.model_validate(row) for row in accounts],
+        segments=list_segment_names(db, client_id),
         recent_orders=recent_orders,
     )
 
@@ -420,6 +422,7 @@ def create_client(db: Session, payload: ClientCreate) -> Client:
         responsible_id=payload.responsible_id,
         organization_id=organization_id,
         folder_id=payload.folder_id,
+        inn=payload.inn,
     )
     db.add(client)
     db.flush()

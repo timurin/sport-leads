@@ -38,4 +38,5 @@ test("fromApiClientDetail maps recent orders", () => {
   assert.equal(card.recentOrders[0].statusLabel, "Подтверждён");
   assert.equal(card.requisites.inn, null);
   assert.deepEqual(card.requisites.bankAccounts, []);
+  assert.deepEqual(card.segments, []);
 });
