@@ -14,6 +14,8 @@ export type ApiClientListItem = {
   primary_sport: string | null;
   created_at: string;
   updated_at: string;
+  folder_id?: number | null;
+  folder_name?: string | null;
 };
 
 const fallbackManager: UserSummary = {
@@ -77,5 +79,7 @@ export function fromApiClientListItem(item: ApiClientListItem): Client {
     lastContactOrder: Number.isFinite(updatedMs) ? updatedMs : 0,
     responsible: managerFromApi(item),
     status: deriveStatus(item.orders_count ?? 0),
+    folderId: item.folder_id ?? null,
+    folderName: item.folder_name ?? null,
   };
 }

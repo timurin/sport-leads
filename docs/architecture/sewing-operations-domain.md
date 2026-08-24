@@ -2,7 +2,7 @@
 
 **Code:** `SL-SEWING-OPERATIONS-DOMAIN-v1`  
 **Date:** `2026-07-22`  
-**Roadmap:** `6.3.1` (amended `6.3.10`, `6.3.11`, `6.3.12`)  
+**Roadmap:** `6.3.1` (amended `6.3.10`, `6.3.11`, `6.3.12`, catalog I/O `4.5.4`)  
 **Boundary ADR:** `ADR-014` (amended)  
 **UI template:** `DS-PT-02-CATALOG` + folder-tree UX (`4.9.5` / `4.10.3` pattern)  
 **Task:** `docs/tasks/v0.9.0-stage-6.3.11-sewing-op-sort-and-templates.md`
@@ -89,6 +89,7 @@ Sibling ↑/↓ swaps `sort_order` among the same kind (folder↔folder or op↔
 - Composition picker in templates uses the same folder tree (leaf ops only)
 - Legacy path `/settings/catalogs/sewing_operation_templates` redirects to sewing operations
 - API: `/sewing-operations` (ops) + `/sewing-operation-folders` (folders) + `/sewing-operation-templates` (templates)
+- Catalog file I/O (`4.5.4`): `GET/POST /sewing-operations/export|import-template|import` (CSV/XLSX; `folder_path`, `work_center_codes`)
 - Equipment multi-select on create/edit leaf (`6.3.10.4`)
 - Shell: nav only via `navigation.ts`; `DS-SHELL-01` / `DS-SHELL-02` preserved (no separate nav item for templates)
 
@@ -115,3 +116,9 @@ Named sewing-operation template library (заготовки). Task: `docs/tasks/
 Apply template → assembly variant copy-on-pick snapshots. Task: `docs/tasks/v0.9.0-stage-6.3.11-sewing-op-sort-and-templates.md`.
 
 **Contract:** `POST /product-models/{id}/assembly-variants/{vid}/apply-sewing-template` (`append`|`replace`); drawer «Новый вариант сборки» — блок «Из шаблона» (prefill selection) + folder-tree ops list. Equipment not copied.
+
+## Amendment (`4.5.4`, `2026-08-24`)
+
+Catalog CSV/XLSX import/export on `/settings/catalogs/sewing_operations` (ADR-020 contour A). Task: `docs/tasks/v0.9.0-stage-4.5.4-sewing-operation-import-export.md`.
+
+**Contract:** same columns for template/export/import; upsert by `id` then unique `name`; `folder_path` (` / `, create missing folders on commit); `work_center_codes` (`|`, sewing-stage only); templates library not in the file. Owner visual OK `4.5.4.4` (`2026-08-24`).

@@ -2,6 +2,7 @@ import { Suspense } from "react";
 
 import { SewingOperationsWorkspace } from "@/components/settings/sewing-operations-workspace";
 import { PageLayout } from "@/components/layout/page-layout";
+import { retryBackendOnce } from "@/lib/backend-fetch";
 import { getSewingOperationTemplates } from "@/lib/sewing-operation-templates";
 import {
   getSewingOperationFolders,
@@ -11,14 +12,16 @@ import { getWorkCenters } from "@/lib/shop-routings";
 
 export default async function SewingOperationsListPage() {
   const [operations, folders, sewingWorkCenters, templates] = await Promise.all([
-    getSewingOperations({ limit: 500 }),
-    getSewingOperationFolders(),
-    getWorkCenters({
-      active_only: true,
-      production_stage_code: "sewing",
-      limit: 500,
-    }),
-    getSewingOperationTemplates(),
+    retryBackendOnce(() => getSewingOperations({ limit: 500 })),
+    retryBackendOnce(() => getSewingOperationFolders()),
+    retryBackendOnce(() =>
+      getWorkCenters({
+        active_only: true,
+        production_stage_code: "sewing",
+        limit: 500,
+      }),
+    ),
+    retryBackendOnce(() => getSewingOperationTemplates()),
   ]);
 
   return (

@@ -21,7 +21,7 @@
 - `[x]` **SMTP email connector `1.4.3.3`** — real outbound email + inbound webhook → `LeadMessage` (mock fallback if SMTP unset);
 - `[x]` **mailbox settings `1.4.3.4`** — persist SMTP/IMAP/CRM flags in `mailbox_settings`; admin UI `/settings/integrations`; secrets not returned; owner visual OK `2026-08-23`;
 - `[x]` **external adapters checkpoint `1.4.3.5`** — contour **C** closed (`2026-08-23`): website-form ingest + SMTP `LeadMessage` + mailbox persist; collectors ≠ connectors; ≠ Stage 19;
-- `[~]` список/Kanban, задачи, заметки, timeline и коммуникации частично local/demo; **лиды list/kanban** `1.1.3`/`1.1.4` closed (owner visual OK `2026-07-31`); **dashboard models** `1.1.5` closed (owner visual OK `2026-08-01`); **lead tasks/notes/communications** `1.2.4` closed (owner visual OK `2026-08-01`); lead **card demix** `1.2.5` closed (owner visual OK `2026-08-01`; production auth → `17.1.1`); **`1.3.3` closed** (owner visual OK `2026-08-01`): no Deal; deals→orders; lead archive cancelled; ACL → `17.1.1`; **`2.2.1`/`2.2.2` closed** (owner visual OK `2026-08-01`; history → v1.00);
+- `[~]` список/Kanban, задачи, заметки, timeline и коммуникации частично local/demo; **лиды list/kanban** `1.1.3`/`1.1.4` closed (owner visual OK `2026-07-31`); **dashboard models** `1.1.5` closed (owner visual OK `2026-08-01`); **lead tasks/notes/communications** `1.2.4` closed (owner visual OK `2026-08-01`); lead **card demix** `1.2.5` closed (owner visual OK `2026-08-01`; production auth → `17.1.1`); **`1.3.3` closed** (owner visual OK `2026-08-01`): no Deal; deals→orders; lead archive cancelled; ACL → `17.1.1`; **`2.2.1`/`2.2.2` closed** (owner visual OK `2026-08-01`); **`2.2.3` closed** (owner visual OK `2026-08-23`); **`2.2.4` closed** (owner visual OK `2026-08-23`); **`2.3.1` shipped** (`2026-08-23`; INN/KPP/OGRN + `ClientBankAccount` on `/sales/clients/[id]`);
 - `[x]` `Deal` как отдельная сущность **не вводится** (конверсия → `SalesOrder`); ACL CRM → `17.1.1`;
 - `[x]` `Organization` и связь `SalesOrder.organization_id`;
 - `[x]` `SalesOrder` list/detail, status workflow и history;
@@ -116,7 +116,7 @@
 - `[~]` реальные внешние CRM/communication adapters;
 - `[ ]` **внутренние коммуникации сотрудников** (Stage `19`): чат по заказу и техкартам, `@mention`, микротаски из чата, in-app уведомления — не внешние каналы;
 - `[ ]` обмен с 1С: номенклатуры, заказы, утверждённые спецификации, списание материалов, операции, выпуск и связанные документы (`16.2.1`, ADR-020 contour D);
-- `[x]` каталожный file I/O номенклатуры (`4.5.1`/`4.5.2`) + модели изделий (`4.5.3`) — section toolbar + shared parse lib (ADR-020); domain inline (`9.3.2`) отдельно;
+- `[x]` каталожный file I/O номенклатуры (`4.5.1`/`4.5.2`) + модели изделий (`4.5.3`) + операции пошива (`4.5.4`, owner visual OK `4.5.4.4` `2026-08-24`) — section toolbar + shared parse lib (ADR-020); domain inline (`9.3.2`) отдельно;
 - `[x]` audit/archive/bulk номенклатуры (`4.3.3`) — card history + soft archive + warehouse multi-select;
 - `[ ]` универсальный job shell импорта/экспорта (`16.3`) — поверх adapters `4.5`, не print-forms `18.3`.
 

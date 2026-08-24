@@ -146,26 +146,26 @@
 **Moved from:** `v0.9.0` items `2.2.3`, `2.3.*`, `2.4.*` (one group); **added** `2.2.4` folders (`2026-08-05`)  
 **Перенесено из:** `v0.9.0`, пункты `2.2.3`, `2.3.*`, `2.4.*`; **добавлено** `2.2.4` папки (`2026-08-05`)
 
-> **EN:** `2.2.1` / `2.2.2` closed in `v0.9.0` (list+card on `/sales/clients`). History `2.2.3`; **folders** `2.2.4` on list; legal requisites `2.3.1` on card.  
-> **RU:** `2.2.1` / `2.2.2` закрыты в `v0.9.0`. История `2.2.3`; **папки** `2.2.4` на списке; юр. реквизиты `2.3.1` на карточке.
+> **EN:** `2.2.1` / `2.2.2` closed in `v0.9.0` (list+card on `/sales/clients`). History `2.2.3` owner OK; **folders** `2.2.4` owner OK `2026-08-23`; legal requisites `2.3.1` shipped on card.  
+> **RU:** `2.2.1` / `2.2.2` закрыты в `v0.9.0`. История `2.2.3` owner OK; **папки** `2.2.4` owner OK `2026-08-23`; юр. реквизиты `2.3.1` на карточке.
 
 ### 2.2.3 — Client lead and order history / История лидов и заказов клиента
 
-- [ ] 2.2.3.1 — Contract: sources (Lead / SalesOrder), filters, sort, empty states; embeddable on future client card (`2.2.2`) — ADR/domain note or task file / Контракт: источники (Lead / SalesOrder), фильтры, сортировка, empty states; встраивание на будущую карточку клиента (`2.2.2`)
-- [ ] 2.2.3.2 — Backend: `GET` client history aggregation (leads + orders) + schemas / Backend: агрегация истории клиента (лиды + заказы) + schemas
-- [ ] 2.2.3.3 — Frontend: history panel/component wired to API (no demo substitution) / Frontend: панель истории на API (без demo)
-- [ ] 2.2.3.4 — Regression tests (API + FE mapper/unit as applicable) / Регрессионные тесты (API + FE)
-- [ ] 2.2.3.5 — Owner visual verification / Визуальная проверка владельцем
+- [x] 2.2.3.1 — Contract: sources (Lead / SalesOrder), filters, sort, empty states; embeddable on future client card (`2.2.2`) — `v1.00` `2026-08-23`; `SL-CLIENT-HISTORY-v1` `docs/tasks/v1.00-stage-2.2.3-client-history.md` / Контракт: источники (Lead / SalesOrder), фильтры, сортировка, empty states; встраивание на будущую карточку клиента (`2.2.2`)
+- [x] 2.2.3.2 — Backend: `GET` client history aggregation (leads + orders) + schemas — `v1.00` `2026-08-23`; `GET /clients/{id}/history`; `client_history` schema/service / Backend: агрегация истории клиента (лиды + заказы) + schemas
+- [x] 2.2.3.3 — Frontend: history panel/component wired to API (no demo substitution) — `v1.00` `2026-08-23`; `ClientHistoryPanel` on `/sales/clients/[id]` / Frontend: панель истории на API (без demo)
+- [x] 2.2.3.4 — Regression tests (API + FE mapper/unit as applicable) — `v1.00` `2026-08-23`; `test_client_history_2_2_3.py` + `client-history.test.mjs` / Регрессионные тесты (API + FE)
+- [x] 2.2.3.5 — Owner visual verification — `v1.00` `2026-08-23`; owner OK `/sales/clients/{id}` history tabs / Визуальная проверка владельцем
 
 ### 2.2.4 — Client folders (`/sales/clients`) / Папки клиентов
 
 > **EN:** Organize clients in a folder tree on the list workspace (pattern like product-model / sewing-op folders). Unfiled bucket allowed.  
 > **RU:** Организация клиентов по дереву папок на `/sales/clients` (как папки моделей / операций). Допускается «без папки».
 
-- [ ] 2.2.4.1 — Contract: folder tree (create/rename/move/reorder); client↔folder link; filter list by folder∪descendants; empty/unfiled bucket / Контракт: дерево папок; связь client↔folder; фильтр list; unfiled
-- [ ] 2.2.4.2 — BE: `ClientFolder` model + migration + API CRUD/move + client `folder_id` / BE: модель папок + API + `folder_id` на Client
-- [ ] 2.2.4.3 — FE: folders UI on `/sales/clients` (tree + list filter; no demo) / FE: UI папок на списке клиентов
-- [ ] 2.2.4.4 — Regression + owner visual / Регрессия + визуальная проверка владельцем
+- [x] 2.2.4.1 — Contract: folder tree (create/rename/move/reorder); client↔folder link; filter list by folder∪descendants; empty/unfiled bucket — `v1.00` `2026-08-23`; `SL-CLIENT-FOLDERS-v1` `docs/tasks/v1.00-stage-2.2.4-client-folders.md` / Контракт: дерево папок; связь client↔folder; фильтр list; unfiled
+- [x] 2.2.4.2 — BE: `ClientFolder` model + migration + API CRUD/move + client `folder_id` — `v1.00` `2026-08-23`; Alembic `v6w7x8y9z012`; `/client-folders` + `PATCH /clients/{id}` / BE: модель папок + API + `folder_id` на Client
+- [x] 2.2.4.3 — FE: folders UI on `/sales/clients` (tree + list filter; no demo) — `v1.00` `2026-08-23`; `ClientFolderTree` on list / FE: UI папок на списке клиентов
+- [x] 2.2.4.4 — Regression + owner visual — `v1.00` `2026-08-23`; owner OK `/sales/clients` folders; `test_client_folders_2_2_4.py` / Регрессия + визуальная проверка владельцем
 
 ### 2.3 — Business data and quality / Бизнес-данные и качество
 
@@ -174,10 +174,10 @@
 > **EN:** Host `/sales/clients/[clientId]`. MVP fields: **INN**, **bank accounts** (1..n via child table `ClientBankAccount`), **legal address**, **actual (factual) address**. KPP/OGRN only if approved in `2.3.1.1`.  
 > **RU:** Карточка `/sales/clients/[clientId]`. MVP: **ИНН**, **банковские счета** (1..n, таблица `ClientBankAccount`), **юридический адрес**, **фактический адрес**.
 
-- [ ] 2.3.1.1 — Domain contract: INN + multi bank accounts (`ClientBankAccount`) + legal/actual address (+ optional KPP/OGRN); validation rules / Контракт: ИНН + счета + юр./факт. адрес (+ опц. КПП/ОГРН); валидация
-- [ ] 2.3.1.2 — Migration + schemas + API read/write (Client fields + bank-account CRUD) / Миграция + schemas + API
-- [ ] 2.3.1.3 — FE section on `/sales/clients/[clientId]` (edit requisites; no interim-only) / FE-секция на карточке клиента
-- [ ] 2.3.1.4 — Regression + docs checkpoint / Регрессия + checkpoint документации
+- [x] 2.3.1.1 — Domain contract: INN + multi bank accounts (`ClientBankAccount`) + legal/actual address (+ optional KPP/OGRN); validation rules — `v1.00` `2026-08-23`; `SL-CLIENT-REQUISITES-v1` `docs/tasks/v1.00-stage-2.3.1-client-requisites.md` / Контракт: ИНН + счета + юр./факт. адрес (+ опц. КПП/ОГРН); валидация
+- [x] 2.3.1.2 — Migration + schemas + API read/write (Client fields + bank-account CRUD) — `v1.00` `2026-08-23`; Alembic `w7x8y9z0a123`; `ClientUpdate` + `/clients/{id}/bank-accounts` / Миграция + schemas + API
+- [x] 2.3.1.3 — FE section on `/sales/clients/[clientId]` (edit requisites; no interim-only) — `v1.00` `2026-08-23`; `ClientLegalSection` on PT-05 card / FE-секция на карточке клиента
+- [x] 2.3.1.4 — Regression + docs checkpoint — `v1.00` `2026-08-23`; `test_client_requisites_2_3_1.py` + `client-requisites.test.mjs` / Регрессия + checkpoint документации
 
 #### 2.3.2 — Segmentation and duplicate detection / Сегментация и дедупликация
 
@@ -722,3 +722,8 @@
 | `2026-08-23` | Closed `1.4.3.3`: SMTP email outbound/inbound → LeadMessage; mock fallback if SMTP unset | Закрыт `1.4.3.3`: SMTP email → LeadMessage; mock если SMTP не задан |
 | `2026-08-23` | Closed `1.4.3.4`: persist mailbox settings + `/settings/integrations` admin UI | Закрыт `1.4.3.4`: persist почтового ящика + UI настроек |
 | `2026-08-23` | Closed `1.4.3.5`: contour C regression + docs checkpoint; Stage 1.4.3 complete | Закрыт `1.4.3.5`: регрессия контура C; Stage 1.4.3 закрыт |
+| `2026-08-23` | Closed `2.2.3.1`–`2.2.3.4`: client history contract + API + card panel; stop at owner visual `2.2.3.5` | Закрыты `2.2.3.1`–`2.2.3.4`: контракт + API + панель истории; стоп на visual `2.2.3.5` |
+| `2026-08-23` | Closed `2.2.3.5`: owner visual OK on client history | Закрыт `2.2.3.5`: owner visual истории клиента |
+| `2026-08-23` | Closed `2.2.4.1`–`2.2.4.3`: client folders contract + API + list tree; stop at visual `2.2.4.4` | Закрыты `2.2.4.1`–`2.2.4.3`: папки клиентов; стоп на visual `2.2.4.4` |
+| `2026-08-23` | Closed `2.2.4.4`: owner visual OK on client folders | Закрыт `2.2.4.4`: owner visual папок клиентов |
+| `2026-08-23` | Closed `2.3.1.1`–`2.3.1.4`: client legal requisites + bank accounts on card | Закрыты `2.3.1.1`–`2.3.1.4`: юр. реквизиты и счета на карточке |

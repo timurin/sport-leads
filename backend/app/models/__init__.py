@@ -19,6 +19,8 @@ from app.models.characteristics import (
 )
 from app.models.sales import (
     Client,
+    ClientBankAccount,
+    ClientFolder,
     Organization,
     Lead,
     LeadContact,
@@ -176,6 +178,8 @@ __all__ = [
     "NomenclatureCharacteristicValue",
     "NomenclatureVariant",
     "Client",
+    "ClientBankAccount",
+    "ClientFolder",
     "Organization",
     "Lead",
     "LeadContact",

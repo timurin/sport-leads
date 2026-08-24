@@ -108,7 +108,16 @@ def _ensure_folder_exists(db: Session, folder_id: int | None) -> None:
         raise SewingOperationValidationError("Папка операций пошива не найдена")
 
 
-def create_sewing_operation(db: Session, payload: SewingOperationCreate) -> SewingOperation:
+def _persist(db: Session, *, commit: bool) -> None:
+    if commit:
+        db.commit()
+    else:
+        db.flush()
+
+
+def create_sewing_operation(
+    db: Session, payload: SewingOperationCreate, *, commit: bool = True
+) -> SewingOperation:
     if repo.get_sewing_operation_by_name(db, payload.name) is not None:
         raise SewingOperationConflictError("Операция с таким наименованием уже существует")
 
@@ -132,7 +141,7 @@ def create_sewing_operation(db: Session, payload: SewingOperationCreate) -> Sewi
     row.work_centers = work_centers
     try:
         repo.add_sewing_operation(db, row)
-        db.commit()
+        _persist(db, commit=commit)
         return get_sewing_operation(db, row.id)
     except IntegrityError as error:
         db.rollback()
@@ -145,6 +154,8 @@ def update_sewing_operation(
     db: Session,
     operation_id: int,
     payload: SewingOperationUpdate,
+    *,
+    commit: bool = True,
 ) -> SewingOperation:
     row = get_sewing_operation(db, operation_id)
     changes = payload.model_dump(exclude_unset=True)
@@ -199,7 +210,7 @@ def update_sewing_operation(
     if work_center_ids is not None:
         row.work_centers = _resolve_sewing_work_centers(db, work_center_ids)
     try:
-        db.commit()
+        _persist(db, commit=commit)
         return get_sewing_operation(db, operation_id)
     except IntegrityError as error:
         db.rollback()
@@ -283,7 +294,7 @@ def _assert_unique_sibling_folder_name(
 
 
 def create_sewing_operation_folder(
-    db: Session, payload: SewingOperationFolderCreate
+    db: Session, payload: SewingOperationFolderCreate, *, commit: bool = True
 ) -> SewingOperationFolder:
     _validate_folder_parent(db, None, payload.parent_id)
     _assert_unique_sibling_folder_name(
@@ -302,7 +313,7 @@ def create_sewing_operation_folder(
     )
     try:
         repo.add_sewing_operation_folder(db, row)
-        db.commit()
+        _persist(db, commit=commit)
         return get_sewing_operation_folder(db, row.id)
     except IntegrityError as error:
         db.rollback()

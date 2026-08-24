@@ -36,4 +36,6 @@ test("fromApiClientDetail maps recent orders", () => {
   assert.equal(card.recentOrders[0].number, "SO-15");
   assert.equal(card.recentOrders[0].href, "/sales/orders/15");
   assert.equal(card.recentOrders[0].statusLabel, "Подтверждён");
+  assert.equal(card.requisites.inn, null);
+  assert.deepEqual(card.requisites.bankAccounts, []);
 });

@@ -1601,6 +1601,42 @@
                     note: "v0.9.0; test_product_model_import_export_4_5_3.py + product-model-import-export-4-5-3.test.mjs"
                   }
                 ]
+              },
+              {
+                code: "4.5.4",
+                title: "Sewing operations import / export",
+                done: false,
+                dependencies: [
+                  "4.5.0",
+                  "ADR-020",
+                  "6.3"
+                ],
+                microtasks: [
+                  {
+                    code: "4.5.4.1",
+                    title: "Sewing-operation import/export API + shared columns + template",
+                    done: true,
+                    note: "v0.9.0 2026-08-24; /sewing-operations/import|export|import-template; sewing_operation_import/export/file_columns; task v0.9.0-stage-4.5.4-sewing-operation-import-export.md"
+                  },
+                  {
+                    code: "4.5.4.2",
+                    title: "UI: Import/Export on sewing-operations list toolbar",
+                    done: true,
+                    note: "v0.9.0 2026-08-24; sewing-operations-workspace + sewing-operation-import-drawer"
+                  },
+                  {
+                    code: "4.5.4.3",
+                    title: "Regression tests",
+                    done: true,
+                    note: "v0.9.0 2026-08-24; test_sewing_operation_import_export_4_5_4.py + sewing-operation-import-export-4-5-4.test.mjs"
+                  },
+                  {
+                    code: "4.5.4.4",
+                    title: "Owner visual verification",
+                    done: true,
+                    note: "owner visual OK 2026-08-24; /settings/catalogs/sewing_operations Import/Export + template"
+                  }
+                ]
               }
             ]
           },

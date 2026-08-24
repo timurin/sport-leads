@@ -31,6 +31,7 @@ from app.api.lead_stages import router as lead_stages_router
 from app.api.lead_rejection_reasons import router as lead_rejection_reasons_router
 from app.api.orders import router as orders_router
 from app.api.organizations import router as organizations_router
+from app.api.client_folders import router as client_folders_router
 from app.api.clients import router as clients_router
 from app.api.sales_users import router as sales_users_router
 from app.api.product_models import (
@@ -139,6 +140,7 @@ app.include_router(orders_router)
 app.include_router(analytics_router)
 app.include_router(organizations_router)
 app.include_router(clients_router)
+app.include_router(client_folders_router)
 app.include_router(sales_users_router)
 app.include_router(product_models_router)
 app.include_router(product_model_folders_router)

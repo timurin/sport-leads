@@ -378,6 +378,8 @@ export type Client = {
   lastContactOrder: number;
   responsible: UserSummary;
   status: ClientStatus;
+  folderId: number | null;
+  folderName: string | null;
 };
 
 export type KanbanColumn<TStatus extends string> = {

@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 
+import { fetchBackend } from "@/lib/backend-fetch";
 import {
   nextSewingOperationCopyName,
   parseDurationSecondsInput,
@@ -110,7 +111,7 @@ export async function createSewingOperation(
     };
   }
 
-  const response = await fetch(`${apiBaseUrl()}/sewing-operations`, {
+  const response = await fetchBackend(`${apiBaseUrl()}/sewing-operations`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
@@ -133,7 +134,7 @@ export async function copySewingOperation(
   if (!Number.isSafeInteger(operationId) || operationId <= 0) {
     return { ok: false, message: "Некорректная операция" };
   }
-  const response = await fetch(
+  const response = await fetchBackend(
     `${apiBaseUrl()}/sewing-operations/${operationId}`,
     { cache: "no-store" },
   );
@@ -170,7 +171,7 @@ export async function updateSewingOperation(
     };
   }
 
-  const response = await fetch(
+  const response = await fetchBackend(
     `${apiBaseUrl()}/sewing-operations/${operationId}`,
     {
       method: "PATCH",
@@ -204,7 +205,7 @@ export async function moveSewingOperationsToFolder(
   }
   const operations: SewingOperation[] = [];
   for (const operationId of uniqueIds) {
-    const response = await fetch(
+    const response = await fetchBackend(
       `${apiBaseUrl()}/sewing-operations/${operationId}`,
       {
         method: "PATCH",
@@ -227,7 +228,7 @@ export async function moveSewingOperationsToFolder(
 export async function deleteSewingOperation(
   operationId: number,
 ): Promise<{ ok: true } | { ok: false; message: string }> {
-  const response = await fetch(
+  const response = await fetchBackend(
     `${apiBaseUrl()}/sewing-operations/${operationId}`,
     { method: "DELETE", cache: "no-store" },
   );
@@ -248,7 +249,7 @@ export async function createSewingOperationFolder(input: {
 }): Promise<SewingFolderActionResult> {
   const name = input.name.trim();
   if (!name) return { ok: false, message: "Укажите название папки" };
-  const response = await fetch(`${apiBaseUrl()}/sewing-operation-folders`, {
+  const response = await fetchBackend(`${apiBaseUrl()}/sewing-operation-folders`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ name, parent_id: input.parent_id }),
@@ -269,7 +270,7 @@ export async function updateSewingOperationFolder(
   const body: Record<string, unknown> = {};
   if (input.name != null) body.name = input.name.trim();
   if ("parent_id" in input) body.parent_id = input.parent_id ?? null;
-  const response = await fetch(
+  const response = await fetchBackend(
     `${apiBaseUrl()}/sewing-operation-folders/${folderId}`,
     {
       method: "PATCH",
@@ -289,7 +290,7 @@ export async function updateSewingOperationFolder(
 export async function deleteSewingOperationFolder(
   folderId: number,
 ): Promise<{ ok: true } | { ok: false; message: string }> {
-  const response = await fetch(
+  const response = await fetchBackend(
     `${apiBaseUrl()}/sewing-operation-folders/${folderId}`,
     { method: "DELETE", cache: "no-store" },
   );
@@ -304,7 +305,7 @@ export async function moveSewingOperationFolderSibling(
   folderId: number,
   direction: "up" | "down",
 ): Promise<SewingFolderActionResult> {
-  const response = await fetch(
+  const response = await fetchBackend(
     `${apiBaseUrl()}/sewing-operation-folders/${folderId}/move-sibling`,
     {
       method: "POST",
@@ -325,7 +326,7 @@ export async function moveSewingOperationSibling(
   operationId: number,
   direction: "up" | "down",
 ): Promise<SewingOperationActionResult> {
-  const response = await fetch(
+  const response = await fetchBackend(
     `${apiBaseUrl()}/sewing-operations/${operationId}/move-sibling`,
     {
       method: "POST",
@@ -342,4 +343,76 @@ export async function moveSewingOperationSibling(
   );
   revalidatePath(CATALOG_PATH);
   return { ok: true, operation };
+}
+
+/** Catalog CSV/XLSX import (`POST /sewing-operations/import`, `4.5.4`). */
+export async function importSewingOperationsFile(
+  formData: FormData,
+): Promise<import("@/lib/sewing-operation-import").SewingOperationImportResult> {
+  const file = formData.get("file");
+  if (!(file instanceof File) || file.size === 0) {
+    throw new Error("Выберите непустой файл CSV или XLSX.");
+  }
+  const dryRun = String(formData.get("dry_run") ?? "true") !== "false";
+  const body = new FormData();
+  body.append("file", file);
+
+  const response = await fetchBackend(
+    `${apiBaseUrl()}/sewing-operations/import?dry_run=${dryRun ? "true" : "false"}`,
+    {
+      method: "POST",
+      body,
+      cache: "no-store",
+    },
+  );
+  if (!response.ok) {
+    throw new Error(await readError(response));
+  }
+  const payload =
+    (await response.json()) as import("@/lib/sewing-operation-import").SewingOperationImportResult;
+  if (!dryRun && (payload.created_count > 0 || payload.updated_count > 0)) {
+    revalidatePath(CATALOG_PATH);
+  }
+  return payload;
+}
+
+async function fetchSewingOperationFileDownload(
+  pathWithQuery: string,
+): Promise<import("@/lib/file-download").FileDownloadPayload> {
+  const response = await fetchBackend(`${apiBaseUrl()}/sewing-operations${pathWithQuery}`, {
+    method: "GET",
+    cache: "no-store",
+  });
+  if (!response.ok) {
+    throw new Error(await readError(response));
+  }
+  const buffer = Buffer.from(await response.arrayBuffer());
+  const disposition = response.headers.get("content-disposition") ?? "";
+  const match = /filename="([^"]+)"/i.exec(disposition);
+  const filename = match?.[1] ?? "sewing-operation-download.bin";
+  return {
+    filename,
+    contentType: response.headers.get("content-type") ?? "application/octet-stream",
+    base64: buffer.toString("base64"),
+  };
+}
+
+/** Filter-aware catalog export (`GET /sewing-operations/export`, `4.5.4`). */
+export async function downloadSewingOperationExport(options?: {
+  format?: "csv" | "xlsx";
+  search?: string;
+}): Promise<import("@/lib/file-download").FileDownloadPayload> {
+  const params = new URLSearchParams();
+  params.set("format", options?.format ?? "csv");
+  if (options?.search?.trim()) params.set("search", options.search.trim());
+  return fetchSewingOperationFileDownload(`/export?${params.toString()}`);
+}
+
+/** Import template — same columns as export. */
+export async function downloadSewingOperationImportTemplate(
+  format: "csv" | "xlsx" = "csv",
+): Promise<import("@/lib/file-download").FileDownloadPayload> {
+  return fetchSewingOperationFileDownload(
+    `/import-template?format=${encodeURIComponent(format)}`,
+  );
 }

@@ -1,21 +1,14 @@
 import Link from "next/link";
 
+import { ClientHistoryPanel } from "@/components/sales/client-history-panel";
+import { ClientLegalSection } from "@/components/sales/client-legal-section";
 import { SimpleEntityCard } from "@/components/entity/simple-entity-card";
-import {
-  DataTable,
-  DataTableBody,
-  DataTableCell,
-  DataTableFrame,
-  DataTableHead,
-  DataTableHeaderCell,
-  DataTableRow,
-} from "@/components/ui/data-table";
-import { EmptyState } from "@/components/ui/empty-state";
 import { EntityHeader } from "@/components/ui/entity-header";
 import { InlineAlert } from "@/components/ui/inline-alert";
 import { SectionCard } from "@/components/ui/section-card";
 import { StatusBadge } from "@/components/ui/status-badge";
 import type { ClientCardView } from "@/lib/sales/client-card-mapping";
+import type { ClientHistoryItemView } from "@/lib/sales/client-history";
 
 const statusLabels = { new: "Новый", active: "Активный", paused: "Приостановлен" } as const;
 const statusTones = {
@@ -28,11 +21,18 @@ const salesCurrency = (value: number) => `${new Intl.NumberFormat("ru-RU").forma
 
 type ClientCardProps = {
   client: ClientCardView;
+  history?: ClientHistoryItemView[];
+  historyError?: string;
   loadError?: string;
 };
 
-/** PT-05 client card (`DS-PT-05`). Persistent `/clients/{id}` — history panel → 2.2.3 / v1.00. */
-export function ClientCard({ client, loadError }: ClientCardProps) {
+/** PT-05 client card (`DS-PT-05`). History panel `2.2.3`. */
+export function ClientCard({
+  client,
+  history = [],
+  historyError,
+  loadError,
+}: ClientCardProps) {
   return (
     <SimpleEntityCard
       header={
@@ -89,54 +89,9 @@ export function ClientCard({ client, loadError }: ClientCardProps) {
         </dl>
       </SectionCard>
 
-      <SectionCard
-        title="Связанные заказы"
-        description="Краткая сводка (до 20). Полная история лидов/заказов — Stage 2.2.3 / v1.00."
-        size="compact"
-      >
-        {client.recentOrders.length === 0 ? (
-          <EmptyState
-            title="Заказов пока нет"
-            description="Заказы появятся после конвертации лида или создания заказа на клиента."
-            size="compact"
-          />
-        ) : (
-          <DataTableFrame>
-            <DataTable minWidthClassName="min-w-[720px]">
-              <DataTableHead>
-                <tr>
-                  <DataTableHeaderCell>Номер</DataTableHeaderCell>
-                  <DataTableHeaderCell>Название</DataTableHeaderCell>
-                  <DataTableHeaderCell>Статус</DataTableHeaderCell>
-                  <DataTableHeaderCell>Спорт</DataTableHeaderCell>
-                  <DataTableHeaderCell align="right">Сумма</DataTableHeaderCell>
-                  <DataTableHeaderCell>Создан</DataTableHeaderCell>
-                </tr>
-              </DataTableHead>
-              <DataTableBody>
-                {client.recentOrders.map((order) => (
-                  <DataTableRow key={order.id}>
-                    <DataTableCell className="font-semibold">
-                      <Link href={order.href} className="text-portal-primary hover:underline">
-                        {order.number}
-                      </Link>
-                    </DataTableCell>
-                    <DataTableCell className="min-w-0 truncate">{order.title}</DataTableCell>
-                    <DataTableCell className="text-portal-muted">{order.statusLabel}</DataTableCell>
-                    <DataTableCell className="text-portal-muted">{order.sport}</DataTableCell>
-                    <DataTableCell align="right" className="whitespace-nowrap font-medium">
-                      {order.amountLabel}
-                    </DataTableCell>
-                    <DataTableCell className="whitespace-nowrap text-portal-muted">
-                      {order.createdAtLabel}
-                    </DataTableCell>
-                  </DataTableRow>
-                ))}
-              </DataTableBody>
-            </DataTable>
-          </DataTableFrame>
-        )}
-      </SectionCard>
+      <ClientLegalSection clientId={Number(client.id)} requisites={client.requisites} />
+
+      <ClientHistoryPanel items={history} loadError={historyError} />
     </SimpleEntityCard>
   );
 }

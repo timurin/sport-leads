@@ -692,8 +692,8 @@
           ru: "Этап 2 — История клиента, бизнес-данные, организации"
         },
         note: {
-          en: "Carried from v0.9.0: 2.2.3 + 2.3 + 2.4; added 2.2.4 folders (2026-08-05). 2.2.1 / 2.2.2 closed in v0.9.0. History 2.2.3; folders on /sales/clients; legal requisites 2.3.1 on card.",
-          ru: "Перенос из v0.9.0: 2.2.3 + 2.3 + 2.4; добавлено 2.2.4 папки (2026-08-05). 2.2.1 / 2.2.2 закрыты в v0.9.0. История 2.2.3; папки на списке; юр. реквизиты 2.3.1 на карточке."
+          en: "Carried from v0.9.0: 2.2.3 + 2.3 + 2.4; added 2.2.4 folders (2026-08-05). 2.2.1 / 2.2.2 closed in v0.9.0. History 2.2.3 owner OK 2026-08-23; folders 2.2.4 owner OK 2026-08-23; legal requisites 2.3.1 shipped on card.",
+          ru: "Перенос из v0.9.0: 2.2.3 + 2.3 + 2.4; добавлено 2.2.4 папки (2026-08-05). 2.2.1 / 2.2.2 закрыты в v0.9.0. История 2.2.3 owner OK 2026-08-23; папки 2.2.4 owner OK 2026-08-23; юр. реквизиты 2.3.1 на карточке."
         },
         blocks: [
           {
@@ -704,42 +704,62 @@
             items: [
               {
                 code: "2.2.3.1",
-                done: false,
+                done: true,
                 title: {
                   en: "Contract: sources (Lead / SalesOrder), filters, sort, empty states; embeddable on future client card (2.2.2)",
                   ru: "Контракт: источники (Lead / SalesOrder), фильтры, сортировка, empty states; встраивание на будущую карточку клиента (2.2.2)"
+                },
+                note: {
+                  en: "v1.00 2026-08-23; SL-CLIENT-HISTORY-v1; docs/tasks/v1.00-stage-2.2.3-client-history.md",
+                  ru: "v1.00 2026-08-23; SL-CLIENT-HISTORY-v1"
                 }
               },
               {
                 code: "2.2.3.2",
-                done: false,
+                done: true,
                 title: {
                   en: "Backend: GET client history aggregation (leads + orders) + schemas",
                   ru: "Backend: агрегация истории клиента (лиды + заказы) + schemas"
+                },
+                note: {
+                  en: "v1.00 2026-08-23; GET /clients/{id}/history; client_history schema/service",
+                  ru: "v1.00 2026-08-23; GET /clients/{id}/history"
                 }
               },
               {
                 code: "2.2.3.3",
-                done: false,
+                done: true,
                 title: {
                   en: "Frontend: history panel/component wired to API (no demo substitution)",
                   ru: "Frontend: панель истории на API (без demo)"
+                },
+                note: {
+                  en: "v1.00 2026-08-23; ClientHistoryPanel on /sales/clients/[id]",
+                  ru: "v1.00 2026-08-23; панель истории на карточке клиента"
                 }
               },
               {
                 code: "2.2.3.4",
-                done: false,
+                done: true,
                 title: {
                   en: "Regression tests (API + FE mapper/unit as applicable)",
                   ru: "Регрессионные тесты (API + FE)"
+                },
+                note: {
+                  en: "v1.00 2026-08-23; test_client_history_2_2_3.py + client-history.test.mjs",
+                  ru: "v1.00 2026-08-23; API + FE mapper tests"
                 }
               },
               {
                 code: "2.2.3.5",
-                done: false,
+                done: true,
                 title: {
                   en: "Owner visual verification",
                   ru: "Визуальная проверка владельцем"
+                },
+                note: {
+                  en: "v1.00 2026-08-23; owner OK /sales/clients/{id} history tabs",
+                  ru: "v1.00 2026-08-23; owner OK история на карточке клиента"
                 }
               }
             ]
@@ -756,34 +776,50 @@
             items: [
               {
                 code: "2.2.4.1",
-                done: false,
+                done: true,
                 title: {
                   en: "Contract: folder tree (create/rename/move/reorder); client↔folder link; filter list by folder∪descendants; empty/unfiled bucket",
                   ru: "Контракт: дерево папок; связь client↔folder; фильтр list; unfiled"
+                },
+                note: {
+                  en: "v1.00 2026-08-23; SL-CLIENT-FOLDERS-v1; docs/tasks/v1.00-stage-2.2.4-client-folders.md",
+                  ru: "v1.00 2026-08-23; SL-CLIENT-FOLDERS-v1"
                 }
               },
               {
                 code: "2.2.4.2",
-                done: false,
+                done: true,
                 title: {
                   en: "BE: ClientFolder model + migration + API CRUD/move + client folder_id",
                   ru: "BE: модель папок + API + folder_id на Client"
+                },
+                note: {
+                  en: "v1.00 2026-08-23; Alembic v6w7x8y9z012; /client-folders + PATCH /clients/{id}",
+                  ru: "v1.00 2026-08-23; миграция + API папок"
                 }
               },
               {
                 code: "2.2.4.3",
-                done: false,
+                done: true,
                 title: {
                   en: "FE: folders UI on /sales/clients (tree + list filter; no demo)",
                   ru: "FE: UI папок на списке клиентов"
+                },
+                note: {
+                  en: "v1.00 2026-08-23; ClientFolderTree on /sales/clients",
+                  ru: "v1.00 2026-08-23; дерево папок на списке"
                 }
               },
               {
                 code: "2.2.4.4",
-                done: false,
+                done: true,
                 title: {
                   en: "Regression + owner visual",
                   ru: "Регрессия + визуальная проверка владельцем"
+                },
+                note: {
+                  en: "v1.00 2026-08-23; owner OK /sales/clients folders; test_client_folders_2_2_4.py",
+                  ru: "v1.00 2026-08-23; owner OK папки на списке"
                 }
               }
             ]
@@ -800,34 +836,50 @@
             items: [
               {
                 code: "2.3.1.1",
-                done: false,
+                done: true,
                 title: {
                   en: "Domain contract: INN + multi bank accounts (ClientBankAccount) + legal/actual address (+ optional KPP/OGRN); validation rules",
                   ru: "Контракт: ИНН + счета + юр./факт. адрес (+ опц. КПП/ОГРН); валидация"
+                },
+                note: {
+                  en: "v1.00 2026-08-23; SL-CLIENT-REQUISITES-v1; docs/tasks/v1.00-stage-2.3.1-client-requisites.md",
+                  ru: "v1.00 2026-08-23; SL-CLIENT-REQUISITES-v1"
                 }
               },
               {
                 code: "2.3.1.2",
-                done: false,
+                done: true,
                 title: {
                   en: "Migration + schemas + API read/write (Client fields + bank-account CRUD)",
                   ru: "Миграция + schemas + API"
+                },
+                note: {
+                  en: "v1.00 2026-08-23; Alembic w7x8y9z0a123; ClientUpdate + /clients/{id}/bank-accounts",
+                  ru: "v1.00 2026-08-23; миграция + API реквизитов и счетов"
                 }
               },
               {
                 code: "2.3.1.3",
-                done: false,
+                done: true,
                 title: {
                   en: "FE section on /sales/clients/[clientId] (edit requisites; no interim-only)",
                   ru: "FE-секция на карточке клиента"
+                },
+                note: {
+                  en: "v1.00 2026-08-23; ClientLegalSection on PT-05 card",
+                  ru: "v1.00 2026-08-23; секция юр. реквизитов на карточке"
                 }
               },
               {
                 code: "2.3.1.4",
-                done: false,
+                done: true,
                 title: {
                   en: "Regression + docs checkpoint",
                   ru: "Регрессия + checkpoint документации"
+                },
+                note: {
+                  en: "v1.00 2026-08-23; test_client_requisites_2_3_1.py + client-requisites.test.mjs",
+                  ru: "v1.00 2026-08-23; API + FE tests"
                 }
               }
             ]

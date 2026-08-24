@@ -1,7 +1,7 @@
 # Import / Export contours (inventory)
 
 **Code:** `SL-IMPORT-EXPORT-INVENTORY-v1`  
-**Date:** `2026-08-23`  
+**Date:** `2026-08-24`  
 **Decision:** [ADR-020](decisions/ADR-020-import-export-hybrid.md)  
 **Roadmap:** `4.5`, `9.3.2`, `1.4`, `16.2` / `16.3`; project-structure §5 / §12
 
@@ -13,7 +13,7 @@
 
 | Code | Contour | Roadmap / checklist | Status | Meaning |
 |------|---------|---------------------|--------|---------|
-| **A** | Catalog file I/O | `4.5.1` / `4.5.2` / `4.5.3`; project-structure §5 «import, and export» | done (adapters) | Пакетный файл ↔ мастер-справочник (номенклатура + модели изделий); universal jobs → `16.3` |
+| **A** | Catalog file I/O | `4.5.1` / `4.5.2` / `4.5.3` / `4.5.4`; project-structure §5 «import, and export» | adapters (owner visual OK `4.5.4.4` `2026-08-24`) | Пакетный файл ↔ мастер-справочник (номенклатура + модели изделий + операции пошива); universal jobs → `16.3` |
 | **B** | Domain / inline import | `9.3.2.*` (personalization); SizeGrid Mosmade row-by-row; unit-lines API `9.3.2.3` | partial | Импорт **внутрь** документа/сущности; SoT остаётся domain rows |
 | **C** | Lead / source ingest | `1.4.1` done; **`1.4.3` closed `2026-08-23`** (contract + website-form → Lead + SMTP `LeadMessage` + mailbox persist) | collectors + CRM Lead ingest + first real comms connector + `/settings/integrations`; IMAP poll / more channels later — не Excel-каталог |
 | **D** | System exchange + universal jobs | `16.2.1` 1C:UNF; `16.3.*` universal job shell; project-structure «Universal import and export» / «1C exchange» | open | Внешняя ERP + кросс-модульный job runner |

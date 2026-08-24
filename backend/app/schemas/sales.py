@@ -4,6 +4,8 @@ from enum import Enum
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator, model_validator
 
+from app.schemas.client_requisites import ClientBankAccountRead
+
 from app.models.sales import (
     DesignApprovalStatus,
     MaterialReserveStatus,
@@ -526,6 +528,8 @@ class ClientListItem(SalesSchema):
     orders_count: int = 0
     sales_amount: Decimal = Decimal("0.00")
     primary_sport: str | None = None
+    folder_id: int | None = None
+    folder_name: str | None = None
     created_at: datetime
     updated_at: datetime
 
@@ -539,6 +543,7 @@ class ClientCreate(BaseModel):
     email: EmailStr | None = None
     city: str | None = Field(default=None, max_length=150)
     responsible_id: int | None = None
+    folder_id: int | None = None
     organization_id: int | None = None
     organization_name: str | None = Field(default=None, max_length=255)
     tax_id: str | None = Field(default=None, max_length=12)
@@ -580,8 +585,14 @@ class ClientOrderSummary(SalesSchema):
 
 
 class ClientDetailRead(ClientListItem):
-    """Card payload for `/clients/{id}` (2.2.2). Full history UI → 2.2.3 / v1.00."""
+    """Card payload for `/clients/{id}` (2.2.2). Requisites `2.3.1` live only on detail."""
 
+    inn: str | None = None
+    kpp: str | None = None
+    ogrn: str | None = None
+    legal_address: str | None = None
+    actual_address: str | None = None
+    bank_accounts: list[ClientBankAccountRead] = []
     recent_orders: list[ClientOrderSummary] = []
 
 

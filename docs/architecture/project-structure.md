@@ -59,8 +59,8 @@
 - [x] Mailbox settings persist (`1.4.3.4`) — `mailbox_settings` + `/settings/integrations`; secrets masked; owner visual OK `2026-08-23`
 - [x] External adapters checkpoint (`1.4.3.5`) — contour C regression + erp-check / import-export; Stage `1.4.3` closed `2026-08-23`
 - [x] Deals boundary + CRM access-control — `1.3.3`: no separate Deal; `/sales/deals` → orders; lead archive cancelled (converted/rejected); ACL → `17.1.1`; owner visual OK `2026-08-01`
-- [x] Persistent client list workspace (`2.2.1`) — `GET /clients` + `/sales/clients`; owner visual OK `2026-08-01`
-- [x] Separate client card (`2.2.2`) — PT-05 `/sales/clients/[id]`; owner visual OK `2026-08-01`; history → v1.00
+- [x] Persistent client list workspace (`2.2.1`) — `GET /clients` + `/sales/clients`; owner visual OK `2026-08-01`; folders `2.2.4` owner visual OK `2026-08-23`
+- [x] Separate client card (`2.2.2`) — PT-05 `/sales/clients/[id]`; owner visual OK `2026-08-01`; history `2.2.3` owner OK `2026-08-23`; legal requisites `2.3.1` shipped `2026-08-23`
 
 ## 3. Organizations, Clients, and Contacts
 
@@ -69,7 +69,7 @@
 - [ ] Persistent employees directory, org structure, and user linkage (`2.4.2`) — org HR «Сотрудники»; **≠** platform Users cabinet Stage `21` / `/settings/users`
 - [x] Clients and contacts linked to leads and orders
 - [x] Customer and contact saving from the lead workflow
-- [ ] Separate persistent client history, deduplication, and settlements (`2.2.3`+ / `2.3`; → v1.00)
+- [ ] Separate persistent client history, deduplication, and settlements — history `2.2.3` + folders `2.2.4` owner OK `2026-08-23`; requisites `2.3.1` shipped; `2.3.2`/`2.3.3` open; → v1.00
 
 ## 4. Sales Orders
 
@@ -99,7 +99,7 @@
 - [x] Separate workspace and editable card for nomenclature — create uses `CreateDrawer` fullscreen (`4.7.9` / B2); create field order owner OK (`4.7.10`, 50/50 name+price | type+category+unit)
 - [x] Nomenclature card free-assignment UI on characteristics names (no `CustomField*` shims) — `4.8.6`
 - [x] Stage `4.8` residual: focused regression for unmounted `/custom-fields` + definition DELETE guards — `4.8.7` (`test_characteristics_catalog_4_8.py`)
-- [x] Audit history, archive flow, bulk editing, import, and export — history/archive/bulk `4.3.3` (`v0.9.0`); catalog file I/O `4.5` (ADR-020; inventory `import-export-contours.md`); universal job shell → Stage `16.3`
+- [x] Audit history, archive flow, bulk editing, import, and export — history/archive/bulk `4.3.3` (`v0.9.0`); catalog file I/O `4.5` (ADR-020; nomenclature + product-models + sewing ops `4.5.4`; inventory `import-export-contours.md`); universal job shell → Stage `16.3`
 
 ## 6. Nomenclature Characteristics, Variants, and Media
 
@@ -132,7 +132,7 @@
 - [x] Product types directory + model link + list column/filter — `ProductType` (`6.1.14`–`6.1.16`); Alembic `y5z6a7b8c901` / `a1b2c3d4e515`
 - [x] Assembly variants API + model-card UI (sewing-ops picker) — `AssemblyVariantsBlock` + copy-on-pick (`6.1.12` / `6.3.6`); owner visual OK `6.1.12.6` (`2026-07-22`)
 - [x] Model routing whitelist + operation material norms on product model — Stage `6.1.17` shipped (owner visual OK `2026-07-27`; plan hint; fact on TC/`11.5`–`11.6`)
-- [x] Sewing operations flat catalog API + PT-02 list UI — `sewing_operations` / `/settings/catalogs/sewing_operations` (`6.3.1–5`; owner visual OK `6.3.4.5` / `6.3.5.4` / `6.4.3.3`); PatternSet withdrawn
+- [x] Sewing operations flat catalog API + PT-02 list UI — `sewing_operations` / `/settings/catalogs/sewing_operations` (`6.3.1–5`; owner visual OK `6.3.4.5` / `6.3.5.4` / `6.4.3.3`); PatternSet withdrawn; catalog CSV/XLSX `4.5.4` (owner visual OK `4.5.4.4` `2026-08-24`)
 - [x] Sewing operations folder tree catalog (`6.3.11`) + templates library modal (`6.3.12`) + apply template to assembly (`6.3.13`) — owner visual OK `2026-08-02`; Alembic `a4b5c6d7e890` / `b5c6d7e8f901`
 - [x] Product-model folders catalog tree (`6.1.18`) + folder default sewing template (`6.1.19`) — owner visual OK `2026-08-03`; Alembic `c6d7e8f9a012` / `d7e8f9a0b123`
 - [x] Sewing operation normative duration (`duration_seconds`) + assembly-line snapshot — `6.3.8`; Alembic `d5e6f7a8b901`

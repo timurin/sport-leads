@@ -432,6 +432,8 @@ const clientSeeds: Omit<Client, "id">[] = [
 export const clients: Client[] = clientSeeds.map((client, index) => ({
   ...client,
   id: `client-${index + 1}`,
+  folderId: null,
+  folderName: null,
 }));
 
 const currency = (value: number) => `${new Intl.NumberFormat("ru-RU").format(value)} ₽`;

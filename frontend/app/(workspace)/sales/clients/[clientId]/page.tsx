@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { ClientCard } from "@/components/sales/client-card";
 import { PageContent, PageLayout } from "@/components/layout/page-layout";
 import { getClientDetail } from "@/lib/sales/client-detail-api";
+import { getClientHistory } from "@/lib/sales/client-history-api";
 
 type ClientPageProps = {
   params: Promise<{ clientId: string }>;
@@ -11,7 +12,10 @@ type ClientPageProps = {
 
 export default async function ClientPage({ params }: ClientPageProps) {
   const { clientId } = await params;
-  const result = await getClientDetail(clientId);
+  const [result, history] = await Promise.all([
+    getClientDetail(clientId),
+    getClientHistory(clientId),
+  ]);
   if (!result.ok && result.notFound) {
     notFound();
   }
@@ -32,5 +36,11 @@ export default async function ClientPage({ params }: ClientPageProps) {
       </PageLayout>
     );
   }
-  return <ClientCard client={result.client} />;
+  return (
+    <ClientCard
+      client={result.client}
+      history={history.items}
+      historyError={history.ok ? undefined : history.message}
+    />
+  );
 }

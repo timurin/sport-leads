@@ -7,7 +7,15 @@ from decimal import Decimal
 from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
-from app.models.sales import Client, Organization, SalesOrder, SalesUser
+from app.models.sales import (
+    Client,
+    ClientBankAccount,
+    ClientFolder,
+    Organization,
+    SalesOrder,
+    SalesUser,
+)
+from app.schemas.client_requisites import ClientBankAccountRead, ClientUpdate
 from app.schemas.sales import (
     ClientCreate,
     ClientDetailRead,
@@ -17,6 +25,18 @@ from app.schemas.sales import (
 
 
 class ClientCreateError(RuntimeError):
+    pass
+
+
+class ClientNotFoundError(RuntimeError):
+    pass
+
+
+class ClientFolderAssignError(RuntimeError):
+    pass
+
+
+class ClientUpdateError(RuntimeError):
     pass
 
 
@@ -119,6 +139,7 @@ def _to_list_item(
     primary_sport: str | None,
     *,
     default_organization_id: int | None,
+    folder_name: str | None = None,
 ) -> ClientListItem:
     amount = sales_amount if isinstance(sales_amount, Decimal) else Decimal(str(sales_amount or 0))
     return ClientListItem(
@@ -136,6 +157,8 @@ def _to_list_item(
         orders_count=int(orders_count or 0),
         sales_amount=amount,
         primary_sport=primary_sport,
+        folder_id=client.folder_id,
+        folder_name=folder_name,
         created_at=client.created_at,
         updated_at=client.updated_at,
     )
@@ -146,6 +169,7 @@ def list_clients(
     *,
     q: str | None = None,
     responsible_id: int | None = None,
+    folder_id: int | None = None,
     limit: int = 500,
     offset: int = 0,
 ) -> list[ClientListItem]:
@@ -156,12 +180,14 @@ def list_clients(
             Client,
             SalesUser.name.label("responsible_name"),
             Organization.name.label("organization_name"),
+            ClientFolder.name.label("folder_name"),
             func.coalesce(orders_agg.c.orders_count, 0).label("orders_count"),
             func.coalesce(orders_agg.c.sales_amount, 0).label("sales_amount"),
             orders_agg.c.primary_sport,
         )
         .outerjoin(SalesUser, SalesUser.id == Client.responsible_id)
         .outerjoin(Organization, Organization.id == Client.organization_id)
+        .outerjoin(ClientFolder, ClientFolder.id == Client.folder_id)
         .outerjoin(orders_agg, orders_agg.c.client_id == Client.id)
         .order_by(
             func.coalesce(Client.company_name, Client.contact_name),
@@ -174,6 +200,9 @@ def list_clients(
 
     if responsible_id is not None:
         statement = statement.where(Client.responsible_id == responsible_id)
+
+    if folder_id is not None:
+        statement = statement.where(Client.folder_id == folder_id)
 
     if q:
         needle = f"%{q.strip()}%"
@@ -216,11 +245,13 @@ def list_clients(
                 last_order_orgs=last_order_orgs,
                 orgs_by_name=orgs_by_name,
             ),
+            folder_name=folder_name,
         )
         for (
             client,
             responsible_name,
             organization_name,
+            folder_name,
             orders_count,
             sales_amount,
             primary_sport,
@@ -235,12 +266,14 @@ def get_client(db: Session, client_id: int) -> ClientDetailRead | None:
             Client,
             SalesUser.name.label("responsible_name"),
             Organization.name.label("organization_name"),
+            ClientFolder.name.label("folder_name"),
             func.coalesce(orders_agg.c.orders_count, 0).label("orders_count"),
             func.coalesce(orders_agg.c.sales_amount, 0).label("sales_amount"),
             orders_agg.c.primary_sport,
         )
         .outerjoin(SalesUser, SalesUser.id == Client.responsible_id)
         .outerjoin(Organization, Organization.id == Client.organization_id)
+        .outerjoin(ClientFolder, ClientFolder.id == Client.folder_id)
         .outerjoin(orders_agg, orders_agg.c.client_id == Client.id)
         .where(Client.id == client_id)
     ).one_or_none()
@@ -251,6 +284,7 @@ def get_client(db: Session, client_id: int) -> ClientDetailRead | None:
         client,
         responsible_name,
         organization_name,
+        folder_name,
         orders_count,
         sales_amount,
         primary_sport,
@@ -279,6 +313,7 @@ def get_client(db: Session, client_id: int) -> ClientDetailRead | None:
             last_order_orgs=last_order_orgs,
             orgs_by_name=orgs_by_name,
         ),
+        folder_name=folder_name,
     )
 
     orders = db.scalars(
@@ -299,7 +334,25 @@ def get_client(db: Session, client_id: int) -> ClientDetailRead | None:
         )
         for order in orders
     ]
-    return ClientDetailRead(**base.model_dump(), recent_orders=recent_orders)
+    accounts = db.scalars(
+        select(ClientBankAccount)
+        .where(ClientBankAccount.client_id == client_id)
+        .order_by(
+            ClientBankAccount.is_primary.desc(),
+            ClientBankAccount.sort_order,
+            ClientBankAccount.id,
+        )
+    ).all()
+    return ClientDetailRead(
+        **base.model_dump(),
+        inn=client.inn,
+        kpp=client.kpp,
+        ogrn=client.ogrn,
+        legal_address=client.legal_address,
+        actual_address=client.actual_address,
+        bank_accounts=[ClientBankAccountRead.model_validate(row) for row in accounts],
+        recent_orders=recent_orders,
+    )
 
 
 def create_client(db: Session, payload: ClientCreate) -> Client:
@@ -355,6 +408,9 @@ def create_client(db: Session, payload: ClientCreate) -> Client:
         if db.get(SalesUser, payload.responsible_id) is None:
             raise ClientCreateError("Responsible user not found")
 
+    if payload.folder_id is not None and db.get(ClientFolder, payload.folder_id) is None:
+        raise ClientCreateError("Client folder not found")
+
     client = Client(
         contact_name=payload.contact_name,
         company_name=payload.company_name,
@@ -363,7 +419,34 @@ def create_client(db: Session, payload: ClientCreate) -> Client:
         city=payload.city,
         responsible_id=payload.responsible_id,
         organization_id=organization_id,
+        folder_id=payload.folder_id,
     )
     db.add(client)
     db.flush()
     return client
+
+
+def update_client(db: Session, client_id: int, payload: ClientUpdate) -> ClientDetailRead:
+    changes = payload.model_dump(exclude_unset=True)
+    if not changes:
+        raise ClientUpdateError("Нет полей для обновления")
+    client = db.get(Client, client_id)
+    if client is None:
+        raise ClientNotFoundError("Client not found")
+    if "folder_id" in changes:
+        folder_id = changes["folder_id"]
+        if folder_id is not None and db.get(ClientFolder, folder_id) is None:
+            raise ClientFolderAssignError("Client folder not found")
+    for field_name, value in changes.items():
+        setattr(client, field_name, value)
+    db.commit()
+    detail = get_client(db, client_id)
+    if detail is None:
+        raise ClientNotFoundError("Client not found")
+    return detail
+
+
+def assign_client_folder(
+    db: Session, client_id: int, folder_id: int | None
+) -> ClientDetailRead:
+    return update_client(db, client_id, ClientUpdate(folder_id=folder_id))

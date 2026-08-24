@@ -30,6 +30,7 @@
 
 - Реализовать **вариант 2** для номенклатуры: import/export actions на каталоге, API рядом с nomenclature services.
 - Второй catalog adapter: **модели изделий** (`4.5.3`) на `/settings/catalogs/product-models`.
+- Третий catalog adapter: **операции пошива** (`4.5.4`) на `/settings/catalogs/sewing_operations`.
 - Вынести **тонкую shared-библиотеку** (не полноценный модуль-навигацию).
 - Не создавать отдельный пункт меню «Импорт/Экспорт» до `16.3`.
 

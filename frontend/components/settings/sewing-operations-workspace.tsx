@@ -7,6 +7,7 @@ import {
   ChevronDown,
   ChevronRight,
   Copy,
+  Download,
   FilterX,
   Folder,
   FolderInput,
@@ -16,16 +17,18 @@ import {
   Pencil,
   Plus,
   Trash2,
+  Upload,
   X,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 
 import {
   copySewingOperation,
   createSewingOperationFolder,
   deleteSewingOperation,
   deleteSewingOperationFolder,
+  downloadSewingOperationExport,
   moveSewingOperationFolderSibling,
   moveSewingOperationSibling,
   moveSewingOperationsToFolder,
@@ -42,8 +45,9 @@ import {
 } from "@/components/settings/catalog-folder-tree-dnd";
 import { SewingOperationCreateDrawer } from "@/components/settings/sewing-operation-create-drawer";
 import { SewingOperationEquipmentPicker } from "@/components/settings/sewing-operation-equipment-picker";
+import { SewingOperationImportDrawer } from "@/components/settings/sewing-operation-import-drawer";
 import { SewingOperationTemplatesModal } from "@/components/settings/sewing-operation-templates-modal";
-import { IconButton } from "@/components/ui/button";
+import { Button, IconButton } from "@/components/ui/button";
 import {
   canNestCatalogFolder,
   catalogFolderRowSurfaceClass,
@@ -64,6 +68,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { Checkbox, Input } from "@/components/ui/form-controls";
 import { ListTotals } from "@/components/ui/list-pagination";
 import { PageToolbar } from "@/components/ui/page-header";
+import { triggerBrowserDownload } from "@/lib/file-download";
 import {
   buildSewingCatalogTreeRows,
   filterSewingOperations,
@@ -110,6 +115,9 @@ export function SewingOperationsWorkspace({
   const [moveSelectMode, setMoveSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<number>>(() => new Set());
   const [moveModalIds, setMoveModalIds] = useState<number[] | null>(null);
+  const [importOpen, setImportOpen] = useState(false);
+  const [exportPending, startExportTransition] = useTransition();
+  const [exportError, setExportError] = useState<string | null>(null);
 
   useEffect(() => {
     setLocalFolders(folders);
@@ -255,6 +263,25 @@ export function SewingOperationsWorkspace({
   };
 
   const clearFilters = () => setQuery("");
+
+  const onExportCatalog = () => {
+    setExportError(null);
+    startExportTransition(async () => {
+      try {
+        const payload = await downloadSewingOperationExport({
+          format: "csv",
+          search: query || undefined,
+        });
+        triggerBrowserDownload(payload);
+      } catch (caught) {
+        setExportError(
+          caught instanceof Error
+            ? caught.message
+            : "Не удалось экспортировать операции",
+        );
+      }
+    });
+  };
 
   const toggleFolder = (folderId: number) => {
     setExpandedIds((prev) => {
@@ -580,6 +607,11 @@ export function SewingOperationsWorkspace({
         defaultFolderId={createFolderId}
       />
 
+      <SewingOperationImportDrawer
+        open={importOpen}
+        onClose={() => setImportOpen(false)}
+      />
+
       <SewingOperationTemplatesModal
         open={templatesOpen}
         onClose={() => setTemplatesOpen(false)}
@@ -657,6 +689,25 @@ export function SewingOperationsWorkspace({
             >
               <FolderPlus className="size-4" />
             </IconButton>
+            <Button
+              type="button"
+              size="compact"
+              variant="secondary"
+              disabled={exportPending}
+              onClick={onExportCatalog}
+            >
+              <Download className="size-4" aria-hidden="true" />
+              Экспорт
+            </Button>
+            <Button
+              type="button"
+              size="compact"
+              variant="secondary"
+              onClick={() => setImportOpen(true)}
+            >
+              <Upload className="size-4" aria-hidden="true" />
+              Импорт
+            </Button>
             <IconButton
               type="button"
               label="Создать операцию"
@@ -671,9 +722,9 @@ export function SewingOperationsWorkspace({
         }
       />
 
-      {rowError ? (
+      {rowError || exportError ? (
         <div className="border-b border-portal-line px-portal-4 py-2 text-portal-caption text-red-700">
-          {rowError}
+          {rowError ?? exportError}
         </div>
       ) : null}
 

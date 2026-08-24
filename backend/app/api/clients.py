@@ -2,8 +2,36 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from app.database.session import get_db
+from app.schemas.client_history import ClientHistoryRead
+from app.schemas.client_requisites import (
+    ClientBankAccountCreate,
+    ClientBankAccountRead,
+    ClientBankAccountUpdate,
+    ClientUpdate,
+)
 from app.schemas.sales import ClientCreate, ClientDetailRead, ClientListItem
-from app.services.clients import ClientCreateError, create_client, get_client, list_clients
+from app.services.client_history import (
+    ClientHistoryNotFoundError,
+    HistoryKind,
+    list_client_history,
+)
+from app.services.client_bank_accounts import (
+    ClientBankAccountNotFoundError,
+    ClientBankAccountValidationError,
+    create_bank_account,
+    delete_bank_account,
+    update_bank_account,
+)
+from app.services.clients import (
+    ClientCreateError,
+    ClientFolderAssignError,
+    ClientNotFoundError,
+    ClientUpdateError,
+    create_client,
+    get_client,
+    list_clients,
+    update_client,
+)
 
 
 router = APIRouter(prefix="/clients", tags=["Clients"])
@@ -13,6 +41,7 @@ router = APIRouter(prefix="/clients", tags=["Clients"])
 def get_clients(
     q: str | None = Query(default=None, max_length=255),
     responsible_id: int | None = Query(default=None, ge=1),
+    folder_id: int | None = Query(default=None, ge=1),
     limit: int = Query(default=500, ge=1, le=500),
     offset: int = Query(default=0, ge=0),
     db: Session = Depends(get_db),
@@ -21,6 +50,7 @@ def get_clients(
         db,
         q=q,
         responsible_id=responsible_id,
+        folder_id=folder_id,
         limit=limit,
         offset=offset,
     )
@@ -39,9 +69,105 @@ def post_client(payload: ClientCreate, db: Session = Depends(get_db)) -> ClientD
     return detail
 
 
+@router.patch("/{client_id}", response_model=ClientDetailRead, operation_id="update_client")
+def patch_client(
+    client_id: int,
+    payload: ClientUpdate,
+    db: Session = Depends(get_db),
+) -> ClientDetailRead:
+    try:
+        return update_client(db, client_id, payload)
+    except ClientNotFoundError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+    except ClientFolderAssignError as error:
+        raise HTTPException(status_code=422, detail=str(error)) from error
+    except ClientUpdateError as error:
+        raise HTTPException(status_code=422, detail=str(error)) from error
+
+
 @router.get("/{client_id}", response_model=ClientDetailRead)
 def get_client_by_id(client_id: int, db: Session = Depends(get_db)) -> ClientDetailRead:
     client = get_client(db, client_id)
     if client is None:
         raise HTTPException(status_code=404, detail="Client not found")
     return client
+
+
+@router.get(
+    "/{client_id}/history",
+    response_model=ClientHistoryRead,
+    operation_id="get_client_history",
+)
+def get_client_history(
+    client_id: int,
+    kind: HistoryKind = Query(default="all"),
+    limit: int = Query(default=50, ge=1, le=200),
+    offset: int = Query(default=0, ge=0),
+    db: Session = Depends(get_db),
+) -> ClientHistoryRead:
+    try:
+        return list_client_history(
+            db,
+            client_id,
+            kind=kind,
+            limit=limit,
+            offset=offset,
+        )
+    except ClientHistoryNotFoundError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+
+
+@router.post(
+    "/{client_id}/bank-accounts",
+    response_model=ClientBankAccountRead,
+    status_code=201,
+    operation_id="create_client_bank_account",
+)
+def post_client_bank_account(
+    client_id: int,
+    payload: ClientBankAccountCreate,
+    db: Session = Depends(get_db),
+) -> ClientBankAccountRead:
+    try:
+        return create_bank_account(db, client_id, payload)
+    except ClientNotFoundError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+
+
+@router.patch(
+    "/{client_id}/bank-accounts/{account_id}",
+    response_model=ClientBankAccountRead,
+    operation_id="update_client_bank_account",
+)
+def patch_client_bank_account(
+    client_id: int,
+    account_id: int,
+    payload: ClientBankAccountUpdate,
+    db: Session = Depends(get_db),
+) -> ClientBankAccountRead:
+    try:
+        return update_bank_account(db, client_id, account_id, payload)
+    except ClientNotFoundError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+    except ClientBankAccountNotFoundError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+    except ClientBankAccountValidationError as error:
+        raise HTTPException(status_code=422, detail=str(error)) from error
+
+
+@router.delete(
+    "/{client_id}/bank-accounts/{account_id}",
+    status_code=204,
+    operation_id="delete_client_bank_account",
+)
+def remove_client_bank_account(
+    client_id: int,
+    account_id: int,
+    db: Session = Depends(get_db),
+) -> None:
+    try:
+        delete_bank_account(db, client_id, account_id)
+    except ClientNotFoundError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+    except ClientBankAccountNotFoundError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error

@@ -19,19 +19,23 @@ function apiBaseUrl(): string {
 }
 
 export async function loadPlatformBrand(): Promise<PlatformBrand> {
-  const auth = await sessionAuthHeaders();
-  const response = await fetch(`${apiBaseUrl()}/platform-system-settings/brand`, {
-    headers: { ...auth },
-    cache: "no-store",
-  });
-  if (!response.ok) {
+  try {
+    const auth = await sessionAuthHeaders();
+    const response = await fetch(`${apiBaseUrl()}/platform-system-settings/brand`, {
+      headers: { ...auth },
+      cache: "no-store",
+    });
+    if (!response.ok) {
+      return DEFAULT_PLATFORM_BRAND;
+    }
+    const body = (await response.json()) as PlatformBrand;
+    const name = body.organization_display_name?.trim();
+    return {
+      organization_display_name:
+        name || DEFAULT_PLATFORM_BRAND.organization_display_name,
+      logo_url: body.logo_url ?? null,
+    };
+  } catch {
     return DEFAULT_PLATFORM_BRAND;
   }
-  const body = (await response.json()) as PlatformBrand;
-  const name = body.organization_display_name?.trim();
-  return {
-    organization_display_name:
-      name || DEFAULT_PLATFORM_BRAND.organization_display_name,
-    logo_url: body.logo_url ?? null,
-  };
 }

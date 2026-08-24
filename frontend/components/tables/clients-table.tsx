@@ -24,9 +24,21 @@ import { InlineAlert } from "@/components/ui/inline-alert";
 import { PageToolbar } from "@/components/ui/page-header";
 import { MetricCard } from "@/components/ui/section-card";
 import { StatusBadge } from "@/components/ui/status-badge";
+import { ClientFolderTree } from "@/components/sales/client-folder-tree";
+import { moveClientToFolder } from "@/app/(workspace)/sales/clients/client-folder-actions";
+import {
+  clientMatchesFolderScope,
+  type ClientFolderScope,
+  type ClientFolderView,
+} from "@/lib/sales/client-folders";
 import type { Client } from "@/types/sales";
 
-type ClientsTableProps = { clients: Client[]; loadError?: string };
+type ClientsTableProps = {
+  clients: Client[];
+  folders?: ClientFolderView[];
+  loadError?: string;
+  foldersError?: string;
+};
 type SortField = "name" | "salesAmount" | "lastContact";
 type SortDirection = "asc" | "desc";
 
@@ -41,12 +53,18 @@ const statusTones = {
   paused: "neutral",
 } as const;
 
-/** PT-02 client list workspace (`DS-PT-02`). Persistent `/clients` API (2.2.1). */
-export function ClientsTable({ clients, loadError }: ClientsTableProps) {
+/** PT-02 client list workspace (`DS-PT-02`). Folders `2.2.4`. */
+export function ClientsTable({
+  clients,
+  folders = [],
+  loadError,
+  foldersError,
+}: ClientsTableProps) {
   const [query, setQuery] = useState("");
   const [type, setType] = useState("");
   const [status, setStatus] = useState("");
   const [responsible, setResponsible] = useState("");
+  const [folderScope, setFolderScope] = useState<ClientFolderScope>("all");
   const [sortField, setSortField] = useState<SortField>("lastContact");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -66,7 +84,8 @@ export function ClientsTable({ clients, loadError }: ClientsTableProps) {
           (!normalizedQuery || searchText.includes(normalizedQuery)) &&
           (!type || client.type === type) &&
           (!status || client.status === status) &&
-          (!responsible || client.responsible.name === responsible)
+          (!responsible || client.responsible.name === responsible) &&
+          clientMatchesFolderScope(client.folderId, folderScope, folders)
         );
       })
       .sort((first, second) => {
@@ -76,7 +95,7 @@ export function ClientsTable({ clients, loadError }: ClientsTableProps) {
         if (sortField === "lastContact") comparison = first.lastContactOrder - second.lastContactOrder;
         return sortDirection === "asc" ? comparison : -comparison;
       });
-  }, [clients, query, responsible, sortDirection, sortField, status, type]);
+  }, [clients, folderScope, folders, query, responsible, sortDirection, sortField, status, type]);
 
   const pageCount = Math.max(1, Math.ceil(visibleClients.length / PAGE_SIZE));
   const safePage = Math.min(page, pageCount);
@@ -90,14 +109,28 @@ export function ClientsTable({ clients, loadError }: ClientsTableProps) {
     }
     setPage(1);
   };
-  const hasFilters = Boolean(query || type || status || responsible);
+  const hasFilters = Boolean(query || type || status || responsible || folderScope !== "all");
   const resetFilters = () => {
     setQuery("");
     setType("");
     setStatus("");
     setResponsible("");
+    setFolderScope("all");
     setPage(1);
   };
+  const folderCounts = useMemo(() => {
+    const counts = new Map<number, number>();
+    for (const folder of folders) {
+      counts.set(
+        folder.id,
+        clients.filter((client) =>
+          clientMatchesFolderScope(client.folderId, folder.id, folders),
+        ).length,
+      );
+    }
+    return counts;
+  }, [clients, folders]);
+  const unfiledCount = clients.filter((client) => client.folderId == null).length;
 
   const activeCount = clients.filter((client) => client.status === "active").length;
   const salesTotal = salesCurrency(clients.reduce((sum, client) => sum + client.salesAmount, 0));
@@ -136,6 +169,19 @@ export function ClientsTable({ clients, loadError }: ClientsTableProps) {
         </ResponsiveGrid>
       </section>
 
+      <div className="grid min-w-0 gap-portal-4 border-b border-portal-border px-portal-4 py-portal-4 lg:grid-cols-[280px_minmax(0,1fr)] lg:px-portal-6">
+        <ClientFolderTree
+          folders={folders}
+          scope={folderScope}
+          onScopeChange={(next) => {
+            setFolderScope(next);
+            setPage(1);
+          }}
+          unfiledCount={unfiledCount}
+          counts={folderCounts}
+          loadError={foldersError}
+        />
+        <div className="min-w-0">
       <FilterToolbar label="Фильтры клиентов">
         <div className="relative min-w-0 w-full md:min-w-60 md:flex-1 lg:max-w-sm">
           <Search
@@ -214,7 +260,7 @@ export function ClientsTable({ clients, loadError }: ClientsTableProps) {
                   active={sortField === "name"}
                   onClick={() => changeSort("name")}
                 />
-                {["Тип", "Контактное лицо", "Телефон", "Email", "Город", "Вид спорта"].map(
+                {["Папка", "Тип", "Контактное лицо", "Телефон", "Email", "Город", "Вид спорта"].map(
                   (label) => (
                     <DataTableHeaderCell key={label}>{label}</DataTableHeaderCell>
                   ),
@@ -244,6 +290,13 @@ export function ClientsTable({ clients, loadError }: ClientsTableProps) {
                     >
                       {client.name}
                     </Link>
+                  </DataTableCell>
+                  <DataTableCell>
+                    <ClientFolderSelect
+                      clientId={Number(client.id)}
+                      folderId={client.folderId}
+                      folders={folders}
+                    />
                   </DataTableCell>
                   <DataTableCell className="text-portal-muted">{client.type}</DataTableCell>
                   <DataTableCell>{client.contact}</DataTableCell>
@@ -311,7 +364,7 @@ export function ClientsTable({ clients, loadError }: ClientsTableProps) {
                     </Link>
                   </h3>
                   <p className="mt-1 truncate text-portal-caption text-portal-muted">
-                    {client.type} · {client.city}
+                    {client.folderName ?? "Без папки"} · {client.type} · {client.city}
                   </p>
                 </div>
                 <StatusBadge tone={statusTones[client.status]} size="compact">
@@ -347,6 +400,9 @@ export function ClientsTable({ clients, loadError }: ClientsTableProps) {
         )}
       </div>
 
+        </div>
+      </div>
+
       <ListTotals
         primary={`Показано: ${pageRows.length} из ${visibleClients.length} (всего ${clients.length})`}
         secondary={`Продажи по выборке: ${selectionSales}`}
@@ -366,6 +422,36 @@ export function ClientsTable({ clients, loadError }: ClientsTableProps) {
         onClose={() => setDialogOpen(false)}
       />
     </PageLayout>
+  );
+}
+
+function ClientFolderSelect({
+  clientId,
+  folderId,
+  folders,
+}: {
+  clientId: number;
+  folderId: number | null;
+  folders: ClientFolderView[];
+}) {
+  return (
+    <Select
+      className="min-w-36 max-w-44"
+      value={folderId == null ? "" : String(folderId)}
+      aria-label="Папка клиента"
+      onChange={async (event) => {
+        const next = event.target.value;
+        const result = await moveClientToFolder(clientId, next === "" ? null : Number(next));
+        if (!result.ok) window.alert(result.message);
+      }}
+    >
+      <option value="">Без папки</option>
+      {folders.map((folder) => (
+        <option key={folder.id} value={folder.id}>
+          {folder.name}
+        </option>
+      ))}
+    </Select>
   );
 }
 

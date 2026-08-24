@@ -138,6 +138,66 @@ class Client(Base):
     organization_id: Mapped[int | None] = mapped_column(
         ForeignKey("organizations.id", ondelete="SET NULL"), index=True
     )
+    folder_id: Mapped[int | None] = mapped_column(
+        ForeignKey("client_folders.id", ondelete="RESTRICT"),
+        nullable=True,
+        index=True,
+    )
+    inn: Mapped[str | None] = mapped_column(String(12), index=True)
+    kpp: Mapped[str | None] = mapped_column(String(9))
+    ogrn: Mapped[str | None] = mapped_column(String(15))
+    legal_address: Mapped[str | None] = mapped_column(String(500))
+    actual_address: Mapped[str | None] = mapped_column(String(500))
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now()
+    )
+
+
+class ClientFolder(Base):
+    """Navigation folder for the clients list (2.2.4)."""
+
+    __tablename__ = "client_folders"
+    __table_args__ = (
+        CheckConstraint("sort_order >= 0", name="ck_client_folders_sort_order_nonnegative"),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    parent_id: Mapped[int | None] = mapped_column(
+        ForeignKey("client_folders.id", ondelete="RESTRICT"),
+        nullable=True,
+        index=True,
+    )
+    name: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
+    sort_order: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now()
+    )
+
+
+class ClientBankAccount(Base):
+    """Client settlement account (2.3.1)."""
+
+    __tablename__ = "client_bank_accounts"
+    __table_args__ = (
+        CheckConstraint("sort_order >= 0", name="ck_client_bank_accounts_sort_order_nonnegative"),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    client_id: Mapped[int] = mapped_column(
+        ForeignKey("clients.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    bank_name: Mapped[str] = mapped_column(String(255), nullable=False)
+    bik: Mapped[str] = mapped_column(String(9), nullable=False)
+    account_number: Mapped[str] = mapped_column(String(20), nullable=False)
+    corr_account: Mapped[str | None] = mapped_column(String(20))
+    is_primary: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    sort_order: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )

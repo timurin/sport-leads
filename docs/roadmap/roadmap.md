@@ -472,6 +472,15 @@ Dependencies:
 - [x] 4.5.2.2 — UI: Export action on nomenclature workspace toolbar — `v0.9.0`; evidence: toolbar «Экспорт» + import drawer «Шаблон CSV/XLSX»; `nomenclature-export-4-5-2.test.mjs`; **owner visual OK** (`2026-07-30`)
 - [x] 4.5.2.3 — Regression tests (columns, filter scope) — `v0.9.0`; evidence: `tests/test_nomenclature_export_4_5_2.py`; multi-photo CSV shift fixed (`LIST_VALUE_SEPARATOR=|`, `sep=,`, QUOTE_NONNUMERIC)
 
+#### 4.5.4 — Sewing operations import / export
+
+Toolbar CSV/XLSX on `/settings/catalogs/sewing_operations` (ADR-020 contour A). `folder_path` + `work_center_codes`. Templates library out of scope.
+
+- [x] 4.5.4.1 — Sewing-operation import/export API + shared columns + template — `v0.9.0` `2026-08-24`; `/sewing-operations/import|export|import-template`; `sewing_operation_import/export/file_columns`; task `docs/tasks/v0.9.0-stage-4.5.4-sewing-operation-import-export.md`
+- [x] 4.5.4.2 — UI: Import/Export on sewing-operations list toolbar — `v0.9.0` `2026-08-24`; `sewing-operations-workspace` + `sewing-operation-import-drawer`
+- [x] 4.5.4.3 — Regression tests — `v0.9.0` `2026-08-24`; `test_sewing_operation_import_export_4_5_4.py` + `sewing-operation-import-export-4-5-4.test.mjs`
+- [x] 4.5.4.4 — Owner visual verification — `/settings/catalogs/sewing_operations` Import/Export + template — **owner visual OK** (`2026-08-24`)
+
 ### 4.6 — Unified catalog (materials consolidation)
 
 Decision (`ADR-012`, owner `2026-07-23`): **materials are a nomenclature type** (`MATERIAL`), not a separate directory. Standalone `materials` catalog/API/table must be removed after cutover. Stock balances stay outside the nomenclature card.

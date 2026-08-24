@@ -1,4 +1,10 @@
 import { fromApiClientListItem, type ApiClientListItem } from "./client-list-mapping.ts";
+import {
+  emptyRequisites,
+  fromApiClientBankAccount,
+  type ApiClientBankAccount,
+  type ClientRequisitesView,
+} from "./client-requisites.ts";
 import type { Client, OrderStatus } from "@/types/sales";
 
 export type ApiClientOrderSummary = {
@@ -13,6 +19,12 @@ export type ApiClientOrderSummary = {
 
 export type ApiClientDetail = ApiClientListItem & {
   recent_orders: ApiClientOrderSummary[];
+  inn?: string | null;
+  kpp?: string | null;
+  ogrn?: string | null;
+  legal_address?: string | null;
+  actual_address?: string | null;
+  bank_accounts?: ApiClientBankAccount[];
 };
 
 export type ClientOrderSummaryView = {
@@ -29,6 +41,7 @@ export type ClientOrderSummaryView = {
 
 export type ClientCardView = Client & {
   recentOrders: ClientOrderSummaryView[];
+  requisites: ClientRequisitesView;
 };
 
 const orderStatusLabels: Record<OrderStatus, string> = {
@@ -59,6 +72,15 @@ export function fromApiClientDetail(item: ApiClientDetail): ClientCardView {
   const base = fromApiClientListItem(item);
   return {
     ...base,
+    requisites: {
+      ...emptyRequisites(),
+      inn: item.inn ?? null,
+      kpp: item.kpp ?? null,
+      ogrn: item.ogrn ?? null,
+      legalAddress: item.legal_address ?? null,
+      actualAddress: item.actual_address ?? null,
+      bankAccounts: (item.bank_accounts ?? []).map(fromApiClientBankAccount),
+    },
     recentOrders: (item.recent_orders ?? []).map((order) => ({
       id: String(order.id),
       number: order.number,
