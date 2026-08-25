@@ -65,6 +65,20 @@ class StockLedgerLineRead(BaseModel):
     sales_order_id: int | None
 
 
+class StockInventoryLineRead(BaseModel):
+    """Recount line for inventory detail (`12.4.1.4`). Not a ledger row."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    sequence: int
+    nomenclature_id: int
+    nomenclature_name: str | None = None
+    book_qty: Decimal
+    counted_qty: Decimal
+    delta: Decimal
+
+
 class StockDocumentRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -80,3 +94,26 @@ class StockDocumentRead(BaseModel):
     created_at: datetime
     updated_at: datetime
     ledger_lines: list[StockLedgerLineRead] = Field(default_factory=list)
+    inventory_lines: list[StockInventoryLineRead] = Field(default_factory=list)
+
+
+class InventoryDocumentCreate(BaseModel):
+    warehouse_id: int = Field(ge=1)
+    notes: str | None = Field(default=None, max_length=4000)
+    fill: bool = Field(
+        default=True,
+        description="Snapshot non-zero posted balances into recount lines",
+    )
+
+    @field_validator("notes", mode="before")
+    @classmethod
+    def strip_notes(cls, value: object) -> object:
+        if isinstance(value, str):
+            stripped = value.strip()
+            return stripped or None
+        return value
+
+
+class InventoryCountedUpdate(BaseModel):
+    nomenclature_id: int = Field(ge=1)
+    counted_qty: Decimal = Field(ge=0, max_digits=14, decimal_places=3)

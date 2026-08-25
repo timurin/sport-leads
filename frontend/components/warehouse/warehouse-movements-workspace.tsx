@@ -1,7 +1,11 @@
 "use client";
 
+import { Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
+
+import { InventoryCreateDrawer } from "@/components/warehouse/inventory-create-drawer";
+import { Button } from "@/components/ui/button";
 
 import {
   DataTable,
@@ -26,6 +30,7 @@ import {
   stockDocumentTypeLabel,
   type StockDocument,
 } from "@/lib/stock-documents";
+import type { Warehouse } from "@/lib/warehouses";
 
 const DOC_TYPE_FILTER: { value: string; label: string }[] = [
   { value: "", label: "Все типы" },
@@ -33,6 +38,7 @@ const DOC_TYPE_FILTER: { value: string; label: string }[] = [
   { value: "issue", label: "Списание" },
   { value: "fg_receipt", label: "Приход ГП" },
   { value: "fg_issue", label: "Списание ГП" },
+  { value: "inventory", label: "Инвентаризация" },
 ];
 
 const STATUS_FILTER: { value: string; label: string }[] = [
@@ -46,14 +52,17 @@ const STATUS_FILTER: { value: string; label: string }[] = [
 export function WarehouseMovementsWorkspace({
   documents,
   warehouseNames,
+  warehouses,
 }: {
   documents: StockDocument[];
   warehouseNames: Record<number, string>;
+  warehouses: Warehouse[];
 }) {
   const router = useRouter();
   const [query, setQuery] = useState("");
   const [docTypeFilter, setDocTypeFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [createOpen, setCreateOpen] = useState(false);
 
   const filtered = useMemo(() => {
     let rows = filterStockDocumentsClient(documents, query);
@@ -68,6 +77,11 @@ export function WarehouseMovementsWorkspace({
 
   return (
     <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+      <InventoryCreateDrawer
+        open={createOpen}
+        warehouses={warehouses}
+        onClose={() => setCreateOpen(false)}
+      />
       <PageToolbar
         start={
           <div className="flex min-w-0 w-full flex-col gap-portal-2 md:flex-row md:items-center">
@@ -107,12 +121,23 @@ export function WarehouseMovementsWorkspace({
             </Select>
           </div>
         }
+        end={
+          <Button
+            type="button"
+            variant="primary"
+            size="compact"
+            onClick={() => setCreateOpen(true)}
+          >
+            <Plus className="size-4" aria-hidden="true" />
+            Инвентаризация
+          </Button>
+        }
       />
 
       {filtered.length === 0 ? (
         <EmptyState
           title="Нет складских документов"
-          description="Приходы и списания появятся после проводок и завершения стадий ГП."
+          description="Приходы, списания и инвентаризации появятся после создания и проводок."
         />
       ) : (
         <section className="flex min-h-0 min-w-0 flex-1 flex-col">

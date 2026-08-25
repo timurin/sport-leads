@@ -11,7 +11,10 @@ def get_document(db: Session, document_id: int) -> StockDocument | None:
     return db.scalars(
         select(StockDocument)
         .where(StockDocument.id == document_id)
-        .options(selectinload(StockDocument.ledger_lines))
+        .options(
+            selectinload(StockDocument.ledger_lines),
+            selectinload(StockDocument.inventory_lines),
+        )
     ).first()
 
 
@@ -52,7 +55,8 @@ def list_documents(
     offset: int = 0,
 ) -> list[StockDocument]:
     statement = select(StockDocument).options(
-        selectinload(StockDocument.ledger_lines)
+        selectinload(StockDocument.ledger_lines),
+        selectinload(StockDocument.inventory_lines),
     )
     if doc_type is not None:
         statement = statement.where(StockDocument.doc_type == doc_type)

@@ -62,7 +62,7 @@
 - `[~]` единая номенклатура готовых изделий, услуг, полуфабрикатов и комплектов (типы `PRODUCT`/`GOODS`/`SERVICE`/`MATERIAL`; materials cutover `4.6.1`–`4.6.4` done; UNF primary warehouse list `4.10` shipped; stock register MVP `4.6.5.*` / Stage `12.2` shipped);
 - `[x]` `4.10` — УНФ: Склад → «Номенклатура» (`/warehouse/stock`) primary PT-04; `4.10.1`–`4.10.7` closed (`v0.9.0`; owner visual OK `2026-07-26`); остаток column live from ledger (`12.2.2`–`12.2.3`);
 - `[x]` `4.6.5.*` — MVP регистр shipped via Stage `12.2` (`12.2.1`–`12.2.5`; ADR-019); SoT = posted ledger, not `Nomenclature`; FG docs/bins/lots → `12.3`+;
-- `[~]` **warehouse Stage 12** — ADR-019; structure `12.1` + ledger MVP `12.2` done; FG docs/inventory/transfers open (`12.3`–`12.5`);
+- `[~]` **warehouse Stage 12** — ADR-019; `12.1`–`12.3` shipped in `v0.9.0`; inventory UI `12.4.1.5` closed `2026-08-25`; owner visual `12.4.1.6` next; transfers/reserves `12.5` open;
 - `[~]` модели и артикулы — Stage 6 catalog v1 closed (`6.1.1`–`6.1.16`, `6.2.*`, `6.3.*` incl. `6.3.8` duration / `6.3.10` equipment, `6.4`); product types directory + model link shipped; order-item binding `3.2.5` + routing `3.2.7` + smoke `3.2.6` shipped; model routing whitelist + op norms `6.1.17` shipped;
 - `[~]` размеры и изображения — SizeGrid Mosmade men+women + list/card visual OK; Stage-6 read-only; write/edit → `17.1.2.4`; model link `6.2.7` shipped;
 - `[x]` операции пошива (каталог) + связка со строками варианта — `6.3.1`–`6.3.6` shipped; normative `duration_seconds` + assembly-line snapshot `6.3.8` shipped; equipment M:N (цех Пошив) `6.3.10` shipped; folder tree `6.3.11` + templates `6.3.12` + apply to assembly `6.3.13` shipped (owner visual OK `2026-08-02`);
@@ -73,7 +73,7 @@
 - `[ ]` операционные узлы;
 - `[~]` технологические операции — Stage `8.1.3` **shipped** (`tech_operations` + seed 5; settings UI); строки объёмов на ТК — `9.3.3` (≠ SewingOperation Stage `6.3`); привязка ops → цех shipped in `8.3`;
 - `[~]` нормативы модели и времени — **planned** `6.1.17` (operation material norms on model+routing as plan hint) + sewing duration already `6.3.8`; TC `planned_qty`/`fact_qty` + hard gate cutting/print → `9.3.4` / shop `11.5`–`11.6`;
-- `[~]` подготовка и версионирование спецификации — Stage 7 **документ-отчёт план+факт** (ADR-004/016/031 `2026-08-25`; контракт `7.1.1` закрыт; DB `7.1.2` next; не hard dep generate ТК; не отдельный модуль; не gate запуска партии);
+- `[x]` подготовка и версионирование спецификации — Stage 7 **документ-отчёт план+факт** (ADR-004/016/031; owner visual `7.2.2.6` OK `2026-08-25`; не hard dep generate ТК; не отдельный модуль; не gate запуска партии);
 - `[x]` запрет запуска партии без утверждённой версии Spec — **не применяется** (ADR-004/031): Spec = отчёт после исполнения, не prerequisite партии/ТК;
 
 ## Производство
@@ -86,7 +86,7 @@
 - `[x]` **кабинет швеи (`v1.00` Stage `24`)** — закрыт `2026-08-24` (owner visual `24.5.2`); ADR-029 + `SL-SEWING-CABINET-v1`; `PlatformUser`; журнал + ограниченная оболочка; ≠ `2.4.2` Employee;
 - `[x]` **QR техкарты / скан (`v1.00` Stage `25`)** — закрыт `2026-08-25` (owner visual `25.5.2`); ADR-030; токен + печать QR + скан + `wip_status` + частичный FG;
 - `[x]` **production batches** — ADR-018 + DB/API/UI `/production/orders` shipped (`11.1.1`); owner visual `11.1.1.5` OK `2026-07-30`;
-- `[ ]` batch specification formation (plan+fact report document from filled TC / ADR-004/031; contract `7.1.1` closed `2026-08-25`; DB/API/UI `7.1.2`+);
+- `[x]` batch specification formation (plan+fact report document from filled TC / ADR-004/031; owner visual `7.2.2.6` OK `2026-08-25`);
 - `[x]` **aggregate fact (`11.2.1`)** — contract/API/UI/tests + owner visual OK `2026-07-30` (`11.2.1.1`–`11.2.1.4`);
 - `[x]` **FG warehouse bridge (`11.2.2`)** — wire + auto-post + owner visual OK `2026-08-01`; movements UI `12.3.3` shipped;
 
@@ -95,7 +95,7 @@
 ## Ресурсы, склад, закупки и финансы
 
 - `[~]` складской регистр остатков / min stock — MVP register shipped (`4.6.5.*` / `12.2`); min stock + bins/lots later; не на карточке `Nomenclature`; legacy `Material` removed (`4.6.4`); primary list UI — `4.10` (UNF);
-- `[ ]` единицы измерения как единый справочник, склады, зоны, резервы, партии и инвентаризация;
+- `[~]` единицы измерения как единый справочник, склады, зоны, резервы, партии и инвентаризация — склады + регистр `12.1`/`12.2` shipped; инвентаризация UI `12.4.1.5` (`2026-08-25`); зоны/лоты/резервы later;
 - `[ ]` фактическое списание и выпуск;
 - `[ ]` закупки, поставщики и заказы поставщикам;
 - `[ ]` оплаты, себестоимость, маржа, задолженность и финансовые документы.
@@ -105,12 +105,13 @@
 - `[x]` **List-page data rules (`v1.00` `0.2.1`–`0.2.8`)** — `SL-LIST-PAGE-RULES-v1`; embed/batch for product-models cost, characteristic `option_count`, warehouse `list-extras`, slim tech-cards list; PO `batch-fact-rollups` (`0.2.6`); stock `nomenclature_name` (`0.2.7`); nomenclature card `options-batch` (`0.2.8`); evidence `test_list_performance_0_2.py`, `test_technical_cards_9_4_2.py`, `test_production_fact_rollup_11_2_1_2.py`, `test_stock_documents_12_2_2.py`;
 - `[x]` **LAN local-stack access (`v1.00` `0.3.1`–`0.3.3`)** — `scripts/dev-servers.ps1 -Lan` binds `0.0.0.0:3001`/`8000`; `.env.example` + AGENTS CORS/`NEXT_PUBLIC_*` notes; owner smoke OK `2026-08-05` (`192.168.2.98:3001`); ≠ public internet / production Caddy;
 - `[x]` **Create SalesOrder without Lead (`v1.00` `0.4.1`–`0.4.3`)** — nullable `lead_id`; `POST /orders` (number auto|freeform unique); FE create drawer; convert intact; org optional + client checkbox «Создать организацию?»; owner visual OK `2026-08-05`; evidence `test_order_without_lead_0_4.py`, `SL-ORDER-WITHOUT-LEAD-v1`;
+- `[~]` **Canonical VPS workflow (`v1.00` `0.5`)** — ADR-032 + agent rule + compose `127.0.0.1:5432` + tunnel/storage scripts; git push + live host + owner smoke open (`0.5.3`/`0.5.4`/`0.5.6`–`0.5.8`/`0.5.11`–`0.5.12`);
 - `[x]` **Authentication (`17.1.1`)** — ADR-023 + API + `/login` workspace gate; owner visual OK `2026-08-01`; evidence `test_auth_17_1_1_2.py`, `session.test.mjs`;
 - `[x]` System users / roles / permissions (`17.1.2`) — ADR-024 + RBAC + size-grid/kanban/admin gates + stage executors; owner visuals OK `2026-08-01`; **Users cabinet list/profile/access** → Stage `21`; sewing cabinet codes/roles → `24.1.1`;
 - `[x]` **Settings / Users cabinet (`v1.00` Stage `21` closed)** — nav «Пользователи» `/settings/users` (≠ org «Сотрудники» `2.4.2`); invite + list/filter + profile PATCH + access matrix; Alembic `m6n7o8p9q012`; owner visual OK `21.5.1` (`2026-08-05`); `SL-USERS-CABINET-v1`; extends `17.1.2` without new permission codes;
 - `[x]` **Design v1.0 (`v1.00` Stage `22`)** — Soft UI HTML etalons → platform; process `SL-DESIGN-V1-PROCESS-v1`; closed `2026-08-23` (boards `22.3.4` + shell `22.9.4`); do not re-open Stage `20` data contracts;
 - `[x]` Universal audit trail (`17.1.3`) — ADR-025 + `audit_events` + size-grid UI journal; owner visual OK `2026-08-01`;
-- `[x]` Production ops (`17.2`) — `17.2.1`–`17.2.3` shipped (Compose/Caddy, deploy/health/logs, backup/DR runbooks); live VPS/secrets = owner apply.
+- `[x]` Production ops (`17.2`) — `17.2.1`–`17.2.3` shipped (Compose/Caddy, deploy/health/logs, backup/DR runbooks); live apply + tunnel = `v1.00` `0.5` (do not reopen `17.2.*`).
 
 ## Интеграции
 

@@ -23,6 +23,7 @@ from app.repositories import warehouses as warehouse_repo
 from app.schemas.stock import (
     StockDocumentCreate,
     StockDocumentRead,
+    StockInventoryLineRead,
     StockLedgerLineRead,
 )
 
@@ -58,6 +59,7 @@ _FG_TYPES = frozenset(
     }
 )
 _ALL_DOC_TYPES = _RECEIPT_TYPES | _ISSUE_TYPES
+_LISTABLE_DOC_TYPES = _ALL_DOC_TYPES | {StockDocumentType.INVENTORY.value}
 
 
 def _now() -> datetime:
@@ -82,7 +84,7 @@ def list_stock_documents(
     limit: int = 100,
     offset: int = 0,
 ) -> list[StockDocument]:
-    if doc_type is not None and doc_type not in _ALL_DOC_TYPES:
+    if doc_type is not None and doc_type not in _LISTABLE_DOC_TYPES:
         raise StockDocumentValidationError("Недопустимый тип документа")
     if status is not None and status not in {
         StockDocumentStatus.DRAFT.value,
@@ -221,6 +223,10 @@ def create_stock_document(
 
 def post_stock_document(db: Session, document_id: int) -> StockDocument:
     document = get_stock_document(db, document_id)
+    if document.doc_type == StockDocumentType.INVENTORY.value:
+        raise StockDocumentValidationError(
+            "Инвентаризацию нужно проводить отдельной операцией"
+        )
     if document.status == StockDocumentStatus.POSTED.value:
         raise StockDocumentValidationError("Документ уже проведён")
     if document.status == StockDocumentStatus.CANCELLED.value:
@@ -252,8 +258,25 @@ def _nomenclature_names_by_ids(db: Session, ids: list[int]) -> dict[int, str]:
 
 
 def to_stock_document_read(
-    document: StockDocument, names: dict[int, str]
+    document: StockDocument,
+    names: dict[int, str],
+    *,
+    include_inventory_lines: bool = False,
 ) -> StockDocumentRead:
+    inventory_lines: list[StockInventoryLineRead] = []
+    if include_inventory_lines:
+        inventory_lines = [
+            StockInventoryLineRead(
+                id=line.id,
+                sequence=line.sequence,
+                nomenclature_id=line.nomenclature_id,
+                nomenclature_name=names.get(line.nomenclature_id),
+                book_qty=line.book_qty,
+                counted_qty=line.counted_qty,
+                delta=Decimal(str(line.counted_qty)) - Decimal(str(line.book_qty)),
+            )
+            for line in document.inventory_lines
+        ]
     return StockDocumentRead(
         id=document.id,
         number=document.number,
@@ -280,13 +303,19 @@ def to_stock_document_read(
             )
             for line in document.ledger_lines
         ],
+        inventory_lines=inventory_lines,
     )
 
 
 def serialize_stock_document(db: Session, document: StockDocument) -> StockDocumentRead:
     """Embed nomenclature display names — one batch lookup (`0.2.7`)."""
     ids = [line.nomenclature_id for line in document.ledger_lines]
-    return to_stock_document_read(document, _nomenclature_names_by_ids(db, ids))
+    ids.extend(line.nomenclature_id for line in document.inventory_lines)
+    return to_stock_document_read(
+        document,
+        _nomenclature_names_by_ids(db, ids),
+        include_inventory_lines=True,
+    )
 
 
 def serialize_stock_documents(
@@ -298,4 +327,7 @@ def serialize_stock_documents(
         for line in document.ledger_lines
     ]
     names = _nomenclature_names_by_ids(db, ids)
-    return [to_stock_document_read(document, names) for document in documents]
+    return [
+        to_stock_document_read(document, names, include_inventory_lines=False)
+        for document in documents
+    ]

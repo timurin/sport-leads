@@ -1,9 +1,9 @@
 # Sport-Lead — Roadmap v1.00
 
-**Code:** `SL-ROADMAP-v1.00`  
-**Updated:** `2026-08-25` (Stage **25** closed owner visual `25.5.2`; Stage **7** contract `7.1.1` / ADR-031; next `7.1.2`)
-**Project version:** `v1.00`  
-**Status:** Confirmed carry-over from `v0.9.0` (Stages **1.4.3**, **2** group, **7**, **12.4**–**12.5**, **13**, **14**, **15**, **16**, **18.4**) + **new** Stages **0** (performance + LAN + order-without-lead), **20** (Lead / Order UX, closed), **21** (Settings / Users cabinet, closed), **22** (Design v1.0), **23** (Unified Work Tasks), **24** (Sewing cabinet), **25** (Tech-card QR / shop scan). Owner started early (`2026-08-05`).
+**Code:** `SL-ROADMAP-v1.00`
+**Updated:** `2026-08-25` (Stage **12.4** inventory UI `12.4.1.5`; stop at owner visual `12.4.1.6`)
+**Project version:** `v1.00`
+**Status:** Confirmed carry-over from `v0.9.0` (Stages **1.4.3**, **2** group, **7**, **12.4**–**12.5**, **13**, **14**, **15**, **16**, **18.4**) + **new** Stages **0** (performance + LAN + order-without-lead + **canonical VPS `0.5`**), **20** (Lead / Order UX, closed), **21** (Settings / Users cabinet, closed), **22** (Design v1.0), **23** (Unified Work Tasks), **24** (Sewing cabinet), **25** (Tech-card QR / shop scan). Owner started early (`2026-08-05`).
 **Languages / Языки:** English + Russian (this MD). Interactive switch: `docs/erp/status/roadmap-v1.00.html`
 
 **Canonical twin:**
@@ -29,7 +29,7 @@
 ## Rules / Правила
 
 - `[x]` = done / выполнено; `[ ]` = open / не выполнено.
-- Codes keep `v0.9.0` numbering for carried work (`1.4.3.*`, `2.2.3.*`, `2.2.4.*`, `2.3.*`, `2.4.*`, `7.*`, `12.4`–`12.5`, `13.*`, `14.*`, `15.*`, `16.*`, `18.4.*`). New Stages **0** (`0.1` / `0.2.*` / `0.3.*` / `0.4.*`), **20** (`20.1`–`20.4`), **21** (`21.1`–`21.5`), **22** (`22.0`–`22.9` Design v1.0; process `docs/design/design-v1-process.md`), **23** (`23.0`–`23.10` Unified Work Tasks; ADR-028), **24** (`24.0`–`24.5` Sewing cabinet), **25** (`25.0`–`25.5` Tech-card QR / shop scan).
+- Codes keep `v0.9.0` numbering for carried work (`1.4.3.*`, `2.2.3.*`, `2.2.4.*`, `2.3.*`, `2.4.*`, `7.*`, `12.4`–`12.5`, `13.*`, `14.*`, `15.*`, `16.*`, `18.4.*`). New Stages **0** (`0.1` / `0.2.*` / `0.3.*` / `0.4.*` / **`0.5.*`**), **20** (`20.1`–`20.4`), **21** (`21.1`–`21.5`), **22** (`22.0`–`22.9` Design v1.0; process `docs/design/design-v1-process.md`), **23** (`23.0`–`23.10` Unified Work Tasks; ADR-028), **24** (`24.0`–`24.5` Sewing cabinet), **25** (`25.0`–`25.5` Tech-card QR / shop scan).
 - Do not execute `v1.00` while `v0.9.0` is still the active project version, unless the owner explicitly starts early.
 - Не исполнять `v1.00`, пока активная версия проекта — `v0.9.0`, если владелец явно не начал раньше.
 - **Owner early start:** `2026-08-05` — execution of `v1.00` begun (`0.1.1` closed).
@@ -57,7 +57,7 @@
 
 | Stage | EN | RU |
 |---|---|---|
-| **0** | Platform performance / slow-data + LAN + order without Lead | Производительность / slow-data + LAN + заказ без лида |
+| **0** | Platform performance / slow-data + LAN + order without Lead + **canonical VPS (`0.5`)** | Производительность / slow-data + LAN + заказ без лида + **канонический VPS (`0.5`)** |
 | **20** | Lead / Order card UX + unified messaging | UX карточек лида / заказа + единая внутренняя переписка |
 | **21** | Settings / Users cabinet (`/settings/users`) | Настройки / Пользователи (кабинет) |
 | **22** | Design v1.0 (HTML etalons → Soft UI platform) | Design v1.0 (HTML-эталоны → Soft UI в платформе) |
@@ -65,8 +65,9 @@
 | **24** | Sewing cabinet (current slice after Stage 2) | Кабинет швеи (текущий срез после Stage 2) |
 | **25** | Tech-card QR + shop scan (after 24) | QR техкарты + скан по маршруту (после 24) |
 
-> **EN:** Stage 0 is **new** in `v1.00`: slow-data (`0.1`/`0.2`), **LAN** (`0.3`), and **create SalesOrder without Lead** (`0.4`). Stages **20** / **21** closed. Stage **22** = Design v1.0 (do **not** re-open `20.*` data contracts). Do **not** re-open closed `3.5.*` / `19.*` / `17.1.2.*` in `v0.9.0`. Stage **2** closed `2026-08-24`. Stage **24** sewing cabinet closed `2026-08-24`. Stage **25** QR/scan closed `2026-08-25` (owner visual `25.5.2`). Current slice: Stage **7** Specifications (`7.1.1` contract / ADR-031; next `7.1.2` DB). `2.4.2` Employees is **not** a 24/25 dependency (sewer = `PlatformUser`). `12.4`–`12.5` / 13–16 / `18.4` are not blockers.
-> **RU:** Stage 0: slow-data + **LAN** (`0.3`) + **заказ без лида** (`0.4`). Stages **20** / **21** закрыты. Stage **22** = Design v1.0. Stage **2** закрыт `2026-08-24`. Stage **24** закрыт `2026-08-24`. Stage **25** закрыт `2026-08-25`. Текущий срез: Stage **7** (`7.1.1` / ADR-031; далее `7.1.2`). `2.4.2` Employees **не** зависимость (швея = `PlatformUser`).
+> **EN:** Stage 0 is **new** in `v1.00`: slow-data (`0.1`/`0.2`), **LAN** (`0.3`), **create SalesOrder without Lead** (`0.4`), and **canonical VPS** (`0.5`, ADR-032). Stages **20** / **21** closed. Stage **22** = Design v1.0 (do **not** re-open `20.*` data contracts). Do **not** re-open closed `3.5.*` / `19.*` / `17.1.2.*` / `17.2.1`–`17.2.3` in `v0.9.0`. Stage **2** closed `2026-08-24`. Stage **24** sewing cabinet closed `2026-08-24`. Stage **25** QR/scan closed `2026-08-25` (owner visual `25.5.2`). Stage **7** Specifications closed `2026-08-25` (owner visual `7.2.2.6`). Current slice: Stage **12.4** inventory UI shipped; stop at owner visual `12.4.1.6`. Stage **`0.5`** git gate `0.5.3` remains owner. `2.4.2` Employees is **not** a 24/25 dependency (sewer = `PlatformUser`). `12.5` / 13–16 / `18.4` are not blockers.
+>
+> **RU:** Stage 0: slow-data + **LAN** (`0.3`) + **заказ без лида** (`0.4`) + **канонический VPS** (`0.5`). Stages **20** / **21** закрыты. Stage **22** = Design v1.0. Stage **2** закрыт `2026-08-24`. Stage **24** закрыт `2026-08-24`. Stage **25** закрыт `2026-08-25`. Stage **7** закрыт `2026-08-25` (owner visual `7.2.2.6`). Текущий срез: Stage **12.4** (UI инвентаризации; стоп на visual `12.4.1.6`). Git gate `0.5.3` остаётся за владельцем. `2.4.2` Employees **не** зависимость (швея = `PlatformUser`).
 
 ### Remain in v0.9.0 / Остаются в v0.9.0
 
@@ -74,21 +75,21 @@
 
 `1.4.1` / `1.4.2` уже закрыты в `v0.9.0`; `2.2.1` / `2.2.2`; FG `12.3`; visual `1.3.3.6`; auth `17`; admin `18.1`–`18.3`; Stage `19` — остаются в `v0.9.0`.
 
-> **18.4 decision / Решение по 18.4:** full carry to `v1.00` (no minimum close in `v0.9.0`). Catalog guards already use stable stubs (`product_model_has_journal_operations` / characteristic journal hooks return `False`). Real journal does not block closing `v0.9.0`.  
+> **18.4 decision / Решение по 18.4:** full carry to `v1.00` (no minimum close in `v0.9.0`). Catalog guards already use stable stubs (`product_model_has_journal_operations` / characteristic journal hooks return `False`). Real journal does not block closing `v0.9.0`.
 > Полный перенос в `v1.00` без минимального закрытия в `v0.9.0`: stubs уже держат guards каталога.
 
-> **1.4.3 decision / Решение по 1.4.3:** only open remainder of Stage 1.4. Core + mock (`1.4.1`/`1.4.2`) stay done in `v0.9.0`. Real adapters ≠ Stage `19`; channel transport shared with `16.1`, CRM lead ingest owned here.  
+> **1.4.3 decision / Решение по 1.4.3:** only open remainder of Stage 1.4. Core + mock (`1.4.1`/`1.4.2`) stay done in `v0.9.0`. Real adapters ≠ Stage `19`; channel transport shared with `16.1`, CRM lead ingest owned here.
 > Переносится только открытый остаток; ядро+mock закрыты в `v0.9.0`.
 
 ---
 
-## Stage 0 — Platform performance, LAN access, and order-without-lead / Производительность, LAN и заказ без лида
+## Stage 0 — Platform performance, LAN access, order-without-lead, and canonical VPS / Производительность, LAN, заказ без лида и канонический VPS
 
-**New in:** `v1.00` (relocated from `v0.9.0` stub `0.4`; LAN `2026-08-05`; order-without-lead `2026-08-05`)  
-**Новое в:** `v1.00` (из stub `0.4`; LAN и заказ без лида `2026-08-05`)
+**New in:** `v1.00` (relocated from `v0.9.0` stub `0.4`; LAN `2026-08-05`; order-without-lead `2026-08-05`; canonical VPS `2026-08-25`)
+**Новое в:** `v1.00` (из stub `0.4`; LAN и заказ без лида `2026-08-05`; VPS `2026-08-25`)
 
-> **EN:** (1) Kill slow catalog/list UX from RSC **per-row HTTP** (N+1). (2) **LAN** access to local FE/BE (`3001`/`8000`; ≠ production VPS). (3) Enable **SalesOrder create without Lead** — today `lead_id` is required and orders are created only via `convert_lead`. Convert-from-lead stays valid.  
-> **RU:** (1) Slow-data / N+1. (2) Доступ из **LAN**. (3) **Создание заказа без лида** — сейчас `lead_id` обязателен, заказ только через convert. Convert-from-lead остаётся.
+> **EN:** (1) Kill slow catalog/list UX from RSC **per-row HTTP** (N+1). (2) **LAN** access to local FE/BE (`3001`/`8000`; ≠ production VPS). (3) Enable **SalesOrder create without Lead**. (4) **Canonical VPS Postgres** + local repo + GitHub deploy + owner SSH tunnel (`0.5`; ADR-032). Convert-from-lead stays valid. Do not reopen `17.2.1`–`17.2.3`.
+> **RU:** (1) Slow-data / N+1. (2) Доступ из **LAN**. (3) **Создание заказа без лида**. (4) **Каноническая БД на VPS** + локальный репо + Git + tunnel (`0.5`). `17.2.1`–`17.2.3` не переоткрывать.
 
 ### 0.1 — Full slow-data audit (first) / Полный аудит медленных данных (первым)
 
@@ -110,7 +111,7 @@
 
 ### 0.3 — Local network (LAN) access / Доступ в локальной сети
 
-> **EN:** Today stack defaults to `127.0.0.1` — not reachable from other LAN hosts without bind/CORS/env. LAN share ≠ public internet / production Caddy.  
+> **EN:** Today stack defaults to `127.0.0.1` — not reachable from other LAN hosts without bind/CORS/env. LAN share ≠ public internet / production Caddy.
 > **RU:** Сейчас стек на `127.0.0.1` — с других машин LAN недоступен без bind/CORS/env. LAN ≠ публичный интернет / production Caddy.
 
 - [x] 0.3.1 — Audit first: inventory bind hosts (uvicorn/Next `127.0.0.1` vs `0.0.0.0`), CORS, `SPORT_LEADS_API_URL` / `NEXT_PUBLIC_*`, firewall/Windows features, optional reverse proxy; produce **install vs remove** component list + threat note (LAN ≠ public); write follow-up Stage 0 microtasks if gaps remain — `v1.00` `2026-08-05`; task `docs/tasks/v1.00-stage-0.3-lan-access.md` / Аудит LAN закрыт
@@ -119,21 +120,39 @@
 
 ### 0.4 — Create sales order without Lead / Создание заказа без лида
 
-> **EN:** Evidence: `SalesOrder.lead_id` required + `uq_sales_orders_lead_id`; create path = `convert_lead` only (`lead_conversion.py`). Need nullable `lead_id` + create API + UI; convert-from-lead intact. **Numbering:** auto `SO-YYYY-######` **or** owner-entered freeform `number` (unique, ≤50). **TC path:** no orphan TechnicalCard — after create + PRODUCT line, use existing `…/technical-cards/generate` (ADR-016). Enables manual «TC with arbitrary order number» without breaking FG/Spec/shop. Prefetch for UNF order Excel (`16.2.1`).  
+> **EN:** Evidence: `SalesOrder.lead_id` required + `uq_sales_orders_lead_id`; create path = `convert_lead` only (`lead_conversion.py`). Need nullable `lead_id` + create API + UI; convert-from-lead intact. **Numbering:** auto `SO-YYYY-######` **or** owner-entered freeform `number` (unique, ≤50). **TC path:** no orphan TechnicalCard — after create + PRODUCT line, use existing `…/technical-cards/generate` (ADR-016). Enables manual «TC with arbitrary order number» without breaking FG/Spec/shop. Prefetch for UNF order Excel (`16.2.1`).
 > **RU:** Сейчас заказ только через convert; `lead_id` обязателен. Нужен nullable `lead_id` + create API + UI. **Номер:** auto или **произвольный** (unique). **ТК:** без orphan — generate после заказа+позиции (ADR-016). Prefetch для импорта заказов УНФ (`16.2.1`).
 
 - [x] 0.4.1 — Audit/contract: nullable `lead_id` (unique still for non-null); required Client/org/responsible; **number = auto OR freeform unique**; create API vs convert-only; UI entry (`/sales/orders` create); impact on lead convert, order field-links, Stage 20, TC generate (no orphan TC); amend ADR/domain note — `v1.00` `2026-08-05`; `SL-ORDER-WITHOUT-LEAD-v1`; task `docs/tasks/v1.00-stage-0.4-order-without-lead.md`; ADR-001 amend / Контракт закрыт
 - [x] 0.4.2 — Implement: migration + schemas/services/API create order without lead (incl. freeform number validation); FE create flow; keep convert-from-lead intact — `v1.00` `2026-08-05`; Alembic `i2j3k4l5m678`/`j3k4l5m6n789`/`k4l5m6n7o890`; `POST /orders` + `POST /clients`; drawer `/sales/orders`; owner visual OK; org via checkbox «Создать организацию?» / Реализация закрыта
 - [x] 0.4.3 — Regression (API: convert + without-lead create + freeform number unique) + docs checkpoint (order-card-field-links, erp-check/project-structure) — `v1.00` `2026-08-05`; `test_order_without_lead_0_4.py` 8 passed; field-links Source lead optional; ADR-001 org optional on create / Регрессия + docs закрыты
 
+### 0.5 — Canonical VPS workflow / Канонический VPS (БД + git + деплой)
+
+> **EN:** Canonical **data** = VPS Postgres. Canonical **code** = GitHub `main` after local push. User runtime = Caddy on VPS. Owner may point local uvicorn at VPS via SSH tunnel `:5433`. Agent tests stay on local Docker Postgres `:5432`. In-repo `17.2.1`–`17.2.3` stay closed. LAN `0.3` ≠ this block. Task `docs/tasks/v1.00-stage-0.5-vps-canonical.md`. ADR-032.
+> **RU:** Канонические данные = Postgres на VPS. Код = GitHub `main`. Рантайм = Caddy. Tunnel `:5433` — opt-in владельца. Агент тестирует только локальный Docker Postgres. `17.2.*` не переоткрывать.
+
+- [x] 0.5.1 — Contract / ADR: VPS Postgres SoT; loopback bind; agent Docker PG only; Git deploy; media-sync; boundary vs LAN `0.3` and closed `17.2` — `v1.00` `2026-08-25`; ADR-032; `SL-VPS-CANONICAL-v1`; task `docs/tasks/v1.00-stage-0.5-vps-canonical.md` / Контракт закрыт
+- [x] 0.5.2 — Agent rule + AGENTS / `dev-server-sessions.mdc` (default stack is not tunnel) — `v1.00` `2026-08-25`; `.cursor/rules/vps-canonical-workflow.mdc` / Правило агента
+- [ ] 0.5.3 — Git gate: owner commit+push closed-roadmap WIP (no `__pycache__`) before first VPS clone / Git gate: commit+push WIP до clone на VPS
+- [ ] 0.5.4 — VPS bootstrap: Docker, deploy user, UFW `22/80/443`, GitHub deploy key, clone, `.env.production` / Bootstrap хоста
+- [x] 0.5.5 — `compose.prod.yaml`: Postgres `127.0.0.1:5432` + `./storage:/app/storage` bind — `v1.00` `2026-08-25` / Bind loopback + storage
+- [ ] 0.5.6 — First `up --build`, DNS, TLS, `/healthz` `/health` `/health/ready` / Первый up + TLS
+- [ ] 0.5.7 — One-time data migrate: local `backup_db.ps1` → `prod-restore-db` on VPS / Перенос дампа
+- [ ] 0.5.8 — GitHub Environment `production` + secrets + first `workflow_dispatch` / Secrets + первый deploy
+- [x] 0.5.9 — Tunnel script + `.env.tunnel.example` (local port **5433**) — `v1.00` `2026-08-25`; `scripts/vps-db-tunnel.ps1` / Tunnel
+- [x] 0.5.10 — Storage sync script; media SoT = VPS disk — `v1.00` `2026-08-25`; `scripts/sync-storage-from-vps.ps1` / Sync media
+- [ ] 0.5.11 — Cron `prod-backup-db.sh` on VPS (off-box copy) / Cron backup
+- [ ] 0.5.12 — Owner smoke: HTTPS login + optional local `:3001` via tunnel; docs checkpoint / Smoke владельцем
+
 ---
 
 ## Stage 1.4.3 — Real external lead-source and communication adapters / Реальные адаптеры источников лидов и коммуникаций
 
-**Moved from:** `v0.9.0` `1.4.3` (split into microtasks)  
+**Moved from:** `v0.9.0` `1.4.3` (split into microtasks)
 **Перенесено из:** `v0.9.0`, `1.4.3` (разбито на микротаски)
 
-> **EN:** Stage closed `2026-08-23`. `1.4.1` collectors + `1.4.2` mock stay in `v0.9.0`. Lead card send uses SMTP when mailbox/env configured; mock fallback otherwise. Contour **C** (ADR-020). ≠ Stage `19`.  
+> **EN:** Stage closed `2026-08-23`. `1.4.1` collectors + `1.4.2` mock stay in `v0.9.0`. Lead card send uses SMTP when mailbox/env configured; mock fallback otherwise. Contour **C** (ADR-020). ≠ Stage `19`.
 > **RU:** Этап закрыт `2026-08-23`. `1.4.1` + `1.4.2` остаются в `v0.9.0`. Отправка с карточки лида — SMTP при конфиге, иначе mock. Контур **C**. ≠ Stage `19`.
 
 - [x] 1.4.3.1 — Contract: adapter registry vs collectors (`1.4.1`); lead create/update mapping; ≠ Stage `19` staff chat; relation to `16.1` (shared channel transport, CRM ingest owned here) — `v1.00` `2026-08-05`; `SL-EXTERNAL-ADAPTERS-v1`; task `docs/tasks/v1.00-stage-1.4.3-external-adapters.md`; ADR-020 / contour C note / Контракт закрыт
@@ -146,7 +165,7 @@
 
 ## Stage 2 — Client history, business data, organizations / История клиента, бизнес-данные, организации
 
-**Moved from:** `v0.9.0` items `2.2.3`, `2.3.*`, `2.4.*` (one group); **added** `2.2.4` folders (`2026-08-05`)  
+**Moved from:** `v0.9.0` items `2.2.3`, `2.3.*`, `2.4.*` (one group); **added** `2.2.4` folders (`2026-08-05`)
 **Перенесено из:** `v0.9.0`, пункты `2.2.3`, `2.3.*`, `2.4.*`; **добавлено** `2.2.4` папки (`2026-08-05`)
 
 > **EN:** `2.2.1` / `2.2.2` closed in `v0.9.0` (list+card on `/sales/clients`). History `2.2.3` owner OK; **folders** `2.2.4` owner OK `2026-08-23`; legal requisites `2.3.1` shipped on card; **segments/duplicates** `2.3.2` owner visual OK `2026-08-24`; **settlements** `2.3.3` owner visual OK `2026-08-24` (projection of `3.4.2`; ledger `14.2`); **orgs** `2.4.1` owner visual OK `2026-08-24`; **employees** `2.4.2` owner visual OK `2026-08-24` (auth linkage deferred). **Stage 2 closed.**
@@ -163,7 +182,7 @@
 
 ### 2.2.4 — Client folders (`/sales/clients`) / Папки клиентов
 
-> **EN:** Organize clients in a folder tree on the list workspace (pattern like product-model / sewing-op folders). Unfiled bucket allowed.  
+> **EN:** Organize clients in a folder tree on the list workspace (pattern like product-model / sewing-op folders). Unfiled bucket allowed.
 > **RU:** Организация клиентов по дереву папок на `/sales/clients` (как папки моделей / операций). Допускается «без папки».
 
 - [x] 2.2.4.1 — Contract: folder tree (create/rename/move/reorder); client↔folder link; filter list by folder∪descendants; empty/unfiled bucket — `v1.00` `2026-08-23`; `SL-CLIENT-FOLDERS-v1` `docs/tasks/v1.00-stage-2.2.4-client-folders.md` / Контракт: дерево папок; связь client↔folder; фильтр list; unfiled
@@ -175,7 +194,7 @@
 
 #### 2.3.1 — Legal details and banking data / Юр. реквизиты и банковские данные
 
-> **EN:** Host `/sales/clients/[clientId]`. MVP fields: **INN**, **bank accounts** (1..n via child table `ClientBankAccount`), **legal address**, **actual (factual) address**. KPP/OGRN only if approved in `2.3.1.1`.  
+> **EN:** Host `/sales/clients/[clientId]`. MVP fields: **INN**, **bank accounts** (1..n via child table `ClientBankAccount`), **legal address**, **actual (factual) address**. KPP/OGRN only if approved in `2.3.1.1`.
 > **RU:** Карточка `/sales/clients/[clientId]`. MVP: **ИНН**, **банковские счета** (1..n, таблица `ClientBankAccount`), **юридический адрес**, **фактический адрес**.
 
 - [x] 2.3.1.1 — Domain contract: INN + multi bank accounts (`ClientBankAccount`) + legal/actual address (+ optional KPP/OGRN); validation rules — `v1.00` `2026-08-23`; `SL-CLIENT-REQUISITES-v1` `docs/tasks/v1.00-stage-2.3.1-client-requisites.md` / Контракт: ИНН + счета + юр./факт. адрес (+ опц. КПП/ОГРН); валидация
@@ -228,13 +247,13 @@
 
 ## Stage 7 — Specifications / Спецификации
 
-**Moved from:** `v0.9.0` Stage 7  
+**Moved from:** `v0.9.0` Stage 7
 **Перенесено из:** `v0.9.0`, этап 7
 
 > **EN:** Spec = plan+fact **report document** from filled TC + execution (ADR-004/016/031). Not a prerequisite for TC generate or batch start. Parent = `ProductionBatch` 1:1. Documents registry = link index later. Task: `docs/tasks/v1.00-stage-7-specifications.md`.
 > **RU:** Спецификация = **документ-отчёт** план+факт из заполненной ТК + исполнения (ADR-004/016/031). Не prerequisite generate ТК и не gate запуска партии. Родитель = партия 1:1. Реестр Документы = индекс ссылок позже.
 
-**Execute after / Исполнять после:** Stage 25 closed `2026-08-25`. **This is the current slice.**
+**Execute after / Исполнять после:** Stage 25 closed `2026-08-25`. **Stage 7 closed** `2026-08-25` (owner visual `7.2.2.6`).
 
 ### 7.1 — Domain and persistence / Домен и персистентность
 
@@ -247,49 +266,58 @@
 
 #### 7.1.2 — Specification database core / Ядро БД спецификаций
 
-- [ ] 7.1.2.1 — Add SQLAlchemy entities / Добавить SQLAlchemy entities
-- [ ] 7.1.2.2 — Add Alembic migration / Добавить Alembic migration
-- [ ] 7.1.2.3 — Add schemas and backend regression tests / Schemas + backend regression tests
+- [x] 7.1.2.1 — Add SQLAlchemy entities / Добавить SQLAlchemy entities — `v1.00` `2026-08-25`; `Specification*` + TC FK; `test_specifications_7_1_2.py` / SQLAlchemy entities
+- [x] 7.1.2.2 — Add Alembic migration / Добавить Alembic migration — `v1.00` `2026-08-25`; Alembic `e4f5a6b7c890` / Миграция
+- [x] 7.1.2.3 — Add schemas and backend regression tests / Schemas + backend regression tests — `v1.00` `2026-08-25`; `schemas/specification.py`; `test_specifications_7_2.py` / DTO + list slim
 
 ### 7.2 — Specification workflows / Workflows спецификаций
 
 #### 7.2.1 — Specification CRUD API / CRUD API спецификаций
 
-- [ ] 7.2.1.1 — Add repository and service CRUD / Repository + service CRUD
-- [ ] 7.2.1.2 — Add endpoints / Endpoints
-- [ ] 7.2.1.3 — Add backend regression tests / Backend regression tests
+- [x] 7.2.1.1 — Add repository and service CRUD / Repository + service CRUD — `v1.00` `2026-08-25`; `services/specifications.py` create/refresh/approve / Service
+- [x] 7.2.1.2 — Add endpoints / Endpoints — `v1.00` `2026-08-25`; `GET/POST /specifications` + refresh/new-draft/approve/cancel-draft / API
+- [x] 7.2.1.3 — Add backend regression tests / Backend regression tests — `v1.00` `2026-08-25`; `test_specifications_7_2.py` / API tests
 
 #### 7.2.2 — Specification workspace and card / Workspace и карточка спецификации
 
-- [ ] 7.2.2.1 — Add frontend types and API client / Frontend types + API client
-- [ ] 7.2.2.2 — Add workspace/list route (interim; later subsumed by Documents filter) / Workspace/list route (interim; позже Documents filter)
-- [ ] 7.2.2.3 — Add detail card (plan+fact blocks; rights-gated edit) / Detail card (блоки план+факт; edit по правам)
-- [ ] 7.2.2.4 — Add loading/error states / Loading/error states
-- [ ] 7.2.2.5 — Add frontend regression tests / Frontend regression tests
-- [ ] 7.2.2.6 — Visual verification / Визуальная проверка
+- [x] 7.2.2.1 — Add frontend types and API client / Frontend types + API client — `v1.00` `2026-08-25`; `lib/production/specifications.ts` + `-api.ts` / FE client
+- [x] 7.2.2.2 — Add workspace/list route (interim; later subsumed by Documents filter) / Workspace/list route (interim; позже Documents filter) — `v1.00` `2026-08-25`; `/production/specifications` PT-02 / List
+- [x] 7.2.2.3 — Add detail card (plan+fact blocks; rights-gated edit) / Detail card (блоки план+факт; edit по правам) — `v1.00` `2026-08-25`; PT-07 card; refresh/approve/new-draft; no free-form edit / Card
+- [x] 7.2.2.4 — Add loading/error states / Loading/error states — `v1.00` `2026-08-25`; list+detail `loading.tsx`/`error.tsx` / Page states
+- [x] 7.2.2.5 — Add frontend regression tests / Frontend regression tests — `v1.00` `2026-08-25`; `specifications.test.mjs` + nav / FE tests
+- [x] 7.2.2.6 — Visual verification / Визуальная проверка — `v1.00` `2026-08-25`; owner visual OK list `/production/specifications` + card + batch link / Owner visual OK
 
 #### 7.2.3 — Link specifications to technical card / order context / Связь спецификаций с ТК / контекстом заказа
 
-- [ ] 7.2.3.1 — Add backend relation fields (technical_card / order item / model / variant / batch references as approved) / Backend relation fields (ТК / позиция заказа / модель / вариант / batch)
-- [ ] 7.2.3.2 — Add migration and schemas for specification material + operation (+ fact) lines (snapshot/read from TC + execution) / Миграция + schemas строк материалов/операций (+ факт)
-- [ ] 7.2.3.3 — Add service: create Spec version from TC composition + assembly snapshot (plan); refresh fact blocks from execution / Service: создать версию Spec из состава ТК + snapshot сборки (plan); обновить факт из исполнения
-- [ ] 7.2.3.4 — Add service validation for active/approved versions where applicable / Валидация active/approved версий
-- [ ] 7.2.3.5 — Add workspace/card integration showing plan+fact blocks sourced from TC / execution / Интеграция workspace/card с блоками план+факт из ТК / исполнения
-- [ ] 7.2.3.6 — Add regression tests (immutability vs later TC/model edits after Spec approve) / Регрессия (иммутабельность vs правки ТК/модели после approve Spec)
+- [x] 7.2.3.1 — Add backend relation fields (technical_card / order item / model / variant / batch references as approved) / Backend relation fields (ТК / позиция заказа / модель / вариант / batch) — `v1.00` `2026-08-25`; shipped in `e4f5a6b7c890` product lines + header FKs / Relations in 7.1.2
+- [x] 7.2.3.2 — Add migration and schemas for specification material + operation (+ fact) lines (snapshot/read from TC + execution) / Миграция + schemas строк материалов/операций (+ факт) — `v1.00` `2026-08-25`; same migration + line DTOs / Lines in 7.1.2
+- [x] 7.2.3.3 — Add service: create Spec version from TC composition + assembly snapshot (plan); refresh fact blocks from execution / Service: создать версию Spec из состава ТК + snapshot сборки (plan); обновить факт из исполнения — `v1.00` `2026-08-25`; rebuild from TC + sewing ledger / Refresh from TC
+- [x] 7.2.3.4 — Add service validation for active/approved versions where applicable / Валидация active/approved версий — `v1.00` `2026-08-25`; approve requires terminal TCs; refresh only draft / Approve gate
+- [x] 7.2.3.5 — Add workspace/card integration showing plan+fact blocks sourced from TC / execution / Интеграция workspace/card с блоками план+факт из ТК / исполнения — `v1.00` `2026-08-25`; card tables + batch link on PO / Plan+fact UI
+- [x] 7.2.3.6 — Add regression tests (immutability vs later TC/model edits after Spec approve) / Регрессия (иммутабельность vs правки ТК/модели после approve Spec) — `v1.00` `2026-08-25`; approved planned_qty frozen after TC edit / Immutability test
 
 ---
 
 ## Stage 12 — Warehouse remainder / Остаток склада (12.4–12.5)
 
-**Moved from:** `v0.9.0` `12.4`, `12.5`  
+**Moved from:** `v0.9.0` `12.4`, `12.5`
 **Перенесено из:** `v0.9.0`, `12.4`, `12.5`
 
-> **EN:** `12.1` structure + `12.2` ledger MVP already shipped in `v0.9.0`. FG docs `12.3` (+ wire `11.2.2.4`) **remain** in `v0.9.0`.  
-> **RU:** `12.1` + `12.2` уже в `v0.9.0`. FG `12.3` (+ `11.2.2.4`) **остаются** в `v0.9.0`.
+> **EN:** `12.1` structure + `12.2` ledger MVP already shipped in `v0.9.0`. FG docs `12.3` (+ wire `11.2.2.4`) **remain** in `v0.9.0`. Inventory = `StockDocument` type `inventory` + recount lines; post writes signed deltas to the same ledger (ADR-019 amend `2026-08-25`). Task: `docs/tasks/v1.00-stage-12.4-inventory.md`.
+> **RU:** `12.1` + `12.2` уже в `v0.9.0`. FG `12.3` (+ `11.2.2.4`) **остаются** в `v0.9.0`. Инвентаризация = тип `inventory` + строки пересчёта; проведение пишет signed delta в тот же регистр.
+
+**Execute after / Исполнять после:** Stage 7 closed `2026-08-25`. Owner unpaused UI; **stop at visual `12.4.1.6`**.
 
 ### 12.4 — Inventory / Инвентаризация
 
-- [ ] 12.4.1 — Inventory documents and recount postings / Документы инвентаризации и пересчётные проводки
+#### 12.4.1 — Inventory documents and recount postings / Документы инвентаризации и пересчётные проводки
+
+- [x] 12.4.1.1 — Define inventory document + recount posting contract (book vs counted; signed delta to ledger) / Контракт документа инвентаризации + проводки пересчёта — `v1.00` `2026-08-25`; ADR-019 amend; `SL-STOCK-INVENTORY-v1` / Контракт; без БД
+- [x] 12.4.1.2 — Add SQLAlchemy + Alembic for `inventory` doc type and recount lines / SQLAlchemy + Alembic тип `inventory` + строки пересчёта — `v1.00` `2026-08-25`; Alembic `f5a6b7c8d901`; `test_stock_inventory_12_4_1_2.py` / модели + миграция
+- [x] 12.4.1.3 — Add service: snapshot book qty, enter counted, post non-zero deltas / Service: снимок книги, факт, проведение дельт — `v1.00` `2026-08-25`; `stock_inventory.py`; `test_stock_inventory_12_4_1_3.py` / snapshot + counted + post
+- [x] 12.4.1.4 — Add API + backend regression tests / API + backend tests — `v1.00` `2026-08-25`; `POST /stock/inventory` + fill/refresh/counted/post; `test_stock_inventory_12_4_1_4.py` / slim list
+- [x] 12.4.1.5 — Add UI on `/warehouse/movements` (create + card book/counted/delta) / UI журнал + карточка — `v1.00` `2026-08-25`; create drawer + PT-07 book/counted/delta; `stock-inventory.test.mjs` / UI; стоп на visual `12.4.1.6`
+- [ ] 12.4.1.6 — Visual verification / Визуальная проверка
 
 ### 12.5 — Transfers and reserves / Перемещения и резервы
 
@@ -300,7 +328,7 @@
 
 ## Stage 13 — Procurement / Закупки
 
-**Moved from:** `v0.9.0` Stage 13  
+**Moved from:** `v0.9.0` Stage 13
 **Перенесено из:** `v0.9.0`, этап 13
 
 ### 13.1 — Supplier contour / Контур поставщиков
@@ -317,7 +345,7 @@
 
 ## Stage 14 — Shipping and Payments / Отгрузка и платежи
 
-**Moved from:** `v0.9.0` Stage 14  
+**Moved from:** `v0.9.0` Stage 14
 **Перенесено из:** `v0.9.0`, этап 14
 
 ### 14.1 — Shipping / Отгрузка
@@ -333,7 +361,7 @@
 
 ## Stage 15 — Costing and Analytics / Себестоимость и аналитика
 
-**Moved from:** `v0.9.0` Stage 15  
+**Moved from:** `v0.9.0` Stage 15
 **Перенесено из:** `v0.9.0`, этап 15
 
 ### 15.1 — Costing / Себестоимость
@@ -350,12 +378,12 @@
 
 ## Stage 16 — Integrations / Интеграции
 
-**Moved from:** `v0.9.0` Stage 16  
+**Moved from:** `v0.9.0` Stage 16
 **Перенесено из:** `v0.9.0`, этап 16
 
 ### 16.1 — External channels / Внешние каналы
 
-> **EN:** Platform channel connectors. Lead **ingest** adapters owned by `1.4.3.*` (shared transport OK, no duplicate CRM SoT).  
+> **EN:** Platform channel connectors. Lead **ingest** adapters owned by `1.4.3.*` (shared transport OK, no duplicate CRM SoT).
 > **RU:** Канальные коннекторы платформы. Адаптеры **ingest лидов** — `1.4.3.*` (общий transport OK, без дубля CRM SoT).
 
 - [ ] 16.1.1 — Website forms, email, VK, Telegram, and telephony / Формы сайта, email, VK, Telegram и телефония
@@ -363,7 +391,7 @@
 
 ### 16.2 — Enterprise exchange / Корпоративный обмен
 
-> **EN:** Contour **D** (ADR-020). **First slice of `16.2.1`:** import **SalesOrder** (+ lines) from **1C:UNF Excel export** via shared `file_io` + dry-run (not catalog toolbar). Depends on **`0.4`** (create without lead). Column map **deferred** until owner provides a sample UNF workbook. Resolve Client / Nomenclature (variant `external_code` as seed); idempotency via UNF document number → `SalesOrder.number` (or later `external_id`). Commercial import OK without model/routing; TC generate only after eligible PRODUCT lines are completed. Orchestration shell → `16.3`.  
+> **EN:** Contour **D** (ADR-020). **First slice of `16.2.1`:** import **SalesOrder** (+ lines) from **1C:UNF Excel export** via shared `file_io` + dry-run (not catalog toolbar). Depends on **`0.4`** (create without lead). Column map **deferred** until owner provides a sample UNF workbook. Resolve Client / Nomenclature (variant `external_code` as seed); idempotency via UNF document number → `SalesOrder.number` (or later `external_id`). Commercial import OK without model/routing; TC generate only after eligible PRODUCT lines are completed. Orchestration shell → `16.3`.
 > **RU:** Контур **D**. **Первый срез `16.2.1`:** импорт **заказов покупателя** из **Excel выгрузки 1С:УНФ** (`file_io` + dry-run). Зависит от **`0.4`**. Карта колонок — **позже** (нужен образец файла). Сопоставление клиент/номенклатура; идемпотентность по номеру УНФ. ТК — только после дозаполнения eligible lines. Оркестрация → `16.3`.
 
 - [ ] 16.2.1 — 1C:UNF exchange — contour **D** (ADR-020); **MVP first:** SalesOrder Excel from UNF export (depends `0.4`; column map after sample file); neighbor to universal job shell (`16.3`), not catalog Excel buttons / Обмен с 1С:УНФ — контур **D**; **MVP:** Excel заказов из УНФ (после `0.4`; карта колонок после образца); рядом с `16.3`, не кнопки каталога
@@ -372,7 +400,7 @@
 
 ### 16.3 — Universal import and export (orchestration) / Универсальный импорт и экспорт (оркестрация)
 
-> **EN:** ADR-020: platform **job shell** (section picker + journal) over the same adapters used by section toolbars (`4.5`). Do not pull domain-inline `9.3.2` here.  
+> **EN:** ADR-020: platform **job shell** (section picker + journal) over the same adapters used by section toolbars (`4.5`). Do not pull domain-inline `9.3.2` here.
 > **RU:** ADR-020: платформенная **оболочка заданий** (выбор раздела + журнал) поверх тех же адаптеров, что у тулбаров разделов (`4.5`). Не тянуть сюда доменный inline `9.3.2`.
 
 - [ ] 16.3.1 — Contract: job runner + section adapter registry (upload → map → validate → dry-run → commit; audit hooks) / Контракт: runner заданий + реестр адаптеров разделов (upload → map → validate → dry-run → commit; audit hooks)
@@ -384,10 +412,10 @@
 
 ## Stage 18.4 — Global operations journal / Глобальный журнал операций
 
-**Moved from:** `v0.9.0` `18.4` (full block)  
+**Moved from:** `v0.9.0` `18.4` (full block)
 **Перенесено из:** `v0.9.0`, блок `18.4` целиком
 
-> **EN:** No minimum close in `v0.9.0`. Stubs remain: `product_model_has_journal_operations` / characteristic journal hooks return `False` until this ships. Admin shell `18.1`–`18.3` stay in `v0.9.0`.  
+> **EN:** No minimum close in `v0.9.0`. Stubs remain: `product_model_has_journal_operations` / characteristic journal hooks return `False` until this ships. Admin shell `18.1`–`18.3` stay in `v0.9.0`.
 > **RU:** Без минимального закрытия в `v0.9.0`. Stubs остаются до реализации журнала. Оболочка admin `18.1`–`18.3` — в `v0.9.0`.
 
 ### 18.4 — Journal microtasks / Микрозадачи журнала
@@ -405,15 +433,15 @@
 
 ## Stage 20 — Lead / Order card UX + unified messaging / UX карточек лида / заказа + единая переписка
 
-**New in:** `v1.00` (owner UX package `2026-08-05`)  
+**New in:** `v1.00` (owner UX package `2026-08-05`)
 **Новое в:** `v1.00` (UX-пакет владельца `2026-08-05`)
 
-> **EN:** Do not re-open closed `v0.9.0` `3.5.*` or Stage `19`. External CRM channels stay `1.4.3` / `LeadMessage`. Stage `19` (ADR-026) remains the staff collaboration platform on order/TC; Stage 20 unifies UX / optional shared shell with lead.  
+> **EN:** Do not re-open closed `v0.9.0` `3.5.*` or Stage `19`. External CRM channels stay `1.4.3` / `LeadMessage`. Stage `19` (ADR-026) remains the staff collaboration platform on order/TC; Stage 20 unifies UX / optional shared shell with lead.
 > **RU:** Не переоткрывать закрытые `3.5.*` / Stage `19` в `v0.9.0`. Внешние CRM-каналы — `1.4.3` / `LeadMessage`. Stage `19` (ADR-026) — платформа staff chat на заказе/ТК; Stage 20 — паритет UX / общий shell с лидом.
 
 ### 20.1 — Lead: Client need field cleanup / Лид: очистка «Потребность клиента»
 
-> **EN:** Remove from lead commercial block (`lead-commercial-details.tsx`): `productType`, `kitQuantity`, `estimatedAmount`, `sizeComment`, `desiredReadyDate`, `eventDate`.  
+> **EN:** Remove from lead commercial block (`lead-commercial-details.tsx`): `productType`, `kitQuantity`, `estimatedAmount`, `sizeComment`, `desiredReadyDate`, `eventDate`.
 > **RU:** Убрать из блока: Тип продукции, Количество комплектов, Предполагаемая сумма, Размерный ряд/комментарии, Желаемая дата готовности, Дата мероприятия.
 
 - [x] 20.1.1 — Contract: retain vs remove vs hide for each field; impact on convert-to-order / order sync (`20.4.2`) — `v1.00` `2026-08-05`; `SL-LEAD-NEED-CLEANUP-v1`; task `docs/tasks/v1.00-stage-20.1-lead-need-cleanup.md`; hide UI / retain DB; convert keeps `estimated_amount`+`desired_date` / Контракт закрыт
@@ -422,7 +450,7 @@
 
 ### 20.2 — Lead: Card template layout / Лид: шаблон карточки
 
-> **EN:** Host `lead-page.tsx`: key metrics under stage/kanban rail; activity history full width at page bottom; tasks + notes **50/50**.  
+> **EN:** Host `lead-page.tsx`: key metrics under stage/kanban rail; activity history full width at page bottom; tasks + notes **50/50**.
 > **RU:** Метрики вверх под стадии канбан; история на всю ширину внизу; задачи и заметки 50/50.
 
 - [x] 20.2.1 — Layout wire: metrics up; history full-width bottom; tasks/notes 50/50 — `v1.00` `2026-08-05`; `lead-page.tsx` + `globals.css` `.lead-bottom-grid` / `.lead-history-card`; skeleton synced / Layout wired
@@ -430,7 +458,7 @@
 
 ### 20.3 — Unified internal messaging (CRM lead ↔ Stage 19) / Единая внутренняя переписка
 
-> **EN:** Analyze merge of lead CRM communications UI with order `OrderCollaborationPanel` / Stage `19`. Prefer shared platform UX; keep external channel SoT separate (`LeadMessage` / `1.4.3`).  
+> **EN:** Analyze merge of lead CRM communications UI with order `OrderCollaborationPanel` / Stage `19`. Prefer shared platform UX; keep external channel SoT separate (`LeadMessage` / `1.4.3`).
 > **RU:** Анализ совмещения CRM-коммуникаций лида с панелью заказа / Stage `19`. Общий UX платформы; внешние каналы отдельно.
 
 - [x] 20.3.1 — Contract / ADR note: shared UI shell vs shared thread SoT; boundaries vs `LeadMessage` external — `v1.00` `2026-08-05`; `ADR-027`; task `docs/tasks/v1.00-stage-20.3-unified-messaging.md`; shared UI + XOR lead/order thread; no convert merge; external stays `LeadMessage` / Контракт закрыт
@@ -439,7 +467,7 @@
 
 ### 20.4 — Sales order card parity with lead / Паритет карточки заказа с лидом
 
-> **EN:** Host `/sales/orders/[id]` (`sales-order-page.tsx`). Remove **Резерв** / **Дизайн** from «Основные сведения» (hide from block; do not blindly delete domain). Sync client-need with lead after `20.1`. Metrics visual parity with lead. Internal chat look + sync via `20.3`. **Create order without Lead** owned by Stage **`0.4`** (not this block).  
+> **EN:** Host `/sales/orders/[id]` (`sales-order-page.tsx`). Remove **Резерв** / **Дизайн** from «Основные сведения» (hide from block; do not blindly delete domain). Sync client-need with lead after `20.1`. Metrics visual parity with lead. Internal chat look + sync via `20.3`. **Create order without Lead** owned by Stage **`0.4`** (not this block).
 > **RU:** Убрать Резерв и Дизайн из «Основные сведения». Синхронизировать «Потребность клиента» с лидом. Метрики как у лида. Внутренняя переписка — вид как у лида + sync через `20.3`. **Создание заказа без лида** — Stage **`0.4`**.
 
 - [x] 20.4.1 — Remove Reserve / Design from order «Основные сведения» (relocate only if process still requires) — `v1.00` `2026-08-05`; hidden from `sales-order-page.tsx` basics; domain fields/API retained / Убраны из UI
@@ -452,10 +480,10 @@
 
 ## Stage 21 — Settings / Users cabinet (Пользователи) / Настройки / Пользователи (кабинет)
 
-**New in:** `v1.00` (owner ask `2026-08-05`)  
+**New in:** `v1.00` (owner ask `2026-08-05`)
 **Новое в:** `v1.00` (запрос владельца `2026-08-05`)
 
-> **EN:** Rename Settings «Сотрудники»→«Пользователи»; route `/settings/users`. Extend closed `17.1.2.5` role-assign UI into full user list + cabinet + flexible access (ADR-024). Org HR directory `/settings/organizations/employees` stays **`2.4.2`**. Bitrix-only extras (gratitude, Disk/Mail/Analytics tabs, mobile/desktop app install columns, 2FA UI) deferred in `21.1.2`.  
+> **EN:** Rename Settings «Сотрудники»→«Пользователи»; route `/settings/users`. Extend closed `17.1.2.5` role-assign UI into full user list + cabinet + flexible access (ADR-024). Org HR directory `/settings/organizations/employees` stays **`2.4.2`**. Bitrix-only extras (gratitude, Disk/Mail/Analytics tabs, mobile/desktop app install columns, 2FA UI) deferred in `21.1.2`.
 > **RU:** Переименовать «Сотрудники»→«Пользователи»; маршрут `/settings/users`. Расширить закрытый `17.1.2.5` до списка + кабинета + гибкого доступа. Org-справочник сотрудников — **`2.4.2`**. Bitrix extras — deferred в `21.1.2`.
 
 ### 21.1 — Placement, rename, domain contract / Размещение, rename, контракт
@@ -487,10 +515,10 @@
 
 ## Stage 22 — Design v1.0 / Дизайн v1.0
 
-**New in:** `v1.00` (owner approved HTML etalons `2026-08-05`)  
+**New in:** `v1.00` (owner approved HTML etalons `2026-08-05`)
 **Новое в:** `v1.00` (утверждённые HTML-эталоны `2026-08-05`)
 
-> **EN:** Soft UI + flat buttons from `docs/design/` into live page content. Process SoT: `docs/design/design-v1-process.md` (`SL-DESIGN-V1-PROCESS-v1`). Task: `docs/tasks/v1.00-stage-22-design-v1.md`. Do **not** re-open Stage `20` data contracts. Stage **22** closed: live through boards `22.3.4` + shell `22.9.4`.  
+> **EN:** Soft UI + flat buttons from `docs/design/` into live page content. Process SoT: `docs/design/design-v1-process.md` (`SL-DESIGN-V1-PROCESS-v1`). Task: `docs/tasks/v1.00-stage-22-design-v1.md`. Do **not** re-open Stage `20` data contracts. Stage **22** closed: live through boards `22.3.4` + shell `22.9.4`.
 > **RU:** Soft UI + flat из `docs/design/` в live-контент. Процесс: `design-v1-process.md`. Не переоткрывать Stage `20`. Stage **22** закрыт: live доски `22.3.4` + shell `22.9.4`.
 
 ### 22.0 — Process / Процесс
@@ -500,7 +528,7 @@
 
 ### 22.1 — Sales · Lead card / Продажи · Карточка лида
 
-> **EN:** Etalon `docs/design/sales/lead-card-reference-v1.html` → `/sales/leads/[id]` (`lead-page.tsx`). Soft UI panels + flat actions; existing fields only.  
+> **EN:** Etalon `docs/design/sales/lead-card-reference-v1.html` → `/sales/leads/[id]` (`lead-page.tsx`). Soft UI panels + flat actions; existing fields only.
 > **RU:** Эталон лида → live карточка. Soft UI + flat; только существующие поля.
 
 - [x] 22.1.1 — Contract: etalon → host mapping; Soft UI + flat; field map; shell preserved; out-of-scope vs Stage `20` — `v1.00` `2026-08-05`; `SL-DESIGN-V1-LEAD-v1` in task `v1.00-stage-22-design-v1.md` / Контракт эталон → хост
@@ -510,7 +538,7 @@
 
 ### 22.2 — Sales · Sales order card / Продажи · Заказ покупателя
 
-> **EN:** Etalon `docs/design/sales/order-card-reference-v1.html` → `/sales/orders/[id]` (`sales-order-page.tsx`). Compact finance rail **right**, always visible; view filters hide **left** only.  
+> **EN:** Etalon `docs/design/sales/order-card-reference-v1.html` → `/sales/orders/[id]` (`sales-order-page.tsx`). Compact finance rail **right**, always visible; view filters hide **left** only.
 > **RU:** Эталон заказа → live. Финансы справа компактно и всегда; фильтры скрывают только левую колонку.
 
 - [x] 22.2.1 — Contract: finance rail right sticky compact; filters left-only; Soft UI + flat; field map; shell preserved — `v1.00` `2026-08-05`; `SL-DESIGN-V1-ORDER-v1` / Контракт finance rail + фильтры
@@ -521,7 +549,7 @@
 
 ### 22.3 — Sales · boards / lists / Продажи · доски / списки
 
-> **EN:** Approved etalon `docs/design/sales/leads-board-reference-v1.html` (PT-03 Soft UI). Hosts ≈ `/sales/leads` (primary) + `/sales/orders` (same chrome). Existing fields only.  
+> **EN:** Approved etalon `docs/design/sales/leads-board-reference-v1.html` (PT-03 Soft UI). Hosts ≈ `/sales/leads` (primary) + `/sales/orders` (same chrome). Existing fields only.
 > **RU:** Утверждённый эталон досок продаж. Хосты `/sales/leads` и `/sales/orders`.
 
 - [x] 22.3.1 — Owner visual OK on Sales boards Soft UI etalon — `v1.00` `2026-08-23`; owner OK `docs/design/sales/leads-board-reference-v1.html` / Owner visual эталона досок
@@ -531,7 +559,7 @@
 
 ### 22.4 — Production / Производство
 
-> **EN:** Approved etalon `docs/design/production/orders-workspace-reference-v1.html` (KPI + list + shop stage hubs). Hosts ≈ `/production/orders` (primary; `/production` dashboard route has no page).  
+> **EN:** Approved etalon `docs/design/production/orders-workspace-reference-v1.html` (KPI + list + shop stage hubs). Hosts ≈ `/production/orders` (primary; `/production` dashboard route has no page).
 > **RU:** Утверждённый эталон производства. Хост `/production/orders`.
 
 - [x] 22.4.1 — Owner visual OK on Production Soft UI etalon (desktop + responsive) — `v1.00` `2026-08-22`; owner OK `docs/design/production/orders-workspace-reference-v1.html` / Owner visual эталона производства
@@ -541,7 +569,7 @@
 
 ### 22.5 — Warehouse / Склад
 
-> **EN:** Approved etalon `docs/design/warehouse/stock-workspace-reference-v1.html` (tree + list + movements). Host ≈ `/warehouse/stock`.  
+> **EN:** Approved etalon `docs/design/warehouse/stock-workspace-reference-v1.html` (tree + list + movements). Host ≈ `/warehouse/stock`.
 > **RU:** Утверждённый эталон склада (дерево + список).
 
 - [x] 22.5.1 — Owner visual OK on Warehouse Soft UI etalon — `v1.00` `2026-08-22`; owner OK `docs/design/warehouse/stock-workspace-reference-v1.html` / Owner visual эталона склада
@@ -551,7 +579,7 @@
 
 ### 22.6 — Purchases / Закупки
 
-> **EN:** Approved etalon `docs/design/purchases/hub-reference-v1.html`. Host ≈ `/purchases`.  
+> **EN:** Approved etalon `docs/design/purchases/hub-reference-v1.html`. Host ≈ `/purchases`.
 > **RU:** Утверждённый эталон закупок.
 
 - [x] 22.6.1 — Owner visual OK on Purchases Soft UI etalon — `v1.00` `2026-08-22`; owner OK `docs/design/purchases/hub-reference-v1.html` / Owner visual эталона закупок
@@ -561,7 +589,7 @@
 
 ### 22.7 — Settings / Platform / Настройки / Платформа
 
-> **EN:** Approved etalon `docs/design/settings/hub-reference-v1.html`. Host ≈ `/settings` (+ Stage 21 users hub link).  
+> **EN:** Approved etalon `docs/design/settings/hub-reference-v1.html`. Host ≈ `/settings` (+ Stage 21 users hub link).
 > **RU:** Утверждённый эталон настроек.
 
 - [x] 22.7.1 — Owner visual OK on Settings Soft UI etalon — `v1.00` `2026-08-22`; owner OK `docs/design/settings/hub-reference-v1.html` / Owner visual эталона настроек
@@ -571,7 +599,7 @@
 
 ### 22.8 — Dashboard / Home / Главная / Дашборд
 
-> **EN:** Approved etalon `docs/design/dashboard/home-reference-v1.html` (typical Soft UI dashboard: KPI strip, chart stub, activity, shortcuts). Host ≈ `/dashboard`.  
+> **EN:** Approved etalon `docs/design/dashboard/home-reference-v1.html` (typical Soft UI dashboard: KPI strip, chart stub, activity, shortcuts). Host ≈ `/dashboard`.
 > **RU:** Типовой Soft UI дашборд.
 
 - [x] 22.8.1 — Owner visual OK on Dashboard Soft UI etalon — `v1.00` `2026-08-22`; owner OK `docs/design/dashboard/home-reference-v1.html` / Owner visual эталона дашборда
@@ -581,7 +609,7 @@
 
 ### 22.9 — Soft UI shell chrome (left + top) / Soft UI оболочка (лево + топ)
 
-> **EN:** Approved etalon `docs/design/shared/shell-reference-v1.html` (+ `shell.js` labeled rail + top search/tabs/CTA). Contract `SL-DESIGN-V1-SHELL-v1` + live FE + owner visual `22.9.4`. Nav structure still from `frontend/lib/navigation.ts`.  
+> **EN:** Approved etalon `docs/design/shared/shell-reference-v1.html` (+ `shell.js` labeled rail + top search/tabs/CTA). Contract `SL-DESIGN-V1-SHELL-v1` + live FE + owner visual `22.9.4`. Nav structure still from `frontend/lib/navigation.ts`.
 > **RU:** Эталон, контракт, FE и owner visual оболочки закрыты.
 
 - [x] 22.9.1 — Owner visual OK on Soft UI shell etalon (desktop + responsive) — `v1.00` `2026-08-22`; owner OK `docs/design/shared/shell-reference-v1.html` / Owner visual эталона shell
@@ -593,10 +621,10 @@
 
 ## Stage 23 — Unified Work Tasks module / Единый модуль Задачи
 
-**New in:** `v1.00` (owner design OK `2026-08-06`)  
+**New in:** `v1.00` (owner design OK `2026-08-06`)
 **Новое в:** `v1.00` (дизайн утверждён `2026-08-06`)
 
-> **EN:** Replace `LeadTask` + `CollaborationMicrotask` with `WorkTask` (цех=`ProductionStage`, responsible/executor=`PlatformUser`, XOR lead|order|production_order, Telegram-like chat + images, `storage/task-media`). Live `/sales/tasks`. Leave `CollaborationMessage` object staff chat. Spec: `docs/superpowers/specs/2026-08-06-unified-tasks-module-design.md`. ADR-028. Task: `docs/tasks/v1.00-stage-23-unified-tasks.md`. Do **not** reopen Stage 19 message SoT; do **not** change DS-SHELL without `22.9`.  
+> **EN:** Replace `LeadTask` + `CollaborationMicrotask` with `WorkTask` (цех=`ProductionStage`, responsible/executor=`PlatformUser`, XOR lead|order|production_order, Telegram-like chat + images, `storage/task-media`). Live `/sales/tasks`. Leave `CollaborationMessage` object staff chat. Spec: `docs/superpowers/specs/2026-08-06-unified-tasks-module-design.md`. ADR-028. Task: `docs/tasks/v1.00-stage-23-unified-tasks.md`. Do **not** reopen Stage 19 message SoT; do **not** change DS-SHELL without `22.9`.
 > **RU:** Замена LeadTask + microtasks на WorkTask (цех, ответственный/исполнитель, якорь, чат с картинками). Live `/sales/tasks`. Object staff-чат CollaborationMessage не трогаем в MVP.
 
 ### 23.0 — Contract / Контракт
@@ -849,3 +877,12 @@
 | `2026-08-24` | New Stages 24 (sewing cabinet) + 25 (tech-card QR / shop scan); queued after current Stage 2; 25 depends on 24 | Новые этапы 24 (кабинет швеи) + 25 (QR техкарты / скан); в очереди после текущего Stage 2; 25 зависит от 24 |
 | `2026-08-25` | Closed `25.5.2`: owner visual OK phone + tablet scan + printed sheet; Stage 25 complete | Закрыт `25.5.2`: owner visual скана и печати; Stage 25 закрыт |
 | `2026-08-25` | Closed `7.1.1.1`–`7.1.1.4`: Spec ADR-031 + contract (batch parent, versions, copy/read, no Documents module); stop at DB `7.1.2.1` | Закрыты `7.1.1.1`–`7.1.1.4`: контракт спецификации; стоп на БД `7.1.2.1` |
+| `2026-08-25` | Closed `7.1.2.1`–`7.1.2.2`: Spec SQLAlchemy + Alembic `e4f5a6b7c890`; stop at schemas `7.1.2.3` | Закрыты `7.1.2.1`–`7.1.2.2`: модели + миграция; стоп на schemas `7.1.2.3` |
+| `2026-08-25` | Closed `7.1.2.3`–`7.2.2.5` + `7.2.3.*`: Spec API + list/card plan+fact; stop at owner visual `7.2.2.6` | Закрыты schemas/API/UI спецификации; стоп на visual `7.2.2.6` |
+| `2026-08-25` | Closed `7.2.2.6`: owner visual OK specs list+card+batch link; Stage 7 complete | Закрыт `7.2.2.6`: owner visual спецификаций; Stage 7 закрыт |
+| `2026-08-25` | Split `12.4.1` → `12.4.1.1`–`12.4.1.6`; closed `12.4.1.1` inventory contract (ADR-019 amend); stop at persistence `12.4.1.2` | Сплит `12.4.1`; закрыт контракт инвентаризации; стоп на БД `12.4.1.2` |
+| `2026-08-25` | Closed `12.4.1.2`: `StockDocumentType.INVENTORY` + `stock_inventory_lines`; Alembic `f5a6b7c8d901`; stop at service `12.4.1.3` | Закрыт `12.4.1.2`: тип `inventory` + строки пересчёта; стоп на service `12.4.1.3` |
+| `2026-08-25` | Closed `12.4.1.3`: inventory snapshot/counted/post deltas; stop at API `12.4.1.4` | Закрыт `12.4.1.3`: service инвентаризации; стоп на API `12.4.1.4` |
+| `2026-08-25` | Closed `12.4.1.4`: inventory HTTP API + regression; stop at UI `12.4.1.5` | Закрыт `12.4.1.4`: API инвентаризации; стоп на UI `12.4.1.5` |
+| `2026-08-25` | New Stage `0.5` canonical VPS (ADR-032): closed `0.5.1`/`0.5.2`/`0.5.5`/`0.5.9`/`0.5.10`; pause `12.4.1.5`; owner `0.5.3`+ live apply | Новый `0.5` канонический VPS; закрыты контракт/правило/compose/tunnel/sync; пауза `12.4.1.5` |
+| `2026-08-25` | Closed `12.4.1.5`: inventory UI on `/warehouse/movements` (create + card); stop at owner visual `12.4.1.6` | Закрыт `12.4.1.5`: UI инвентаризации; стоп на visual `12.4.1.6` |

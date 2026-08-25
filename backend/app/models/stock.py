@@ -1,4 +1,4 @@
-"""Stock register documents and ledger lines (ADR-019 / Stage 12.2.1)."""
+"""Stock register documents, ledger lines, and inventory recount (ADR-019)."""
 
 from __future__ import annotations
 
@@ -31,12 +31,13 @@ if TYPE_CHECKING:
 
 
 class StockDocumentType(str, Enum):
-    """Movement types including FG subtypes (`12.3.1` / ADR-019)."""
+    """Movement types including FG subtypes and inventory recount (`12.4`)."""
 
     RECEIPT = "receipt"
     ISSUE = "issue"
     FG_RECEIPT = "fg_receipt"
     FG_ISSUE = "fg_issue"
+    INVENTORY = "inventory"
 
 
 class StockDocumentStatus(str, Enum):
@@ -46,7 +47,7 @@ class StockDocumentStatus(str, Enum):
 
 
 class StockDocument(Base):
-    """Stock movement header (Приход / Списание / FG). Balance SoT is ledger only."""
+    """Stock movement header (Приход / Списание / FG / inventory). Balance SoT is ledger only."""
 
     __tablename__ = "stock_documents"
     __table_args__ = (
@@ -56,7 +57,7 @@ class StockDocument(Base):
         Index("ix_stock_documents_doc_type", "doc_type"),
         Index("ix_stock_documents_posted_at", "posted_at"),
         CheckConstraint(
-            "doc_type IN ('receipt', 'issue', 'fg_receipt', 'fg_issue')",
+            "doc_type IN ('receipt', 'issue', 'fg_receipt', 'fg_issue', 'inventory')",
             name="ck_stock_documents_doc_type",
         ),
         CheckConstraint(
@@ -112,6 +113,11 @@ class StockDocument(Base):
         back_populates="stock_document",
         cascade="all, delete-orphan",
         order_by="StockLedgerLine.line_no",
+    )
+    inventory_lines: Mapped[list[StockInventoryLine]] = relationship(
+        back_populates="stock_document",
+        cascade="all, delete-orphan",
+        order_by="StockInventoryLine.sequence",
     )
 
 
@@ -182,3 +188,51 @@ class StockLedgerLine(Base):
     nomenclature: Mapped[Nomenclature] = relationship()
     technical_card: Mapped[TechnicalCard | None] = relationship()
     sales_order: Mapped[SalesOrder | None] = relationship()
+
+
+class StockInventoryLine(Base):
+    """Recount line: book snapshot + counted qty (ADR-019 / 12.4). Not a ledger row."""
+
+    __tablename__ = "stock_inventory_lines"
+    __table_args__ = (
+        UniqueConstraint(
+            "stock_document_id",
+            "nomenclature_id",
+            name="uq_stock_inventory_lines_document_nomenclature",
+        ),
+        UniqueConstraint(
+            "stock_document_id",
+            "sequence",
+            name="uq_stock_inventory_lines_document_sequence",
+        ),
+        Index("ix_stock_inventory_lines_nomenclature_id", "nomenclature_id"),
+        CheckConstraint("sequence >= 1", name="ck_stock_inventory_lines_sequence"),
+        CheckConstraint(
+            "counted_qty >= 0",
+            name="ck_stock_inventory_lines_counted_qty_nonnegative",
+        ),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    stock_document_id: Mapped[int] = mapped_column(
+        ForeignKey("stock_documents.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    sequence: Mapped[int] = mapped_column(Integer, nullable=False)
+    nomenclature_id: Mapped[int] = mapped_column(
+        ForeignKey("nomenclatures.id", ondelete="RESTRICT"),
+        nullable=False,
+    )
+    book_qty: Mapped[Decimal] = mapped_column(Numeric(14, 3), nullable=False)
+    counted_qty: Mapped[Decimal] = mapped_column(Numeric(14, 3), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+    )
+
+    stock_document: Mapped[StockDocument] = relationship(
+        back_populates="inventory_lines"
+    )
+    nomenclature: Mapped[Nomenclature] = relationship()

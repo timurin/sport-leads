@@ -1,7 +1,7 @@
 # Sport-Lead — Project Structure Checklist
 
 **Code:** `SL-PROJECT-STRUCTURE-v1`
-**Updated:** `2026-08-25` (Stage **25** closed owner visual `25.5.2`; Stage **7** contract ADR-031; next `7.1.2`)
+**Updated:** `2026-08-25` (Stage **12.4** inventory UI `12.4.1.5`; stop at visual `12.4.1.6`)
 **Project version:** `v0.9.0` / early `v1.00` Stages 0 + 20 + 21 + 22 + 23 + **24** + **25** + Stage **7** contract
 **Git branch:** `main`
 
@@ -27,6 +27,7 @@
 - [x] List-page data rules (`v1.00` `0.2.1`–`0.2.8`) — `SL-LIST-PAGE-RULES-v1`; product-models/characteristics/warehouse/tech-cards list N+1; PO batch rollups; stock `nomenclature_name`; nomenclature card options-batch
 - [x] LAN local-stack access (`v1.00` `0.3.1`–`0.3.3`) — `dev-servers.ps1 -Lan`; CORS/`NEXT_PUBLIC_*` notes; owner smoke OK `2026-08-05`
 - [x] Create SalesOrder without Lead (`v1.00` `0.4.1`–`0.4.3`) — nullable `lead_id`; `POST /orders`; FE create drawer; convert intact; owner visual OK `2026-08-05`
+- [ ] Canonical VPS workflow (`v1.00` `0.5`) — ADR-032; in-repo compose loopback bind + tunnel/storage scripts; live host / git-push / owner smoke open (`0.5.3`+)
 - [x] Authentication (`17.1.1`) — ADR-023 + API + `/login` gate shipped (owner visual OK `2026-08-01`)
 - [x] System users, roles, and permissions (`17.1.2`) — ADR-024; Alembic `t7u8v9w0x123` + `u8v9w0x1y234`; owner visuals OK `2026-08-01`; **Users cabinet UX** → Stage `21`
 - [x] Universal audit trail (`17.1.3`) — ADR-025; Alembic `v9w0x1y2z345`; size-grid «Журнал аудита»; owner visual OK `2026-08-01`
@@ -143,7 +144,7 @@
 - [x] Pattern-base owner visual checkpoint — models / grids / sewing ops / PRODUCT available-models (`6.4.3`); Stage 6 catalog closed
 - [x] Order-item model + assembly-variant selection — Stage `3.2.5` shipped; smoke `3.2.6` shipped `2026-07-27`; order routing `3.2.7` shipped
 - [x] Order-item routing template selection from model whitelist — Stage `3.2.7` shipped (owner visual OK `2026-07-27`)
-- [ ] Specifications and bill-of-materials contour — Stage 7 **plan+fact report document** from filled TC + execution (ADR-004/031; not hard dep of Stage 8/9; parent = batch 1:1; Documents = link registry later); contract `7.1.1` closed `2026-08-25`; next `7.1.2`
+- [x] Specifications and bill-of-materials contour — Stage 7 **plan+fact report document** from filled TC + execution (ADR-004/031; parent = batch 1:1; Documents = link registry later); owner visual `7.2.2.6` OK `2026-08-25`; Alembic `e4f5a6b7c890`
 - [x] ProductionStage (цех) catalog + routing/ops bind (`8.3`) — Дизайн→Раскрой→Печать→Пошив→ВТО→ОТК→Упаковка; WorkCenter = оборудование; migration `m4n5o6p7q890`; owner visual routings OK `2026-07-28`
 - [x] Routing, operations, work centers, QC flags; shop TechOperation catalog (`8.1.3` + required materials `8.1.4`) + routings UI (`8.2`) — `v0.9.0`; ADR-017 amend `8.3`; TC whitelist wire `8.2.3.7`–`8.2.3.8` shipped; migration `l3m4n5o6p789`; owner visual `8.2.2.6` OK `2026-07-28`
 
@@ -171,7 +172,7 @@
 - [x] Tech-card QR / shop scan (`v1.00` Stage `25`) — ADR-030; owner visual OK `25.5.2` (`2026-08-25`); token/print/scan/status/FG
 - [x] Warehouse nomenclature PT-04 `/warehouse/stock` — tree CRUD + list + settings redirects + остаток column/filter + owner visual OK (`4.10.1`–`4.10.7`); live ledger column `12.2.3` (ADR-019)
 - [x] Warehouse Stage 12 ledger MVP `12.2` (`12.2.1`–`12.2.5` / former `4.6.5.*`) — StockDocument/Ledger + post/API + live `/warehouse/stock` column + regression + docs sync
-- [x] Warehouse FG docs + movements `12.3` (`12.3.1`–`12.3.3`) shipped; inventory/transfers `12.4`–`12.5` → v1.00
+- [x] Warehouse FG docs + movements `12.3` (`12.3.1`–`12.3.3`) shipped; inventory `12.4` UI `12.4.1.5` closed `2026-08-25`; owner visual `12.4.1.6` open; transfers `12.5` open
 - [ ] Procurement requests, supplier orders, receipts, and returns
 - [ ] Shipping documents, delivery tracking, and confirmation of receipt
 
@@ -194,7 +195,7 @@
 
 ## 13. Operations and Deployment
 
-- [x] VPS, production Docker, reverse proxy, HTTPS, and domain (`17.2.1`) — in-repo `compose.prod.yaml` + Caddy + runbook; live host apply = owner
+- [x] VPS, production Docker, reverse proxy, HTTPS, and domain (`17.2.1`) — in-repo `compose.prod.yaml` + Caddy + runbook; live apply = `v1.00` Stage `0.5`
 - [x] Dev/staging CI for mandatory checks
 - [x] Production deployment pipeline, centralized monitoring, and log aggregation (`17.2.2`) — `deploy-production.yml` + health probes + json-file rotation
 - [x] Production backup, disaster recovery, and administrator runbooks (`17.2.3`) — `prod-backup/restore` + `docs/ops/production-17-2-3.md`

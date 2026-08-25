@@ -3,6 +3,8 @@ from sqlalchemy.orm import Session
 
 from app.database.session import get_db
 from app.schemas.stock import (
+    InventoryCountedUpdate,
+    InventoryDocumentCreate,
     StockBalanceRead,
     StockDocumentCreate,
     StockDocumentRead,
@@ -22,6 +24,13 @@ from app.services.stock_documents import (
     post_stock_document,
     serialize_stock_document,
     serialize_stock_documents,
+)
+from app.services.stock_inventory import (
+    create_inventory_document,
+    fill_inventory_from_balances,
+    post_inventory_document,
+    refresh_inventory_book,
+    set_inventory_counted,
 )
 
 router = APIRouter(prefix="/stock", tags=["Stock"])
@@ -157,3 +166,134 @@ def post_stock_document_endpoint(
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(error)
         ) from error
+
+
+def _inventory_http_error(error: Exception) -> HTTPException:
+    if isinstance(error, StockDocumentNotFoundError):
+        return HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail=str(error)
+        )
+    if isinstance(error, StockDocumentConflictError):
+        return HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(error))
+    if isinstance(error, StockDocumentValidationError):
+        return HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(error)
+        )
+    return HTTPException(
+        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(error)
+    )
+
+
+@router.post(
+    "/inventory",
+    response_model=StockDocumentRead,
+    status_code=status.HTTP_201_CREATED,
+    operation_id="create_inventory_document",
+)
+def create_inventory_document_endpoint(
+    payload: InventoryDocumentCreate,
+    db: Session = Depends(get_db),
+) -> StockDocumentRead:
+    try:
+        document = create_inventory_document(
+            db,
+            warehouse_id=payload.warehouse_id,
+            notes=payload.notes,
+            commit=not payload.fill,
+        )
+        if payload.fill:
+            document = fill_inventory_from_balances(db, document.id)
+        return serialize_stock_document(db, document)
+    except (
+        StockDocumentNotFoundError,
+        StockDocumentConflictError,
+        StockDocumentValidationError,
+    ) as error:
+        raise _inventory_http_error(error) from error
+
+
+@router.post(
+    "/inventory/{document_id}/fill",
+    response_model=StockDocumentRead,
+    operation_id="fill_inventory_document",
+)
+def fill_inventory_document_endpoint(
+    document_id: int,
+    db: Session = Depends(get_db),
+) -> StockDocumentRead:
+    try:
+        return serialize_stock_document(
+            db, fill_inventory_from_balances(db, document_id)
+        )
+    except (
+        StockDocumentNotFoundError,
+        StockDocumentConflictError,
+        StockDocumentValidationError,
+    ) as error:
+        raise _inventory_http_error(error) from error
+
+
+@router.post(
+    "/inventory/{document_id}/refresh",
+    response_model=StockDocumentRead,
+    operation_id="refresh_inventory_book",
+)
+def refresh_inventory_book_endpoint(
+    document_id: int,
+    db: Session = Depends(get_db),
+) -> StockDocumentRead:
+    try:
+        return serialize_stock_document(db, refresh_inventory_book(db, document_id))
+    except (
+        StockDocumentNotFoundError,
+        StockDocumentConflictError,
+        StockDocumentValidationError,
+    ) as error:
+        raise _inventory_http_error(error) from error
+
+
+@router.post(
+    "/inventory/{document_id}/counted",
+    response_model=StockDocumentRead,
+    operation_id="set_inventory_counted",
+)
+def set_inventory_counted_endpoint(
+    document_id: int,
+    payload: InventoryCountedUpdate,
+    db: Session = Depends(get_db),
+) -> StockDocumentRead:
+    try:
+        return serialize_stock_document(
+            db,
+            set_inventory_counted(
+                db,
+                document_id,
+                payload.nomenclature_id,
+                counted_qty=payload.counted_qty,
+            ),
+        )
+    except (
+        StockDocumentNotFoundError,
+        StockDocumentConflictError,
+        StockDocumentValidationError,
+    ) as error:
+        raise _inventory_http_error(error) from error
+
+
+@router.post(
+    "/inventory/{document_id}/post",
+    response_model=StockDocumentRead,
+    operation_id="post_inventory_document",
+)
+def post_inventory_document_endpoint(
+    document_id: int,
+    db: Session = Depends(get_db),
+) -> StockDocumentRead:
+    try:
+        return serialize_stock_document(db, post_inventory_document(db, document_id))
+    except (
+        StockDocumentNotFoundError,
+        StockDocumentConflictError,
+        StockDocumentValidationError,
+    ) as error:
+        raise _inventory_http_error(error) from error

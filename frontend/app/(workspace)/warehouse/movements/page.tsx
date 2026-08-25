@@ -6,20 +6,22 @@ import {
   listStockDocuments,
   type StockDocument,
 } from "@/lib/stock-documents";
-import { getWarehouses } from "@/lib/warehouses";
+import { getWarehouses, type Warehouse } from "@/lib/warehouses";
 
 export default async function WarehouseMovementsPage() {
   let loadError: string | null = null;
   let documents: StockDocument[] = [];
   const warehouseNames: Record<number, string> = {};
+  let warehouses: Warehouse[] = [];
 
   try {
-    const [docs, warehouses] = await Promise.all([
+    const [docs, warehouseRows] = await Promise.all([
       listStockDocuments({ limit: 500 }),
       getWarehouses({ limit: 500 }),
     ]);
     documents = docs;
-    for (const warehouse of warehouses) {
+    warehouses = warehouseRows;
+    for (const warehouse of warehouseRows) {
       warehouseNames[warehouse.id] = warehouse.name;
     }
   } catch (error) {
@@ -49,6 +51,7 @@ export default async function WarehouseMovementsPage() {
           <WarehouseMovementsWorkspace
             documents={documents}
             warehouseNames={warehouseNames}
+            warehouses={warehouses}
           />
         </Suspense>
       )}

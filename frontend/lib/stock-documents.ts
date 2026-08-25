@@ -6,7 +6,8 @@ export type StockDocumentType =
   | "receipt"
   | "issue"
   | "fg_receipt"
-  | "fg_issue";
+  | "fg_issue"
+  | "inventory";
 
 export type StockDocumentStatus = "draft" | "posted" | "cancelled";
 
@@ -22,6 +23,16 @@ export type StockLedgerLine = {
   sales_order_id: number | null;
 };
 
+export type StockInventoryLine = {
+  id: number;
+  sequence: number;
+  nomenclature_id: number;
+  nomenclature_name?: string | null;
+  book_qty: string | number;
+  counted_qty: string | number;
+  delta: string | number;
+};
+
 export type StockDocument = {
   id: number;
   number: string;
@@ -35,6 +46,7 @@ export type StockDocument = {
   created_at: string;
   updated_at: string;
   ledger_lines: StockLedgerLine[];
+  inventory_lines?: StockInventoryLine[];
 };
 
 export type StockDocumentListParams = {
@@ -64,6 +76,8 @@ export function stockDocumentTypeLabel(docType: string): string {
       return "Приход ГП";
     case "fg_issue":
       return "Списание ГП";
+    case "inventory":
+      return "Инвентаризация";
     default:
       return docType;
   }
@@ -105,6 +119,22 @@ export function formatStockDateTime(value: string | null | undefined): string {
     dateStyle: "short",
     timeStyle: "short",
   }).format(date);
+}
+
+export function isInventoryDocument(row: { doc_type: string }): boolean {
+  return row.doc_type === "inventory";
+}
+
+export function inventoryLineDelta(
+  bookQty: string | number,
+  countedQty: string | number,
+): string {
+  const book = Number(bookQty);
+  const counted = Number(countedQty);
+  if (!Number.isFinite(book) || !Number.isFinite(counted)) {
+    return "—";
+  }
+  return formatStockQuantity(counted - book);
 }
 
 export function formatStockQuantity(value: string | number): string {
@@ -183,3 +213,122 @@ export async function getStockDocument(
   }
   return (await response.json()) as StockDocument;
 }
+
+async function readStockApiError(
+  response: Response,
+  fallback: string,
+): Promise<string> {
+  try {
+    const body = (await response.json()) as { detail?: string | unknown };
+    if (typeof body.detail === "string" && body.detail.trim()) {
+      return body.detail;
+    }
+    if (Array.isArray(body.detail) && body.detail.length > 0) {
+      const first = body.detail[0] as { msg?: string };
+      if (typeof first?.msg === "string" && first.msg.trim()) {
+        return first.msg;
+      }
+    }
+  } catch {
+    /* ignore */
+  }
+  return `${fallback} (${response.status})`;
+}
+
+export type InventoryDocumentCreatePayload = {
+  warehouse_id: number;
+  notes?: string | null;
+  fill?: boolean;
+};
+
+export async function createInventoryDocument(
+  payload: InventoryDocumentCreatePayload,
+): Promise<StockDocument> {
+  const response = await fetch(`${apiBaseUrl()}/stock/inventory`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      warehouse_id: payload.warehouse_id,
+      notes: payload.notes ?? null,
+      fill: payload.fill ?? true,
+    }),
+    cache: "no-store",
+  });
+  if (!response.ok) {
+    throw new Error(
+      await readStockApiError(response, "Не удалось создать инвентаризацию"),
+    );
+  }
+  return (await response.json()) as StockDocument;
+}
+
+export async function fillInventoryDocument(
+  documentId: number,
+): Promise<StockDocument> {
+  const response = await fetch(
+    `${apiBaseUrl()}/stock/inventory/${documentId}/fill`,
+    { method: "POST", cache: "no-store" },
+  );
+  if (!response.ok) {
+    throw new Error(
+      await readStockApiError(response, "Не удалось заполнить инвентаризацию"),
+    );
+  }
+  return (await response.json()) as StockDocument;
+}
+
+export async function refreshInventoryBook(
+  documentId: number,
+): Promise<StockDocument> {
+  const response = await fetch(
+    `${apiBaseUrl()}/stock/inventory/${documentId}/refresh`,
+    { method: "POST", cache: "no-store" },
+  );
+  if (!response.ok) {
+    throw new Error(
+      await readStockApiError(response, "Не удалось обновить книгу"),
+    );
+  }
+  return (await response.json()) as StockDocument;
+}
+
+export async function setInventoryCounted(
+  documentId: number,
+  nomenclatureId: number,
+  countedQty: string,
+): Promise<StockDocument> {
+  const response = await fetch(
+    `${apiBaseUrl()}/stock/inventory/${documentId}/counted`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        nomenclature_id: nomenclatureId,
+        counted_qty: countedQty,
+      }),
+      cache: "no-store",
+    },
+  );
+  if (!response.ok) {
+    throw new Error(
+      await readStockApiError(response, "Не удалось сохранить факт"),
+    );
+  }
+  return (await response.json()) as StockDocument;
+}
+
+export async function postInventoryDocument(
+  documentId: number,
+): Promise<StockDocument> {
+  const response = await fetch(
+    `${apiBaseUrl()}/stock/inventory/${documentId}/post`,
+    { method: "POST", cache: "no-store" },
+  );
+  if (!response.ok) {
+    throw new Error(
+      await readStockApiError(response, "Не удалось провести инвентаризацию"),
+    );
+  }
+  return (await response.json()) as StockDocument;
+}
+

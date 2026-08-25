@@ -31,6 +31,10 @@ export default async function WarehouseMovementDocumentPage({
     const name = line.nomenclature_name?.trim();
     nomenclatureNames[line.nomenclature_id] = name || `#${line.nomenclature_id}`;
   }
+  for (const line of document.inventory_lines ?? []) {
+    const name = line.nomenclature_name?.trim();
+    if (name) nomenclatureNames[line.nomenclature_id] = name;
+  }
 
   return (
     <PageLayout className="flex min-h-0 flex-1 flex-col">
