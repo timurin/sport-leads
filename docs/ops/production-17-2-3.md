@@ -63,6 +63,7 @@ Log in as bootstrap admin; spot-check a size-grid and a shop kanban card.
 | Topic | Doc / artifact |
 |-------|----------------|
 | Bootstrap stack | `docs/ops/production-17-2-1.md` |
+| Canonical VPS live apply + tunnel | `docs/ops/vps-canonical-0-5.md` (Stage `0.5`) |
 | Deploy + health + logs | `docs/ops/production-17-2-2.md` |
 | Backup / restore / DR | this file |
 | Dev DB backup | `scripts/backup_db.ps1`, `scripts/restore_db.ps1` |

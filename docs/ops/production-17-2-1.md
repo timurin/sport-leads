@@ -5,8 +5,8 @@
 
 ## Prerequisites (owner)
 
-1. VPS with public IPv4, Ubuntu 22.04+ (or equivalent)
-2. DNS `A`/`AAAA` for `SPORT_LEADS_DOMAIN` → VPS IP
+1. VPS with public IPv4, **Ubuntu 26.04** (Stage `0.5.4.1`; `scripts/vps-bootstrap-ubuntu-26.04.sh`; Docker CE on the host, app in `compose.prod.yaml`)
+2. DNS `A`/`AAAA` for **`sport-lead.ru`** → VPS IP (Stage `0.5.6.1`; registrar panel)
 3. Ports **80** and **443** open inbound
 4. Docker Engine + Docker Compose plugin installed on the host
 
@@ -30,7 +30,9 @@ curl -fsS "https://$SPORT_LEADS_DOMAIN/healthz"   # Caddy
 # Workspace: https://$SPORT_LEADS_DOMAIN/login
 ```
 
-API and Postgres are **not** published. Next talks to API at `http://api:8000` inside the network. Migrations run on API container start (`alembic upgrade head`).
+API and Next are **not** published. Postgres is published to **host loopback only** (`127.0.0.1:5432`) for the owner SSH tunnel (Stage `0.5` / ADR-032) — never `0.0.0.0`. Next talks to API at `http://api:8000` inside the network. Migrations run on API container start (`alembic upgrade head`). Media bind: `./storage:/app/storage`.
+
+Live apply (clone, DNS, dump restore, tunnel, GitHub secrets): `docs/ops/vps-canonical-0-5.md`. Do not reopen `17.2.1`–`17.2.3` for that work.
 
 ## TLS
 

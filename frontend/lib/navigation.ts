@@ -181,6 +181,11 @@ export function buildAppSections(
         href: "/production/orders",
       },
       {
+        id: "production-specifications",
+        title: "Спецификации",
+        href: "/production/specifications",
+      },
+      {
         id: "design-projects",
         title: "Дизайн-проекты",
         href: "/design/projects",

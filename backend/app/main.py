@@ -58,6 +58,7 @@ from app.api.production_orders import (
     batches_router as production_batches_router,
     router as production_orders_router,
 )
+from app.api.specifications import router as specifications_router
 from app.api.design_projects import router as design_projects_router
 from app.api.shop_routings import (
     routings_router as shop_routings_router,
@@ -175,6 +176,7 @@ app.include_router(tech_operations_router)
 app.include_router(production_stages_router)
 app.include_router(production_orders_router)
 app.include_router(production_batches_router)
+app.include_router(specifications_router)
 app.include_router(design_projects_router)
 app.include_router(work_centers_router)
 app.include_router(shop_routings_router)

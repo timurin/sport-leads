@@ -149,6 +149,8 @@ test("production navigation exposes tech-cards and shop modules", () => {
   assert.ok(ids.includes("production-shop-kanban"));
   assert.ok(ids.includes("production-sewing-cabinet"));
   assert.ok(ids.includes("production-sewing-cabinets"));
+  assert.ok(ids.includes("production-orders"));
+  assert.ok(ids.includes("production-specifications"));
   assert.ok(ids.includes("design-projects"));
   assert.ok(ids.includes("production-shop-modules"));
   const designProjects = production.topNavigation.find(

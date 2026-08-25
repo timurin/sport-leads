@@ -22,6 +22,7 @@ from app.database.base import Base
 
 if TYPE_CHECKING:
     from app.models.sales import SalesOrder
+    from app.models.specification import Specification
     from app.models.technical_card import TechnicalCard
 
 
@@ -138,6 +139,12 @@ class ProductionBatch(Base):
     card_links: Mapped[list[ProductionBatchCardLink]] = relationship(
         "ProductionBatchCardLink",
         back_populates="batch",
+        cascade="all, delete-orphan",
+    )
+    specification: Mapped[Specification | None] = relationship(
+        "Specification",
+        back_populates="batch",
+        uselist=False,
         cascade="all, delete-orphan",
     )
 

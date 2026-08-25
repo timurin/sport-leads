@@ -2,7 +2,7 @@
 
 **Status:** принято (`2026-08-25`)  
 **Date:** `2026-08-25`  
-**Roadmap:** Stage 7 (`7.1.1.1`–`7.1.1.4` contract)  
+**Roadmap:** Stage 7 (`7.1.1` contract; `7.2` API+UI; stop at owner visual `7.2.2.6`)  
 **Amends:** ADR-004 (version lifecycle); ADR-016 (soft `specification_version_id` becomes real FK in `7.1.2`); ADR-018 (Spec parent = `ProductionBatch`)  
 **Depends on:** ADR-004, ADR-014, ADR-016, ADR-018, ADR-019, ADR-029  
 **Evidence:** `docs/tasks/v1.00-stage-7-specifications.md` (`SL-SPEC-DOCUMENT-v1`)
@@ -87,7 +87,7 @@ Spec **копирует / читает**, не live-edit мастера.
 
 После `approved`: тест `7.2.3.6` — правка ТК/модели не меняет frozen lines.
 
-Soft stamp на ТК: сегодня `specification_version_id` integer без FK. В `7.1.2` — FK на `specification_versions.id` + label; проставлять при approve (обратная связь, не gate generate).
+Soft stamp на ТК: `specification_version_id` — FK на `specification_versions.id` + label (`7.1.2.1`); проставлять при approve (обратная связь, не gate generate).
 
 ### 5. Документы (`7.1.1.4`)
 
@@ -110,7 +110,7 @@ DS-SHELL-01/02 не менять.
 
 ## Последствия
 
-- `7.1.2` добавляет таблицы + Alembic + schemas/tests по этому ADR.
+- `7.1.2.1`–`7.1.2.2` добавляют таблицы + Alembic `e4f5a6b7c890`. Schemas/tests DTO — `7.1.2.3`.
 - Generate ТК и release партии остаются независимы от Spec.
 - Кабинет швеи и скан QR не пишут в Spec; Spec читает их SoT при refresh.
 

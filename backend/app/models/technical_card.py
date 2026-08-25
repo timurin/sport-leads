@@ -1,10 +1,11 @@
 """Technical card persistence (ADR-016 / Stage 9.1.2).
 
 Soft refs without FK:
-- `specification_version_id` → Stage 7 outbound Spec (optional)
 - `routing_template_id` → Stage 8 template id snapshot (no live FK; name copied)
 - `tech_operation_id` on operation lines → Stage `8.1.3` TechOperation
   (ORM catalog exists; card keeps soft integer + snapshot fields)
+
+`specification_version_id` is a real FK to `specification_versions` (ADR-031 / 7.1.2).
 """
 
 from __future__ import annotations
@@ -33,6 +34,7 @@ from app.database.base import Base
 
 if TYPE_CHECKING:
     from app.models.sales import SalesOrder, SalesOrderItem
+    from app.models.specification import SpecificationVersion
 
 
 class TechnicalCardStatus(str, Enum):
@@ -152,8 +154,12 @@ class TechnicalCard(Base):
         Numeric(14, 2), nullable=True
     )
 
-    # Soft Spec until Stage 7 outbound; routing_template_* snapshotted from Stage 8.
-    specification_version_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    # Stamp after Spec approve (ADR-031); not a generate gate.
+    specification_version_id: Mapped[int | None] = mapped_column(
+        ForeignKey("specification_versions.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
     specification_version_label: Mapped[str | None] = mapped_column(String(255), nullable=True)
     routing_template_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
     routing_template_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
@@ -178,6 +184,10 @@ class TechnicalCard(Base):
 
     order: Mapped[SalesOrder] = relationship()
     order_item: Mapped[SalesOrderItem] = relationship()
+    specification_version: Mapped[SpecificationVersion | None] = relationship(
+        "SpecificationVersion",
+        foreign_keys="TechnicalCard.specification_version_id",
+    )
     composition_lines: Mapped[list[TechnicalCardCompositionLine]] = relationship(
         back_populates="technical_card",
         cascade="all, delete-orphan",

@@ -1,9 +1,10 @@
-# Sport-Lead production edge (17.2.1.2 / 17.2.2.2).
-# Set SPORT_LEADS_DOMAIN in the environment (e.g. erp.example.com).
-# Caddy obtains/renews Let's Encrypt certificates automatically when the domain
-# points at this host and ports 80/443 are reachable.
+# Sport-Lead production edge (17.2.1.2 / 17.2.2.2 / Stage 0.5.6.1).
+# Public hostname: sport-lead.ru (SPORT_LEADS_DOMAIN).
+# Caddy obtains/renews Let's Encrypt when the A-record points at this host
+# and ports 80/443 are reachable.
+# Do not add a www site block until www DNS exists (otherwise TLS issuance can stall).
 
-{$SPORT_LEADS_DOMAIN:localhost} {
+{$SPORT_LEADS_DOMAIN:sport-lead.ru} {
 	encode gzip
 
 	# Edge liveness (Caddy process)

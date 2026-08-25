@@ -1,13 +1,13 @@
 # Sport-Lead — Global Roadmap
 
 **Code:** `SL-ROADMAP-v1`
-**Updated:** `2026-08-06` (v1.00 Stage 23 Unified Work Tasks pointer; prior `0.4` / Stage 21–22 carry)  
+**Updated:** `2026-08-25` (v1.00 Stage `0.5` canonical VPS pointer; prior Stage 23 / `0.4` / Stage 21–22 carry)  
 **Project version:** `v0.9.0`
 **Git branch:** `feature/v0.8.1-nomenclature-core`
 
 **Canonical files:**
 - roadmap: `docs/roadmap/roadmap.md`
-- v1.00 roadmap (active early): `docs/roadmap/roadmap-v1.00.md` (+ HTML twin) — includes Stage **23** Work Tasks
+- v1.00 roadmap (active early): `docs/roadmap/roadmap-v1.00.md` (+ HTML twin) — includes Stage **23** Work Tasks and Stage **`0.5`** canonical VPS
 - structure: `docs/architecture/project-structure.md`
 - ERP-check: `docs/architecture/erp-check.md`
 
@@ -2760,6 +2760,8 @@ Completion criteria:
 - [x] 17.1.3.3 — Surface critical mutations (incl. size-grid edits when `17.1.2.4` ships) — `v0.9.0`; owner visual OK (`2026-08-01`); size-grid «Журнал аудита»; `GET /audit-events?size_grid_id=`; `audit-events.test.mjs`
 
 ### 17.2 — Production operations
+
+> **Live apply (`2026-08-25`):** in-repo `17.2.1`–`17.2.3` stay closed. Canonical VPS Postgres + SSH tunnel + Git deploy live apply is `v1.00` Stage `0.5` (`docs/roadmap/roadmap-v1.00.md`, ADR-032, `docs/ops/vps-canonical-0-5.md`). Do not reopen these checkboxes.
 
 #### 17.2.1 — VPS, production Docker, reverse proxy, and HTTPS
 

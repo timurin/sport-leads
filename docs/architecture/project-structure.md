@@ -27,7 +27,7 @@
 - [x] List-page data rules (`v1.00` `0.2.1`–`0.2.8`) — `SL-LIST-PAGE-RULES-v1`; product-models/characteristics/warehouse/tech-cards list N+1; PO batch rollups; stock `nomenclature_name`; nomenclature card options-batch
 - [x] LAN local-stack access (`v1.00` `0.3.1`–`0.3.3`) — `dev-servers.ps1 -Lan`; CORS/`NEXT_PUBLIC_*` notes; owner smoke OK `2026-08-05`
 - [x] Create SalesOrder without Lead (`v1.00` `0.4.1`–`0.4.3`) — nullable `lead_id`; `POST /orders`; FE create drawer; convert intact; owner visual OK `2026-08-05`
-- [ ] Canonical VPS workflow (`v1.00` `0.5`) — ADR-032; in-repo compose loopback bind + tunnel/storage scripts; live host / git-push / owner smoke open (`0.5.3`+)
+- [ ] Canonical VPS workflow (`v1.00` `0.5`) — ADR-032; Ubuntu **26.04** host live (`0.5.4.1` Docker CE); git gate `0.5.3` closed; public origin **`https://sport-lead.ru`** (`0.5.6.1` DNS open); clone / owner smoke open (`0.5.4`+)
 - [x] Authentication (`17.1.1`) — ADR-023 + API + `/login` gate shipped (owner visual OK `2026-08-01`)
 - [x] System users, roles, and permissions (`17.1.2`) — ADR-024; Alembic `t7u8v9w0x123` + `u8v9w0x1y234`; owner visuals OK `2026-08-01`; **Users cabinet UX** → Stage `21`
 - [x] Universal audit trail (`17.1.3`) — ADR-025; Alembic `v9w0x1y2z345`; size-grid «Журнал аудита»; owner visual OK `2026-08-01`

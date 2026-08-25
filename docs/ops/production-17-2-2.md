@@ -1,6 +1,6 @@
 # Production pipeline, monitoring, and logs (17.2.2)
 
-**Depends on:** `17.2.1` stack (`compose.prod.yaml`, Caddy)
+**Depends on:** `17.2.1` stack (`compose.prod.yaml`, Caddy). Live apply + SSH tunnel: `docs/ops/vps-canonical-0-5.md` (Stage `0.5`).
 
 ## 1. Deploy pipeline (GitHub Actions)
 
@@ -43,11 +43,11 @@ Dev CI (`checks.yml` / `0.2.3`) stays separate and is not a deploy gate in Actio
 Scripts:
 
 ```powershell
-powershell -File scripts/prod-health-check.ps1 -BaseUrl https://erp.example.com
+powershell -File scripts/prod-health-check.ps1 -BaseUrl https://sport-lead.ru
 ```
 
 ```bash
-bash scripts/prod-health-check.sh https://erp.example.com
+bash scripts/prod-health-check.sh https://sport-lead.ru
 ```
 
 Point any uptime provider (UptimeRobot, Better Stack, …) at these three URLs. Full APM/Prometheus is out of MVP scope.

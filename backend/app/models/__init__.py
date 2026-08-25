@@ -88,6 +88,7 @@ from app.models.stock import (
     StockDocument,
     StockDocumentStatus,
     StockDocumentType,
+    StockInventoryLine,
     StockLedgerLine,
 )
 from app.models.tech_operation import TechOperation, TechOperationRequiredMaterial
@@ -131,6 +132,15 @@ from app.models.sewing_work_ledger import (
     SewingWorkKind,
     SewingWorkLedgerEntry,
     SewingWorkStatus,
+)
+from app.models.specification import (
+    Specification,
+    SpecificationMaterialLine,
+    SpecificationOperationLine,
+    SpecificationOperationSourceKind,
+    SpecificationProductLine,
+    SpecificationVersion,
+    SpecificationVersionStatus,
 )
 from app.models.platform_system_settings import PlatformSystemSettings
 from app.models.mailbox_settings import MailboxSettings
@@ -245,6 +255,7 @@ __all__ = [
     "StockDocument",
     "StockDocumentStatus",
     "StockDocumentType",
+    "StockInventoryLine",
     "StockLedgerLine",
     "ProductionStage",
     "ProductionOrder",
@@ -279,6 +290,13 @@ __all__ = [
     "SewingWorkKind",
     "SewingWorkLedgerEntry",
     "SewingWorkStatus",
+    "Specification",
+    "SpecificationMaterialLine",
+    "SpecificationOperationLine",
+    "SpecificationOperationSourceKind",
+    "SpecificationProductLine",
+    "SpecificationVersion",
+    "SpecificationVersionStatus",
     "PlatformSystemSettings",
     "MailboxSettings",
     "PlatformCity",

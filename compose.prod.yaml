@@ -5,8 +5,10 @@
 #   cp .env.production.example .env.production   # edit secrets + domain
 #   docker compose -f compose.prod.yaml --env-file .env.production up -d --build
 #
-# Do not expose Postgres / API / Next ports publicly; only Caddy :80/:443.
+# Postgres is bound to host loopback only (SSH tunnel / Stage 0.5). Never 0.0.0.0:5432.
+# Do not expose API / Next ports publicly; only Caddy :80/:443.
 # Deploy automation: `.github/workflows/deploy-production.yml` (17.2.2).
+# Canonical VPS workflow: `docs/ops/vps-canonical-0-5.md` (ADR-032).
 
 name: sport-leads-prod
 
@@ -29,6 +31,8 @@ services:
       TZ: ${TZ:-Europe/Moscow}
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "127.0.0.1:5432:5432"
     healthcheck:
       test:
         - CMD-SHELL
@@ -62,6 +66,9 @@ services:
       AUTH_COOKIE_SECURE: ${AUTH_COOKIE_SECURE:-true}
       AUTH_COOKIE_SAMESITE: ${AUTH_COOKIE_SAMESITE:-lax}
       SPORT_LEADS_CORS_ORIGINS: ${SPORT_LEADS_CORS_ORIGINS:-}
+      PUBLIC_APP_ORIGIN: ${PUBLIC_APP_ORIGIN:-https://sport-lead.ru}
+    volumes:
+      - ./storage:/app/storage
     depends_on:
       postgres:
         condition: service_healthy
@@ -90,7 +97,7 @@ services:
       - "80:80"
       - "443:443"
     environment:
-      SPORT_LEADS_DOMAIN: ${SPORT_LEADS_DOMAIN:-localhost}
+      SPORT_LEADS_DOMAIN: ${SPORT_LEADS_DOMAIN:-sport-lead.ru}
     volumes:
       - ./docker/Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data

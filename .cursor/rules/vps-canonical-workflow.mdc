@@ -1,0 +1,36 @@
+---
+description: Canonical VPS Postgres, local repo, GitHub deploy. Agent tests stay on local Docker Postgres.
+alwaysApply: true
+---
+
+# Canonical VPS workflow (ADR-032 / Stage 0.5)
+
+## Chain
+
+Local repo → commit (only if the owner asked) → `git push origin main` → GitHub Actions `workflow_dispatch` → VPS `git pull` + `compose.prod.yaml`. Do not rsync/scp the tree around Git.
+
+## Database
+
+- Canonical rows = VPS Postgres (`127.0.0.1:5432` on the host, SSH tunnel to local `:5433`).
+- Agent default = local Docker Postgres `:5432` via `dev-servers.ps1 -Action start`.
+- **Never** set `DATABASE_URL` / `POSTGRES_PORT` to `5433` for pytest, `scripts/check_project.py`, `alembic upgrade`, or `restore_db`.
+- Do not publish VPS Postgres on `0.0.0.0`. Do not point CI at the VPS DB.
+
+## Tunnel
+
+Owner opt-in only (`scripts/vps-db-tunnel.ps1` + `.env.tunnel`). Do not start the tunnel unless the owner explicitly asks. LAN `:3001`/`:8000` is not production Caddy.
+
+## Secrets and media
+
+- `.env.production` / `.env.tunnel` stay on hosts (gitignored `.env.*`).
+- Media SoT = VPS `storage/` (`scripts/sync-storage-from-vps.ps1`). A DB dump does not copy files.
+
+## Public origin
+
+User-facing platform = **`https://sport-lead.ru`** only (`0.5.6.1`). Do not treat LAN `:3001` as the office/shop URL. Agent pytest still uses local Docker Postgres + `:3001`/`:8000`.
+
+VPS host OS = **Ubuntu 26.04**. Install Docker Engine + compose plugin on the host (`0.5.4.1`); do not install the ERP as native Python/Node.
+
+## Git gate
+
+Do not tell the owner to clone the VPS from `main` while Spec/inventory (or other closed-roadmap) WIP is still uncommitted. Port `3000` on Windows stays out of scope.

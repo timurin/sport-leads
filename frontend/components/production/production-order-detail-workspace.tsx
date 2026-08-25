@@ -10,6 +10,7 @@ import {
   createProductionBatchAction,
   detachTechnicalCardFromBatchAction,
 } from "@/app/(workspace)/production/orders/production-order-actions";
+import { createSpecificationAction } from "@/app/(workspace)/production/specifications/specification-actions";
 import { ProductionFactRollupPanel } from "@/components/production/production-fact-rollup-panel";
 import { HostWorkTasksPanel } from "@/components/sales/host-work-tasks-panel";
 import {
@@ -31,6 +32,7 @@ import {
   type ProductionOrderDetail,
 } from "@/lib/production/production-orders";
 import type { ApiTechnicalCardListItem } from "@/lib/sales/order-tech-cards-api";
+import type { SpecificationListItem } from "@/lib/production/specifications";
 import type { WorkTaskListItem } from "@/lib/work-tasks";
 
 function CollapseToggleButton({
@@ -63,6 +65,7 @@ export function ProductionOrderDetailWorkspace({
   technicalCards,
   orderRollup,
   batchRollups,
+  specificationsByBatch = {},
   workTasks: initialWorkTasks = [],
   workTasksError = null,
   workTaskStages = [],
@@ -73,6 +76,7 @@ export function ProductionOrderDetailWorkspace({
   technicalCards: ApiTechnicalCardListItem[];
   orderRollup: ProductionFactRollup;
   batchRollups: Record<number, ProductionFactRollup>;
+  specificationsByBatch?: Record<number, SpecificationListItem>;
   workTasks?: WorkTaskListItem[];
   workTasksError?: string | null;
   workTaskStages?: WorkTaskAnchorOption[];
@@ -126,6 +130,20 @@ export function ProductionOrderDetailWorkspace({
     }
     pushToast("Партия создана", "success");
     refresh();
+  };
+
+  const onCreateSpecification = async (batchId: number) => {
+    setBusy(true);
+    setError(null);
+    const result = await createSpecificationAction(batchId);
+    setBusy(false);
+    if (!result.ok) {
+      setError(result.message);
+      pushToast(result.message, "danger");
+      return;
+    }
+    pushToast("Спецификация создана", "success");
+    router.push(`/production/specifications/${result.specification.id}`);
   };
 
   const onAttach = async (event: FormEvent, batchId: number) => {
@@ -276,6 +294,7 @@ export function ProductionOrderDetailWorkspace({
             );
             const batchIsCollapsed = isBatchCollapsed(batch.id);
             const batchFactIsCollapsed = isBatchFactCollapsed(batch.id);
+            const spec = specificationsByBatch[batch.id];
             return (
               <SectionCard
                 key={batch.id}
@@ -331,6 +350,28 @@ export function ProductionOrderDetailWorkspace({
                       </li>
                     ))}
                   </ul>
+                )}
+
+                {spec ? (
+                  <div className="mt-portal-3 flex flex-wrap items-center gap-portal-2">
+                    <Link
+                      href={`/production/specifications/${spec.id}`}
+                      className="text-portal-body text-portal-primary hover:underline"
+                    >
+                      Спецификация {spec.number}
+                    </Link>
+                  </div>
+                ) : (
+                  <div className="mt-portal-3 flex flex-wrap items-center gap-portal-2">
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      disabled={busy || batch.card_links.length === 0}
+                      onClick={() => void onCreateSpecification(batch.id)}
+                    >
+                      Создать спецификацию
+                    </Button>
+                  </div>
                 )}
 
                 {editable ? (

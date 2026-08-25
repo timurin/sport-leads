@@ -258,7 +258,7 @@
         heroText: "Includes Stage 0 (performance + LAN + order-without-lead + canonical VPS 0.5), Stage 20 Lead/Order UX, Stage 21 Users cabinet, Stage 22 Design v1.0, Stage 23 Unified Work Tasks, Stage 24 Sewing cabinet (closed), Stage 25 tech-card QR (closed), Stage 7 Specs (closed), Stage 12.4 inventory UI (current; stop at 12.4.1.6 visual), plus carry-over 1.4.3, Stage 2 group (closed), 12.5, 13–16, 18.4. Switch EN / RU.",
         progressLabel: "Overall progress",
         transferTitle: "Owner transfer",
-        transferText: "Stage 12.4 inventory UI 12.4.1.5 shipped; stop at owner visual 12.4.1.6. Stage 0.5 git gate 0.5.3 remains owner (ADR-032). Do not reopen 17.2.1–17.2.3. Stage 0.4: create SalesOrder without Lead. 16.2.1: UNF SalesOrder Excel MVP. Stage 21 Users; Stage 20 UX closed; Stage 22 Design v1.0; Stage 23 Work Tasks (ADR-028). Stage 2 closed. Stage 24 sewing cabinet closed. Stage 25 QR/scan closed (owner visual 25.5.2, 2026-08-25). Stage 7 Specs closed (owner visual 7.2.2.6, 2026-08-25). Do not re-open closed 3.5/19/17.1.2/20.* data in v0.9.",
+        transferText: "Stage 12.4 inventory UI 12.4.1.5 shipped; stop at owner visual 12.4.1.6. Stage 0.5: git gate 0.5.3 closed; next clone 0.5.4 + DNS sport-lead.ru 0.5.6.1 (only public origin https://sport-lead.ru). Do not reopen 17.2.1–17.2.3. Stage 0.4: create SalesOrder without Lead. 16.2.1: UNF SalesOrder Excel MVP. Stage 21 Users; Stage 20 UX closed; Stage 22 Design v1.0; Stage 23 Work Tasks (ADR-028). Stage 2 closed. Stage 24 sewing cabinet closed. Stage 25 QR/scan closed (owner visual 25.5.2, 2026-08-25). Stage 7 Specs closed (owner visual 7.2.2.6, 2026-08-25). Do not re-open closed 3.5/19/17.1.2/20.* data in v0.9.",
         transferItems: [
           "New: Stage 0 — Performance / slow-data (0.1–0.2) + LAN (0.3) + order without Lead (0.4.1–0.4.3) + canonical VPS (0.5)",
           "New: Stage 20 — Lead / Order card UX + unified messaging (20.1–20.4)",
@@ -304,7 +304,7 @@
         heroText: "Stage 0 (производительность + LAN + заказ без лида + канонический VPS 0.5), Stage 20 UX лида/заказа, Stage 21 кабинет Пользователи, Stage 22 Design v1.0, Stage 23 Единые Задачи, Stage 24 кабинет швеи (закрыт), Stage 25 QR техкарты (закрыт), Stage 7 Спецификации (закрыт), Stage 12.4 UI инвентаризации (текущий; стоп на visual 12.4.1.6), плюс перенос 1.4.3, группа 2 (закрыта), 12.5, 13–16, 18.4. Язык EN / RU.",
         progressLabel: "Общий прогресс",
         transferTitle: "Перенос владельца",
-        transferText: "Stage 12.4 UI инвентаризации 12.4.1.5 закрыт; стоп на owner visual 12.4.1.6. Git gate 0.5.3 остаётся за владельцем (ADR-032). Не переоткрывать 17.2.1–17.2.3. Stage 0.4: создание заказа без лида. 16.2.1: MVP Excel заказов УНФ. Stage 21 кабинет; Stage 20 UX закрыт; Stage 22 Design v1.0; Stage 23 Задачи (ADR-028). Stage 2 закрыт. Stage 24 закрыт. Stage 25 закрыт (owner visual 25.5.2, 2026-08-25). Stage 7 закрыт (owner visual 7.2.2.6, 2026-08-25).",
+        transferText: "Stage 12.4 UI инвентаризации 12.4.1.5 закрыт; стоп на owner visual 12.4.1.6. Stage 0.5: git gate 0.5.3 закрыт; далее clone 0.5.4 и DNS sport-lead.ru — 0.5.6.1 (единственный публичный origin https://sport-lead.ru). Не переоткрывать 17.2.1–17.2.3. Stage 0.4: создание заказа без лида. 16.2.1: MVP Excel заказов УНФ. Stage 21 кабинет; Stage 20 UX закрыт; Stage 22 Design v1.0; Stage 23 Задачи (ADR-028). Stage 2 закрыт. Stage 24 закрыт. Stage 25 закрыт (owner visual 25.5.2, 2026-08-25). Stage 7 закрыт (owner visual 7.2.2.6, 2026-08-25).",
         transferItems: [
           "Новое: Stage 0 — Производительность / slow-data (0.1–0.2) + LAN (0.3) + заказ без лида (0.4.1–0.4.3) + канонический VPS (0.5)",
           "Новое: Stage 20 — UX карточек лида / заказа + единая переписка (20.1–20.4)",
@@ -612,8 +612,8 @@
               ru: "0.5 — Канонический VPS (БД + git + деплой)"
             },
             note: {
-              en: "Data = VPS Postgres. Code = GitHub main after local push. User runtime = Caddy. Owner SSH tunnel :5433. Agent tests = local Docker :5432. Do not reopen 17.2.1–17.2.3. ADR-032.",
-              ru: "Данные = Postgres на VPS. Код = GitHub main. Рантайм = Caddy. Tunnel :5433 — opt-in. Агент — Docker Postgres. 17.2 не переоткрывать."
+              en: "Data = VPS Postgres. Code = GitHub main after local push. User runtime = https://sport-lead.ru. Owner SSH tunnel :5433. Agent tests = local Docker :5432. Do not reopen 17.2.1–17.2.3. ADR-032.",
+              ru: "Данные = Postgres на VPS. Код = GitHub main. Рантайм = https://sport-lead.ru. Tunnel :5433 — opt-in. Агент — Docker Postgres. 17.2 не переоткрывать."
             },
             items: [
               {
@@ -642,18 +642,34 @@
               },
               {
                 code: "0.5.3",
-                done: false,
+                done: true,
                 title: {
                   en: "Git gate: owner commit+push closed-roadmap WIP (no __pycache__) before first VPS clone",
                   ru: "Git gate: commit+push WIP до clone на VPS (без pycache)"
+                },
+                note: {
+                  en: "v1.00 2026-08-25; Spec Alembic e4f5a6b7c890 + ADR-032 on main",
+                  ru: "v1.00 2026-08-25; Spec + ADR-032 в main"
+                }
+              },
+              {
+                code: "0.5.4.1",
+                done: true,
+                title: {
+                  en: "Assemble host on Ubuntu 26.04: Docker Engine + compose plugin (Docker apt repo), git, UFW, curl; TZ Europe/Moscow; no host Python/Node (compose.prod images). Before clone 0.5.4",
+                  ru: "Окружение Ubuntu 26.04: Docker Engine + compose plugin, git, UFW, curl; TZ Europe/Moscow; без native Python/Node. До clone 0.5.4"
+                },
+                note: {
+                  en: "v1.00 2026-08-25; live VPS Docker 29.7.2 + Compose v5.5.0; UFW 22/80/443; TZ Europe/Moscow; scripts/vps-bootstrap-ubuntu-26.04.sh",
+                  ru: "v1.00 2026-08-25; live VPS Docker 29.7.2 + Compose v5.5.0; UFW 22/80/443; TZ Europe/Moscow"
                 }
               },
               {
                 code: "0.5.4",
                 done: false,
                 title: {
-                  en: "VPS bootstrap: Docker, deploy user, UFW 22/80/443, GitHub deploy key, clone, .env.production",
-                  ru: "Bootstrap хоста: Docker, UFW, deploy key, clone, .env.production"
+                  en: "VPS bootstrap on Ubuntu 26.04: deploy user, UFW 22/80/443, GitHub deploy key, clone, .env.production",
+                  ru: "Bootstrap хоста Ubuntu 26.04: deploy user, UFW, deploy key, clone, .env.production"
                 }
               },
               {
@@ -669,11 +685,23 @@
                 }
               },
               {
+                code: "0.5.6.1",
+                done: false,
+                title: {
+                  en: "Point registrar DNS sport-lead.ru (A/AAAA; optional www → apex) at the VPS; SPORT_LEADS_DOMAIN=sport-lead.ru; PUBLIC_APP_ORIGIN=https://sport-lead.ru; only public user origin. Execute before 0.5.6 TLS",
+                  ru: "DNS sport-lead.ru (A/AAAA; опционально www) → VPS; SPORT_LEADS_DOMAIN; PUBLIC_APP_ORIGIN=https://sport-lead.ru; единственный публичный origin. До TLS 0.5.6"
+                },
+                note: {
+                  en: "v1.00 2026-08-25; docs/ops/vps-canonical-0-5.md § domain; owner registrar panel",
+                  ru: "v1.00 2026-08-25; runbook § domain; панель регистратора"
+                }
+              },
+              {
                 code: "0.5.6",
                 done: false,
                 title: {
-                  en: "First up --build, DNS, TLS, /healthz /health /health/ready",
-                  ru: "Первый up + DNS + TLS + health"
+                  en: "First up --build, Caddy TLS, /healthz /health /health/ready on https://sport-lead.ru (after 0.5.6.1)",
+                  ru: "Первый up + TLS + health на https://sport-lead.ru (после 0.5.6.1)"
                 }
               },
               {
@@ -728,8 +756,8 @@
                 code: "0.5.12",
                 done: false,
                 title: {
-                  en: "Owner smoke: HTTPS login + optional local :3001 via tunnel; docs checkpoint",
-                  ru: "Smoke владельцем: HTTPS + опционально :3001 через tunnel"
+                  en: "Owner smoke: https://sport-lead.ru/login + optional local :3001 via tunnel; docs checkpoint",
+                  ru: "Smoke владельцем: https://sport-lead.ru/login + опционально :3001 через tunnel"
                 }
               }
             ]

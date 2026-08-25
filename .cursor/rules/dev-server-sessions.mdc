@@ -34,4 +34,4 @@ This binds backend `:8000` and frontend `:3001` on `0.0.0.0` (reachable as `127.
 
 ## After start
 
-Report PIDs, `http://127.0.0.1:3001`, `http://127.0.0.1:8000`, and detected LAN URLs. Trusted LAN only — not public internet / production Caddy.
+Report PIDs, `http://127.0.0.1:3001`, `http://127.0.0.1:8000`, and detected LAN URLs. Trusted LAN only — not public internet / production Caddy. SSH tunnel to VPS Postgres (`:5433`) is owner opt-in, not this default (ADR-032 / Stage `0.5`).

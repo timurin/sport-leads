@@ -65,9 +65,9 @@
 | **24** | Sewing cabinet (current slice after Stage 2) | Кабинет швеи (текущий срез после Stage 2) |
 | **25** | Tech-card QR + shop scan (after 24) | QR техкарты + скан по маршруту (после 24) |
 
-> **EN:** Stage 0 is **new** in `v1.00`: slow-data (`0.1`/`0.2`), **LAN** (`0.3`), **create SalesOrder without Lead** (`0.4`), and **canonical VPS** (`0.5`, ADR-032). Stages **20** / **21** closed. Stage **22** = Design v1.0 (do **not** re-open `20.*` data contracts). Do **not** re-open closed `3.5.*` / `19.*` / `17.1.2.*` / `17.2.1`–`17.2.3` in `v0.9.0`. Stage **2** closed `2026-08-24`. Stage **24** sewing cabinet closed `2026-08-24`. Stage **25** QR/scan closed `2026-08-25` (owner visual `25.5.2`). Stage **7** Specifications closed `2026-08-25` (owner visual `7.2.2.6`). Current slice: Stage **12.4** inventory UI shipped; stop at owner visual `12.4.1.6`. Stage **`0.5`** git gate `0.5.3` remains owner. `2.4.2` Employees is **not** a 24/25 dependency (sewer = `PlatformUser`). `12.5` / 13–16 / `18.4` are not blockers.
+> **EN:** Stage 0 is **new** in `v1.00`: slow-data (`0.1`/`0.2`), **LAN** (`0.3`), **create SalesOrder without Lead** (`0.4`), and **canonical VPS** (`0.5`, ADR-032). Stages **20** / **21** closed. Stage **22** = Design v1.0 (do **not** re-open `20.*` data contracts). Do **not** re-open closed `3.5.*` / `19.*` / `17.1.2.*` / `17.2.1`–`17.2.3` in `v0.9.0`. Stage **2** closed `2026-08-24`. Stage **24** sewing cabinet closed `2026-08-24`. Stage **25** QR/scan closed `2026-08-25` (owner visual `25.5.2`). Stage **7** Specifications closed `2026-08-25` (owner visual `7.2.2.6`). Current slice: Stage **12.4** inventory UI shipped; stop at owner visual `12.4.1.6`. Stage **`0.5`**: git gate `0.5.3` closed; next clone `0.5.4` + DNS `0.5.6.1`. `2.4.2` Employees is **not** a 24/25 dependency (sewer = `PlatformUser`). `12.5` / 13–16 / `18.4` are not blockers.
 >
-> **RU:** Stage 0: slow-data + **LAN** (`0.3`) + **заказ без лида** (`0.4`) + **канонический VPS** (`0.5`). Stages **20** / **21** закрыты. Stage **22** = Design v1.0. Stage **2** закрыт `2026-08-24`. Stage **24** закрыт `2026-08-24`. Stage **25** закрыт `2026-08-25`. Stage **7** закрыт `2026-08-25` (owner visual `7.2.2.6`). Текущий срез: Stage **12.4** (UI инвентаризации; стоп на visual `12.4.1.6`). Git gate `0.5.3` остаётся за владельцем. `2.4.2` Employees **не** зависимость (швея = `PlatformUser`).
+> **RU:** Stage 0: slow-data + **LAN** (`0.3`) + **заказ без лида** (`0.4`) + **канонический VPS** (`0.5`). Stages **20** / **21** закрыты. Stage **22** = Design v1.0. Stage **2** закрыт `2026-08-24`. Stage **24** закрыт `2026-08-24`. Stage **25** закрыт `2026-08-25`. Stage **7** закрыт `2026-08-25` (owner visual `7.2.2.6`). Текущий срез: Stage **12.4** (UI инвентаризации; стоп на visual `12.4.1.6`). Git gate `0.5.3` закрыт; далее clone `0.5.4` и DNS `0.5.6.1`. `2.4.2` Employees **не** зависимость (швея = `PlatformUser`).
 
 ### Remain in v0.9.0 / Остаются в v0.9.0
 
@@ -129,21 +129,23 @@
 
 ### 0.5 — Canonical VPS workflow / Канонический VPS (БД + git + деплой)
 
-> **EN:** Canonical **data** = VPS Postgres. Canonical **code** = GitHub `main` after local push. User runtime = Caddy on VPS. Owner may point local uvicorn at VPS via SSH tunnel `:5433`. Agent tests stay on local Docker Postgres `:5432`. In-repo `17.2.1`–`17.2.3` stay closed. LAN `0.3` ≠ this block. Task `docs/tasks/v1.00-stage-0.5-vps-canonical.md`. ADR-032.
-> **RU:** Канонические данные = Postgres на VPS. Код = GitHub `main`. Рантайм = Caddy. Tunnel `:5433` — opt-in владельца. Агент тестирует только локальный Docker Postgres. `17.2.*` не переоткрывать.
+> **EN:** Canonical **data** = VPS Postgres. Canonical **code** = GitHub `main` after local push. User runtime = **`https://sport-lead.ru`** (Caddy). Owner may point local uvicorn at VPS via SSH tunnel `:5433`. Agent tests stay on local Docker Postgres `:5432`. In-repo `17.2.1`–`17.2.3` stay closed. LAN `0.3` ≠ this block. Task `docs/tasks/v1.00-stage-0.5-vps-canonical.md`. ADR-032.
+> **RU:** Канонические данные = Postgres на VPS. Код = GitHub `main`. Рантайм пользователей = **`https://sport-lead.ru`**. Tunnel `:5433` — opt-in владельца. Агент тестирует только локальный Docker Postgres. `17.2.*` не переоткрывать.
 
 - [x] 0.5.1 — Contract / ADR: VPS Postgres SoT; loopback bind; agent Docker PG only; Git deploy; media-sync; boundary vs LAN `0.3` and closed `17.2` — `v1.00` `2026-08-25`; ADR-032; `SL-VPS-CANONICAL-v1`; task `docs/tasks/v1.00-stage-0.5-vps-canonical.md` / Контракт закрыт
 - [x] 0.5.2 — Agent rule + AGENTS / `dev-server-sessions.mdc` (default stack is not tunnel) — `v1.00` `2026-08-25`; `.cursor/rules/vps-canonical-workflow.mdc` / Правило агента
-- [ ] 0.5.3 — Git gate: owner commit+push closed-roadmap WIP (no `__pycache__`) before first VPS clone / Git gate: commit+push WIP до clone на VPS
-- [ ] 0.5.4 — VPS bootstrap: Docker, deploy user, UFW `22/80/443`, GitHub deploy key, clone, `.env.production` / Bootstrap хоста
+- [x] 0.5.3 — Git gate: owner commit+push closed-roadmap WIP (no `__pycache__`) before first VPS clone — `v1.00` `2026-08-25`; Spec Alembic `e4f5a6b7c890` + ADR-032 / Git gate: commit+push WIP до clone на VPS
+- [x] 0.5.4.1 — Assemble host on **Ubuntu 26.04**: Docker Engine + compose plugin (Docker apt repo), git, UFW, curl; TZ `Europe/Moscow`; **no** host Python/Node for the app (`compose.prod.yaml` images) — `v1.00` `2026-08-25`; live VPS `46.173.29.247`; Docker `29.7.2` + Compose `v5.5.0`; UFW `22/80/443`; `scripts/vps-bootstrap-ubuntu-26.04.sh` / Окружение Ubuntu 26.04 (Docker, не native app)
+- [ ] 0.5.4 — VPS bootstrap on Ubuntu 26.04: deploy user, UFW `22/80/443`, GitHub deploy key, clone, `.env.production` / Bootstrap хоста Ubuntu 26.04
 - [x] 0.5.5 — `compose.prod.yaml`: Postgres `127.0.0.1:5432` + `./storage:/app/storage` bind — `v1.00` `2026-08-25` / Bind loopback + storage
-- [ ] 0.5.6 — First `up --build`, DNS, TLS, `/healthz` `/health` `/health/ready` / Первый up + TLS
+- [ ] 0.5.6.1 — Point registrar DNS `sport-lead.ru` (A/AAAA; optional `www` → apex) at the VPS; `SPORT_LEADS_DOMAIN=sport-lead.ru`; `PUBLIC_APP_ORIGIN=https://sport-lead.ru`; only public user origin — `v1.00` `2026-08-25`; execute **before** `0.5.6` TLS / DNS `sport-lead.ru` → VPS; единственный публичный origin
+- [ ] 0.5.6 — First `up --build`, Caddy TLS, `/healthz` `/health` `/health/ready` on `https://sport-lead.ru` (after `0.5.6.1`) / Первый up + TLS на sport-lead.ru
 - [ ] 0.5.7 — One-time data migrate: local `backup_db.ps1` → `prod-restore-db` on VPS / Перенос дампа
 - [ ] 0.5.8 — GitHub Environment `production` + secrets + first `workflow_dispatch` / Secrets + первый deploy
 - [x] 0.5.9 — Tunnel script + `.env.tunnel.example` (local port **5433**) — `v1.00` `2026-08-25`; `scripts/vps-db-tunnel.ps1` / Tunnel
 - [x] 0.5.10 — Storage sync script; media SoT = VPS disk — `v1.00` `2026-08-25`; `scripts/sync-storage-from-vps.ps1` / Sync media
 - [ ] 0.5.11 — Cron `prod-backup-db.sh` on VPS (off-box copy) / Cron backup
-- [ ] 0.5.12 — Owner smoke: HTTPS login + optional local `:3001` via tunnel; docs checkpoint / Smoke владельцем
+- [ ] 0.5.12 — Owner smoke: `https://sport-lead.ru/login` + optional local `:3001` via tunnel; docs checkpoint / Smoke на sport-lead.ru
 
 ---
 
@@ -886,3 +888,8 @@
 | `2026-08-25` | Closed `12.4.1.4`: inventory HTTP API + regression; stop at UI `12.4.1.5` | Закрыт `12.4.1.4`: API инвентаризации; стоп на UI `12.4.1.5` |
 | `2026-08-25` | New Stage `0.5` canonical VPS (ADR-032): closed `0.5.1`/`0.5.2`/`0.5.5`/`0.5.9`/`0.5.10`; pause `12.4.1.5`; owner `0.5.3`+ live apply | Новый `0.5` канонический VPS; закрыты контракт/правило/compose/tunnel/sync; пауза `12.4.1.5` |
 | `2026-08-25` | Closed `12.4.1.5`: inventory UI on `/warehouse/movements` (create + card); stop at owner visual `12.4.1.6` | Закрыт `12.4.1.5`: UI инвентаризации; стоп на visual `12.4.1.6` |
+| `2026-08-25` | Added `0.5.6.1`: DNS `sport-lead.ru` → VPS; only public origin `https://sport-lead.ru`; execute before `0.5.6` TLS | Добавлен `0.5.6.1`: DNS sport-lead.ru на VPS; единственный публичный origin |
+| `2026-08-25` | Added `0.5.4.1`: host environment on Ubuntu **26.04** (Docker CE + compose; no native app runtime); `0.5.4` is clone/env on that OS | Добавлен `0.5.4.1`: окружение Ubuntu 26.04; `0.5.4` — clone/env |
+| `2026-08-25` | `0.5.4.1` in-repo host script `scripts/vps-bootstrap-ubuntu-26.04.sh` (checkbox open until live VPS) | Скрипт bootstrap Ubuntu 26.04; чекбокс открыт до live host |
+| `2026-08-25` | Closed `0.5.4.1`: live Ubuntu 26.04 host Docker CE `29.7.2` + Compose `v5.5.0`; TZ Moscow; UFW 22/80/443; stop at git gate `0.5.3` then clone `0.5.4` | Закрыт `0.5.4.1`: Docker на Ubuntu 26.04; стоп на `0.5.3` / clone `0.5.4` |
+| `2026-08-25` | Closed `0.5.3`: Spec + Stage 0.5 artifacts on `main` (no pycache); next clone `0.5.4` | Закрыт `0.5.3`: WIP в `main`; далее clone `0.5.4` |

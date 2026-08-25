@@ -13,6 +13,8 @@ import {
   fetchProductionOrderFactRollup,
   type ProductionFactRollup,
 } from "@/lib/production/production-orders";
+import { specificationsByBatchId, type SpecificationListItem } from "@/lib/production/specifications";
+import { getSpecificationsList } from "@/lib/production/specifications-api";
 import { getProductionStages } from "@/lib/production-stages";
 import {
   fetchTechnicalCards,
@@ -42,9 +44,10 @@ export default async function ProductionOrderDetailPage({
   let stagesCatalog;
   let usersLoaded;
   let me;
+  let specsByBatch: Record<number, SpecificationListItem> = {};
   try {
     order = await fetchProductionOrder(orderId);
-    const [viewer, cards, rollup, rollupsByBatch, tasksResult, stages, users] =
+    const [viewer, cards, rollup, rollupsByBatch, specsResult, tasksResult, stages, users] =
       await Promise.all([
         getMe(),
         fetchTechnicalCards({
@@ -53,6 +56,7 @@ export default async function ProductionOrderDetailPage({
         }),
         fetchProductionOrderFactRollup(orderId),
         fetchProductionOrderBatchFactRollups(orderId),
+        getSpecificationsList({ production_order_id: orderId, limit: 500 }),
         listProductionOrderWorkTasks(orderId),
         getProductionStages({ active_only: true, limit: 200 }).catch(() => []),
         listWorkTaskFilterUsers(),
@@ -61,6 +65,9 @@ export default async function ProductionOrderDetailPage({
     technicalCards = cards;
     orderRollup = rollup;
     batchRollups = rollupsByBatch;
+    specsByBatch = specsResult.ok
+      ? specificationsByBatchId(specsResult.items)
+      : {};
     workTasksLoaded = tasksResult;
     stagesCatalog = stages;
     usersLoaded = users;
@@ -79,6 +86,7 @@ export default async function ProductionOrderDetailPage({
         technicalCards={technicalCards}
         orderRollup={orderRollup}
         batchRollups={batchRollups}
+        specificationsByBatch={specsByBatch}
         workTasks={workTasksLoaded.ok ? workTasksLoaded.data : []}
         workTasksError={workTasksLoaded.ok ? null : workTasksLoaded.message}
         workTaskStages={stagesCatalog.map((stage) => ({
