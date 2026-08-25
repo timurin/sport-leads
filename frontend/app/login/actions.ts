@@ -6,6 +6,10 @@ import {
   loginWithPassword,
   logoutSession,
 } from "@/lib/auth/session";
+import {
+  isSewingCabinetOwnPath,
+  isSewingCabinetRestricted,
+} from "@/lib/auth/session-mapping";
 
 export type LoginActionResult =
   | { ok: true }
@@ -18,6 +22,16 @@ export async function loginAction(
 ): Promise<LoginActionResult> {
   const result = await loginWithPassword(login, password);
   if (!result.ok) return result;
+  if (isSewingCabinetRestricted(result.user)) {
+    const next =
+      nextPath &&
+      nextPath.startsWith("/") &&
+      !nextPath.startsWith("//") &&
+      isSewingCabinetOwnPath(nextPath)
+        ? nextPath
+        : "/production/sewing-cabinet";
+    redirect(next);
+  }
   const next =
     nextPath && nextPath.startsWith("/") && !nextPath.startsWith("//")
       ? nextPath

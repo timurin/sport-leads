@@ -64,7 +64,7 @@ test("maps persisted order details and preserves nullable fields", () => {
   assert.equal(order.clientId, "3");
   assert.equal(order.clientHref, "/sales/clients/3");
   assert.equal(order.organizationId, "2");
-  assert.equal(order.organizationHref, "/settings/organizations");
+  assert.equal(order.organizationHref, "/settings/organizations/2");
   assert.equal(order.responsibleId, null);
   assert.equal(order.statusCode, "new");
   assert.equal(order.clientName, "Клиент #3");

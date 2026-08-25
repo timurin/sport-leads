@@ -1,6 +1,7 @@
 # ADR-004 — Производственная цепочка и момент формирования спецификации
 
-**Статус:** принято как целевая архитектура; amend Spec↔ТК (`2026-07-26`); amend Spec = план+факт + Documents registry (`2026-07-26`); **amend ProductionOrder + ProductionBatch (`11.1.1.1` / ADR-018, `2026-07-30`)**; **amend FG warehouse stages (`11.2.2.1` / ADR-019, `2026-07-30`)**  
+**Статус:** принято как целевая архитектура; amend Spec↔ТК (`2026-07-26`); amend Spec = план+факт + Documents registry (`2026-07-26`); **amend ProductionOrder + ProductionBatch (`11.1.1.1` / ADR-018, `2026-07-30`)**; **amend FG warehouse stages (`11.2.2.1` / ADR-019, `2026-07-30`)**; **amend version lifecycle ADR-031 (`2026-08-25`)**
+
 **Контекст:** план производства, утверждённый состав и фактическое исполнение имеют разные жизненные циклы, но для 1С нужен единый документ-отчёт по затратам партии.
 
 ## Решение
@@ -31,7 +32,7 @@
 | Операции | Производственные операции / этапы: сколько сделали / за какое время |
 | Кто сделал | Ответственный за операцию (оператор или группа) |
 
-**Spec = сводный отчёт: план + факт в одной форме.** План опирается на заполненную ТК (состав, объёмы, маршрут). Факт подтягивается из исполнения партии / stage results / списаний — без отдельного «второго» отчётного контура вместо Spec. Версионирование и момент утверждения уточняются в Stage `7.1.1` (черновик плана до факта vs финальный отчёт после выпуска — детали сущностей, не смена роли документа).
+**Spec = сводный отчёт: план + факт в одной форме.** План опирается на заполненную ТК (состав, объёмы, маршрут). Факт подтягивается из исполнения партии / stage results / списаний — без отдельного «второго» отчётного контура вместо Spec. Версионирование: ADR-031 — шапка 1:1 с `ProductionBatch`; `draft` (refresh) vs `approved` (immutable, все linked TC terminal); не gate запуска партии/ТК.
 
 ### Документы — реестр ссылок, не отдельный контур на тип
 
@@ -50,8 +51,8 @@
 
 ## Ограничения
 
-Спецификации, агрегированный факт партии (`11.2`), реестр Документы и интеграция с 1С пока не реализованы. Домен ProductionOrder/Batch зафиксирован ADR-018 (`11.1.1.1`); реализация DB/API/UI — `11.1.1.2`–`11.1.1.5`.
+Контракт Spec Stage `7.1.1` закрыт ADR-031 (`2026-08-25`); DB/API/UI — `7.1.2`+. Агрегированный факт партии (`11.2`) и ProductionOrder/Batch shipped. Реестр Документы и интеграция с 1С пока не реализованы.
 
 **Связанные модули:** technical cards (Stage 9), shop routings (Stage 8), production orders/batches (ADR-018 / Stage `11.1.1`), warehouse FG (ADR-019 / Stage 12), будущие specification services, интеграционный adapter 1С, будущий Documents index.
 
-**Evidence:** `docs/tasks/v0.9.0-stage-8-spec-tc-dependency-fix.md`; `docs/tasks/v0.9.0-spec-document-and-documents-registry.md`; ADR-018 `docs/tasks/v0.9.0-stage-11.1.1.1-production-order-batch-adr.md`; ADR-019 `docs/tasks/v0.9.0-stage-11.2.2.1-warehouse-fg-contract.md`
+**Evidence:** `docs/tasks/v0.9.0-stage-8-spec-tc-dependency-fix.md`; `docs/tasks/v0.9.0-spec-document-and-documents-registry.md`; ADR-018 `docs/tasks/v0.9.0-stage-11.1.1.1-production-order-batch-adr.md`; ADR-019 `docs/tasks/v0.9.0-stage-11.2.2.1-warehouse-fg-contract.md`; ADR-031 `docs/tasks/v1.00-stage-7-specifications.md`

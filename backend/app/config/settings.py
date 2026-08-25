@@ -96,6 +96,17 @@ class Settings:
     ]
 
     @property
+    def public_app_origin(self) -> str:
+        explicit = (
+            os.getenv("PUBLIC_APP_ORIGIN") or os.getenv("SPORT_LEADS_PUBLIC_APP_ORIGIN") or ""
+        ).strip()
+        if explicit:
+            return explicit.rstrip("/")
+        if self.cors_origins:
+            return self.cors_origins[0].rstrip("/")
+        return "http://127.0.0.1:3001"
+
+    @property
     def database_url(self) -> str:
         explicit_database_url = os.getenv(
             "DATABASE_URL"

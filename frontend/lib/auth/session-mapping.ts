@@ -23,12 +23,39 @@ export const PERM_AUDIT_READ = "audit.read";
 export const PERM_SYSTEM_SETTINGS_WRITE = "system_settings.write";
 export const PERM_PLATFORM_DIRECTORIES_WRITE = "platform_directories.write";
 export const PERM_PRINT_FORMS_WRITE = "print_forms.write";
+export const PERM_SEWING_CABINET_READ_OWN = "sewing_cabinet.read_own";
+export const PERM_SEWING_CABINET_READ_ANY = "sewing_cabinet.read_any";
+export const PERM_SEWING_CABINET_WRITE = "sewing_cabinet.write";
+
+export const SEWING_CABINET_OWN_HREF = "/production/sewing-cabinet";
 
 export function hasPermission(
   user: PlatformUserMe | null | undefined,
   code: string,
 ): boolean {
   return Boolean(user?.permissions?.includes(code));
+}
+
+export function permissionsIndicateSewingCabinetRestricted(
+  permissions: readonly string[] | undefined,
+): boolean {
+  const perms = permissions ?? [];
+  return (
+    perms.includes(PERM_SEWING_CABINET_READ_OWN) &&
+    !perms.includes(PERM_SEWING_CABINET_READ_ANY)
+  );
+}
+
+export function isSewingCabinetRestricted(
+  user: PlatformUserMe | null | undefined,
+): boolean {
+  return permissionsIndicateSewingCabinetRestricted(user?.permissions);
+}
+
+export function isSewingCabinetOwnPath(pathname: string): boolean {
+  const path = pathname.replace(/\/+$/, "") || "/";
+  if (path === SEWING_CABINET_OWN_HREF) return true;
+  return path.startsWith("/production/scan/");
 }
 
 function initialsFromName(name: string): string {

@@ -21,6 +21,18 @@ export type AppSection = {
   topNavigation: NavigationGroup[];
 };
 
+export const SEWING_CABINET_NAV_ITEM: NavigationGroup = {
+  id: "production-sewing-cabinet",
+  title: "Кабинет швеи",
+  href: "/production/sewing-cabinet",
+};
+
+export const SEWING_CABINETS_NAV_ITEM: NavigationGroup = {
+  id: "production-sewing-cabinets",
+  title: "Кабинеты швей",
+  href: "/production/sewing-cabinet/sewers",
+};
+
 /** Fallback seed order when AppShell cannot load ProductionStage catalog. */
 const DEFAULT_SHOP_STAGE_NAV: ReadonlyArray<NavigationChild> = [
   { id: "design", title: "Дизайн", href: "/production/stages/design" },
@@ -161,6 +173,8 @@ export function buildAppSections(
         title: "Канбан цехов",
         href: "/production/kanban",
       },
+      SEWING_CABINET_NAV_ITEM,
+      SEWING_CABINETS_NAV_ITEM,
       {
         id: "production-orders",
         title: "Заказы",
@@ -549,4 +563,49 @@ export function isNavigationPathActive(
   );
 
   return !betterMatch;
+}
+
+export function filterAppSectionsForSession(
+  sections: AppSection[],
+  permissions: readonly string[] | undefined,
+): AppSection[] {
+  const perms = permissions ?? [];
+  const hasOwn = perms.includes("sewing_cabinet.read_own");
+  const hasAny = perms.includes("sewing_cabinet.read_any");
+  const hasWrite = perms.includes("sewing_cabinet.write");
+  const restricted = hasOwn && !hasAny;
+  if (restricted) {
+    const production = sections.find((section) => section.id === "production");
+    if (!production) {
+      return [
+        {
+          id: "production",
+          title: "Производство",
+          shortTitle: "ПР",
+          href: "/production/sewing-cabinet",
+          topNavigation: [SEWING_CABINET_NAV_ITEM],
+        },
+      ];
+    }
+    return [
+      {
+        ...production,
+        href: "/production/sewing-cabinet",
+        topNavigation: [SEWING_CABINET_NAV_ITEM],
+      },
+    ];
+  }
+  return sections.map((section) => {
+    if (section.id !== "production") return section;
+    return {
+      ...section,
+      topNavigation: section.topNavigation.filter((item) => {
+        if (item.id === "production-sewing-cabinet") {
+          return hasOwn || hasWrite || hasAny;
+        }
+        if (item.id === "production-sewing-cabinets") return hasAny;
+        return true;
+      }),
+    };
+  });
 }

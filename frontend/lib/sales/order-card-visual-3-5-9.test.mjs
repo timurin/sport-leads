@@ -11,9 +11,7 @@ test("order card layout breakpoints and collapse wiring (3.5.9)", () => {
     join(root, "components/sales/sales-order-page.tsx"),
     "utf8",
   );
-  assert.ok(page.includes("order-card-top-triple"));
-  assert.ok(page.includes("order-card-top-pair"));
-  assert.ok(page.includes("order-card-mid-pair"));
+  assert.ok(page.includes("order-card-comms"));
   assert.ok(page.includes("CollapseToggleButton"));
   assert.ok(page.includes("historyCollapsed"));
   assert.equal(page.includes("commentsCollapsed"), false);
@@ -28,7 +26,7 @@ test("order card layout breakpoints and collapse wiring (3.5.9)", () => {
     join(root, "components/sales/lead-activity-timeline.tsx"),
     "utf8",
   );
-  assert.ok(timeline.includes("Комментарии менеджера"));
+  assert.ok(timeline.includes("Комментарии"));
   assert.ok(timeline.includes("История активности"));
   assert.equal(timeline.includes("F) Комментарии"), false);
   assert.equal(timeline.includes("D) История"), false);

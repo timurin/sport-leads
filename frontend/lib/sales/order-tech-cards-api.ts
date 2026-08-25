@@ -51,6 +51,11 @@ export type ApiTechnicalCardUnitLine = {
   print_number?: string | null;
   color?: string | null;
   notes?: string | null;
+  production_stage_id?: number | null;
+  last_transfer_kind?: string | null;
+  fg_receipt_posted?: boolean;
+  fg_issue_posted?: boolean;
+  is_scrapped?: boolean;
   created_at?: string;
   updated_at?: string;
 };
@@ -136,6 +141,7 @@ export type ApiTechnicalCardStageResult = {
   id: number;
   technical_card_id: number;
   stage_order: number;
+  production_stage_id?: number | null;
   stage_label: string;
   status: TechnicalCardStageResultStatus | string;
   performer_name: string | null;
@@ -176,6 +182,10 @@ export type ApiTechnicalCard = {
   routing_template_name?: string | null;
   current_stage_order: number | null;
   current_stage_label: string | null;
+  qr_token?: string | null;
+  scan_url?: string | null;
+  scan_qr_svg?: string | null;
+  wip_status?: string | null;
   design_mockup_url?: string | null;
   notes?: string | null;
   order_number?: string | null;

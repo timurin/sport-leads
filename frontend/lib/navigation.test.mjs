@@ -3,6 +3,7 @@ import test from "node:test";
 
 import {
   appSections,
+  filterAppSectionsForSession,
   getSectionByPathname,
   isNavigationPathActive,
 } from "./navigation.ts";
@@ -146,6 +147,8 @@ test("production navigation exposes tech-cards and shop modules", () => {
   assert.ok(ids.includes("production-dashboard"));
   assert.ok(ids.includes("production-tech-cards"));
   assert.ok(ids.includes("production-shop-kanban"));
+  assert.ok(ids.includes("production-sewing-cabinet"));
+  assert.ok(ids.includes("production-sewing-cabinets"));
   assert.ok(ids.includes("design-projects"));
   assert.ok(ids.includes("production-shop-modules"));
   const designProjects = production.topNavigation.find(
@@ -259,4 +262,41 @@ test("purchases and finance dashboards yield to deeper routes", () => {
     isNavigationPathActive("/finance/payments", "/finance"),
     false,
   );
+});
+
+test("restricted sewer nav keeps production chrome and only the cabinet item", () => {
+  const filtered = filterAppSectionsForSession(appSections, [
+    "sewing_cabinet.read_own",
+    "sewing_cabinet.write",
+  ]);
+  assert.deepEqual(
+    filtered.map((section) => section.id),
+    ["production"],
+  );
+  assert.equal(filtered[0]?.href, "/production/sewing-cabinet");
+  assert.deepEqual(filtered[0]?.topNavigation, [
+    {
+      id: "production-sewing-cabinet",
+      title: "Кабинет швеи",
+      href: "/production/sewing-cabinet",
+    },
+  ]);
+  const full = filterAppSectionsForSession(appSections, [
+    "sewing_cabinet.read_own",
+    "sewing_cabinet.read_any",
+    "sewing_cabinet.write",
+  ]);
+  assert.ok(full.length > 1);
+  assert.ok(full.some((section) => section.id === "sales"));
+  const production = full.find((section) => section.id === "production");
+  const ids = production?.topNavigation.map((item) => item.id) ?? [];
+  assert.ok(ids.includes("production-sewing-cabinet"));
+  assert.ok(ids.includes("production-sewing-cabinets"));
+  const operator = filterAppSectionsForSession(appSections, [
+    "shop.kanban.transition",
+  ]);
+  const operatorProduction = operator.find((section) => section.id === "production");
+  const operatorIds = operatorProduction?.topNavigation.map((item) => item.id) ?? [];
+  assert.equal(operatorIds.includes("production-sewing-cabinet"), false);
+  assert.equal(operatorIds.includes("production-sewing-cabinets"), false);
 });

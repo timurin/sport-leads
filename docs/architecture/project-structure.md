@@ -1,8 +1,8 @@
 # Sport-Lead — Project Structure Checklist
 
 **Code:** `SL-PROJECT-STRUCTURE-v1`
-**Updated:** `2026-08-23` (Stage `1.4.3` closed `1.4.3.5`; Stage `22` closed)  
-**Project version:** `v0.9.0` / early `v1.00` Stages 0 + 20 + 21 + 22 + 23
+**Updated:** `2026-08-25` (Stage **25** closed owner visual `25.5.2`; Stage **7** contract ADR-031; next `7.1.2`)
+**Project version:** `v0.9.0` / early `v1.00` Stages 0 + 20 + 21 + 22 + 23 + **24** + **25** + Stage **7** contract
 **Git branch:** `main`
 
 ## Rules
@@ -40,6 +40,8 @@
 - [x] Settings / Users cabinet (`v1.00` Stage `21`) — nav «Пользователи» `/settings/users` (≠ org «Сотрудники» `2.4.2`); invite/list/profile PATCH; access matrix; extends `17.1.2`; Alembic `m6n7o8p9q012`; owner visual OK `21.5.1` (`2026-08-05`); contract `SL-USERS-CABINET-v1`
 - [x] Design v1.0 (`v1.00` Stage `22`) — Soft UI etalons → platform; `SL-DESIGN-V1-PROCESS-v1`; closed `2026-08-23` (boards `22.3.4` + shell `22.9.4`); task `docs/tasks/v1.00-stage-22-design-v1.md`
 - [ ] Unified Work Tasks (`v1.00` Stage `23`) — ADR-028; through `23.7` / `23.10.4` (API/FE/hosts, migrate, kanban, order context; owner visuals OK `2026-08-22`); old task tables retained
+- [x] Sewing cabinet (`v1.00` Stage `24`) — ADR-029 work ledger + restricted shell + own/manager UI; owner visual OK `24.5.2` (`2026-08-24`); `PlatformUser` sewer; not `2.4.2` Employee
+- [x] Tech-card QR + shop scan (`v1.00` Stage `25`) — closed `2026-08-25` (owner visual `25.5.2`); ADR-030; Alembic `d3e4f5a6b789`; `/production/scan/{token}`
 - [ ] Production secrets management (Vault/etc.) — monitoring + DR covered in `17.2.2`/`17.2.3`; file `.env.production` remains host SoT for secrets MVP
 
 ## 2. CRM and Leads
@@ -65,11 +67,11 @@
 ## 3. Organizations, Clients, and Contacts
 
 - [x] Persistent organizations API and `SalesOrder.organization_id` binding
-- [ ] Persistent organizations workspace on backend data
-- [ ] Persistent employees directory, org structure, and user linkage (`2.4.2`) — org HR «Сотрудники»; **≠** platform Users cabinet Stage `21` / `/settings/users`
+- [x] Persistent organizations workspace on backend data — list+card `2.4.1` owner visual OK `2026-08-24` (`SL-ORGANIZATIONS-v1`)
+- [x] Persistent employees directory (`2.4.2`) — list+card owner visual OK `2026-08-24` (`SL-EMPLOYEES-v1`); department = free text; `platform_user_id` deferred; **≠** platform Users cabinet Stage `21` / `/settings/users`
 - [x] Clients and contacts linked to leads and orders
 - [x] Customer and contact saving from the lead workflow
-- [ ] Separate persistent client history, deduplication, and settlements — history `2.2.3` + folders `2.2.4` owner OK `2026-08-23`; requisites `2.3.1` shipped; segments/duplicates `2.3.2` shipped `2026-08-24` (awaiting owner visual); `2.3.3` open; → v1.00
+- [ ] Separate persistent client history, deduplication, and settlements — history `2.2.3` + folders `2.2.4` owner OK `2026-08-23`; requisites `2.3.1` shipped; segments/duplicates `2.3.2` owner visual OK `2026-08-24`; settlements `2.3.3` owner visual OK `2026-08-24` (projection of `3.4.2`; ledger `14.2`); → v1.00
 
 ## 4. Sales Orders
 
@@ -141,7 +143,7 @@
 - [x] Pattern-base owner visual checkpoint — models / grids / sewing ops / PRODUCT available-models (`6.4.3`); Stage 6 catalog closed
 - [x] Order-item model + assembly-variant selection — Stage `3.2.5` shipped; smoke `3.2.6` shipped `2026-07-27`; order routing `3.2.7` shipped
 - [x] Order-item routing template selection from model whitelist — Stage `3.2.7` shipped (owner visual OK `2026-07-27`)
-- [ ] Specifications and bill-of-materials contour — Stage 7 **plan+fact report document** from filled TC + execution (ADR-004; not hard dep of Stage 8/9; Documents = link registry later)
+- [ ] Specifications and bill-of-materials contour — Stage 7 **plan+fact report document** from filled TC + execution (ADR-004/031; not hard dep of Stage 8/9; parent = batch 1:1; Documents = link registry later); contract `7.1.1` closed `2026-08-25`; next `7.1.2`
 - [x] ProductionStage (цех) catalog + routing/ops bind (`8.3`) — Дизайн→Раскрой→Печать→Пошив→ВТО→ОТК→Упаковка; WorkCenter = оборудование; migration `m4n5o6p7q890`; owner visual routings OK `2026-07-28`
 - [x] Routing, operations, work centers, QC flags; shop TechOperation catalog (`8.1.3` + required materials `8.1.4`) + routings UI (`8.2`) — `v0.9.0`; ADR-017 amend `8.3`; TC whitelist wire `8.2.3.7`–`8.2.3.8` shipped; migration `l3m4n5o6p789`; owner visual `8.2.2.6` OK `2026-07-28`
 
@@ -165,6 +167,8 @@
 - [x] Design versioned layouts / assets (Stage `10.1`) — **ADR-021/022**; `10.1.1`–`10.1.2` closed (owner visuals OK `2026-08-01`); approval = `3.4.1` + Stage `19` (`10.2` cancelled); shop Дизайн = `11.4`
 - [x] Production orders/batches `11.1.1` + WorkCenter planning `11.1.2` + aggregate fact `11.2.1` shipped (owner visuals OK `2026-07-30`); FG warehouse `11.2.2` shipped (owner visual `11.2.2.5` OK `2026-08-01`)
 - [x] Shop-floor modules platform + per-цех UIs (`11.3`–`11.10`) — fact on technical card; material `fact_qty` hard gate on Раскрой/Печать (`9.3.4` / `11.5`–`11.6`); owner visuals OK through `11.10.5` (`2026-07-29`)
+- [x] Sewing cabinet (`v1.00` Stage `24`) — ADR-029 `sewing_work_ledger_entries`; UI `/production/sewing-cabinet`; not a second `11.7` shop module; owner visual OK `2026-08-24`
+- [x] Tech-card QR / shop scan (`v1.00` Stage `25`) — ADR-030; owner visual OK `25.5.2` (`2026-08-25`); token/print/scan/status/FG
 - [x] Warehouse nomenclature PT-04 `/warehouse/stock` — tree CRUD + list + settings redirects + остаток column/filter + owner visual OK (`4.10.1`–`4.10.7`); live ledger column `12.2.3` (ADR-019)
 - [x] Warehouse Stage 12 ledger MVP `12.2` (`12.2.1`–`12.2.5` / former `4.6.5.*`) — StockDocument/Ledger + post/API + live `/warehouse/stock` column + regression + docs sync
 - [x] Warehouse FG docs + movements `12.3` (`12.3.1`–`12.3.3`) shipped; inventory/transfers `12.4`–`12.5` → v1.00

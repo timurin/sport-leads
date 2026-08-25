@@ -1,12 +1,12 @@
-import { EntityWorkspace } from "@/components/entity/entity-workspace";
-import { organizationRecords } from "@/lib/demo-data/catalogs";
-import { organizationsDefinition } from "@/lib/entity/definitions/organizations";
+import { OrganizationsWorkspace } from "@/components/settings/organizations-workspace";
+import { getOrganizationsList } from "@/lib/settings/organizations-api";
 
-export default function OrganizationsPage() {
+export default async function OrganizationsPage() {
+  const result = await getOrganizationsList(false);
   return (
-    <EntityWorkspace
-      definition={organizationsDefinition}
-      records={organizationRecords}
+    <OrganizationsWorkspace
+      organizations={result.ok ? result.items : []}
+      loadError={result.ok ? undefined : result.message}
     />
   );
 }

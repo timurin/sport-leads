@@ -163,6 +163,9 @@ def _assert_material_fact_gate(
         )
 
 
+assert_material_fact_gate = _assert_material_fact_gate
+
+
 def _assert_card_executable(card: TechnicalCard) -> None:
     if card.status == TechnicalCardStatus.CANCELLED:
         raise TechnicalCardConflictError("Cancelled technical card cannot execute stages")

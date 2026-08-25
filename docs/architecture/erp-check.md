@@ -21,7 +21,7 @@
 - `[x]` **SMTP email connector `1.4.3.3`** — real outbound email + inbound webhook → `LeadMessage` (mock fallback if SMTP unset);
 - `[x]` **mailbox settings `1.4.3.4`** — persist SMTP/IMAP/CRM flags in `mailbox_settings`; admin UI `/settings/integrations`; secrets not returned; owner visual OK `2026-08-23`;
 - `[x]` **external adapters checkpoint `1.4.3.5`** — contour **C** closed (`2026-08-23`): website-form ingest + SMTP `LeadMessage` + mailbox persist; collectors ≠ connectors; ≠ Stage 19;
-- `[~]` список/Kanban, задачи, заметки, timeline и коммуникации частично local/demo; **лиды list/kanban** `1.1.3`/`1.1.4` closed (owner visual OK `2026-07-31`); **dashboard models** `1.1.5` closed (owner visual OK `2026-08-01`); **lead tasks/notes/communications** `1.2.4` closed (owner visual OK `2026-08-01`); lead **card demix** `1.2.5` closed (owner visual OK `2026-08-01`; production auth → `17.1.1`); **`1.3.3` closed** (owner visual OK `2026-08-01`): no Deal; deals→orders; lead archive cancelled; ACL → `17.1.1`; **`2.2.1`/`2.2.2` closed** (owner visual OK `2026-08-01`); **`2.2.3` closed** (owner visual OK `2026-08-23`); **`2.2.4` closed** (owner visual OK `2026-08-23`); **`2.3.1` shipped** (`2026-08-23`; INN/KPP/OGRN + `ClientBankAccount` on `/sales/clients/[id]`); **`2.3.2` shipped** (`2026-08-24`; segment tags + duplicate warning, awaiting owner visual);
+- `[~]` список/Kanban, задачи, заметки, timeline и коммуникации частично local/demo; **лиды list/kanban** `1.1.3`/`1.1.4` closed (owner visual OK `2026-07-31`); **dashboard models** `1.1.5` closed (owner visual OK `2026-08-01`); **lead tasks/notes/communications** `1.2.4` closed (owner visual OK `2026-08-01`); lead **card demix** `1.2.5` closed (owner visual OK `2026-08-01`; production auth → `17.1.1`); **`1.3.3` closed** (owner visual OK `2026-08-01`): no Deal; deals→orders; lead archive cancelled; ACL → `17.1.1`; **`2.2.1`/`2.2.2` closed** (owner visual OK `2026-08-01`); **`2.2.3` closed** (owner visual OK `2026-08-23`); **`2.2.4` closed** (owner visual OK `2026-08-23`); **`2.3.1` shipped** (`2026-08-23`; INN/KPP/OGRN + `ClientBankAccount` on `/sales/clients/[id]`); **`2.3.2` closed** (owner visual OK `2026-08-24`; segment tags + duplicate warning); **`2.3.3` closed** (owner visual OK `2026-08-24`; read-only settlements projection of `3.4.2` markers; ledger SoT Stage `14.2`); **`2.4.1` closed** (owner visual OK `2026-08-24`; `/settings/organizations` list+card); **`2.4.2` closed** (owner visual OK `2026-08-24`; `/settings/organizations/employees`; auth linkage deferred); **Stage 2 closed**;
 - `[x]` `Deal` как отдельная сущность **не вводится** (конверсия → `SalesOrder`); ACL CRM → `17.1.1`;
 - `[x]` `Organization` и связь `SalesOrder.organization_id`;
 - `[x]` `SalesOrder` list/detail, status workflow и history;
@@ -73,8 +73,8 @@
 - `[ ]` операционные узлы;
 - `[~]` технологические операции — Stage `8.1.3` **shipped** (`tech_operations` + seed 5; settings UI); строки объёмов на ТК — `9.3.3` (≠ SewingOperation Stage `6.3`); привязка ops → цех shipped in `8.3`;
 - `[~]` нормативы модели и времени — **planned** `6.1.17` (operation material norms on model+routing as plan hint) + sewing duration already `6.3.8`; TC `planned_qty`/`fact_qty` + hard gate cutting/print → `9.3.4` / shop `11.5`–`11.6`;
-- `[ ]` подготовка и версионирование спецификации — Stage 7 **документ-отчёт план+факт** from filled TC + execution (ADR-004/016 amend `2026-07-26`; не hard dep generate ТК; не отдельный модуль);
-- `[ ]` запрет запуска партии без утверждённой версии Spec (где применимо; ТК исполняется по snapshot маршрута Stage 8);
+- `[~]` подготовка и версионирование спецификации — Stage 7 **документ-отчёт план+факт** (ADR-004/016/031 `2026-08-25`; контракт `7.1.1` закрыт; DB `7.1.2` next; не hard dep generate ТК; не отдельный модуль; не gate запуска партии);
+- `[x]` запрет запуска партии без утверждённой версии Spec — **не применяется** (ADR-004/031): Spec = отчёт после исполнения, не prerequisite партии/ТК;
 
 ## Производство
 
@@ -83,8 +83,10 @@
 - `[~]` **ProductionStage (цех) catalog** — Stage `8.3` **shipped** (seed 7 цехов; migration `m4n5o6p7q890`); FG stages `ready_to_ship` / `shipped` seeded in `11.2.2.2` (`x5y6z7a8b901`); settings «Этапы»; routing step = цех; owner visual OK `2026-07-28`;
 - `[x]` **WorkCenter planning (`11.1.2`)** — contract + routing snapshot + Settings catalog + TC planned assign UI shipped; owner visual `11.1.2.5` OK `2026-07-30`;
 - `[~]` **shop-floor modules** — Stage `11.3` platform + **`11.4`–`11.10` per-цех UIs shipped** (owner visuals OK through `11.10.5`); FG stages `11.2.2` (ADR-019) after packaging; **Раскрой/Печать** write material `fact_qty` with hard complete-gate (`9.3.4`);
+- `[x]` **кабинет швеи (`v1.00` Stage `24`)** — закрыт `2026-08-24` (owner visual `24.5.2`); ADR-029 + `SL-SEWING-CABINET-v1`; `PlatformUser`; журнал + ограниченная оболочка; ≠ `2.4.2` Employee;
+- `[x]` **QR техкарты / скан (`v1.00` Stage `25`)** — закрыт `2026-08-25` (owner visual `25.5.2`); ADR-030; токен + печать QR + скан + `wip_status` + частичный FG;
 - `[x]` **production batches** — ADR-018 + DB/API/UI `/production/orders` shipped (`11.1.1`); owner visual `11.1.1.5` OK `2026-07-30`;
-- `[ ]` batch specification formation (plan+fact report document from filled TC / ADR-004);
+- `[ ]` batch specification formation (plan+fact report document from filled TC / ADR-004/031; contract `7.1.1` closed `2026-08-25`; DB/API/UI `7.1.2`+);
 - `[x]` **aggregate fact (`11.2.1`)** — contract/API/UI/tests + owner visual OK `2026-07-30` (`11.2.1.1`–`11.2.1.4`);
 - `[x]` **FG warehouse bridge (`11.2.2`)** — wire + auto-post + owner visual OK `2026-08-01`; movements UI `12.3.3` shipped;
 
@@ -104,7 +106,7 @@
 - `[x]` **LAN local-stack access (`v1.00` `0.3.1`–`0.3.3`)** — `scripts/dev-servers.ps1 -Lan` binds `0.0.0.0:3001`/`8000`; `.env.example` + AGENTS CORS/`NEXT_PUBLIC_*` notes; owner smoke OK `2026-08-05` (`192.168.2.98:3001`); ≠ public internet / production Caddy;
 - `[x]` **Create SalesOrder without Lead (`v1.00` `0.4.1`–`0.4.3`)** — nullable `lead_id`; `POST /orders` (number auto|freeform unique); FE create drawer; convert intact; org optional + client checkbox «Создать организацию?»; owner visual OK `2026-08-05`; evidence `test_order_without_lead_0_4.py`, `SL-ORDER-WITHOUT-LEAD-v1`;
 - `[x]` **Authentication (`17.1.1`)** — ADR-023 + API + `/login` workspace gate; owner visual OK `2026-08-01`; evidence `test_auth_17_1_1_2.py`, `session.test.mjs`;
-- `[x]` System users / roles / permissions (`17.1.2`) — ADR-024 + RBAC + size-grid/kanban/admin gates + stage executors; owner visuals OK `2026-08-01`; **Users cabinet list/profile/access** → Stage `21`;
+- `[x]` System users / roles / permissions (`17.1.2`) — ADR-024 + RBAC + size-grid/kanban/admin gates + stage executors; owner visuals OK `2026-08-01`; **Users cabinet list/profile/access** → Stage `21`; sewing cabinet codes/roles → `24.1.1`;
 - `[x]` **Settings / Users cabinet (`v1.00` Stage `21` closed)** — nav «Пользователи» `/settings/users` (≠ org «Сотрудники» `2.4.2`); invite + list/filter + profile PATCH + access matrix; Alembic `m6n7o8p9q012`; owner visual OK `21.5.1` (`2026-08-05`); `SL-USERS-CABINET-v1`; extends `17.1.2` without new permission codes;
 - `[x]` **Design v1.0 (`v1.00` Stage `22`)** — Soft UI HTML etalons → platform; process `SL-DESIGN-V1-PROCESS-v1`; closed `2026-08-23` (boards `22.3.4` + shell `22.9.4`); do not re-open Stage `20` data contracts;
 - `[x]` Universal audit trail (`17.1.3`) — ADR-025 + `audit_events` + size-grid UI journal; owner visual OK `2026-08-01`;

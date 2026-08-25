@@ -1,6 +1,7 @@
 # ADR-016 — Technical card domain boundary
 
-**Status:** принято (`2026-07-26`); amend numbering + TechOperation / op-volume lines (`2026-07-26`); amend Spec↔ТК dependency (`2026-07-26`); amend Spec = план+факт report (`2026-07-26`); amend screen mockups on TC max 3 + sewing snapshot lines (`2026-07-27`); **amend composition plan/fact + hard material gate cutting/print (`2026-07-27`)**; **amend aggregate personalization import + history block + TechOperation material prefill (`2026-07-28`)**; **amend shop-module platform contract (`11.3.1`, `2026-07-28`)**; **amend Раскрой shop domain (`11.5.1`, `2026-07-28`)**; **amend Печать shop domain (`11.6.1`, `2026-07-28`)**; **amend Пошив shop domain (`11.7.1`, `2026-07-28`)**; **amend Упаковка shop domain (`11.10.1`, `2026-07-29`)**; **amend DesignProject SoT ADR-021 (`2026-08-01`)**; **amend Stage 19 internal collaboration context (`2026-08-04`, ADR-026)**  
+**Status:** принято (`2026-07-26`); amend numbering + TechOperation / op-volume lines (`2026-07-26`); amend Spec↔ТК dependency (`2026-07-26`); amend Spec = план+факт report (`2026-07-26`); amend screen mockups on TC max 3 + sewing snapshot lines (`2026-07-27`); **amend composition plan/fact + hard material gate cutting/print (`2026-07-27`)**; **amend aggregate personalization import + history block + TechOperation material prefill (`2026-07-28`)**; **amend shop-module platform contract (`11.3.1`, `2026-07-28`)**; **amend Раскрой shop domain (`11.5.1`, `2026-07-28`)**; **amend Печать shop domain (`11.6.1`, `2026-07-28`)**; **amend Пошив shop domain (`11.7.1`, `2026-07-28`)**; **amend Упаковка shop domain (`11.10.1`, `2026-07-29`)**; **amend DesignProject SoT ADR-021 (`2026-08-01`)**; **amend Stage 19 internal collaboration context (`2026-08-04`, ADR-026)**; **amend sewing work ledger pointer Stage 24 / ADR-029 (`2026-08-24`)**; **amend unit-line location + split WIP Stage 25 / ADR-030 (`2026-08-24`)**; **amend Spec version FK Stage 7 / ADR-031 (`2026-08-25`)**
+
 **Date:** `2026-07-26`  
 **Roadmap:** Stage 9 § `9.1.1` (+ Stage `8.1.3` TechOperation catalog; Stage `9.3.3` volume lines; Stage `9.3.4` plan/fact materials; Stage `9.3.5` required materials prefill; document layout `9.4.2.7` / history `9.4.2.8`; shop Упаковка `11.10`)  
 **Depends on:** ADR-004, ADR-003, ADR-012, ADR-014 (ADR-017 for shop routing)  
@@ -60,7 +61,7 @@ UNIQUE: не более одной ТК на один `sales_order_item_id` (к�
 - defaults при генерации: из snapshot позиции заказа (`size_range`, `personalization`, …) с возможностью per-row правки; `color` больше не является активным UI/import полем в этом контуре и остаётся только legacy nullable storage до cleanup;
 - **не** создаём N отдельных `TechnicalCard` при qty = N.
 
-Изменение qty на заказе синхронизирует число unit lines (добавление/удаление незакрытых строк) — сервис `9.2.1.2`, не ручное размножение документов.
+**Amend `2026-08-24` (Stage `25` / ADR-030):** unit line получает **локацию** `production_stage_id` (WIP по штуке). Одна ТК; child TC запрещены. Вычисляемый статус карты (возврат > готова / частично готова / в работе) не дублирует `TechnicalCard.status`. QR — ADR-030, не этот файл.
 
 Импорт персонализации может приходить **агрегированными** строками по колонкам (`size_type`, `size`, `surname`, `print_number`, `quantity`, `notes`), но сервис обязан валидировать `Σ quantity = qty` строки заказа и **разворачивать** агрегат в N unit lines. Агрегат — transport/presentation DTO, не новый SoT.
 
@@ -77,7 +78,7 @@ UNIQUE: не более одной ТК на один `sales_order_item_id` (к�
 | ProductModel | id + snapshot article/name/`size_type` | Копия из order-item snapshot (или catalog на generate); master не ретроактивен |
 | AssemblyVariant + sewing operation lines | id + name/total + operation snapshots | Из order-item assembly snapshots (cost contour Stage 6) |
 | Материалы / лекала / нормы | planned **composition** rows on card | SoT состава на order-line; MATERIAL lines bind to `production_stage_id`; **`planned_qty`** = hint from model operation norms × order qty (`6.1.17`) and, when TechOperation carries required materials, `required_material_qty × norm_qty_per_item × order qty` (`9.3.5`); **`fact_qty`** written by цех on stage complete (`11.5`/`11.6`); not a second складской каталог (ADR-012) |
-| Спецификация (Stage 7) | optional soft `specification_version_id` + label | **Не** источник generate. Spec = сводный отчёт (план из ТК + факт исполнения) для партии / 1С. Soft-ref на карте — обратная связь после Stage 7, не hard gate |
+| Спецификация (Stage 7) | `specification_version_id` + label (ADR-031: real FK in `7.1.2`) | **Не** источник generate. Spec = сводный отчёт (план из ТК + факт исполнения) для **партии** / 1С. Stamp на карте — обратная связь после approve, не hard gate |
 | Shop routing template (Stage 8) | template id + ordered stage plan snapshot | Снимок маршрута на generate from order-item snapshot / model whitelist (`3.2.7` / `6.1.17`); исполнение пишет **stage results** на карте |
 | TechOperation volume lines | operation id + name/unit snapshot + volume Decimal + stage binding | Prefill from routing/`8.1.3` on generate (`9.3.3`); manager may edit volumes; catalog edits do not live-merge |
 | Design mockup (Stage 10) | optional asset / file link | Не блокирует generate; экран и Side 1 печати показывают когда есть. **Amend `2026-07-27`:** экранная галерея на ТК до 3 фото (`TechnicalCardMedia`) раньше полного модуля Stage 10; печать 2×A4 остаётся `18.3`. **Amend `2026-08-01`:** версионный SoT = `DesignProject` / `DesignVersion` (**ADR-021**); TC media ≠ DesignVersion |
@@ -201,6 +202,7 @@ Rules:
 - **No** MATERIAL hard complete-gate for Пошив in MVP (gate remains Раскрой/Печать only — `9.3.4`).
 - **No** required WorkCenter / TechOperation volume fields for Пошив MVP (those stay Печать `11.6`).
 - AssemblyVariant sewing-operation snapshot lines on the TC remain the **cost/plan contour** (Stage 6 / generate); they are not the shop-floor fact write surface for `11.7`.
+- **Amend `2026-08-24` (Stage `24` / ADR-029):** multi-sewer **work ledger** (take/reserve/complete, piece vs sewing-op qty, price snapshot) is a **separate** SoT from this stage-fact table. Do not store assignments in `performer_name`. Shop module `11.7` stays.
 
 ### 6.5 Stage 11.10 Упаковка domain (`2026-07-29`)
 
@@ -236,7 +238,7 @@ Rules:
 |---------|------|
 | Stages | `ready_to_ship` («Готовы к отгрузке»), `shipped` («Отгружены») after Упаковка — ADR-019 |
 | Stock SoT | Warehouse ledger / StockDocument — **not** on TC header |
-| Receipt qty | `TC.quantity − Σ scrap_qty` (QC); rework does not reduce (MVP) |
+| Receipt qty | MVP: `TC.quantity − Σ scrap_qty` (QC). **Amend `2026-08-24` (Stage `25` / ADR-030):** post qty = unit lines arriving at the FG stage, not the whole card; multiple FG docs per TC allowed |
 | Complete | `ready_to_ship` posts FG receipt; `shipped` posts FG issue (wire in `11.2.2.4` / `12.3`) |
 
 ### 7. Сущности (логический контур → `9.1.2` / `9.3.3`)
@@ -267,7 +269,7 @@ API не отдаёт ORM; деньги/нормы/объёмы — `Decimal`/`N
 - Stage `11.1.2` WorkCenter planning: planned equipment is the same `TechnicalCardStageResult.work_center_id` field (routing snapshot + editable); not stored on ProductionOrder/Batch; Settings catalog CRUD for `WorkCenter` master.
 - Stage `11.7` Пошив: stage fact only (`performer` / `work_done` / `duration`); no material gate; sewing-op snapshots stay cost contour, not shop fact.
 - Stage `11.10` Упаковка: stage fact only (`performer` / `work_done` / `duration`); no material gate; no WorkCenter/QC scrap fields in MVP.
-- Stage `11.2.2` / ADR-019: after Упаковка — `ready_to_ship` (складской приход ГП) → `shipped` (складское списание); остаток SoT в ledger, не на ТК.
+- **Stage 25 / ADR-030:** split WIP lives on unit-line location; FG auto-post qty follows arriving units (`12.3.2` amend).
 - ADR-004: «технология» = заполненная ТК + snapshot маршрута; Spec — сводный отчёт план+факт по партии, опирается на ТК и факт, не предшествует create ТК.
 - **Stage 19 / ADR-026:** document UI may show the order’s internal staff collaboration thread filtered by optional `technical_card_id`. ТК is **context**, not a second chat store; messages live on the order thread.
 

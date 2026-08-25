@@ -16,8 +16,8 @@ export type OrderCommercialDocSummary = {
 export function buildOrderDocumentTree(order: {
   id: string;
   number: string;
-  leadId: string;
-  sourceLeadHref: string;
+  leadId: string | null;
+  sourceLeadHref: string | null;
   quotations?: OrderCommercialDocSummary[];
   invoices?: OrderCommercialDocSummary[];
 }): OrderDocumentNode[] {
@@ -66,8 +66,8 @@ export function buildOrderDocumentTree(order: {
   return [
     {
       id: "lead",
-      label: `Лид #${order.leadId}`,
-      href: order.sourceLeadHref,
+      label: order.leadId ? `Лид #${order.leadId}` : "Лид",
+      href: order.sourceLeadHref ?? undefined,
       status: "live",
       children: [
         {

@@ -1,6 +1,7 @@
 # ADR-018 — ProductionOrder + ProductionBatch domain
 
-**Status:** принято (`2026-07-30`); **amended** `2026-07-30` (`11.2.1.1` aggregate fact roll-up contract); **amended** `2026-07-30` (`11.2.2.1` / ADR-019 FG warehouse stages)  
+**Status:** принято (`2026-07-30`); **amended** `2026-07-30` (`11.2.1.1` aggregate fact roll-up contract); **amended** `2026-07-30` (`11.2.2.1` / ADR-019 FG warehouse stages); **amended** `2026-08-25` (Spec parent 1:1 batch / ADR-031)
+
 **Date:** `2026-07-30`  
 **Roadmap:** Stage 11 § `11.1.1.1` (orders/batches); feeds `11.1.1.2`–`11.1.1.5`, `11.2`, Spec Stage 7  
 **Depends on:** ADR-004, ADR-016, ADR-017, ADR-019  
@@ -14,7 +15,7 @@
 - **технической картой** (SoT состава и цехового факта на order-line — ADR-016);
 - **цеховыми модулями** `11.3`–`11.10` (пишут факт на ТК);
 - планировочными документами Производства: **производственный заказ** и **партия**;
-- будущей **спецификацией партии** (Stage 7 — отчёт план+факт для 1С, ADR-004).
+- **спецификацией партии** (Stage 7 / ADR-031 — отчёт план+факт для 1С, шапка 1:1 с batch; не gate запуска).
 
 Нельзя: подменять `SalesOrder` «производственным заказом»; плодить второй SoT факта на партии вместо ТК; ломать правило 1 ТК = 1 eligible order-line; смешивать назначение WorkCenter (`11.1.2`) с CRUD заказов/партий.
 

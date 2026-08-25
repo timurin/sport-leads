@@ -129,7 +129,15 @@ def test_role_assign_requires_permission() -> None:
             roles = client.get("/roles")
             assert roles.status_code == 200, roles.text
             codes = {item["code"] for item in roles.json()["items"]}
-            assert codes == {"admin", "catalog_editor", "shop_operator"}
+            assert codes == {
+                "admin",
+                "catalog_editor",
+                "shop_operator",
+                "sewer",
+                "company_lead",
+                "technologist",
+                "shop_master",
+            }
 
             listed = client.get("/platform-users")
             assert listed.status_code == 200, listed.text

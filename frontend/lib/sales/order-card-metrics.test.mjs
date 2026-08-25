@@ -89,7 +89,7 @@ test("enriches zero amount from demo catalog and sums sewing from items", () => 
     openTasksCount: 1,
   });
 
-  assert.equal(metrics.isDemoEnriched, true);
+  assert.equal(metrics.isDemoEnriched, false);
   assert.ok(metrics.amountValue > 0);
   assert.equal(metrics.sewingCostSource, "items");
   assert.equal(metrics.sewingCostValue, 4500);

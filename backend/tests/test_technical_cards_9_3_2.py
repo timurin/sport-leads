@@ -16,7 +16,11 @@ from app.database.session import get_db
 from app.main import app
 from app.models.nomenclature import Nomenclature, NomenclatureType
 from app.models.sales import Lead, LeadTask, SalesUser
-from app.services.size_grids_seed import seed_mosmade_reference_grids
+from app.services.size_grids_seed import (
+    MOSMADE_MEN_GRID_NAME,
+    MOSMADE_WOMEN_GRID_NAME,
+    seed_mosmade_reference_grids,
+)
 
 
 def _session_factory() -> sessionmaker[Session]:
@@ -263,6 +267,8 @@ def test_unit_lines_import_from_xlsx_template() -> None:
             yield db
 
     app.dependency_overrides[get_db] = override_get_db
+    previous_factory = getattr(app.state, "session_factory", None)
+    app.state.session_factory = factory
     try:
         with factory() as db:
             product_id = _seed_product(db)
@@ -277,8 +283,8 @@ def test_unit_lines_import_from_xlsx_template() -> None:
         sheet.append(
             ["Номер", "Имя", "Тип размера", "Размер", "Рост", "Количество"]
         )
-        sheet.append([10, "Иванов", "Мужской (Mosmade)", "48 / M", "", 2])
-        sheet.append([7, "Петрова", "Женский (Mosmade)", "44 / S", "", 1])
+        sheet.append([10, "Иванов", MOSMADE_MEN_GRID_NAME, "48 / M", "", 2])
+        sheet.append([7, "Петрова", MOSMADE_WOMEN_GRID_NAME, "44 / S", "", 1])
         payload = io.BytesIO()
         workbook.save(payload)
 
@@ -355,3 +361,8 @@ def test_unit_lines_import_from_xlsx_template() -> None:
             assert "размер не найден" in bad_import.json()["detail"].lower()
     finally:
         app.dependency_overrides.clear()
+        if previous_factory is None:
+            if hasattr(app.state, "session_factory"):
+                delattr(app.state, "session_factory")
+        else:
+            app.state.session_factory = previous_factory

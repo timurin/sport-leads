@@ -3,7 +3,8 @@
 **Status:** принято (`2026-07-30`)  
 **Date:** `2026-07-30`  
 **Roadmap:** Stage `12.0` / bridge `11.2.2.1`; feeds `12.1`–`12.3`, `11.2.2.2`–`11.2.2.5`; owns ledger formerly sketched as `4.6.5.*`  
-**Depends on:** ADR-012, ADR-004, ADR-016, ADR-017, ADR-018  
+**Amended:** `2026-08-24` (Stage `25` / ADR-030: partial FG qty from unit lines)
+
 **Evidence:** `docs/tasks/v0.9.0-stage-11.2.2.1-warehouse-fg-contract.md`
 
 ## Контекст
@@ -101,6 +102,10 @@ receipt_qty = max(0, TC.quantity − sum(scrap_qty on QC stage_results))
 - Цепочка ADR-004: … → Упаковка → **складской приход ГП** → **отгрузка/списание** → Spec/1С.
 - Остатки на списке номенклатуры становятся живыми после `12.2`.
 - `11.2.2.4` (wire complete→post) зависит от ledger `12.2`.
+
+## Amend `2026-08-24` — partial FG post (Stage `25`)
+
+`12.3.2` сегодня постит `TC.quantity − QC scrap` одним документом на карту. После ADR-030 приход/списание ГП считаются по **unit lines, которые реально вошли** в `ready_to_ship` / `shipped`. Несколько FG-документов на одну ТК допустимы; повторный пост той же штуки запрещён. Подробности: ADR-030 §6.
 
 ## Evidence
 

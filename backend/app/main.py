@@ -31,6 +31,9 @@ from app.api.lead_stages import router as lead_stages_router
 from app.api.lead_rejection_reasons import router as lead_rejection_reasons_router
 from app.api.orders import router as orders_router
 from app.api.organizations import router as organizations_router
+from app.api.employees import router as employees_router
+from app.api.sewing_cabinet import router as sewing_cabinet_router
+from app.api.tech_card_scan import router as tech_card_scan_router
 from app.api.client_folders import router as client_folders_router
 from app.api.clients import router as clients_router
 from app.api.sales_users import router as sales_users_router
@@ -62,8 +65,9 @@ from app.api.shop_routings import (
 )
 from app.api.analytics import router as analytics_router
 from app.config.settings import settings
-from app.database.session import engine
+from app.database.session import SessionLocal, engine
 from app.logging_config import configure_logging
+from app.services.sewing_cabinet_access import sewing_cabinet_forbidden_response
 
 # Platform release line (roadmap / project-structure). Keep in sync with docs.
 APP_VERSION = "0.9.0"
@@ -78,6 +82,7 @@ app = FastAPI(
     description="API для сбора и обработки спортивных мероприятий",
     version=APP_VERSION,
 )
+app.state.session_factory = SessionLocal
 
 if settings.cors_origins:
     app.add_middleware(
@@ -95,6 +100,16 @@ async def log_requests(
     call_next,
 ) -> Response:
     started = time.perf_counter()
+    blocked = sewing_cabinet_forbidden_response(request)
+    if blocked is not None:
+        logger.bind(
+            component="http",
+            method=request.method,
+            path=request.url.path,
+            status_code=blocked.status_code,
+            duration_ms=round((time.perf_counter() - started) * 1000, 2),
+        ).info("HTTP request completed")
+        return blocked
     response = await call_next(request)
     duration_ms = round(
         (time.perf_counter() - started) * 1000,
@@ -139,6 +154,9 @@ app.include_router(lead_rejection_reasons_router)
 app.include_router(orders_router)
 app.include_router(analytics_router)
 app.include_router(organizations_router)
+app.include_router(employees_router)
+app.include_router(sewing_cabinet_router)
+app.include_router(tech_card_scan_router)
 app.include_router(clients_router)
 app.include_router(client_folders_router)
 app.include_router(sales_users_router)

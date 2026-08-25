@@ -79,6 +79,7 @@ class TechnicalCard(Base):
         UniqueConstraint("sales_order_item_id", name="uq_technical_cards_sales_order_item_id"),
         UniqueConstraint("sales_order_id", "card_seq", name="uq_technical_cards_order_card_seq"),
         UniqueConstraint("number", name="uq_technical_cards_number"),
+        UniqueConstraint("qr_token", name="uq_technical_cards_qr_token"),
         CheckConstraint("card_seq >= 1", name="ck_technical_cards_card_seq"),
         CheckConstraint(
             "status IN ('draft', 'in_progress', 'completed', 'cancelled')",
@@ -115,6 +116,7 @@ class TechnicalCard(Base):
         nullable=False,
     )
     number: Mapped[str] = mapped_column(String(80), nullable=False)
+    qr_token: Mapped[str | None] = mapped_column(String(64), nullable=True)
     card_seq: Mapped[int] = mapped_column(Integer, nullable=False)
     status: Mapped[TechnicalCardStatus] = mapped_column(
         String(20),
@@ -286,7 +288,16 @@ class TechnicalCardUnitLine(Base):
             "size_type IS NULL OR size_type IN ('male', 'female')",
             name="ck_technical_card_unit_lines_size_type",
         ),
+        CheckConstraint(
+            "last_transfer_kind IS NULL OR last_transfer_kind IN "
+            "('accept', 'forward', 'return')",
+            name="ck_technical_card_unit_lines_last_transfer_kind",
+        ),
         Index("ix_technical_card_unit_lines_card_id", "technical_card_id"),
+        Index(
+            "ix_technical_card_unit_lines_production_stage_id",
+            "production_stage_id",
+        ),
     )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -301,6 +312,20 @@ class TechnicalCardUnitLine(Base):
     print_number: Mapped[str | None] = mapped_column(String(50), nullable=True)
     color: Mapped[str | None] = mapped_column(String(100), nullable=True)
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    production_stage_id: Mapped[int | None] = mapped_column(
+        ForeignKey("production_stages.id", ondelete="SET NULL"),
+        nullable=True,
+    )
+    last_transfer_kind: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    fg_receipt_posted: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, server_default="false"
+    )
+    fg_issue_posted: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, server_default="false"
+    )
+    is_scrapped: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, server_default="false"
+    )
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),

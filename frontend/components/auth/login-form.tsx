@@ -45,7 +45,13 @@ export function LoginForm({
           <Button
             type="button"
             variant="primary"
-            onClick={() => router.push("/sales/dashboard")}
+            onClick={() =>
+              router.push(
+                nextPath && nextPath.startsWith("/") && !nextPath.startsWith("//")
+                  ? nextPath
+                  : "/sales/dashboard",
+              )
+            }
           >
             В рабочую область
           </Button>

@@ -114,7 +114,7 @@ const NoteCard = memo(function NoteCard({
   const permissions = getNotePermissions(note, currentUserId, { persistAll: allowAllNoteActions });
   const mentionedUsers = managers.filter((manager) => note.mentionedUserIds?.includes(manager.id));
   const authorName = note.author?.name ?? "Без автора";
-  const initials = note.author?.initials ?? authorName.slice(0, 2).toUpperCase();
+  const initials = authorName.slice(0, 2).toUpperCase();
 
   return (
     <article className="rounded-portal-md border border-portal-border bg-portal-surface p-3" aria-label={`Заметка: ${authorName}`}>

@@ -13,6 +13,7 @@ import {
 import {
   applyTechnicalCardRouting,
   assignTechnicalCardPlannedWorkCenter,
+  bulkUpdateTechnicalCardUnitLines,
   completeTechnicalCardStage,
   deleteTechnicalCardCompositionLine,
   deleteTechnicalCardMedia,

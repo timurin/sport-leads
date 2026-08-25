@@ -75,17 +75,41 @@ def post_fg_on_stage_complete(
     db: Session,
     card: TechnicalCard,
     stage_code: str | None,
+    *,
+    units: list | None = None,
 ) -> StockDocument | None:
-    """Create+post fg_receipt / fg_issue without committing (caller owns transaction)."""
+    """Create+post fg_receipt / fg_issue without committing (caller owns transaction).
+
+    Header-only cards (no unit lines) keep the legacy qty = TC.quantity − QC scrap
+    and a single document. After Stage 25, unit lines arriving at an FG stage
+    post only the unposted pieces (multiple documents allowed).
+    """
     if stage_code not in _FG_STAGE_TO_DOC_TYPE:
         return None
 
     doc_type = _FG_STAGE_TO_DOC_TYPE[stage_code]
-    existing = stock_repo.find_fg_document_for_card(
-        db, technical_card_id=card.id, doc_type=doc_type
+    posted_flag = (
+        "fg_receipt_posted" if stage_code == "ready_to_ship" else "fg_issue_posted"
     )
-    if existing is not None:
-        return existing
+    from app.services.tech_card_wip import live_unit_lines
+
+    live = live_unit_lines(card)
+    target_units = list(units) if units is not None else live
+    unposted = [
+        row for row in target_units if not bool(getattr(row, posted_flag, False))
+    ]
+
+    if live and not unposted:
+        return stock_repo.find_fg_document_for_card(
+            db, technical_card_id=card.id, doc_type=doc_type
+        )
+
+    if not live:
+        existing = stock_repo.find_fg_document_for_card(
+            db, technical_card_id=card.id, doc_type=doc_type
+        )
+        if existing is not None:
+            return existing
 
     try:
         warehouse = get_default_warehouse(db)
@@ -99,7 +123,10 @@ def post_fg_on_stage_complete(
             raise TechnicalCardValidationError(
                 "Для прихода ГП у техкарты должна быть номенклатура"
             )
-        qty = compute_fg_receipt_qty(db, card)
+        if live:
+            qty = Decimal(len(unposted))
+        else:
+            qty = compute_fg_receipt_qty(db, card)
         if qty <= 0:
             raise TechnicalCardValidationError(
                 "Количество прихода ГП должно быть больше нуля "
@@ -129,7 +156,10 @@ def post_fg_on_stage_complete(
             raise TechnicalCardValidationError(
                 "Перед списанием ГП требуется проведённый приход по этой техкарте"
             )
-        qty = _absolute_receipt_qty(receipt)
+        if live:
+            qty = Decimal(len(unposted))
+        else:
+            qty = _absolute_receipt_qty(receipt)
         if qty <= 0:
             raise TechnicalCardValidationError(
                 "Количество списания ГП должно быть больше нуля"
@@ -151,6 +181,9 @@ def post_fg_on_stage_complete(
         )
 
     try:
-        return create_stock_document(db, payload, commit=False)
+        document = create_stock_document(db, payload, commit=False)
     except (StockDocumentValidationError, StockDocumentConflictError) as error:
         raise _map_stock_error(error) from error
+    for row in unposted:
+        setattr(row, posted_flag, True)
+    return document

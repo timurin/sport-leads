@@ -96,6 +96,7 @@ import type {
 } from "@/lib/sales/order-tech-cards-api";
 import type { WorkCenter } from "@/lib/shop-routings";
 import { techCardStatusLabel } from "@/lib/sales/order-tech-cards";
+import { techCardWipStatusLabel } from "@/lib/production/tech-card-scan";
 import type { SizeGrid } from "@/lib/size-grids";
 import {
   assemblyOperationLineTotal,
@@ -1334,6 +1335,22 @@ export function TechCardDetailWorkspace({
                 {showCurrentStageBadge ? (
                   <StatusBadge size="compact" tone="neutral">
                     {card.current_stage_label}
+                  </StatusBadge>
+                ) : null}
+                {card.wip_status ? (
+                  <StatusBadge
+                    size="compact"
+                    tone={
+                      card.wip_status === "return"
+                        ? "danger"
+                        : card.wip_status === "ready"
+                          ? "success"
+                          : card.wip_status === "partial_ready"
+                            ? "warning"
+                            : "primary"
+                    }
+                  >
+                    {techCardWipStatusLabel(card.wip_status)}
                   </StatusBadge>
                 ) : null}
               </>

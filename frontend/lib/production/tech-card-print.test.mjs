@@ -155,6 +155,7 @@ test("buildTechnicalCardPrintRequest maps technical card to registry payload", (
   assert.match(request.payload.html.materials_table, /Кулирка/);
   assert.match(request.payload.html.composition_notes_block, /Наклейка по вороту/);
   assert.match(request.payload.html.operation_volumes_table, /Печать груди/);
+  assert.match(request.payload.html.qr_block, /QR не сформирован/);
   assert.doesNotMatch(request.payload.html.operation_volumes_table, /Втачивание рукава/);
   assert.doesNotMatch(request.payload.html.operation_volumes_table, /sewing/);
   assert.equal(request.payload.unit_lines[0].personalization, "Иванов");
@@ -170,6 +171,7 @@ test("TECH_CARD_PRINT_TEMPLATE_SOURCE targets landscape side 1/2 layout", () => 
   assert.match(TECH_CARD_PRINT_TEMPLATE_SOURCE, /\{\{ html\.assembly_scheme_block \}\}/);
   assert.match(TECH_CARD_PRINT_TEMPLATE_SOURCE, /\{\{ html\.materials_table \}\}/);
   assert.match(TECH_CARD_PRINT_TEMPLATE_SOURCE, /\{\{ html\.operation_volumes_table \}\}/);
+  assert.match(TECH_CARD_PRINT_TEMPLATE_SOURCE, /\{\{ html\.qr_block \}\}/);
   assert.match(TECH_CARD_PRINT_TEMPLATE_SOURCE, /grid-template-columns:\s*3fr 7fr/);
 });
 

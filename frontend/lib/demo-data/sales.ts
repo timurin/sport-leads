@@ -411,7 +411,7 @@ export const salesTasks: SalesTask[] = [
   { id: "task-12", status: "overdue", title: "Отправить закрывающие документы", clientName: "БК «Север»", relatedEntity: "Заказ №1044", dueAt: "Просрочено на 1 день", assignee: alexey, priority: "medium", type: "Письмо" },
 ];
 
-const clientSeeds: Omit<Client, "id">[] = [
+const clientSeeds: Omit<Client, "id" | "folderId" | "folderName">[] = [
   { name: "ООО «ПромТех»", type: "Корпоративный клиент", contact: "Иван Петров", phone: "+7 900 000-01-01", email: "demo.promtech@example.test", city: "Москва", sport: "Корпоративный спорт", ordersCount: 7, salesAmount: 3840000, lastContact: "Сегодня, 14:30", lastContactOrder: 202607151430, responsible: maria, status: "active" },
   { name: "ФА «Олимп»", type: "Академия", contact: "Сергей Волков", phone: "+7 900 000-01-02", email: "demo.olimp@example.test", city: "Казань", sport: "Футбол", ordersCount: 3, salesAmount: 1120000, lastContact: "Сегодня, 11:20", lastContactOrder: 202607151120, responsible: alexey, status: "active" },
   { name: "ВК «Вектор»", type: "Спортивный клуб", contact: "Анна Соколова", phone: "+7 900 000-01-03", email: "demo.vector@example.test", city: "Самара", sport: "Волейбол", ordersCount: 2, salesAmount: 620000, lastContact: "Вчера, 17:45", lastContactOrder: 202607141745, responsible: maria, status: "active" },

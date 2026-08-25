@@ -510,6 +510,146 @@ class OrganizationRead(SalesSchema):
     updated_at: datetime
 
 
+def _org_blank_to_none(value: object) -> object:
+    if isinstance(value, str):
+        stripped = value.strip()
+        return stripped or None
+    return value
+
+
+class OrganizationCreate(BaseModel):
+    name: str = Field(min_length=1, max_length=255)
+    legal_form: str | None = Field(default=None, max_length=50)
+    tax_id: str | None = Field(default=None, max_length=12, pattern=r"^(\d{10}|\d{12})$")
+    ogrn: str | None = Field(default=None, max_length=15, pattern=r"^(\d{13}|\d{15})$")
+    kpp: str | None = Field(default=None, max_length=9, pattern=r"^\d{9}$")
+    tax_system: str | None = Field(default=None, max_length=100)
+    director: str | None = Field(default=None, max_length=255)
+    legal_address: str | None = Field(default=None, max_length=500)
+    is_active: bool = True
+
+    @field_validator("name", mode="before")
+    @classmethod
+    def strip_name(cls, value: object) -> object:
+        return value.strip() if isinstance(value, str) else value
+
+    @field_validator(
+        "legal_form",
+        "tax_id",
+        "ogrn",
+        "kpp",
+        "tax_system",
+        "director",
+        "legal_address",
+        mode="before",
+    )
+    @classmethod
+    def blank_to_none(cls, value: object) -> object:
+        return _org_blank_to_none(value)
+
+
+class OrganizationUpdate(BaseModel):
+    name: str | None = Field(default=None, min_length=1, max_length=255)
+    legal_form: str | None = Field(default=None, max_length=50)
+    tax_id: str | None = Field(default=None, max_length=12, pattern=r"^(\d{10}|\d{12})$")
+    ogrn: str | None = Field(default=None, max_length=15, pattern=r"^(\d{13}|\d{15})$")
+    kpp: str | None = Field(default=None, max_length=9, pattern=r"^\d{9}$")
+    tax_system: str | None = Field(default=None, max_length=100)
+    director: str | None = Field(default=None, max_length=255)
+    legal_address: str | None = Field(default=None, max_length=500)
+    is_active: bool | None = None
+
+    @field_validator("name", mode="before")
+    @classmethod
+    def strip_name(cls, value: object) -> object:
+        return value.strip() if isinstance(value, str) else value
+
+    @field_validator(
+        "legal_form",
+        "tax_id",
+        "ogrn",
+        "kpp",
+        "tax_system",
+        "director",
+        "legal_address",
+        mode="before",
+    )
+    @classmethod
+    def blank_to_none(cls, value: object) -> object:
+        return _org_blank_to_none(value)
+
+
+class EmployeeRead(SalesSchema):
+    id: int
+    full_name: str
+    organization_id: int
+    organization_name: str
+    position: str | None
+    department: str | None
+    phone: str | None
+    email: str | None
+    employment_date: date | None
+    is_active: bool
+    created_at: datetime
+    updated_at: datetime
+
+
+class EmployeeCreate(BaseModel):
+    full_name: str = Field(min_length=1, max_length=255)
+    organization_id: int
+    position: str | None = Field(default=None, max_length=150)
+    department: str | None = Field(default=None, max_length=150)
+    phone: str | None = Field(default=None, max_length=50)
+    email: EmailStr | None = None
+    employment_date: date | None = None
+    is_active: bool = True
+
+    @field_validator("full_name", mode="before")
+    @classmethod
+    def strip_full_name(cls, value: object) -> object:
+        return value.strip() if isinstance(value, str) else value
+
+    @field_validator("position", "department", "phone", "email", mode="before")
+    @classmethod
+    def blank_to_none(cls, value: object) -> object:
+        return _org_blank_to_none(value)
+
+    @field_validator("employment_date", mode="before")
+    @classmethod
+    def blank_date_to_none(cls, value: object) -> object:
+        if value == "":
+            return None
+        return value
+
+
+class EmployeeUpdate(BaseModel):
+    full_name: str | None = Field(default=None, min_length=1, max_length=255)
+    organization_id: int | None = None
+    position: str | None = Field(default=None, max_length=150)
+    department: str | None = Field(default=None, max_length=150)
+    phone: str | None = Field(default=None, max_length=50)
+    email: EmailStr | None = None
+    employment_date: date | None = None
+    is_active: bool | None = None
+
+    @field_validator("full_name", mode="before")
+    @classmethod
+    def strip_full_name(cls, value: object) -> object:
+        return value.strip() if isinstance(value, str) else value
+
+    @field_validator("position", "department", "phone", "email", mode="before")
+    @classmethod
+    def blank_to_none(cls, value: object) -> object:
+        return _org_blank_to_none(value)
+
+    @field_validator("employment_date", mode="before")
+    @classmethod
+    def blank_date_to_none(cls, value: object) -> object:
+        if value == "":
+            return None
+        return value
+
+
 class ClientListItem(SalesSchema):
     """List row for `/clients` (2.2.1). Aggregates from `sales_orders` when present."""
 

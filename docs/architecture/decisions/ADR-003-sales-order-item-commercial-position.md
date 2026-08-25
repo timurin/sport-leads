@@ -41,3 +41,7 @@ Sales-side **execution markers** on `SalesOrder`:
 - `material_reserve_status` (`not_required` / `pending` / `reserved`) — flag only, no warehouse movements
 
 Gate: transition to `completed` requires `payment_status == paid` (in addition to manufacturing completeness from `9.5`). Warehouse reserves → Stage `12.5`; payment ledger / shipping docs → Stage `14`. Task `docs/tasks/v0.9.0-stage-3.4.2-order-execution-workflow.md`.
+
+## Amendment (`2.3.3`, `2026-08-24`)
+
+Client-card **settlements MVP** is a **read-only projection** of `SalesOrder` payment markers (`payment_status` / `paid_amount` / `amount`) for `client_id`, excluding `cancelled`. It is **not** a ledger and must not add `Client` balance columns. Ledger SoT remains Stage **`14.2`**. Contract `SL-CLIENT-SETTLEMENTS-v1` (`docs/tasks/v1.00-stage-2.3.3-client-settlements.md`).

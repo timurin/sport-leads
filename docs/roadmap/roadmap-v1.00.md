@@ -1,9 +1,9 @@
 # Sport-Lead — Roadmap v1.00
 
 **Code:** `SL-ROADMAP-v1.00`  
-**Updated:** `2026-08-23` (Stage **1.4.3** closed: checkpoint `1.4.3.5`)  
+**Updated:** `2026-08-25` (Stage **25** closed owner visual `25.5.2`; Stage **7** contract `7.1.1` / ADR-031; next `7.1.2`)
 **Project version:** `v1.00`  
-**Status:** Confirmed carry-over from `v0.9.0` (Stages **1.4.3**, **2** group, **7**, **12.4**–**12.5**, **13**, **14**, **15**, **16**, **18.4**) + **new** Stages **0** (performance + LAN + order-without-lead), **20** (Lead / Order UX, closed), **21** (Settings / Users cabinet, closed), **22** (Design v1.0), **23** (Unified Work Tasks). Owner started early (`2026-08-05`).  
+**Status:** Confirmed carry-over from `v0.9.0` (Stages **1.4.3**, **2** group, **7**, **12.4**–**12.5**, **13**, **14**, **15**, **16**, **18.4**) + **new** Stages **0** (performance + LAN + order-without-lead), **20** (Lead / Order UX, closed), **21** (Settings / Users cabinet, closed), **22** (Design v1.0), **23** (Unified Work Tasks), **24** (Sewing cabinet), **25** (Tech-card QR / shop scan). Owner started early (`2026-08-05`).
 **Languages / Языки:** English + Russian (this MD). Interactive switch: `docs/erp/status/roadmap-v1.00.html`
 
 **Canonical twin:**
@@ -29,7 +29,7 @@
 ## Rules / Правила
 
 - `[x]` = done / выполнено; `[ ]` = open / не выполнено.
-- Codes keep `v0.9.0` numbering for carried work (`1.4.3.*`, `2.2.3.*`, `2.2.4.*`, `2.3.*`, `2.4.*`, `7.*`, `12.4`–`12.5`, `13.*`, `14.*`, `15.*`, `16.*`, `18.4.*`). New Stages **0** (`0.1` / `0.2.*` / `0.3.*` / `0.4.*`), **20** (`20.1`–`20.4`), **21** (`21.1`–`21.5`), **22** (`22.0`–`22.9` Design v1.0; process `docs/design/design-v1-process.md`), **23** (`23.0`–`23.6` Unified Work Tasks; ADR-028).
+- Codes keep `v0.9.0` numbering for carried work (`1.4.3.*`, `2.2.3.*`, `2.2.4.*`, `2.3.*`, `2.4.*`, `7.*`, `12.4`–`12.5`, `13.*`, `14.*`, `15.*`, `16.*`, `18.4.*`). New Stages **0** (`0.1` / `0.2.*` / `0.3.*` / `0.4.*`), **20** (`20.1`–`20.4`), **21** (`21.1`–`21.5`), **22** (`22.0`–`22.9` Design v1.0; process `docs/design/design-v1-process.md`), **23** (`23.0`–`23.10` Unified Work Tasks; ADR-028), **24** (`24.0`–`24.5` Sewing cabinet), **25** (`25.0`–`25.5` Tech-card QR / shop scan).
 - Do not execute `v1.00` while `v0.9.0` is still the active project version, unless the owner explicitly starts early.
 - Не исполнять `v1.00`, пока активная версия проекта — `v0.9.0`, если владелец явно не начал раньше.
 - **Owner early start:** `2026-08-05` — execution of `v1.00` begun (`0.1.1` closed).
@@ -61,9 +61,12 @@
 | **20** | Lead / Order card UX + unified messaging | UX карточек лида / заказа + единая внутренняя переписка |
 | **21** | Settings / Users cabinet (`/settings/users`) | Настройки / Пользователи (кабинет) |
 | **22** | Design v1.0 (HTML etalons → Soft UI platform) | Design v1.0 (HTML-эталоны → Soft UI в платформе) |
+| **23** | Unified Work Tasks | Единый модуль Задачи |
+| **24** | Sewing cabinet (current slice after Stage 2) | Кабинет швеи (текущий срез после Stage 2) |
+| **25** | Tech-card QR + shop scan (after 24) | QR техкарты + скан по маршруту (после 24) |
 
-> **EN:** Stage 0 is **new** in `v1.00`: slow-data (`0.1`/`0.2`), **LAN** (`0.3`), and **create SalesOrder without Lead** (`0.4`). Stages **20** / **21** closed. Stage **22** = Design v1.0 (do **not** re-open `20.*` data contracts). Do **not** re-open closed `3.5.*` / `19.*` / `17.1.2.*` in `v0.9.0`.  
-> **RU:** Stage 0: slow-data + **LAN** (`0.3`) + **заказ без лида** (`0.4`). Stages **20** / **21** закрыты. Stage **22** = Design v1.0 (не переоткрывать контракты `20.*`). Не переоткрывать закрытые пункты v0.9.
+> **EN:** Stage 0 is **new** in `v1.00`: slow-data (`0.1`/`0.2`), **LAN** (`0.3`), and **create SalesOrder without Lead** (`0.4`). Stages **20** / **21** closed. Stage **22** = Design v1.0 (do **not** re-open `20.*` data contracts). Do **not** re-open closed `3.5.*` / `19.*` / `17.1.2.*` in `v0.9.0`. Stage **2** closed `2026-08-24`. Stage **24** sewing cabinet closed `2026-08-24`. Stage **25** QR/scan closed `2026-08-25` (owner visual `25.5.2`). Current slice: Stage **7** Specifications (`7.1.1` contract / ADR-031; next `7.1.2` DB). `2.4.2` Employees is **not** a 24/25 dependency (sewer = `PlatformUser`). `12.4`–`12.5` / 13–16 / `18.4` are not blockers.
+> **RU:** Stage 0: slow-data + **LAN** (`0.3`) + **заказ без лида** (`0.4`). Stages **20** / **21** закрыты. Stage **22** = Design v1.0. Stage **2** закрыт `2026-08-24`. Stage **24** закрыт `2026-08-24`. Stage **25** закрыт `2026-08-25`. Текущий срез: Stage **7** (`7.1.1` / ADR-031; далее `7.1.2`). `2.4.2` Employees **не** зависимость (швея = `PlatformUser`).
 
 ### Remain in v0.9.0 / Остаются в v0.9.0
 
@@ -146,8 +149,9 @@
 **Moved from:** `v0.9.0` items `2.2.3`, `2.3.*`, `2.4.*` (one group); **added** `2.2.4` folders (`2026-08-05`)  
 **Перенесено из:** `v0.9.0`, пункты `2.2.3`, `2.3.*`, `2.4.*`; **добавлено** `2.2.4` папки (`2026-08-05`)
 
-> **EN:** `2.2.1` / `2.2.2` closed in `v0.9.0` (list+card on `/sales/clients`). History `2.2.3` owner OK; **folders** `2.2.4` owner OK `2026-08-23`; legal requisites `2.3.1` shipped on card; **segments/duplicates** `2.3.2` shipped `2026-08-24` (stop at owner visual).
-> **RU:** `2.2.1` / `2.2.2` закрыты в `v0.9.0`. История `2.2.3` owner OK; **папки** `2.2.4` owner OK `2026-08-23`; юр. реквизиты `2.3.1` на карточке; **сегменты/дубли** `2.3.2` shipped `2026-08-24` (стоп на visual владельца).
+> **EN:** `2.2.1` / `2.2.2` closed in `v0.9.0` (list+card on `/sales/clients`). History `2.2.3` owner OK; **folders** `2.2.4` owner OK `2026-08-23`; legal requisites `2.3.1` shipped on card; **segments/duplicates** `2.3.2` owner visual OK `2026-08-24`; **settlements** `2.3.3` owner visual OK `2026-08-24` (projection of `3.4.2`; ledger `14.2`); **orgs** `2.4.1` owner visual OK `2026-08-24`; **employees** `2.4.2` owner visual OK `2026-08-24` (auth linkage deferred). **Stage 2 closed.**
+>
+> **RU:** `2.2.1` / `2.2.2` закрыты в `v0.9.0`. История `2.2.3` owner OK; **папки** `2.2.4` owner OK `2026-08-23`; юр. реквизиты `2.3.1` на карточке; **сегменты/дубли** `2.3.2` owner visual OK `2026-08-24`; **взаиморасчёты** `2.3.3` owner visual OK `2026-08-24`; **организации** `2.4.1` owner visual OK `2026-08-24`; **сотрудники** `2.4.2` owner visual OK `2026-08-24`. **Stage 2 закрыт.**
 
 ### 2.2.3 — Client lead and order history / История лидов и заказов клиента
 
@@ -184,37 +188,41 @@
 - [x] 2.3.2.1 — Contract: segment tags + duplicate match rules (name/phone/INN) — `v1.00` `2026-08-24`; `SL-CLIENT-SEGMENTS-v1` `docs/tasks/v1.00-stage-2.3.2-client-segments-duplicates.md` / Контракт: сегменты + правила дублей (name/phone/INN)
 - [x] 2.3.2.2 — Persist segments + duplicate-check service/API — `v1.00` `2026-08-24`; Alembic `x8y9z0a1b234`; `PUT /clients/{id}/segments`; `GET /clients/duplicate-candidates` / Персистентность сегментов + service/API проверки дублей
 - [x] 2.3.2.3 — FE: segment UI + duplicate warning on create/edit — `v1.00` `2026-08-24`; `ClientSegmentsSection` + `ClientCreateDrawer` + INN save warning / FE: UI сегментов + предупреждение о дублях
-- [x] 2.3.2.4 — Regression tests — `v1.00` `2026-08-24`; `test_client_segments_2_3_2.py` + `client-segments.test.mjs`; stop at owner visual / Регрессионные тесты
+- [x] 2.3.2.4 — Regression tests — `v1.00` `2026-08-24`; `test_client_segments_2_3_2.py` + `client-segments.test.mjs` / Регрессионные тесты
+- [x] 2.3.2.5 — Owner visual verification — `v1.00` `2026-08-24`; owner OK `/sales/clients` create drawer + `/sales/clients/[id]` segments and INN duplicate warning / Визуальная проверка владельцем
 
 #### 2.3.3 — Settlements and financial client state / Взаиморасчёты и фин. состояние клиента
 
-- [ ] 2.3.3.1 — Contract: which balances are SoT (orders/payments Stage 14 vs summary flags); MVP scope / Контракт: SoT балансов (заказы/платежи Stage 14 vs summary); MVP scope
-- [ ] 2.3.3.2 — Backend summary API (debt/advance/open orders) — no fake ledger / Backend summary API (долг/аванс/открытые заказы) — без fake ledger
-- [ ] 2.3.3.3 — FE settlements summary block / FE-блок сводки взаиморасчётов
-- [ ] 2.3.3.4 — Regression + docs; note link to Stage 14 when payments ship / Регрессия + docs; связь со Stage 14 при платежах
+- [x] 2.3.3.1 — Contract: which balances are SoT (orders/payments Stage 14 vs summary flags); MVP scope — `v1.00` `2026-08-24`; `SL-CLIENT-SETTLEMENTS-v1` `docs/tasks/v1.00-stage-2.3.3-client-settlements.md`; ADR-003 amend; projection of `3.4.2` markers, ledger stays `14.2` / Контракт: сводка с маркеров заказа; ledger → Stage 14
+- [x] 2.3.3.2 — Backend summary API (debt/advance/open orders) — no fake ledger — `v1.00` `2026-08-24`; `GET /clients/{id}/settlements-summary`; `client_settlements` schema/service / Backend summary API (долг/аванс/открытые заказы) — без fake ledger
+- [x] 2.3.3.3 — FE settlements summary block — `v1.00` `2026-08-24`; `ClientSettlementsSection` on `/sales/clients/[id]` after segments, before history / FE-блок сводки взаиморасчётов
+- [x] 2.3.3.4 — Regression + docs; note link to Stage 14 when payments ship — `v1.00` `2026-08-24`; `test_client_settlements_2_3_3.py` + `client-settlements.test.mjs`; UI/API `ledger_stage=14.2` / Регрессия + docs; связь со Stage 14 при платежах
+- [x] 2.3.3.5 — Owner visual verification — `v1.00` `2026-08-24`; owner OK `/sales/clients/[id]` settlements block / Визуальная проверка владельцем
 
 ### 2.4 — Organizations workspace / Рабочее пространство организаций
 
 #### 2.4.1 — Organizations list and card / Список и карточка организаций
 
-> **EN:** Backend `Organization` + `/organizations` already exist; FE still uses demo `organizationRecords`.  
-> **RU:** Backend `Organization` + `/organizations` уже есть; FE ещё на demo `organizationRecords`.
+> **EN:** Backend `Organization` + `/organizations` list existed; FE demo `organizationRecords` **dropped** (`2.4.1.3`). Card `/settings/organizations/[id]`.
+>
+> **RU:** Backend `Organization` + `/organizations` были; demo `organizationRecords` **снят**. Карточка `/settings/organizations/[id]`.
 
-- [ ] 2.4.1.1 — Contract: list/card fields vs existing `OrganizationRead`; drop demo path / Контракт: поля list/card vs `OrganizationRead`; отказ от demo
-- [ ] 2.4.1.2 — Extend API if gaps (CRUD/detail) + schemas / Расширить API при пробелах (CRUD/detail) + schemas
-- [ ] 2.4.1.3 — Wire `/settings/organizations` list to API (remove `organizationRecords`) / Подключить список `/settings/organizations` к API (убрать `organizationRecords`)
-- [ ] 2.4.1.4 — Persistent organization card route + edit / Persistent карточка организации + edit
-- [ ] 2.4.1.5 — Regression + owner visual / Регрессия + визуальная проверка владельцем
+- [x] 2.4.1.1 — Contract: list/card fields vs existing `OrganizationRead`; drop demo path — `v1.00` `2026-08-24`; `SL-ORGANIZATIONS-v1` `docs/tasks/v1.00-stage-2.4.1-organizations.md`; ADR-002 amend / Контракт: поля list/card vs `OrganizationRead`; отказ от demo
+- [x] 2.4.1.2 — Extend API if gaps (CRUD/detail) + schemas — `v1.00` `2026-08-24`; `GET|POST|PATCH /organizations`; `OrganizationCreate`/`Update` / Расширить API при пробелах (CRUD/detail) + schemas
+- [x] 2.4.1.3 — Wire `/settings/organizations` list to API (remove `organizationRecords`) — `v1.00` `2026-08-24`; `OrganizationsWorkspace` PT-02; demo records removed / Подключить список `/settings/organizations` к API (убрать `organizationRecords`)
+- [x] 2.4.1.4 — Persistent organization card route + edit — `v1.00` `2026-08-24`; `/settings/organizations/[id]` PT-05; order `organizationHref` → card / Persistent карточка организации + edit
+- [x] 2.4.1.5 — Regression + owner visual — `v1.00` `2026-08-24`; owner OK `/settings/organizations` list + card; `test_organizations_2_4_1.py` + `organizations.test.mjs` / Регрессия + визуальная проверка владельцем
 
 #### 2.4.2 — Employees directory / Справочник сотрудников
 
-> **EN:** `/settings/organizations/employees` uses demo `employeeRecords`; user linkage → Stage `17.1` / Stage **21** cabinet. Full Settings **Users** list+cabinet UX → **Stage 21** (`/settings/users`); do not duplicate SoT here.  
-> **RU:** `/settings/organizations/employees` на demo; связка с users → `17.1` / Stage **21**. Кабинет **Пользователи** → **Stage 21** (`/settings/users`); без дубля SoT.
+> **EN:** `/settings/organizations/employees` on API (`SL-EMPLOYEES-v1`); demo `employeeRecords` **dropped**. User linkage → Stage `17.1` / Stage **21** cabinet. Full Settings **Users** list+cabinet UX → **Stage 21** (`/settings/users`); do not duplicate SoT here.
+>
+> **RU:** `/settings/organizations/employees` на API; demo `employeeRecords` **снят**. Связка с users → `17.1` / Stage **21**. Кабинет **Пользователи** → **Stage 21** (`/settings/users`); без дубля SoT.
 
-- [ ] 2.4.2.1 — Domain: Employee entity vs platform User; org/department links (MVP) / Домен: Employee vs platform User; связи org/department (MVP)
-- [ ] 2.4.2.2 — DB + migration + schemas + API / БД + миграция + schemas + API
-- [ ] 2.4.2.3 — Wire employees list/card UI to API (remove `employeeRecords`) / Подключить UI сотрудников к API (убрать `employeeRecords`)
-- [ ] 2.4.2.4 — Regression + owner visual; auth linkage deferred to `17.1` / Stage 21 / Регрессия + visual; auth-связка → `17.1` / Stage 21
+- [x] 2.4.2.1 — Domain: Employee entity vs platform User; org/department links (MVP) — `v1.00` `2026-08-24`; `SL-EMPLOYEES-v1` `docs/tasks/v1.00-stage-2.4.2-employees.md`; org FK + free-text department; no `platform_user_id` / Домен: Employee vs platform User; связи org/department (MVP)
+- [x] 2.4.2.2 — DB + migration + schemas + API — `v1.00` `2026-08-24`; Alembic `y9z0a1b2c345`; `GET|POST|PATCH /employees`; `EmployeeCreate`/`Update` / БД + миграция + schemas + API
+- [x] 2.4.2.3 — Wire employees list/card UI to API (remove `employeeRecords`) — `v1.00` `2026-08-24`; `EmployeesWorkspace` PT-02; card PT-05; demo records removed / Подключить UI сотрудников к API (убрать `employeeRecords`)
+- [x] 2.4.2.4 — Regression + owner visual; auth linkage deferred to `17.1` / Stage 21 — `v1.00` `2026-08-24`; owner OK `/settings/organizations/employees`; `test_employees_2_4_2.py` + `employees.test.mjs` / Регрессия + visual; auth-связка → `17.1` / Stage 21
 
 ---
 
@@ -223,17 +231,19 @@
 **Moved from:** `v0.9.0` Stage 7  
 **Перенесено из:** `v0.9.0`, этап 7
 
-> **EN:** Spec = plan+fact **report document** from filled TC + execution (ADR-004/016). Not a prerequisite for TC generate. Documents registry = link index later.  
-> **RU:** Спецификация = **документ-отчёт** план+факт из заполненной ТК + исполнения (ADR-004/016). Не prerequisite для generate ТК. Реестр Документы = индекс ссылок позже.
+> **EN:** Spec = plan+fact **report document** from filled TC + execution (ADR-004/016/031). Not a prerequisite for TC generate or batch start. Parent = `ProductionBatch` 1:1. Documents registry = link index later. Task: `docs/tasks/v1.00-stage-7-specifications.md`.
+> **RU:** Спецификация = **документ-отчёт** план+факт из заполненной ТК + исполнения (ADR-004/016/031). Не prerequisite generate ТК и не gate запуска партии. Родитель = партия 1:1. Реестр Документы = индекс ссылок позже.
+
+**Execute after / Исполнять после:** Stage 25 closed `2026-08-25`. **This is the current slice.**
 
 ### 7.1 — Domain and persistence / Домен и персистентность
 
 #### 7.1.1 — Specification architecture / Архитектура спецификации
 
-- [ ] 7.1.1.1 — Define specification entities and version lifecycle (from TC / batch context; plan draft vs final plan+fact report) / Сущности спецификации и lifecycle версий (из ТК / batch; plan draft vs итоговый план+факт)
-- [ ] 7.1.1.2 — Define material, accessory, norm, and substitute scope sourced from TC composition (+ fact consumption binding) / Scope материалов/норм/замен из состава ТК (+ привязка факта расхода)
-- [ ] 7.1.1.3 — Define copy/read contract: assembly + op volumes from order-item / TC; performers / time from execution — not live model edit / Контракт copy/read: сборка + объёмы ops из order-item / ТК; исполнители / время из исполнения — не live-редактирование модели
-- [ ] 7.1.1.4 — Documentation checkpoint (Documents registry = link index only; no per-type contour) / Checkpoint документации (реестр Документы = только индекс ссылок)
+- [x] 7.1.1.1 — Define specification entities and version lifecycle (from TC / batch context; plan draft vs final plan+fact report) / Сущности спецификации и lifecycle версий — `v1.00` `2026-08-25`; ADR-031; 1:1 `ProductionBatch`; draft/approved/superseded/cancelled / Контракт сущностей + lifecycle
+- [x] 7.1.1.2 — Define material, accessory, norm, and substitute scope sourced from TC composition (+ fact consumption binding) / Scope материалов/норм/замен — `v1.00` `2026-08-25`; ADR-031 §3; material lines only; no substitute table / Состав ТК; без таблицы замен
+- [x] 7.1.1.3 — Define copy/read contract: assembly + op volumes from order-item / TC; performers / time from execution — not live model edit / Контракт copy/read — `v1.00` `2026-08-25`; ADR-031 §4; sewing fact from Stage 24 ledger / Snapshot с ТК; не live-модель
+- [x] 7.1.1.4 — Documentation checkpoint (Documents registry = link index only; no per-type contour) / Checkpoint документации — `v1.00` `2026-08-25`; ADR-004/031; no Documents module in Stage 7 / Реестр Документы позже; Spec у партии
 
 #### 7.1.2 — Specification database core / Ядро БД спецификаций
 
@@ -669,6 +679,100 @@
 
 ---
 
+## Stage 24 — Sewing cabinet / Кабинет швеи
+
+**New in:** `v1.00` (owner ask `2026-08-24`; current slice after Stage 2 close)
+
+**Новое в:** `v1.00` (запрос владельца `2026-08-24`; текущий срез после закрытия Stage 2)
+
+> **EN:** Sewer is a `PlatformUser` with a restricted shell (own cabinet only). Several sewers may work one technical card: take = **reserve** pieces **and/or** sewing operations; remaining pool cannot exceed order qty. Earnings = fact × catalog snapshot (`SewingOperation.cost` / assembly-variant cost) at take. Managers (admin / company lead / technologist / shop master) get `read_any`. Entry in this stage is the sewing queue **inside the cabinet** (no QR). Do **not** split the card across цеха here — TC stays wholly on Пошив. Not `2.4.2` Employee. Not a second SoT vs `11.7` stage fact: this is the multi-sewer **work ledger**. Task: `docs/tasks/v1.00-stage-24-sewing-cabinet.md`.
+>
+> **RU:** Швея = `PlatformUser`, после входа только свой кабинет. Несколько швей на одной ТК: взяла = **резерв** штук и/или операций; нельзя превысить заказ. Заработок = факт × снимок цены каталога. Мастер/админ/руководитель/технолог видят чужие кабинеты. Вход — очередь пошива в кабинете, без QR. Карта целиком на пошиве. Не справочник `2.4.2`.
+
+**Deps / зависимости:** `11.7`, `17.1.2` / ADR-024, `17.1.2.8`, Stage `21`. **Not deps:** `2.4.2`, Stage `7`, `12.4`–`12.5`, `13`–`16`, `18.4`.
+
+**Execute after / Исполнять после:** Stage 2 closed `2026-08-24`. **Stage 24 closed** `2026-08-24` (owner visual `24.5.2`).
+
+### 24.0 — Contract / Контракт
+
+- [x] 24.0.1 — ADR + contract (`SL-SEWING-CABINET-v1`): work ledger vs `11.7` fact vs Stage 21 profile; not Employee `2.4.2` — `v1.00` `2026-08-24`; ADR-029; `docs/tasks/v1.00-stage-24-sewing-cabinet.md` / Контракт/ADR: журнал пошива ≠ факт `11.7`; швея = `PlatformUser`
+- [x] 24.0.2 — Domain: take / reserve / complete / release; pieces and operations; shared remaining pool; price snapshot at take — `v1.00` `2026-08-24`; ADR-029 §3–§5; independent piece vs operation pools / Домен: взять / резерв / отшить / отказаться; штуки и операции; общий остаток; снимок цены при «взяла»
+
+### 24.1 — Access / Доступ
+
+- [x] 24.1.1 — Permission codes `sewing_cabinet.read_own` / `read_any` / `write`; seed role Швея (own only) + admin / company lead / technologist / shop master (`read_any`); ADR-024 amend — `v1.00` `2026-08-24`; Alembic `z0a1b2c3d456`; `ensure_rbac_seed`; ADR-024 / Права + сиды ролей; швея только свой кабинет
+- [x] 24.1.2 — Restricted shell: sewer sees only own cabinet; hide rest of ERP in nav **and** API (not menu-only); DS-SHELL visuals unchanged — `v1.00` `2026-08-24`; API middleware + nav filter; stub `/production/sewing-cabinet`; DS-SHELL-01/02 preserved / Оболочка швеи: только кабинет; API тоже режется; DS-SHELL не трогаем
+
+### 24.2 — Sewing work ledger / Журнал пошива
+
+- [x] 24.2.1 — Model + Alembic (who, TC, item vs operation, qty, reserve status, price snapshot) — `v1.00` `2026-08-24`; Alembic `c2d3e4f5a678`; `sewing_work_ledger_entries` / Модель + миграция журнала
+- [x] 24.2.2 — API: sewing-stage TC queue, take, release, complete; reject if reserve + fact > ordered — `v1.00` `2026-08-24`; `/sewing-cabinet`; independent pools; `test_sewing_cabinet_24_2.py` / API: очередь пошива, взять, отказаться, закрыть; отказ при превышении заказа
+
+### 24.3 — Own cabinet UI / Свой кабинет
+
+- [x] 24.3.1 — Profile block: name / photo from Stage 21 `PlatformUser` — `v1.00` `2026-08-24`; initials + login; photo later (Stage 21 has no photo field) / Профиль: ФИО и фото из кабинета пользователя
+- [x] 24.3.2 — Current work: tech card → operation / item — `v1.00` `2026-08-24`; reserved table + queue take / Сейчас в работе: техкарта → операция / изделие
+- [x] 24.3.3 — History + periods day / week / month (+ custom range) — `v1.00` `2026-08-24`; UTC half-open `[start, end)` / История + периоды день / неделя / месяц (+ диапазон)
+- [x] 24.3.4 — Earnings: fact × snapshot operation or assembly-variant price — `v1.00` `2026-08-24`; Σ qty × snapshot on completed / Заработок: факт × цена операции или варианта сборки
+
+### 24.4 — Manager view / Кабинеты для мастера
+
+- [x] 24.4.1 — `read_any`: sewer list + open any cabinet — `v1.00` `2026-08-24`; `/production/sewing-cabinet/sewers` + `[platformUserId]`; list embed remaining/earnings / Список швей и чужой кабинет для мастера / админа / технолога / руководителя
+
+### 24.5 — Regression, visual, docs / Регрессия, visual, docs
+
+- [x] 24.5.1 — Regression (API + FE) + docs checkpoint (erp-check / project-structure / ADR-024) — `v1.00` `2026-08-24`; pytest `test_sewing_cabinet_24_2.py` + access + FE `sewing-cabinet.test.mjs`; stop at `24.5.2` / Регрессия + checkpoint документации
+- [x] 24.5.2 — Owner visual (own cabinet + manager view) — `v1.00` `2026-08-24`; owner OK `/production/sewing-cabinet` + `/sewers` / Визуальная проверка владельцем
+
+---
+
+## Stage 25 — Tech-card QR and shop scan / QR техкарты и скан по маршруту
+
+**New in:** `v1.00` (owner ask `2026-08-24`; after Stage **24**)
+
+**Новое в:** `v1.00` (запрос владельца `2026-08-24`; после этапа **24**)
+
+> **EN:** One QR on the printed TC (`18.3.8`). Scan (personal phone **or** shop tablet; **own** Sport-Lead login, not a shared цех account) both **moves the route** and **requires shop fact**. Actor = session user; цех = **current or next** only (if several bound цеха via `17.1.2.8`, ask); no skip. Partial qty forward/return on **all** цеха; one TC document; remaining lives on **unit lines** (ADR-016) — do not spawn child TCs. Single TC status: return overrides; else **ready** / **partially ready** / **in work** from ship-readiness (`11.2.2` / `ready_to_ship`). Print/cutting fact reuses `11.5`/`11.6`; sewing scan writes Stage **24** ledger. Amend `12.3.2` FG auto-post for partial qty. Task: `docs/tasks/v1.00-stage-25-tech-card-qr.md`.
+>
+> **RU:** Один QR на печатной ТК. Скан (телефон или планшет, свой логин) двигает маршрут **и** требует факт цеха. Цех = текущий или следующий; прыжки запрещены. Частичная передача/возврат на всех цехах; одна ТК, остатки по unit lines. Один статус техкарты по готовности к отгрузке. Пошив пишет в журнал Stage 24.
+
+**Deps / зависимости:** Stage **24**, `9.2.2` / `9.3.4`, `11.3`–`11.10`, `11.2.2` / `12.3.2`, `17.1.2.8`, print `18.3.8`.
+
+**Execute after / Исполнять после:** Stage 24 closed. **Stage 25 closed** `2026-08-25` (owner visual `25.5.2`).
+
+### 25.0 — Contract / Контракт
+
+- [x] 25.0.1 — ADR + contract (`SL-TECH-CARD-QR-v1`): one QR; current-or-next; session user; ask цех if several allowed — `v1.00` `2026-08-24`; ADR-030; `docs/tasks/v1.00-stage-25-tech-card-qr.md` / Контракт: один QR; current|next; исполнитель = сессия; спросить цех при нескольких правах
+- [x] 25.0.2 — Domain: qty remaining per цех on unit lines; partial return; one TC status (return > ready / partial / in work from ship-readiness); amend `12.3.2` FG post — `v1.00` `2026-08-24`; ADR-030 §4–§6; ADR-016/019/029 amends / Домен остатков по unit lines + единый статус + правка автопостинга ГП
+
+### 25.1 — QR identity + print / QR и печать
+
+- [x] 25.1.1 — Opaque QR token on technical card (not a guessable open id) / Токен QR на техкарте — `v1.00` `2026-08-24`; Alembic `d3e4f5a6b789`; `qr_token` unique; `/production/scan/{token}`
+- [x] 25.1.2 — QR on print form `18.3.8` / QR на печатной форме техкарты — `v1.00` `2026-08-24`; `html.qr_block` SVG on `18.3.8`
+
+### 25.2 — Scan entry / Вход скана
+
+- [x] 25.2.1 — Scan page for phone and shop tablet/PC; own login required / Страница скана: телефон и планшет; свой логин — `v1.00` `2026-08-24`; `/production/scan/[token]`; session `PlatformUser`
+- [x] 25.2.2 — Цех picker when user has several allowed stages; reject if not current/next / Выбор цеха; отказ если шаг не current/next — `v1.00` `2026-08-24`; GET `/tech-card-scan/{token}`
+
+### 25.3 — Scan actions + fact / Действия скана + факт
+
+- [x] 25.3.1 — Actions: accept in work / complete and transfer / return to previous (partial qty allowed) / Принята / готова и передана / возврат (можно частью qty) — `v1.00` `2026-08-24`; POST accept|complete-transfer|return
+- [x] 25.3.2 — Print + cutting: materials, duration, start/ready — reuse `11.5` / `11.6` fact fields / Печать и раскрой: материалы, время, запуск/готовность — те же поля факта — `v1.00` `2026-08-24`; material `fact_qty` + hard-gate `9.3.4`
+- [x] 25.3.3 — Design / WTO / QC / packing: scan + existing `11.4` / `11.8`–`11.10` fact / Дизайн, ВТО, ОТК, упаковка: скан + факт своего модуля — `v1.00` `2026-08-24`; performer + work_done on complete/return
+- [x] 25.3.4 — Sewing: scan writes Stage 24 ledger (same reserve/limit rules) / Пошив: скан пишет в журнал Stage 24 — `v1.00` `2026-08-24`; accept=take, complete=complete, return=release
+
+### 25.4 — Status + kanban / Статус и канбан
+
+- [x] 25.4.1 — Compute and show the single TC status; kanban must not invent a parallel SoT / Расчёт и показ статуса техкарты; канбан без второй модели — `v1.00` `2026-08-24`; `wip_status` computed; not a second `TechnicalCard.status`
+
+### 25.5 — Regression, visual, docs / Регрессия, visual, docs
+
+- [x] 25.5.1 — Regression (gates, sewing limit, status, print QR) + docs (ADR-016 / `12.3.2` / erp-check / project-structure) / Регрессия + docs — `v1.00` `2026-08-24`; `test_tech_card_scan_25.py`
+- [x] 25.5.2 — Owner visual: phone + tablet scan + printed sheet / Owner visual: телефон, планшет, печатный лист — `v1.00` `2026-08-25`; owner OK phone+tablet+print; Stage 25 complete
+
+---
+
 ## Version gate / Шлюз версии
 
 `v1.00` execution begins after / Исполнение `v1.00` начинается после:
@@ -728,3 +832,20 @@
 | `2026-08-23` | Closed `2.2.4.4`: owner visual OK on client folders | Закрыт `2.2.4.4`: owner visual папок клиентов |
 | `2026-08-23` | Closed `2.3.1.1`–`2.3.1.4`: client legal requisites + bank accounts on card | Закрыты `2.3.1.1`–`2.3.1.4`: юр. реквизиты и счета на карточке |
 | `2026-08-24` | Closed `2.3.2.1`–`2.3.2.4`: client segments + duplicate warning; stop at owner visual before `2.3.3` | Закрыты `2.3.2.1`–`2.3.2.4`: сегменты + предупреждение о дублях; стоп на visual до `2.3.3` |
+| `2026-08-24` | Closed `2.3.2.5`: owner visual OK on client segments / duplicates | Закрыт `2.3.2.5`: owner visual сегментов и дублей |
+| `2026-08-24` | Closed `2.3.3.1`: settlements MVP = projection of `3.4.2` order payment markers; ledger SoT remains `14.2`; `SL-CLIENT-SETTLEMENTS-v1` | Закрыт `2.3.3.1`: сводка с маркеров заказа; ledger остаётся `14.2` |
+| `2026-08-24` | Closed `2.3.3.2`–`2.3.3.4`: settlements summary API + card block; stop at owner visual `2.3.3.5` | Закрыты `2.3.3.2`–`2.3.3.4`: сводка взаиморасчётов; стоп на visual `2.3.3.5` |
+| `2026-08-24` | Closed `2.3.3.5`: owner visual OK on client settlements block | Закрыт `2.3.3.5`: owner visual взаиморасчётов |
+| `2026-08-24` | Closed `2.4.1.1`–`2.4.1.4`: organizations contract + CRUD + Settings list/card; drop demo; stop at `2.4.1.5` | Закрыты `2.4.1.1`–`2.4.1.4`: организации API+UI; стоп на visual `2.4.1.5` |
+| `2026-08-24` | Closed `2.4.1.5`: owner visual OK on organizations list/card | Закрыт `2.4.1.5`: owner visual организаций |
+| `2026-08-24` | Closed `2.4.2.1`–`2.4.2.3`: employees contract + CRUD + Settings list/card; drop demo; stop at `2.4.2.4` | Закрыты `2.4.2.1`–`2.4.2.3`: сотрудники API+UI; стоп на visual `2.4.2.4` |
+| `2026-08-24` | Closed `2.4.2.4`: owner visual OK on employees list/card; Stage 2 complete; auth linkage still deferred | Закрыт `2.4.2.4`: owner visual сотрудников; Stage 2 закрыт |
+| `2026-08-24` | Closed `24.0.1`–`24.0.2`: sewing cabinet ADR-029 + domain (take/pools/snapshot); stop at `24.1.1` | Закрыты `24.0.1`–`24.0.2`: контракт кабинета швеи; стоп на права `24.1.1` |
+| `2026-08-24` | Closed `24.1.1`–`24.1.2`: sewing cabinet RBAC seed + restricted shell (nav + API); stop at ledger `24.2.1` | Закрыты `24.1.1`–`24.1.2`: права/роли + оболочка швеи; стоп на журнал `24.2.1` |
+| `2026-08-24` | Closed `24.2.1`–`24.5.1`: sewing work ledger + own/manager cabinet UI; stop at owner visual `24.5.2` | Закрыты `24.2.1`–`24.5.1`: журнал + кабинеты; стоп на visual `24.5.2` |
+| `2026-08-24` | Closed `24.5.2`: owner visual OK on sewing cabinet; Stage 24 complete | Закрыт `24.5.2`: owner visual кабинета швеи; Stage 24 закрыт |
+| `2026-08-24` | Closed `25.0.1`–`25.0.2`: tech-card QR ADR-030 + domain (unit-line location, status, FG amend); stop at token `25.1.1` | Закрыты `25.0.1`–`25.0.2`: контракт QR/скана; стоп на токен `25.1.1` |
+| `2026-08-24` | Closed `25.1.1`–`25.5.1`: opaque QR + print + scan commands/status/FG/sewing ledger; stop at owner visual `25.5.2` | Закрыты `25.1.1`–`25.5.1`: QR/скан до visual `25.5.2` |
+| `2026-08-24` | New Stages 24 (sewing cabinet) + 25 (tech-card QR / shop scan); queued after current Stage 2; 25 depends on 24 | Новые этапы 24 (кабинет швеи) + 25 (QR техкарты / скан); в очереди после текущего Stage 2; 25 зависит от 24 |
+| `2026-08-25` | Closed `25.5.2`: owner visual OK phone + tablet scan + printed sheet; Stage 25 complete | Закрыт `25.5.2`: owner visual скана и печати; Stage 25 закрыт |
+| `2026-08-25` | Closed `7.1.1.1`–`7.1.1.4`: Spec ADR-031 + contract (batch parent, versions, copy/read, no Documents module); stop at DB `7.1.2.1` | Закрыты `7.1.1.1`–`7.1.1.4`: контракт спецификации; стоп на БД `7.1.2.1` |

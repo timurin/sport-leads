@@ -3,7 +3,9 @@ import type { ReactNode } from "react";
 import { AppTopbar } from "@/components/layout/app-topbar";
 import { AppSidebar } from "@/components/navigation/app-sidebar";
 import { ToastProvider } from "@/components/ui/toast";
-import { buildAppSections } from "@/lib/navigation";
+import type { PlatformUserMe } from "@/lib/auth/session-mapping";
+import { isSewingCabinetRestricted } from "@/lib/auth/session-mapping";
+import { buildAppSections, filterAppSectionsForSession } from "@/lib/navigation";
 import { loadPlatformBrand } from "@/lib/platform-brand";
 import {
   buildShopStageModulesFromCatalog,
@@ -13,21 +15,32 @@ import { getProductionStages } from "@/lib/production-stages";
 
 type AppShellProps = {
   children: ReactNode;
+  me: PlatformUserMe;
 };
 
-async function loadAppSections() {
+async function loadAppSections(me: PlatformUserMe) {
+  const permissions = me.permissions;
+  if (isSewingCabinetRestricted(me)) {
+    return filterAppSectionsForSession(buildAppSections(), permissions);
+  }
   try {
     const stages = await getProductionStages({ active_only: true, limit: 200 });
     const shopModules = buildShopStageModulesFromCatalog(stages);
-    return buildAppSections(shopModules);
+    return filterAppSectionsForSession(
+      buildAppSections(shopModules),
+      permissions,
+    );
   } catch {
-    return buildAppSections(SHOP_STAGE_MODULES);
+    return filterAppSectionsForSession(
+      buildAppSections(SHOP_STAGE_MODULES),
+      permissions,
+    );
   }
 }
 
-export async function AppShell({ children }: AppShellProps) {
+export async function AppShell({ children, me }: AppShellProps) {
   const [sections, brand] = await Promise.all([
-    loadAppSections(),
+    loadAppSections(me),
     loadPlatformBrand(),
   ]);
 

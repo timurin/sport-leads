@@ -260,6 +260,36 @@ class Organization(Base):
     )
 
 
+class Employee(Base):
+    """Org HR directory (2.4.2). Not PlatformUser login and not SalesUser CRM actor."""
+
+    __tablename__ = "employees"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    full_name: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
+    organization_id: Mapped[int] = mapped_column(
+        ForeignKey("organizations.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
+    )
+    position: Mapped[str | None] = mapped_column(String(150))
+    department: Mapped[str | None] = mapped_column(String(150))
+    phone: Mapped[str | None] = mapped_column(String(50), index=True)
+    email: Mapped[str | None] = mapped_column(String(255), index=True)
+    employment_date: Mapped[date | None] = mapped_column(Date)
+    is_active: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=True, server_default="true", index=True
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now()
+    )
+
+    organization: Mapped[Organization] = relationship()
+
+
 class LeadStage(Base):
     __tablename__ = "lead_stages"
     __table_args__ = (

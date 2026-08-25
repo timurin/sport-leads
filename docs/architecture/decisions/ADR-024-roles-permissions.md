@@ -38,6 +38,9 @@ Effective permissions = ∪ permissions всех ролей пользовате
 | `size_grids.write` | Create/update/delete size grids and rows | `17.1.2.4` |
 | `shop.kanban.transition` | Complete / rollback-kanban stage moves | `17.1.2.7` |
 | `admin.roles.assign` | Assign/revoke roles on PlatformUser | `17.1.2.5` |
+| `sewing_cabinet.read_own` | Own sewing cabinet | `24.1.1` |
+| `sewing_cabinet.read_any` | Any sewer cabinet + sewer list | `24.1.1` |
+| `sewing_cabinet.write` | Take / release / complete sewing work ledger | `24.1.1` |
 
 Catalog is seed-extensible; new modules add codes via migration seed, not free-text.
 
@@ -45,9 +48,13 @@ Catalog is seed-extensible; new modules add codes via migration seed, not free-t
 
 | Role code | Permissions |
 |-----------|-------------|
-| `admin` | all MVP codes |
+| `admin` | all catalog codes (including sewing cabinet) |
 | `catalog_editor` | `size_grids.write` |
 | `shop_operator` | `shop.kanban.transition` |
+| `sewer` | `sewing_cabinet.read_own` + `sewing_cabinet.write` |
+| `company_lead` | `sewing_cabinet.read_any` + `sewing_cabinet.write` |
+| `technologist` | `sewing_cabinet.read_any` + `sewing_cabinet.write` |
+| `shop_master` | `sewing_cabinet.read_any` + `sewing_cabinet.write` |
 
 Bootstrap admin user (empty DB / `AUTH_BOOTSTRAP_*`) receives role `admin`.
 
@@ -58,6 +65,7 @@ Bootstrap admin user (empty DB / `AUTH_BOOTSTRAP_*`) receives role `admin`.
 - **Deny-by-default** for registered protected writes only (not every ERP POST yet).
 - Reads of size-grids / catalogs stay open to any authenticated workspace user (FE gate) until a dedicated read ACL ships.
 - Unauthenticated API on still-public domain routes remains as today until a later global protect pass; FE gate already blocks workspace UI.
+- **Amend `2026-08-24` (Stage `24.1.2`):** a session with `sewing_cabinet.read_own` and **without** `sewing_cabinet.read_any` is a restricted sewer. HTTP middleware allows only `/auth/*`, health/docs, and `/sewing-cabinet*` (ledger API in `24.2`). Other API paths return **403**. Nav composition is filtered the same way; DS-SHELL visuals stay unchanged.
 
 ### 5. `/auth/me` extension
 
@@ -77,6 +85,8 @@ Response adds:
 - Separate Admin app shell (Stage 18 owns Administration chrome; role assign UI may live under `/settings/users`)
 
 Per-stage executor directory (`17.1.2.8`) is a follow-on: table `platform_user_stage_access` + `GET /shop-stage-executors` with **role_fallback** (`shop_operator`/`admin`) until the directory is filled.
+
+**Amend `2026-08-24` (Stage `24` / ADR-029 / `24.1.1`):** catalog now includes `sewing_cabinet.read_own` / `read_any` / `write` and roles `sewer` / `company_lead` / `technologist` / `shop_master`. Seed: `ensure_rbac_seed` + Alembic `z0a1b2c3d456`. `shop_operator` stays kanban-only. Restricted shell for `read_own` without `read_any` is `24.1.2`.
 ## Последствия
 
 - `17.1.2.2` creates tables + seeds permissions/roles + links bootstrap admin.

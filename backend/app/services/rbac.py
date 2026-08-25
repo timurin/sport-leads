@@ -15,6 +15,9 @@ PERM_AUDIT_READ = "audit.read"
 PERM_SYSTEM_SETTINGS_WRITE = "system_settings.write"
 PERM_PLATFORM_DIRECTORIES_WRITE = "platform_directories.write"
 PERM_PRINT_FORMS_WRITE = "print_forms.write"
+PERM_SEWING_CABINET_READ_OWN = "sewing_cabinet.read_own"
+PERM_SEWING_CABINET_READ_ANY = "sewing_cabinet.read_any"
+PERM_SEWING_CABINET_WRITE = "sewing_cabinet.write"
 
 MVP_PERMISSIONS: tuple[tuple[str, str], ...] = (
     (PERM_SIZE_GRIDS_WRITE, "Create/update/delete size grids and rows"),
@@ -24,6 +27,12 @@ MVP_PERMISSIONS: tuple[tuple[str, str], ...] = (
     (PERM_SYSTEM_SETTINGS_WRITE, "Update platform system settings"),
     (PERM_PLATFORM_DIRECTORIES_WRITE, "Create/update/delete platform directory rows"),
     (PERM_PRINT_FORMS_WRITE, "Create/update/archive print-form registry entries"),
+    (PERM_SEWING_CABINET_READ_OWN, "Read own sewing cabinet queue and earnings"),
+    (PERM_SEWING_CABINET_READ_ANY, "Read any sewer cabinet and sewer list"),
+    (
+        PERM_SEWING_CABINET_WRITE,
+        "Take / release / complete sewing work ledger rows",
+    ),
 )
 
 MVP_ROLES: tuple[tuple[str, str, tuple[str, ...]], ...] = (
@@ -38,13 +47,37 @@ MVP_ROLES: tuple[tuple[str, str, tuple[str, ...]], ...] = (
             PERM_SYSTEM_SETTINGS_WRITE,
             PERM_PLATFORM_DIRECTORIES_WRITE,
             PERM_PRINT_FORMS_WRITE,
+            PERM_SEWING_CABINET_READ_OWN,
+            PERM_SEWING_CABINET_READ_ANY,
+            PERM_SEWING_CABINET_WRITE,
         ),
     ),
     ("catalog_editor", "Catalog editor", (PERM_SIZE_GRIDS_WRITE,)),
     ("shop_operator", "Shop operator", (PERM_SHOP_KANBAN_TRANSITION,)),
+    (
+        "sewer",
+        "Sewer",
+        (PERM_SEWING_CABINET_READ_OWN, PERM_SEWING_CABINET_WRITE),
+    ),
+    (
+        "company_lead",
+        "Company lead",
+        (PERM_SEWING_CABINET_READ_ANY, PERM_SEWING_CABINET_WRITE),
+    ),
+    (
+        "technologist",
+        "Technologist",
+        (PERM_SEWING_CABINET_READ_ANY, PERM_SEWING_CABINET_WRITE),
+    ),
+    (
+        "shop_master",
+        "Shop master",
+        (PERM_SEWING_CABINET_READ_ANY, PERM_SEWING_CABINET_WRITE),
+    ),
 )
 
 ROLE_ADMIN = "admin"
+ROLE_SEWER = "sewer"
 
 
 class RbacError(RuntimeError):
@@ -120,6 +153,15 @@ def permission_codes_for_user(user: PlatformUser) -> list[str]:
 
 def user_has_permission(user: PlatformUser, code: str) -> bool:
     return code in permission_codes_for_user(user)
+
+
+def is_sewing_cabinet_restricted(user: PlatformUser) -> bool:
+    """Own-cabinet sewer: read_own without read_any (ADR-029 / 24.1.2)."""
+    codes = permission_codes_for_user(user)
+    return (
+        PERM_SEWING_CABINET_READ_OWN in codes
+        and PERM_SEWING_CABINET_READ_ANY not in codes
+    )
 
 
 def ensure_user_has_permission(user: PlatformUser, code: str) -> None:

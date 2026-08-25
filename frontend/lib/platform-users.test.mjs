@@ -48,6 +48,7 @@ function sampleUser(overrides = {}) {
 
 test("roleLabel falls back to code", () => {
   assert.equal(roleLabel("admin"), "Администратор");
+  assert.equal(roleLabel("sewer"), "Швея");
   assert.equal(roleLabel("custom"), "custom");
 });
 

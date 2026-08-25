@@ -22,6 +22,7 @@ from app.models.sales import (
     ClientBankAccount,
     ClientFolder,
     ClientSegment,
+    Employee,
     Organization,
     Lead,
     LeadContact,
@@ -126,6 +127,11 @@ from app.models.technical_card import (
     TechOperationVolumeUnit,
 )
 from app.models.technical_card_settings import TechnicalCardSettings
+from app.models.sewing_work_ledger import (
+    SewingWorkKind,
+    SewingWorkLedgerEntry,
+    SewingWorkStatus,
+)
 from app.models.platform_system_settings import PlatformSystemSettings
 from app.models.mailbox_settings import MailboxSettings
 from app.models.platform_city import PlatformCity
@@ -182,6 +188,7 @@ __all__ = [
     "ClientBankAccount",
     "ClientFolder",
     "ClientSegment",
+    "Employee",
     "Organization",
     "Lead",
     "LeadContact",
@@ -269,6 +276,9 @@ __all__ = [
     "TechnicalCardUnitLine",
     "TechOperationVolumeUnit",
     "TechnicalCardSettings",
+    "SewingWorkKind",
+    "SewingWorkLedgerEntry",
+    "SewingWorkStatus",
     "PlatformSystemSettings",
     "MailboxSettings",
     "PlatformCity",

@@ -251,6 +251,11 @@ def to_technical_card_read(db: Session, card: TechnicalCard) -> TechnicalCardRea
     data["client_name"] = client_name
     data["responsible_name"] = responsible_name
     data["desired_date"] = desired_date
+    from app.services.tech_card_qr import attach_qr_fields
+    from app.services.tech_card_wip import compute_wip_status
+
+    attach_qr_fields(db, card, data)
+    data["wip_status"] = compute_wip_status(db, card)
     return TechnicalCardRead.model_validate(data)
 
 
@@ -516,6 +521,11 @@ def _apply_routing_template(db: Session, card: TechnicalCard, template) -> None:
     if first_stage is not None:
         card.current_stage_order = first_stage.stage_order
         card.current_stage_label = first_stage.stage_label
+    from app.services.tech_card_qr import ensure_qr_token
+    from app.services.tech_card_wip import seed_unit_locations_from_first_stage
+
+    seed_unit_locations_from_first_stage(card)
+    ensure_qr_token(db, card)
     db.flush()
 
 
@@ -1131,6 +1141,9 @@ def _build_new_card(
     _apply_planned_qty_hints_to_composition(db, card)
     db.add(card)
     db.flush()
+    from app.services.tech_card_qr import ensure_qr_token
+
+    ensure_qr_token(db, card)
     return card
 
 
@@ -1978,10 +1991,14 @@ def _find_size_grid_for_unit_line_import(
     normalized = grid_name.strip()
     if not normalized:
         return None
-    return db.scalar(
-        select(SizeGrid)
-        .options(selectinload(SizeGrid.rows))
-        .where(func.lower(SizeGrid.name) == normalized.lower())
+    needle = normalized.casefold()
+    # SQLite `lower()` is ASCII-only; compare in Python so sqlite tests match Postgres.
+    grids = list(
+        db.scalars(select(SizeGrid).options(selectinload(SizeGrid.rows))).all()
+    )
+    return next(
+        (grid for grid in grids if grid.name.strip().casefold() == needle),
+        None,
     )
 
 

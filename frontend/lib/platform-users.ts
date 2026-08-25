@@ -59,6 +59,10 @@ export const ROLE_LABELS: Record<string, string> = {
   admin: "Администратор",
   catalog_editor: "Редактор каталога",
   shop_operator: "Оператор цеха",
+  sewer: "Швея",
+  company_lead: "Руководитель компании",
+  technologist: "Технолог",
+  shop_master: "Мастер цеха",
 };
 
 export const LANGUAGE_LABELS: Record<string, string> = {
@@ -316,6 +320,9 @@ export const PERMISSION_LABELS: Record<string, string> = {
   "system_settings.write": "Система: настройки платформы",
   "platform_directories.write": "Справочники платформы: изменение",
   "print_forms.write": "Печатные формы: реестр",
+  "sewing_cabinet.read_own": "Кабинет швеи: свой кабинет",
+  "sewing_cabinet.read_any": "Кабинет швеи: все кабинеты",
+  "sewing_cabinet.write": "Кабинет швеи: взять / отказаться / закрыть",
 };
 
 export const MODULE_LABELS: Record<string, string> = {
@@ -326,6 +333,7 @@ export const MODULE_LABELS: Record<string, string> = {
   system_settings: "Системные настройки",
   platform_directories: "Справочники платформы",
   print_forms: "Печатные формы",
+  sewing_cabinet: "Кабинет швеи",
   other: "Прочее",
 };
 

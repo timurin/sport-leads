@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 
 from app.database.session import get_db
 from app.schemas.client_history import ClientHistoryRead
+from app.schemas.client_settlements import ClientSettlementsSummary
 from app.schemas.client_requisites import (
     ClientBankAccountCreate,
     ClientBankAccountRead,
@@ -19,6 +20,10 @@ from app.services.client_history import (
     ClientHistoryNotFoundError,
     HistoryKind,
     list_client_history,
+)
+from app.services.client_settlements import (
+    ClientSettlementsNotFoundError,
+    get_client_settlements_summary,
 )
 from app.services.client_bank_accounts import (
     ClientBankAccountNotFoundError,
@@ -146,6 +151,21 @@ def get_client_history(
             offset=offset,
         )
     except ClientHistoryNotFoundError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+
+
+@router.get(
+    "/{client_id}/settlements-summary",
+    response_model=ClientSettlementsSummary,
+    operation_id="get_client_settlements_summary",
+)
+def get_client_settlements(
+    client_id: int,
+    db: Session = Depends(get_db),
+) -> ClientSettlementsSummary:
+    try:
+        return get_client_settlements_summary(db, client_id)
+    except ClientSettlementsNotFoundError as error:
         raise HTTPException(status_code=404, detail=str(error)) from error
 
 

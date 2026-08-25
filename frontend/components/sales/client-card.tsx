@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ClientHistoryPanel } from "@/components/sales/client-history-panel";
 import { ClientLegalSection } from "@/components/sales/client-legal-section";
 import { ClientSegmentsSection } from "@/components/sales/client-segments-section";
+import { ClientSettlementsSection } from "@/components/sales/client-settlements-section";
 import { SimpleEntityCard } from "@/components/entity/simple-entity-card";
 import { EntityHeader } from "@/components/ui/entity-header";
 import { InlineAlert } from "@/components/ui/inline-alert";
@@ -10,6 +11,7 @@ import { SectionCard } from "@/components/ui/section-card";
 import { StatusBadge } from "@/components/ui/status-badge";
 import type { ClientCardView } from "@/lib/sales/client-card-mapping";
 import type { ClientHistoryItemView } from "@/lib/sales/client-history";
+import type { ClientSettlementsView } from "@/lib/sales/client-settlements";
 
 const statusLabels = { new: "Новый", active: "Активный", paused: "Приостановлен" } as const;
 const statusTones = {
@@ -24,14 +26,18 @@ type ClientCardProps = {
   client: ClientCardView;
   history?: ClientHistoryItemView[];
   historyError?: string;
+  settlements?: ClientSettlementsView | null;
+  settlementsError?: string;
   loadError?: string;
 };
 
-/** PT-05 client card (`DS-PT-05`). History panel `2.2.3`. */
+/** PT-05 client card (`DS-PT-05`). History panel `2.2.3`. Settlements `2.3.3`. */
 export function ClientCard({
   client,
   history = [],
   historyError,
+  settlements = null,
+  settlementsError,
   loadError,
 }: ClientCardProps) {
   return (
@@ -101,6 +107,11 @@ export function ClientCard({
       <ClientSegmentsSection
         clientId={Number(client.id)}
         segments={client.segments}
+      />
+
+      <ClientSettlementsSection
+        summary={settlements}
+        loadError={settlementsError}
       />
 
       <ClientHistoryPanel items={history} loadError={historyError} />

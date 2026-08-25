@@ -183,7 +183,7 @@ Dedupe notes (Sales Orders):
 
 - [ ] 2.3.1 — Legal details and banking data — **moved → v1.00** (`2.3.1.1`–`2.3.1.4`; INN / bank accounts / legal+actual address on card)
 - [ ] 2.3.2 — Segmentation and duplicate detection — **moved → v1.00** (`2.3.2.1`–`2.3.2.4`)
-- [ ] 2.3.3 — Settlements and financial client state — **moved → v1.00** (`2.3.3.1`–`2.3.3.4`)
+- [ ] 2.3.3 — Settlements and financial client state — **moved → v1.00** (`2.3.3.1`–`2.3.3.5`)
 
 ### 2.4 — Organizations workspace
 

@@ -559,6 +559,8 @@ def test_order_status_patch_rejects_backward_and_terminal_transitions(
     backward = client.patch(f"/orders/{order_id}/status", json={"status": "confirmed"})
     assert backward.status_code == 409
 
+    paid = client.patch(f"/orders/{order_id}/payment", json={"payment_status": "paid"})
+    assert paid.status_code == 200, paid.text
     assert client.patch(f"/orders/{order_id}/status", json={"status": "completed"}).status_code == 200
     terminal = client.patch(f"/orders/{order_id}/status", json={"status": "cancelled"})
     assert terminal.status_code == 409

@@ -128,6 +128,11 @@ class TechnicalCardUnitLineRead(TechnicalCardUnitLineWrite):
 
     id: int
     technical_card_id: int
+    production_stage_id: int | None = None
+    last_transfer_kind: str | None = None
+    fg_receipt_posted: bool = False
+    fg_issue_posted: bool = False
+    is_scrapped: bool = False
     created_at: datetime
     updated_at: datetime
 
@@ -395,6 +400,10 @@ class TechnicalCardRead(BaseModel):
 
     current_stage_order: int | None = None
     current_stage_label: str | None = None
+    qr_token: str | None = None
+    scan_url: str | None = None
+    scan_qr_svg: str | None = None
+    wip_status: str | None = None
 
     design_mockup_url: str | None = None
     notes: str | None = None

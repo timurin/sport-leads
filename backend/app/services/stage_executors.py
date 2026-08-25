@@ -112,6 +112,15 @@ def list_stage_executors(
     )
 
 
+def user_is_stage_executor(
+    db: Session,
+    user: PlatformUser,
+    production_stage_id: int,
+) -> bool:
+    listing = list_stage_executors(db, production_stage_id=production_stage_id)
+    return any(item.id == user.id for item in listing.items)
+
+
 def set_stage_executors(
     db: Session,
     *,

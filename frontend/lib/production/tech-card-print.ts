@@ -33,6 +33,16 @@ const STATUS_LABEL: Record<string, string> = {
   missing: "Нет",
 };
 
+function renderQrBlock(card: ApiTechnicalCard): string {
+  const svg = card.scan_qr_svg?.trim();
+  if (svg) return svg;
+  const url = card.scan_url?.trim();
+  if (url) {
+    return `<div class="pf-empty">QR: ${escapeHtml(url)}</div>`;
+  }
+  return `<div class="pf-empty">QR не сформирован</div>`;
+}
+
 function formatVolumeUnit(unit: string): string {
   return VOLUME_UNIT_LABEL[unit] ?? unit;
 }
@@ -397,6 +407,8 @@ export const TECH_CARD_PRINT_TEMPLATE_SOURCE = `<!doctype html>
     }
     .pf-sheet:last-child { page-break-after: auto; }
     .pf-head { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; }
+    .pf-qr { width: 96px; height: 96px; flex: 0 0 96px; }
+    .pf-qr svg { width: 96px; height: 96px; display: block; }
     .pf-title { font-size: 22px; font-weight: 700; margin: 0 0 4px; }
     .pf-meta { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px 14px; font-size: 12px; }
     .pf-meta--compact { grid-template-columns: repeat(2, minmax(0, 1fr)); margin-bottom: 8px; }
@@ -461,6 +473,7 @@ export const TECH_CARD_PRINT_TEMPLATE_SOURCE = `<!doctype html>
         <h1 class="pf-title">Техкарта</h1>
         <div class="pf-text">{{ document_number }}</div>
       </div>
+      <div class="pf-qr">{{ html.qr_block }}</div>
       <div class="pf-text">{{ header.status_label }}</div>
     </div>
     <div class="pf-block">
@@ -618,6 +631,7 @@ export function buildTechnicalCardPrintRequest(
         materials_table: renderMaterialsTable(card),
         operation_volumes_table: renderOperationsTable(card),
         composition_notes_block: renderCompositionNotes(card),
+        qr_block: renderQrBlock(card),
       },
     },
   };
