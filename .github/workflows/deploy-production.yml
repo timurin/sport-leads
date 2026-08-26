@@ -69,12 +69,14 @@ jobs:
             cd "$APP_PATH"
             if [ "$SKIP_PULL" != "true" ]; then
               git fetch --prune origin
-              git checkout --force "$REF"
+              git fetch origin main || true
               if git show-ref --verify --quiet "refs/remotes/origin/${REF}"; then
                 git reset --hard "origin/${REF}"
               else
                 git reset --hard "$REF"
               fi
+              git rev-parse --short HEAD
+              git status -sb
             fi
             test -f .env.production
             docker compose -f compose.prod.yaml --env-file .env.production up -d --build
