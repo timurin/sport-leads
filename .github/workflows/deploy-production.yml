@@ -96,9 +96,23 @@ jobs:
             docker compose -f compose.prod.yaml --env-file .env.production ps
             DOMAIN="$(grep -E '^SPORT_LEADS_DOMAIN=' .env.production | cut -d= -f2- | tr -d '\r' | tr -d '\"')"
             if [ -n "$DOMAIN" ] && [ "$DOMAIN" != "localhost" ] && [ "$DOMAIN" != "erp.example.com" ]; then
-              curl -fsS "https://${DOMAIN}/healthz" >/dev/null
-              curl -fsS "https://${DOMAIN}/health" >/dev/null
-              curl -fsS "https://${DOMAIN}/health/ready" >/dev/null
+              echo "Waiting for https://${DOMAIN} health (api/web start after alembic)"
+              ok=0
+              for _ in $(seq 1 90); do
+                if curl -fsS "https://${DOMAIN}/healthz" >/dev/null 2>&1 \
+                  && curl -fsS "https://${DOMAIN}/health" >/dev/null 2>&1 \
+                  && curl -fsS "https://${DOMAIN}/health/ready" >/dev/null 2>&1; then
+                  ok=1
+                  break
+                fi
+                sleep 2
+              done
+              if [ "$ok" != 1 ]; then
+                echo "Health checks failed for https://${DOMAIN}"
+                docker compose -f compose.prod.yaml --env-file .env.production ps
+                docker compose -f compose.prod.yaml --env-file .env.production logs --tail=80 api web
+                exit 1
+              fi
               echo "Health checks OK for https://${DOMAIN}"
             else
               echo "SPORT_LEADS_DOMAIN is placeholder/localhost — skipped remote HTTPS probes"

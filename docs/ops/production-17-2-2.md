@@ -28,7 +28,7 @@ Trigger: **`git push origin main`** (automatic) and **Actions → Deploy product
 1. SSH into the host  
 2. `git fetch` + checkout requested ref (unless skip_pull)  
 3. `docker compose -f compose.prod.yaml --env-file .env.production up -d --build`  
-4. Probe `https://$SPORT_LEADS_DOMAIN/healthz`, `/health`, `/health/ready`
+4. Wait until `https://$SPORT_LEADS_DOMAIN/healthz`, `/health`, and `/health/ready` succeed (api/web are still starting immediately after recreate)
 
 Dev CI (`checks.yml` / `0.2.3`) stays separate. A successful push to `main` is the production deploy trigger; run checks before pushing when the change is product code.
 
