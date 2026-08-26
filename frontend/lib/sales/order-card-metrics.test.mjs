@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { buildOrderCardMetrics } from "./order-card-metrics.ts";
+import { buildOrderCardMetrics, paidPercentFromDraft } from "./order-card-metrics.ts";
 
 const baseOrder = {
   id: "41",
@@ -136,4 +136,15 @@ test("uses API order discount fields without demo amount fallback", () => {
   assert.equal(metrics.discountAmountValue, 200);
   assert.equal(metrics.amountLabel, "800,00 ₽");
   assert.equal(metrics.currencyCode, "RUB");
+});
+
+test("26.1.2 live paid percent follows typed amount without waiting for reload", () => {
+  assert.equal(paidPercentFromDraft("0", 95), 0);
+  assert.equal(paidPercentFromDraft("", 95), 0);
+  assert.equal(paidPercentFromDraft("47.5", 95), 50);
+  assert.equal(paidPercentFromDraft("47,5", 95), 50);
+  assert.equal(paidPercentFromDraft("95", 95), 100);
+  assert.equal(paidPercentFromDraft("200", 95), 100);
+  assert.equal(paidPercentFromDraft("abc", 95), 0);
+  assert.equal(paidPercentFromDraft("10", 0), 0);
 });

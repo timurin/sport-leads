@@ -1,0 +1,311 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SPORT-LEAD — Лид · варианты раскладки</title>
+  <link rel="stylesheet" href="../shared/preview.css">
+  <style>
+    .opt-note { max-width: 78ch; font-size: 13px; line-height: 1.55; color: var(--muted); }
+    .opt-note b { color: var(--text); }
+    .opt-switch { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 14px; }
+    .opt-grid-2 {
+      display: grid;
+      grid-template-columns: minmax(260px, 0.42fr) minmax(0, 1fr);
+      gap: 14px;
+      align-items: start;
+    }
+    .opt-grid-2.is-feed-first {
+      grid-template-columns: minmax(0, 1fr) minmax(260px, 0.38fr);
+    }
+    .opt-grid-3 {
+      display: grid;
+      grid-template-columns: minmax(240px, 0.28fr) minmax(0, 1fr) minmax(240px, 0.28fr);
+      gap: 12px;
+      align-items: start;
+    }
+    .kv { display: grid; gap: 10px; }
+    .kv-row { display: grid; gap: 2px; }
+    .kv-row .k { font-size: 11px; font-weight: 700; color: var(--subtle); text-transform: uppercase; letter-spacing: 0.04em; }
+    .kv-row .v { font-size: 14px; font-weight: 650; }
+    .ident { text-align: center; padding: 8px 0 12px; }
+    .ident .ava {
+      width: 64px; height: 64px; margin: 0 auto 8px; border-radius: 50%;
+      display: grid; place-items: center; background: var(--primary-soft); color: var(--primary-hover);
+      font-weight: 800; font-size: 18px;
+    }
+    .qa { display: flex; justify-content: center; gap: 8px; margin: 10px 0; }
+    .qa .btn { min-width: 0; padding: 0 12px; }
+    .feed-card {
+      padding: 12px 14px;
+      border-radius: var(--r-sm);
+      border: 1px solid var(--line);
+      background: #fff;
+      box-shadow: var(--shadow-1);
+    }
+    .feed-card + .feed-card { margin-top: 10px; }
+    .feed-meta { display: flex; flex-wrap: wrap; gap: 8px 12px; margin-top: 8px; }
+    .next-task { border-color: rgba(217, 119, 6, 0.28); background: var(--warning-soft); }
+    @media (max-width: 1100px) {
+      .opt-grid-2, .opt-grid-2.is-feed-first, .opt-grid-3 { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body
+  data-preview-page="lead-options"
+  data-shell-section="sales"
+  data-top-nav="leads"
+  data-base="../"
+  data-page-title="Продажи · варианты карточки лида"
+  data-create-label="Оформить заказ"
+  data-create-href="order-card-reference-v1.html?id=8801"
+>
+  <div class="shell">
+    <aside class="rail" data-shell-rail aria-label="Левое меню"></aside>
+    <div class="workspace">
+      <header class="topbar" data-shell-topbar></header>
+      <main class="main">
+        <div class="banner" role="status">
+          <span>Stage 26 · варианты раскладки карточки лида · <b>не</b> эталон 22.1 / 22.8 · формат как dashboard/home-reference-v1.html</span>
+          <nav>
+            <a href="../index.html">Оглавление</a>
+            <a href="lead-card-reference-v1.html?id=1042">Эталон 22.1</a>
+            <a href="../dashboard/home-reference-v1.html">Дашборд 22.8</a>
+          </nav>
+        </div>
+
+        <section class="panel">
+          <h1 style="margin:0 0 8px;font-size:22px;letter-spacing:-0.03em">Почему текущая карточка тяжёлая</h1>
+          <p class="opt-note" style="margin:0 0 10px">
+            Референсы (Hub-style 3 колонки, Contact overview с AI, Bitrix «поля слева / лента справа») и текущий live
+            <code>/sales/leads/[id]</code> страдают от одного: <b>несколько равноправных зон без одного главного действия</b>.
+            Телефон и почта повторяются, вкладки дублируют шапку и воронку, метрики занимают место ленты.
+            В Sport-Lead нет сущности Deal и нет AI-summary — копировать правую колонку «сделки / интеллект» нельзя.
+          </p>
+          <p class="opt-note" style="margin:0">
+            Ограничения: оболочка <b>DS-SHELL-01/02</b> не меняется; шапка + воронка PT-06 остаются;
+            конверсия → заказ, не «сделка»; заказ в связанном виджете, не вторая воронка.
+            Рекомендация: <b>вариант A</b> (Bitrix-логика, без шума «создать поле»).
+          </p>
+        </section>
+
+        <section class="panel header-panel">
+          <div>
+            <div class="title-row">
+              <h1>Заявка с сайта · 100 футболок Coral Travel</h1>
+              <span class="badge">Обсуждение</span>
+            </div>
+            <div class="meta-row">
+              <span>ID <b>1001</b></span>
+              <span>Ответственный <b>Кирилл Чижов</b></span>
+              <span>Источник <b>Сайт</b></span>
+              <span>Активность <b>вчера 11:00</b></span>
+            </div>
+            <div class="stages" aria-label="Этапы лида">
+              <span class="stage is-done"><span class="n">1</span> Новый</span>
+              <span class="stage is-current"><span class="n">2</span> Обсуждение</span>
+              <span class="stage"><span class="n">3</span> Расчёт</span>
+              <span class="stage"><span class="n">4</span> КП</span>
+              <span class="stage"><span class="n">5</span> Оплата</span>
+            </div>
+          </div>
+          <div class="actions">
+            <button type="button" class="btn">Написать</button>
+            <button type="button" class="btn">Задача</button>
+            <button type="button" class="btn is-danger">Отказ</button>
+            <button type="button" class="btn is-primary">Оформить заказ</button>
+          </div>
+        </section>
+
+        <div class="opt-switch" role="tablist" aria-label="Варианты раскладки">
+          <button type="button" class="tab is-active" data-opt="a" aria-selected="true">A · Факты + лента</button>
+          <button type="button" class="tab" data-opt="b" aria-selected="false">B · Три колонки</button>
+          <button type="button" class="tab" data-opt="c" aria-selected="false">C · Лента слева</button>
+        </div>
+
+        <div id="opt-a" data-opt-panel="a">
+          <p class="small" style="margin:0 0 10px">
+            A — как Bitrix: слева только факты (один раз телефон/почта), справа композер и лента.
+            Нет шести MetricCard, нет вкладок «Общее / Товары / История» под воронкой.
+          </p>
+          <div class="opt-grid-2">
+            <div class="stack">
+              <section class="panel">
+                <div class="panel-head"><h2>Клиент</h2><button type="button" class="btn">Править</button></div>
+                <div class="kv">
+                  <div class="kv-row"><span class="k">Контакт</span><span class="v">Анна Пылайкина</span></div>
+                  <div class="kv-row"><span class="k">Телефон</span><span class="v">+7 900 000-00-00</span></div>
+                  <div class="kv-row"><span class="k">Email</span><span class="v">anna@coral.example</span></div>
+                  <div class="kv-row"><span class="k">Организация</span><span class="v">Coral Travel</span></div>
+                </div>
+              </section>
+              <section class="panel">
+                <div class="panel-head"><h2>Интерес</h2></div>
+                <div class="kv">
+                  <div class="kv-row"><span class="k">Сумма</span><span class="v">186 000 ₽</span></div>
+                  <div class="kv-row"><span class="k">Изделие</span><span class="v">Футболка · 100 шт</span></div>
+                  <div class="kv-row"><span class="k">Следующий контакт</span><span class="v">Сегодня 12:00</span></div>
+                </div>
+              </section>
+            </div>
+            <section class="panel">
+              <div class="tabs" style="margin-top:0">
+                <button type="button" class="tab is-active">Коммуникация</button>
+                <button type="button" class="tab">Задачи</button>
+                <button type="button" class="tab">Заметки</button>
+                <button type="button" class="tab">История</button>
+              </div>
+              <div class="composer">
+                <textarea class="textarea" rows="3">Что сделать или написать клиенту…</textarea>
+                <div class="actions" style="justify-content:flex-start">
+                  <button type="button" class="btn is-primary">Отправить</button>
+                  <button type="button" class="btn">Задача</button>
+                </div>
+              </div>
+              <div class="feed-card next-task">
+                <div class="who" style="font-size:12px;font-weight:700">Задача · срок сегодня 12:00</div>
+                <div>Связаться с клиентом · уточнить тираж и сроки</div>
+                <div class="feed-meta small"><span>Приоритет высокий</span><span>Кирилл Чижов</span></div>
+              </div>
+              <div class="feed-card">
+                <div class="small">Исходящее · вчера 18:20</div>
+                <div>КП по 100 футболкам отправлено на anna@coral.example</div>
+              </div>
+              <div class="feed-card">
+                <div class="small">Входящее · 12 дек</div>
+                <div>Заявка с сайта: 100 футболок Coral Travel</div>
+              </div>
+              <div class="panel" style="margin-top:12px;box-shadow:none">
+                <h2 style="margin:0 0 8px;font-size:13px">Внутренняя переписка</h2>
+                <p class="small" style="margin:0">Сотрудничество по лиду · без дубля телефона клиента</p>
+              </div>
+            </section>
+          </div>
+        </div>
+
+        <div id="opt-b" class="is-hidden" data-opt-panel="b">
+          <p class="small" style="margin:0 0 10px">
+            B — как Hub-скрин: личность | лента | связанные. Справа не сделки, а заказ / вложения / следующий шаг.
+            На узком экране колонки складываются; на типичном 1366px три колонки тесные рядом с рельсом 220px.
+          </p>
+          <div class="opt-grid-3">
+            <section class="panel">
+              <div class="ident">
+                <div class="ava">АП</div>
+                <div style="font-weight:750">Анна Пылайкина</div>
+                <div class="small">Coral Travel</div>
+              </div>
+              <div class="qa">
+                <button type="button" class="btn">Почта</button>
+                <button type="button" class="btn">Звонок</button>
+              </div>
+              <button type="button" class="btn is-primary" style="width:100%">Оформить заказ</button>
+              <p class="small" style="margin:10px 0 0;text-align:center">Активность · вчера 11:00</p>
+              <hr style="border:0;border-top:1px solid var(--line);margin:14px 0">
+              <div class="kv">
+                <div class="kv-row"><span class="k">Email</span><span class="v">anna@coral.example</span></div>
+                <div class="kv-row"><span class="k">Телефон</span><span class="v">+7 900 000-00-00</span></div>
+                <div class="kv-row"><span class="k">Ответственный</span><span class="v">Кирилл Чижов</span></div>
+                <div class="kv-row"><span class="k">Источник</span><span class="v">Сайт</span></div>
+              </div>
+            </section>
+            <section class="panel">
+              <input class="input" placeholder="Поиск в ленте…" style="margin-bottom:10px">
+              <div class="tabs" style="margin-top:0">
+                <button type="button" class="tab is-active">Лента</button>
+                <button type="button" class="tab">Задачи</button>
+                <button type="button" class="tab">Почта</button>
+              </div>
+              <div class="feed-card next-task">
+                <div class="small">Предстоит · сегодня 12:00</div>
+                <div style="font-weight:700">Подготовить расчёт для Анны</div>
+                <div class="feed-meta small"><span>Назначено: Кирилл</span></div>
+              </div>
+              <div class="feed-card"><div class="small">12 дек</div><div>Заявка с сайта</div></div>
+            </section>
+            <div class="stack">
+              <section class="panel">
+                <h2 style="margin:0 0 8px;font-size:14px">Заказ</h2>
+                <p class="small" style="margin:0 0 8px">Ещё не создан. Конверсия → SalesOrder, не Deal.</p>
+                <button type="button" class="btn is-primary" style="width:100%">Оформить заказ</button>
+              </section>
+              <section class="panel">
+                <h2 style="margin:0 0 8px;font-size:14px">Вложения</h2>
+                <p class="small" style="margin:0">Макет не загружен</p>
+              </section>
+              <section class="panel">
+                <h2 style="margin:0 0 8px;font-size:14px">Следующий шаг</h2>
+                <p style="margin:0;font-weight:650">Связаться · сегодня 12:00</p>
+              </section>
+            </div>
+          </div>
+        </div>
+
+        <div id="opt-c" class="is-hidden" data-opt-panel="c">
+          <p class="small" style="margin:0 0 10px">
+            C — коммуникация как главная колонка слева (~62%), факты справа. Ближе к текущему 26.5.1,
+            но без шести плиток и без тройного копирования контакта. На мобильном: Коммуникации | Клиент | Интерес.
+          </p>
+          <div class="opt-grid-2 is-feed-first">
+            <section class="panel">
+              <div class="tabs" style="margin-top:0">
+                <button type="button" class="tab is-active">Коммуникация</button>
+                <button type="button" class="tab">Задачи</button>
+                <button type="button" class="tab">Заметки</button>
+                <button type="button" class="tab">История</button>
+              </div>
+              <div class="composer">
+                <textarea class="textarea" rows="3">Написать клиенту…</textarea>
+                <div class="actions" style="justify-content:flex-start">
+                  <button type="button" class="btn is-primary">Отправить</button>
+                  <button type="button" class="btn">Задача</button>
+                  <button type="button" class="btn">Позвонить</button>
+                </div>
+              </div>
+              <div class="feed-card next-task">Следующий контакт · сегодня 12:00</div>
+              <div class="feed-card">КП отправлено · вчера</div>
+              <div class="feed-card">Заявка с сайта · 12 дек</div>
+            </section>
+            <div class="stack">
+              <div class="chips" aria-label="Показатели">
+                <span class="chip">186 000 ₽</span>
+                <span class="chip">Контакт сегодня 12:00</span>
+                <span class="chip">Касаний 3</span>
+              </div>
+              <section class="panel">
+                <h2 style="margin:0 0 8px;font-size:14px">Клиент</h2>
+                <div class="kv">
+                  <div class="kv-row"><span class="k">Анна Пылайкина</span><span class="v">+7 900 000-00-00</span></div>
+                  <div class="kv-row"><span class="k">Coral Travel</span><span class="v">anna@coral.example</span></div>
+                </div>
+              </section>
+              <section class="panel">
+                <h2 style="margin:0 0 8px;font-size:14px">Интерес</h2>
+                <p style="margin:0">Футболка · 100 шт · срок обсуждается</p>
+              </section>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+  <script src="../shared/shell.js"></script>
+  <script>
+    const tabs = document.querySelectorAll("[data-opt]");
+    const panels = document.querySelectorAll("[data-opt-panel]");
+    tabs.forEach((tab) => {
+      tab.addEventListener("click", () => {
+        const id = tab.getAttribute("data-opt");
+        tabs.forEach((item) => {
+          const on = item === tab;
+          item.classList.toggle("is-active", on);
+          item.setAttribute("aria-selected", on ? "true" : "false");
+        });
+        panels.forEach((panel) => {
+          panel.classList.toggle("is-hidden", panel.getAttribute("data-opt-panel") !== id);
+        });
+      });
+    });
+  </script>
+</body>
+</html>

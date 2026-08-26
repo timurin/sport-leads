@@ -124,6 +124,8 @@ def _item_error_status(error: SalesOrderItemError) -> int:
     detail = str(error)
     if detail.endswith("not found") or detail in {"Order not found", "Order item not found"}:
         return 404
+    if detail.startswith("Нельзя удалить позицию"):
+        return 409
     return 400
 
 

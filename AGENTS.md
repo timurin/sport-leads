@@ -78,7 +78,7 @@ While working: minimal diff; keep architecture and compatibility; no visual chan
 - If port `3000` is occupied by another local product or service, treat it as foreign and out of scope; report it, but do not touch it by default.
 - When checking local readiness, use only the canonical project endpoints above; do not waste time rediscovering project paths or trying alternate frontend ports first.
 - **Start (one command):** `powershell -File scripts/dev-servers.ps1 -Action start` — binds `0.0.0.0` so both loopback and trusted LAN work; starts Docker Postgres if needed; merges CORS for LAN origins. Loopback-only: `-LoopbackOnly`. LAN ≠ public internet / production Caddy. See `docs/tasks/v1.00-stage-0.3-lan-access.md`.
-- **Canonical VPS (Stage `0.5` / ADR-032):** host = **Ubuntu 26.04** (`0.5.4.1`, Docker Engine on the host, app in compose). Code = local repo → GitHub `main` → `workflow_dispatch` deploy. Canonical DB = VPS Postgres. User origin = **`https://sport-lead.ru`** (`0.5.6.1`). Agent pytest / `check_project.py` / `alembic` use local Docker Postgres `:5432` only — never SSH tunnel `:5433`. Owner tunnel: `scripts/vps-db-tunnel.ps1` + `.env.tunnel`. Media SoT = VPS `storage/` (`scripts/sync-storage-from-vps.ps1`). Live apply runbook: `docs/ops/vps-canonical-0-5.md`. Rule: `.cursor/rules/vps-canonical-workflow.mdc`. Do not clone the VPS from `main` while closed-roadmap WIP is still uncommitted (`0.5.3`).
+- **Canonical VPS (Stage `0.5` / ADR-032):** host = **Ubuntu 26.04** (`0.5.4.1`, Docker Engine on the host, app in compose). Code = local repo → GitHub `main` → **automatic** `deploy-production.yml` on push (VPS `git reset` + compose). Manual `workflow_dispatch` is the fallback. Canonical DB = VPS Postgres. User origin = **`https://sport-lead.ru`** (`0.5.6.1`). Agent pytest / `check_project.py` / `alembic` use local Docker Postgres `:5432` only — never SSH tunnel `:5433`. Owner tunnel: `scripts/vps-db-tunnel.ps1` + `.env.tunnel`. Media SoT = VPS `storage/` (`scripts/sync-storage-from-vps.ps1`). Live apply runbook: `docs/ops/vps-canonical-0-5.md`. Rules: `.cursor/rules/vps-canonical-workflow.mdc`, `.cursor/rules/commit-push-vps-sync.mdc`. Do not clone the VPS from `main` while closed-roadmap WIP is still uncommitted (`0.5.3`).
 
 ## Protected Platform Shell
 
@@ -157,6 +157,8 @@ Stop on P0/P1. Do not chase P2/P3 without a dedicated task.
 Allowed: code, migrations, tests, docs/roadmap updates, running checks.
 
 Forbidden without explicit permission: commit, tag, push, merge, rebase, switching primary branch, deleting branches, production migrations, deleting data, advancing to the next roadmap stage.
+
+When the owner **does** ask to commit and push to `main`, also sync the VPS (`sport-lead.ru`): wait for (or start) `deploy-production.yml`; do not treat GitHub-only as done. See `.cursor/rules/commit-push-vps-sync.mdc`.
 
 When committing (only after explicit user request): do not append `Co-authored-by` lines for Cursor or other agents; keep the message body free of AI co-author trailers.
 

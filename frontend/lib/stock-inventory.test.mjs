@@ -43,6 +43,7 @@ test("inventory API and movements UI wiring (12.4.1.5)", async () => {
   assert.ok(list.includes('value: "inventory"'));
   assert.ok(list.includes("Инвентаризация"));
   assert.ok(list.includes("InventoryCreateDrawer"));
+  assert.match(list, /<DataTableHead>\s*<DataTableRow>/);
 
   const card = await readSource(
     "../components/warehouse/warehouse-movement-document-card.tsx",
@@ -50,6 +51,7 @@ test("inventory API and movements UI wiring (12.4.1.5)", async () => {
   assert.ok(card.includes("book_qty"));
   assert.ok(card.includes("counted_qty"));
   assert.ok(card.includes("Пересчёт"));
+  assert.match(card, /<DataTableHead>\s*<DataTableRow>/);
 
   const inventoryHost = await readSource(
     "../app/(workspace)/warehouse/inventory/page.tsx",

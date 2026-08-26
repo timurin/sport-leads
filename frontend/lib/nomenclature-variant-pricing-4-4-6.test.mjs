@@ -12,19 +12,6 @@ test("variant pricing helpers and UI wiring (4.4.6)", () => {
   assert.ok(lib.includes("barcode: string | null"));
   assert.ok(lib.includes("external_code: string | null"));
 
-  const block = readFileSync(
-    join(root, "components/settings/nomenclature-variants-block.tsx"),
-    "utf8",
-  );
-  assert.ok(block.includes("updateNomenclatureVariantCommercial"));
-  assert.ok(block.includes("external_code"));
-
-  const card = readFileSync(
-    join(root, "components/settings/nomenclature-card.tsx"),
-    "utf8",
-  );
-  assert.ok(card.includes("NomenclatureVariantsBlock"));
-
   const orderItems = readFileSync(
     join(root, "components/sales/sales-order-items.tsx"),
     "utf8",

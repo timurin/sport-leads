@@ -1026,13 +1026,20 @@ def _variant_dimension_ids(db: Session, nomenclature_id: int) -> set[int]:
     assigned = {
         row.characteristic_id
         for row in list_nomenclature_characteristics(db, nomenclature_id)
+        if _definition(db, row.characteristic_id).is_variant_dimension
     }
-    if assigned:
-        return {
-            characteristic_id
-            for characteristic_id in assigned
-            if _definition(db, characteristic_id).is_variant_dimension
-        }
+    value_ids = {
+        row.characteristic_id
+        for row in db.scalars(
+            select(NomenclatureCharacteristicValue).where(
+                NomenclatureCharacteristicValue.nomenclature_id == nomenclature_id
+            )
+        ).all()
+        if _definition(db, row.characteristic_id).is_variant_dimension
+    }
+    combined = assigned | value_ids
+    if combined:
+        return combined
     nomenclature = db.get(Nomenclature, nomenclature_id)
     if nomenclature is None or nomenclature.category_id is None:
         return set()
@@ -1190,9 +1197,18 @@ def generate_variants(
     db: Session, nomenclature_id: int, payload: VariantGenerateRequest
 ) -> list[NomenclatureVariant]:
     characteristic_ids = sorted(_variant_dimension_ids(db, nomenclature_id))
-    option_groups = [list_options(db, characteristic_id) for characteristic_id in characteristic_ids]
-    if not option_groups or any(not group for group in option_groups):
-        raise CharacteristicRuleError("Every characteristic must have active options")
+    if not characteristic_ids:
+        raise CharacteristicRuleError(
+            "Сначала назначьте характеристику-измерение варианта с активными опциями"
+        )
+    option_groups = [
+        [option for option in list_options(db, characteristic_id) if option.is_active]
+        for characteristic_id in characteristic_ids
+    ]
+    if any(not group for group in option_groups):
+        raise CharacteristicRuleError(
+            "У каждого измерения варианта должны быть активные опции"
+        )
     created: list[NomenclatureVariant] = []
     for index, combination in enumerate(product(*option_groups), start=1):
         option_ids = [option.id for option in combination]

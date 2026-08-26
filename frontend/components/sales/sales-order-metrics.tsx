@@ -22,7 +22,10 @@ import { Button } from "@/components/ui/button";
 import { Input, Select } from "@/components/ui/form-controls";
 import { StatusBadge, type StatusBadgeTone } from "@/components/ui/status-badge";
 import { useToast } from "@/components/ui/toast";
-import type { OrderCardMetricsModel } from "@/lib/sales/order-card-metrics";
+import {
+  paidPercentFromDraft,
+  type OrderCardMetricsModel,
+} from "@/lib/sales/order-card-metrics";
 import {
   orderPaymentStatusLabels,
   orderPaymentStatuses,
@@ -134,9 +137,10 @@ export function SalesOrderMetrics({
     setPaymentError(null);
   }, [metrics.paymentStatus, metrics.paidAmountValue, orderId]);
 
-  const paymentProgressTone = metrics.paidPercent >= 100
+  const livePaidPercent = paidPercentFromDraft(paidAmountDraft, metrics.amountValue);
+  const paymentProgressTone = livePaidPercent >= 100
     ? "success"
-    : metrics.paidPercent > 0
+    : livePaidPercent > 0
       ? "warning"
       : "danger";
   const productionTone = metrics.productionPercent >= 88
@@ -318,12 +322,12 @@ export function SalesOrderMetrics({
 
         {variant === "full" ? (
           <div className="mt-3 space-y-2.5">
-            <ProgressBar value={metrics.paidPercent} tone={paymentProgressTone} label="Оплата" />
+            <ProgressBar value={livePaidPercent} tone={paymentProgressTone} label="Оплата" />
             <ProgressBar value={metrics.productionPercent} tone={productionTone} label={metrics.productionLabel} />
           </div>
         ) : (
           <div className="mt-3">
-            <ProgressBar value={metrics.paidPercent} tone={paymentProgressTone} label="Оплата" />
+            <ProgressBar value={livePaidPercent} tone={paymentProgressTone} label="Оплата" />
           </div>
         )}
       </div>

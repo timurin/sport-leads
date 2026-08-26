@@ -1,0 +1,31 @@
+---
+description: After owner commit+push to main, auto-sync the sport-lead.ru VPS clone. Do not stop at GitHub.
+alwaysApply: true
+---
+
+# Commit, push, VPS sync (`sport-lead.ru`)
+
+Commit and push stay **owner-gated**. VPS sync after a `main` push is **not** optional.
+
+## Permissions (unchanged)
+
+- Do not commit, tag, or `git push` unless the owner explicitly asked.
+- Do not invent a commit when they only asked to change code.
+- No `Co-authored-by` Cursor/agent trailers.
+
+## After a successful `git push origin main`
+
+The VPS clone is `/home/deploy/sport-leads` (`https://sport-lead.ru`). Sync path is Git only — no rsync/scp of the tree.
+
+1. Push to `main` **must** start `.github/workflows/deploy-production.yml` (`on: push` + remaining `workflow_dispatch`).
+2. If the push workflow did not appear: `gh workflow run "Deploy production" --ref main -f ref=main`.
+3. Wait until the run succeeds (or report the failing job URL). Do not tell the owner "pushed" while VPS is still on the previous SHA.
+4. Confirm health: `https://sport-lead.ru/healthz` (and `/health/ready` when the job did not already).
+
+## Do not
+
+- Push a non-`main` branch and expect production to follow.
+- Skip deploy because "docs-only" or "the owner can dispatch later".
+- `git reset --hard` / `git clean -fd` on the VPS by hand; the workflow already resets to the pushed SHA.
+
+Media (`storage/`) is a separate SoT — dump/push does not copy files. DB stays VPS Postgres; agent tests stay on local Docker Postgres.

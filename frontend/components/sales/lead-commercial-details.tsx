@@ -185,6 +185,7 @@ export function LeadCommercialDetails({
   onChange,
   embedded = false,
   compact = false,
+  hideQuantity = false,
 }: {
   commercial: LeadCommercialDetailsData;
   source: string | null;
@@ -195,6 +196,7 @@ export function LeadCommercialDetails({
   onChange: (change: LeadCommercialChange) => void;
   embedded?: boolean;
   compact?: boolean;
+  hideQuantity?: boolean;
 }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(() => createDraft(commercial, source, probability));
@@ -227,7 +229,9 @@ export function LeadCommercialDetails({
 
   async function save(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const estimatedQuantity = parsePositiveInteger(draft.estimatedQuantity);
+    const estimatedQuantity = hideQuantity
+      ? { value: commercial.estimatedQuantity, error: undefined }
+      : parsePositiveInteger(draft.estimatedQuantity);
     const preliminaryBudget = parseNonNegativeNumber(draft.preliminaryBudget);
     const discountPercent = parsePercent(draft.discountPercent);
     const nextProbability = parsePercent(draft.probability);
@@ -253,7 +257,7 @@ export function LeadCommercialDetails({
         productCategory: draft.productCategory ? draft.productCategory as LeadCommercialDetailsData["productCategory"] : undefined,
         productType: commercial.productType,
         needDescription: optionalText(draft.needDescription),
-        estimatedQuantity: estimatedQuantity.value,
+        estimatedQuantity: hideQuantity ? commercial.estimatedQuantity : estimatedQuantity.value,
         kitQuantity: commercial.kitQuantity,
         sizeComment: commercial.sizeComment,
         preliminaryBudget: preliminaryBudget.value,
@@ -345,8 +349,10 @@ export function LeadCommercialDetails({
             </label>
           </FormSection>
 
-          <FormSection title="Количество и бюджет">
+          <FormSection title={hideQuantity ? "Бюджет" : "Количество и бюджет"}>
+            {hideQuantity ? null : (
             <TextField id="commercial-quantity" label="Количество изделий" type="number" min={1} step={1} value={draft.estimatedQuantity} error={errors.estimatedQuantity} onChange={(value) => updateDraft("estimatedQuantity", value)} />
+            )}
             <TextField id="commercial-budget" label="Предварительный бюджет, ₽" type="number" min={0} step={0.01} value={draft.preliminaryBudget} error={errors.preliminaryBudget} onChange={(value) => updateDraft("preliminaryBudget", value)} />
             <TextField id="commercial-discount" label="Скидка, %" type="number" min={0} max={100} step={0.01} value={draft.discountPercent} error={errors.discountPercent} onChange={(value) => updateDraft("discountPercent", value)} />
             <TextField id="commercial-probability" label="Вероятность сделки, %" type="number" min={0} max={100} step={0.01} value={draft.probability} error={errors.probability} onChange={(value) => updateDraft("probability", value)} />
@@ -388,7 +394,9 @@ export function LeadCommercialDetails({
               <DataItem label="Направление">{display(commercial.direction)}</DataItem>
               <DataItem label="Вид спорта">{display(commercial.sport)}</DataItem>
               <DataItem label="Категория">{display(commercial.productCategory)}</DataItem>
+              {hideQuantity ? null : (
               <DataItem label="Количество изделий">{formatQuantity(commercial.estimatedQuantity)}</DataItem>
+              )}
             </dl>
           </div>
           <div className="border-t border-slate-200 pt-3">

@@ -5,7 +5,7 @@
 ## 1. Deploy pipeline (GitHub Actions)
 
 Workflow: `.github/workflows/deploy-production.yml`  
-Trigger: **Actions → Deploy production → Run workflow** (`workflow_dispatch` only).
+Trigger: **`git push origin main`** (automatic) and **Actions → Deploy production → Run workflow** (`workflow_dispatch` for a chosen ref or skip-pull rebuild).
 
 ### GitHub setup (owner)
 
@@ -30,7 +30,7 @@ Trigger: **Actions → Deploy production → Run workflow** (`workflow_dispatch`
 3. `docker compose -f compose.prod.yaml --env-file .env.production up -d --build`  
 4. Probe `https://$SPORT_LEADS_DOMAIN/healthz`, `/health`, `/health/ready`
 
-Dev CI (`checks.yml` / `0.2.3`) stays separate and is not a deploy gate in Actions — run checks on `main` before dispatching deploy.
+Dev CI (`checks.yml` / `0.2.3`) stays separate. A successful push to `main` is the production deploy trigger; run checks before pushing when the change is product code.
 
 ## 2. Centralized monitoring (health)
 

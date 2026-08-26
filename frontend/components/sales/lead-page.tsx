@@ -1,11 +1,7 @@
 "use client";
 
 import {
-  Mail,
-  MessageCircle,
-  PhoneCall,
   Plus,
-  ShoppingBag,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 
@@ -25,10 +21,9 @@ import { HostWorkTasksPanel } from "@/components/sales/host-work-tasks-panel";
 import { OrderCollaborationPanel } from "@/components/sales/order-collaboration-panel";
 import { WorkTaskCreateDrawer, type WorkTaskAnchorOption } from "@/components/sales/work-task-create-drawer";
 import { ComplexEntityCard } from "@/components/entity/complex-entity-card";
-import { PageActions, PageContent, PageLayout, ResponsiveGrid } from "@/components/layout/page-layout";
+import { PageContent, PageLayout } from "@/components/layout/page-layout";
 import { Button } from "@/components/ui/button";
 import { CompactTabs } from "@/components/ui/compact-tabs";
-import { MetricCard, SectionCard } from "@/components/ui/section-card";
 
 import { getNotePermissions, isInternalNote } from "@/lib/sales/lead-activity";
 import { formatCurrency } from "@/lib/sales/lead-commercial";
@@ -44,7 +39,7 @@ import { sendLeadMessage as sendLeadMessageAction } from "@/app/(workspace)/sale
 import { leadMessageToActivity } from "@/lib/sales/lead-message-api";
 import type { LeadFinalActionId } from "@/lib/sales/lead-final-actions";
 import type { LeadStageConfig } from "@/lib/sales/lead-stages";
-import { formatAttachmentSize, leadMessageChannelLabels } from "@/lib/sales/lead-message";
+import { formatAttachmentSize } from "@/lib/sales/lead-message";
 import type { WorkTaskListItem } from "@/lib/work-tasks";
 import type { Lead, LeadActivity, LeadMessage, Priority } from "@/types/sales";
 
@@ -53,18 +48,19 @@ const dateFormatter = new Intl.DateTimeFormat("ru-RU", {
   timeStyle: "short",
   timeZone: "Europe/Moscow",
 });
-const workspaceTabs = [
+const mobileTabs = [
   { id: "communication", label: "Коммуникации" },
-  { id: "history", label: "История" },
-  { id: "notes", label: "Заметки" },
+  { id: "customer", label: "Клиент" },
+  { id: "interest", label: "Интерес" },
+] as const;
+type MobileTab = (typeof mobileTabs)[number]["id"];
+const feedTabs = [
+  { id: "communication", label: "Коммуникация" },
   { id: "tasks", label: "Задачи" },
+  { id: "notes", label: "Заметки" },
+  { id: "history", label: "История" },
 ] as const;
-type WorkspaceTab = (typeof workspaceTabs)[number]["id"];
-const referenceTabs = [
-  { id: "customer", label: "Клиент и контакты" },
-  { id: "commercial", label: "Коммерческие параметры" },
-] as const;
-type ReferenceTab = (typeof referenceTabs)[number]["id"];
+type FeedTab = (typeof feedTabs)[number]["id"];
 
 function formatDate(value: string) {
   return dateFormatter.format(new Date(value));
@@ -132,8 +128,8 @@ export function LeadPage({
   viewerUserId?: number | null;
 }) {
   const [lead, setLead] = useState<LeadDetails>(() => cloneLead(initialLead));
-  const [workspaceTab, setWorkspaceTab] = useState<WorkspaceTab>("communication");
-  const [referenceTab, setReferenceTab] = useState<ReferenceTab>("customer");
+  const [mobileTab, setMobileTab] = useState<MobileTab>("communication");
+  const [feedTab, setFeedTab] = useState<FeedTab>("communication");
   const [completionMode, setCompletionMode] = useState<LeadCompletionMode | null>(null);
   const [noteActionError, setNoteActionError] = useState("");
   const [workTasks, setWorkTasks] = useState(initialWorkTasks);
@@ -407,66 +403,41 @@ export function LeadPage({
     return null;
   }
 
-  function openWorkspaceSection(tab: WorkspaceTab) {
-    setWorkspaceTab(tab);
+  function openWorkspaceSection(tab: MobileTab | FeedTab) {
+    if (tab === "communication" || tab === "customer" || tab === "interest") {
+      setMobileTab(tab);
+    }
+    if (tab === "communication" || tab === "tasks" || tab === "notes" || tab === "history") {
+      setFeedTab(tab);
+    }
     window.requestAnimationFrame(() => {
       document.getElementById(`lead-workspace-panel-${tab}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
       document.getElementById(`lead-workspace-tab-${tab}`)?.focus({ preventScroll: true });
     });
   }
 
-  function openReferenceSection(tab: ReferenceTab) {
-    setReferenceTab(tab);
-    window.requestAnimationFrame(() => {
-      document.getElementById(`lead-reference-panel-${tab}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
-      document.getElementById(`lead-reference-tab-${tab}`)?.focus({ preventScroll: true });
-    });
-  }
-
-  function moveWorkspaceTab(event: React.KeyboardEvent<HTMLButtonElement>, currentTab: WorkspaceTab) {
-    const currentIndex = workspaceTabs.findIndex((tab) => tab.id === currentTab);
+  function moveMobileTab(event: React.KeyboardEvent<HTMLButtonElement>, currentTab: MobileTab) {
+    const currentIndex = mobileTabs.findIndex((tab) => tab.id === currentTab);
     const targetIndex = event.key === "ArrowRight"
-      ? (currentIndex + 1) % workspaceTabs.length
+      ? (currentIndex + 1) % mobileTabs.length
       : event.key === "ArrowLeft"
-        ? (currentIndex - 1 + workspaceTabs.length) % workspaceTabs.length
+        ? (currentIndex - 1 + mobileTabs.length) % mobileTabs.length
         : event.key === "Home"
           ? 0
           : event.key === "End"
-            ? workspaceTabs.length - 1
+            ? mobileTabs.length - 1
             : -1;
     if (targetIndex < 0) return;
     event.preventDefault();
-    const targetTab = workspaceTabs[targetIndex].id;
-    setWorkspaceTab(targetTab);
+    const targetTab = mobileTabs[targetIndex].id;
+    setMobileTab(targetTab);
     window.requestAnimationFrame(() => document.getElementById(`lead-workspace-tab-${targetTab}`)?.focus());
-  }
-
-  function moveReferenceTab(event: React.KeyboardEvent<HTMLButtonElement>, currentTab: ReferenceTab) {
-    const currentIndex = referenceTabs.findIndex((tab) => tab.id === currentTab);
-    const targetIndex = event.key === "ArrowRight"
-      ? (currentIndex + 1) % referenceTabs.length
-      : event.key === "ArrowLeft"
-        ? (currentIndex - 1 + referenceTabs.length) % referenceTabs.length
-        : event.key === "Home"
-          ? 0
-          : event.key === "End"
-            ? referenceTabs.length - 1
-            : -1;
-    if (targetIndex < 0) return;
-    event.preventDefault();
-    const targetTab = referenceTabs[targetIndex].id;
-    setReferenceTab(targetTab);
-    window.requestAnimationFrame(() => document.getElementById(`lead-reference-tab-${targetTab}`)?.focus());
   }
 
   const nearestWorkTask =
     workTasks.find((task) => task.status === "open" || task.status === "in_progress") ??
     null;
   const primaryContact = lead.customer.contacts.find((contact) => contact.isPrimary);
-  const daysInWork = Math.max(0, Math.ceil((new Date(lead.taskReferenceAt).getTime() - new Date(lead.createdAt).getTime()) / 86_400_000));
-  const preferredChannel = primaryContact?.preferredChannel && primaryContact.preferredChannel !== "unspecified"
-    ? leadMessageChannelLabels[primaryContact.preferredChannel]
-    : "Не указано";
   const completionLead: Lead = {
     id: lead.id,
     status: lead.status === "completed" ? "completed" : "new",
@@ -557,67 +528,109 @@ export function LeadPage({
 
       <PageContent size="compact" width="full" className="lead-page-container">
         <ComplexEntityCard>
+        <div className="lg:hidden mb-3">
+          <CompactTabs
+            label="Разделы карточки лида"
+            size="compact"
+            items={mobileTabs.map(({ id, label }) => ({ id, label }))}
+            value={mobileTab}
+            onChange={(id) => openWorkspaceSection(id as MobileTab)}
+          />
+        </div>
+        <nav className="sr-only" aria-label="Разделы карточки лида">
+          {mobileTabs.map(({ id, label }) => (
+            <button
+              key={id}
+              id={`lead-workspace-tab-${id}`}
+              type="button"
+              aria-current={mobileTab === id ? "page" : undefined}
+              onClick={() => openWorkspaceSection(id)}
+              onKeyDown={(event) => moveMobileTab(event, id)}
+            >
+              {label}
+            </button>
+          ))}
+        </nav>
         <div className="lead-main-grid grid min-w-0 gap-4">
-          <div className="lead-left-column min-w-0 space-y-3">
-            <nav className="sr-only" aria-label="Данные лида">
-              {referenceTabs.map(({ id, label }) => <button key={id} id={`lead-reference-tab-${id}`} type="button" aria-current={referenceTab === id ? "page" : undefined} onClick={() => openReferenceSection(id)} onKeyDown={(event) => moveReferenceTab(event, id)} className={`shrink-0 rounded-lg px-3 py-1.5 text-xs font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${referenceTab === id ? "bg-blue-50 text-blue-700" : "text-slate-500 hover:bg-white hover:text-slate-800"}`}>{label}</button>)}
-            </nav>
-
-            <SectionCard title="Ключевые метрики лида" size="compact">
-              <ResponsiveGrid minItemWidth="small" gap="compact" className="lead-metrics-grid">
-                <MetricCard label="Вероятность конверсии" value={lead.probability === null ? "Не указана" : `${lead.probability}%`} size="compact" />
-                <MetricCard label="Последний контакт" value={formatDate(lead.lastActivityAt)} size="compact" />
-                <MetricCard label="Следующий контакт" value={nearestWorkTask && nearestWorkTask.dueLabel !== "—" ? nearestWorkTask.dueLabel : "Не запланирован"} detail={nearestWorkTask?.title} size="compact" />
-                <MetricCard label="Дней в работе" value={`${daysInWork} дн.`} detail={`с ${formatDate(lead.createdAt)}`} size="compact" />
-                <MetricCard label="Количество касаний" value={String(lead.activities.length)} detail="событий в истории" size="compact" />
-                <MetricCard label="Потенциальная сумма" value={formatCurrency(lead.estimatedAmount)} tone="success" size="compact" />
-              </ResponsiveGrid>
-            </SectionCard>
-
-            <ResponsiveGrid minItemWidth="large" gap="default" className="lead-reference-grid">
-              <div id="lead-reference-panel-customer" className="min-w-0 rounded-portal-lg border border-portal-border bg-portal-surface shadow-portal-card">
-                <LeadCustomerDetails
-                  embedded
-                  compact
-                  customer={lead.customer}
-                  leadId={lead.id}
-                  contactPersistence="api"
-                  onCustomerChange={updateCustomer}
-                />
-              </div>
-              <div id="lead-reference-panel-commercial" className="min-w-0 rounded-portal-lg border border-portal-border bg-portal-surface shadow-portal-card">
-                <LeadCommercialDetails
-                  embedded
-                  compact
-                  commercial={lead.commercial}
-                  source={lead.source}
-                  estimatedAmount={lead.estimatedAmount}
-                  probability={lead.probability}
-                  leadId={lead.id}
-                  persistence="api"
-                  onChange={updateCommercial}
-                />
-              </div>
-            </ResponsiveGrid>
-
-            <div className="lg:hidden">
-              <CompactTabs
-                label="Рабочие разделы лида"
-                size="compact"
-                items={workspaceTabs.map(({ id, label }) => ({ id, label }))}
-                value={workspaceTab}
-                onChange={(id) => openWorkspaceSection(id as WorkspaceTab)}
-              />
+          <div
+            className={`lead-left-column min-w-0 space-y-3 ${mobileTab === "customer" || mobileTab === "interest" ? "block" : "hidden"} lg:block`}
+          >
+            <div className="flex flex-wrap gap-2" aria-label="Ключевые показатели">
+              <span className="rounded-full border border-portal-border bg-portal-surface px-3 py-1 text-xs font-semibold text-portal-text">
+                Сумма {formatCurrency(lead.estimatedAmount)}
+              </span>
+              <span className="rounded-full border border-portal-border bg-portal-surface px-3 py-1 text-xs font-semibold text-portal-text">
+                Следующий контакт: {nearestWorkTask && nearestWorkTask.dueLabel !== "—" ? nearestWorkTask.dueLabel : "не запланирован"}
+              </span>
+              <span className="rounded-full border border-portal-border bg-portal-surface px-3 py-1 text-xs font-semibold text-portal-text">
+                Касаний: {lead.activities.length}
+              </span>
             </div>
 
-            <nav id="lead-workspace-sections-heading" className="sr-only" aria-label="Рабочие разделы лида">
-              {workspaceTabs.map(({ id, label }) => (
-                <button key={id} id={`lead-workspace-tab-${id}`} type="button" aria-current={workspaceTab === id ? "page" : undefined} onClick={() => openWorkspaceSection(id)} onKeyDown={(event) => moveWorkspaceTab(event, id)}>{label}</button>
-              ))}
-            </nav>
+            <details
+              id="lead-reference-panel-customer"
+              open
+              className={`min-w-0 rounded-portal-lg border border-portal-border bg-portal-surface shadow-portal-card ${mobileTab === "interest" ? "hidden lg:block" : ""}`}
+            >
+              <summary className="cursor-pointer px-3.5 py-2.5 text-sm font-semibold text-portal-text">
+                Клиент и контакты
+              </summary>
+              <LeadCustomerDetails
+                embedded
+                compact
+                customer={lead.customer}
+                leadId={lead.id}
+                contactPersistence="api"
+                onCustomerChange={updateCustomer}
+              />
+            </details>
 
-            <div className="lead-bottom-grid grid min-w-0 items-start gap-3">
-              <div id="lead-workspace-panel-tasks" className={`lead-tasks-card min-w-0 rounded-portal-lg border border-portal-border bg-portal-surface shadow-portal-card ${workspaceTab === "tasks" ? "block" : "hidden"} lg:block`}>
+            <details
+              id="lead-reference-panel-commercial"
+              className={`min-w-0 rounded-portal-lg border border-portal-border bg-portal-surface shadow-portal-card ${mobileTab === "customer" ? "hidden lg:block" : ""}`}
+            >
+              <summary className="cursor-pointer px-3.5 py-2.5 text-sm font-semibold text-portal-text">
+                Интерес
+              </summary>
+              <LeadCommercialDetails
+                embedded
+                compact
+                hideQuantity
+                commercial={lead.commercial}
+                source={lead.source}
+                estimatedAmount={lead.estimatedAmount}
+                probability={lead.probability}
+                leadId={lead.id}
+                persistence="api"
+                onChange={updateCommercial}
+              />
+            </details>
+          </div>
+
+          <aside
+            id="lead-workspace-panel-communication"
+            data-lead-communication-column
+            className={`lead-communication-column min-w-0 self-start overflow-hidden rounded-portal-lg border border-portal-border bg-portal-surface shadow-portal-card ${mobileTab === "communication" ? "block" : "hidden"} lg:block`}
+          >
+            <CompactTabs
+              label="Лента лида"
+              size="compact"
+              items={feedTabs.map(({ id, label }) => ({ id, label }))}
+              value={feedTab}
+              onChange={(id) => setFeedTab(id as FeedTab)}
+            />
+            {feedTab === "communication" ? (
+              <LeadCommunicationPanel
+                embedded
+                persistent={taskPersistent}
+                messages={lead.messages}
+                primaryContact={primaryContact}
+                customerWebsite={lead.customer.website}
+                onSend={sendMessage}
+              />
+            ) : null}
+            {feedTab === "tasks" ? (
+              <div id="lead-workspace-panel-tasks" className="lead-tasks-card min-w-0">
                 <HostWorkTasksPanel
                   embedded
                   compact
@@ -627,7 +640,9 @@ export function LeadPage({
                   onAdd={() => setWorkTaskCreateOpen(true)}
                 />
               </div>
-              <div id="lead-workspace-panel-notes" className={`lead-notes-card min-w-0 rounded-portal-lg border border-portal-border bg-portal-surface shadow-portal-card ${workspaceTab === "notes" ? "block" : "hidden"} lg:block`}>
+            ) : null}
+            {feedTab === "notes" ? (
+              <div id="lead-workspace-panel-notes" className="lead-notes-card min-w-0">
                 {noteActionError ? <p className="border-b border-red-100 bg-red-50 px-4 py-2 text-sm text-red-700" role="alert">{noteActionError}</p> : null}
                 <LeadActivityTimeline
                   embedded
@@ -643,7 +658,9 @@ export function LeadPage({
                   onTogglePin={toggleNotePin}
                 />
               </div>
-              <div id="lead-workspace-panel-history" className={`lead-history-card min-w-0 rounded-portal-lg border border-portal-border bg-portal-surface shadow-portal-card ${workspaceTab === "history" ? "block" : "hidden"} lg:block`}>
+            ) : null}
+            {feedTab === "history" ? (
+              <div id="lead-workspace-panel-history" className="lead-history-card min-w-0">
                 <LeadActivityTimeline
                   embedded
                   compact
@@ -658,34 +675,7 @@ export function LeadPage({
                   onTogglePin={toggleNotePin}
                 />
               </div>
-            </div>
-          </div>
-
-          <aside id="lead-workspace-panel-communication" data-lead-communication-column className={`lead-communication-column min-w-0 self-start overflow-hidden rounded-portal-lg border border-portal-border bg-portal-surface shadow-portal-card ${workspaceTab === "communication" ? "block" : "hidden"} lg:block`}>
-            <LeadCommunicationPanel
-              embedded
-              persistent={taskPersistent}
-              messages={lead.messages}
-              primaryContact={primaryContact}
-              customerWebsite={lead.customer.website}
-              onSend={sendMessage}
-              customerSummary={(
-                <div className="flex h-full min-w-0 flex-col p-3.5">
-                  <h3 className="text-sm font-bold text-portal-text">Карточка клиента</h3>
-                  <dl className="mt-4 space-y-4">
-                    <div><dt className="text-[11px] text-slate-500">Основной контакт</dt><dd className="mt-1 text-sm font-semibold text-slate-900">{primaryContact?.name ?? "Не указан"}</dd></div>
-                    <div><dt className="text-[11px] text-slate-500">Предпочтительный канал</dt><dd className="mt-1 text-sm font-semibold text-blue-700">{preferredChannel}</dd></div>
-                    <div><dt className="text-[11px] text-slate-500">Среднее время ответа</dt><dd className="mt-1 text-sm font-semibold text-slate-900">Не указано</dd></div>
-                    <div><dt className="text-[11px] text-slate-500">Часовой пояс</dt><dd className="mt-1 text-sm font-semibold text-slate-900">Не указано</dd></div>
-                  </dl>
-                  <div className="mt-auto space-y-2 pt-5">
-                    {primaryContact?.phone ? <a href={`tel:${primaryContact.phone}`} className="flex h-9 items-center justify-center gap-2 rounded-lg border border-slate-200 text-xs font-semibold text-slate-700 hover:bg-slate-50"><PhoneCall size={14} /> Позвонить</a> : null}
-                    {primaryContact?.email ? <a href={`mailto:${primaryContact.email}`} className="flex h-9 items-center justify-center gap-2 rounded-lg border border-slate-200 text-xs font-semibold text-slate-700 hover:bg-slate-50"><Mail size={14} /> Написать email</a> : null}
-                    <button type="button" onClick={() => openReferenceSection("customer")} className="h-9 w-full rounded-lg border border-slate-200 text-xs font-semibold text-slate-700 hover:bg-slate-50">Открыть профиль клиента</button>
-                  </div>
-                </div>
-              )}
-            />
+            ) : null}
             <div className="border-t border-portal-border">
               <OrderCollaborationPanel
                 embedded
@@ -693,12 +683,6 @@ export function LeadPage({
                 title="Внутренняя переписка"
               />
             </div>
-            <PageActions className="border-t border-portal-border bg-portal-surface-secondary p-3" align="start">
-              <Button type="button" variant="primary" onClick={() => openWorkspaceSection("communication")} className="h-9 basis-[calc(50%-0.25rem)] px-2 sm:basis-auto"><MessageCircle size={15} /> Написать</Button>
-              <Button type="button" onClick={() => setWorkTaskCreateOpen(true)} className="h-9 basis-[calc(50%-0.25rem)] px-2 sm:basis-auto"><Plus size={15} /> Задача</Button>
-              {primaryContact?.phone ? <a href={`tel:${primaryContact.phone}`} className="inline-flex h-9 basis-[calc(50%-0.25rem)] items-center justify-center gap-2 rounded-[var(--portal-radius-md)] border border-portal-border bg-portal-surface px-2 text-sm font-medium text-portal-text hover:bg-portal-surface-secondary sm:basis-auto"><PhoneCall size={15} /> Позвонить</a> : <Button type="button" disabled className="h-9 basis-[calc(50%-0.25rem)] px-2 sm:basis-auto"><PhoneCall size={15} /> Позвонить</Button>}
-              <Button type="button" disabled title="Создание заказа будет доступно позже" className="h-9 basis-[calc(50%-0.25rem)] px-2 sm:basis-auto"><ShoppingBag size={15} /> Заказ</Button>
-            </PageActions>
           </aside>
         </div>
         </ComplexEntityCard>
@@ -718,7 +702,8 @@ export function LeadPage({
         onCreated={(task) => {
           setWorkTasks((current) => [task, ...current]);
           setWorkTaskCreateOpen(false);
-          setWorkspaceTab("tasks");
+          setFeedTab("tasks");
+          setMobileTab("communication");
         }}
       />
       {completionMode ? (

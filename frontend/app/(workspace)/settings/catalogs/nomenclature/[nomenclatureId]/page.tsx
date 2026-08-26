@@ -11,7 +11,6 @@ import {
   getNomenclatureCharacteristicValues,
   getNomenclatureHistory,
   getNomenclatureMedia,
-  getNomenclatureVariants,
   getUnitsOfMeasure,
 } from "@/lib/nomenclature";
 import { getProductModels } from "@/lib/product-models";
@@ -33,7 +32,7 @@ export default async function NomenclatureCardPage({
   const item = await getNomenclatureById(Number(nomenclatureId));
   if (!item) notFound();
 
-  const [categories, units, fields, characteristicDefinitions, media, history, variants] =
+  const [categories, units, fields, characteristicDefinitions, media, history] =
     await Promise.all([
       getNomenclatureCategories(),
       getUnitsOfMeasure(),
@@ -41,7 +40,6 @@ export default async function NomenclatureCardPage({
       getCharacteristicDefinitions(),
       getNomenclatureMedia(item.id),
       getNomenclatureHistory(item.id),
-      getNomenclatureVariants(item.id),
     ]);
 
   const selectDefinitions = characteristicDefinitions.filter((field) => {
@@ -80,7 +78,6 @@ export default async function NomenclatureCardPage({
       characteristicDefinitions={characteristicDefinitions}
       media={media}
       history={history}
-      variants={variants}
       availableModels={availableModels}
       activeModels={activeModels}
       productTypes={productTypes}

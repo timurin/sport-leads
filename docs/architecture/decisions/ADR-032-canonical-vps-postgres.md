@@ -1,6 +1,6 @@
 # ADR-032 — Canonical VPS Postgres and local-git-VPS workflow
 
-**Status:** принято (`2026-08-25`)  
+**Status:** принято (`2026-08-25`; amend `2026-08-26` auto-deploy on `main` push)  
 **Date:** `2026-08-25`  
 **Roadmap:** `v1.00` Stage `0.5` (`0.5.1` contract)  
 **Depends on:** in-repo production stack `17.2.1`–`17.2.3` (Compose/Caddy/deploy/backup); LAN `0.3`; auth ADR-023  
@@ -34,7 +34,7 @@ Stage `17.2` уже дал `compose.prod.yaml`, Caddy, `workflow_dispatch` SSH d
 
 ### 2. Деплой
 
-Локальный репо → `git push origin main` → GitHub Actions `deploy-production.yml` (`workflow_dispatch`) → SSH `git fetch` + `docker compose -f compose.prod.yaml --env-file .env.production up -d --build`.
+Локальный репо → `git push origin main` → GitHub Actions `deploy-production.yml` (**`on: push` branches `main`**, plus `workflow_dispatch` for a chosen ref / skip-pull rebuild) → SSH `git fetch` + `reset` to the pushed SHA + `docker compose -f compose.prod.yaml --env-file .env.production up -d --build`. Agent: after owner-requested push to `main`, do not stop until that job has run (`.cursor/rules/commit-push-vps-sync.mdc`).
 
 Не копировать проект на VPS в обход Git. Alembic на проде — старт контейнера API (`alembic upgrade head`). Агент **не** гоняет `alembic` против tunnel.
 
@@ -60,7 +60,7 @@ Stage `17.2` уже дал `compose.prod.yaml`, Caddy, `workflow_dispatch` SSH d
 
 ### 6. Публичный hostname (`0.5.6.1`)
 
-Единственный пользовательский origin: **`https://sport-lead.ru`**. DNS A/AAAA на регистраторе → IPv4 VPS **до** Let's Encrypt (`0.5.6`). `PUBLIC_APP_ORIGIN=https://sport-lead.ru` (QR Stage 25). `www` — опционально и только после DNS; не включать site block `www` в Caddy, пока запись не резолвится. Агент не ведёт пользовательскую работу на LAN `:3001` вместо этого origin.
+Единственный пользовательский origin: **`https://sport-lead.ru`**. DNS A/AAAA на регистраторе → IPv4 VPS **до** Let's Encrypt (`0.5.6`). `PUBLIC_APP_ORIGIN=https://sport-lead.ru` (QR Stage 25). `www` редиректит на apex (`docker/Caddyfile`). Агент не ведёт пользовательскую работу на LAN `:3001` вместо этого origin.
 
 ### 7. Host OS (`0.5.4.1`)
 

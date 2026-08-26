@@ -2,7 +2,11 @@
 # Public hostname: sport-lead.ru (SPORT_LEADS_DOMAIN).
 # Caddy obtains/renews Let's Encrypt when the A-record points at this host
 # and ports 80/443 are reachable.
-# Do not add a www site block until www DNS exists (otherwise TLS issuance can stall).
+# www DNS exists (A → same VPS). Redirect to apex so Let's Encrypt covers both names.
+
+www.{$SPORT_LEADS_DOMAIN:sport-lead.ru} {
+	redir https://{$SPORT_LEADS_DOMAIN:sport-lead.ru}{uri} permanent
+}
 
 {$SPORT_LEADS_DOMAIN:sport-lead.ru} {
 	encode gzip

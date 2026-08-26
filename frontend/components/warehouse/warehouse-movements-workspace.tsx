@@ -144,13 +144,15 @@ export function WarehouseMovementsWorkspace({
           <DataTableFrame className="min-h-0 flex-1 rounded-none border-x-0 shadow-none">
             <DataTable minWidthClassName="min-w-[960px]">
               <DataTableHead>
-                <DataTableHeaderCell>Номер</DataTableHeaderCell>
-                <DataTableHeaderCell>Тип</DataTableHeaderCell>
-                <DataTableHeaderCell>Статус</DataTableHeaderCell>
-                <DataTableHeaderCell>Склад</DataTableHeaderCell>
-                <DataTableHeaderCell>Проведён</DataTableHeaderCell>
-                <DataTableHeaderCell>ТК</DataTableHeaderCell>
-                <DataTableHeaderCell>Заказ</DataTableHeaderCell>
+                <DataTableRow>
+                  <DataTableHeaderCell>Номер</DataTableHeaderCell>
+                  <DataTableHeaderCell>Тип</DataTableHeaderCell>
+                  <DataTableHeaderCell>Статус</DataTableHeaderCell>
+                  <DataTableHeaderCell>Склад</DataTableHeaderCell>
+                  <DataTableHeaderCell>Проведён</DataTableHeaderCell>
+                  <DataTableHeaderCell>ТК</DataTableHeaderCell>
+                  <DataTableHeaderCell>Заказ</DataTableHeaderCell>
+                </DataTableRow>
               </DataTableHead>
               <DataTableBody>
                 {filtered.map((row) => (

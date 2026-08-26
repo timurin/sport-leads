@@ -30,7 +30,6 @@ import {
 } from "@/components/settings/nomenclature-add-characteristic-form";
 import { NomenclatureAvailableModelsBlock } from "@/components/settings/nomenclature-available-models-block";
 import { NomenclatureMediaCarousel } from "@/components/settings/nomenclature-media-carousel";
-import { NomenclatureVariantsBlock } from "@/components/settings/nomenclature-variants-block";
 import { ProductModelToolbarActions } from "@/components/settings/product-model-toolbar-actions";
 import { EntityHeader } from "@/components/ui/entity-header";
 import { Button, IconButton } from "@/components/ui/button";
@@ -73,7 +72,6 @@ import {
   type NomenclatureMedia,
   type NomenclatureRequisitesDraft,
   type NomenclatureType,
-  type NomenclatureVariant,
   type UnitOfMeasure,
 } from "@/lib/nomenclature";
 import type { ProductModel } from "@/lib/product-models";
@@ -275,7 +273,6 @@ export function NomenclatureCard({
   characteristicDefinitions,
   media,
   history = [],
-  variants = [],
   availableModels = [],
   activeModels = [],
   productTypes = [],
@@ -290,7 +287,6 @@ export function NomenclatureCard({
   characteristicDefinitions: CharacteristicDefinition[];
   media: NomenclatureMedia[];
   history?: NomenclatureHistoryEntry[];
-  variants?: NomenclatureVariant[];
   availableModels?: NomenclatureAvailableModel[];
   activeModels?: ProductModel[];
   productTypes?: ProductType[];
@@ -1502,12 +1498,6 @@ export function NomenclatureCard({
                   <div className="hidden min-w-0 lg:block" aria-hidden="true" />
                 )}
               </div>
-
-              <NomenclatureVariantsBlock
-                nomenclatureId={current.id}
-                variants={variants}
-                basePrice={current.basePrice}
-              />
 
               <SectionCard
                 title="Вложения"

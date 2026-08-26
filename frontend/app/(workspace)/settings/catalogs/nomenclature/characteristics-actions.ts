@@ -18,9 +18,25 @@ async function request(path: string, method: string, body?: unknown) {
   });
   if (!response.ok) {
     const data = (await response.json().catch(() => null)) as {
-      detail?: string;
+      detail?: string | Array<{ msg?: string } | string>;
     } | null;
-    throw new Error(data?.detail ?? `Backend вернул ${response.status}`);
+    const detail = data?.detail;
+    const message =
+      typeof detail === "string"
+        ? detail
+        : Array.isArray(detail)
+          ? detail
+              .map((item) =>
+                typeof item === "string"
+                  ? item
+                  : typeof item === "object" && item && "msg" in item
+                    ? String(item.msg ?? "")
+                    : "",
+              )
+              .filter(Boolean)
+              .join("; ")
+          : "";
+    throw new Error(message || `Backend вернул ${response.status}`);
   }
   if (response.status === 204) {
     return null;
@@ -239,6 +255,14 @@ export async function generateNomenclatureVariants(formData: FormData) {
   revalidatePath(
     `/settings/catalogs/nomenclature/${formData.get("nomenclature_id")}`,
   );
+}
+
+export async function createNomenclatureVariant(
+  nomenclatureId: number,
+  payload: { article: string; name: string; option_ids: number[] },
+) {
+  await request(`/nomenclatures/${nomenclatureId}/variants`, "POST", payload);
+  revalidatePath(`/settings/catalogs/nomenclature/${nomenclatureId}`);
 }
 
 export async function toggleNomenclatureVariant(formData: FormData) {

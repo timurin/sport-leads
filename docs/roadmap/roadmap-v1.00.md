@@ -1,9 +1,9 @@
 # Sport-Lead — Roadmap v1.00
 
 **Code:** `SL-ROADMAP-v1.00`
-**Updated:** `2026-08-25` (Stage **12.4** inventory UI `12.4.1.5`; stop at owner visual `12.4.1.6`)
+**Updated:** `2026-08-26` (Stage **12.4** closed owner visual `12.4.1.6`; next **12.5.1**; Stage **26** `26.4`/`26.5` owner-pull)
 **Project version:** `v1.00`
-**Status:** Confirmed carry-over from `v0.9.0` (Stages **1.4.3**, **2** group, **7**, **12.4**–**12.5**, **13**, **14**, **15**, **16**, **18.4**) + **new** Stages **0** (performance + LAN + order-without-lead + **canonical VPS `0.5`**), **20** (Lead / Order UX, closed), **21** (Settings / Users cabinet, closed), **22** (Design v1.0), **23** (Unified Work Tasks), **24** (Sewing cabinet), **25** (Tech-card QR / shop scan). Owner started early (`2026-08-05`).
+**Status:** Confirmed carry-over from `v0.9.0` (Stages **1.4.3**, **2** group, **7**, **12.4**–**12.5**, **13**, **14**, **15**, **16**, **18.4**) + **new** Stages **0** (performance + LAN + order-without-lead + **canonical VPS `0.5`**), **20** (Lead / Order UX, closed), **21** (Settings / Users cabinet, closed), **22** (Design v1.0), **23** (Unified Work Tasks), **24** (Sewing cabinet), **25** (Tech-card QR / shop scan), **26** (owner findings: bugs / cosmetics). Owner started early (`2026-08-05`).
 **Languages / Языки:** English + Russian (this MD). Interactive switch: `docs/erp/status/roadmap-v1.00.html`
 
 **Canonical twin:**
@@ -29,7 +29,7 @@
 ## Rules / Правила
 
 - `[x]` = done / выполнено; `[ ]` = open / не выполнено.
-- Codes keep `v0.9.0` numbering for carried work (`1.4.3.*`, `2.2.3.*`, `2.2.4.*`, `2.3.*`, `2.4.*`, `7.*`, `12.4`–`12.5`, `13.*`, `14.*`, `15.*`, `16.*`, `18.4.*`). New Stages **0** (`0.1` / `0.2.*` / `0.3.*` / `0.4.*` / **`0.5.*`**), **20** (`20.1`–`20.4`), **21** (`21.1`–`21.5`), **22** (`22.0`–`22.9` Design v1.0; process `docs/design/design-v1-process.md`), **23** (`23.0`–`23.10` Unified Work Tasks; ADR-028), **24** (`24.0`–`24.5` Sewing cabinet), **25** (`25.0`–`25.5` Tech-card QR / shop scan).
+- Codes keep `v0.9.0` numbering for carried work (`1.4.3.*`, `2.2.3.*`, `2.2.4.*`, `2.3.*`, `2.4.*`, `7.*`, `12.4`–`12.5`, `13.*`, `14.*`, `15.*`, `16.*`, `18.4.*`). New Stages **0** (`0.1` / `0.2.*` / `0.3.*` / `0.4.*` / **`0.5.*`**), **20** (`20.1`–`20.4`), **21** (`21.1`–`21.5`), **22** (`22.0`–`22.9` Design v1.0; process `docs/design/design-v1-process.md`), **23** (`23.0`–`23.10` Unified Work Tasks; ADR-028), **24** (`24.0`–`24.5` Sewing cabinet), **25** (`25.0`–`25.5` Tech-card QR / shop scan), **26** (`26.0`–`26.5` owner findings; living; owner-pull).
 - Do not execute `v1.00` while `v0.9.0` is still the active project version, unless the owner explicitly starts early.
 - Не исполнять `v1.00`, пока активная версия проекта — `v0.9.0`, если владелец явно не начал раньше.
 - **Owner early start:** `2026-08-05` — execution of `v1.00` begun (`0.1.1` closed).
@@ -64,10 +64,11 @@
 | **23** | Unified Work Tasks | Единый модуль Задачи |
 | **24** | Sewing cabinet (current slice after Stage 2) | Кабинет швеи (текущий срез после Stage 2) |
 | **25** | Tech-card QR + shop scan (after 24) | QR техкарты + скан по маршруту (после 24) |
+| **26** | Owner findings: bugs / cosmetics / UX polish (living) | Находки владельца: баги / косметика / UX (живой backlog) |
 
-> **EN:** Stage 0 is **new** in `v1.00`: slow-data (`0.1`/`0.2`), **LAN** (`0.3`), **create SalesOrder without Lead** (`0.4`), and **canonical VPS** (`0.5`, ADR-032). Stages **20** / **21** closed. Stage **22** = Design v1.0 (do **not** re-open `20.*` data contracts). Do **not** re-open closed `3.5.*` / `19.*` / `17.1.2.*` / `17.2.1`–`17.2.3` in `v0.9.0`. Stage **2** closed `2026-08-24`. Stage **24** sewing cabinet closed `2026-08-24`. Stage **25** QR/scan closed `2026-08-25` (owner visual `25.5.2`). Stage **7** Specifications closed `2026-08-25` (owner visual `7.2.2.6`). Current slice: Stage **12.4** inventory UI shipped; stop at owner visual `12.4.1.6`. Stage **`0.5`**: git gate `0.5.3` closed; next clone `0.5.4` + DNS `0.5.6.1`. `2.4.2` Employees is **not** a 24/25 dependency (sewer = `PlatformUser`). `12.5` / 13–16 / `18.4` are not blockers.
+> **EN:** Stage 0 is **new** in `v1.00`: slow-data (`0.1`/`0.2`), **LAN** (`0.3`), **create SalesOrder without Lead** (`0.4`), and **canonical VPS** (`0.5`, ADR-032). Stages **20** / **21** closed. Stage **22** = Design v1.0 (do **not** re-open `20.*` data contracts). Do **not** re-open closed `3.5.*` / `19.*` / `17.1.2.*` / `17.2.1`–`17.2.3` in `v0.9.0`. Stage **2** closed `2026-08-24`. Stage **24** sewing cabinet closed `2026-08-24`. Stage **25** QR/scan closed `2026-08-25` (owner visual `25.5.2`). Stage **7** Specifications closed `2026-08-25` (owner visual `7.2.2.6`). Stage **26** = living owner findings (bugs/cosmetics); `26.0.1` closed; seed parked; **owner-pull only** — do not auto-start. Stage **12.4** inventory closed `2026-08-26` (owner visual `12.4.1.6`). Current slice: Stage **12.5** transfers (`12.5.1`). Stage **`0.5`** closed `2026-08-25` (smoke `0.5.12`: `https://sport-lead.ru/login`). `2.4.2` Employees is **not** a 24/25 dependency (sewer = `PlatformUser`). `12.5` / 13–16 / `18.4` are not blockers.
 >
-> **RU:** Stage 0: slow-data + **LAN** (`0.3`) + **заказ без лида** (`0.4`) + **канонический VPS** (`0.5`). Stages **20** / **21** закрыты. Stage **22** = Design v1.0. Stage **2** закрыт `2026-08-24`. Stage **24** закрыт `2026-08-24`. Stage **25** закрыт `2026-08-25`. Stage **7** закрыт `2026-08-25` (owner visual `7.2.2.6`). Текущий срез: Stage **12.4** (UI инвентаризации; стоп на visual `12.4.1.6`). Git gate `0.5.3` закрыт; далее clone `0.5.4` и DNS `0.5.6.1`. `2.4.2` Employees **не** зависимость (швея = `PlatformUser`).
+> **RU:** Stage 0: slow-data + **LAN** (`0.3`) + **заказ без лида** (`0.4`) + **канонический VPS** (`0.5`). Stages **20** / **21** закрыты. Stage **22** = Design v1.0. Stage **2** закрыт `2026-08-24`. Stage **24** закрыт `2026-08-24`. Stage **25** закрыт `2026-08-25`. Stage **7** закрыт `2026-08-25` (owner visual `7.2.2.6`). Stage **26** — живой backlog находок; `26.0.1` закрыт; seed припаркован; старт только по явному коду владельца. Stage **12.4** закрыт `2026-08-26` (owner visual `12.4.1.6`). Текущий срез: Stage **12.5** (`12.5.1` перемещения). Stage **`0.5`** закрыт `2026-08-25` (smoke `https://sport-lead.ru/login`). `2.4.2` Employees **не** зависимость (швея = `PlatformUser`).
 
 ### Remain in v0.9.0 / Остаются в v0.9.0
 
@@ -136,16 +137,16 @@
 - [x] 0.5.2 — Agent rule + AGENTS / `dev-server-sessions.mdc` (default stack is not tunnel) — `v1.00` `2026-08-25`; `.cursor/rules/vps-canonical-workflow.mdc` / Правило агента
 - [x] 0.5.3 — Git gate: owner commit+push closed-roadmap WIP (no `__pycache__`) before first VPS clone — `v1.00` `2026-08-25`; Spec Alembic `e4f5a6b7c890` + ADR-032 / Git gate: commit+push WIP до clone на VPS
 - [x] 0.5.4.1 — Assemble host on **Ubuntu 26.04**: Docker Engine + compose plugin (Docker apt repo), git, UFW, curl; TZ `Europe/Moscow`; **no** host Python/Node for the app (`compose.prod.yaml` images) — `v1.00` `2026-08-25`; live VPS `46.173.29.247`; Docker `29.7.2` + Compose `v5.5.0`; UFW `22/80/443`; `scripts/vps-bootstrap-ubuntu-26.04.sh` / Окружение Ubuntu 26.04 (Docker, не native app)
-- [ ] 0.5.4 — VPS bootstrap on Ubuntu 26.04: deploy user, UFW `22/80/443`, GitHub deploy key, clone, `.env.production` / Bootstrap хоста Ubuntu 26.04
+- [x] 0.5.4 — VPS bootstrap on Ubuntu 26.04: deploy user, UFW `22/80/443`, GitHub deploy key, clone, `.env.production` — `v1.00` `2026-08-25`; `/home/deploy/sport-leads` @ `841f64e`; deploy-key `vps-0.5.4-deploy` / Bootstrap хоста Ubuntu 26.04
 - [x] 0.5.5 — `compose.prod.yaml`: Postgres `127.0.0.1:5432` + `./storage:/app/storage` bind — `v1.00` `2026-08-25` / Bind loopback + storage
-- [ ] 0.5.6.1 — Point registrar DNS `sport-lead.ru` (A/AAAA; optional `www` → apex) at the VPS; `SPORT_LEADS_DOMAIN=sport-lead.ru`; `PUBLIC_APP_ORIGIN=https://sport-lead.ru`; only public user origin — `v1.00` `2026-08-25`; execute **before** `0.5.6` TLS / DNS `sport-lead.ru` → VPS; единственный публичный origin
-- [ ] 0.5.6 — First `up --build`, Caddy TLS, `/healthz` `/health` `/health/ready` on `https://sport-lead.ru` (after `0.5.6.1`) / Первый up + TLS на sport-lead.ru
-- [ ] 0.5.7 — One-time data migrate: local `backup_db.ps1` → `prod-restore-db` on VPS / Перенос дампа
-- [ ] 0.5.8 — GitHub Environment `production` + secrets + first `workflow_dispatch` / Secrets + первый deploy
+- [x] 0.5.6.1 — Point registrar DNS `sport-lead.ru` (A/AAAA; optional `www` → apex) at the VPS; `SPORT_LEADS_DOMAIN=sport-lead.ru`; `PUBLIC_APP_ORIGIN=https://sport-lead.ru`; only public user origin — `v1.00` `2026-08-25`; Google DNS `8.8.8.8` A `46.173.29.247` (apex + `www`) / DNS `sport-lead.ru` → VPS; единственный публичный origin
+- [x] 0.5.6 — First `up --build`, Caddy TLS, `/healthz` `/health` `/health/ready` on `https://sport-lead.ru` (after `0.5.6.1`) — `v1.00` `2026-08-25`; HTTPS 200 healthz/health/ready / Первый up + TLS на sport-lead.ru
+- [x] 0.5.7 — One-time data migrate: local `backup_db.ps1` → `prod-restore-db` on VPS — `v1.00` `2026-08-25`; dump `backup/sport_leads-20260825-173102.dump` (local Docker PG host `:5433`); `prod-restore-db.sh`; `/health/ready` ok / Перенос дампа
+- [x] 0.5.8 — GitHub Environment `production` + secrets + first `workflow_dispatch` — `v1.00` `2026-08-25`; env `production`; run `32861707751` success; `/healthz` `/health/ready` 200 / Secrets + первый deploy
 - [x] 0.5.9 — Tunnel script + `.env.tunnel.example` (local port **5433**) — `v1.00` `2026-08-25`; `scripts/vps-db-tunnel.ps1` / Tunnel
 - [x] 0.5.10 — Storage sync script; media SoT = VPS disk — `v1.00` `2026-08-25`; `scripts/sync-storage-from-vps.ps1` / Sync media
-- [ ] 0.5.11 — Cron `prod-backup-db.sh` on VPS (off-box copy) / Cron backup
-- [ ] 0.5.12 — Owner smoke: `https://sport-lead.ru/login` + optional local `:3001` via tunnel; docs checkpoint / Smoke на sport-lead.ru
+- [x] 0.5.11 — Cron `prod-backup-db.sh` on VPS (off-box copy) — `v1.00` `2026-08-25`; deploy crontab `15 2 * * *`; dump `sport_leads-prod-20260825-175911.dump`; off-box `backup/vps-offbox/` / Cron backup
+- [x] 0.5.12 — Owner smoke: `https://sport-lead.ru/login` + optional local `:3001` via tunnel; docs checkpoint — `v1.00` `2026-08-25`; HTTPS login form + `/health/ready` 200; Stage `0.5` complete / Smoke на sport-lead.ru
 
 ---
 
@@ -308,7 +309,7 @@
 > **EN:** `12.1` structure + `12.2` ledger MVP already shipped in `v0.9.0`. FG docs `12.3` (+ wire `11.2.2.4`) **remain** in `v0.9.0`. Inventory = `StockDocument` type `inventory` + recount lines; post writes signed deltas to the same ledger (ADR-019 amend `2026-08-25`). Task: `docs/tasks/v1.00-stage-12.4-inventory.md`.
 > **RU:** `12.1` + `12.2` уже в `v0.9.0`. FG `12.3` (+ `11.2.2.4`) **остаются** в `v0.9.0`. Инвентаризация = тип `inventory` + строки пересчёта; проведение пишет signed delta в тот же регистр.
 
-**Execute after / Исполнять после:** Stage 7 closed `2026-08-25`. Owner unpaused UI; **stop at visual `12.4.1.6`**.
+**Execute after / Исполнять после:** Stage 7 closed `2026-08-25`. Stage **12.4** closed `2026-08-26` (owner visual `12.4.1.6`). Next **`12.5.1`**.
 
 ### 12.4 — Inventory / Инвентаризация
 
@@ -319,7 +320,7 @@
 - [x] 12.4.1.3 — Add service: snapshot book qty, enter counted, post non-zero deltas / Service: снимок книги, факт, проведение дельт — `v1.00` `2026-08-25`; `stock_inventory.py`; `test_stock_inventory_12_4_1_3.py` / snapshot + counted + post
 - [x] 12.4.1.4 — Add API + backend regression tests / API + backend tests — `v1.00` `2026-08-25`; `POST /stock/inventory` + fill/refresh/counted/post; `test_stock_inventory_12_4_1_4.py` / slim list
 - [x] 12.4.1.5 — Add UI on `/warehouse/movements` (create + card book/counted/delta) / UI журнал + карточка — `v1.00` `2026-08-25`; create drawer + PT-07 book/counted/delta; `stock-inventory.test.mjs` / UI; стоп на visual `12.4.1.6`
-- [ ] 12.4.1.6 — Visual verification / Визуальная проверка
+- [x] 12.4.1.6 — Visual verification / Визуальная проверка — `v1.00` `2026-08-26`; owner visual OK `/warehouse/movements` list + create drawer + card STK; thead `tr` hydration fix / Owner visual OK; Stage 12.4 complete
 
 ### 12.5 — Transfers and reserves / Перемещения и резервы
 
@@ -803,6 +804,67 @@
 
 ---
 
+## Stage 26 — Owner findings: bugs, cosmetics, UX polish / Находки владельца: баги, косметика, UX
+
+**New in:** `v1.00` (owner ask `2026-08-25`)
+**Новое в:** `v1.00` (запрос владельца `2026-08-25`)
+
+> **EN:** Living backlog. Owner appends findings as `26.N.M` (MD + HTML twin, same iteration). Agent does **not** auto-start `26.*`. Current slice is Stage **12.5** (`12.5.1`). Do **not** re-open closed `20.*` / `22.*` / `3.5.*` / `19.*`. Do not interrupt `12.5`. Task: `docs/tasks/v1.00-stage-26-owner-findings.md`. Contract: `SL-OWNER-FINDINGS-v1`.
+>
+> **RU:** Живой backlog. Владелец дописывает находки кодами `26.N.M` (MD + HTML в той же итерации). Агент **не** стартует `26.*` сам. Текущий срез — Stage **12.5** (`12.5.1`). Не переоткрывать `20` / `22` / `3.5` / `19`. Не прерывать `12.5`.
+
+**Execute after / Исполнять после:** only when the owner names a code (e.g. «делай 26.1.2»). / только по явному коду владельца.
+
+### 26.0 — Process / Процесс
+
+- [x] 26.0.1 — Contract: living owner-pull backlog; MD↔HTML atomic; do not interrupt 12.4/12.5; do not reopen 20/22/3.5/19 — `v1.00` `2026-08-25`; `SL-OWNER-FINDINGS-v1`; task `docs/tasks/v1.00-stage-26-owner-findings.md` / Контракт живого backlog
+
+### 26.1 — Sales order card / Карточка заказа `/sales/orders/[id]`
+
+- [x] 26.1.1 — Warn before deleting an order line that has created or started tech cards (number + status); no cascade delete — `v1.00` `2026-08-26`; HTTP 409; host `sales-order-items-unf-demo.tsx`; tests `test_order_item_delete_26_1_1.py` + `order-item-tech-card-guard.test.mjs` / Диалог при удалении позиции с ТК
+- [x] 26.1.2 — Payment scale in the right finance rail fills live while typing paid amount (not only after reload) — `v1.00` `2026-08-26`; `paidPercentFromDraft` in `sales-order-metrics.tsx` / Шкала Оплата при вводе
+- [ ] 26.1.3 — Hide «Количество» from order «Основные сведения» and the same field on the lead («Количество изделий»); no DROP — `v1.00`; `order-client-need-details.tsx` + `lead-commercial-details.tsx` / Убрать Количество
+- [ ] 26.1.4 — Rename «Желаемая дата» → «Дата отгрузки» on the order (same label on lead if still shown) — `v1.00` / Дата отгрузки
+- [ ] 26.1.5 — Source: keep if filled from lead; if empty use the same Select as lead create (`manual` / `website` / `phone` / `email` / `referral` / `vk`) — `v1.00`; `lead-create-dialog.tsx` / Источник dropdown
+- [ ] 26.1.6 — Remove aside tab «Переписка»; keep order chat on filter «Коммуникация» (`3.5.7` / Stage 19); do not move ADR-026 off the tech card — `v1.00` / Убрать вкладку Переписка справа
+
+### 26.2 — Order tech-cards panel / Техкарты на заказе
+
+> **EN:** Shared host `SalesOrderTechCardsPanel` on filters **Товары** and **Тех карты**. Filter **Документ** (`all`) hides the panel — out of 26.2 unless a new finding.
+> **RU:** Общий хост на фильтрах **Товары** и **Тех карты**. Фильтр **Документ** панель скрывает — не 26.2 без новой находки.
+
+- [ ] 26.2.1 — Gradient 0–100% readiness bar under the block title (0 = TCs not launched; 100 = ready to ship); remove «Готовность производства» summary block — `v1.00`; replace `completedCount/eligibleCount` / Шкала готовности; убрать блок Готовность производства
+- [ ] 26.2.2 — Grid 3 mini-cards per row (1 col on narrow); number — title; stage strips (active / done / upcoming); Open as icon at title right; embed `stage_results` on list DTO — `v1.00` / Миниблоки 3 в ряд
+
+### 26.3 — Tech-card document / Документ техкарты `/production/tech-cards/[id]`
+
+> **EN:** Host `tech-card-detail-workspace.tsx`. Shop `?stage=` layout stays; 26.3.3 is manager document only (shop already has horizontal chips).
+> **RU:** Хост документа ТК. Цеховой `?stage=` не ломаем; 26.3.3 — только менеджерский документ.
+
+- [ ] 26.3.1 — Move «Сотрудничество по заказу» (ADR-026) to a right rail on xl+ (sticky); tablet collapse; mobile accordion after header; owner visual on layout in the task file — `v1.00` / Правый рейл переписки
+- [ ] 26.3.2 — «Операции / объёмы», «Схема сборки», «Состав материалов» in one row on large screens — `v1.00` / Три блока в ряд
+- [ ] 26.3.3 — Manager «Маршрут / участки» horizontal (shop floor already has chips — do not break) — `v1.00` / Горизонтальный маршрут менеджера
+- [ ] 26.3.4 — Rename «Поштучно» → «Персонализация»; move to row 2 after Макет / order data / model+route — `v1.00` / Персонализация на строке 2
+
+### 26.4 — Nomenclature card / Карточка номенклатуры `/settings/catalogs/nomenclature/[id]`
+
+> **EN:** Host `nomenclature-card.tsx`. Product-type catalog is a picker source, not an auto-whitelist. Variants ≠ product models (ADR-006). Card has no «Варианты» block (`26.4.3`); API/order snapshots stay.
+> **RU:** Хост карточки номенклатуры. Каталог вида изделия — источник для `+`, не авто-whitelist. Варианты ≠ модели изделия (ADR-006). Блок «Варианты» на карточке не нужен (`26.4.3`); API/заказ остаются.
+
+- [x] 26.4.1 — «Модели изделий»: show only user-linked whitelist; `+` offers remaining active models of the selected Вид изделия — `v1.00` `2026-08-26`; `nomenclature-available-models-block.tsx`; test `nomenclature-available-models.test.mjs` / Модели только по выбору
+- [x] 26.4.2 — «Варианты»: generate / create / edit via existing characteristics API (not empty-state-only) — `v1.00` `2026-08-26`; superseded by `26.4.3` (card block removed) / Выбрать, создать, править варианты
+- [x] 26.4.3 — Remove «Варианты» block from nomenclature card (no business/tech need); keep variant API for order snapshots — `v1.00` `2026-08-26`; `nomenclature-card.tsx`; test `nomenclature-variants-26-4-3.test.mjs` / Убрать блок Варианты
+
+### 26.5 — Lead card layout A / Карточка лида `/sales/leads/[id]`
+
+> **EN:** Communication-first two columns (owner pick `2026-08-26`). PT-06 header + stage rail stay. Shell unchanged. Do not close `26.5.1` without owner visual `26.5.2`. Do not close parked `26.1.3` from this item.
+> **RU:** Коммуникация — главная колонка; контакт/интерес — узкая левая. Шапку/воронку PT-06 не ломаем. `26.5.1` без visual `26.5.2` не закрывать.
+
+- [ ] 26.5.1 — Layout A: wide composer+feed; narrow left contact/interest accordions; 2–3 header pills instead of 6 MetricCard; no tel/email triple-copy — `v1.00`; `lead-page.tsx` / Раскладка A
+- [ ] 26.5.2 — Owner visual on `/sales/leads/1001` (desktop + narrow) — `v1.00` / Visual карточки лида
+
+---
+
 ## Version gate / Шлюз версии
 
 `v1.00` execution begins after / Исполнение `v1.00` начинается после:
@@ -893,3 +955,16 @@
 | `2026-08-25` | `0.5.4.1` in-repo host script `scripts/vps-bootstrap-ubuntu-26.04.sh` (checkbox open until live VPS) | Скрипт bootstrap Ubuntu 26.04; чекбокс открыт до live host |
 | `2026-08-25` | Closed `0.5.4.1`: live Ubuntu 26.04 host Docker CE `29.7.2` + Compose `v5.5.0`; TZ Moscow; UFW 22/80/443; stop at git gate `0.5.3` then clone `0.5.4` | Закрыт `0.5.4.1`: Docker на Ubuntu 26.04; стоп на `0.5.3` / clone `0.5.4` |
 | `2026-08-25` | Closed `0.5.3`: Spec + Stage 0.5 artifacts on `main` (no pycache); next clone `0.5.4` | Закрыт `0.5.3`: WIP в `main`; далее clone `0.5.4` |
+| `2026-08-25` | Closed `0.5.4`: VPS `/home/deploy/sport-leads` @ `841f64e`; GitHub deploy-key read-only; `.env.production` on host; next DNS `0.5.6.1` | Закрыт `0.5.4`: clone + env на VPS; далее DNS |
+| `2026-08-25` | Closed `0.5.6.1`: Google DNS A `sport-lead.ru` + `www` → `46.173.29.247`; next first up `0.5.6` | Закрыт `0.5.6.1`: DNS на VPS; далее `0.5.6` |
+| `2026-08-25` | Closed `0.5.6`: compose up + Caddy TLS; `https://sport-lead.ru/healthz` `/health` `/health/ready` HTTP 200; next dump `0.5.7` | Закрыт `0.5.6`: TLS + health; далее dump |
+| `2026-08-25` | Closed `0.5.7`: local Docker PG dump `sport_leads-20260825-173102.dump` → `prod-restore-db` on VPS; `/health/ready` ok; next `0.5.8` | Закрыт `0.5.7`: дамп на VPS; далее GitHub deploy |
+| `2026-08-25` | Closed `0.5.8`: GitHub env `production` + SSH secrets; workflow_dispatch run `32861707751` success; next cron `0.5.11` | Закрыт `0.5.8`: первый Actions deploy; далее cron |
+| `2026-08-25` | Closed `0.5.11`: deploy crontab 02:15 MSK + 7-day disk retention; first dump off-box to `backup/vps-offbox/`; next owner smoke `0.5.12` | Закрыт `0.5.11`: cron backup; далее smoke |
+| `2026-08-25` | Closed `0.5.12`: HTTPS `https://sport-lead.ru/login` form + `/health/ready` 200; Stage `0.5` complete | Закрыт `0.5.12`: smoke login; Stage `0.5` закрыт |
+| `2026-08-25` | New Stage **26** living owner findings (bugs/cosmetics); closed `26.0.1` contract; seed `26.1`–`26.3` parked; owner-pull only; current slice still `12.4.1.6` | Новый Stage **26** живой backlog; закрыт `26.0.1`; seed припаркован; текущий срез `12.4.1.6` |
+| `2026-08-26` | Closed `26.1.1`: refuse deleting an order line that still has a tech card (number + status, HTTP 409, no cascade); remaining seed `26.1.2`+ parked | Закрыт `26.1.1`: нельзя удалить позицию с техкартой (номер + статус, 409, без каскада) |
+| `2026-08-26` | Closed `26.1.2`: payment scale fills live from typed paid amount (`paidPercentFromDraft`); remaining seed `26.1.3`+ parked | Закрыт `26.1.2`: шкала Оплата живая при вводе суммы |
+| `2026-08-26` | Closed `26.4.1`–`26.4.2`: nomenclature models whitelist-only + variants generate/create UI; `26.5.1`–`26.5.2` still open (lead layout A + owner visual) | Закрыты `26.4.1`–`26.4.2`; лид `26.5` открыт |
+| `2026-08-26` | Closed `26.4.3`: remove nomenclature card «Варианты» block; variant API/order snapshots stay | Закрыт `26.4.3`: блок Варианты с карточки убран |
+| `2026-08-26` | Closed `12.4.1.6`: owner visual OK inventory list+drawer+card; thead `tr` hydration fix; Stage 12.4 complete; next `12.5.1` | Закрыт `12.4.1.6`: owner visual инвентаризации; Stage 12.4 закрыт; далее `12.5.1` |

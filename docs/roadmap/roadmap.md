@@ -1,13 +1,13 @@
 # Sport-Lead — Global Roadmap
 
 **Code:** `SL-ROADMAP-v1`
-**Updated:** `2026-08-25` (v1.00 Stage `0.5` canonical VPS pointer; prior Stage 23 / `0.4` / Stage 21–22 carry)  
+**Updated:** `2026-08-26` (v1.00 Stage **26** closed `26.4.3` card variants block; `26.4`/`26.5`; Stage `0.5` canonical VPS)
 **Project version:** `v0.9.0`
 **Git branch:** `feature/v0.8.1-nomenclature-core`
 
 **Canonical files:**
 - roadmap: `docs/roadmap/roadmap.md`
-- v1.00 roadmap (active early): `docs/roadmap/roadmap-v1.00.md` (+ HTML twin) — includes Stage **23** Work Tasks and Stage **`0.5`** canonical VPS
+- v1.00 roadmap (active early): `docs/roadmap/roadmap-v1.00.md` (+ HTML twin) — includes Stage **23** Work Tasks, Stage **`0.5`** canonical VPS, and Stage **26** living owner findings (bugs/cosmetics; owner-pull)
 - structure: `docs/architecture/project-structure.md`
 - ERP-check: `docs/architecture/erp-check.md`
 
@@ -443,7 +443,7 @@ Completion criteria:
 
 - [x] 4.4.6.1 — ADR-010 amend + DB columns (`price`, `barcode`, `external_code`) + schemas — `v0.9.0`; Alembic `b9c0d1e2f345`; task `docs/tasks/v0.9.0-stage-4.4.6-variant-pricing-barcodes.md`
 - [x] 4.4.6.2 — API update + order UI suggests variant price when selected — `v0.9.0`; evidence: `services/characteristics.py`, `sales-order-items.tsx` + `effectiveVariantUnitPrice`
-- [x] 4.4.6.3 — Card UI: variants block with editable price / barcode / external_code — `v0.9.0`; evidence: `nomenclature-variants-block.tsx`
+- [x] 4.4.6.3 — Card UI: variants block with editable price / barcode / external_code — `v0.9.0`; later removed from card `26.4.3` (API/order remain)
 - [x] 4.4.6.4 — Regression tests + docs sync — `v0.9.0`; evidence: `test_variant_pricing_4_4_6.py`, `nomenclature-variant-pricing-4-4-6.test.mjs`
 
 ### 4.5 — Import and export

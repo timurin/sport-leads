@@ -19,6 +19,7 @@ from app.models.sales import (
     SalesOrderItemAssemblyOperationSnapshot,
     SalesOrderItemVariantSnapshot,
 )
+from app.models.technical_card import TechnicalCard
 from app.models.vat_rate import VatRate
 from app.repositories import assembly_variants as assembly_repo
 from app.repositories import nomenclature_product_models as nomenclature_model_repo
@@ -587,6 +588,26 @@ def update_sales_order_item(
     return item
 
 
+_TECH_CARD_STATUS_RU = {
+    "draft": "Черновик",
+    "in_progress": "В работе",
+    "completed": "Завершена",
+    "cancelled": "Отменена",
+}
+
+
+def _tech_card_status_label(status: object) -> str:
+    value = status.value if hasattr(status, "value") else str(status)
+    return _TECH_CARD_STATUS_RU.get(value, value)
+
+
+def delete_blocked_by_tech_card_message(number: str, status: object) -> str:
+    return (
+        f"Нельзя удалить позицию: техкарта {number} ({_tech_card_status_label(status)}). "
+        "Каскадное удаление техкарты не выполняется. Позиция не удалена."
+    )
+
+
 def delete_sales_order_item(db: Session, order_id: int, item_id: int) -> None:
     order = _get_order(db, order_id)
     item = db.scalar(
@@ -597,6 +618,11 @@ def delete_sales_order_item(db: Session, order_id: int, item_id: int) -> None:
     )
     if item is None:
         raise SalesOrderItemError("Order item not found")
+    card = db.scalar(
+        select(TechnicalCard).where(TechnicalCard.sales_order_item_id == item_id)
+    )
+    if card is not None:
+        raise SalesOrderItemError(delete_blocked_by_tech_card_message(card.number, card.status))
     db.delete(item)
     db.flush()
     _recalculate_order(order)

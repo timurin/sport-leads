@@ -53,7 +53,7 @@ The hostname is registered (hosting panel) but **not yet** pointed at the VPS. D
 1. Read the VPS public IPv4 (`curl -4 ifconfig.me` on the VPS, or the provider panel).
 2. In the DNS zone for `sport-lead.ru`:
    - `A` `@` (apex `sport-lead.ru`) → VPS IPv4
-   - optional later: `A` or `CNAME` `www` → apex (add a Caddy `www` site block only after that record exists, or TLS issuance can stall)
+   - `A` `www` → same VPS IP (Caddy redirects `www` to apex; see `docker/Caddyfile`)
    - `AAAA` only if the VPS has IPv6
 3. Wait until `nslookup sport-lead.ru` (or `dig +short sport-lead.ru`) returns that IP from a public resolver.
 4. On the VPS `.env.production`:
@@ -104,7 +104,7 @@ Do this **before** running local uvicorn against the tunnel (two writers + empty
 
 1. Repo → Settings → Environments → **`production`**.  
 2. Secrets: `PROD_SSH_HOST`, `PROD_SSH_USER`, `PROD_SSH_KEY`, `PROD_APP_PATH` (optional `PROD_SSH_PORT`).  
-3. Actions → **Deploy production** → Run workflow (`ref=main`).
+3. Push to **`main`** starts **Deploy production** automatically. Fallback: Actions → **Deploy production** → Run workflow (`ref=main`).
 
 See `docs/ops/production-17-2-2.md`.
 
@@ -132,13 +132,15 @@ Push local → VPS only when you intend to overwrite production files (`-Push`).
 
 ## 7. Backup cron (`0.5.11`)
 
-On the VPS (see `production-17-2-3.md`):
+On the VPS user `deploy` (host TZ `Europe/Moscow`):
 
 ```cron
-15 2 * * * cd /home/deploy/sport-leads && ./scripts/prod-backup-db.sh >> logs/backup.log 2>&1
+PATH=/usr/sbin:/usr/bin:/bin
+SHELL=/bin/bash
+15 2 * * * cd /home/deploy/sport-leads && /bin/bash scripts/prod-backup-db.sh >> logs/backup.log 2>&1; find backup -name 'sport_leads-prod-*.dump' -mtime +7 -delete
 ```
 
-Copy dumps off-box. Disk-only is not DR.
+Copy dumps off-box (scp/rsync). Disk-only is not DR. First off-box copy: owner Windows `backup/vps-offbox/` (gitignored).
 
 ## 8. Owner smoke (`0.5.12`)
 

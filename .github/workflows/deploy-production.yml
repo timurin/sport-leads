@@ -1,13 +1,17 @@
 name: Deploy production
 
-# Manual production deploy (17.2.2.1). Requires owner-configured repository secrets.
-# Does not run on every push — use workflow_dispatch after checks pass on main.
+# Production deploy (17.2.2.1 / Stage 0.5). Requires owner-configured repository secrets.
+# Push to main syncs /home/deploy/sport-leads on the VPS (sport-lead.ru).
+# workflow_dispatch remains for a chosen ref or compose rebuild without git pull.
 
 on:
+  push:
+    branches:
+      - main
   workflow_dispatch:
     inputs:
       ref:
-        description: "Git ref to deploy (branch, tag, or SHA)"
+        description: "Git ref to deploy (branch, tag, or SHA). Ignored on push (uses the pushed SHA)."
         required: true
         default: "main"
       skip_pull:
@@ -54,9 +58,16 @@ jobs:
           script: |
             set -euo pipefail
             APP_PATH="${{ secrets.PROD_APP_PATH }}"
-            REF="${{ inputs.ref }}"
+            EVENT_NAME="${{ github.event_name }}"
+            if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+              REF="${{ inputs.ref }}"
+              SKIP_PULL="${{ inputs.skip_pull }}"
+            else
+              REF="${{ github.sha }}"
+              SKIP_PULL="false"
+            fi
             cd "$APP_PATH"
-            if [ "${{ inputs.skip_pull }}" != "true" ]; then
+            if [ "$SKIP_PULL" != "true" ]; then
               git fetch --prune origin
               git checkout --force "$REF"
               if git show-ref --verify --quiet "refs/remotes/origin/${REF}"; then

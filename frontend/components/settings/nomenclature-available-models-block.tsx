@@ -14,6 +14,10 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { Select } from "@/components/ui/form-controls";
 import { SectionCard } from "@/components/ui/section-card";
 import { StatusBadge } from "@/components/ui/status-badge";
+import {
+  nomenclatureModelPickerOptions,
+  sortNomenclatureAvailableModelLinks,
+} from "@/lib/nomenclature-available-models";
 import type { NomenclatureAvailableModel } from "@/lib/nomenclature";
 import {
   PRODUCT_MODEL_SIZE_TYPE_LABELS,
@@ -31,7 +35,7 @@ type NomenclatureAvailableModelsBlockProps = {
   className?: string;
 };
 
-/** PRODUCT «Модели изделий» — models of the same Вид изделия (`6.1.11` / ADR-014). */
+/** PRODUCT «Модели изделий» — user whitelist; picker from Вид изделия (`26.4.1` / ADR-014). */
 export function NomenclatureAvailableModelsBlock({
   nomenclatureId,
   productTypeId,
@@ -51,18 +55,14 @@ export function NomenclatureAvailableModelsBlock({
     () => new Set(links.map((link) => link.product_model_id)),
     [links],
   );
-
-  /** Active models whose Вид изделия matches requisites. */
-  const matchingModels = useMemo(() => {
-    if (!hasProductType) return [];
-    return activeModels
-      .filter((model) => model.product_type_id === productTypeId)
-      .sort((a, b) => a.article.localeCompare(b.article, "ru"));
-  }, [activeModels, hasProductType, productTypeId]);
-
+  const listed = useMemo(
+    () => sortNomenclatureAvailableModelLinks(links),
+    [links],
+  );
   const options = useMemo(
-    () => matchingModels.filter((model) => !linkedIds.has(model.id)),
-    [linkedIds, matchingModels],
+    () =>
+      nomenclatureModelPickerOptions(activeModels, productTypeId, linkedIds),
+    [activeModels, linkedIds, productTypeId],
   );
 
   const onAdd = async () => {
@@ -115,14 +115,16 @@ export function NomenclatureAvailableModelsBlock({
       description={
         open
           ? hasProductType
-            ? `Модели вида изделия из основных реквизитов (${matchingModels.length}).`
+            ? listed.length
+              ? `${listed.length} в карточке. «+» предлагает модели выбранного вида изделия.`
+              : "В карточке пусто. Нажмите «+», чтобы выбрать модели этого вида изделия."
             : "Сначала укажите вид изделия в основных реквизитах."
           : undefined
       }
       actions={
         <div className="flex items-center gap-1">
           <IconButton
-            label="Добавить в whitelist заказа"
+            label="Добавить модель в карточку"
             title="Добавить"
             variant="secondary"
             disabled={busy || !hasProductType || options.length === 0}
@@ -164,7 +166,7 @@ export function NomenclatureAvailableModelsBlock({
       {!hasProductType ? (
         <EmptyState
           title="Вид изделия не выбран"
-          description="Выберите вид изделия в блоке «Основные реквизиты» — здесь появятся модели этого вида."
+          description="Выберите вид изделия в блоке «Основные реквизиты», затем добавьте модели кнопкой +."
           size="compact"
         />
       ) : null}
@@ -173,7 +175,7 @@ export function NomenclatureAvailableModelsBlock({
         <div className="mb-portal-4 flex flex-wrap items-end gap-2">
           <label className="min-w-[180px] flex-1">
             <span className="mb-1 block text-portal-caption font-medium text-portal-muted">
-              В whitelist заказа
+              Модель вида изделия
             </span>
             <Select
               value={selectedId}
@@ -182,11 +184,11 @@ export function NomenclatureAvailableModelsBlock({
                 setSelectedId(event.target.value);
                 setError(null);
               }}
-              aria-label="Модель для whitelist"
+              aria-label="Модель для добавления в карточку"
             >
               <option value="">
                 {options.length === 0
-                  ? "Все модели этого вида уже в whitelist"
+                  ? "Все модели этого вида уже в карточке"
                   : "Выберите модель"}
               </option>
               {options.map((model) => (
@@ -219,58 +221,54 @@ export function NomenclatureAvailableModelsBlock({
         </p>
       ) : null}
 
-      {hasProductType && matchingModels.length === 0 ? (
+      {hasProductType && listed.length === 0 && !adding ? (
         <EmptyState
-          title="Нет моделей этого вида"
-          description="В базе лекал нет активных моделей с выбранным видом изделия."
+          title="Модели не выбраны"
+          description={
+            options.length === 0
+              ? "В базе нет активных моделей с выбранным видом изделия."
+              : "Нажмите «+» и выберите модель из списка вида изделия."
+          }
           size="compact"
         />
       ) : null}
 
-      {hasProductType && matchingModels.length > 0 ? (
+      {hasProductType && listed.length > 0 ? (
         <ul className="divide-y divide-portal-border rounded-portal-md border border-portal-border">
-          {matchingModels.map((model) => {
-            const linked = linkedIds.has(model.id);
-            return (
-              <li
-                key={model.id}
-                className="flex flex-wrap items-center justify-between gap-3 px-portal-3 py-portal-2"
-              >
-                <div className="min-w-0">
-                  <Link
-                    href={`/settings/catalogs/product-models/${model.id}`}
-                    className="font-semibold text-portal-primary hover:underline"
-                  >
-                    {model.article} — {model.name}
-                  </Link>
-                  <p className="mt-0.5 text-portal-caption text-portal-muted">
-                    {PRODUCT_MODEL_SIZE_TYPE_LABELS[model.size_type]}
-                    {model.product_type_name
-                      ? ` · ${model.product_type_name}`
-                      : ""}
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <StatusBadge
-                    size="compact"
-                    tone={productModelStatusTone(model.status)}
-                  >
-                    {PRODUCT_MODEL_STATUS_LABELS[model.status]}
-                  </StatusBadge>
-                  {linked ? (
-                    <Button
-                      type="button"
-                      size="compact"
-                      disabled={busy}
-                      onClick={() => void onRemove(model.id)}
-                    >
-                      Убрать
-                    </Button>
-                  ) : null}
-                </div>
-              </li>
-            );
-          })}
+          {listed.map((model) => (
+            <li
+              key={model.product_model_id}
+              className="flex flex-wrap items-center justify-between gap-3 px-portal-3 py-portal-2"
+            >
+              <div className="min-w-0">
+                <Link
+                  href={`/settings/catalogs/product-models/${model.product_model_id}`}
+                  className="font-semibold text-portal-primary hover:underline"
+                >
+                  {model.article} — {model.name}
+                </Link>
+                <p className="mt-0.5 text-portal-caption text-portal-muted">
+                  {PRODUCT_MODEL_SIZE_TYPE_LABELS[model.size_type]}
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <StatusBadge
+                  size="compact"
+                  tone={productModelStatusTone(model.status)}
+                >
+                  {PRODUCT_MODEL_STATUS_LABELS[model.status]}
+                </StatusBadge>
+                <Button
+                  type="button"
+                  size="compact"
+                  disabled={busy}
+                  onClick={() => void onRemove(model.product_model_id)}
+                >
+                  Убрать
+                </Button>
+              </div>
+            </li>
+          ))}
         </ul>
       ) : null}
     </SectionCard>

@@ -586,9 +586,9 @@ body {
 }
 }
 
-@container lead-page (min-width: 90rem) {
+@container lead-page (min-width: 64rem) {
   .lead-main-grid {
-    grid-template-columns: minmax(0, 1.35fr) minmax(640px, 1fr);
+    grid-template-columns: minmax(260px, 0.34fr) minmax(0, 1fr);
   }
 
   .lead-communication-column {

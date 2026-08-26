@@ -84,6 +84,14 @@ function parseMoney(value: string): number {
   return Number.isFinite(amount) ? amount : 0;
 }
 
+/** Live 0–100% fill for the order payment scale while the paid-amount field is typed. */
+export function paidPercentFromDraft(paidAmountDraft: string, orderAmount: number): number {
+  if (!(orderAmount > 0)) return 0;
+  const paid = Number(String(paidAmountDraft).trim().replace(/\s/g, "").replace(",", "."));
+  if (!Number.isFinite(paid) || paid <= 0) return 0;
+  return Math.max(0, Math.min(100, Math.round((paid / orderAmount) * 100)));
+}
+
 function parseQuantity(value: string): number {
   const amount = Number(String(value).replace(/[^\d.-]/g, ""));
   return Number.isFinite(amount) && amount > 0 ? amount : 0;

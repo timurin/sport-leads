@@ -7,7 +7,7 @@ alwaysApply: true
 
 ## Chain
 
-Local repo → commit (only if the owner asked) → `git push origin main` → GitHub Actions `workflow_dispatch` → VPS `git pull` + `compose.prod.yaml`. Do not rsync/scp the tree around Git.
+Local repo → commit (only if the owner asked) → `git push origin main` → GitHub Actions **`deploy-production.yml` on that push** (VPS `/home/deploy/sport-leads` `git reset` + `compose.prod.yaml`). `workflow_dispatch` remains for a chosen ref or rebuild-without-pull. Do not rsync/scp the tree around Git. After an owner-requested push to `main`, do not stop until that deploy has run — see `.cursor/rules/commit-push-vps-sync.mdc`.
 
 ## Database
 

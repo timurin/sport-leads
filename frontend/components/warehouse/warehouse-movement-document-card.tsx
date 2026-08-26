@@ -242,10 +242,12 @@ export function WarehouseMovementDocumentCard({
             <DataTableFrame className="rounded-none border-0 shadow-none">
               <DataTable minWidthClassName="min-w-[720px]">
                 <DataTableHead>
-                  <DataTableHeaderCell>Номенклатура</DataTableHeaderCell>
-                  <DataTableHeaderCell align="right">Книга</DataTableHeaderCell>
-                  <DataTableHeaderCell align="right">Факт</DataTableHeaderCell>
-                  <DataTableHeaderCell align="right">Дельта</DataTableHeaderCell>
+                  <DataTableRow>
+                    <DataTableHeaderCell>Номенклатура</DataTableHeaderCell>
+                    <DataTableHeaderCell align="right">Книга</DataTableHeaderCell>
+                    <DataTableHeaderCell align="right">Факт</DataTableHeaderCell>
+                    <DataTableHeaderCell align="right">Дельта</DataTableHeaderCell>
+                  </DataTableRow>
                 </DataTableHead>
                 <DataTableBody>
                   {recountLines.map((line) => {
@@ -306,10 +308,12 @@ export function WarehouseMovementDocumentCard({
           <DataTableFrame className="rounded-none border-0 shadow-none">
             <DataTable minWidthClassName="min-w-[640px]">
               <DataTableHead>
-                <DataTableHeaderCell>#</DataTableHeaderCell>
-                <DataTableHeaderCell>Номенклатура</DataTableHeaderCell>
-                <DataTableHeaderCell align="right">Кол-во</DataTableHeaderCell>
-                <DataTableHeaderCell>Проведено</DataTableHeaderCell>
+                <DataTableRow>
+                  <DataTableHeaderCell>#</DataTableHeaderCell>
+                  <DataTableHeaderCell>Номенклатура</DataTableHeaderCell>
+                  <DataTableHeaderCell align="right">Кол-во</DataTableHeaderCell>
+                  <DataTableHeaderCell>Проведено</DataTableHeaderCell>
+                </DataTableRow>
               </DataTableHead>
               <DataTableBody>
                 {document.ledger_lines.map((line) => (

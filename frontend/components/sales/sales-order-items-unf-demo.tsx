@@ -20,6 +20,7 @@ import {
   updateOrderItemPayload,
   type OrderItemPayload,
 } from "@/app/(workspace)/sales/orders/[orderId]/order-item-actions";
+import { loadOrderTechCardsState } from "@/app/(workspace)/sales/orders/[orderId]/order-tech-card-actions";
 import {
   loadNomenclatureAvailableModels,
   loadProductModelActiveAssemblyVariants,
@@ -42,6 +43,10 @@ import {
   type AssemblyVariant,
 } from "@/lib/product-models";
 import type { ProductModelRoutingLink } from "@/lib/product-model-routings";
+import {
+  blockingTechCardsForItemIds,
+  formatDeleteBlockedByTechCardsMessage,
+} from "@/lib/sales/order-item-tech-card-guard";
 import type { SalesOrderItem } from "@/lib/sales/order-details";
 import {
   calculateLineGrossAmount,
@@ -572,11 +577,22 @@ export function SalesOrderItemsUnfDemo({
     const ids = selectedIds.length > 0 ? selectedIds : activeRowId ? [activeRowId] : [];
     if (ids.length === 0) return;
     startTransition(async () => {
+      const techCards = await loadOrderTechCardsState(orderId);
+      if (techCards.ok) {
+        const blocking = blockingTechCardsForItemIds(ids, techCards.rows);
+        if (blocking.length > 0) {
+          const text = formatDeleteBlockedByTechCardsMessage(blocking);
+          window.alert(text);
+          setMessage(text);
+          return;
+        }
+      }
       let lastMessage = "Позиции заказа сохранены.";
       for (const id of ids) {
         const result = await deleteOrderItem(orderId, id);
         lastMessage = result.message;
         if (!result.ok) {
+          window.alert(result.message);
           setMessage(result.message);
           return;
         }
@@ -860,7 +876,7 @@ export function SalesOrderItemsUnfDemo({
     >
       <div className="space-y-portal-3">
         {message ? (
-          <p className="text-portal-meta text-portal-muted" role="status">
+          <p className="whitespace-pre-line text-portal-meta text-portal-muted" role="status">
             {message}
           </p>
         ) : null}
