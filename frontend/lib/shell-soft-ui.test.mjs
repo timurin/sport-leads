@@ -33,7 +33,7 @@ test("Soft UI shell keeps nav SoT and compact mechanics", async () => {
     assert.ok(topbar.includes(marker), `topbar missing ${marker}`);
   }
 
-  assert.ok(css.includes("--portal-shell-sidebar-expanded: 220px"));
+  assert.ok(css.includes("--portal-shell-sidebar-expanded: max(220px, 10vw)"));
   assert.ok(css.includes("--portal-shell-sidebar-compact: 72px"));
   assert.ok(css.includes(".sl-shell-rail-card"));
 

@@ -1,3 +1,4 @@
+import { sameOriginApiMediaUrl } from "../api-media.ts";
 import type { StatusBadgeTone } from "@/components/ui/status-badge";
 
 /** Design projects / versions API client (ADR-021 / 10.1.1.4). */
@@ -291,10 +292,7 @@ export function designAssetKindLabel(kind: string): string {
 }
 
 export function designAssetContentAbsoluteUrl(contentUrl: string): string {
-  if (contentUrl.startsWith("http://") || contentUrl.startsWith("https://")) {
-    return contentUrl;
-  }
-  return `${apiBaseUrl()}${contentUrl.startsWith("/") ? "" : "/"}${contentUrl}`;
+  return sameOriginApiMediaUrl(contentUrl) ?? contentUrl;
 }
 
 export async function fetchDesignVersionAssets(

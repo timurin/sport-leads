@@ -3,6 +3,7 @@ import "server-only";
 import { fromApiLeadCommercial, type ApiLeadCommercialFields } from "@/lib/sales/lead-commercial-api";
 import { fromApiLeadContact, type ApiLeadContact } from "@/lib/sales/lead-contact-api";
 import { fromApiLeadCustomer, type ApiLeadCustomerFields } from "@/lib/sales/lead-customer-api";
+import { fromApiLeadCardFieldValue, type ApiLeadCardFieldValue, type LeadCardField } from "@/lib/sales/lead-card-fields";
 import { resolveLeadDetailStage } from "@/lib/sales/lead-detail-stage";
 import { findBackendReasonId, type ApiLeadRejectionReason } from "@/lib/sales/lead-rejection";
 import { fromApiLeadEvent, type ApiLeadEvent } from "@/lib/sales/lead-history";
@@ -41,6 +42,7 @@ export type LeadDetails = {
   messages: LeadMessage[];
   taskReferenceAt: string;
   dataOrigin: "api";
+  cardFields?: LeadCardField[];
   result?: LeadResult;
   completedAt?: string;
   completedBy?: LeadResponsible;
@@ -86,6 +88,7 @@ function fromApiLead(
   taskManagers: UserSummary[],
   currentActor: UserSummary,
   messages: LeadMessage[],
+  cardFields: LeadCardField[] = [],
 ): LeadDetails {
   const persistedCommercial = fromApiLeadCommercial(lead);
   const stageState = resolveLeadDetailStage(lead.status);
@@ -121,6 +124,7 @@ function fromApiLead(
     messages,
     taskReferenceAt: lastActivityAt,
     dataOrigin: "api",
+    cardFields,
     result: lead.result ?? undefined,
     completedAt: lead.completed_at ?? undefined,
     completedBy: lead.completed_by_id === null
@@ -334,12 +338,13 @@ export async function getLeadDetails(leadId: string): Promise<LeadDetails | null
   }
 
   const apiLead = await response.json() as ApiLead;
-  const [historyResponse, tasksResponse, notesResponse, messagesResponse, usersResponse] = await Promise.all([
+  const [historyResponse, tasksResponse, notesResponse, messagesResponse, usersResponse, cardFieldsResponse] = await Promise.all([
     fetch(`${apiUrl.replace(/\/$/, "")}/leads/${leadId}/history`, { cache: "no-store" }),
     fetch(`${apiUrl.replace(/\/$/, "")}/leads/${leadId}/tasks`, { cache: "no-store" }),
     fetch(`${apiUrl.replace(/\/$/, "")}/leads/${leadId}/notes`, { cache: "no-store" }),
     fetch(`${apiUrl.replace(/\/$/, "")}/leads/${leadId}/messages`, { cache: "no-store" }),
     fetch(`${apiUrl.replace(/\/$/, "")}/sales-users?is_active=true`, { cache: "no-store" }),
+    fetch(`${apiUrl.replace(/\/$/, "")}/leads/${leadId}/card-field-values`, { cache: "no-store" }),
   ]);
   if (!historyResponse.ok) {
     throw new Error(`Lead history API request failed with status ${historyResponse.status}`);
@@ -361,6 +366,9 @@ export async function getLeadDetails(leadId: string): Promise<LeadDetails | null
   const notes = (await notesResponse.json() as ApiLeadNote[]).map(fromApiLeadNote);
   const messages = (await messagesResponse.json() as ApiLeadMessage[]).map(fromApiLeadMessage);
   const taskManagers = (await usersResponse.json() as ApiSalesUser[]).map(fromApiSalesUser);
+  const cardFields = cardFieldsResponse.ok
+    ? ((await cardFieldsResponse.json()) as ApiLeadCardFieldValue[]).map(fromApiLeadCardFieldValue)
+    : [];
   const managers: UserSummary[] = taskManagers.length > 0
     ? taskManagers
     : apiLead.responsible_id === null
@@ -381,5 +389,5 @@ export async function getLeadDetails(leadId: string): Promise<LeadDetails | null
     .map(fromApiLeadEvent);
   const messageActivities = messages.map(leadMessageToActivity);
   const activities = [...historyActivities, ...notes, ...messageActivities];
-  return fromApiLead(apiLead, activities, tasks, managers, currentActor, messages);
+  return fromApiLead(apiLead, activities, tasks, managers, currentActor, messages, cardFields);
 }

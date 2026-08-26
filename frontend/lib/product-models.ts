@@ -1,3 +1,5 @@
+import { rasterImageMimeOrNull, sameOriginApiMediaUrl } from "./api-media.ts";
+
 export type ProductModelSizeType = "men" | "women" | "kids";
 export type ProductModelStatus = "draft" | "active" | "archived";
 export type ProductModelVersionState = "draft" | "published" | "archived";
@@ -131,8 +133,7 @@ export function productModelLabel(model: Pick<ProductModel, "article" | "name">)
 }
 
 export function validateProductModelImageFile(file: File): string | null {
-  const allowed = new Set(["image/jpeg", "image/png", "image/webp"]);
-  if (!allowed.has(file.type)) {
+  if (rasterImageMimeOrNull(file) == null) {
     return PRODUCT_MODEL_IMAGE_RULE;
   }
   if (file.size <= 0 || file.size > PRODUCT_MODEL_IMAGE_MAX_BYTES) {
@@ -176,6 +177,7 @@ export function toProductModelRequisitesDraft(
     | "patterns_created_on"
     | "product_type_id"
     | "default_routing_template_id"
+    | "folder_id"
   >,
 ): ProductModelRequisitesDraft {
   return {
@@ -189,6 +191,7 @@ export function toProductModelRequisitesDraft(
     patterns_created_on: model.patterns_created_on ?? "",
     product_type_id: model.product_type_id,
     default_routing_template_id: model.default_routing_template_id,
+    folder_id: model.folder_id ?? null,
   };
 }
 
@@ -206,6 +209,7 @@ export function isProductModelRequisitesDirty(
     | "patterns_created_on"
     | "product_type_id"
     | "default_routing_template_id"
+    | "folder_id"
   >,
   draft: ProductModelRequisitesDraft,
 ): boolean {
@@ -219,7 +223,8 @@ export function isProductModelRequisitesDirty(
     draft.constructor_name !== (model.constructor_name ?? "") ||
     draft.patterns_created_on !== (model.patterns_created_on ?? "") ||
     draft.product_type_id !== model.product_type_id ||
-    draft.default_routing_template_id !== model.default_routing_template_id
+    draft.default_routing_template_id !== model.default_routing_template_id ||
+    (draft.folder_id ?? null) !== (model.folder_id ?? null)
   );
 }
 
@@ -246,27 +251,7 @@ export function validateProductModelCreateDraft(
 }
 
 export function productModelCoverUrl(url: string | null | undefined): string | null {
-  if (!url?.trim()) return null;
-  const value = url.trim();
-  if (
-    value.startsWith("http://") ||
-    value.startsWith("https://") ||
-    value.startsWith("blob:")
-  ) {
-    return value;
-  }
-  // Uploaded images are served by the API; public assets stay on the Next origin.
-  if (
-    value.startsWith("/product-models/") &&
-    (value.includes("/cover/") || value.includes("/media/"))
-  ) {
-    const api = (
-      process.env.NEXT_PUBLIC_SPORT_LEADS_API_URL ?? "http://127.0.0.1:8000"
-    ).replace(/\/$/, "");
-    return `${api}${value}`;
-  }
-  if (value.startsWith("/")) return value;
-  return `/${value.replace(/^\.\//, "")}`;
+  return sameOriginApiMediaUrl(url);
 }
 
 export function parseProductModelRouteId(raw: string): number | null {
@@ -481,6 +466,18 @@ export function buildProductModelCatalogTreeRows(
 
   walk(null, 0);
   return rows;
+}
+
+/** Flatten catalog folders for a card/create Select (`26.7.1` / `6.1.18`). */
+export function productModelFolderSelectOptions(
+  folders: ProductModelFolder[],
+): Array<{ id: number; name: string; depth: number }> {
+  return buildProductModelCatalogTreeRows(folders, [])
+    .filter(
+      (row): row is Extract<ProductModelCatalogTreeRow, { kind: "folder" }> =>
+        row.kind === "folder",
+    )
+    .map((row) => ({ id: row.id, name: row.name, depth: row.depth }));
 }
 
 export type ProductModelListSortField =

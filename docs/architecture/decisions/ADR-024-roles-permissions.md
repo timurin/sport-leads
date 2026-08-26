@@ -41,6 +41,7 @@ Effective permissions = ∪ permissions всех ролей пользовате
 | `sewing_cabinet.read_own` | Own sewing cabinet | `24.1.1` |
 | `sewing_cabinet.read_any` | Any sewer cabinet + sewer list | `24.1.1` |
 | `sewing_cabinet.write` | Take / release / complete sewing work ledger | `24.1.1` |
+| `leads.card_fields.manage` | Create/delete extra fields on the lead card | `26.5.4` |
 
 Catalog is seed-extensible; new modules add codes via migration seed, not free-text.
 
@@ -86,7 +87,7 @@ Response adds:
 
 Per-stage executor directory (`17.1.2.8`) is a follow-on: table `platform_user_stage_access` + `GET /shop-stage-executors` with **role_fallback** (`shop_operator`/`admin`) until the directory is filled.
 
-**Amend `2026-08-24` (Stage `24` / ADR-029 / `24.1.1`):** catalog now includes `sewing_cabinet.read_own` / `read_any` / `write` and roles `sewer` / `company_lead` / `technologist` / `shop_master`. Seed: `ensure_rbac_seed` + Alembic `z0a1b2c3d456`. `shop_operator` stays kanban-only. Restricted shell for `read_own` without `read_any` is `24.1.2`.
+**Amend `2026-08-26` (Stage `26.5.4`):** catalog includes `leads.card_fields.manage` (create/delete extra fields on the lead card). Seed: `ensure_rbac_seed` + Alembic `g6h7i8j9k012`. Granted to `admin` by default; other roles get it only when assigned in `/settings/users`. Values of extra fields can be filled by any signed-in user who can edit the lead.
 ## Последствия
 
 - `17.1.2.2` creates tables + seeds permissions/roles + links bootstrap admin.

@@ -2,13 +2,15 @@ export type OrderCardViewMode =
   | "all"
   | "items"
   | "documents"
-  | "techCards";
+  | "techCards"
+  | "communication";
 
 export const orderCardViewModeOptions: { id: OrderCardViewMode; label: string }[] = [
   { id: "all", label: "Документ" },
   { id: "items", label: "Товары" },
   { id: "documents", label: "Документы" },
   { id: "techCards", label: "Тех карты" },
+  { id: "communication", label: "Коммуникация" },
 ];
 
 export type OrderCardSectionVisibility = {
@@ -63,6 +65,19 @@ export function getOrderCardSectionVisibility(mode: OrderCardViewMode): OrderCar
       communication: false,
       documents: false,
       techCards: true,
+    };
+  }
+  if (mode === "communication") {
+    return {
+      info: false,
+      metrics: true,
+      items: false,
+      history: false,
+      comments: false,
+      tasks: false,
+      communication: true,
+      documents: false,
+      techCards: false,
     };
   }
   // Document default: items left; party/need/CRM in right tabs.

@@ -7,6 +7,7 @@ type CardSize = "compact" | "default" | "spacious";
 export function SectionCard({
   children,
   title,
+  afterTitle,
   description,
   actions,
   footer,
@@ -16,6 +17,8 @@ export function SectionCard({
 }: {
   children: ReactNode;
   title?: ReactNode;
+  /** Rendered under the title (still in the header). */
+  afterTitle?: ReactNode;
   description?: ReactNode;
   actions?: ReactNode;
   footer?: ReactNode;
@@ -43,6 +46,7 @@ export function SectionCard({
                 {title}
               </h2>
             ) : null}
+            {afterTitle ? <div className="mt-2 min-w-0 w-full">{afterTitle}</div> : null}
             {description ? (
               <p className="mt-1 text-portal-body text-portal-muted">{description}</p>
             ) : null}

@@ -1,8 +1,5 @@
 "use client";
 
-import {
-  Plus,
-} from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { LeadActivityTimeline } from "@/components/sales/lead-activity-timeline";
@@ -15,19 +12,28 @@ import {
 } from "@/components/sales/lead-completion-dialog";
 import { LeadHeader } from "@/components/sales/lead-header";
 import { LeadCommercialDetails } from "@/components/sales/lead-commercial-details";
-import { LeadCommunicationPanel, type LeadMessageDraft } from "@/components/sales/lead-communication-panel";
+import type { LeadMessageDraft } from "@/components/sales/lead-communication-panel";
 import { LeadCustomerDetails } from "@/components/sales/lead-customer-details";
-import { HostWorkTasksPanel } from "@/components/sales/host-work-tasks-panel";
-import { OrderCollaborationPanel } from "@/components/sales/order-collaboration-panel";
+import { LeadEventModal, type LeadEventModalState } from "@/components/sales/lead-event-modal";
 import { WorkTaskCreateDrawer, type WorkTaskAnchorOption } from "@/components/sales/work-task-create-drawer";
 import { ComplexEntityCard } from "@/components/entity/complex-entity-card";
 import { PageContent, PageLayout } from "@/components/layout/page-layout";
-import { Button } from "@/components/ui/button";
 import { CompactTabs } from "@/components/ui/compact-tabs";
 
-import { getNotePermissions, isInternalNote } from "@/lib/sales/lead-activity";
+import {
+  activityOpensInEventModal,
+  collaborationMessageToActivity,
+  getNotePermissions,
+  isInternalNote,
+} from "@/lib/sales/lead-activity";
 import { formatCurrency } from "@/lib/sales/lead-commercial";
 import type { LeadDetails } from "@/lib/sales/lead-details";
+import type { LeadCardField, LeadCardFieldBlock } from "@/lib/sales/lead-card-fields";
+import {
+  createLeadCardField,
+  deleteLeadCardField,
+  saveLeadCardFieldValues,
+} from "@/app/(workspace)/sales/leads/[leadId]/lead-card-field-actions";
 import { convertLead, rejectLead } from "@/app/(workspace)/sales/leads/[leadId]/lead-header-actions";
 import {
   createLeadNote as createLeadNoteAction,
@@ -36,6 +42,10 @@ import {
   updateLeadNote as updateLeadNoteAction,
 } from "@/app/(workspace)/sales/leads/[leadId]/lead-note-actions";
 import { sendLeadMessage as sendLeadMessageAction } from "@/app/(workspace)/sales/leads/[leadId]/lead-message-actions";
+import {
+  createLeadCollaborationMessage,
+  listLeadCollaborationMessages,
+} from "@/app/(workspace)/sales/orders/[orderId]/collaboration-actions";
 import { leadMessageToActivity } from "@/lib/sales/lead-message-api";
 import type { LeadFinalActionId } from "@/lib/sales/lead-final-actions";
 import type { LeadStageConfig } from "@/lib/sales/lead-stages";
@@ -54,13 +64,6 @@ const mobileTabs = [
   { id: "interest", label: "Интерес" },
 ] as const;
 type MobileTab = (typeof mobileTabs)[number]["id"];
-const feedTabs = [
-  { id: "communication", label: "Коммуникация" },
-  { id: "tasks", label: "Задачи" },
-  { id: "notes", label: "Заметки" },
-  { id: "history", label: "История" },
-] as const;
-type FeedTab = (typeof feedTabs)[number]["id"];
 
 function formatDate(value: string) {
   return dateFormatter.format(new Date(value));
@@ -93,6 +96,7 @@ function cloneLead(lead: LeadDetails): LeadDetails {
       ...lead.customer,
       contacts: lead.customer.contacts.map((contact) => ({ ...contact })),
     },
+    cardFields: (lead.cardFields ?? []).map((field) => ({ ...field })),
   };
 }
 
@@ -114,10 +118,11 @@ export function LeadPage({
   lead: initialLead,
   stages,
   workTasks: initialWorkTasks = [],
-  workTasksError = null,
+  workTasksError: _workTasksError = null,
   workTaskStages = [],
   workTaskUsers = [],
-  viewerUserId = null,
+  viewerUserId: _viewerUserId = null,
+  canManageCardFields = false,
 }: {
   lead: LeadDetails;
   stages: LeadStageConfig[];
@@ -126,10 +131,13 @@ export function LeadPage({
   workTaskStages?: WorkTaskAnchorOption[];
   workTaskUsers?: WorkTaskAnchorOption[];
   viewerUserId?: number | null;
+  canManageCardFields?: boolean;
 }) {
   const [lead, setLead] = useState<LeadDetails>(() => cloneLead(initialLead));
+  const [cardFields, setCardFields] = useState<LeadCardField[]>(() => [...(initialLead.cardFields ?? [])]);
   const [mobileTab, setMobileTab] = useState<MobileTab>("communication");
-  const [feedTab, setFeedTab] = useState<FeedTab>("communication");
+  const [eventModal, setEventModal] = useState<LeadEventModalState | null>(null);
+  const [collabActivities, setCollabActivities] = useState<LeadActivity[]>([]);
   const [completionMode, setCompletionMode] = useState<LeadCompletionMode | null>(null);
   const [noteActionError, setNoteActionError] = useState("");
   const [workTasks, setWorkTasks] = useState(initialWorkTasks);
@@ -142,6 +150,21 @@ export function LeadPage({
   useEffect(() => {
     setWorkTasks(initialWorkTasks);
   }, [initialWorkTasks]);
+
+  useEffect(() => {
+    setCardFields([...(initialLead.cardFields ?? [])]);
+  }, [initialLead]);
+
+  useEffect(() => {
+    let cancelled = false;
+    void listLeadCollaborationMessages(lead.id).then((result) => {
+      if (cancelled || !result.ok) return;
+      setCollabActivities(result.data.map(collaborationMessageToActivity));
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [lead.id]);
 
   function applyPersistedActivities(activities: LeadActivity[]) {
     const occurredAt = activities.reduce((latest, activity) => {
@@ -163,6 +186,52 @@ export function LeadPage({
       lastActivityAt: occurredAt,
       taskReferenceAt: occurredAt,
     }));
+  }
+
+  async function addCardField(block: LeadCardFieldBlock, label: string) {
+    const result = await createLeadCardField(block, label, lead.id);
+    if (result.ok) {
+      setCardFields((current) => {
+        const local = new Map(current.map((field) => [field.id, field.value]));
+        return result.fields.map((field) => ({
+          ...field,
+          value: local.get(field.id) ?? field.value,
+        }));
+      });
+      return;
+    }
+    window.alert(result.message);
+  }
+
+  async function removeCardField(id: number) {
+    if (!window.confirm("Удалить это поле у всех лидов?")) {
+      return;
+    }
+    const result = await deleteLeadCardField(id, lead.id);
+    if (result.ok) {
+      setCardFields(result.fields);
+      return;
+    }
+    window.alert(result.message);
+  }
+
+  function changeCardFieldValue(id: number, value: string) {
+    setCardFields((current) =>
+      current.map((field) => (field.id === id ? { ...field, value } : field)),
+    );
+  }
+
+  async function persistCardFields() {
+    const result = await saveLeadCardFieldValues(
+      lead.id,
+      cardFields.map((field) => ({ id: field.id, value: field.value })),
+    );
+    if (result.ok) {
+      setCardFields(result.fields);
+      return true;
+    }
+    window.alert(result.message);
+    return false;
   }
 
   function updateCustomer(customer: LeadDetails["customer"]) {
@@ -403,13 +472,15 @@ export function LeadPage({
     return null;
   }
 
-  function openWorkspaceSection(tab: MobileTab | FeedTab) {
-    if (tab === "communication" || tab === "customer" || tab === "interest") {
-      setMobileTab(tab);
-    }
-    if (tab === "communication" || tab === "tasks" || tab === "notes" || tab === "history") {
-      setFeedTab(tab);
-    }
+  async function sendInternalMessage(body: string): Promise<string | null> {
+    const result = await createLeadCollaborationMessage(lead.id, { body });
+    if (!result.ok) return result.message;
+    setCollabActivities((current) => [collaborationMessageToActivity(result.data), ...current]);
+    return null;
+  }
+
+  function openWorkspaceSection(tab: MobileTab) {
+    setMobileTab(tab);
     window.requestAnimationFrame(() => {
       document.getElementById(`lead-workspace-panel-${tab}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
       document.getElementById(`lead-workspace-tab-${tab}`)?.focus({ preventScroll: true });
@@ -522,7 +593,10 @@ export function LeadPage({
         managers={taskManagers}
         lastActivityAtLabel={formatDate(lead.lastActivityAt)}
         onAddTask={() => setWorkTaskCreateOpen(true)}
-        onWrite={() => openWorkspaceSection("communication")}
+        onWrite={() => {
+          setMobileTab("communication");
+          setEventModal({ kind: "compose" });
+        }}
         onFinalAction={openFinalAction}
       />
 
@@ -555,26 +629,10 @@ export function LeadPage({
           <div
             className={`lead-left-column min-w-0 space-y-3 ${mobileTab === "customer" || mobileTab === "interest" ? "block" : "hidden"} lg:block`}
           >
-            <div className="flex flex-wrap gap-2" aria-label="Ключевые показатели">
-              <span className="rounded-full border border-portal-border bg-portal-surface px-3 py-1 text-xs font-semibold text-portal-text">
-                Сумма {formatCurrency(lead.estimatedAmount)}
-              </span>
-              <span className="rounded-full border border-portal-border bg-portal-surface px-3 py-1 text-xs font-semibold text-portal-text">
-                Следующий контакт: {nearestWorkTask && nearestWorkTask.dueLabel !== "—" ? nearestWorkTask.dueLabel : "не запланирован"}
-              </span>
-              <span className="rounded-full border border-portal-border bg-portal-surface px-3 py-1 text-xs font-semibold text-portal-text">
-                Касаний: {lead.activities.length}
-              </span>
-            </div>
-
-            <details
+            <section
               id="lead-reference-panel-customer"
-              open
               className={`min-w-0 rounded-portal-lg border border-portal-border bg-portal-surface shadow-portal-card ${mobileTab === "interest" ? "hidden lg:block" : ""}`}
             >
-              <summary className="cursor-pointer px-3.5 py-2.5 text-sm font-semibold text-portal-text">
-                Клиент и контакты
-              </summary>
               <LeadCustomerDetails
                 embedded
                 compact
@@ -582,20 +640,28 @@ export function LeadPage({
                 leadId={lead.id}
                 contactPersistence="api"
                 onCustomerChange={updateCustomer}
+                cardFields={cardFields}
+                canManageCardFields={canManageCardFields}
+                onAddCardField={addCardField}
+                onDeleteCardField={removeCardField}
+                onCardFieldValueChange={changeCardFieldValue}
+                onPersistCardFields={persistCardFields}
               />
-            </details>
+            </section>
 
-            <details
+            <div
               id="lead-reference-panel-commercial"
-              className={`min-w-0 rounded-portal-lg border border-portal-border bg-portal-surface shadow-portal-card ${mobileTab === "customer" ? "hidden lg:block" : ""}`}
+              className={`min-w-0 ${mobileTab === "customer" ? "hidden lg:block" : ""}`}
             >
-              <summary className="cursor-pointer px-3.5 py-2.5 text-sm font-semibold text-portal-text">
-                Интерес
-              </summary>
               <LeadCommercialDetails
                 embedded
                 compact
                 hideQuantity
+                nextContactLabel={
+                  nearestWorkTask && nearestWorkTask.dueLabel !== "—"
+                    ? nearestWorkTask.dueLabel
+                    : "не запланирован"
+                }
                 commercial={lead.commercial}
                 source={lead.source}
                 estimatedAmount={lead.estimatedAmount}
@@ -603,90 +669,64 @@ export function LeadPage({
                 leadId={lead.id}
                 persistence="api"
                 onChange={updateCommercial}
+                cardFields={cardFields}
+                canManageCardFields={canManageCardFields}
+                onAddCardField={addCardField}
+                onDeleteCardField={removeCardField}
+                onCardFieldValueChange={changeCardFieldValue}
+                onPersistCardFields={persistCardFields}
               />
-            </details>
+            </div>
           </div>
 
           <aside
             id="lead-workspace-panel-communication"
             data-lead-communication-column
-            className={`lead-communication-column min-w-0 self-start overflow-hidden rounded-portal-lg border border-portal-border bg-portal-surface shadow-portal-card ${mobileTab === "communication" ? "block" : "hidden"} lg:block`}
+            className={`lead-communication-column min-w-0 self-start overflow-x-clip rounded-portal-lg border border-portal-border bg-portal-surface shadow-portal-card ${mobileTab === "communication" ? "block" : "hidden"} lg:block`}
           >
-            <CompactTabs
-              label="Лента лида"
-              size="compact"
-              items={feedTabs.map(({ id, label }) => ({ id, label }))}
-              value={feedTab}
-              onChange={(id) => setFeedTab(id as FeedTab)}
+            {noteActionError ? <p className="border-b border-red-100 bg-red-50 px-4 py-2 text-sm text-red-700" role="alert">{noteActionError}</p> : null}
+            <LeadActivityTimeline
+              embedded
+              compact
+              unified
+              title="Лента"
+              extraActivities={collabActivities}
+              activities={lead.activities}
+              currentUser={currentActor}
+              managers={noteManagers}
+              allowAllNoteActions={taskPersistent}
+              onAddComment={addComment}
+              onEditNote={editNote}
+              onDeleteNote={deleteNote}
+              onTogglePin={toggleNotePin}
+              onOpenActivity={(activity) => {
+                if (!activityOpensInEventModal(activity)) return;
+                setEventModal({ kind: "view", activity });
+              }}
             />
-            {feedTab === "communication" ? (
-              <LeadCommunicationPanel
-                embedded
-                persistent={taskPersistent}
-                messages={lead.messages}
-                primaryContact={primaryContact}
-                customerWebsite={lead.customer.website}
-                onSend={sendMessage}
-              />
-            ) : null}
-            {feedTab === "tasks" ? (
-              <div id="lead-workspace-panel-tasks" className="lead-tasks-card min-w-0">
-                <HostWorkTasksPanel
-                  embedded
-                  compact
-                  tasks={workTasks}
-                  loadError={workTasksError}
-                  viewerUserId={viewerUserId}
-                  onAdd={() => setWorkTaskCreateOpen(true)}
-                />
-              </div>
-            ) : null}
-            {feedTab === "notes" ? (
-              <div id="lead-workspace-panel-notes" className="lead-notes-card min-w-0">
-                {noteActionError ? <p className="border-b border-red-100 bg-red-50 px-4 py-2 text-sm text-red-700" role="alert">{noteActionError}</p> : null}
-                <LeadActivityTimeline
-                  embedded
-                  compact
-                  mode="notes"
-                  activities={lead.activities}
-                  currentUser={currentActor}
-                  managers={noteManagers}
-                  allowAllNoteActions={taskPersistent}
-                  onAddComment={addComment}
-                  onEditNote={editNote}
-                  onDeleteNote={deleteNote}
-                  onTogglePin={toggleNotePin}
-                />
-              </div>
-            ) : null}
-            {feedTab === "history" ? (
-              <div id="lead-workspace-panel-history" className="lead-history-card min-w-0">
-                <LeadActivityTimeline
-                  embedded
-                  compact
-                  mode="history"
-                  activities={lead.activities}
-                  currentUser={currentActor}
-                  managers={noteManagers}
-                  allowAllNoteActions={taskPersistent}
-                  onAddComment={addComment}
-                  onEditNote={editNote}
-                  onDeleteNote={deleteNote}
-                  onTogglePin={toggleNotePin}
-                />
-              </div>
-            ) : null}
-            <div className="border-t border-portal-border">
-              <OrderCollaborationPanel
-                embedded
-                leadId={lead.id}
-                title="Внутренняя переписка"
-              />
-            </div>
           </aside>
         </div>
         </ComplexEntityCard>
       </PageContent>
+
+      {eventModal ? (
+        <LeadEventModal
+          state={eventModal}
+          leadId={lead.id}
+          messages={lead.messages}
+          activities={[...lead.activities, ...collabActivities]}
+          primaryContact={primaryContact}
+          customerWebsite={lead.customer.website}
+          persistent={taskPersistent}
+          onClose={() => setEventModal(null)}
+          onSend={sendMessage}
+          onSendInternal={sendInternalMessage}
+          onAddTask={() => {
+            setEventModal(null);
+            setWorkTaskCreateOpen(true);
+          }}
+        />
+      ) : null}
 
       <WorkTaskCreateDrawer
         open={workTaskCreateOpen}
@@ -702,7 +742,6 @@ export function LeadPage({
         onCreated={(task) => {
           setWorkTasks((current) => [task, ...current]);
           setWorkTaskCreateOpen(false);
-          setFeedTab("tasks");
           setMobileTab("communication");
         }}
       />

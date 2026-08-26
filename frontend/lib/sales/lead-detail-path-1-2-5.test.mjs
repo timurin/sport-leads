@@ -14,7 +14,14 @@ test("1.2.5 lead detail path is API-only", () => {
 
   const page = readFileSync(join(root, "app/(workspace)/sales/leads/[leadId]/page.tsx"), "utf8");
   assert.equal(page.includes("getDefaultLeadStages"), false);
-  assert.match(page, /if \(!\/\^\\d\+\$\/\.test\(leadId\)\)/);
+  assert.ok(page.includes("LeadCardSlider"));
+  assert.ok(page.includes("LeadWorkspace"));
+
+  const routeData = readFileSync(
+    join(root, "app/(workspace)/sales/leads/[leadId]/lead-route-data.ts"),
+    "utf8",
+  );
+  assert.match(routeData, /if \(!\/\^\\d\+\$\/\.test\(leadId\)\)/);
 
   const header = readFileSync(join(root, "components/sales/lead-header.tsx"), "utf8");
   assert.equal(header.includes("isDemoLead"), false);

@@ -2,6 +2,8 @@
  * Platform system settings (Stage 18.1.2).
  */
 
+import { sameOriginApiMediaUrl } from "./api-media.ts";
+
 export type PlatformSystemSettings = {
   id: number;
   organization_display_name: string;
@@ -48,18 +50,7 @@ export const PLATFORM_LOCALE_OPTIONS = [
 ] as const;
 
 export function platformMediaUrl(contentUrl: string | null | undefined): string | null {
-  if (!contentUrl) return null;
-  if (
-    contentUrl.startsWith("http://") ||
-    contentUrl.startsWith("https://") ||
-    contentUrl.startsWith("blob:")
-  ) {
-    return contentUrl;
-  }
-  const base = (
-    process.env.NEXT_PUBLIC_SPORT_LEADS_API_URL ?? "http://127.0.0.1:8000"
-  ).replace(/\/$/, "");
-  return `${base}${contentUrl.startsWith("/") ? contentUrl : `/${contentUrl}`}`;
+  return sameOriginApiMediaUrl(contentUrl);
 }
 
 export function brandInitials(name: string): string {

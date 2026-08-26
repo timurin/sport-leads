@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 
+import { rasterImageMimeOrNull } from "@/lib/api-media";
 import { sessionAuthHeaders } from "@/lib/auth/api-headers";
 import type { TechnicalCardPrintRequest } from "@/lib/production/tech-card-print";
 import { shopStageCodeByTitle } from "@/lib/production/shop-stage-modules";
@@ -519,11 +520,13 @@ export async function uploadTechCardMediaAction(
     for (const [index, file] of files.entries()) {
       const invalid = validateTechCardImageFile(file);
       if (invalid) return mediaFailure(invalid);
+      const mime_type = rasterImageMimeOrNull(file);
+      if (mime_type == null) return mediaFailure(TECH_CARD_IMAGE_RULE);
       const content_base64 = Buffer.from(await file.arrayBuffer()).toString("base64");
       uploaded.push(
         await uploadTechnicalCardMedia(cardId, {
           filename: file.name,
-          mime_type: file.type,
+          mime_type,
           content_base64,
           is_primary: makePrimary && index === 0,
         }),

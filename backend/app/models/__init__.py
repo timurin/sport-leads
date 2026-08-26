@@ -48,6 +48,10 @@ from app.models.sales import (
     OrderPaymentStatus,
     SalesUser,
 )
+from app.models.lead_card_fields import (
+    LeadCardFieldDefinition,
+    LeadCardFieldValue,
+)
 from app.models.sales_commercial import (
     CommercialDocumentStatus,
     SalesInvoice,

@@ -1,3 +1,4 @@
+import { rasterImageMimeOrNull } from "../api-media.ts";
 import type { StatusBadgeTone } from "@/components/ui/status-badge";
 import type {
   ApiTechnicalCard,
@@ -22,8 +23,7 @@ export const TECH_CARD_IMAGE_MAX_BYTES = 10 * 1024 * 1024;
 export const TECH_CARD_IMAGE_RULE = "JPEG / PNG / WebP, до 10 МБ";
 
 export function validateTechCardImageFile(file: File): string | null {
-  const allowed = new Set(["image/jpeg", "image/png", "image/webp"]);
-  if (!allowed.has(file.type)) {
+  if (rasterImageMimeOrNull(file) == null) {
     return TECH_CARD_IMAGE_RULE;
   }
   if (file.size <= 0 || file.size > TECH_CARD_IMAGE_MAX_BYTES) {

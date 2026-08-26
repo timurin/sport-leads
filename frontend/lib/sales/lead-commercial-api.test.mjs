@@ -110,7 +110,7 @@ test("20.1 need-cleanup omit strips hidden SoT fields from PATCH payload", () =>
   assert.equal("kit_quantity" in payload, false);
   assert.equal("size_comment" in payload, false);
   assert.equal("estimated_amount" in payload, false);
-  assert.equal("desired_date" in payload, false);
+  assert.equal(payload.desired_date, "2026-09-15");
   assert.equal("event_date" in payload, false);
   assert.equal(payload.source, "website");
   assert.equal(payload.estimated_quantity, 25);

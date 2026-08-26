@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from app.api.deps_auth import require_permission
 from app.database.session import get_db
 from app.models.auth import PlatformUser
+from app.models.sales import SalesOrder
 from app.models.technical_card import TechnicalCard
 from app.services import rbac as rbac_service
 from app.schemas.technical_card import (
@@ -153,17 +154,19 @@ def update_technical_card_settings_endpoint(
 
 @router.get(
     "/orders/{order_id}/technical-cards",
-    response_model=list[TechnicalCardRead],
+    response_model=list[TechnicalCardListRead],
     operation_id="list_order_technical_cards",
 )
 def list_order_technical_cards(
     order_id: int, db: Session = Depends(get_db)
-) -> list[TechnicalCardRead]:
+) -> list[TechnicalCardListRead]:
     try:
         rows = list_technical_cards_for_order(db, order_id)
     except TechnicalCardNotFoundError as error:
         raise _http_error(error) from error
-    return [_card_read(db, row) for row in rows]
+    order = db.get(SalesOrder, order_id)
+    order_number = order.number if order is not None else None
+    return [to_technical_card_list_read(row, order_number=order_number) for row in rows]
 
 
 @router.get(

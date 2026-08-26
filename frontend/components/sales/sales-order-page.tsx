@@ -6,7 +6,6 @@ import {
   ChevronRight,
   FileText,
   ListTodo,
-  MessageSquare,
   Wallet,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
@@ -47,7 +46,7 @@ import type { VatRate } from "@/lib/vat-rates";
 import type { WorkTaskListItem } from "@/lib/work-tasks";
 import type { LeadActivity, LeadMessage, OrderStatus } from "@/types/sales";
 
-type AsideTab = "finance" | "info" | "chat" | "notes" | "tasks";
+type AsideTab = "finance" | "info" | "notes" | "tasks";
 
 const dateFormatter = new Intl.DateTimeFormat("ru-RU", {
   dateStyle: "medium",
@@ -442,6 +441,17 @@ export function SalesOrderPage({
                 </div>
 
                 <div
+                  id="order-workspace-panel-communication"
+                  className={`order-card-comms min-w-0 overflow-hidden rounded-portal-lg border border-portal-border bg-portal-surface shadow-portal-card ${sectionClass(visibility.communication)}`}
+                >
+                  <OrderCollaborationPanel
+                    embedded
+                    orderId={order.id}
+                    title="Внутренняя переписка"
+                  />
+                </div>
+
+                <div
                   id="order-workspace-panel-history"
                   className={`lead-history-card min-w-0 rounded-portal-lg border border-portal-border bg-portal-surface shadow-portal-card ${sectionClass(visibility.history)}`}
                 >
@@ -482,7 +492,7 @@ export function SalesOrderPage({
 
               <aside
                 className={`order-v1-aside ${sectionClass(visibility.metrics)}`}
-                aria-label="Финансы и коммуникации заказа"
+                aria-label="Финансы и сведения заказа"
               >
                 <div className="min-w-0 rounded-portal-lg border border-portal-border bg-portal-surface p-portal-3 shadow-portal-card">
                   <CompactTabs
@@ -496,7 +506,6 @@ export function SalesOrderPage({
                     items={[
                       { id: "finance", label: "Финансы", icon: <Wallet /> },
                       { id: "info", label: "Основные сведения", icon: <FileText /> },
-                      { id: "chat", label: "Переписка", icon: <MessageSquare /> },
                       { id: "notes", label: "Заметки", icon: <ClipboardList /> },
                       {
                         id: "tasks",
@@ -518,18 +527,6 @@ export function SalesOrderPage({
                         sourceLeadMessageCount={sourceLead ? messages.length : undefined}
                         onSaved={(next) => setOrder(next)}
                       />
-                    ) : null}
-                    {asideTab === "chat" ? (
-                      <div
-                        id="order-workspace-panel-communication"
-                        className="order-card-comms min-w-0 overflow-hidden rounded-portal-md border border-portal-border"
-                      >
-                        <OrderCollaborationPanel
-                          embedded
-                          orderId={order.id}
-                          title="Внутренняя переписка"
-                        />
-                      </div>
                     ) : null}
                     {asideTab === "notes" ? notesPanel : null}
                     {asideTab === "tasks" ? tasksPanel : null}

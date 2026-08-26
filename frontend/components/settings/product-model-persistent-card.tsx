@@ -35,12 +35,14 @@ import {
   MODEL_OPERATIONS_WARNING,
   formatAssemblyVariantCostRange,
   isProductModelRequisitesDirty,
+  productModelFolderSelectOptions,
   productModelStatusTone,
   toProductModelRequisitesDraft,
   validateProductModelCreateDraft,
   validateProductModelImageFile,
   type AssemblyVariant,
   type ProductModel,
+  type ProductModelFolder,
   type ProductModelHistoryEntry,
   type ProductModelMedia,
   type ProductModelRequisitesDraft,
@@ -80,6 +82,7 @@ export function ProductModelPersistentCard({
   routingLinks = [],
   productionStages = [],
   techOperations = [],
+  catalogFolders = [],
   initialEditing = false,
 }: {
   model: ProductModel;
@@ -97,6 +100,7 @@ export function ProductModelPersistentCard({
   routingLinks?: ProductModelRoutingLink[];
   productionStages?: ProductionStage[];
   techOperations?: TechOperation[];
+  catalogFolders?: ProductModelFolder[];
   initialEditing?: boolean;
 }) {
   const router = useRouter();
@@ -218,6 +222,26 @@ export function ProductModelPersistentCard({
     }
     return [...base].sort((a, b) => a.name.localeCompare(b.name, "ru"));
   }, [linkedDefaultRouting, routingLinks, shopRoutings]);
+  const folderSelectOptions = useMemo(
+    () => productModelFolderSelectOptions(catalogFolders),
+    [catalogFolders],
+  );
+  const linkedFolder = useMemo(() => {
+    const folderId =
+      editing && draft ? draft.folder_id ?? null : current.folder_id;
+    if (folderId == null) return null;
+    return (
+      catalogFolders.find((row) => row.id === folderId) ??
+      folderSelectOptions.find((row) => row.id === folderId) ??
+      null
+    );
+  }, [
+    catalogFolders,
+    current.folder_id,
+    draft,
+    editing,
+    folderSelectOptions,
+  ]);
   const historySummary =
     history.length === 0
       ? "Записей пока нет"
@@ -404,6 +428,7 @@ export function ProductModelPersistentCard({
         patterns_created_on: draft.patterns_created_on || null,
         product_type_id: draft.product_type_id,
         default_routing_template_id: draft.default_routing_template_id,
+        folder_id: draft.folder_id ?? null,
       });
       setTrackedModel(updated);
       setCurrent(updated);
@@ -793,6 +818,38 @@ export function ProductModelPersistentCard({
                           ))}
                         </Select>
                       </Field>
+                      <Field label="Категория" className="min-w-0">
+                        <Select
+                          value={
+                            draft.folder_id == null ? "" : String(draft.folder_id)
+                          }
+                          size="compact"
+                          disabled={busy}
+                          onChange={(event) => {
+                            const raw = event.target.value;
+                            setDraft({
+                              ...draft,
+                              folder_id: raw ? Number(raw) : null,
+                            });
+                          }}
+                          aria-label="Категория"
+                        >
+                          <option value="">Без папки</option>
+                          {folderSelectOptions.map((row) => (
+                            <option key={row.id} value={row.id}>
+                              {"—".repeat(row.depth)} {row.name}
+                            </option>
+                          ))}
+                          {draft.folder_id != null &&
+                          !folderSelectOptions.some(
+                            (row) => row.id === draft.folder_id,
+                          ) ? (
+                            <option value={draft.folder_id}>
+                              Папка #{draft.folder_id}
+                            </option>
+                          ) : null}
+                        </Select>
+                      </Field>
                       <Field label="Маршрут по умолчанию" className="min-w-0">
                         <Select
                           value={
@@ -962,6 +1019,24 @@ export function ProductModelPersistentCard({
                         ) : (
                           <p className="mt-1 text-portal-body text-portal-muted">
                             Не указан
+                          </p>
+                        )}
+                      </div>
+                      <div className="min-w-0 border-l-2 border-portal-border pl-portal-3">
+                        <p className="text-portal-caption font-medium text-portal-muted">
+                          Категория
+                        </p>
+                        {linkedFolder ? (
+                          <p className="mt-1 text-portal-body font-semibold text-portal-text">
+                            {linkedFolder.name}
+                          </p>
+                        ) : current.folder_id != null ? (
+                          <p className="mt-1 text-portal-body font-semibold text-portal-text">
+                            Папка #{current.folder_id}
+                          </p>
+                        ) : (
+                          <p className="mt-1 text-portal-body text-portal-muted">
+                            Без папки
                           </p>
                         )}
                       </div>

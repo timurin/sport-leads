@@ -191,6 +191,7 @@ test("buildAccessMatrix groups permissions by module", () => {
   assert.deepEqual(matrix.roleCodes, ["admin", "catalog_editor"]);
   assert.equal(permissionModuleKey("size_grids.write"), "size_grids");
   assert.match(permissionLabel("size_grids.write"), /сетк/i);
+  assert.match(permissionLabel("leads.card_fields.manage"), /полей карточки/i);
   const sizeRow = matrix.rows.find((row) => row.code === "size_grids.write");
   assert.equal(sizeRow?.grantedByRole.admin, true);
   assert.equal(sizeRow?.grantedByRole.catalog_editor, true);

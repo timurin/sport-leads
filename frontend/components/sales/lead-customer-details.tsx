@@ -1,6 +1,6 @@
 "use client";
 
-import { Ellipsis, Mail, Pencil, Phone, Plus, Trash2 } from "lucide-react";
+import { Check, Ellipsis, Mail, Pencil, Phone, Plus, Trash2, X } from "lucide-react";
 import { useRef, useState } from "react";
 
 import {
@@ -15,8 +15,9 @@ import {
   saveLeadContact,
 } from "@/app/(workspace)/sales/leads/[leadId]/lead-contact-actions";
 import { saveLeadCustomerProfile } from "@/app/(workspace)/sales/leads/[leadId]/lead-customer-actions";
-import { Button } from "@/components/ui/button";
+import { Button, IconButton } from "@/components/ui/button";
 import { CityAutocomplete } from "@/components/ui/city-autocomplete";
+import { LeadCardCustomFields } from "@/components/sales/lead-card-custom-fields";
 import { InlineEditActions } from "@/components/ui/entity-link";
 import {
   getWebsiteHref,
@@ -30,6 +31,7 @@ import type {
   LeadCustomer,
   LeadCustomerType,
 } from "@/types/sales";
+import type { LeadCardField, LeadCardFieldBlock } from "@/lib/sales/lead-card-fields";
 
 const fieldClass = "mt-1 h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100";
 const customerTypeLabels: Record<LeadCustomerType, string> = {
@@ -96,9 +98,9 @@ function createLocalContactId() {
 
 function DataItem({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="min-w-0">
-      <dt className="text-xs font-medium text-slate-500">{label}</dt>
-      <dd className="mt-1 text-sm font-medium text-slate-900">{children}</dd>
+    <div className="lead-detail-pair min-w-0">
+      <dt className="min-w-0 text-xs font-normal text-slate-500">{label}</dt>
+      <dd className="mt-1 min-w-0 text-sm font-normal leading-snug text-slate-800">{children}</dd>
     </div>
   );
 }
@@ -143,6 +145,12 @@ export function LeadCustomerDetails({
   onCustomerChange,
   embedded = false,
   compact = false,
+  cardFields = [],
+  canManageCardFields = false,
+  onAddCardField,
+  onDeleteCardField,
+  onCardFieldValueChange,
+  onPersistCardFields,
 }: {
   customer: LeadCustomer;
   leadId: string;
@@ -150,6 +158,12 @@ export function LeadCustomerDetails({
   onCustomerChange: (customer: LeadCustomer) => void;
   embedded?: boolean;
   compact?: boolean;
+  cardFields?: LeadCardField[];
+  canManageCardFields?: boolean;
+  onAddCardField?: (block: LeadCardFieldBlock, label: string) => Promise<void> | void;
+  onDeleteCardField?: (id: number) => Promise<void> | void;
+  onCardFieldValueChange?: (id: number, value: string) => void;
+  onPersistCardFields?: () => Promise<boolean>;
 }) {
   const [draft, setDraft] = useState<CustomerDraft>(() => createDraft(customer));
   const [editing, setEditing] = useState(false);
@@ -284,6 +298,9 @@ export function LeadCustomerDetails({
 
     onCustomerChange(nextCustomer);
     setEditing(false);
+    if (onPersistCardFields) {
+      await onPersistCardFields();
+    }
     setNotice(contactPersistence === "api"
       ? "Профиль клиента и основной контакт сохранены в backend."
       : "Demo-режим: изменения сохранены только локально.");
@@ -402,13 +419,34 @@ export function LeadCustomerDetails({
   );
 
   return (
-    <section className={`${embedded ? `min-w-0 ${compact ? "p-3.5" : "p-4 sm:p-5"}` : "min-w-0 rounded-xl border border-slate-200 bg-white p-4 sm:p-5"} lead-customer-details ${compact ? "lead-compact-details" : ""}`}>
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+    <section className={`${embedded ? `min-w-0 ${compact ? "p-4" : "p-4 sm:p-5"}` : "min-w-0 rounded-xl border border-slate-200 bg-white p-4 sm:p-5"} lead-customer-details ${compact ? "lead-compact-details" : ""}`}>
+      <div className={`flex ${compact ? "mb-3.5 items-center justify-between gap-3" : "flex-col gap-3 sm:flex-row sm:items-start sm:justify-between"}`}>
+        {compact ? (
+          <h2 className="text-[15px] font-medium tracking-normal text-slate-900">Клиент</h2>
+        ) : (
         <div>
-          <h2 className="text-sm font-bold text-slate-950">{compact ? "A) Основная информация" : "Данные клиента"}</h2>
-          {!compact ? <p className="mt-1 text-sm text-slate-500">Сведения о клиенте и контактных лицах лида.</p> : null}
+          <h2 className="text-sm font-bold text-slate-950">Данные клиента</h2>
+          <p className="mt-1 text-sm text-slate-500">Сведения о клиенте и контактных лицах лида.</p>
         </div>
-        {!editing && hasCustomerData ? (
+        )}
+        {compact ? (
+          <div className="flex shrink-0 items-center gap-0.5">
+            {editing ? (
+              <>
+                <IconButton type="button" label="Отмена" onClick={cancelEditing} disabled={savingCustomer}>
+                  <X size={16} aria-hidden="true" />
+                </IconButton>
+                <IconButton type="submit" form="lead-customer-form" label="Сохранить" disabled={savingCustomer}>
+                  <Check size={16} aria-hidden="true" />
+                </IconButton>
+              </>
+            ) : (
+              <IconButton type="button" label="Редактировать" onClick={startEditing} disabled={savingCustomer}>
+                <Pencil size={16} aria-hidden="true" />
+              </IconButton>
+            )}
+          </div>
+        ) : !editing && hasCustomerData ? (
           <InlineEditActions
             editing={false}
             onEdit={startEditing}
@@ -419,8 +457,8 @@ export function LeadCustomerDetails({
       </div>
 
       {editing ? (
-        <form onSubmit={saveCustomer} className="mt-4">
-          <div className="grid gap-3 sm:grid-cols-2">
+        <form id="lead-customer-form" onSubmit={saveCustomer} className="mt-4">
+          <div className={`grid gap-3 ${compact ? "" : "sm:grid-cols-2"}`}>
             <label htmlFor="customer-type" className="text-sm font-medium text-slate-700">
               Тип клиента
               <select
@@ -438,13 +476,13 @@ export function LeadCustomerDetails({
             <TextField id="customer-website" label="Сайт" value={draft.website} onChange={(value) => updateDraft("website", value)} />
             <CityAutocomplete id="customer-city" label="Город" value={draft.city} onChange={(value) => updateDraft("city", value)} inputClassName={fieldClass} />
             <TextField id="customer-region" label="Регион" value={draft.region} onChange={(value) => updateDraft("region", value)} />
-            <div className="sm:col-span-2">
+            <div className={compact ? "" : "sm:col-span-2"}>
               <TextField id="customer-address" label="Адрес" value={draft.address} onChange={(value) => updateDraft("address", value)} />
             </div>
           </div>
 
           <h3 className="mt-5 border-t border-slate-200 pt-4 text-sm font-semibold text-slate-950">Основной контакт</h3>
-          <div className="mt-3 grid gap-3 sm:grid-cols-2">
+          <div className={`mt-3 grid gap-3 ${compact ? "" : "sm:grid-cols-2"}`}>
             <TextField id="customer-contact-name" label="ФИО контактного лица" value={draft.contactName} error={errors.contactName} onChange={(value) => updateDraft("contactName", value)} />
             <TextField id="customer-contact-position" label="Должность" value={draft.position} onChange={(value) => updateDraft("position", value)} />
             <TextField id="customer-contact-phone" label="Телефон" type="tel" value={draft.phone} error={errors.phone} onChange={(value) => updateDraft("phone", value)} />
@@ -462,23 +500,64 @@ export function LeadCustomerDetails({
             </label>
           </div>
 
-          <label htmlFor="customer-comment" className="mt-5 block text-sm font-medium text-slate-700">
+          <label htmlFor="customer-comment" className={`${compact ? "mt-0" : "mt-5"} block text-sm font-medium text-slate-700`}>
             Комментарий
             <textarea
               id="customer-comment"
-              rows={4}
+              rows={compact ? 2 : 4}
               value={draft.comment}
               onChange={(event) => updateDraft("comment", event.target.value)}
               className="mt-1 w-full resize-y rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             />
           </label>
 
+          {compact ? (
+            <div className="mt-5">
+              <LeadCardCustomFields
+                block="customer"
+                fields={cardFields}
+                editing
+                canManage={canManageCardFields}
+                onAdd={onAddCardField ?? (async () => undefined)}
+                onDelete={onDeleteCardField ?? (async () => undefined)}
+                onValueChange={onCardFieldValueChange ?? (() => undefined)}
+              />
+            </div>
+          ) : null}
+
+          {compact ? null : (
           <div className="mt-5 flex flex-col-reverse gap-2 border-t border-slate-200 pt-4 sm:flex-row sm:justify-end">
             <Button type="button" onClick={cancelEditing} disabled={savingCustomer}>Отмена</Button>
             <Button type="submit" variant="primary" disabled={savingCustomer}>{savingCustomer ? "Сохранение…" : "Сохранить"}</Button>
           </div>
+          )}
         </form>
       ) : hasCustomerData ? (
+        compact ? (
+        <>
+        <dl className="lead-fact-kv">
+          <DataItem label="Контакт">{primaryContact ? display(primaryContact.name) : "Не указано"}</DataItem>
+          <DataItem label="Телефон">
+            {primaryContact?.phone ? <a href={`tel:${primaryContact.phone}`} className="inline-flex items-center gap-1.5 text-blue-700 hover:underline"><Phone size={14} />{primaryContact.phone}</a> : "Не указано"}
+          </DataItem>
+          <DataItem label="Email">
+            {primaryContact?.email ? <a href={`mailto:${primaryContact.email}`} className="inline-flex items-center gap-1.5 text-blue-700 hover:underline"><Mail size={14} />{primaryContact.email}</a> : "Не указано"}
+          </DataItem>
+          <DataItem label="Организация">{display(customer.organizationName)}</DataItem>
+        </dl>
+        <div className="mt-3">
+          <LeadCardCustomFields
+            block="customer"
+            fields={cardFields}
+            editing={false}
+            canManage={canManageCardFields}
+            onAdd={onAddCardField ?? (async () => undefined)}
+            onDelete={onDeleteCardField ?? (async () => undefined)}
+            onValueChange={onCardFieldValueChange ?? (() => undefined)}
+          />
+        </div>
+        </>
+        ) : (
         <div className="mt-4 space-y-4">
           <div>
             <h3 className="text-sm font-semibold text-slate-950">Клиент</h3>
@@ -512,11 +591,12 @@ export function LeadCustomerDetails({
             ) : <p className="mt-3 text-sm text-slate-500">Основной контакт не назначен.</p>}
           </div>
 
-          {!compact ? <div className="border-t border-slate-200 pt-4">
+          <div className="border-t border-slate-200 pt-4">
             <h3 className="text-sm font-semibold text-slate-950">Комментарий</h3>
             <p className="mt-2 max-w-4xl whitespace-pre-wrap text-sm leading-6 text-slate-600">{display(customer.comment)}</p>
-          </div> : null}
+          </div>
         </div>
+        )
       ) : (
         <div className="mt-5 rounded-lg border border-dashed border-slate-200 bg-slate-50 px-4 py-8 text-center">
           <p className="text-sm font-medium text-slate-700">Данные клиента пока не заполнены</p>
@@ -524,10 +604,10 @@ export function LeadCustomerDetails({
         </div>
       )}
 
-      {!editing ? (
-        <details open={!compact} className="mt-4 border-t border-slate-200 pt-3">
-          <summary className={`${compact ? "cursor-pointer text-xs font-semibold text-blue-700" : "sr-only"}`}>Дополнительные данные и контакты</summary>
-        <div className={compact ? "mt-3" : ""}>
+      {!editing && !compact ? (
+        <details open className="mt-4 border-t border-slate-200 pt-3">
+          <summary className="sr-only">Дополнительно</summary>
+        <div>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h3 className="text-sm font-semibold text-slate-950">Контактные лица</h3>

@@ -164,7 +164,7 @@
         </div>
       </div>
       <div class="meta-list">
-        <div class="chip">Updated: 2026-08-26 (v1.00 Stage 26 closed 26.4.3 card variants block; 26.4/26.5; Stage 0.5 canonical VPS)</div>
+        <div class="chip">Updated: 2026-08-26 (v1.00 parked 0.5.13 S3 media; Stage 26 parked 26.7.1 + 26.8.1–26.8.2; Stage 0.5 canonical VPS)</div>
         <div class="chip">Version: v0.9.0</div>
         <div class="chip">Branch: feature/v0.8.1-nomenclature-core</div>
         <div class="chip">Commit: 0980f34</div>
@@ -1466,7 +1466,7 @@
                 code: "4.4.6",
                 title: "Variant pricing, barcodes, and external sync",
                 done: true,
-                note: "v0.9.0; ADR-010 amend; Alembic b9c0d1e2f345; 1C engine → 16.2.1; task v0.9.0-stage-4.4.6-variant-pricing-barcodes.md",
+                note: "v0.9.0; ADR-010 amend; Alembic b9c0d1e2f345; 1C export → Stage 27; task v0.9.0-stage-4.4.6-variant-pricing-barcodes.md",
                 microtasks: [
                   {
                     code: "4.4.6.1",
@@ -6310,9 +6310,9 @@
             items: [
               {
                 code: "16.2.1",
-                title: "1C:UNF exchange — contour D (ADR-020); neighbor to universal job shell",
+                title: "1C:UNF inbound SalesOrder Excel (UNF → platform); parked, not MVP; canonical outbound = Stage 27",
                 done: false,
-                note: "moved → v1.00; MVP: SalesOrder Excel from UNF (depends 0.4; column map after sample); ADR-020; not catalog Excel / not print 18.3"
+                note: "moved → v1.00; parked inbound UNF→platform (not MVP); canonical outbound = Stage 27; ADR-020; not catalog Excel / not print 18.3"
               },
               {
                 code: "16.2.2",
@@ -6486,7 +6486,7 @@
                 code: "17.2.1",
                 title: "VPS, production Docker, reverse proxy, and HTTPS",
                 goal: "In-repo Compose+Dockerfiles+Caddy TLS and VPS runbook; live host apply is v1.00 Stage 0.5.",
-                note: "v0.9.0; compose.prod.yaml; docs/ops/production-17-2-1.md. Live apply + SSH tunnel → v1.00 Stage 0.5 (ADR-032); do not reopen 17.2.1–17.2.3.",
+                note: "v0.9.0; compose.prod.yaml; docs/ops/production-17-2-1.md. Live apply + SSH tunnel → v1.00 Stage 0.5 (ADR-032); do not reopen 17.2.1–17.2.3. Media SoT = VPS disk 0.5.10 until parked 0.5.13 S3 (owner-pull).",
                 microtasks: [
                   {
                     code: "17.2.1.1",
@@ -6538,7 +6538,7 @@
                 code: "17.2.3",
                 title: "Production backup, disaster recovery, and administrator runbooks",
                 goal: "Compose-aware backup/restore + DR/admin ops index (extends 0.3.3).",
-                note: "v0.9.0; docs/ops/production-17-2-3.md",
+                note: "v0.9.0; docs/ops/production-17-2-3.md. Media files stay on VPS disk until v1.00 0.5.13 (parked S3).",
                 microtasks: [
                   {
                     code: "17.2.3.1",

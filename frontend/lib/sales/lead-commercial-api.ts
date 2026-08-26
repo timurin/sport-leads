@@ -230,8 +230,9 @@ export function toApiLeadCommercialPayload(input: LeadCommercialCoreInput) {
 }
 
 /**
- * Commercial save after `20.1` need-cleanup: omit hidden SoT fields so PATCH
- * `exclude_unset` does not clear convert-critical / retained columns.
+ * Commercial save after `20.1` need-cleanup: omit remaining hidden SoT fields
+ * so PATCH `exclude_unset` does not clear them. `desired_date` is editable
+ * as Дата отгрузки (`26.1.4`) and is included.
  */
 export function toApiLeadCommercialPayloadOmittingNeedCleanup(
   input: LeadCommercialCoreInput,
@@ -241,7 +242,6 @@ export function toApiLeadCommercialPayloadOmittingNeedCleanup(
     kit_quantity: _kitQuantity,
     size_comment: _sizeComment,
     estimated_amount: _estimatedAmount,
-    desired_date: _desiredDate,
     event_date: _eventDate,
     ...rest
   } = toApiLeadCommercialPayload(input);

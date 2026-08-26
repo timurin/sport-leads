@@ -1,7 +1,7 @@
 # Sport-Lead — Global Roadmap
 
 **Code:** `SL-ROADMAP-v1`
-**Updated:** `2026-08-26` (v1.00 Stage **26** closed `26.4.3` card variants block; `26.4`/`26.5`; Stage `0.5` canonical VPS)
+**Updated:** `2026-08-26` (v1.00 parked `0.5.13` S3 media; Stage **26** `26.7.1` + `26.8.1`–`26.8.2`; Stage `0.5` canonical VPS)
 **Project version:** `v0.9.0`
 **Git branch:** `feature/v0.8.1-nomenclature-core`
 
@@ -439,7 +439,7 @@ Completion criteria:
 
 #### 4.4.6 — Variant pricing, barcodes, and external sync
 
-> ADR-010 amend: variant may carry optional `price` (override of card `base_price`), unique `barcode`, and opaque `external_code` for later 1C. **No** live 1C exchange here — that remains `16.2.1` / ADR-020 contour D.
+> ADR-010 amend: variant may carry optional `price` (override of card `base_price`), unique `barcode`, and opaque `external_code` for later 1C. **No** live 1C exchange here — outbound is Stage **`27`** / ADR-020 contour D (`16.2.1` inbound parked).
 
 - [x] 4.4.6.1 — ADR-010 amend + DB columns (`price`, `barcode`, `external_code`) + schemas — `v0.9.0`; Alembic `b9c0d1e2f345`; task `docs/tasks/v0.9.0-stage-4.4.6-variant-pricing-barcodes.md`
 - [x] 4.4.6.2 — API update + order UI suggests variant price when selected — `v0.9.0`; evidence: `services/characteristics.py`, `sales-order-items.tsx` + `effectiveVariantUnitPrice`
@@ -2702,7 +2702,7 @@ Microtasks:
 
 ### 16.2 — Enterprise exchange
 
-- [ ] 16.2.1 — 1C:UNF exchange — contour **D** (ADR-020); neighbor to universal job shell, not catalog Excel buttons — **moved → v1.00** (MVP first: SalesOrder Excel from UNF; depends `0.4`; column map after sample)
+- [ ] 16.2.1 — 1C:UNF **inbound** SalesOrder Excel (UNF → platform) — **moved → v1.00** (parked, not MVP; canonical **outbound** = Stage **27**; column map after sample)
 - [ ] 16.2.2 — Delivery and payment-system integrations — **moved → v1.00**
 - [ ] 16.2.3 — External API for third-party systems — **moved → v1.00**
 
@@ -2761,7 +2761,7 @@ Completion criteria:
 
 ### 17.2 — Production operations
 
-> **Live apply (`2026-08-25`):** in-repo `17.2.1`–`17.2.3` stay closed. Canonical VPS Postgres + SSH tunnel + Git deploy live apply is `v1.00` Stage `0.5` (`docs/roadmap/roadmap-v1.00.md`, ADR-032, `docs/ops/vps-canonical-0-5.md`). Do not reopen these checkboxes.
+> **Live apply (`2026-08-25`):** in-repo `17.2.1`–`17.2.3` stay closed. Canonical VPS Postgres + SSH tunnel + Git deploy live apply is `v1.00` Stage `0.5` (`docs/roadmap/roadmap-v1.00.md`, ADR-032, `docs/ops/vps-canonical-0-5.md`). Do not reopen these checkboxes. Media SoT stays VPS `storage/` (`0.5.10`) until parked **`0.5.13`** (S3-compatible object storage; owner-pull; do not auto-start).
 
 #### 17.2.1 — VPS, production Docker, reverse proxy, and HTTPS
 

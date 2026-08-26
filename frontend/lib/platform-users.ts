@@ -323,6 +323,7 @@ export const PERMISSION_LABELS: Record<string, string> = {
   "sewing_cabinet.read_own": "Кабинет швеи: свой кабинет",
   "sewing_cabinet.read_any": "Кабинет швеи: все кабинеты",
   "sewing_cabinet.write": "Кабинет швеи: взять / отказаться / закрыть",
+  "leads.card_fields.manage": "Лиды: создание и удаление полей карточки",
 };
 
 export const MODULE_LABELS: Record<string, string> = {
@@ -334,6 +335,7 @@ export const MODULE_LABELS: Record<string, string> = {
   platform_directories: "Справочники платформы",
   print_forms: "Печатные формы",
   sewing_cabinet: "Кабинет швеи",
+  leads: "Продажи / лиды",
   other: "Прочее",
 };
 

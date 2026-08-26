@@ -1,8 +1,8 @@
 # Sport-Lead — Project Structure Checklist
 
 **Code:** `SL-PROJECT-STRUCTURE-v1`
-**Updated:** `2026-08-26` (push to `main` auto-deploys VPS; Stage **12.4** closed; next **12.5.1**)
-**Project version:** `v0.9.0` / early `v1.00` Stages 0 + 20 + 21 + 22 + 23 + **24** + **25** + **26** + Stage **7** contract
+**Updated:** `2026-08-26` (push to `main` auto-deploys VPS; Stage **12.4** closed; next **12.5.1**; Stage **27** 1C:UNF export parked)
+**Project version:** `v0.9.0` / early `v1.00` Stages 0 + 20 + 21 + 22 + 23 + **24** + **25** + **26** + **27** + Stage **7** contract
 **Git branch:** `main`
 
 ## Rules
@@ -43,7 +43,8 @@
 - [ ] Unified Work Tasks (`v1.00` Stage `23`) — ADR-028; through `23.7` / `23.10.4` (API/FE/hosts, migrate, kanban, order context; owner visuals OK `2026-08-22`); old task tables retained
 - [x] Sewing cabinet (`v1.00` Stage `24`) — ADR-029 work ledger + restricted shell + own/manager UI; owner visual OK `24.5.2` (`2026-08-24`); `PlatformUser` sewer; not `2.4.2` Employee
 - [x] Tech-card QR + shop scan (`v1.00` Stage `25`) — closed `2026-08-25` (owner visual `25.5.2`); ADR-030; Alembic `d3e4f5a6b789`; `/production/scan/{token}`
-- [ ] Owner findings / bugs-cosmetics (`v1.00` Stage `26`) — living backlog; `26.0.1` closed `2026-08-25`; `26.1.1`–`26.1.2` closed `2026-08-26`; **`26.4.1`–`26.4.3` closed `2026-08-26`** (models whitelist; card «Варианты» removed); `26.5` lead layout A open (owner visual `26.5.2`); remaining seed parked; owner-pull only
+- [ ] Owner findings / bugs-cosmetics (`v1.00` Stage `26`) — living backlog; `26.0.1` closed `2026-08-25`; `26.1.1`–`26.1.6` closed `2026-08-26`; **`26.2.1`–`26.2.2` closed `2026-08-26`**; **`26.3.1`–`26.3.4` closed `2026-08-26`**; **`26.4.1`–`26.4.3` closed `2026-08-26`** (models whitelist; card «Варианты» removed); **`26.5.1`–`26.5.4` closed `2026-08-26`**; **`26.6.1`–`26.6.8` closed `2026-08-26`**; **`26.7.1` closed `2026-08-26`**; **`26.8.1`–`26.8.2` closed `2026-08-26`**; remaining seed parked; owner-pull only
+- [ ] 1C:UNF document export (`v1.00` Stage `27`) — `27.0.1` closed `2026-08-26`; `27.1+` parked owner-pull; platform→УНФ packages; matching in 1C; inbound `16.2.1` parked
 - [ ] Production secrets management (Vault/etc.) — monitoring + DR covered in `17.2.2`/`17.2.3`; file `.env.production` remains host SoT for secrets MVP
 
 ## 2. CRM and Leads
@@ -115,7 +116,7 @@
 - [x] Sales-order item variant selection with stored characteristic snapshot
 - [x] Image media upload, storage, primary image, sorting, and deletion in the card
 - [x] Non-image file attachments — `4.4.5` (`v0.9.0`; pdf/office/zip/txt/csv on same `nomenclature_media`; card «Вложения»)
-- [x] Variant pricing, barcodes, and external-sync contour — `4.4.6` (`v0.9.0`; Alembic `b9c0d1e2f345`; card «Варианты» removed `26.4.3`; order suggests variant price; 1C sync remains `16.2.1`)
+- [x] Variant pricing, barcodes, and external-sync contour — `4.4.6` (`v0.9.0`; Alembic `b9c0d1e2f345`; card «Варианты» removed `26.4.3`; order suggests variant price; 1C **export** = Stage `27`; `external_code` optional, not an entry gate)
 
 ## 7. Materials
 
@@ -191,7 +192,7 @@
 - [x] Mock communications connector core
 - [ ] Real external CRM and communications adapters
 - [ ] Website forms, email, telephony, VK, and Telegram integrations
-- [ ] 1C exchange — Stage `16.2.1` (ADR-020 contour D)
+- [ ] 1C exchange — Stage `27` outbound packages (ADR-020 contour D); inbound `16.2.1` parked, not MVP
 - [ ] Universal import and export contour — Stage `16.3` orchestration shell (ADR-020); not `4.5` / not domain `9.3.2`
 
 ## 13. Operations and Deployment

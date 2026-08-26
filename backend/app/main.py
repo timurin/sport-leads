@@ -1,4 +1,4 @@
-﻿import time
+import time
 
 from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
@@ -27,6 +27,10 @@ from app.api.nomenclature import router as nomenclature_router
 from app.api.characteristics import router as characteristics_router
 from app.api.media import router as media_router
 from app.api.leads import router as leads_router
+from app.api.lead_card_fields import (
+    definitions_router as lead_card_fields_router,
+    values_router as lead_card_field_values_router,
+)
 from app.api.lead_stages import router as lead_stages_router
 from app.api.lead_rejection_reasons import router as lead_rejection_reasons_router
 from app.api.orders import router as orders_router
@@ -150,6 +154,8 @@ app.include_router(nomenclature_router)
 app.include_router(characteristics_router)
 app.include_router(media_router)
 app.include_router(leads_router)
+app.include_router(lead_card_fields_router)
+app.include_router(lead_card_field_values_router)
 app.include_router(lead_stages_router)
 app.include_router(lead_rejection_reasons_router)
 app.include_router(orders_router)

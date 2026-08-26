@@ -1,14 +1,10 @@
-import { notFound } from "next/navigation";
-
-import {
-  listLeadWorkTasks,
-  listWorkTaskFilterUsers,
-} from "@/app/(workspace)/sales/tasks/work-task-actions";
+import { LeadWorkspace } from "@/components/sales/lead-workspace";
+import { LeadCardSlider } from "@/components/sales/lead-card-slider";
 import { LeadPage } from "@/components/sales/lead-page";
-import { getMe } from "@/lib/auth/session";
-import { getLeadDetails } from "@/lib/sales/lead-details";
+import { getLeadList } from "@/lib/sales/lead-list-api";
 import { getLeadStages } from "@/lib/sales/lead-stage-api";
-import { getProductionStages } from "@/lib/production-stages";
+
+import { loadLeadRoute } from "./lead-route-data";
 
 type LeadRouteProps = {
   params: Promise<{ leadId: string }>;
@@ -16,40 +12,36 @@ type LeadRouteProps = {
 
 export default async function LeadRoute({ params }: LeadRouteProps) {
   const { leadId } = await params;
-  if (!/^\d+$/.test(leadId)) {
-    notFound();
-  }
-
-  const [me, lead, stageResult, workTasksLoaded, stagesCatalog, usersLoaded] =
-    await Promise.all([
-      getMe(),
-      getLeadDetails(leadId),
-      getLeadStages(),
-      listLeadWorkTasks(Number(leadId)),
-      getProductionStages({ active_only: true, limit: 200 }).catch(() => []),
-      listWorkTaskFilterUsers(),
-    ]);
-
-  if (!lead) {
-    notFound();
-  }
-  if (!stageResult.ok) {
-    throw new Error(stageResult.message);
-  }
+  const [model, leadList, leadStages] = await Promise.all([
+    loadLeadRoute(leadId),
+    getLeadList(),
+    getLeadStages(),
+  ]);
+  const loadError = [
+    leadList.ok ? null : leadList.message,
+    leadStages.ok ? null : leadStages.message,
+  ].filter(Boolean).join(" ") || undefined;
 
   return (
-    <LeadPage
-      key={lead.id}
-      lead={lead}
-      stages={stageResult.stages}
-      workTasks={workTasksLoaded.ok ? workTasksLoaded.data : []}
-      workTasksError={workTasksLoaded.ok ? null : workTasksLoaded.message}
-      workTaskStages={stagesCatalog.map((stage) => ({
-        id: stage.id,
-        label: stage.name,
-      }))}
-      workTaskUsers={usersLoaded.ok ? usersLoaded.data : []}
-      viewerUserId={me?.id ?? null}
-    />
+    <>
+      <LeadWorkspace
+        initialLeads={leadList.leads}
+        initialStages={leadStages.stages}
+        loadError={loadError}
+      />
+      <LeadCardSlider>
+        <LeadPage
+          key={model.lead.id}
+          lead={model.lead}
+          stages={model.stages}
+          workTasks={model.workTasks}
+          workTasksError={model.workTasksError}
+          workTaskStages={model.workTaskStages}
+          workTaskUsers={model.workTaskUsers}
+          viewerUserId={model.viewerUserId}
+        canManageCardFields={model.canManageCardFields}
+        />
+      </LeadCardSlider>
+    </>
   );
 }

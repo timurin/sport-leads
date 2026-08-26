@@ -51,6 +51,16 @@ export const salesSources = [
   "manual",
 ] as const;
 
+/** Same options/order as lead create dialog (`26.1.5`). */
+export const leadCreateSourceOptions = [
+  { value: "manual", label: "Вручную" },
+  { value: "website", label: "Сайт" },
+  { value: "phone", label: "Телефон" },
+  { value: "email", label: "Email" },
+  { value: "referral", label: "Рекомендация" },
+  { value: "vk", label: "VK" },
+] as const;
+
 export type LeadStatus = (typeof leadStatuses)[number];
 export type LeadResult = (typeof leadResults)[number];
 export type DealStatus = (typeof dealStatuses)[number];

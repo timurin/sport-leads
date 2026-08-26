@@ -1,3 +1,5 @@
+import { sameOriginApiMediaUrl } from "../api-media.ts";
+
 export type TechnicalCardStatus =
   | "draft"
   | "in_progress"
@@ -335,14 +337,14 @@ export async function fetchOrderTechnicalCardsPreview(
 
 export async function fetchOrderTechnicalCards(
   orderId: number | string,
-): Promise<ApiTechnicalCard[]> {
+): Promise<ApiTechnicalCardListItem[]> {
   const response = await fetch(`${apiBaseUrl()}/orders/${orderId}/technical-cards`, {
     cache: "no-store",
   });
   if (!response.ok) {
     throw new Error(await readError(response, "List failed"));
   }
-  return (await response.json()) as ApiTechnicalCard[];
+  return (await response.json()) as ApiTechnicalCardListItem[];
 }
 
 export async function generateOrderTechnicalCards(
@@ -669,33 +671,11 @@ export async function updateTechnicalCardOperationLineVolume(
   return (await response.json()) as ApiTechnicalCard;
 }
 
-/** Resolve media content URL against the API origin (same pattern as productModelCoverUrl). */
+/** Resolve media content URL against the same-origin Next proxy (`26.8.1`). */
 export function technicalCardMediaContentUrl(
   url: string | null | undefined,
 ): string | null {
-  if (!url?.trim()) return null;
-  const value = url.trim();
-  if (
-    value.startsWith("http://") ||
-    value.startsWith("https://") ||
-    value.startsWith("blob:")
-  ) {
-    return value;
-  }
-  if (
-    value.startsWith("/technical-cards/") &&
-    value.includes("/media/") &&
-    value.includes("/content")
-  ) {
-    const api = (
-      process.env.NEXT_PUBLIC_SPORT_LEADS_API_URL ??
-      process.env.SPORT_LEADS_API_URL ??
-      "http://127.0.0.1:8000"
-    ).replace(/\/$/, "");
-    return `${api}${value}`;
-  }
-  if (value.startsWith("/")) return value;
-  return `/${value.replace(/^\.\//, "")}`;
+  return sameOriginApiMediaUrl(url);
 }
 
 export async function uploadTechnicalCardMedia(

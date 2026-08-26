@@ -59,6 +59,7 @@ type OrderCollaborationPanelProps = {
   leadId?: number | string;
   technicalCardId?: number | null;
   embedded?: boolean;
+  compact?: boolean;
   customerSummary?: ReactNode;
   title?: string;
   deepLinkHref?: string | null;
@@ -69,6 +70,7 @@ export function OrderCollaborationPanel({
   leadId,
   technicalCardId = null,
   embedded = false,
+  compact = false,
   customerSummary,
   title = "Внутренняя переписка",
   deepLinkHref = null,
@@ -180,11 +182,14 @@ export function OrderCollaborationPanel({
   }
 
   const shellClass = embedded
-    ? "flex h-full min-h-[28rem] min-w-0 flex-col"
+    ? compact
+      ? "flex min-h-0 min-w-0 flex-col"
+      : "flex h-full min-h-[28rem] min-w-0 flex-col"
     : "flex min-h-[22rem] min-w-0 flex-col rounded-portal-lg border border-portal-border bg-portal-surface shadow-portal-card";
 
   return (
     <div className={shellClass} data-order-collaboration-panel>
+      {compact ? <h3 className="sr-only">{title}</h3> : (
       <div className="flex items-center justify-between gap-2 border-b border-portal-border px-3.5 py-2.5">
         <div className="min-w-0">
           <h3 className="truncate text-sm font-bold text-portal-text">{title}</h3>
@@ -207,6 +212,7 @@ export function OrderCollaborationPanel({
           ) : null}
         </div>
       </div>
+      )}
 
       <div className={`grid min-h-0 flex-1 ${customerSummary ? "lg:grid-cols-[1fr_14rem]" : ""}`}>
         <div className="flex min-h-0 min-w-0 flex-col">
@@ -216,7 +222,7 @@ export function OrderCollaborationPanel({
             </p>
           ) : null}
 
-          <div ref={historyRef} className="min-h-0 flex-1 space-y-2 overflow-y-auto px-3.5 py-3">
+          <div ref={historyRef} className={`min-h-0 ${compact ? "max-h-48" : "flex-1"} space-y-2 overflow-y-auto px-3.5 py-3`}>
             {loading ? (
               <p className="text-xs text-slate-500">Загрузка…</p>
             ) : messages.length === 0 ? (

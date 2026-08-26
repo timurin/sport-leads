@@ -10,6 +10,7 @@ import {
   type ProductModelMedia,
   type ProductModelSizeType,
 } from "@/lib/product-models";
+import { rasterImageMimeOrNull } from "@/lib/api-media";
 
 function apiBaseUrl(): string {
   return (process.env.SPORT_LEADS_API_URL ?? "http://127.0.0.1:8000").replace(/\/$/, "");
@@ -36,17 +37,18 @@ function revalidateModel(modelId: string | number) {
   revalidatePath(`/settings/catalogs/product-models/${modelId}`);
 }
 
-function validateImageFile(file: File): void {
+function validateImageFile(file: File): string {
   if (!(file instanceof File) || file.size === 0) {
     throw new Error(PRODUCT_MODEL_IMAGE_RULE);
   }
   if (file.size > PRODUCT_MODEL_IMAGE_MAX_BYTES) {
     throw new Error(PRODUCT_MODEL_IMAGE_RULE);
   }
-  const allowed = new Set(["image/jpeg", "image/png", "image/webp"]);
-  if (!allowed.has(file.type)) {
+  const mime = rasterImageMimeOrNull(file);
+  if (mime == null) {
     throw new Error(PRODUCT_MODEL_IMAGE_RULE);
   }
+  return mime;
 }
 
 export type ProductModelRequisitesInput = {
@@ -165,6 +167,7 @@ export async function updateProductModelRequisites(
             patterns_created_on: payload.patterns_created_on?.trim() || null,
           }
         : {}),
+      ...(payload.folder_id !== undefined ? { folder_id: payload.folder_id } : {}),
     }),
     cache: "no-store",
   });
@@ -230,14 +233,14 @@ export async function uploadProductModelMedia(formData: FormData) {
 
   const uploaded: ProductModelMedia[] = [];
   for (const [index, file] of files.entries()) {
-    validateImageFile(file);
+    const mime_type = validateImageFile(file);
     const content_base64 = Buffer.from(await file.arrayBuffer()).toString("base64");
     const response = await fetch(`${apiBaseUrl()}/product-models/${modelId}/media`, {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
         filename: file.name,
-        mime_type: file.type,
+        mime_type,
         content_base64,
         is_primary: makePrimary && index === 0,
       }),
@@ -259,7 +262,7 @@ export async function replaceProductModelMedia(formData: FormData) {
 
   if (!modelId || !mediaId) throw new Error("Не указано изображение");
   if (!(file instanceof File)) throw new Error(PRODUCT_MODEL_IMAGE_RULE);
-  validateImageFile(file);
+  const mime_type = validateImageFile(file);
 
   const content_base64 = Buffer.from(await file.arrayBuffer()).toString("base64");
   const createResponse = await fetch(`${apiBaseUrl()}/product-models/${modelId}/media`, {
@@ -267,7 +270,7 @@ export async function replaceProductModelMedia(formData: FormData) {
     headers: { "content-type": "application/json" },
     body: JSON.stringify({
       filename: file.name,
-      mime_type: file.type,
+      mime_type,
       content_base64,
       is_primary: keepPrimary,
     }),

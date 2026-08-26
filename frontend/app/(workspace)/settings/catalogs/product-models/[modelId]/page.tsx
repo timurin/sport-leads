@@ -6,6 +6,7 @@ import { productModelReference } from "@/lib/demo-data/product-model-reference";
 import {
   getProductModelAssemblyVariants,
   getProductModelById,
+  getProductModelFolders,
   getProductModelHistory,
   getProductModelMedia,
   getProductModelVersions,
@@ -65,6 +66,7 @@ export default async function ProductModelRoute({
     routingLinks,
     productionStages,
     techOperations,
+    catalogFolders,
   ] = await Promise.all([
     getProductModelVersions(id),
     getProductModelMedia(id),
@@ -79,6 +81,7 @@ export default async function ProductModelRoute({
     getProductModelRoutings(id),
     getProductionStages({ active_only: true, limit: 500 }),
     getTechOperations({ active_only: true, limit: 500 }),
+    getProductModelFolders(),
   ]);
 
   return (
@@ -97,6 +100,7 @@ export default async function ProductModelRoute({
       routingLinks={routingLinks}
       productionStages={productionStages}
       techOperations={techOperations}
+      catalogFolders={catalogFolders}
       initialEditing={initialEditing}
     />
   );

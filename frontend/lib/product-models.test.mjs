@@ -11,6 +11,7 @@ import {
   isProductModelRequisitesDirty,
   parseAssemblyCostInput,
   parseProductModelRouteId,
+  productModelFolderSelectOptions,
   productModelLabel,
   productModelStatusTone,
   sumSelectedSewingOperationCosts,
@@ -255,6 +256,41 @@ test("isProductModelRequisitesDirty compares draft to model", () => {
       size_grid_id: 10,
     }),
     true,
+  );
+  assert.equal(
+    isProductModelRequisitesDirty(model, {
+      ...toProductModelRequisitesDraft(model),
+      folder_id: 9,
+    }),
+    true,
+  );
+});
+
+test("productModelFolderSelectOptions flattens nested folders for the card Select", () => {
+  const options = productModelFolderSelectOptions([
+    {
+      id: 1,
+      name: "Одежда",
+      parent_id: null,
+      sort_order: 0,
+      created_at: "2026-08-26T00:00:00Z",
+      updated_at: "2026-08-26T00:00:00Z",
+    },
+    {
+      id: 2,
+      name: "Футболки",
+      parent_id: 1,
+      sort_order: 0,
+      created_at: "2026-08-26T00:00:00Z",
+      updated_at: "2026-08-26T00:00:00Z",
+    },
+  ]);
+  assert.deepEqual(
+    options.map((row) => ({ id: row.id, depth: row.depth, name: row.name })),
+    [
+      { id: 1, depth: 0, name: "Одежда" },
+      { id: 2, depth: 1, name: "Футболки" },
+    ],
   );
 });
 

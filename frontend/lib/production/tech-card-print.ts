@@ -4,6 +4,7 @@ import type {
   ApiTechnicalCardCompositionLine,
   ApiTechnicalCardOperationLine,
 } from "../sales/order-tech-cards-api";
+import { sameOriginApiMediaUrl } from "../api-media.ts";
 
 export type TechnicalCardPrintRequest = {
   binding_type: "model";
@@ -103,56 +104,15 @@ function formatMoney(value: string | number | null | undefined): string {
   }).format(num);
 }
 
-function apiBaseUrl(): string {
-  return (
-    process.env.NEXT_PUBLIC_SPORT_LEADS_API_URL ??
-    process.env.SPORT_LEADS_API_URL ??
-    "http://127.0.0.1:8000"
-  ).replace(/\/$/, "");
-}
-
-/** Resolve media URL for print HTML (mirrors order-tech-cards-api helper). */
+/** Resolve media URL for print HTML via same-origin Next proxy (`26.8.1`). */
 function technicalCardMediaContentUrl(
   url: string | null | undefined,
 ): string | null {
-  if (!url?.trim()) return null;
-  const value = url.trim();
-  if (
-    value.startsWith("http://") ||
-    value.startsWith("https://") ||
-    value.startsWith("blob:")
-  ) {
-    return value;
-  }
-  if (
-    value.startsWith("/technical-cards/") &&
-    value.includes("/media/") &&
-    value.includes("/content")
-  ) {
-    return `${apiBaseUrl()}${value}`;
-  }
-  if (value.startsWith("/")) return value;
-  return `/${value.replace(/^\.\//, "")}`;
+  return sameOriginApiMediaUrl(url);
 }
 
 function productModelImageUrl(url: string | null | undefined): string | null {
-  if (!url?.trim()) return null;
-  const value = url.trim();
-  if (
-    value.startsWith("http://") ||
-    value.startsWith("https://") ||
-    value.startsWith("blob:")
-  ) {
-    return value;
-  }
-  if (
-    value.startsWith("/product-models/") &&
-    (value.includes("/cover/") || value.includes("/media/"))
-  ) {
-    return `${apiBaseUrl()}${value}`;
-  }
-  if (value.startsWith("/")) return value;
-  return `/${value.replace(/^\.\//, "")}`;
+  return sameOriginApiMediaUrl(url);
 }
 
 function escapeHtml(value: string): string {

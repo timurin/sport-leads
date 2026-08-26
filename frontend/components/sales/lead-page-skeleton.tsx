@@ -17,8 +17,8 @@ function DataCardSkeleton() {
 
 function CommunicationSkeleton() {
   return (
-    <div className="overflow-hidden rounded-[var(--portal-radius-lg)] border border-portal-border bg-portal-surface shadow-[var(--portal-shadow-card)]">
-      <div className="p-3.5"><SkeletonLine className="w-36" /><SkeletonLine className="mt-2 w-64 max-w-full" /><div className="mt-3 grid grid-cols-4 gap-1.5 sm:grid-cols-7">{[0, 1, 2, 3, 4, 5, 6].map((item) => <SkeletonLine key={item} className="h-14 w-full" />)}</div></div>
+    <div className="overflow-x-clip rounded-[var(--portal-radius-lg)] border border-portal-border bg-portal-surface shadow-[var(--portal-shadow-card)]">
+      <div className="p-3.5"><SkeletonLine className="w-36" /><div className="mt-3 flex flex-wrap gap-1.5">{[0, 1, 2, 3, 4, 5].map((item) => <SkeletonLine key={item} className="h-7 w-16 rounded-full" />)}</div></div>
       <div className="min-w-0">
         <div><div className="h-[430px] space-y-3 bg-slate-50 p-4">{["w-3/5", "w-2/3", "w-1/2", "w-3/4"].map((width, index) => <div key={width} className={`rounded-lg bg-white p-3 shadow-sm ${index % 2 ? "ml-auto" : ""} ${width}`}><SkeletonLine className="w-24" /><SkeletonLine className="mt-2 w-full" /></div>)}</div><div className="border-t border-slate-200 p-3"><SkeletonLine className="h-20 w-full" /><div className="mt-3 flex gap-2"><SkeletonLine className="h-10 w-28" /><SkeletonLine className="ml-auto h-10 w-28" /></div></div></div>
       </div>

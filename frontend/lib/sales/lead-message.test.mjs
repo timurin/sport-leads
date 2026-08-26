@@ -7,6 +7,7 @@ import {
   formatAttachmentSize,
   getLeadMessageDestination,
   sortLeadMessages,
+  buildLeadChannelThread,
 } from "./lead-message.ts";
 
 const contact = {
@@ -40,4 +41,14 @@ test("resolves destinations from the primary contact", () => {
 test("formats attachment metadata", () => {
   assert.equal(formatAttachmentSize(184 * 1024), "184 КБ");
   assert.equal(formatAttachmentSize(2 * 1024 * 1024), "2 МБ");
+});
+
+test("builds a per-channel thread newest first without mixing channels", () => {
+  const thread = buildLeadChannelThread("email", messages, [
+    { id: "call", type: "incoming_call", occurredAt: "2026-07-16T12:00:00Z", title: "call", channel: "phone" },
+    { id: "mail-act", type: "email_received", occurredAt: "2026-07-16T11:00:00Z", title: "mail", channel: "email", description: "extra" },
+  ]);
+  assert.deepEqual(thread.map((item) => item.id), ["mail-act", "message-new"]);
+  assert.deepEqual(buildLeadChannelThread("telegram", messages).map((item) => item.id), ["message-old"]);
+  assert.deepEqual(buildLeadChannelThread("whatsapp", messages), []);
 });

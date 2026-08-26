@@ -15,6 +15,7 @@ import { getProductionStages } from "@/lib/production-stages";
 
 type AppShellProps = {
   children: ReactNode;
+  overlay?: ReactNode;
   me: PlatformUserMe;
 };
 
@@ -38,7 +39,7 @@ async function loadAppSections(me: PlatformUserMe) {
   }
 }
 
-export async function AppShell({ children, me }: AppShellProps) {
+export async function AppShell({ children, overlay = null, me }: AppShellProps) {
   const [sections, brand] = await Promise.all([
     loadAppSections(me),
     loadPlatformBrand(),
@@ -57,6 +58,7 @@ export async function AppShell({ children, me }: AppShellProps) {
           </main>
         </div>
       </div>
+      {overlay}
     </ToastProvider>
   );
 }

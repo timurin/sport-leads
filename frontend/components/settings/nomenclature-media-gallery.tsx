@@ -6,13 +6,12 @@ import ThumbnailGenerator from "@uppy/thumbnail-generator";
 import { useEffect, useMemo, useState } from "react";
 import type { FormEvent } from "react";
 import { deleteNomenclatureMedia, updateNomenclatureMedia, uploadNomenclatureMedia } from "@/app/(workspace)/settings/catalogs/nomenclature/characteristics-actions";
+import { rasterImageMimeOrNull } from "@/lib/api-media";
 import type { NomenclatureMedia } from "@/lib/nomenclature";
+import { nomenclatureMediaUrl } from "@/lib/nomenclature";
 import { controlClassName } from "@/lib/design-system/control-styles";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
-const ACCEPTED_TYPES = ["image/jpeg", "image/png", "image/webp"];
-
-function mediaUrl(contentUrl: string): string { return contentUrl.startsWith("blob:") ? contentUrl : `${(process.env.NEXT_PUBLIC_SPORT_LEADS_API_URL ?? "http://127.0.0.1:8000").replace(/\/$/, "")}${contentUrl}`; }
 
 export function NomenclatureMediaGallery({ itemId, media, editing }: { itemId: number; media: NomenclatureMedia[]; editing: boolean }) {
   const [items, setItems] = useState(media);
@@ -28,9 +27,10 @@ export function NomenclatureMediaGallery({ itemId, media, editing }: { itemId: n
     const selected = Array.from(event.currentTarget.files ?? []);
     setError("");
     for (const file of selected) {
-      if (!ACCEPTED_TYPES.includes(file.type)) { setError("Поддерживаются только JPG, PNG и WEBP"); continue; }
+      const mime = rasterImageMimeOrNull(file);
+      if (mime == null) { setError("Поддерживаются только JPG, PNG и WEBP"); continue; }
       if (file.size > MAX_FILE_SIZE) { setError("Размер изображения не должен превышать 10 МБ"); continue; }
-      try { uppy.addFile({ name: file.name, type: file.type, data: file }); } catch (caught) { setError(caught instanceof Error ? caught.message : "Не удалось добавить файл"); }
+      try { uppy.addFile({ name: file.name, type: mime, data: file }); } catch (caught) { setError(caught instanceof Error ? caught.message : "Не удалось добавить файл"); }
     }
     event.currentTarget.value = "";
   };
@@ -65,5 +65,5 @@ function MediaTile({ item, editing, busy, onUpdate, onDelete }: { item: Nomencla
   const [altText, setAltText] = useState(item.alt_text ?? "");
   const [sortOrder, setSortOrder] = useState(item.sort_order);
   const save = async (event: FormEvent<HTMLFormElement>) => { event.preventDefault(); await onUpdate(item, { altText, sortOrder, primary: item.is_primary }); };
-  return <div className="overflow-hidden rounded-lg border border-[#dfe5ef] bg-white"><div className="relative aspect-square bg-[#eef2f7]"><img src={mediaUrl(item.content_url)} alt={item.alt_text ?? item.filename} className="h-full w-full object-cover"/><span className="absolute bottom-1 left-1 max-w-[90%] truncate rounded bg-[#1f5eff] px-1.5 py-0.5 text-[10px] font-bold text-white">{item.is_primary ? "Главное" : item.filename}</span></div>{editing && <form onSubmit={save} className="grid gap-1.5 p-2"><input value={altText} onChange={(event) => setAltText(event.target.value)} aria-label={`Alt-текст ${item.filename}`} placeholder="Alt-текст" className={controlClassName({ size: "compact", className: "text-portal-caption" })}/><div className="flex items-center gap-1"><input type="number" min="0" value={sortOrder} onChange={(event) => setSortOrder(Number(event.target.value))} aria-label={`Порядок ${item.filename}`} className={controlClassName({ size: "compact", className: "w-16 text-portal-caption" })}/><button disabled={busy} className="flex-1 rounded border border-[#dfe5ef] px-2 py-1 text-xs font-semibold">Сохранить</button></div><div className="flex gap-1"><button type="button" disabled={busy || item.is_primary} onClick={() => onUpdate(item, { altText, sortOrder, primary: true })} className="flex-1 rounded border border-blue-300 px-2 py-1 text-xs text-blue-700 disabled:opacity-50">Сделать главным</button><button type="button" disabled={busy} onClick={() => onDelete(item)} className="rounded border border-red-200 px-2 py-1 text-xs text-red-700">Удалить</button></div></form>}</div>;
+  return <div className="overflow-hidden rounded-lg border border-[#dfe5ef] bg-white"><div className="relative aspect-square bg-[#eef2f7]"><img src={nomenclatureMediaUrl(item.content_url)} alt={item.alt_text ?? item.filename} className="h-full w-full object-cover"/><span className="absolute bottom-1 left-1 max-w-[90%] truncate rounded bg-[#1f5eff] px-1.5 py-0.5 text-[10px] font-bold text-white">{item.is_primary ? "Главное" : item.filename}</span></div>{editing && <form onSubmit={save} className="grid gap-1.5 p-2"><input value={altText} onChange={(event) => setAltText(event.target.value)} aria-label={`Alt-текст ${item.filename}`} placeholder="Alt-текст" className={controlClassName({ size: "compact", className: "text-portal-caption" })}/><div className="flex items-center gap-1"><input type="number" min="0" value={sortOrder} onChange={(event) => setSortOrder(Number(event.target.value))} aria-label={`Порядок ${item.filename}`} className={controlClassName({ size: "compact", className: "w-16 text-portal-caption" })}/><button disabled={busy} className="flex-1 rounded border border-[#dfe5ef] px-2 py-1 text-xs font-semibold">Сохранить</button></div><div className="flex gap-1"><button type="button" disabled={busy || item.is_primary} onClick={() => onUpdate(item, { altText, sortOrder, primary: true })} className="flex-1 rounded border border-blue-300 px-2 py-1 text-xs text-blue-700 disabled:opacity-50">Сделать главным</button><button type="button" disabled={busy} onClick={() => onDelete(item)} className="rounded border border-red-200 px-2 py-1 text-xs text-red-700">Удалить</button></div></form>}</div>;
 }

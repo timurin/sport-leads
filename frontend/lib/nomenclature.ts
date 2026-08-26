@@ -1,3 +1,5 @@
+import { rasterImageMimeOrNull, sameOriginApiMediaUrl } from "./api-media.ts";
+
 export type ApiNomenclature = {
   id: number;
   name: string;
@@ -242,8 +244,7 @@ export function validateNomenclatureRequisitesDraft(
 }
 
 export function validateNomenclatureImageFile(file: File): string | null {
-  const allowed = ["image/jpeg", "image/png", "image/webp"];
-  if (!allowed.includes(file.type)) return NOMENCLATURE_IMAGE_RULE;
+  if (rasterImageMimeOrNull(file) == null) return NOMENCLATURE_IMAGE_RULE;
   if (file.size > 10 * 1024 * 1024) return NOMENCLATURE_IMAGE_RULE;
   return null;
 }
@@ -281,17 +282,7 @@ export function guessNomenclatureAttachmentMime(file: File): string {
 }
 
 export function nomenclatureMediaUrl(contentUrl: string): string {
-  if (
-    contentUrl.startsWith("http://") ||
-    contentUrl.startsWith("https://") ||
-    contentUrl.startsWith("blob:")
-  ) {
-    return contentUrl;
-  }
-  const base = (
-    process.env.NEXT_PUBLIC_SPORT_LEADS_API_URL ?? "http://127.0.0.1:8000"
-  ).replace(/\/$/, "");
-  return `${base}${contentUrl.startsWith("/") ? contentUrl : `/${contentUrl}`}`;
+  return sameOriginApiMediaUrl(contentUrl) ?? contentUrl;
 }
 
 export type UnitCategory = "QUANTITY" | "LENGTH" | "AREA" | "MASS" | "TIME" | "SERVICE";

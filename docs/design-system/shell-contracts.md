@@ -11,7 +11,7 @@
 
 Approved look and behaviour:
 
-- expanded width `220px`; compact width `72px`;
+- expanded width `max(220px, 10vw)` (owner `2026-08-26`, `26.8.2`; was `220px`); compact width `72px`;
 - Soft UI rail card (`.sl-shell-v1` / `.sl-shell-rail-card`): rounded card, light border, blur; owner visual `22.9.4` (`2026-08-23`);
 - on viewports below `md` (≤767 px) the sidebar is not shown; platform and section navigation use the topbar compact menu;
 - on viewports `md`–`1299` px the sidebar is **always compact** (icons only); expand control is hidden; stored `expanded` preference is restored from `1300` px up (owner visual `3.5.9`, `2026-07-31`);

@@ -1,6 +1,6 @@
 import type { LeadActivity, UserSummary } from "@/types/sales";
 
-export type LeadActivityFilter = "all" | "comments" | "messages" | "tasks" | "files";
+export type LeadActivityFilter = "all" | "comments" | "messages" | "tasks" | "files" | "system";
 
 const messageTypes = new Set<LeadActivity["type"]>([
   "incoming_call",
@@ -51,7 +51,75 @@ export function filterLeadActivities(activities: ReadonlyArray<LeadActivity>, fi
   if (filter === "tasks") {
     return activities.filter((activity) => taskTypes.has(activity.type));
   }
+  if (filter === "system") {
+    return activities.filter((activity) => Boolean(activity.isSystem));
+  }
   return activities.filter((activity) => activity.type === "file_attached" || Boolean(activity.attachments?.length));
+}
+
+export type LeadActivityChannelFilter = "all" | NonNullable<LeadActivity["channel"]>;
+
+export function filterLeadActivitiesByChannel(
+  activities: ReadonlyArray<LeadActivity>,
+  filter: LeadActivityChannelFilter,
+) {
+  if (filter === "all") {
+    return [...activities];
+  }
+  return activities.filter((activity) => activity.channel === filter);
+}
+
+export function activityAllowsReply(activity: LeadActivity) {
+  if (activity.channel === "internal") {
+    return true;
+  }
+  return messageTypes.has(activity.type);
+}
+
+export function activityIsTaskEvent(activity: LeadActivity) {
+  return taskTypes.has(activity.type);
+}
+
+export function activityIsSystemEvent(activity: LeadActivity) {
+  return Boolean(activity.isSystem);
+}
+
+export function activityChannelForThread(activity: LeadActivity): NonNullable<LeadActivity["channel"]> | null {
+  if (!activity.channel || activity.isSystem) {
+    return null;
+  }
+  if (taskTypes.has(activity.type) || activity.type === "file_attached" || activity.type === "comment_added") {
+    return null;
+  }
+  return activity.channel;
+}
+
+export function activityOpensInEventModal(activity: LeadActivity) {
+  return !activityIsSystemEvent(activity);
+}
+
+export function collaborationMessageToActivity(message: {
+  id: number;
+  created_at: string;
+  author_platform_user_id: number;
+  author_login: string;
+  author_display_name: string;
+  body: string;
+}): LeadActivity {
+  return {
+    id: `collab-${message.id}`,
+    type: "outgoing_message",
+    occurredAt: message.created_at,
+    author: {
+      id: String(message.author_platform_user_id),
+      name: message.author_display_name || message.author_login,
+    },
+    title: "Внутреннее сообщение",
+    description: message.body,
+    direction: "outgoing",
+    channel: "internal",
+    metadata: { collaborationMessageId: message.id, source: "collaboration" },
+  };
 }
 
 export function formatActivityDate(value: string) {

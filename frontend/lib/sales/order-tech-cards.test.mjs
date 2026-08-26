@@ -47,11 +47,15 @@ test("builds one row per eligible product line only", () => {
   assert.equal(rows[0].status, "missing");
   assert.equal(rows[0].unitLineCount, 12);
   assert.equal(rows[0].href, null);
+  assert.equal(rows[0].title, "Позиция 1 — Футболка игровая");
+  assert.deepEqual(rows[0].stageStrips, []);
 
   const summary = buildOrderTechCardsSummary(4, rows, []);
   assert.equal(summary.eligibleCount, 1);
   assert.equal(summary.missingCount, 1);
   assert.equal(summary.openListHref, "/production/tech-cards?orderId=4");
+  assert.equal(summary.completenessPercent, 0);
+  assert.equal(summary.readinessPercent, 0);
 });
 
 test("maps active card status and document href", () => {
@@ -86,6 +90,7 @@ test("maps active card status and document href", () => {
   assert.equal(summary.draftCount, 1);
   assert.equal(summary.missingCount, 0);
   assert.equal(summary.manufacturingComplete, false);
+  assert.equal(summary.readinessPercent, 0);
 });
 
 test("completed cards mark manufacturing complete", () => {
@@ -115,4 +120,78 @@ test("completed cards mark manufacturing complete", () => {
   assert.equal(rows[0].status, "completed");
   assert.equal(summary.manufacturingComplete, true);
   assert.equal(summary.completenessPercent, 100);
+  assert.equal(summary.readinessPercent, 100);
+});
+
+function stage(order, label, status) {
+  return {
+    id: order,
+    technical_card_id: 77,
+    stage_order: order,
+    stage_label: label,
+    status,
+    performer_name: null,
+    started_at: null,
+    completed_at: null,
+    scrap_qty: null,
+    rework_qty: null,
+    notes: null,
+    created_at: "2026-07-26T00:00:00Z",
+    updated_at: "2026-07-26T00:00:00Z",
+  };
+}
+
+test("26.2.1 readiness is 0 until launched and 100 at ready_to_ship, not completedCount/eligibleCount", () => {
+  const inProgress = {
+    id: 77,
+    sales_order_id: 4,
+    sales_order_item_id: 11,
+    number: "SO-2026-000004-01",
+    card_seq: 1,
+    status: "in_progress",
+    quantity: "12",
+    nomenclature_id: 1,
+    nomenclature_name: "Футболка игровая",
+    product_model_article: null,
+    product_model_name: null,
+    assembly_variant_name: null,
+    current_stage_order: 2,
+    current_stage_label: "Пошив",
+    unit_lines: [],
+    stage_results: [
+      stage(1, "Дизайн", "completed"),
+      stage(2, "Пошив", "in_progress"),
+      stage(3, "Готовы к отгрузке", "pending"),
+      stage(4, "Отгружены", "pending"),
+    ],
+    created_at: "2026-07-26T00:00:00Z",
+    updated_at: "2026-07-26T00:00:00Z",
+  };
+  const rows = buildOrderTechCardRows(preview, [inProgress]);
+  const summary = buildOrderTechCardsSummary(4, rows, [inProgress]);
+  assert.equal(rows[0].status, "in_progress");
+  assert.equal(rows[0].title, "SO-2026-000004-01 — Футболка игровая");
+  assert.deepEqual(
+    rows[0].stageStrips.map((strip) => strip.kind),
+    ["done", "active", "upcoming", "upcoming"],
+  );
+  assert.equal(summary.completedCount, 0);
+  assert.equal(summary.readinessPercent, 33);
+
+  const ready = {
+    ...inProgress,
+    current_stage_order: 3,
+    current_stage_label: "Готовы к отгрузке",
+    stage_results: [
+      stage(1, "Дизайн", "completed"),
+      stage(2, "Пошив", "completed"),
+      stage(3, "Готовы к отгрузке", "completed"),
+      stage(4, "Отгружены", "pending"),
+    ],
+  };
+  const readyRows = buildOrderTechCardRows(preview, [ready]);
+  const readySummary = buildOrderTechCardsSummary(4, readyRows, [ready]);
+  assert.equal(readySummary.completedCount, 0);
+  assert.equal(readySummary.readinessPercent, 100);
+  assert.equal(readySummary.manufacturingComplete, true);
 });

@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 
+import { rasterImageMimeOrNull } from "@/lib/api-media";
 import type { NomenclatureMedia } from "@/lib/nomenclature";
 
 const apiBase = () =>
@@ -296,7 +297,10 @@ export async function uploadNomenclatureMedia(formData: FormData) {
     throw new Error("Размер файла не должен превышать 10 МБ");
   }
   const explicitMime = String(formData.get("mime_type") ?? "").trim();
-  const mimeType = explicitMime || file.type;
+  const mimeType = explicitMime || rasterImageMimeOrNull(file) || file.type;
+  if (!mimeType) {
+    throw new Error("Не удалось определить тип файла");
+  }
   const bytes = Buffer.from(await file.arrayBuffer()).toString("base64");
   const response = await fetch(
     `${mediaBase()}/nomenclatures/${formData.get("nomenclature_id")}/media`,

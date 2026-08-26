@@ -17,7 +17,7 @@ import {
 import { Button, IconButton } from "@/components/ui/button";
 import { EntityLink } from "@/components/ui/entity-link";
 import type { SalesOrderDetails } from "@/lib/sales/order-details";
-import { productCategories, sports } from "@/types/sales";
+import { productCategories, sports, leadCreateSourceOptions } from "@/types/sales";
 
 const fieldClass =
   "mt-1 h-9 w-full min-w-0 rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100";
@@ -48,6 +48,19 @@ function toDraft(order: SalesOrderDetails): Draft {
 
 function display(value: string) {
   return value.trim() || "Не указано";
+}
+
+function sourceLabel(value: string) {
+  const match = leadCreateSourceOptions.find((option) => option.value === value);
+  return match?.label ?? value;
+}
+
+function sourceSelectOptions(current: string) {
+  const known = new Set<string>(leadCreateSourceOptions.map((option) => option.value));
+  if (current.trim() && !known.has(current)) {
+    return [...leadCreateSourceOptions, { value: current, label: current }];
+  }
+  return [...leadCreateSourceOptions];
 }
 
 function hasClientNeed(order: SalesOrderDetails) {
@@ -303,18 +316,7 @@ export function OrderClientNeedDetails({
               </select>
             </label>
             <label className="min-w-0 text-sm font-medium text-slate-700">
-              Количество
-              <input
-                type="number"
-                min={0}
-                step={1}
-                className={fieldClass}
-                value={draft.quantity}
-                onChange={(event) => setDraft((current) => ({ ...current, quantity: event.target.value }))}
-              />
-            </label>
-            <label className="min-w-0 text-sm font-medium text-slate-700">
-              Желаемая дата
+              Дата отгрузки
               <input
                 type="date"
                 className={fieldClass}
@@ -326,11 +328,18 @@ export function OrderClientNeedDetails({
             </label>
             <label className="min-w-0 text-sm font-medium text-slate-700">
               Источник
-              <input
+              <select
                 className={fieldClass}
                 value={draft.source}
                 onChange={(event) => setDraft((current) => ({ ...current, source: event.target.value }))}
-              />
+              >
+                <option value="">Не указано</option>
+                {sourceSelectOptions(draft.source).map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
             </label>
             <label className="min-w-0 text-sm font-medium text-slate-700">
               Описание потребности
@@ -418,16 +427,12 @@ export function OrderClientNeedDetails({
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-xs text-slate-500">Количество</dt>
-                  <dd className="mt-0.5 text-sm font-medium text-slate-900">{order.quantity}</dd>
-                </div>
-                <div>
-                  <dt className="text-xs text-slate-500">Желаемая дата</dt>
+                  <dt className="text-xs text-slate-500">Дата отгрузки</dt>
                   <dd className="mt-0.5 text-sm font-medium text-slate-900">{order.desiredDate}</dd>
                 </div>
                 <div>
                   <dt className="text-xs text-slate-500">Источник</dt>
-                  <dd className="mt-0.5 text-sm font-medium text-slate-900">{display(order.sourceValue)}</dd>
+                  <dd className="mt-0.5 text-sm font-medium text-slate-900">{display(sourceLabel(order.sourceValue))}</dd>
                 </div>
                 <div>
                   <dt className="text-xs text-slate-500">Описание</dt>

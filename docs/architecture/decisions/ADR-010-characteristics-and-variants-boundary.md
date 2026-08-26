@@ -18,4 +18,4 @@
 
 - `price` — nullable Decimal; если задан, используется как цена по умолчанию при выборе варианта в заказе; иначе наследуется `Nomenclature.base_price`.
 - `barcode` — nullable уникальный штрихкод.
-- `external_code` — nullable opaque-код для будущего обмена 1С (`16.2.1` / ADR-020 contour D). Сам обмен **не** входит в `4.4.6`.
+- `external_code` — nullable opaque-код для будущего обмена 1С (Stage **`27`** / ADR-020 contour D; не обязательный вход). Сам обмен **не** входит в `4.4.6`.

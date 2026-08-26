@@ -47,7 +47,7 @@ Documented for alignment; changing live shell still needs an explicit visual tas
 |---|---|---|
 | `--portal-shell-topbar-sm` | 64px | DS-SHELL-02 small screens |
 | `--portal-shell-topbar` | 72px | DS-SHELL-02 from `md` |
-| `--portal-shell-sidebar-expanded` | 220px | DS-SHELL-01 |
+| `--portal-shell-sidebar-expanded` | `max(220px, 10vw)` | DS-SHELL-01 (`26.8.2`) |
 | `--portal-shell-sidebar-compact` | 72px | DS-SHELL-01 |
 
 `--portal-sidebar-width` is a **deprecated alias** of compact sidebar (was incorrectly `92px`).

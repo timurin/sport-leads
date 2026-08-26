@@ -9,6 +9,7 @@ import { CreateDrawer } from "@/components/ui/create-drawer";
 import { Field, Input, Select } from "@/components/ui/form-controls";
 import { useToast } from "@/components/ui/toast";
 import type { LeadCreateDraft } from "@/lib/sales/lead-creation";
+import { leadCreateSourceOptions } from "@/types/sales";
 
 type Props = {
   open: boolean;
@@ -127,12 +128,11 @@ export function LeadCreateDialog({ open, onClose, onCreate }: Props) {
                   value={draft.source}
                   onChange={(event) => update("source", event.target.value)}
                 >
-                  <option value="manual">Вручную</option>
-                  <option value="website">Сайт</option>
-                  <option value="phone">Телефон</option>
-                  <option value="email">Email</option>
-                  <option value="referral">Рекомендация</option>
-                  <option value="vk">VK</option>
+                  {leadCreateSourceOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
                 </Select>
               </Field>
             </div>

@@ -24,7 +24,7 @@ export function CompactTabs({
   value: string;
   onChange: (id: string) => void;
   label: string;
-  size?: "compact" | "default";
+  size?: "compact" | "default" | "large";
   /** Prefer wrapping over horizontal scroll (order aside tabs). */
   wrap?: boolean;
   /** Show icons instead of text labels (label stays as title/aria). */
@@ -61,7 +61,9 @@ export function CompactTabs({
             className={[
               "relative inline-flex shrink-0 cursor-pointer items-center justify-center gap-1.5 font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-portal-focus-ring",
               pills
-                ? "h-[30px] rounded-full px-3 text-sm"
+                ? size === "large"
+                  ? "h-10 rounded-full px-4 text-sm"
+                  : "h-[30px] rounded-full px-3 text-sm"
                 : "rounded-portal-md",
               pills
                 ? undefined
@@ -71,7 +73,9 @@ export function CompactTabs({
                     : "size-10"
                   : size === "compact"
                     ? "px-2.5 py-1.5 text-portal-caption"
-                    : "px-3.5 py-2 text-sm",
+                    : size === "large"
+                      ? "min-h-10 px-4 py-2.5 text-sm"
+                      : "px-3.5 py-2 text-sm",
               pills
                 ? selected
                   ? "bg-white text-portal-primary shadow-sm"

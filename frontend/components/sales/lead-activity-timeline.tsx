@@ -25,23 +25,37 @@ import { EntityPanel } from "@/components/ui/entity-panel";
 import { ActivityTimeline } from "@/components/ui/activity-timeline";
 import {
   filterLeadActivities,
+  filterLeadActivitiesByChannel,
   formatActivityDate,
   getMentionedUserIds,
   getNotePermissions,
   isInternalNote,
   sortLeadActivities,
+  activityOpensInEventModal,
+  type LeadActivityChannelFilter,
   type LeadActivityFilter,
 } from "@/lib/sales/lead-activity";
 import type { LeadActivity, LeadActivityChannel, LeadActivityType, UserSummary } from "@/types/sales";
 
 const filterOptions: ReadonlyArray<{ id: LeadActivityFilter; label: string }> = [
   { id: "all", label: "Все события" },
-  { id: "comments", label: "Комментарии" },
+  { id: "comments", label: "Заметки" },
   { id: "messages", label: "Сообщения" },
   { id: "tasks", label: "Задачи" },
   { id: "files", label: "Файлы" },
+  { id: "system", label: "Системные" },
 ];
 
+const channelFilterOptions: ReadonlyArray<{ id: LeadActivityChannelFilter; label: string }> = [
+  { id: "all", label: "Все каналы" },
+  { id: "phone", label: "Телефон" },
+  { id: "email", label: "Email" },
+  { id: "telegram", label: "Telegram" },
+  { id: "whatsapp", label: "WhatsApp" },
+  { id: "vk", label: "VK" },
+  { id: "website", label: "Форма сайта" },
+  { id: "internal", label: "Внутренний" },
+];
 const channelLabels: Record<LeadActivityChannel, string> = {
   phone: "Телефон",
   email: "Email",
@@ -52,7 +66,10 @@ const channelLabels: Record<LeadActivityChannel, string> = {
   internal: "Внутренний",
 };
 
-function getTypePresentation(type: LeadActivityType) {
+function getTypePresentation(type: LeadActivityType, channel?: LeadActivityChannel) {
+  if (channel === "internal") {
+    return { Icon: MessageSquareText, label: "Внутреннее", classes: "bg-blue-50 text-blue-700" };
+  }
   if (type === "comment_added") {
     return { Icon: MessageSquareText, label: "Внутренняя заметка", classes: "bg-blue-50 text-blue-700" };
   }
@@ -193,6 +210,7 @@ const ActivityItem = memo(function ActivityItem({
   onEdit,
   onDelete,
   onTogglePin,
+  onOpen,
 }: {
   activity: LeadActivity;
   currentUserId: string;
@@ -201,14 +219,25 @@ const ActivityItem = memo(function ActivityItem({
   onEdit: (note: LeadActivity, trigger: HTMLElement) => void;
   onDelete: (note: LeadActivity, trigger: HTMLElement) => void;
   onTogglePin: (noteId: string) => void;
+  onOpen?: (activity: LeadActivity) => void;
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
-  const { Icon, label, classes } = getTypePresentation(activity.type);
+  const { Icon, label, classes } = getTypePresentation(activity.type, activity.channel);
   const permissions = getNotePermissions(activity, currentUserId, { persistAll: allowAllNoteActions });
   const mentionedUsers = managers.filter((manager) => activity.mentionedUserIds?.includes(manager.id));
+  const visibleMetadata = Object.entries(activity.metadata ?? {}).filter(
+    ([key]) => key !== "source" && key !== "collaborationMessageId",
+  );
   return (
-    <article className="group relative flex min-w-0 gap-3 pb-5 last:pb-0" aria-label={`${label}: ${activity.title}`}>
+    <article
+      className={`group relative flex min-w-0 gap-3 pb-5 last:pb-0 ${onOpen ? "cursor-pointer" : ""}`}
+      aria-label={`${label}: ${activity.title}`}
+      onClick={onOpen ? (event) => {
+        if ((event.target as HTMLElement).closest("button, a, [role='menu']")) return;
+        onOpen(activity);
+      } : undefined}
+    >
       <div className="absolute bottom-0 left-4 top-8 w-px bg-slate-200 group-last:hidden" aria-hidden="true" />
       <span className={`relative z-10 flex size-8 shrink-0 items-center justify-center rounded-full ring-4 ring-white ${classes}`} aria-hidden="true">
         <Icon size={15} />
@@ -248,9 +277,9 @@ const ActivityItem = memo(function ActivityItem({
         <p className="mt-2 text-sm text-slate-500">Автор: <span className="font-medium text-slate-700">{activity.author?.name ?? (activity.isSystem ? "Система" : "Не указан")}</span></p>
         {activity.description ? <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-slate-700">{isInternalNote(activity) ? <MentionText text={activity.description} mentionedUsers={mentionedUsers} /> : activity.description}</p> : null}
         {mentionedUsers.length ? <p className="mt-2 text-xs text-slate-500">Упомянуты: {mentionedUsers.map((user) => user.name).join(", ")}</p> : null}
-        {activity.metadata ? (
+        {visibleMetadata.length ? (
           <dl className="mt-3 grid gap-2 sm:grid-cols-2">
-            {Object.entries(activity.metadata).map(([key, value]) => (
+            {visibleMetadata.map(([key, value]) => (
               <div key={key} className="rounded-lg bg-slate-50 px-3 py-2 text-sm">
                 <dt className="text-xs text-slate-500">{key}</dt>
                 <dd className="mt-0.5 break-words font-medium text-slate-700">{String(value)}</dd>
@@ -284,62 +313,83 @@ type NoteDialogState =
 
 export function LeadActivityTimeline({
   activities,
+  extraActivities = [],
   currentUser,
   managers,
   onAddComment,
   onEditNote,
   onDeleteNote,
   onTogglePin,
+  onOpenActivity,
   embedded = false,
   compact = false,
   mode = "history",
+  unified = false,
   title,
   actions,
   collapsed = false,
   allowAllNoteActions = false,
 }: {
   activities: LeadActivity[];
+  extraActivities?: LeadActivity[];
   currentUser: UserSummary;
   managers: UserSummary[];
   onAddComment: (text: string, mentionedUserIds: string[]) => void;
   onEditNote: (noteId: string, text: string, mentionedUserIds: string[]) => void;
   onDeleteNote: (noteId: string) => void;
   onTogglePin: (noteId: string) => void;
+  onOpenActivity?: (activity: LeadActivity) => void;
   embedded?: boolean;
   compact?: boolean;
   mode?: "history" | "notes";
+  unified?: boolean;
   title?: ReactNode;
   actions?: ReactNode;
   collapsed?: boolean;
   allowAllNoteActions?: boolean;
 }) {
   const [activeFilter, setActiveFilter] = useState<LeadActivityFilter>("all");
+  const [channelFilter, setChannelFilter] = useState<LeadActivityChannelFilter>("all");
   const [comment, setComment] = useState("");
   const [selectedMentionIds, setSelectedMentionIds] = useState<string[]>([]);
   const [error, setError] = useState("");
   const [dialog, setDialog] = useState<NoteDialogState>(null);
   const dialogTriggerRef = useRef<HTMLElement | null>(null);
   const commentFieldRef = useRef<HTMLTextAreaElement>(null);
-  const sortedActivities = useMemo(() => sortLeadActivities(activities), [activities]);
-  const visibleActivities = useMemo(
-    () => sortedActivities.filter((activity) => mode === "notes" ? isInternalNote(activity) && !activity.isPinned : !isInternalNote(activity)),
-    [mode, sortedActivities],
+  const sortedActivities = useMemo(
+    () => sortLeadActivities([...activities, ...extraActivities]),
+    [activities, extraActivities],
   );
+  const visibleActivities = useMemo(() => {
+    if (unified) return sortedActivities;
+    return sortedActivities.filter((activity) => (
+      mode === "notes"
+        ? isInternalNote(activity) && !activity.isPinned
+        : !isInternalNote(activity)
+    ));
+  }, [mode, sortedActivities, unified]);
   const pinnedNotes = useMemo(
     () => sortedActivities.filter((activity) => isInternalNote(activity) && activity.isPinned),
     [sortedActivities],
   );
-  const filteredActivities = useMemo(
-    () => mode === "notes" ? visibleActivities : filterLeadActivities(visibleActivities, activeFilter),
-    [activeFilter, mode, visibleActivities],
-  );
+  const filteredActivities = useMemo(() => {
+    const byType = mode === "notes" && !unified
+      ? visibleActivities
+      : filterLeadActivities(visibleActivities, activeFilter);
+    if (!unified || activeFilter !== "messages") {
+      return byType;
+    }
+    return filterLeadActivitiesByChannel(byType, channelFilter);
+  }, [activeFilter, channelFilter, mode, unified, visibleActivities]);
   const counts = useMemo(() => Object.fromEntries(
     filterOptions.map((option) => [option.id, filterLeadActivities(visibleActivities, option.id).length]),
   ) as Record<LeadActivityFilter, number>, [visibleActivities]);
   const historyFilterOptions = filterOptions.filter((option) => option.id !== "comments");
+  const typeFilterOptions = unified ? filterOptions : historyFilterOptions;
   const compactLimit = mode === "notes" ? 3 : 5;
-  const primaryActivities = compact ? filteredActivities.slice(0, compactLimit) : filteredActivities;
-  const remainingActivities = compact ? filteredActivities.slice(compactLimit) : [];
+  const useCompactSlice = compact && !unified;
+  const primaryActivities = useCompactSlice ? filteredActivities.slice(0, compactLimit) : filteredActivities;
+  const remainingActivities = useCompactSlice ? filteredActivities.slice(compactLimit) : [];
 
   function submitComment(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -380,23 +430,45 @@ export function LeadActivityTimeline({
       actions={actions}
       title={
         title
-        ?? (compact
-          ? (mode === "notes" ? "Заметки" : "История активности")
-          : (mode === "notes" ? "Заметки" : "История лида"))
+        ?? (unified
+          ? "Лента"
+          : compact
+            ? (mode === "notes" ? "Заметки" : "История активности")
+            : (mode === "notes" ? "Заметки" : "История лида"))
       }
-      description={compact ? undefined : (mode === "notes" ? "Внутренние заметки команды по лиду." : "События и коммуникации в единой хронологии.")}
-      filter={mode === "history" ? (
-        <CompactTabs
-          label="Фильтр истории лида"
-          size="compact"
-          value={activeFilter}
-          onChange={(id) => setActiveFilter(id as LeadActivityFilter)}
-          items={historyFilterOptions.map((option) => ({
-            id: option.id,
-            label: option.label,
-            count: counts[option.id],
-          }))}
-        />
+      description={compact ? undefined : (unified
+        ? "Коммуникации, задачи, заметки и внутренняя переписка."
+        : (mode === "notes" ? "Внутренние заметки команды по лиду." : "События и коммуникации в единой хронологии."))}
+      filter={mode === "history" || unified ? (
+        <div className="grid gap-2">
+          <CompactTabs
+            label="Фильтр событий ленты"
+            size="compact"
+            value={activeFilter}
+            onChange={(id) => {
+              const next = id as LeadActivityFilter;
+              setActiveFilter(next);
+              if (next !== "messages") setChannelFilter("all");
+            }}
+            items={typeFilterOptions.map((option) => ({
+              id: option.id,
+              label: option.label,
+              count: counts[option.id],
+            }))}
+          />
+          {unified && activeFilter === "messages" ? (
+            <CompactTabs
+              label="Фильтр каналов ленты"
+              size="compact"
+              value={channelFilter}
+              onChange={(id) => setChannelFilter(id as LeadActivityChannelFilter)}
+              items={channelFilterOptions.map((option) => ({
+                id: option.id,
+                label: option.label,
+              }))}
+            />
+          ) : null}
+        </div>
       ) : undefined}
     >
       {mode === "notes" ? (
@@ -515,11 +587,12 @@ export function LeadActivityTimeline({
             onEdit={(note, trigger) => openDialog({ kind: "edit", note }, trigger)}
             onDelete={(note, trigger) => openDialog({ kind: "delete", note }, trigger)}
             onTogglePin={onTogglePin}
+            onOpen={unified && activityOpensInEventModal(activity) ? onOpenActivity : undefined}
           />
         )) : (
           <EmptyState
-            title="История пока пуста"
-            description="События и коммуникации появятся здесь."
+            title={unified ? "Нет событий по выбранным фильтрам" : "История пока пуста"}
+            description={unified ? "Смените фильтр событий или канала." : "События и коммуникации появятся здесь."}
             size="compact"
           />
         )}
@@ -537,6 +610,7 @@ export function LeadActivityTimeline({
                   onEdit={(note, trigger) => openDialog({ kind: "edit", note }, trigger)}
                   onDelete={(note, trigger) => openDialog({ kind: "delete", note }, trigger)}
                   onTogglePin={onTogglePin}
+                  onOpen={unified && activityOpensInEventModal(activity) ? onOpenActivity : undefined}
                 />
               ))}
             </div>

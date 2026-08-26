@@ -294,7 +294,7 @@ def list_technical_cards_for_order(db: Session, order_id: int) -> list[Technical
     return list(
         db.scalars(
             select(TechnicalCard)
-            .options(*_card_load_options(db))
+            .options(*_list_card_load_options())
             .where(TechnicalCard.sales_order_id == order_id)
             .order_by(TechnicalCard.card_seq, TechnicalCard.id)
         ).all()

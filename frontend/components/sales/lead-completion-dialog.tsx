@@ -114,11 +114,11 @@ export function LeadCompletionDialog({
     void Promise.resolve(onConvert(lead!.id, {
       title: String(data.get("title")),
       description: String(data.get("description")),
-      productCategory: String(data.get("productCategory")),
-      sport: String(data.get("sport")),
-      quantity: Number(data.get("quantity")),
-      amount: Number(data.get("amount")),
-      desiredDate: String(data.get("desiredDate")),
+      productCategory: lead!.productCategory ?? "Спортивная форма",
+      sport: lead!.sport,
+      quantity: lead!.quantity ?? 25,
+      amount: lead!.estimatedAmount,
+      desiredDate: lead!.desiredDate ?? "2026-08-31",
     })).then((result) => {
       if (result && !result.ok) {
         setError(result.message);
@@ -232,50 +232,6 @@ export function LeadCompletionDialog({
                 defaultValue={lead.needDescription ?? `Потребность клиента: ${lead.sport}`}
                 rows={3}
                 className={textareaClass}
-              />
-            </label>
-            <label className="text-sm text-slate-900">
-              Категория
-              <input
-                name="productCategory"
-                defaultValue={lead.productCategory ?? "Спортивная форма"}
-                className={fieldClass}
-              />
-            </label>
-            <label className="text-sm text-slate-900">
-              Вид спорта
-              <input name="sport" defaultValue={lead.sport} className={fieldClass} />
-            </label>
-            <label className="text-sm text-slate-900">
-              Количество
-              <input
-                name="quantity"
-                type="number"
-                min="1"
-                required
-                defaultValue={lead.quantity ?? 25}
-                className={fieldClass}
-              />
-            </label>
-            <label className="text-sm text-slate-900">
-              Сумма, ₽
-              <input
-                name="amount"
-                type="number"
-                min="0"
-                step="0.01"
-                required
-                defaultValue={lead.estimatedAmount}
-                className={fieldClass}
-              />
-            </label>
-            <label className="text-sm text-slate-900">
-              Желаемая дата
-              <input
-                name="desiredDate"
-                type="date"
-                defaultValue={lead.desiredDate ?? "2026-08-31"}
-                className={fieldClass}
               />
             </label>
             {error ? <p className="text-sm text-red-700 sm:col-span-2" role="alert">{error}</p> : null}

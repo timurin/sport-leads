@@ -12,10 +12,12 @@ import {
 
 type WorkspaceLayoutProps = {
   children: ReactNode;
+  leadSlider: ReactNode;
 };
 
 export default async function WorkspaceLayout({
   children,
+  leadSlider,
 }: WorkspaceLayoutProps) {
   let me = null;
   try {
@@ -41,7 +43,7 @@ export default async function WorkspaceLayout({
   return (
     <>
       <SewingCabinetRouteGuard restricted={restricted} />
-      <AppShell me={me}>{children}</AppShell>
+      <AppShell me={me} overlay={leadSlider}>{children}</AppShell>
     </>
   );
 }
