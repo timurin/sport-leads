@@ -49,32 +49,45 @@ jobs:
 
       - name: Deploy over SSH
         uses: appleboy/ssh-action@v1.2.0
+        env:
+          DEPLOY_REF: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.ref || github.sha }}
+          DEPLOY_SKIP_PULL: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.skip_pull || 'false' }}
         with:
           host: ${{ secrets.PROD_SSH_HOST }}
           username: ${{ secrets.PROD_SSH_USER }}
           key: ${{ secrets.PROD_SSH_KEY }}
           port: ${{ secrets.PROD_SSH_PORT || 22 }}
-          script_stop: true
+          script_stop: false
+          command_timeout: 20m
+          envs: DEPLOY_REF,DEPLOY_SKIP_PULL
           script: |
+            #!/bin/bash
             set -euo pipefail
             APP_PATH="${{ secrets.PROD_APP_PATH }}"
-            EVENT_NAME="${{ github.event_name }}"
-            if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
-              REF="${{ inputs.ref }}"
-              SKIP_PULL="${{ inputs.skip_pull }}"
-            else
-              REF="${{ github.sha }}"
-              SKIP_PULL="false"
-            fi
+            REF="${DEPLOY_REF}"
+            SKIP_PULL="${DEPLOY_SKIP_PULL:-false}"
+            echo "Deploy ref=${REF} skip_pull=${SKIP_PULL}"
             cd "$APP_PATH"
             if [ "$SKIP_PULL" != "true" ]; then
-              git fetch --prune origin
-              git fetch origin main || true
-              if git show-ref --verify --quiet "refs/remotes/origin/${REF}"; then
-                git reset --hard "origin/${REF}"
-              else
-                git reset --hard "$REF"
+              ok=0
+              for _ in 1 2 3 4 5 6; do
+                git fetch --prune origin
+                if git rev-parse --verify "${REF}^{commit}" >/dev/null 2>&1; then
+                  ok=1
+                  break
+                fi
+                if git rev-parse --verify "origin/${REF}" >/dev/null 2>&1; then
+                  REF="origin/${REF}"
+                  ok=1
+                  break
+                fi
+                sleep 5
+              done
+              if [ "$ok" != 1 ]; then
+                echo "Could not resolve ref after fetch retries"
+                exit 1
               fi
+              git reset --hard "$REF"
               git rev-parse --short HEAD
               git status -sb
             fi
