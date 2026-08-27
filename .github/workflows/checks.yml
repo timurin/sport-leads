@@ -60,13 +60,20 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "22"
           cache: npm
           cache-dependency-path: frontend/package-lock.json
 
       - name: Install frontend dependencies
         working-directory: frontend
         run: npm ci
+
+      - name: Prepare local .env for Compose config check
+        run: |
+          if [ ! -f .env ]; then
+            cp .env.example .env
+            sed -i 's/change_me_local_only/ci_password/g' .env
+          fi
 
       - name: Run project checks
         run: python scripts/check_project.py

@@ -27,3 +27,6 @@ email-validator
 
 argon2-cffi
 qrcode
+
+pytest
+httpx
