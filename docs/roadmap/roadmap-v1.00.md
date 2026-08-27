@@ -1,9 +1,9 @@
 # Sport-Lead — Roadmap v1.00
 
 **Code:** `SL-ROADMAP-v1.00`
-**Updated:** `2026-08-26` (Stage **12.4** closed; next **12.5.1**; parked `0.5.13` S3 media; Stage **26** closed `26.7.1`–`26.8.2`; Stage **27** 1C:UNF export parked)
+**Updated:** `2026-08-27` (Stage **12.4** closed; next **12.5.1**; parked `0.5.13` S3 media; Stage **26** parked `26.9.3`; Stage **27** 1C:UNF export parked; **Stage 28** standalone TC + numbering parked)
 **Project version:** `v1.00`
-**Status:** Confirmed carry-over from `v0.9.0` (Stages **1.4.3**, **2** group, **7**, **12.4**–**12.5**, **13**, **14**, **15**, **16**, **18.4**) + **new** Stages **0** (performance + LAN + order-without-lead + **canonical VPS `0.5`**), **20** (Lead / Order UX, closed), **21** (Settings / Users cabinet, closed), **22** (Design v1.0), **23** (Unified Work Tasks), **24** (Sewing cabinet), **25** (Tech-card QR / shop scan), **26** (owner findings: bugs / cosmetics), **27** (1C:UNF document export). Owner started early (`2026-08-05`).
+**Status:** Confirmed carry-over from `v0.9.0` (Stages **1.4.3**, **2** group, **7**, **12.4**–**12.5**, **13**, **14**, **15**, **16**, **18.4**) + **new** Stages **0** (performance + LAN + order-without-lead + **canonical VPS `0.5`**), **20** (Lead / Order UX, closed), **21** (Settings / Users cabinet, closed), **22** (Design v1.0), **23** (Unified Work Tasks), **24** (Sewing cabinet), **25** (Tech-card QR / shop scan), **26** (owner findings: bugs / cosmetics), **27** (1C:UNF document export), **28** (standalone tech cards + unified numbering). Owner started early (`2026-08-05`).
 **Languages / Языки:** English + Russian (this MD). Interactive switch: `docs/erp/status/roadmap-v1.00.html`
 
 **Canonical twin:**
@@ -29,7 +29,7 @@
 ## Rules / Правила
 
 - `[x]` = done / выполнено; `[ ]` = open / не выполнено.
-- Codes keep `v0.9.0` numbering for carried work (`1.4.3.*`, `2.2.3.*`, `2.2.4.*`, `2.3.*`, `2.4.*`, `7.*`, `12.4`–`12.5`, `13.*`, `14.*`, `15.*`, `16.*`, `18.4.*`). New Stages **0** (`0.1` / `0.2.*` / `0.3.*` / `0.4.*` / **`0.5.*`**), **20** (`20.1`–`20.4`), **21** (`21.1`–`21.5`), **22** (`22.0`–`22.9` Design v1.0; process `docs/design/design-v1-process.md`), **23** (`23.0`–`23.10` Unified Work Tasks; ADR-028), **24** (`24.0`–`24.5` Sewing cabinet), **25** (`25.0`–`25.5` Tech-card QR / shop scan), **26** (`26.0`–`26.8` owner findings; living; owner-pull), **27** (`27.0`–`27.5` 1C:UNF export; owner-pull).
+- Codes keep `v0.9.0` numbering for carried work (`1.4.3.*`, `2.2.3.*`, `2.2.4.*`, `2.3.*`, `2.4.*`, `7.*`, `12.4`–`12.5`, `13.*`, `14.*`, `15.*`, `16.*`, `18.4.*`). New Stages **0** (`0.1` / `0.2.*` / `0.3.*` / `0.4.*` / **`0.5.*`**), **20** (`20.1`–`20.4`), **21** (`21.1`–`21.5`), **22** (`22.0`–`22.9` Design v1.0; process `docs/design/design-v1-process.md`), **23** (`23.0`–`23.10` Unified Work Tasks; ADR-028), **24** (`24.0`–`24.5` Sewing cabinet), **25** (`25.0`–`25.5` Tech-card QR / shop scan), **26** (`26.0`–`26.9` owner findings; living; owner-pull), **27** (`27.0`–`27.5` 1C:UNF export; owner-pull), **28** (`28.0`–`28.5` standalone tech cards + `{order}-{seq}/{N}`; owner-pull).
 - Do not execute `v1.00` while `v0.9.0` is still the active project version, unless the owner explicitly starts early.
 - Не исполнять `v1.00`, пока активная версия проекта — `v0.9.0`, если владелец явно не начал раньше.
 - **Owner early start:** `2026-08-05` — execution of `v1.00` begun (`0.1.1` closed).
@@ -66,10 +66,11 @@
 | **25** | Tech-card QR + shop scan (after 24) | QR техкарты + скан по маршруту (после 24) |
 | **26** | Owner findings: bugs / cosmetics / UX polish (living) | Находки владельца: баги / косметика / UX (живой backlog) |
 | **27** | 1C:UNF document export (platform → УНФ) | Выгрузка документов в 1С:УНФ (платформа → УНФ) |
+| **28** | Standalone tech cards + unified numbering `{order}-{seq}/{N}` | Самостоятельные техкарты + единая нумерация `{заказ}-{seq}/{N}` |
 
-> **EN:** Stage 0 is **new** in `v1.00`: slow-data (`0.1`/`0.2`), **LAN** (`0.3`), **create SalesOrder without Lead** (`0.4`), and **canonical VPS** (`0.5`, ADR-032). Stages **20** / **21** closed. Stage **22** = Design v1.0 (do **not** re-open `20.*` data contracts). Do **not** re-open closed `3.5.*` / `19.*` / `17.1.2.*` / `17.2.1`–`17.2.3` in `v0.9.0`. Stage **2** closed `2026-08-24`. Stage **24** sewing cabinet closed `2026-08-24`. Stage **25** QR/scan closed `2026-08-25` (owner visual `25.5.2`). Stage **7** Specifications closed `2026-08-25` (owner visual `7.2.2.6`). Stage **26** = living owner findings (bugs/cosmetics); `26.0.1` closed; seed parked; **owner-pull only** — do not auto-start. Stage **27** = 1C:UNF **outbound** document packages (contour D); `27.0.1` closed; `27.1+` parked; **owner-pull only** — do not auto-start; inbound `16.2.1` parked. Stage **12.4** inventory closed `2026-08-26` (owner visual `12.4.1.6`). Current slice: Stage **12.5** transfers (`12.5.1`). Stage **`0.5`** live apply closed `2026-08-25` (smoke `0.5.12`: `https://sport-lead.ru/login`). Parked **`0.5.13`** S3-compatible media (**owner-pull**; do **not** auto-start; keep VPS disk `0.5.10` while the project is small). `2.4.2` Employees is **not** a 24/25 dependency (sewer = `PlatformUser`). `12.5` / 13–16 / `18.4` / **27** are not blockers.
+> **EN:** Stage 0 is **new** in `v1.00`: slow-data (`0.1`/`0.2`), **LAN** (`0.3`), **create SalesOrder without Lead** (`0.4`), and **canonical VPS** (`0.5`, ADR-032). Stages **20** / **21** closed. Stage **22** = Design v1.0 (do **not** re-open `20.*` data contracts). Do **not** re-open closed `3.5.*` / `19.*` / `17.1.2.*` / `17.2.1`–`17.2.3` in `v0.9.0`. Stage **2** closed `2026-08-24`. Stage **24** sewing cabinet closed `2026-08-24`. Stage **25** QR/scan closed `2026-08-25` (owner visual `25.5.2`). Stage **7** Specifications closed `2026-08-25` (owner visual `7.2.2.6`). Stage **26** = living owner findings (bugs/cosmetics); `26.0.1` closed; seed parked; **owner-pull only** — do not auto-start. Stage **27** = 1C:UNF **outbound** document packages (contour D); `27.0.1` closed; `27.1+` parked; **owner-pull only** — do not auto-start; inbound `16.2.1` parked. Stage **28** = standalone TechnicalCard (no required SalesOrder) + planned TC count + display `{orderNo}-{seq}/{N}`; **owner-pull**; do not auto-start; task `docs/tasks/v1.00-stage-28-standalone-tech-cards.md`. Stage **12.4** inventory closed `2026-08-26` (owner visual `12.4.1.6`). Current slice: Stage **12.5** transfers (`12.5.1`). Stage **`0.5`** live apply closed `2026-08-25` (smoke `0.5.12`: `https://sport-lead.ru/login`). Parked **`0.5.13`** S3-compatible media (**owner-pull**; do **not** auto-start; keep VPS disk `0.5.10` while the project is small). `2.4.2` Employees is **not** a 24/25 dependency (sewer = `PlatformUser`). `12.5` / 13–16 / `18.4` / **27** / **28** are not blockers.
 >
-> **RU:** Stage 0: slow-data + **LAN** (`0.3`) + **заказ без лида** (`0.4`) + **канонический VPS** (`0.5`). Stages **20** / **21** закрыты. Stage **22** = Design v1.0. Stage **2** закрыт `2026-08-24`. Stage **24** закрыт `2026-08-24`. Stage **25** закрыт `2026-08-25`. Stage **7** закрыт `2026-08-25` (owner visual `7.2.2.6`). Stage **26** — живой backlog находок; `26.0.1` закрыт; seed припаркован; старт только по явному коду владельца. Stage **27** — выгрузка документов в 1С:УНФ; `27.0.1` закрыт; `27.1+` припаркован; **owner-pull**; inbound `16.2.1` припаркован. Stage **12.4** закрыт `2026-08-26` (owner visual `12.4.1.6`). Текущий срез: Stage **12.5** (`12.5.1` перемещения). Stage **`0.5`** live apply закрыт `2026-08-25` (smoke `https://sport-lead.ru/login`). Припаркован **`0.5.13`** S3 для медиа (**owner-pull**; не стартовать; SoT пока диск VPS `0.5.10`). `2.4.2` Employees **не** зависимость (швея = `PlatformUser`).
+> **RU:** Stage 0: slow-data + **LAN** (`0.3`) + **заказ без лида** (`0.4`) + **канонический VPS** (`0.5`). Stages **20** / **21** закрыты. Stage **22** = Design v1.0. Stage **2** закрыт `2026-08-24`. Stage **24** закрыт `2026-08-24`. Stage **25** закрыт `2026-08-25`. Stage **7** закрыт `2026-08-25` (owner visual `7.2.2.6`). Stage **26** — живой backlog находок; `26.0.1` закрыт; seed припаркован; старт только по явному коду владельца. Stage **27** — выгрузка документов в 1С:УНФ; `27.0.1` закрыт; `27.1+` припаркован; **owner-pull**; inbound `16.2.1` припаркован. Stage **28** — самостоятельные ТК + плановое кол-во + показ `{заказ}-{seq}/{N}`; **owner-pull**; не стартовать сам; task `docs/tasks/v1.00-stage-28-standalone-tech-cards.md`. Stage **12.4** закрыт `2026-08-26` (owner visual `12.4.1.6`). Текущий срез: Stage **12.5** (`12.5.1` перемещения). Stage **`0.5`** live apply закрыт `2026-08-25` (smoke `https://sport-lead.ru/login`). Припаркован **`0.5.13`** S3 для медиа (**owner-pull**; не стартовать; SoT пока диск VPS `0.5.10`). `2.4.2` Employees **не** зависимость (швея = `PlatformUser`).
 
 ### Remain in v0.9.0 / Остаются в v0.9.0
 
@@ -894,7 +895,16 @@
 > **RU:** Кросс-модульные баги продакшена. Метаданные в Postgres VPS; файлы на диске `./storage`. Caddy отдаёт только Next; API снаружи нет. ≠ S3 `0.5.13`.
 
 - [x] 26.8.1 — `https://sport-lead.ru` image upload/display error: same-origin media proxy (or public API origin); do not leave `NEXT_PUBLIC_SPORT_LEADS_API_URL` default `127.0.0.1:8000`; confirm VPS `storage/` write; MIME jpeg/png/webp (empty/HEIC fails); Next serverAction `bodySizeLimit` 10mb vs base64 — `v1.00` `2026-08-26`; `/api/media/[...path]` + `sameOriginApiMediaUrl`; `bodySizeLimit` 15mb; owner report upload fail / Ошибка загрузки картинок на sport-lead.ru
-- [x] 26.8.2 — Left sidebar expanded width **10%** of viewport (`max(220px, 10vw)` on `--portal-shell-sidebar-expanded`); DS-SHELL-01 token + `shell-contracts.md`; compact `72px` unchanged; owner visual — `v1.00` `2026-08-26`; owner ask 10% / Ширина левого меню 10%
+- [x] 26.8.2 — Left sidebar expanded `max(220px, 10vw)` on flex-basis; compact `72px`; DS-SHELL-01 — `v1.00` `2026-08-27`; Tailwind `w-[var]` did not set flex-basis / Ширина левого меню 10%
+
+### 26.9 — Platform nav: sales vs production contours / Меню: контур продаж и производство
+
+> **EN:** Split the left rail into three logical groups so sales and production are separate. Settings may leave the rail (`26.9.2`). SoT `frontend/lib/navigation.ts` (`appSections`). DS-SHELL-01/02 visual; owner visual `26.9.3`. Owner `2026-08-27`: **Склад** and **Закупки** sit in the **Производство** group.
+> **RU:** Три логических раздела. Отделить продажи от производства. Склад и Закупки — в контур Производство. Настройки — в иконку справа и слайдер как лид.
+
+- [x] 26.9.1 — Sidebar three groups: (1) **Продажи** = Главная + Продажи + Отчеты + Финансы + Аналитика; (2) **Производство** = Производство + Склад + Закупки; (3) **Настройки** until `26.9.2`. Map existing `appSections` (`dashboard` / `sales` / finance reports + sales nested «Отчёты» — no new report module; `finance`; `analytics`; `production`; `warehouse`; `purchases`; `settings`) — `v1.00` `2026-08-27`; `SIDEBAR_CONTOURS` + `groupSectionsByContour`; reports section reuses `/sales/reports/*`; `app-sidebar.tsx` / Три раздела левого меню
+- [x] 26.9.2 — Move **Настройки** out of the sidebar to a DS-SHELL-02 top-right icon; open `/settings` in a right slider like the lead (`LeadCardSlider` / `@leadSlider`); nested `/settings/...` keep URL; full-page route remains for refresh/deep link — `v1.00` `2026-08-27`; `@settingsSlider/(.)settings`; `settings-card-slider.tsx`; `data-settings-topbar-link` / Настройки иконкой и слайдером
+- [ ] 26.9.3 — Owner visual: expanded + compact sidebar; desktop + md; settings icon + slider vs full `/settings` — `v1.00` / Visual меню и слайдера настроек
 
 ---
 
@@ -961,6 +971,68 @@
 ### 27.5 — Checkpoint / Checkpoint
 
 - [ ] 27.5.1 — Regression + docs (contour D, erp-check, project-structure, `16.2.1` pointer) / Регрессия + docs
+
+---
+
+## Stage 28 — Standalone tech cards + unified numbering / Самостоятельные техкарты + единая нумерация
+
+**New in:** `v1.00` (owner ask `2026-08-27`)
+**Новое в:** `v1.00` (запрос владельца `2026-08-27`)
+
+> **EN:** Keep contour A: `SalesOrder` → `SalesOrderItem` → PRODUCT → TechnicalCard → (opt.) ProductionOrder/Batch → shops / QR / FG → Spec. Add contour B: TechnicalCard without required SalesOrder (internal ops: scrap, gifts, etc.) via `technical_card_order_groups` (manual order number unique among groups, planned TC count, ship date). Unified **display** number `{orderNo}-{card_seq}/{N}` where `N` = manager-entered planned TC count (live; stored card `number` remains `{orderNo}-{seq}`). Soft progress only — create/generate not blocked when actual ≠ planned. Path B create: nomenclature + order number + planned count + desired date + qty ≥ 1 → unit lines; **no** auto-spawn of N cards. Amend ADR-016 / ADR-004 under `28.0.1`. Parked later: link B→A, PO/Spec without SO, collab without order (`28.5`). Agent does **not** auto-start. Current slice remains Stage **12.5** (`12.5.1`). Task: `docs/tasks/v1.00-stage-28-standalone-tech-cards.md`. Contract: `SL-STANDALONE-TC-v1`.
+>
+> **RU:** Контур A сохраняется. Контур B: ТК без обязательного заказа покупателя (брак, подарки и т.п.) через группу с ручным номером заказа (unique), плановым кол-вом ТК и датой отгрузки. Показ номера `{заказ}-{seq}/{N}`; `N` вручную, live. Мягкий прогресс — без hard-лимита create/generate. Create B: номенклатура + номер + план + дата + qty → unit lines; автосоздания N карт нет. `28.5` припаркован. Не стартовать сам. Срез — **12.5**.
+
+**Execute after / Исполнять после:** only when the owner names a code (e.g. «делай 28.0.1»). Do not interrupt `12.5`. Do not auto-start `26.9` / `27.1+`. / только по явному коду владельца. Не прерывать `12.5`.
+
+### 28.0 — Contract / Контракт
+
+- [ ] 28.0.1 — Contract + ADR amend plan (016/004): dual contour A/B; display `{orderNo}-{seq}/{N}`; soft planned count; no auto-spawn; task `docs/tasks/v1.00-stage-28-standalone-tech-cards.md`; `SL-STANDALONE-TC-v1` / Контракт standalone ТК + нумерация
+
+### 28.1 — Planned count on SalesOrder + unified display number / Плановое кол-во ТК на заказе + единый показ номера
+
+> **EN:** Path A keeps generate from eligible PRODUCT lines. Planned count is a separate manager field for display/progress.
+> **RU:** Generate от позиций не меняется. Плановое кол-во — отдельное ручное поле для показа/прогресса.
+
+- [ ] 28.1.1 — Alembic: `sales_orders.tech_cards_planned_count` (nullable int; when set ≥ 1) / Миграция поля планового кол-ва ТК
+- [ ] 28.1.2 — API/schemas: read + PATCH planned count on sales order / API чтения и PATCH планового кол-ва
+- [ ] 28.1.3 — Display helper: stored `number` = `{orderNo}-{seq}`; UI/print/list show `…/{N}` live from order field / Хранение без `/{N}`; показ live
+- [ ] 28.1.4 — Soft progress on order TC panel (created / planned + status split); no hard gate on create/generate / Мягкий индикатор на панели ТК заказа
+- [ ] 28.1.5 — FE: edit planned count on sales order card / FE: поле на карточке заказа
+- [ ] 28.1.6 — Tests (API + display helper) / Тесты API и helper показа
+
+### 28.2 — Standalone group + nullable TC FKs + create API / Группа standalone + nullable FK + create API
+
+> **EN:** Group table holds manual order number (unique among groups), planned count, desired date. TC may omit SalesOrder FKs.
+> **RU:** Группа хранит ручной номер, план и дату отгрузки. ТК может быть без FK заказа.
+
+- [ ] 28.2.1 — Alembic: `technical_card_order_groups` (`order_number` unique, `tech_cards_planned_count`, `desired_date`); nullable `technical_cards.sales_order_id` / `sales_order_item_id`; FK `order_group_id`; CHECK both SO FKs null or both set; UNIQUE item only when not null / Миграция группы + nullable FK
+- [ ] 28.2.2 — Service: create/find group by `order_number`; next `card_seq`; create TC (PRODUCT + qty → unit lines; nomenclature snapshot) / Сервис create группы и ТК
+- [ ] 28.2.3 — API `POST` standalone create (+ PATCH group planned count / desired_date) / API create + PATCH группы
+- [ ] 28.2.4 — List/detail serializers null-order safe; `order_number` / `desired_date` / `/{N}` from group or SalesOrder / Сериализаторы без обязательного заказа
+- [ ] 28.2.5 — Backend tests (unique group number; seq; qty→units; soft over-plan create allowed) / Backend-тесты standalone
+
+### 28.3 — FE production create + document branches / FE create и ветки документа
+
+- [ ] 28.3.1 — Create drawer on `/production/tech-cards`: nomenclature, order number, planned TC count, ship date, qty / Drawer создания standalone ТК
+- [ ] 28.3.2 — Detail/list standalone branch: no `/sales/orders/{id}` deep-link; hide order collab rail when no `sales_order_id` / Ветка UI без заказа
+- [ ] 28.3.3 — Owner visual: create + list + document header (`…/N`) / Owner visual create/list/шапка
+
+### 28.4 — Print / shop / FG regression + docs checkpoint / Печать / цех / ГП + docs
+
+- [ ] 28.4.1 — Print (`18.3.8`): display number + ship date from SalesOrder **or** order group / Печать: номер и дата отгрузки
+- [ ] 28.4.2 — Scan / kanban / FG paths null-order safe / Скан / канбан / ГП без обязательного заказа
+- [ ] 28.4.3 — Regression tests + erp-check / project-structure notes / Регрессия + docs checkpoint
+
+### 28.5 — Parked follow-ups / Припаркованные продолжения
+
+> **EN:** Owner-pull; do **not** auto-start with MVP `28.1`–`28.4`.
+> **RU:** Owner-pull; не стартовать вместе с MVP.
+
+- [ ] 28.5.1 — Optional link standalone TC → `SalesOrderItem` (if item free) — parked / Опциональная привязка B→A — припарковано
+- [ ] 28.5.2 — `ProductionOrder.sales_order_id` nullable for standalone groups — parked / PO без SalesOrder — припарковано
+- [ ] 28.5.3 — Spec header without required SalesOrder — parked / Spec без SalesOrder — припарковано
+- [ ] 28.5.4 — Collaboration context on TC without order (ADR-026 amend) — parked / Collab без заказа — припарковано
 
 ---
 
@@ -1078,10 +1150,12 @@
 | `2026-08-26` | Closed `26.3.4`: rename Поштучно → Персонализация; block after Макет row (shop title unchanged) | Закрыт `26.3.4`: Персонализация на строке 2 |
 | `2026-08-26` | Closed `26.7.1`: product-model card category Select (`folder_id`); empty = no folder; PATCH sends folder_id | Закрыт `26.7.1`: Select категории модели |
 | `2026-08-26` | Closed `26.8.1`: same-origin `/api/media/[...path]` proxy; `sameOriginApiMediaUrl`; empty MIME from extension; serverAction 15mb | Закрыт `26.8.1`: прокси картинок; не `:8000` в браузере |
-| `2026-08-26` | Closed `26.8.2`: expanded sidebar `max(220px, 10vw)`; compact 72px; DS-SHELL-01 token | Закрыт `26.8.2`: левое меню 10% вьюпорта, не уже 220px |
-| `2026-08-26` | Closed `26.8.2`: expanded sidebar `max(220px, 10vw)`; compact 72px; DS-SHELL-01 token | Закрыт `26.8.2`: левое меню 10% вьюпорта, не уже 220px |
+| `2026-08-27` | Fixed `26.8.2` render: expanded sidebar flex-basis `max(220px, 10vw)` (Tailwind `w-[var]` did not set flex-basis) | Исправлено `26.8.2`: flex-basis max(220px, 10vw) |
 | `2026-08-26` | New Stage **27** 1C:UNF outbound export (SalesOrder / approved Spec / ТН-УПД); closed `27.0.1` contract; `27.1+` parked owner-pull; `16.2.1` inbound parked (not MVP) | Новый Stage **27** выгрузка в УНФ; закрыт `27.0.1`; `27.1+` припаркован; inbound `16.2.1` не MVP |
 | `2026-08-26` | Added `26.7.1`: product-model card category Select (`folder_id` / catalog folders); parked owner-pull; example `/settings/catalogs/product-models/104` | Добавлен `26.7.1`: Select категории модели на карточке; припаркован |
 | `2026-08-26` | Added parked `0.5.13`: S3-compatible media when VPS disk is the constraint; keep `0.5.10` disk SoT; owner-pull; do not auto-start; live apply `0.5.12` stays closed | Добавлен припаркованный `0.5.13`: S3 для медиа; SoT пока диск VPS; не стартовать |
 | `2026-08-26` | Added `26.8` common system bugs; parked `26.8.1` sport-lead.ru image upload (Caddy→Next only; browser media URL uses `NEXT_PUBLIC_*` default `:8000`; bytes on VPS `storage/`) | Добавлен `26.8.1`: ошибка картинок на sport-lead.ru |
-| `2026-08-26` | Parked `26.8.2`: expanded left sidebar min 6% viewport (`max(220px, 6vw)`); DS-SHELL-01 currently 220px/72px | Добавлен `26.8.2`: ширина левого меню не менее 6% |
+| `2026-08-27` | Parked `26.9.1`–`26.9.3`: sidebar three contours (sales cluster / production / settings); settings gear + lead-style slider; Склад/Закупки stay until owner places | Добавлен `26.9`: разделить меню продажи/производство; настройки в иконку |
+| `2026-08-27` | Closed `26.9.1`: three sidebar contours; Отчеты = existing `/sales/reports/*`; Склад+Закупки in Производство; settings stay in rail | Закрыт `26.9.1`: три раздела меню |
+| `2026-08-27` | Closed `26.9.2`: settings leave the rail; DS-SHELL-02 gear; `/settings` intercept slider like lead; nested `/settings/...` stay full pages; hard refresh full hub | Закрыт `26.9.2`: настройки иконкой и слайдером |
+| `2026-08-27` | New Stage **28** standalone tech cards + unified display `{order}-{seq}/{N}`; soft planned TC count; all `28.0`–`28.5` open; owner-pull; task `v1.00-stage-28-standalone-tech-cards.md`; `SL-STANDALONE-TC-v1` | Новый Stage **28** самостоятельные ТК + нумерация; все коды открыты; owner-pull |

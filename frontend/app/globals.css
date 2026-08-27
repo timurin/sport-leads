@@ -1181,3 +1181,22 @@ body {
   min-width: 0;
 }
 }
+
+/* 26.8.2 — unlayered, after Tailwind: longhands so `shrink-0` cannot drop flex-basis.
+   `w-[var()]` only set width; used flex size stayed content/~220px. */
+[data-app-shell] > [data-platform-sidebar][data-sidebar-mode="expanded"] {
+  flex-grow: 0;
+  flex-shrink: 0;
+  flex-basis: var(--portal-shell-sidebar-expanded);
+  width: var(--portal-shell-sidebar-expanded);
+  min-width: var(--portal-shell-sidebar-expanded);
+}
+
+[data-app-shell] > [data-platform-sidebar][data-sidebar-mode="compact"] {
+  flex-grow: 0;
+  flex-shrink: 0;
+  flex-basis: var(--portal-shell-sidebar-compact);
+  width: var(--portal-shell-sidebar-compact);
+  min-width: var(--portal-shell-sidebar-compact);
+  max-width: var(--portal-shell-sidebar-compact);
+}

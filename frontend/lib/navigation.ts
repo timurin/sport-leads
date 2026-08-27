@@ -33,6 +33,87 @@ export const SEWING_CABINETS_NAV_ITEM: NavigationGroup = {
   href: "/production/sewing-cabinet/sewers",
 };
 
+/** Existing sales report routes — promoted to a sidebar section in `26.9.1` (no new pages). */
+export const SALES_REPORTS_NAV_CHILDREN: NavigationChild[] = [
+  {
+    id: "sales-funnel",
+    title: "Воронка продаж",
+    href: "/sales/reports/funnel",
+  },
+  {
+    id: "manager-performance",
+    title: "Работа менеджеров",
+    href: "/sales/reports/managers",
+  },
+  {
+    id: "sales-dynamics",
+    title: "Динамика продаж",
+    href: "/sales/reports/dynamics",
+  },
+];
+
+export type SidebarContourId = "sales" | "production";
+
+export type SidebarContour = {
+  id: SidebarContourId;
+  title: string;
+  sectionIds: readonly string[];
+};
+
+/** Left-rail visual groups (`26.9.1`). Settings leave the rail in `26.9.2`. */
+export const SIDEBAR_CONTOURS: readonly SidebarContour[] = [
+  {
+    id: "sales",
+    title: "Продажи",
+    sectionIds: ["dashboard", "sales", "reports", "finance", "analytics"],
+  },
+  {
+    id: "production",
+    title: "Производство",
+    sectionIds: ["production", "warehouse", "purchases"],
+  },
+];
+
+export type SidebarContourGroup = {
+  id: string;
+  title: string;
+  sections: AppSection[];
+};
+
+export function groupSectionsByContour(
+  sections: ReadonlyArray<AppSection>,
+): SidebarContourGroup[] {
+  const byId = new Map(sections.map((section) => [section.id, section]));
+  const used = new Set<string>();
+  const groups: SidebarContourGroup[] = [];
+
+  for (const contour of SIDEBAR_CONTOURS) {
+    const contourSections = contour.sectionIds
+      .map((id) => byId.get(id))
+      .filter((section): section is AppSection => Boolean(section));
+    if (contourSections.length === 0) {
+      continue;
+    }
+    for (const section of contourSections) {
+      used.add(section.id);
+    }
+    groups.push({
+      id: contour.id,
+      title: contour.title,
+      sections: contourSections,
+    });
+  }
+
+  const leftover = sections.filter(
+    (section) => !used.has(section.id) && section.id !== "settings",
+  );
+  if (leftover.length > 0) {
+    groups.push({ id: "other", title: "Прочее", sections: leftover });
+  }
+
+  return groups;
+}
+
 /** Fallback seed order when AppShell cannot load ProductionStage catalog. */
 const DEFAULT_SHOP_STAGE_NAV: ReadonlyArray<NavigationChild> = [
   { id: "design", title: "Дизайн", href: "/production/stages/design" },
@@ -129,26 +210,78 @@ export function buildAppSections(
         title: "Уведомления сотрудничества",
         href: "/sales/collaboration-notifications",
       },
+    ],
+  },
+  {
+    id: "reports",
+    title: "Отчеты",
+    shortTitle: "О",
+    href: "/sales/reports/funnel",
+    topNavigation: SALES_REPORTS_NAV_CHILDREN.map((child) => ({
+      id: child.id,
+      title: child.title,
+      href: child.href,
+    })),
+  },
+  {
+    id: "finance",
+    title: "Финансы",
+    shortTitle: "Ф",
+    href: "/finance",
+    topNavigation: [
       {
-        id: "sales-reports",
+        id: "finance-dashboard",
+        title: "Дашборд",
+        href: "/finance",
+      },
+      {
+        id: "payments",
+        title: "Платежи",
+        href: "/finance/payments",
+      },
+      {
+        id: "reports",
         title: "Отчёты",
         children: [
           {
-            id: "sales-funnel",
-            title: "Воронка продаж",
-            href: "/sales/reports/funnel",
+            id: "profit-loss",
+            title: "P&L",
+            href: "/finance/reports/profit-loss",
           },
           {
-            id: "manager-performance",
-            title: "Работа менеджеров",
-            href: "/sales/reports/managers",
+            id: "cash-flow",
+            title: "ДДС",
+            href: "/finance/reports/cash-flow",
           },
           {
-            id: "sales-dynamics",
-            title: "Динамика продаж",
-            href: "/sales/reports/dynamics",
+            id: "order-margin",
+            title: "Маржинальность заказов",
+            href: "/finance/reports/order-margin",
           },
         ],
+      },
+    ],
+  },
+  {
+    id: "analytics",
+    title: "Аналитика",
+    shortTitle: "А",
+    href: "/analytics",
+    topNavigation: [
+      {
+        id: "analytics-dashboard",
+        title: "Обзор",
+        href: "/analytics",
+      },
+      {
+        id: "sales-analytics",
+        title: "Продажи",
+        href: "/analytics/sales",
+      },
+      {
+        id: "production-analytics",
+        title: "Производство",
+        href: "/analytics/production",
       },
     ],
   },
@@ -250,68 +383,6 @@ export function buildAppSections(
         id: "suppliers",
         title: "Поставщики",
         href: "/purchases/suppliers",
-      },
-    ],
-  },
-  {
-    id: "finance",
-    title: "Финансы",
-    shortTitle: "Ф",
-    href: "/finance",
-    topNavigation: [
-      {
-        id: "finance-dashboard",
-        title: "Дашборд",
-        href: "/finance",
-      },
-      {
-        id: "payments",
-        title: "Платежи",
-        href: "/finance/payments",
-      },
-      {
-        id: "reports",
-        title: "Отчёты",
-        children: [
-          {
-            id: "profit-loss",
-            title: "P&L",
-            href: "/finance/reports/profit-loss",
-          },
-          {
-            id: "cash-flow",
-            title: "ДДС",
-            href: "/finance/reports/cash-flow",
-          },
-          {
-            id: "order-margin",
-            title: "Маржинальность заказов",
-            href: "/finance/reports/order-margin",
-          },
-        ],
-      },
-    ],
-  },
-  {
-    id: "analytics",
-    title: "Аналитика",
-    shortTitle: "А",
-    href: "/analytics",
-    topNavigation: [
-      {
-        id: "analytics-dashboard",
-        title: "Обзор",
-        href: "/analytics",
-      },
-      {
-        id: "sales-analytics",
-        title: "Продажи",
-        href: "/analytics/sales",
-      },
-      {
-        id: "production-analytics",
-        title: "Производство",
-        href: "/analytics/production",
       },
     ],
   },

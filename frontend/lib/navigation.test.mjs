@@ -5,6 +5,7 @@ import {
   appSections,
   filterAppSectionsForSession,
   getSectionByPathname,
+  groupSectionsByContour,
   isNavigationPathActive,
 } from "./navigation.ts";
 
@@ -19,6 +20,71 @@ test("sales navigation exposes leads and customer orders without deals", () => {
     ],
   );
   assert.equal(sales.topNavigation.some((item) => item.href === "/sales/deals"), false);
+  assert.equal(
+    sales.topNavigation.some((item) => item.id === "sales-reports"),
+    false,
+  );
+});
+
+test("26.9.1 sidebar contours split sales from production", () => {
+  assert.deepEqual(
+    appSections.map((section) => section.id),
+    [
+      "dashboard",
+      "sales",
+      "reports",
+      "finance",
+      "analytics",
+      "production",
+      "warehouse",
+      "purchases",
+      "settings",
+    ],
+  );
+  const reports = appSections.find((section) => section.id === "reports");
+  assert.ok(reports);
+  assert.equal(reports.title, "Отчеты");
+  assert.equal(reports.href, "/sales/reports/funnel");
+  assert.deepEqual(
+    reports.topNavigation.map((item) => item.href),
+    [
+      "/sales/reports/funnel",
+      "/sales/reports/managers",
+      "/sales/reports/dynamics",
+    ],
+  );
+  assert.equal(getSectionByPathname("/sales/reports/funnel").id, "reports");
+  assert.equal(getSectionByPathname("/sales/reports/managers").id, "reports");
+  assert.equal(getSectionByPathname("/sales/leads").id, "sales");
+  assert.equal(getSectionByPathname("/finance/reports/profit-loss").id, "finance");
+  assert.equal(getSectionByPathname("/warehouse/stock").id, "warehouse");
+  const groups = groupSectionsByContour(appSections);
+  assert.deepEqual(
+    groups.map((group) => ({
+      id: group.id,
+      titles: group.sections.map((section) => section.title),
+    })),
+    [
+      {
+        id: "sales",
+        titles: ["Главная", "Продажи", "Отчеты", "Финансы", "Аналитика"],
+      },
+      {
+        id: "production",
+        titles: ["Производство", "Склад", "Закупки"],
+      },
+    ],
+  );
+  assert.equal(
+    groups.some((group) => group.id === "settings"),
+    false,
+  );
+  assert.equal(
+    groups.some((group) =>
+      group.sections.some((section) => section.id === "settings"),
+    ),
+    false,
+  );
 });
 
 test("settings navigation exposes tech-cards after pattern-base", () => {

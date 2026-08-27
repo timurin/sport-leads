@@ -10,7 +10,7 @@
 
 Tokenize sidebar chrome **without visual redesign**:
 
-- widths → `--portal-shell-sidebar-expanded|compact` (`max(220px, 10vw)` / 72)
+- widths → `--portal-shell-sidebar-expanded|compact` (`max(220px, 10vw)` / 72px)
 - header height → `--portal-shell-topbar` (72)
 - colors → portal primary/page/border/text + shell-local neutrals (`--portal-shell-nav`, `--portal-shell-ink`, …)
 - radius 9px → `--portal-shell-radius`

@@ -6,6 +6,7 @@ import {
   ChevronDown,
   ChevronRight,
   CircleDollarSign,
+  ClipboardList,
   Factory,
   Home,
   Menu,
@@ -26,6 +27,8 @@ import {
 
 import {
   appSections,
+  getSectionByPathname,
+  groupSectionsByContour,
   isNavigationPathActive,
   type AppSection,
   type NavigationGroup,
@@ -53,6 +56,7 @@ type AppSidebarProps = {
 const sectionIcons = {
   dashboard: Home,
   sales: CircleDollarSign,
+  reports: ClipboardList,
   production: Factory,
   warehouse: Warehouse,
   purchases: ShoppingCart,
@@ -208,12 +212,12 @@ export function AppSidebar({
   const pathname = usePathname();
 
   const activeSectionId = useMemo(() => {
-    return (
-      sections.find((section) =>
-        isSectionContentActive(pathname, section),
-      )?.id ?? "dashboard"
-    );
+    return getSectionByPathname(pathname, sections).id;
   }, [pathname, sections]);
+  const contourGroups = useMemo(
+    () => groupSectionsByContour(sections),
+    [sections],
+  );
 
   const [storedMode, setStoredMode] =
     useState<SidebarMode>("expanded");
@@ -349,10 +353,8 @@ function updateMode(nextMode: SidebarMode) {
         // Mobile (≤767): sidebar hidden — navigation via topbar menu (DS-SHELL-02).
         "sl-shell-v1 hidden h-full shrink-0 flex-col md:flex",
         "bg-transparent text-[color:var(--portal-shell-ink)]",
-        "transition-[width] duration-200 ease-out",
-        expanded
-          ? "w-[var(--portal-shell-sidebar-expanded)] p-2 pr-1.5"
-          : "w-[var(--portal-shell-sidebar-compact)] p-1.5 pr-1",
+        "transition-[width,flex-basis] duration-200 ease-out",
+        expanded ? "p-2 pr-1.5" : "p-1.5 pr-1",
       ].join(" ")}
     >
       <div className="sl-shell-rail-card flex min-h-0 flex-1 flex-col overflow-hidden">
@@ -433,14 +435,25 @@ function updateMode(nextMode: SidebarMode) {
     expanded ? "px-3" : "px-2",
   ].join(" ")}
 >
-        {expanded ? (
-          <div className="mb-2 px-2 text-[11px] font-extrabold uppercase tracking-[0.06em] text-portal-subtle">
-            Разделы
-          </div>
-        ) : null}
-
         <div className="grid gap-1">
-          {sections.map((section) => {
+          {contourGroups.map((group, groupIndex) => (
+            <div
+              key={group.id}
+              data-sidebar-contour={group.id}
+              className={groupIndex > 0 ? "mt-3" : undefined}
+            >
+              {expanded ? (
+                <div className="mb-2 px-2 text-[11px] font-extrabold uppercase tracking-[0.06em] text-portal-subtle">
+                  {group.title}
+                </div>
+              ) : groupIndex > 0 ? (
+                <div
+                  aria-hidden="true"
+                  className="mx-2 my-1.5 border-t border-[color:var(--portal-shell-group-line)]"
+                />
+              ) : null}
+
+              {group.sections.map((section) => {
             const active = isSectionContentActive(
               pathname,
               section,
@@ -554,7 +567,9 @@ function updateMode(nextMode: SidebarMode) {
                 ) : null}
               </div>
             );
-          })}
+              })}
+            </div>
+          ))}
         </div>
       </nav>
 

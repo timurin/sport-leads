@@ -11,13 +11,14 @@
 
 Approved look and behaviour:
 
-- expanded width `max(220px, 10vw)` (owner `2026-08-26`, `26.8.2`; was `220px`); compact width `72px`;
+- expanded width `max(220px, 10vw)` via flex-basis (not Tailwind `width` only; `26.8.2`); compact width `72px`;
 - Soft UI rail card (`.sl-shell-v1` / `.sl-shell-rail-card`): rounded card, light border, blur; owner visual `22.9.4` (`2026-08-23`);
 - on viewports below `md` (≤767 px) the sidebar is not shown; platform and section navigation use the topbar compact menu;
 - on viewports `md`–`1299` px the sidebar is **always compact** (icons only); expand control is hidden; stored `expanded` preference is restored from `1300` px up (owner visual `3.5.9`, `2026-07-31`);
 - light Soft UI background and SPORT-LEAD visual system;
 - brand mark (`SL` fallback / uploaded logo) and title from platform system settings (`18.1.2`), default `SPORT-LEAD`;
 - section/subsection grouping;
+- two contour labels in expanded mode (`Продажи` / `Производство`, `26.9.1`); Settings leave the rail (`26.9.2`, topbar gear); compact uses icon order + dividers;
 - expand/collapse on the full row click;
 - active section and route highlighting;
 - own vertical scroll, no horizontal scroll;
@@ -79,7 +80,7 @@ Approved composition and behaviour:
 - desktop section pills use `12px` semibold type; grouped `topNavigation` items keep dropdowns;
 - desktop nav from `lg`; tablet/mobile use compact section menu;
 - on mobile (≤767 px) the compact menu also lists top-level `appSections` (sidebar is hidden);
-- global Search and Create actions (compact control height `32px`);
+- global Search, Settings gear (`26.9.2`, `/settings`), and Create actions (compact control height `32px`);
 - dropdown closes on toggle, item select, outside click, route change, `Escape`;
 - popups stay in viewport; no horizontal page scroll from topbar;
 - focus/hover/active states are part of the contract.
@@ -99,6 +100,7 @@ Responsibility split:
 
 - section navigation (no separate section title chrome);
 - global search;
+- platform settings gear (`26.9.2`);
 - global create;
 - adaptive section menu.
 

@@ -19,6 +19,8 @@ test("Soft UI shell keeps nav SoT and compact mechanics", async () => {
     "sport-lead-sidebar-mode",
     "1299",
     'from "@/lib/navigation"',
+    "groupSectionsByContour",
+    "data-sidebar-contour",
   ]) {
     assert.ok(sidebar.includes(marker), `sidebar missing ${marker}`);
   }
@@ -29,11 +31,16 @@ test("Soft UI shell keeps nav SoT and compact mechanics", async () => {
     'from "@/lib/navigation"',
     "setSearchOpen",
     "Создать",
+    "data-settings-topbar-link",
+    'href="/settings"',
   ]) {
     assert.ok(topbar.includes(marker), `topbar missing ${marker}`);
   }
 
   assert.ok(css.includes("--portal-shell-sidebar-expanded: max(220px, 10vw)"));
+  assert.ok(css.includes("flex-basis: var(--portal-shell-sidebar-expanded)"));
+  assert.ok(sidebar.includes('data-sidebar-mode={mode}'));
+  assert.ok(!sidebar.includes("w-[var(--portal-shell-sidebar-expanded)]"));
   assert.ok(css.includes("--portal-shell-sidebar-compact: 72px"));
   assert.ok(css.includes(".sl-shell-rail-card"));
 

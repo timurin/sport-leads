@@ -40,7 +40,7 @@ Viewport breakpoints apply to **platform chrome only**. Nested workspaces prefer
 
 1. Never shown below `md` — no alternate mobile drawer for the left rail.
 2. Modes on `md+`: `expanded` | `compact` | `hidden` (hidden is user-triggered, not viewport-driven).
-3. Structure only from `appSections` / `topNavigation` via `navigation.ts`.
+3. Structure only from `appSections` / `topNavigation` via `navigation.ts`. Contours (`26.9.1`) come from `groupSectionsByContour` / `SIDEBAR_CONTOURS`.
 4. Compact mode must not introduce horizontal scroll.
 
 ### Topbar
@@ -48,7 +48,7 @@ Viewport breakpoints apply to **platform chrome only**. Nested workspaces prefer
 1. Heights: 64 → 72 from `md`.
 2. In-section links: desktop strip from `lg`; below `lg` — hamburger compact menu.
 3. Compact menu content:
-   - block **Разделы** → `appSections` (required on mobile because sidebar is gone; also present on tablet/laptop when compact menu is used);
+   - contour labels **Продажи** / **Производство** (`26.9.1`); **Настройки** is the topbar gear (`26.9.2`), not a rail section;
    - block **current section** → that section’s `topNavigation` (groups with children expand in place).
 4. Global Search: icon button below `xl`, wider field from `xl`; full-width search mode unchanged.
 5. Global Create: always visible in topbar (wiring is a separate task; placement is part of DS-SHELL-02).

@@ -5,6 +5,7 @@ ChevronDown,
 Menu,
 Plus,
 Search,
+Settings,
 X,
 } from "lucide-react";
 import Link from "next/link";
@@ -19,6 +20,7 @@ import {
 import {
   appSections,
   getSectionByPathname,
+  groupSectionsByContour,
   isNavigationPathActive,
   type AppSection,
   type NavigationGroup,
@@ -49,6 +51,10 @@ type TopNavigationProps = {
 export function TopNavigation({ sections = appSections }: TopNavigationProps) {
 const pathname = usePathname();
 const section = getSectionByPathname(pathname, sections);
+const contourGroups = useMemo(
+  () => groupSectionsByContour(sections),
+  [sections],
+);
 
 const [openMenuId, setOpenMenuId] =
 useState<string | null>(null);
@@ -467,6 +473,21 @@ return ( <header data-sl-shell="v1" className="sl-shell-v1 relative z-portal-she
           <Search size={16} aria-hidden="true" />
         </button>
 
+        <Link
+          href="/settings"
+          data-settings-topbar-link
+          aria-label="Настройки"
+          aria-current={section.id === "settings" ? "page" : undefined}
+          className={[
+            "flex h-8 w-8 items-center justify-center rounded-md border outline-none transition-colors focus-visible:ring-2 focus-visible:ring-portal-focus-ring",
+            section.id === "settings"
+              ? "border-portal-primary/30 bg-portal-primary-soft text-portal-primary-hover"
+              : "border-portal-border bg-portal-surface text-portal-muted hover:border-portal-border-strong hover:bg-portal-surface-secondary hover:text-portal-text",
+          ].join(" ")}
+        >
+          <Settings size={16} aria-hidden="true" />
+        </Link>
+
         <button
           type="button"
           className="flex h-9 items-center justify-center gap-1.5 rounded-full bg-portal-primary px-3 text-[13px] font-medium text-white outline-none transition-colors hover:bg-portal-primary-hover focus-visible:ring-2 focus-visible:ring-portal-focus-ring focus-visible:ring-offset-2 sm:px-3.5"
@@ -532,11 +553,13 @@ return ( <header data-sl-shell="v1" className="sl-shell-v1 relative z-portal-she
                 aria-label="Мобильная навигация платформы"
               >
                 <div className="mb-2 border-b border-portal-border pb-2">
-                  <div className="px-3 py-1.5 text-[11px] font-medium uppercase tracking-[0.08em] text-portal-subtle">
-                    Разделы
-                  </div>
+                  {contourGroups.map((contour) => (
+                    <div key={contour.id} className="mb-1 last:mb-0">
+                      <div className="px-3 py-1.5 text-[11px] font-medium uppercase tracking-[0.08em] text-portal-subtle">
+                        {contour.title}
+                      </div>
 
-                  {sections.map((appSection) => {
+                      {contour.sections.map((appSection) => {
                     const sectionActive =
                       appSection.id === section.id;
 
@@ -563,7 +586,9 @@ return ( <header data-sl-shell="v1" className="sl-shell-v1 relative z-portal-she
                         {appSection.title}
                       </Link>
                     );
-                  })}
+                      })}
+                    </div>
+                  ))}
                 </div>
 
                 <div className="px-3 py-1.5 text-[11px] font-medium uppercase tracking-[0.08em] text-portal-subtle">
