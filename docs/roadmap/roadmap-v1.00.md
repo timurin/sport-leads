@@ -1,7 +1,7 @@
 # Sport-Lead — Roadmap v1.00
 
 **Code:** `SL-ROADMAP-v1.00`
-**Updated:** `2026-08-27` (Stage **12.4** closed; next **12.5.1**; parked `0.5.13` S3 media; Stage **26** parked `26.9.3`; Stage **27** 1C:UNF export parked; **Stage 28** standalone TC + numbering parked)
+**Updated:** `2026-08-27` (Stage **12.4** closed; next **12.5.1**; parked `0.5.13` S3 media; Stage **26** `26.9.1`–`26.9.3` closed; Stage **27** 1C:UNF export parked; **Stage 28** standalone TC + numbering parked)
 **Project version:** `v1.00`
 **Status:** Confirmed carry-over from `v0.9.0` (Stages **1.4.3**, **2** group, **7**, **12.4**–**12.5**, **13**, **14**, **15**, **16**, **18.4**) + **new** Stages **0** (performance + LAN + order-without-lead + **canonical VPS `0.5`**), **20** (Lead / Order UX, closed), **21** (Settings / Users cabinet, closed), **22** (Design v1.0), **23** (Unified Work Tasks), **24** (Sewing cabinet), **25** (Tech-card QR / shop scan), **26** (owner findings: bugs / cosmetics), **27** (1C:UNF document export), **28** (standalone tech cards + unified numbering). Owner started early (`2026-08-05`).
 **Languages / Языки:** English + Russian (this MD). Interactive switch: `docs/erp/status/roadmap-v1.00.html`
@@ -904,7 +904,7 @@
 
 - [x] 26.9.1 — Sidebar three groups: (1) **Продажи** = Главная + Продажи + Отчеты + Финансы + Аналитика; (2) **Производство** = Производство + Склад + Закупки; (3) **Настройки** until `26.9.2`. Map existing `appSections` (`dashboard` / `sales` / finance reports + sales nested «Отчёты» — no new report module; `finance`; `analytics`; `production`; `warehouse`; `purchases`; `settings`) — `v1.00` `2026-08-27`; `SIDEBAR_CONTOURS` + `groupSectionsByContour`; reports section reuses `/sales/reports/*`; `app-sidebar.tsx` / Три раздела левого меню
 - [x] 26.9.2 — Move **Настройки** out of the sidebar to a DS-SHELL-02 top-right icon; open `/settings` in a right slider like the lead (`LeadCardSlider` / `@leadSlider`); nested `/settings/...` keep URL; full-page route remains for refresh/deep link — `v1.00` `2026-08-27`; `@settingsSlider/(.)settings`; `settings-card-slider.tsx`; `data-settings-topbar-link` / Настройки иконкой и слайдером
-- [ ] 26.9.3 — Owner visual: expanded + compact sidebar; desktop + md; settings icon + slider vs full `/settings` — `v1.00` / Visual меню и слайдера настроек
+- [x] 26.9.3 — Owner visual: expanded + compact sidebar; desktop + md; settings icon + slider vs full `/settings` — `v1.00` `2026-08-27` / Visual меню и слайдера настроек
 
 ---
 
@@ -1158,4 +1158,5 @@
 | `2026-08-27` | Parked `26.9.1`–`26.9.3`: sidebar three contours (sales cluster / production / settings); settings gear + lead-style slider; Склад/Закупки stay until owner places | Добавлен `26.9`: разделить меню продажи/производство; настройки в иконку |
 | `2026-08-27` | Closed `26.9.1`: three sidebar contours; Отчеты = existing `/sales/reports/*`; Склад+Закупки in Производство; settings stay in rail | Закрыт `26.9.1`: три раздела меню |
 | `2026-08-27` | Closed `26.9.2`: settings leave the rail; DS-SHELL-02 gear; `/settings` intercept slider like lead; nested `/settings/...` stay full pages; hard refresh full hub | Закрыт `26.9.2`: настройки иконкой и слайдером |
+| `2026-08-27` | Closed `26.9.3`: owner visual OK expanded + compact sidebar; desktop + md; settings gear + slider vs full `/settings` | Закрыт `26.9.3`: owner OK меню и слайдер настроек |
 | `2026-08-27` | New Stage **28** standalone tech cards + unified display `{order}-{seq}/{N}`; soft planned TC count; all `28.0`–`28.5` open; owner-pull; task `v1.00-stage-28-standalone-tech-cards.md`; `SL-STANDALONE-TC-v1` | Новый Stage **28** самостоятельные ТК + нумерация; все коды открыты; owner-pull |

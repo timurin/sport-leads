@@ -1,7 +1,7 @@
 # Sport-Lead — Global Roadmap
 
 **Code:** `SL-ROADMAP-v1`
-**Updated:** `2026-08-27` (v1.00 parked `0.5.13` S3 media; Stage **26** `26.9.3`; Stage `0.5` canonical VPS)
+**Updated:** `2026-08-27` (v1.00 parked `0.5.13` S3 media; Stage **26** `26.9.1`–`26.9.3` closed; Stage `0.5` canonical VPS)
 **Project version:** `v0.9.0`
 **Git branch:** `feature/v0.8.1-nomenclature-core`
 
