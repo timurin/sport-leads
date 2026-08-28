@@ -819,7 +819,7 @@ class TechnicalCardOrderGroupUpdate(BaseModel):
     desired_date: date | None = None
 
     @model_validator(mode="after")
-    def require_at_least_one_field(self) -> TechnicalCardOrderGroupUpdate:
+    def require_at_least_one_field(self) -> "TechnicalCardOrderGroupUpdate":
         if self.tech_cards_planned_count is None and self.desired_date is None:
             raise ValueError(
                 "At least one of tech_cards_planned_count or desired_date is required"
