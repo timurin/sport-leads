@@ -28,7 +28,7 @@ MVP registry is **code-defined** (frontend lib + backend module constant). DB ta
 | code | title | status | Notes |
 |------|-------|--------|-------|
 | `cities` | Города | `live` in `18.2.2`/`18.2.3` | Geography for leads/orders/UI suggestions |
-| `contractors` | Контрагенты | `planned` | Not MVP — prefer CRM `Client` / future supplier domain; hub stub under catalogs stays until dedicated stage |
+| `contractors` | Контрагенты | `planned` | Hub stub only — do **not** implement here; procurement SoT = Stage `13` `Supplier` (ADR-033 / `SL-SUPPLIER-v1`); CRM buyers stay `Client` |
 
 ## City entity contract
 

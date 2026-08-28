@@ -31,6 +31,10 @@ test("26.11 list toolbar: view segment + icon-only create/generate + responsible
   assert.ok(workspace.includes("data-tech-card-create-nomenclature-save"));
   assert.ok(workspace.includes("data-tech-card-create-nomenclature-catalog"));
   assert.ok(workspace.includes("<NomenclaturePickModal"));
+  assert.ok(workspace.includes("nomenclatureName"));
+  assert.ok(workspace.includes("Укажите номенклатуру"));
+  assert.equal(workspace.includes('label="Количество"'), false);
+  assert.equal(workspace.includes("Выберите номенклатуру"), false);
   assert.ok(workspace.includes("data-tech-card-row-copy"));
   assert.ok(workspace.includes("data-tech-card-row-delete"));
   assert.ok(workspace.includes('String(card.status) === "draft"'));

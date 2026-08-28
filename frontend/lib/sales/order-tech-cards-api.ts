@@ -378,11 +378,12 @@ export async function generateOrderTechnicalCards(
 }
 
 export type StandaloneTechnicalCardCreateInput = {
-  nomenclature_id: number;
+  nomenclature_id?: number | null;
+  nomenclature_name?: string | null;
   order_number: string;
   tech_cards_planned_count: number;
   desired_date: string;
-  quantity: number;
+  quantity?: number;
 };
 
 export async function createStandaloneTechnicalCard(

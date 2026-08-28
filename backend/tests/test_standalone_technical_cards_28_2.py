@@ -231,3 +231,41 @@ def test_standalone_rejects_fractional_qty_and_non_product(
         json=_create_payload(material_id, quantity=1),
     )
     assert material.status_code == 422
+
+
+def test_standalone_create_with_manual_nomenclature_name(
+    client: TestClient, session_factory: sessionmaker[Session]
+) -> None:
+    """26.11.14 — free-text name without catalog id; quantity defaults to 1."""
+    created = client.post(
+        "/technical-cards/standalone",
+        json={
+            "nomenclature_name": "  Майка ручная  ",
+            "order_number": "MANUAL-1",
+            "tech_cards_planned_count": 2,
+            "desired_date": "2026-09-20",
+        },
+    )
+    assert created.status_code == 201, created.text
+    body = created.json()
+    assert body["nomenclature_id"] is None
+    assert body["nomenclature_name"] == "Майка ручная"
+    assert body["nomenclature_type"] == "PRODUCT"
+    assert Decimal(str(body["quantity"])) == Decimal("1")
+    assert len(body["unit_lines"]) == 1
+    assert body["number"] == "MANUAL-1-1"
+    assert body["display_number"] == "MANUAL-1-1/2"
+
+
+def test_standalone_rejects_empty_nomenclature(
+    client: TestClient,
+) -> None:
+    response = client.post(
+        "/technical-cards/standalone",
+        json={
+            "order_number": "EMPTY-1",
+            "tech_cards_planned_count": 1,
+            "desired_date": "2026-09-20",
+        },
+    )
+    assert response.status_code == 422

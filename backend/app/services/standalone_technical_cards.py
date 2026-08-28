@@ -93,22 +93,47 @@ def create_standalone_technical_card(
     if not order_number:
         raise TechnicalCardValidationError("order_number is required")
 
-    nomenclature = db.get(Nomenclature, payload.nomenclature_id)
-    if nomenclature is None:
-        raise TechnicalCardNotFoundError("Nomenclature not found")
-    if not nomenclature.is_active:
-        raise TechnicalCardValidationError("Nomenclature is inactive")
-
     settings = get_technical_card_settings(db)
     allowed_types = {
         value.value if hasattr(value, "value") else str(value)
         for value in settings.eligible_nomenclature_types
     }
-    nomenclature_type = _nomenclature_type_value(nomenclature)
-    if nomenclature_type not in allowed_types:
-        raise TechnicalCardValidationError(
-            f"nomenclature_type_not_allowed:{nomenclature_type.lower()}"
+
+    nomenclature: Nomenclature | None = None
+    nomenclature_id: int | None = None
+    nomenclature_name: str | None = None
+    nomenclature_type: str | None = None
+
+    if payload.nomenclature_id is not None:
+        nomenclature = db.get(Nomenclature, payload.nomenclature_id)
+        if nomenclature is None:
+            raise TechnicalCardNotFoundError("Nomenclature not found")
+        if not nomenclature.is_active:
+            raise TechnicalCardValidationError("Nomenclature is inactive")
+        nomenclature_type = _nomenclature_type_value(nomenclature)
+        if nomenclature_type not in allowed_types:
+            raise TechnicalCardValidationError(
+                f"nomenclature_type_not_allowed:{nomenclature_type.lower()}"
+            )
+        nomenclature_id = nomenclature.id
+        # Free-text override wins when both are sent (create modal name edit).
+        nomenclature_name = (
+            (payload.nomenclature_name or "").strip() or nomenclature.name
         )
+    else:
+        name = (payload.nomenclature_name or "").strip()
+        if not name:
+            raise TechnicalCardValidationError("Укажите номенклатуру")
+        if len(name) > 255:
+            raise TechnicalCardValidationError("nomenclature_name is too long")
+        # Manual snapshot — no catalog row; treat as PRODUCT for TC eligibility.
+        product_type = NomenclatureType.PRODUCT.value
+        if product_type not in allowed_types and "PRODUCT" not in allowed_types:
+            raise TechnicalCardValidationError(
+                f"nomenclature_type_not_allowed:{product_type.lower()}"
+            )
+        nomenclature_name = name
+        nomenclature_type = product_type
 
     unit_count = unit_line_count_from_quantity(payload.quantity)
     group = _get_or_create_order_group(
@@ -135,8 +160,8 @@ def create_standalone_technical_card(
         card_seq=card_seq,
         status=TechnicalCardStatus.DRAFT,
         quantity=Decimal(payload.quantity),
-        nomenclature_id=nomenclature.id,
-        nomenclature_name=nomenclature.name,
+        nomenclature_id=nomenclature_id,
+        nomenclature_name=nomenclature_name,
         nomenclature_type=nomenclature_type,
         created_by_platform_user_id=created_by_platform_user_id,
         unit_lines=[],

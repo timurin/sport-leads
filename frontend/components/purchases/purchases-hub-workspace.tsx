@@ -6,12 +6,12 @@ const LIVE_LINKS = [
   {
     href: "/purchases/orders",
     title: "Заказы поставщикам",
-    detail: "Stage 13 — контур ещё не поставлен",
+    detail: "Stage 13.1.2 — контур ещё не поставлен",
   },
   {
     href: "/purchases/suppliers",
     title: "Поставщики",
-    detail: "Stage 13 — контур ещё не поставлен",
+    detail: "Список и карточка live (`13.1.1`)",
   },
   {
     href: "/warehouse/stock",
@@ -20,7 +20,7 @@ const LIVE_LINKS = [
   },
 ] as const;
 
-/** Soft UI purchases hub (`22.6.3`). No demo PO/supplier rows — Stage 13 is open. */
+/** Soft UI purchases hub (`22.6.3`). Suppliers live in 13.1.1; PO still empty. */
 export function PurchasesHubWorkspace() {
   return (
     <PageLayout className="flex min-h-0 flex-1 flex-col">
@@ -30,19 +30,19 @@ export function PurchasesHubWorkspace() {
             <div className="flex flex-wrap items-center gap-2">
               <h1 className="text-xl font-semibold tracking-tight">Закупки</h1>
               <span className="rounded-full border border-portal-border px-2 py-0.5 text-portal-caption text-portal-muted">
-                0 open
+                поставщики live
               </span>
             </div>
             <p className="mt-2 text-portal-caption text-portal-muted">
-              Заказы поставщикам и поставщики появятся в Stage 13. Soft UI chrome
-              без demo-подмены API.
+              Поставщики (`13.1.1`) на live API. Заказы поставщикам — Stage `13.1.2`.
+              Soft UI без demo-подмены.
             </p>
           </div>
           <Link
-            href="/warehouse/movements"
+            href="/purchases/suppliers"
             className="portal-focus-ring inline-flex h-9 items-center justify-center rounded-lg border border-portal-border bg-portal-surface px-3 text-sm font-medium text-portal-text"
           >
-            Движения склада
+            Поставщики
           </Link>
         </section>
 
@@ -72,8 +72,14 @@ export function PurchasesHubWorkspace() {
         <section className="sl-soft-panel p-portal-4" id="suppliers">
           <h2 className="mb-2 text-sm font-semibold">Поставщики</h2>
           <p className="text-portal-caption text-portal-muted">
-            Список пуст: нет API поставщиков (`13.1.1`). Карточки эталона не
-            подменяют live данные.
+            Справочник live:{" "}
+            <Link
+              href="/purchases/suppliers"
+              className="font-medium text-portal-primary hover:underline"
+            >
+              /purchases/suppliers
+            </Link>
+            . Карточка и цены на номенклатуру.
           </p>
         </section>
       </div>

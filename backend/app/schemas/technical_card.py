@@ -745,20 +745,36 @@ class TechnicalCardOperationLinesPrefillRead(BaseModel):
 
 
 class TechnicalCardStandaloneCreate(BaseModel):
-    """Contour B create (Stage 28.2) — no SalesOrder required."""
+    """Contour B create (Stage 28.2 / 26.11.14) — no SalesOrder required.
 
-    nomenclature_id: int = Field(ge=1)
+    Catalog pick (`nomenclature_id`) **or** free-text snapshot (`nomenclature_name`).
+    Quantity defaults to 1 (create modal no longer collects it).
+    """
+
+    nomenclature_id: int | None = Field(default=None, ge=1)
+    nomenclature_name: str | None = Field(default=None, max_length=255)
     order_number: str = Field(min_length=1, max_length=50)
     tech_cards_planned_count: int = Field(ge=1)
     desired_date: date
-    quantity: Decimal = Field(gt=0, max_digits=14, decimal_places=3)
+    quantity: Decimal = Field(default=Decimal("1"), gt=0, max_digits=14, decimal_places=3)
 
-    @field_validator("order_number", mode="before")
+    @field_validator("order_number", "nomenclature_name", mode="before")
     @classmethod
-    def strip_order_number(cls, value: object) -> object:
+    def strip_text_fields(cls, value: object) -> object:
         if isinstance(value, str):
             return value.strip()
         return value
+
+    @model_validator(mode="after")
+    def require_nomenclature_id_or_name(self) -> "TechnicalCardStandaloneCreate":
+        name = (self.nomenclature_name or "").strip()
+        if self.nomenclature_id is None and not name:
+            raise ValueError("Укажите номенклатуру")
+        if name:
+            self.nomenclature_name = name
+        else:
+            self.nomenclature_name = None
+        return self
 
 
 class TechnicalCardLinkSalesOrderItem(BaseModel):

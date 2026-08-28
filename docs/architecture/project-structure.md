@@ -1,7 +1,7 @@
 # Sport-Lead — Project Structure Checklist
 
 **Code:** `SL-PROJECT-STRUCTURE-v1`
-**Updated:** `2026-08-29` (Stage **12.5.1.1**–`12.5.1.5` transfer shipped; next **12.5.1.6** owner visual; Stage **26** `26.3.15` + `26.10.1`–`26.10.8` closed; **`26.11.1`–`26.11.13` closed**; Stage **27** 1C:UNF export parked)
+**Updated:** `2026-08-29` (Stage **13.1.1** suppliers closed — owner visual `13.1.1.6`; Stage **27** parked)
 **Project version:** `v0.9.0` / early `v1.00` Stages 0 + 20 + 21 + 22 + 23 + **24** + **25** + **26** + **27** + Stage **7** contract
 **Git branch:** `main`
 
@@ -125,7 +125,7 @@
 - [x] Materials as nomenclature type `MATERIAL` — data migration + nav removed (`4.6.1`–`4.6.3`); Alembic `z6a7b8c9d012`
 - [x] Relation between materials and the common nomenclature contour — `ADR-012` / `materials-nomenclature-migration-plan.md`
 - [x] Delete legacy materials API/UI/table (`4.6.4`) — drop `a1b2c3d4e567`
-- [ ] Suppliers, procurement prices, batches, stock balances, and consumption norms (stock balances must not live on the nomenclature card)
+- [x] Suppliers and supplier prices (`13.1.1`) — ADR-033; Alembic `q6r7s8t9u012`; `/suppliers` + `/purchases/suppliers`; owner visual `13.1.1.6` OK `2026-08-29` (batches / stock norms / PO still open)
 
 ## 8. База лекал (Models / Size grids / Sewing ops), Specifications, and Routings
 
@@ -175,7 +175,7 @@
 - [x] Tech-card QR / shop scan (`v1.00` Stage `25`) — ADR-030; owner visual OK `25.5.2` (`2026-08-25`); token/print/scan/status/FG
 - [x] Warehouse nomenclature PT-04 `/warehouse/stock` — tree CRUD + list + settings redirects + остаток column/filter + owner visual OK (`4.10.1`–`4.10.7`); live ledger column `12.2.3` (ADR-019)
 - [x] Warehouse Stage 12 ledger MVP `12.2` (`12.2.1`–`12.2.5` / former `4.6.5.*`) — StockDocument/Ledger + post/API + live `/warehouse/stock` column + regression + docs sync
-- [x] Warehouse FG docs + movements `12.3` (`12.3.1`–`12.3.3`) shipped; inventory `12.4` closed `2026-08-26` (owner visual `12.4.1.6`); transfers `12.5.1.1`–`12.5.1.5` shipped, owner visual `12.5.1.6` open
+- [x] Warehouse FG docs + movements `12.3` (`12.3.1`–`12.3.3`) shipped; inventory `12.4` closed `2026-08-26` (owner visual `12.4.1.6`); transfers `12.5.1` closed `2026-08-29` (owner visual `12.5.1.6`); reserves `12.5.2` later
 - [ ] Procurement requests, supplier orders, receipts, and returns
 - [ ] Shipping documents, delivery tracking, and confirmation of receipt
 

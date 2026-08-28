@@ -113,7 +113,6 @@ export function TechCardsWorkspace({
   const [createOrderNumber, setCreateOrderNumber] = useState("");
   const [createPlannedCount, setCreatePlannedCount] = useState("1");
   const [createDesiredDate, setCreateDesiredDate] = useState("");
-  const [createQuantity, setCreateQuantity] = useState("1");
   const [rowBusyId, setRowBusyId] = useState<number | null>(null);
   const filterRef = useRef<HTMLDivElement>(null);
   const listView = parseTechCardListView(view);
@@ -220,7 +219,6 @@ export function TechCardsWorkspace({
     setCreateOrderNumber("");
     setCreatePlannedCount("1");
     setCreateDesiredDate("");
-    setCreateQuantity("1");
     setCreateError(null);
   };
 
@@ -277,15 +275,23 @@ export function TechCardsWorkspace({
 
   const openCreate = () => {
     resetCreateForm();
+    setCreateNomenclatureEditing(true);
     setCreateOpen(true);
   };
 
   const runCreate = async () => {
-    const nomenclatureId = Number(createNomenclatureId);
+    const nomenclatureIdRaw = createNomenclatureId.trim();
+    const nomenclatureId = nomenclatureIdRaw ? Number(nomenclatureIdRaw) : null;
+    const nomenclatureName = (
+      createNomenclatureEditing ? createNomenclatureDraft : createNomenclatureName
+    ).trim();
     const plannedCount = Number(createPlannedCount);
-    const quantity = Number(createQuantity);
-    if (!Number.isSafeInteger(nomenclatureId) || nomenclatureId <= 0) {
-      setCreateError("Выберите номенклатуру");
+    const hasCatalogId =
+      nomenclatureId != null &&
+      Number.isSafeInteger(nomenclatureId) &&
+      nomenclatureId > 0;
+    if (!hasCatalogId && !nomenclatureName) {
+      setCreateError("Укажите номенклатуру");
       return;
     }
     if (!createOrderNumber.trim()) {
@@ -300,20 +306,22 @@ export function TechCardsWorkspace({
       setCreateError("Укажите дату отгрузки");
       return;
     }
-    if (!Number.isSafeInteger(quantity) || quantity < 1) {
-      setCreateError("Количество должно быть целым числом ≥ 1");
-      return;
+
+    if (createNomenclatureEditing && nomenclatureName) {
+      setCreateNomenclatureName(nomenclatureName);
+      setCreateNomenclatureEditing(false);
     }
 
     setCreating(true);
     setCreateError(null);
     try {
       const result = await createStandaloneTechnicalCardAction({
-        nomenclatureId,
+        nomenclatureId: hasCatalogId ? nomenclatureId : null,
+        nomenclatureName: nomenclatureName || null,
         orderNumber: createOrderNumber.trim(),
         plannedCount,
         desiredDate: createDesiredDate.trim(),
-        quantity,
+        quantity: 1,
       });
       if (!result.ok || result.card == null) {
         setCreateError(result.message ?? "Ошибка создания");
@@ -403,7 +411,7 @@ export function TechCardsWorkspace({
       <CreateDrawer
         open={createOpen}
         title="Создать техкарту"
-        description="Без заказа продаж: номенклатура, номер, план ТК, дата отгрузки и количество единиц."
+        description="Без заказа продаж: номенклатура (текст или справочник), номер, план ТК и дата отгрузки."
         onClose={() => {
           if (creating) return;
           setCreateOpen(false);
@@ -513,32 +521,13 @@ export function TechCardsWorkspace({
               disabled={creating}
             />
           </Field>
-          <Field label="Количество" required>
-            <Input
-              type="number"
-              min={1}
-              step={1}
-              value={createQuantity}
-              onChange={(event) => setCreateQuantity(event.target.value)}
-              disabled={creating}
-            />
-          </Field>
-          {productNomenclatures.length === 0 ? (
-            <p className="text-portal-body text-portal-muted">
-              Нет активной номенклатуры типа «Продукция».
-            </p>
-          ) : null}
           {createError ? (
             <p className="text-portal-body text-portal-danger" role="alert">
               {createError}
             </p>
           ) : null}
           <div className="flex flex-wrap gap-portal-2">
-            <Button
-              type="submit"
-              variant="primary"
-              disabled={creating || productNomenclatures.length === 0}
-            >
+            <Button type="submit" variant="primary" disabled={creating}>
               {creating ? "Создание…" : "Создать"}
             </Button>
             <Button type="button" disabled={creating} onClick={() => setCreateOpen(false)}>

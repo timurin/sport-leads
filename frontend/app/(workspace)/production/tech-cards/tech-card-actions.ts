@@ -109,21 +109,23 @@ export async function generateTechCardsFromOrderAction(
 }
 
 export async function createStandaloneTechnicalCardAction(input: {
-  nomenclatureId: number;
+  nomenclatureId?: number | null;
+  nomenclatureName?: string | null;
   orderNumber: string;
   plannedCount: number;
   desiredDate: string;
-  quantity: number;
+  quantity?: number;
 }): Promise<TechCardActionResult> {
   try {
     const auth = await sessionAuthHeaders();
     const card = await createStandaloneTechnicalCard(
       {
-        nomenclature_id: input.nomenclatureId,
+        nomenclature_id: input.nomenclatureId ?? null,
+        nomenclature_name: input.nomenclatureName ?? null,
         order_number: input.orderNumber,
         tech_cards_planned_count: input.plannedCount,
         desired_date: input.desiredDate,
-        quantity: input.quantity,
+        quantity: input.quantity ?? 1,
       },
       auth,
     );
