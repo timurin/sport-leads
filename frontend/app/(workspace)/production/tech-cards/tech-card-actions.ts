@@ -27,6 +27,7 @@ import {
   linkStandaloneTechnicalCard,
   importTechnicalCardUnitLinesFile,
   importTechnicalCardUnitLines,
+  downloadTechnicalCardUnitLinesImportTemplate,
   replaceTechnicalCardUnitLines,
   replaceTechnicalCardComposition,
   rollbackTechnicalCardStage,
@@ -493,6 +494,24 @@ export async function importUnitLinesFileAction(
     return failure(
       error instanceof Error ? error.message : "Не удалось импортировать XLSX-файл",
     );
+  }
+}
+
+export async function downloadUnitLinesImportTemplateAction(): Promise<
+  | { ok: true; filename: string; contentType: string; base64: string }
+  | { ok: false; message: string }
+> {
+  try {
+    const payload = await downloadTechnicalCardUnitLinesImportTemplate();
+    return { ok: true, ...payload };
+  } catch (error) {
+    return {
+      ok: false,
+      message:
+        error instanceof Error
+          ? error.message
+          : "Не удалось скачать шаблон импорта",
+    };
   }
 }
 

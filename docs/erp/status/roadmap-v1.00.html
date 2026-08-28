@@ -249,7 +249,7 @@
         brandSub: "HTML twin for SL-ROADMAP-v1.00",
         chipUpdated: "Updated: 2026-08-29",
         chipCarry: "Carry: 1.4.3, 2 group, 7, 12.4–12.5, 13–16, 18.4 + Stages 0, 20–28",
-        chipActive: "Active: v1.00 — name next (13.1.1 closed; 13.1.2 owner-pull)",
+        chipActive: "Active: v1.00 — 13.1.2 stop at visual 13.1.2.6",
         legendTitle: "Legend",
         legendDone: "`[x]` done",
         legendTodo: "`[ ]` open",
@@ -258,7 +258,7 @@
         heroText: "Includes Stage 0 (performance + LAN + order-without-lead + canonical VPS 0.5), Stage 20 Lead/Order UX, Stage 21 Users cabinet, Stage 22 Design v1.0, Stage 23 Unified Work Tasks, Stage 24 Sewing cabinet (closed), Stage 25 tech-card QR (closed), Stage 26 living owner findings (parked; owner-pull), Stage 27 1C:UNF export (27.0.1 closed; 27.1+ parked; owner-pull), Stage 28 standalone tech cards + numbering (parked; owner-pull), Stage 7 Specs (closed), Stage 12.4 inventory (closed owner visual 12.4.1.6), plus carry-over 1.4.3, Stage 2 group (closed), 12.5 (current), 13–16, 18.4. Switch EN / RU.",
         progressLabel: "Overall progress",
         transferTitle: "Owner transfer",
-        transferText: "Stage 13.1.1 suppliers closed 2026-08-29 (owner visual 13.1.1.6 OK). Next 13.1.2 owner-pull. Alembic q6r7s8t9u012. Stage 27 parked. Stage 12.5.1 closed. 12.5.2 later. Do not auto-start 13.1.2 / 27.",
+        transferText: "Stage 13.1.2 purchase orders in flight — stop at owner visual 13.1.2.6. ADR-034. Stage 13.1.1 closed. Stage 27 parked. Do not auto-start 13.2 / 27.",
         transferItems: [
           "New: Stage 0 — Performance / slow-data (0.1–0.2) + LAN (0.3) + order without Lead (0.4.1–0.4.3) + canonical VPS (0.5)",
           "New: Stage 20 — Lead / Order card UX + unified messaging (20.1–20.4)",
@@ -298,7 +298,7 @@
         brandSub: "HTML-близнец SL-ROADMAP-v1.00",
         chipUpdated: "Обновлено: 2026-08-29",
         chipCarry: "Перенос: 1.4.3, группа 2, 7, 12.4–12.5, 13–16, 18.4 + Stages 0, 20–28",
-        chipActive: "Активно: v1.00 — назвать next (13.1.1 закрыт; 13.1.2 owner-pull)",
+        chipActive: "Активно: v1.00 — 13.1.2 стоп на visual 13.1.2.6",
         legendTitle: "Легенда",
         legendDone: "`[x]` выполнено",
         legendTodo: "`[ ]` открыто",
@@ -307,7 +307,7 @@
         heroText: "Stage 0 (производительность + LAN + заказ без лида + канонический VPS 0.5), Stage 20 UX лида/заказа, Stage 21 кабинет Пользователи, Stage 22 Design v1.0, Stage 23 Единые Задачи, Stage 24 кабинет швеи (закрыт), Stage 25 QR техкарты (закрыт), Stage 26 живой backlog находок (припаркован; owner-pull), Stage 27 выгрузка в 1С:УНФ (27.0.1 закрыт; 27.1+ припаркован; owner-pull), Stage 28 самостоятельные ТК + нумерация (припаркован; owner-pull), Stage 7 Спецификации (закрыт), Stage 12.4 инвентаризация (закрыт owner visual 12.4.1.6), плюс перенос 1.4.3, группа 2 (закрыта), 12.5 (текущий), 13–16, 18.4. Язык EN / RU.",
         progressLabel: "Общий прогресс",
         transferTitle: "Перенос владельца",
-        transferText: "Stage 13.1.1 поставщики закрыты 2026-08-29 (owner visual 13.1.1.6 OK). Далее 13.1.2 owner-pull. Alembic q6r7s8t9u012. Stage 27 припаркован. Stage 12.5.1 закрыт. Не стартовать 13.1.2 / 27 сам.",
+        transferText: "Stage 13.1.2 ЗП в работе — стоп на owner visual 13.1.2.6. ADR-034. Stage 13.1.1 закрыт. Stage 27 припаркован. Не стартовать 13.2 / 27 сам.",
         transferItems: [
           "Новое: Stage 0 — Производительность / slow-data (0.1–0.2) + LAN (0.3) + заказ без лида (0.4.1–0.4.3) + канонический VPS (0.5)",
           "Новое: Stage 20 — UX карточек лида / заказа + единая переписка (20.1–20.4)",
@@ -1849,8 +1849,8 @@
         code: "13",
         title: { en: "Stage 13 — Procurement", ru: "Этап 13 — Закупки" },
         note: {
-          en: "Carried from v0.9.0. Soft UI hub 22.6. Stage 13.1.1 closed 2026-08-29 (owner visual 13.1.1.6). Next 13.1.2 owner-pull. Task v1.00-stage-13.1.1-suppliers.md.",
-          ru: "Перенесено из v0.9.0. Хаб Soft UI 22.6. Stage 13.1.1 закрыт 2026-08-29 (visual 13.1.1.6). Далее 13.1.2 owner-pull."
+          en: "Carried from v0.9.0. Soft UI hub 22.6. Stage 13.1.1 closed. Stage 13.1.2 in flight (ADR-034); stop at visual 13.1.2.6. Task v1.00-stage-13.1.2-purchase-orders.md.",
+          ru: "Перенесено из v0.9.0. Хаб Soft UI 22.6. Stage 13.1.1 закрыт. Stage 13.1.2 в работе (ADR-034); стоп на visual 13.1.2.6."
         },
         blocks: [
           {
@@ -1929,11 +1929,71 @@
                 }
               },
               {
-                code: "13.1.2",
+                code: "13.1.2.1",
+                done: true,
+                title: {
+                  en: "Domain contract: PurchaseOrder + lines; draft = request; hosts /purchases/orders",
+                  ru: "Контракт ЗП"
+                },
+                note: {
+                  en: "v1.00 2026-08-29; ADR-034; SL-PURCHASE-ORDER-v1; task v1.00-stage-13.1.2-purchase-orders.md",
+                  ru: "v1.00 2026-08-29; ADR-034; контракт без БД"
+                }
+              },
+              {
+                code: "13.1.2.2",
+                done: true,
+                title: {
+                  en: "SQLAlchemy + Alembic for PurchaseOrder + PurchaseOrderLine",
+                  ru: "SQLAlchemy + Alembic ЗП + строки"
+                },
+                note: {
+                  en: "v1.00 2026-08-29; Alembic r7s8t9u0v123; test_purchase_orders_13_1_2_2.py",
+                  ru: "v1.00 2026-08-29; модели + миграция"
+                }
+              },
+              {
+                code: "13.1.2.3",
+                done: true,
+                title: {
+                  en: "Service + API CRUD (PO + lines + confirm/cancel) + backend tests",
+                  ru: "Service + API + backend tests"
+                },
+                note: {
+                  en: "v1.00 2026-08-29; /purchase-orders; test_purchase_orders_13_1_2_3.py",
+                  ru: "v1.00 2026-08-29; API CRUD"
+                }
+              },
+              {
+                code: "13.1.2.4",
+                done: true,
+                title: {
+                  en: "FE list /purchases/orders (PT-02, no demo)",
+                  ru: "FE список ЗП"
+                },
+                note: {
+                  en: "v1.00 2026-08-29; purchase-orders-workspace.tsx",
+                  ru: "v1.00 2026-08-29; PT-02 list"
+                }
+              },
+              {
+                code: "13.1.2.5",
+                done: true,
+                title: {
+                  en: "FE card + lines editor + confirm/cancel (PT-05)",
+                  ru: "FE карточка + строки"
+                },
+                note: {
+                  en: "v1.00 2026-08-29; purchase-order-card.tsx; stop at visual 13.1.2.6",
+                  ru: "v1.00 2026-08-29; PT-05; стоп на visual"
+                }
+              },
+              {
+                code: "13.1.2.6",
                 done: false,
                 title: {
-                  en: "Procurement requests and purchase orders",
-                  ru: "Заявки на закупку и заказы поставщикам"
+                  en: "Regression + owner visual",
+                  ru: "Регрессия + визуальная проверка владельцем"
                 }
               }
             ]

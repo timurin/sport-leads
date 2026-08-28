@@ -6,7 +6,7 @@ const LIVE_LINKS = [
   {
     href: "/purchases/orders",
     title: "Заказы поставщикам",
-    detail: "Stage 13.1.2 — контур ещё не поставлен",
+    detail: "Список и карточка live (`13.1.2`)",
   },
   {
     href: "/purchases/suppliers",
@@ -16,11 +16,11 @@ const LIVE_LINKS = [
   {
     href: "/warehouse/stock",
     title: "Связь со складом",
-    detail: "Номенклатура и остатки (live)",
+    detail: "Номенклатура и остатки (live); приход из ЗП — 13.2.1",
   },
 ] as const;
 
-/** Soft UI purchases hub (`22.6.3`). Suppliers live in 13.1.1; PO still empty. */
+/** Soft UI purchases hub (`22.6.3`). Suppliers + PO live; receipts later. */
 export function PurchasesHubWorkspace() {
   return (
     <PageLayout className="flex min-h-0 flex-1 flex-col">
@@ -30,20 +30,28 @@ export function PurchasesHubWorkspace() {
             <div className="flex flex-wrap items-center gap-2">
               <h1 className="text-xl font-semibold tracking-tight">Закупки</h1>
               <span className="rounded-full border border-portal-border px-2 py-0.5 text-portal-caption text-portal-muted">
-                поставщики live
+                поставщики + ЗП live
               </span>
             </div>
             <p className="mt-2 text-portal-caption text-portal-muted">
-              Поставщики (`13.1.1`) на live API. Заказы поставщикам — Stage `13.1.2`.
+              Поставщики (`13.1.1`) и заказы поставщикам (`13.1.2`) на live API.
               Soft UI без demo-подмены.
             </p>
           </div>
-          <Link
-            href="/purchases/suppliers"
-            className="portal-focus-ring inline-flex h-9 items-center justify-center rounded-lg border border-portal-border bg-portal-surface px-3 text-sm font-medium text-portal-text"
-          >
-            Поставщики
-          </Link>
+          <div className="flex flex-wrap gap-2">
+            <Link
+              href="/purchases/suppliers"
+              className="portal-focus-ring inline-flex h-9 items-center justify-center rounded-lg border border-portal-border bg-portal-surface px-3 text-sm font-medium text-portal-text"
+            >
+              Поставщики
+            </Link>
+            <Link
+              href="/purchases/orders"
+              className="portal-focus-ring inline-flex h-9 items-center justify-center rounded-lg border border-portal-border bg-portal-surface px-3 text-sm font-medium text-portal-text"
+            >
+              Заказы
+            </Link>
+          </div>
         </section>
 
         <div className="grid gap-3 md:grid-cols-3">
@@ -64,8 +72,14 @@ export function PurchasesHubWorkspace() {
         <section className="sl-soft-panel p-portal-4" id="orders">
           <h2 className="mb-2 text-sm font-semibold">Заказы поставщикам</h2>
           <p className="text-portal-caption text-portal-muted">
-            Список пуст: нет API заказов поставщикам (`13.1.2`). Демо-строки
-            эталона на live-маршрут не переносим.
+            Live список:{" "}
+            <Link
+              href="/purchases/orders"
+              className="font-medium text-portal-primary hover:underline"
+            >
+              /purchases/orders
+            </Link>
+            . Черновик → подтверждение; складской приход — `13.2.1`.
           </p>
         </section>
 

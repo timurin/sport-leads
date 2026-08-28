@@ -117,6 +117,7 @@ from app.services.technical_cards import (
     sync_technical_card_unit_lines,
     tech_card_media_content_url,
     technical_card_media_path,
+    unit_lines_import_template_path,
     to_technical_card_read,
     to_technical_card_list_read,
     list_card_responsible_name,
@@ -1155,6 +1156,25 @@ def import_unit_lines_endpoint(
         TechnicalCardValidationError,
     ) as error:
         raise _http_error(error) from error
+
+
+@router.get(
+    "/technical-cards/unit-lines/import-template",
+    operation_id="download_technical_card_unit_lines_import_template",
+)
+def download_unit_lines_import_template():
+    """Download bundled personalization XLSX template (`techcart_example.xlsx`)."""
+    try:
+        path = unit_lines_import_template_path()
+    except TechnicalCardValidationError as error:
+        raise _http_error(error) from error
+    return FileResponse(
+        path,
+        media_type=(
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        ),
+        filename="techcart_example.xlsx",
+    )
 
 
 @router.post(

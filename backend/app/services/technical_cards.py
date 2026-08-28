@@ -1775,10 +1775,51 @@ def _assert_unit_lines_editable(card: TechnicalCard) -> None:
 
 
 def _order_item_for_card(db: Session, card: TechnicalCard) -> SalesOrderItem:
+    if card.sales_order_item_id is None:
+        raise TechnicalCardValidationError(
+            "Standalone technical card has no order item"
+        )
     item = db.get(SalesOrderItem, card.sales_order_item_id)
     if item is None:
         raise TechnicalCardValidationError("Order item not found for technical card")
     return item
+
+
+def _unit_line_expectation(
+    db: Session, card: TechnicalCard
+) -> tuple[int, SalesOrderItem | None]:
+    """Expected unit-line count from order item, or card.quantity for standalone."""
+    if card.sales_order_item_id is not None:
+        item = db.get(SalesOrderItem, card.sales_order_item_id)
+        if item is not None:
+            return unit_line_count_from_quantity(item.quantity), item
+    return unit_line_count_from_quantity(card.quantity), None
+
+
+def _blank_unit_line_slot(unit_index: int) -> TechnicalCardUnitLine:
+    return TechnicalCardUnitLine(
+        unit_index=unit_index,
+        size_type=None,
+        size=None,
+        personalization=None,
+        print_number=None,
+        notes=None,
+    )
+
+
+def _resize_unit_lines(db: Session, card: TechnicalCard, target: int) -> None:
+    """Align unit-line count without SalesOrderItem (standalone / orphaned item)."""
+    lines = sorted(card.unit_lines, key=lambda row: row.unit_index)
+    while len(lines) < target:
+        next_index = (lines[-1].unit_index + 1) if lines else 1
+        line = _blank_unit_line_slot(next_index)
+        card.unit_lines.append(line)
+        lines.append(line)
+    while len(lines) > target:
+        line = lines.pop()
+        card.unit_lines.remove(line)
+        db.delete(line)
+    db.flush()
 
 
 def list_unit_lines(db: Session, card_id: int) -> list[TechnicalCardUnitLine]:
@@ -1859,8 +1900,7 @@ def replace_unit_lines(
     """Replace characteristic fields for all unit rows; count must equal quantity."""
     card = get_technical_card(db, card_id)
     _assert_unit_lines_editable(card)
-    item = _order_item_for_card(db, card)
-    expected = unit_line_count_from_quantity(item.quantity)
+    expected, order_item = _unit_line_expectation(db, card)
     if len(lines) != expected:
         raise TechnicalCardValidationError(
             f"Unit line count must equal order quantity ({expected})"
@@ -1873,8 +1913,11 @@ def replace_unit_lines(
 
     by_index = {line.unit_index: line for line in card.unit_lines}
     if len(by_index) != expected:
-        # Auto-heal count from order qty, then apply payloads.
-        sync_unit_lines(db, card, item)
+        # Auto-heal count from qty, then apply payloads.
+        if order_item is not None:
+            sync_unit_lines(db, card, order_item)
+        else:
+            _resize_unit_lines(db, card, expected)
         by_index = {line.unit_index: line for line in card.unit_lines}
 
     for payload in lines:
@@ -1885,7 +1928,8 @@ def replace_unit_lines(
         target.print_number = payload.print_number
         target.color = payload.color
         target.notes = payload.notes
-    card.quantity = item.quantity
+    if order_item is not None:
+        card.quantity = order_item.quantity
     db.commit()
     return get_technical_card(db, card_id)
 
@@ -1922,8 +1966,7 @@ def import_unit_lines(
     """Aggregate import hook: validate sum and expand into N unit lines."""
     card = get_technical_card(db, card_id)
     _assert_unit_lines_editable(card)
-    item = _order_item_for_card(db, card)
-    expected = unit_line_count_from_quantity(item.quantity)
+    expected, _order_item = _unit_line_expectation(db, card)
     settings = get_technical_card_settings(db)
     total = sum(row.quantity for row in items)
     if total != expected:
@@ -1968,6 +2011,22 @@ _UNIT_LINE_IMPORT_TEMPLATE_COLUMNS = {
     "Рост": "height",
     "Количество": "quantity",
 }
+
+_UNIT_LINE_IMPORT_TEMPLATE_FILENAME = "techcart_example.xlsx"
+
+
+def unit_lines_import_template_path() -> Path:
+    """Bundled XLSX template for personalization / unit-line import."""
+    path = (
+        Path(__file__).resolve().parents[1]
+        / "assets"
+        / _UNIT_LINE_IMPORT_TEMPLATE_FILENAME
+    )
+    if not path.is_file():
+        raise TechnicalCardValidationError(
+            "Шаблон импорта techcart_example.xlsx не найден на сервере"
+        )
+    return path
 
 
 def import_unit_lines_from_template_file(

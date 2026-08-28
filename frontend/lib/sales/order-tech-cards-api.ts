@@ -684,6 +684,32 @@ export async function importTechnicalCardUnitLinesFile(
   return (await response.json()) as ApiTechnicalCard;
 }
 
+export async function downloadTechnicalCardUnitLinesImportTemplate(): Promise<{
+  filename: string;
+  contentType: string;
+  base64: string;
+}> {
+  const response = await fetch(
+    `${apiBaseUrl()}/technical-cards/unit-lines/import-template`,
+    { method: "GET", cache: "no-store" },
+  );
+  if (!response.ok) {
+    throw new Error(
+      await readError(response, "Не удалось скачать шаблон импорта персонализаций"),
+    );
+  }
+  const buffer = Buffer.from(await response.arrayBuffer());
+  const disposition = response.headers.get("content-disposition") ?? "";
+  const match = /filename="([^"]+)"/i.exec(disposition);
+  return {
+    filename: match?.[1] ?? "techcart_example.xlsx",
+    contentType:
+      response.headers.get("content-type") ??
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    base64: buffer.toString("base64"),
+  };
+}
+
 export async function replaceTechnicalCardUnitLines(
   cardId: number | string,
   lines: TechnicalCardUnitLineWriteItem[],

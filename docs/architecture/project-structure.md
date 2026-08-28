@@ -1,7 +1,7 @@
 # Sport-Lead — Project Structure Checklist
 
 **Code:** `SL-PROJECT-STRUCTURE-v1`
-**Updated:** `2026-08-29` (Stage **13.1.1** suppliers closed — owner visual `13.1.1.6`; Stage **27** parked)
+**Updated:** `2026-08-29` (Stage **13.1.1** suppliers closed — owner visual `13.1.1.6`; Stage **13.1.2** PO FE shipped — stop at visual `13.1.2.6`; Stage **27** parked)
 **Project version:** `v0.9.0` / early `v1.00` Stages 0 + 20 + 21 + 22 + 23 + **24** + **25** + **26** + **27** + Stage **7** contract
 **Git branch:** `main`
 
@@ -125,7 +125,8 @@
 - [x] Materials as nomenclature type `MATERIAL` — data migration + nav removed (`4.6.1`–`4.6.3`); Alembic `z6a7b8c9d012`
 - [x] Relation between materials and the common nomenclature contour — `ADR-012` / `materials-nomenclature-migration-plan.md`
 - [x] Delete legacy materials API/UI/table (`4.6.4`) — drop `a1b2c3d4e567`
-- [x] Suppliers and supplier prices (`13.1.1`) — ADR-033; Alembic `q6r7s8t9u012`; `/suppliers` + `/purchases/suppliers`; owner visual `13.1.1.6` OK `2026-08-29` (batches / stock norms / PO still open)
+- [x] Suppliers and supplier prices (`13.1.1`) — ADR-033; Alembic `q6r7s8t9u012`; `/suppliers` + `/purchases/suppliers`; owner visual `13.1.1.6` OK `2026-08-29`
+- [ ] Purchase orders (`13.1.2`) — ADR-034; Alembic `r7s8t9u0v123`; `/purchase-orders` + `/purchases/orders` FE shipped; owner visual `13.1.2.6` pending (receipts / batches / stock norms still open)
 
 ## 8. База лекал (Models / Size grids / Sewing ops), Specifications, and Routings
 

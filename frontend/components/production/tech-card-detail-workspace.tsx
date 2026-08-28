@@ -25,6 +25,7 @@ import {
   deleteTechCardMediaAction,
   generateTechnicalCardPrintForm,
   importUnitLinesFileAction,
+  downloadUnitLinesImportTemplateAction,
   replaceUnitLinesAction,
   replaceCompositionAction,
   rollbackTechnicalCardStageAction,
@@ -37,6 +38,7 @@ import {
   updateStageFactAction,
   uploadTechCardMediaAction,
 } from "@/app/(workspace)/production/tech-cards/tech-card-actions";
+import { triggerBrowserDownload } from "@/lib/file-download";
 import { TechCardMediaCarousel } from "@/components/production/tech-card-media-carousel";
 import { TechCardOrderDataCard } from "@/components/production/tech-card-order-data-card";
 import { TechCardModelRouteCard } from "@/components/production/tech-card-model-route-card";
@@ -1826,9 +1828,48 @@ export function TechCardDetailWorkspace({
               >
                 {unitImportOpen ? (
                   <div className="mb-portal-4 grid gap-portal-3 rounded-portal-md border border-portal-border p-portal-4">
+                    <div className="flex flex-wrap items-center justify-between gap-portal-2">
+                      <p className="text-portal-caption text-portal-muted">
+                        Скачайте шаблон, заполните и загрузите. Тип размера =
+                        наименование размерной сетки, размер = RU / INT.
+                      </p>
+                      <Button
+                        type="button"
+                        size="compact"
+                        variant="secondary"
+                        disabled={busy}
+                        onClick={() => {
+                          void runAction(
+                            async () => {
+                              const result =
+                                await downloadUnitLinesImportTemplateAction();
+                              if (!result.ok) {
+                                return {
+                                  ok: false as const,
+                                  message: result.message,
+                                };
+                              }
+                              triggerBrowserDownload({
+                                filename: result.filename,
+                                contentType: result.contentType,
+                                base64: result.base64,
+                              });
+                              return {
+                                ok: true as const,
+                                message: "Шаблон techcart_example.xlsx скачан",
+                              };
+                            },
+                            { skipRefresh: true },
+                          );
+                        }}
+                      >
+                        <FileDown className="size-3.5" aria-hidden="true" />
+                        Скачать шаблон
+                      </Button>
+                    </div>
                     <Field
                       label="Файл импорта"
-                      help="Загрузите XLSX по шаблону techcart_example.xlsx. Тип размера = наименование размерной сетки, размер = RU / INT."
+                      help="XLSX по шаблону techcart_example.xlsx."
                     >
                       <input
                         ref={unitImportInputRef}

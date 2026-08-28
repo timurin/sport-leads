@@ -6,10 +6,14 @@ import base64
 import json
 import os
 import re
+import shutil
 import subprocess
 import tempfile
 from pathlib import Path
 from typing import Any
+
+from playwright.sync_api import Error as PlaywrightError
+from playwright.sync_api import sync_playwright
 from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, selectinload
@@ -235,19 +239,59 @@ def _content_type_for_format(output_format: str) -> str:
 
 
 def _resolve_chromium_executable_path() -> str | None:
+    """Locate Chromium for PDF: env override, Playwright cache (Win/Linux), system chrome."""
+    for env_key in (
+        "PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH",
+        "CHROMIUM_PATH",
+        "CHROME_PATH",
+    ):
+        env_path = os.getenv(env_key)
+        if env_path and Path(env_path).is_file():
+            return env_path
+
+    candidates: list[Path] = []
+
     local_app_data = os.getenv("LOCALAPPDATA")
-    if not local_app_data:
-        return None
-    root = Path(local_app_data) / "ms-playwright"
-    if not root.exists():
-        return None
-    candidates = sorted(
-        root.glob("chromium-*/chrome-win64/chrome.exe"),
-        reverse=True,
-    )
+    if local_app_data:
+        win_root = Path(local_app_data) / "ms-playwright"
+        candidates.extend(
+            sorted(win_root.glob("chromium-*/chrome-win64/chrome.exe"), reverse=True)
+        )
+        candidates.extend(
+            sorted(win_root.glob("chromium-*/chrome-win/chrome.exe"), reverse=True)
+        )
+
+    linux_roots = [
+        Path.home() / ".cache" / "ms-playwright",
+        Path("/root/.cache/ms-playwright"),
+        Path("/ms-playwright"),
+    ]
+    playwright_browsers = os.getenv("PLAYWRIGHT_BROWSERS_PATH")
+    if playwright_browsers:
+        linux_roots.insert(0, Path(playwright_browsers))
+    for root in linux_roots:
+        if not root.exists():
+            continue
+        candidates.extend(
+            sorted(root.glob("chromium-*/chrome-linux/chrome"), reverse=True)
+        )
+        candidates.extend(
+            sorted(root.glob("chromium-*/chrome-linux64/chrome"), reverse=True)
+        )
+
     for candidate in candidates:
         if candidate.is_file():
             return str(candidate)
+
+    for binary in (
+        "chromium",
+        "chromium-browser",
+        "google-chrome",
+        "google-chrome-stable",
+    ):
+        found = shutil.which(binary)
+        if found:
+            return found
     return None
 
 
@@ -291,6 +335,8 @@ def _render_pdf_bytes_chrome(html: str) -> bytes:
                     executable_path,
                     "--headless=new",
                     "--disable-gpu",
+                    "--no-sandbox",
+                    "--disable-dev-shm-usage",
                     "--no-first-run",
                     "--no-default-browser-check",
                     f"--print-to-pdf={pdf_path}",
@@ -311,6 +357,14 @@ def _render_pdf_bytes_chrome(html: str) -> bytes:
         raise PrintFormValidationError("Не удалось сформировать PDF: превышено время ожидания") from error
 
 
+def _render_pdf_document(html: str) -> bytes:
+    """Playwright PDF first; headless Chrome CLI fallback (Windows/Linux/Docker)."""
+    try:
+        return _render_pdf_bytes(html)
+    except PrintFormValidationError:
+        return _render_pdf_bytes_chrome(html)
+
+
 def _render_result(
     row: PrintForm,
     version: PrintFormVersion,
@@ -323,7 +377,7 @@ def _render_result(
     content = _render_template(version.template_source, payload)
     content_encoding = "text"
     if output_format == PrintFormOutputFormat.PDF.value:
-        content = base64.b64encode(_render_pdf_bytes_chrome(content)).decode("ascii")
+        content = base64.b64encode(_render_pdf_document(content)).decode("ascii")
         content_encoding = "base64"
     return PrintFormRenderRead(
         print_form_id=row.id,

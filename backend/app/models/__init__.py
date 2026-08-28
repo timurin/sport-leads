@@ -89,6 +89,11 @@ from app.models.size_grid import SizeGrid, SizeGridRow, SizeGridSizeType
 from app.models.vat_rate import VatRate
 from app.models.warehouse import Warehouse
 from app.models.supplier import Supplier, SupplierPrice
+from app.models.purchase_order import (
+    PurchaseOrder,
+    PurchaseOrderLine,
+    PurchaseOrderStatus,
+)
 from app.models.stock import (
     StockDocument,
     StockDocumentStatus,
@@ -261,6 +266,9 @@ __all__ = [
     "Warehouse",
     "Supplier",
     "SupplierPrice",
+    "PurchaseOrder",
+    "PurchaseOrderLine",
+    "PurchaseOrderStatus",
     "StockDocument",
     "StockDocumentStatus",
     "StockDocumentType",

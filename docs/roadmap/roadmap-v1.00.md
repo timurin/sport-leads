@@ -1,7 +1,7 @@
 # Sport-Lead — Roadmap v1.00
 
 **Code:** `SL-ROADMAP-v1.00`
-**Updated:** `2026-08-29` (Stage **13.1.1** suppliers closed — owner visual `13.1.1.6` OK; next gate `13.1.2` / owner-pull; Alembic `q6r7s8t9u012`; Stage **27** parked)
+**Updated:** `2026-08-29` (Stage **13.1.2** purchase orders in flight — stop at owner visual `13.1.2.6`; ADR-034; Stage **27** parked)
 **Project version:** `v1.00`
 **Status:** Confirmed carry-over from `v0.9.0` (Stages **1.4.3**, **2** group, **7**, **12.4**–**12.5**, **13**, **14**, **15**, **16**, **18.4**) + **new** Stages **0** (performance + LAN + order-without-lead + **canonical VPS `0.5`**), **20** (Lead / Order UX, closed), **21** (Settings / Users cabinet, closed), **22** (Design v1.0), **23** (Unified Work Tasks), **24** (Sewing cabinet), **25** (Tech-card QR / shop scan), **26** (owner findings: bugs / cosmetics), **27** (1C:UNF document export), **28** (standalone tech cards + unified numbering). Owner started early (`2026-08-05`).
 **Languages / Языки:** English + Russian (this MD). Interactive switch: `docs/erp/status/roadmap-v1.00.html`
@@ -68,9 +68,9 @@
 | **27** | 1C:UNF document export (platform → УНФ) | Выгрузка документов в 1С:УНФ (платформа → УНФ) |
 | **28** | Standalone tech cards + unified numbering `{order}-{seq}/{N}` | Самостоятельные техкарты + единая нумерация `{заказ}-{seq}/{N}` |
 
-> **EN:** Stage 0 is **new** in `v1.00`: slow-data (`0.1`/`0.2`), **LAN** (`0.3`), **create SalesOrder without Lead** (`0.4`), and **canonical VPS** (`0.5`, ADR-032). Stages **20** / **21** closed. Stage **22** = Design v1.0 (do **not** re-open `20.*` data contracts). Do **not** re-open closed `3.5.*` / `19.*` / `17.1.2.*` / `17.2.1`–`17.2.3` in `v0.9.0`. Stage **2** closed `2026-08-24`. Stage **24** sewing cabinet closed `2026-08-24`. Stage **25** QR/scan closed `2026-08-25` (owner visual `25.5.2`). Stage **7** Specifications closed `2026-08-25` (owner visual `7.2.2.6`). Stage **26** = living owner findings (bugs/cosmetics); seed parked; shipped through **`26.11.14`** — further findings **owner-pull only**. Stage **27** = 1C:UNF **outbound** document packages (contour D); `27.0.1` closed; `27.1+` parked; **owner-pull only** — do not auto-start; inbound `16.2.1` parked. Stage **28** = standalone TechnicalCard + `{orderNo}-{seq}/{N}` — **closed** (`28.0`–`28.5`). Stage **12.4** inventory closed `2026-08-26`. **Stage 12.5.1** transfers closed `2026-08-29`. **Stage 13.1.1** suppliers closed `2026-08-29` (owner visual `13.1.1.6`). Next gate: **`13.1.2`** owner-pull — do **not** auto-start Stage **27**. Parked **`0.5.13`** S3 (**owner-pull**). Stage **`0.5`** live apply closed `2026-08-25`.
+> **EN:** Stage 0 is **new** in `v1.00`: slow-data (`0.1`/`0.2`), **LAN** (`0.3`), **create SalesOrder without Lead** (`0.4`), and **canonical VPS** (`0.5`, ADR-032). Stages **20** / **21** closed. Stage **22** = Design v1.0 (do **not** re-open `20.*` data contracts). Do **not** re-open closed `3.5.*` / `19.*` / `17.1.2.*` / `17.2.1`–`17.2.3` in `v0.9.0`. Stage **2** closed `2026-08-24`. Stage **24** sewing cabinet closed `2026-08-24`. Stage **25** QR/scan closed `2026-08-25` (owner visual `25.5.2`). Stage **7** Specifications closed `2026-08-25` (owner visual `7.2.2.6`). Stage **26** = living owner findings (bugs/cosmetics); seed parked; shipped through **`26.11.14`** — further findings **owner-pull only**. Stage **27** = 1C:UNF **outbound** document packages (contour D); `27.0.1` closed; `27.1+` parked; **owner-pull only** — do not auto-start; inbound `16.2.1` parked. Stage **28** = standalone TechnicalCard + `{orderNo}-{seq}/{N}` — **closed** (`28.0`–`28.5`). Stage **12.4** inventory closed `2026-08-26`. **Stage 12.5.1** transfers closed `2026-08-29`. **Stage 13.1.1** suppliers closed `2026-08-29`. **Stage 13.1.2** purchase orders in flight — stop at owner visual `13.1.2.6`; do **not** auto-start Stage **27**. Parked **`0.5.13`** S3 (**owner-pull**). Stage **`0.5`** live apply closed `2026-08-25`.
 >
-> **RU:** Stage 0: slow-data + **LAN** (`0.3`) + **заказ без лида** (`0.4`) + **канонический VPS** (`0.5`). Stages **20** / **21** / **22** / **2** / **24** / **25** / **7** закрыты. Stage **26** — живой backlog до **`26.11.14`**; новые находки **owner-pull**. Stage **27** припаркован. Stage **28** закрыт. Stage **12.5.1** закрыт. **Stage 13.1.1** поставщики закрыт `2026-08-29` (owner visual `13.1.1.6`). Далее **`13.1.2`** owner-pull — Stage **27** не стартовать. Припаркован **`0.5.13`** S3.
+> **RU:** Stage 0: slow-data + **LAN** (`0.3`) + **заказ без лида** (`0.4`) + **канонический VPS** (`0.5`). Stages **20** / **21** / **22** / **2** / **24** / **25** / **7** закрыты. Stage **26** — живой backlog до **`26.11.14`**; новые находки **owner-pull**. Stage **27** припаркован. Stage **28** закрыт. Stage **12.5.1** закрыт. **Stage 13.1.1** закрыт. **Stage 13.1.2** ЗП — до owner visual `13.1.2.6`; Stage **27** не стартовать. Припаркован **`0.5.13`** S3.
 
 ### Remain in v0.9.0 / Остаются в v0.9.0
 
@@ -345,10 +345,10 @@
 **Moved from:** `v0.9.0` Stage 13
 **Перенесено из:** `v0.9.0`, этап 13
 
-> **EN:** Soft UI hub `/purchases` already shipped (`22.6`, empty — no demo). Stage **13** owns suppliers, POs, receipts. Task: `docs/tasks/v1.00-stage-13.1.1-suppliers.md`. ADR-033.
-> **RU:** Хаб Soft UI `/purchases` уже есть (`22.6`, пустой). Stage **13** — поставщики, ЗП, поступления. Task + ADR-033.
+> **EN:** Soft UI hub `/purchases` already shipped (`22.6`, empty — no demo). Stage **13** owns suppliers, POs, receipts. Tasks: `v1.00-stage-13.1.1-suppliers.md`, `v1.00-stage-13.1.2-purchase-orders.md`. ADR-033 / ADR-034.
+> **RU:** Хаб Soft UI `/purchases` уже есть (`22.6`). Stage **13** — поставщики, ЗП, поступления. Tasks + ADR-033 / ADR-034.
 
-**Execute after / Исполнять после:** Stage **12.5.1** closed `2026-08-29`. Stage **13.1.1** closed `2026-08-29` (owner visual `13.1.1.6`). Next: **`13.1.2`** owner-pull. Do not auto-start Stage **27**.
+**Execute after / Исполнять после:** Stage **13.1.1** closed `2026-08-29`. Current: **`13.1.2`** (owner-pull «до визуал чек»). Stop at `13.1.2.6`. Do not auto-start Stage **27** / `13.2.*`.
 
 ### 13.1 — Supplier contour / Контур поставщиков
 
@@ -361,7 +361,14 @@
 - [x] 13.1.1.5 — FE card + supplier prices editor (PT-05) / FE карточка + цены — `v1.00` `2026-08-29`; `supplier-card.tsx`; stop at visual `13.1.1.6` / PT-05 + цены
 - [x] 13.1.1.6 — Regression + owner visual / Регрессия + визуальная проверка владельцем — `v1.00` `2026-08-29`; owner visual OK `/purchases/suppliers` list + create + card + prices; Stage 13.1.1 complete / Owner visual OK; 13.1.1 закрыт
 
-- [ ] 13.1.2 — Procurement requests and purchase orders / Заявки на закупку и заказы поставщикам
+#### 13.1.2 — Purchase orders / Заказы поставщикам
+
+- [x] 13.1.2.1 — Domain contract: `PurchaseOrder` + lines; draft = заявка; hosts `/purchases/orders` — `v1.00` `2026-08-29`; ADR-034; `SL-PURCHASE-ORDER-v1`; task `v1.00-stage-13.1.2-purchase-orders.md` / Контракт; без БД
+- [x] 13.1.2.2 — SQLAlchemy + Alembic for `PurchaseOrder` + `PurchaseOrderLine` / SQLAlchemy + Alembic ЗП + строки — `v1.00` `2026-08-29`; Alembic `r7s8t9u0v123`; `test_purchase_orders_13_1_2_2.py` / модели + миграция
+- [x] 13.1.2.3 — Service + API CRUD (PO + lines + confirm/cancel) + backend tests / Service + API + backend tests — `v1.00` `2026-08-29`; `/purchase-orders`; `test_purchase_orders_13_1_2_3.py` / API CRUD
+- [x] 13.1.2.4 — FE list `/purchases/orders` (PT-02, no demo) / FE список ЗП — `v1.00` `2026-08-29`; `purchase-orders-workspace.tsx` / PT-02 list
+- [x] 13.1.2.5 — FE card + lines editor + confirm/cancel (PT-05) / FE карточка + строки — `v1.00` `2026-08-29`; `purchase-order-card.tsx`; stop at visual `13.1.2.6` / PT-05 + confirm
+- [ ] 13.1.2.6 — Regression + owner visual / Регрессия + визуальная проверка владельцем
 
 ### 13.2 — Supply execution / Исполнение поставок
 
@@ -1281,3 +1288,5 @@
 | `2026-08-29` | Closed `13.1.1.2`: `Supplier` + `SupplierPrice` models; Alembic `q6r7s8t9u012`; `test_suppliers_13_1_1_2.py`; next `13.1.1.3` | Закрыт `13.1.1.2`: модели + миграция |
 | `2026-08-29` | Closed `13.1.1.3`–`13.1.1.5`: `/suppliers` API + FE list/card/prices; stop at owner visual `13.1.1.6` | Закрыты `13.1.1.3`–`13.1.1.5`; стоп на visual |
 | `2026-08-29` | Closed `13.1.1.6`: owner visual OK `/purchases/suppliers`; Stage **13.1.1** complete | Закрыт `13.1.1.6`: owner visual OK; 13.1.1 закрыт |
+| `2026-08-29` | Split `13.1.2` → `13.1.2.1`–`13.1.2.6`; closed `13.1.2.1` PO contract (ADR-034); stop at visual `13.1.2.6` | Закрыт `13.1.2.1`: контракт ЗП; далее модели/API/FE |
+| `2026-08-29` | Closed `13.1.2.2`–`13.1.2.5`: Alembic `r7s8t9u0v123` + `/purchase-orders` API + FE list/card; stop at owner visual `13.1.2.6` | Закрыты `13.1.2.2`–`13.1.2.5`; стоп на visual |
