@@ -157,6 +157,10 @@ def create_standalone_technical_card(
 
     ensure_qr_token(db, card)
     db.flush()
+    from app.services.tech_card_model_assembly import seed_card_from_nomenclature
+
+    seed_card_from_nomenclature(db, card)
+    db.flush()
     return get_technical_card(db, card.id)
 
 
@@ -177,6 +181,19 @@ def update_technical_card_order_group(
         group.tech_cards_planned_count = payload.tech_cards_planned_count
     if payload.desired_date is not None:
         group.desired_date = payload.desired_date
+    if payload.order_number is not None:
+        next_number = payload.order_number.strip()
+        if not next_number:
+            raise TechnicalCardValidationError("Укажите номер заказа")
+        taken = db.scalar(
+            select(TechnicalCardOrderGroup.id).where(
+                TechnicalCardOrderGroup.order_number == next_number,
+                TechnicalCardOrderGroup.id != group.id,
+            )
+        )
+        if taken is not None:
+            raise TechnicalCardConflictError("Номер заказа уже занят другой группой")
+        group.order_number = next_number
     db.flush()
     return group
 

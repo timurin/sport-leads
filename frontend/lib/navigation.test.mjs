@@ -212,7 +212,7 @@ test("production navigation exposes tech-cards and shop modules", () => {
   const ids = production.topNavigation.map((item) => item.id);
   assert.ok(ids.includes("production-dashboard"));
   assert.ok(ids.includes("production-tech-cards"));
-  assert.ok(ids.includes("production-shop-kanban"));
+  assert.equal(ids.includes("production-shop-kanban"), false);
   assert.ok(ids.includes("production-sewing-cabinet"));
   assert.ok(ids.includes("production-sewing-cabinets"));
   assert.ok(ids.includes("production-orders"));

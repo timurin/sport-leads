@@ -301,11 +301,6 @@ export function buildAppSections(
         title: "Техкарты",
         href: "/production/tech-cards",
       },
-      {
-        id: "production-shop-kanban",
-        title: "Канбан цехов",
-        href: "/production/kanban",
-      },
       SEWING_CABINET_NAV_ITEM,
       SEWING_CABINETS_NAV_ITEM,
       {

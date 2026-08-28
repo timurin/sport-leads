@@ -15,9 +15,10 @@ type CreateDrawerProps = {
   /**
    * docked — right column in a workspace split (materials / EntityInspector).
    * overlay — fixed right panel + backdrop when no inspector column exists.
+   * center — centered modal + backdrop (26.11 create tech card).
    * fullscreen — full-viewport modal over the current page (dense create forms).
    */
-  variant?: "docked" | "overlay" | "fullscreen";
+  variant?: "docked" | "overlay" | "fullscreen" | "center";
 };
 
 /**
@@ -56,7 +57,7 @@ export function CreateDrawer({
   }, [open, onClose]);
 
   useEffect(() => {
-    if (!open || (variant !== "fullscreen" && variant !== "overlay")) {
+    if (!open || (variant !== "fullscreen" && variant !== "overlay" && variant !== "center")) {
       return;
     }
     const previous = document.body.style.overflow;
@@ -68,6 +69,44 @@ export function CreateDrawer({
 
   if (!open) {
     return null;
+  }
+
+  if (variant === "center") {
+    if (!mounted) return null;
+    return createPortal(
+      <>
+        <button
+          type="button"
+          className="fixed inset-0 z-portal-modal bg-[#101828]/40"
+          aria-label="Закрыть окно создания"
+          onClick={onClose}
+        />
+        <div
+          className="fixed inset-0 z-portal-modal-1 flex items-center justify-center p-portal-4 pointer-events-none"
+        >
+          <div
+            className="pointer-events-auto flex max-h-[min(90vh,40rem)] w-full max-w-[32rem] flex-col overflow-hidden rounded-portal-lg border border-portal-border bg-portal-surface shadow-portal-overlay"
+            role="dialog"
+            aria-modal="true"
+            aria-label={title}
+          >
+            <header className="flex shrink-0 items-center justify-between border-b border-portal-border px-portal-6 py-portal-5">
+              <div className="min-w-0">
+                <h2 className="text-portal-page font-semibold text-portal-text">{title}</h2>
+                {description ? (
+                  <p className="mt-1 text-portal-body text-portal-muted">{description}</p>
+                ) : null}
+              </div>
+              <IconButton label="Закрыть" onClick={onClose}>
+                <X size={19} aria-hidden="true" />
+              </IconButton>
+            </header>
+            <div className="min-h-0 flex-1 overflow-auto px-portal-6 py-portal-5">{children}</div>
+          </div>
+        </div>
+      </>,
+      document.body,
+    );
   }
 
   if (variant === "fullscreen") {

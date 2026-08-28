@@ -1,11 +1,30 @@
 "use client";
 
 import Link from "next/link";
-import { Filter, FilterX, Plus, Printer, Sparkles, X } from "lucide-react";
+import {
+  BookMarked,
+  Copy,
+  Filter,
+  FilterX,
+  Pencil,
+  Plus,
+  Printer,
+  Save,
+  Sparkles,
+  Trash2,
+  X,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
-import { type FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { type FormEvent, type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 
-import { createStandaloneTechnicalCardAction, generateTechCardsFromOrderAction } from "@/app/(workspace)/production/tech-cards/tech-card-actions";
+import {
+  copyTechnicalCardAction,
+  createStandaloneTechnicalCardAction,
+  deleteTechnicalCardAction,
+  generateTechCardsFromOrderAction,
+} from "@/app/(workspace)/production/tech-cards/tech-card-actions";
+import { NomenclaturePickModal } from "@/components/sales/nomenclature-pick-modal";
+import { CompactTabs } from "@/components/ui/compact-tabs";
 import { Button, IconButton } from "@/components/ui/button";
 import { CreateDrawer } from "@/components/ui/create-drawer";
 import {
@@ -24,9 +43,12 @@ import { ListTotals } from "@/components/ui/list-pagination";
 import { PageToolbar } from "@/components/ui/page-header";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { useToast } from "@/components/ui/toast";
+import type { Nomenclature, NomenclatureCategory } from "@/lib/nomenclature";
 import {
   asTechCardUiStatus,
   filterTechCardsClient,
+  parseTechCardListView,
+  type TechCardListView,
   formatTechCardDateTime,
   techCardModelLabel,
   techCardOrderLabel,
@@ -45,11 +67,6 @@ const STATUS_FILTER_ITEMS: { value: string; label: string }[] = [
   { value: "cancelled", label: "Отменена" },
 ];
 
-export type TechCardCreateNomenclatureOption = {
-  id: number;
-  name: string;
-};
-
 function TechCardOrderCell({ card }: { card: ApiTechnicalCardListItem }) {
   const label = techCardOrderLabel(card);
   if (card.sales_order_id == null) {
@@ -63,16 +80,23 @@ export function TechCardsWorkspace({
   cards,
   orderId,
   productNomenclatures = [],
+  categories = [],
+  view = "list",
+  kanban = null,
 }: {
   cards: ApiTechnicalCardListItem[];
   orderId?: string;
-  productNomenclatures?: TechCardCreateNomenclatureOption[];
+  productNomenclatures?: Nomenclature[];
+  categories?: NomenclatureCategory[];
+  view?: TechCardListView;
+  kanban?: ReactNode;
 }) {
   const router = useRouter();
   const { push: pushToast } = useToast();
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [stageFilter, setStageFilter] = useState("");
+  const [responsibleFilter, setResponsibleFilter] = useState("");
   const [filterOpen, setFilterOpen] = useState(false);
   const [generateOpen, setGenerateOpen] = useState(false);
   const [generateOrderId, setGenerateOrderId] = useState(orderId ?? "");
@@ -82,13 +106,22 @@ export function TechCardsWorkspace({
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
   const [createNomenclatureId, setCreateNomenclatureId] = useState("");
+  const [createNomenclatureName, setCreateNomenclatureName] = useState("");
+  const [createNomenclatureDraft, setCreateNomenclatureDraft] = useState("");
+  const [createNomenclatureEditing, setCreateNomenclatureEditing] = useState(false);
+  const [pickOpen, setPickOpen] = useState(false);
   const [createOrderNumber, setCreateOrderNumber] = useState("");
   const [createPlannedCount, setCreatePlannedCount] = useState("1");
   const [createDesiredDate, setCreateDesiredDate] = useState("");
   const [createQuantity, setCreateQuantity] = useState("1");
+  const [rowBusyId, setRowBusyId] = useState<number | null>(null);
   const filterRef = useRef<HTMLDivElement>(null);
+  const listView = parseTechCardListView(view);
 
-  const filtersActive = Boolean(statusFilter) || Boolean(stageFilter.trim());
+  const filtersActive =
+    Boolean(statusFilter) ||
+    Boolean(stageFilter.trim()) ||
+    Boolean(responsibleFilter.trim());
 
   useEffect(() => {
     if (!filterOpen) return;
@@ -114,13 +147,15 @@ export function TechCardsWorkspace({
         search: query,
         status: statusFilter,
         stage: stageFilter,
+        responsible: responsibleFilter,
       }),
-    [cards, query, stageFilter, statusFilter],
+    [cards, query, responsibleFilter, stageFilter, statusFilter],
   );
 
   const clearFilters = () => {
     setStatusFilter("");
     setStageFilter("");
+    setResponsibleFilter("");
     setFilterOpen(false);
   };
 
@@ -178,11 +213,66 @@ export function TechCardsWorkspace({
 
   const resetCreateForm = () => {
     setCreateNomenclatureId("");
+    setCreateNomenclatureName("");
+    setCreateNomenclatureDraft("");
+    setCreateNomenclatureEditing(false);
+    setPickOpen(false);
     setCreateOrderNumber("");
     setCreatePlannedCount("1");
     setCreateDesiredDate("");
     setCreateQuantity("1");
     setCreateError(null);
+  };
+
+  const saveNomenclatureName = () => {
+    setCreateNomenclatureName(createNomenclatureDraft.trim());
+    setCreateNomenclatureEditing(false);
+  };
+
+  const viewHref = (next: TechCardListView) => {
+    const params = new URLSearchParams();
+    if (next === "kanban") params.set("view", "kanban");
+    if (orderId) params.set("orderId", orderId);
+    const queryString = params.toString();
+    return queryString ? `/production/tech-cards?${queryString}` : "/production/tech-cards";
+  };
+
+  const onCopyCard = async (cardId: number) => {
+    setRowBusyId(cardId);
+    try {
+      const result = await copyTechnicalCardAction(cardId);
+      if (!result.ok) {
+        pushToast(result.message ?? "Не удалось скопировать", "danger");
+      } else {
+        pushToast(result.message ?? "Скопировано", "success");
+        if (result.card) {
+          router.push(detailHref(result.card.id));
+          return;
+        }
+        router.refresh();
+      }
+    } catch {
+      pushToast("Не удалось скопировать техкарту", "danger");
+    }
+    setRowBusyId(null);
+  };
+
+  const onDeleteCard = async (card: ApiTechnicalCardListItem) => {
+    if (String(card.status) !== "draft") return;
+    if (!window.confirm(`Удалить техкарту ${techCardVisibleNumber(card)}?`)) return;
+    setRowBusyId(card.id);
+    try {
+      const result = await deleteTechnicalCardAction(card.id);
+      if (!result.ok) {
+        pushToast(result.message ?? "Не удалось удалить", "danger");
+      } else {
+        pushToast(result.message ?? "Удалено", "success");
+        router.refresh();
+      }
+    } catch {
+      pushToast("Не удалось удалить техкарту", "danger");
+    }
+    setRowBusyId(null);
   };
 
   const openCreate = () => {
@@ -294,6 +384,22 @@ export function TechCardsWorkspace({
         </form>
       </CreateDrawer>
 
+      <NomenclaturePickModal
+        open={pickOpen}
+        items={productNomenclatures}
+        categories={categories}
+        value={createNomenclatureId ? Number(createNomenclatureId) : null}
+        onClose={() => setPickOpen(false)}
+        onSelect={(item) => {
+          if (item == null) return;
+          setCreateNomenclatureId(String(item.id));
+          setCreateNomenclatureName(item.name);
+          setCreateNomenclatureDraft(item.name);
+          setCreateNomenclatureEditing(false);
+          setPickOpen(false);
+        }}
+      />
+
       <CreateDrawer
         open={createOpen}
         title="Создать техкарту"
@@ -302,7 +408,7 @@ export function TechCardsWorkspace({
           if (creating) return;
           setCreateOpen(false);
         }}
-        variant="overlay"
+        variant="center"
       >
         <form
           className="space-y-portal-4"
@@ -310,18 +416,76 @@ export function TechCardsWorkspace({
           data-standalone-tech-card-create
         >
           <Field label="Номенклатура" required>
-            <Select
-              value={createNomenclatureId}
-              onChange={(event) => setCreateNomenclatureId(event.target.value)}
-              disabled={creating}
+            <div
+              className="flex min-w-0 items-center gap-1"
+              data-tech-card-create-nomenclature-chrome
+              data-tech-card-create-nomenclature-editing={
+                createNomenclatureEditing ? "true" : "false"
+              }
             >
-              <option value="">Выберите продукцию…</option>
-              {productNomenclatures.map((row) => (
-                <option key={row.id} value={row.id}>
-                  {row.name}
-                </option>
-              ))}
-            </Select>
+              <Input
+                value={
+                  createNomenclatureEditing
+                    ? createNomenclatureDraft
+                    : createNomenclatureName
+                }
+                onChange={(event) => setCreateNomenclatureDraft(event.target.value)}
+                placeholder="Название или выберите в справочнике"
+                disabled={creating || !createNomenclatureEditing}
+                aria-label="Номенклатура"
+              />
+              {createNomenclatureEditing ? (
+                <>
+                  <IconButton
+                    type="button"
+                    label="Отменить"
+                    variant="secondary"
+                    disabled={creating}
+                    data-tech-card-create-nomenclature-cancel
+                    onClick={() => {
+                      setCreateNomenclatureDraft(createNomenclatureName);
+                      setCreateNomenclatureEditing(false);
+                    }}
+                  >
+                    <X className="size-4" aria-hidden="true" />
+                  </IconButton>
+                  <IconButton
+                    type="button"
+                    label="Сохранить"
+                    variant="secondary"
+                    disabled={creating}
+                    data-tech-card-create-nomenclature-save
+                    onClick={saveNomenclatureName}
+                  >
+                    <Save className="size-4" aria-hidden="true" />
+                  </IconButton>
+                </>
+              ) : (
+                <IconButton
+                  type="button"
+                  label="Править"
+                  variant="secondary"
+                  disabled={creating}
+                  data-tech-card-create-nomenclature-edit
+                  onClick={() => {
+                    setCreateNomenclatureDraft(createNomenclatureName);
+                    setCreateNomenclatureEditing(true);
+                  }}
+                >
+                  <Pencil className="size-4" aria-hidden="true" />
+                </IconButton>
+              )}
+              <IconButton
+                type="button"
+                label="Выбрать в справочнике"
+                variant="secondary"
+                disabled={creating}
+                data-tech-card-create-nomenclature-catalog
+                onClick={() => setPickOpen(true)}
+              >
+                <BookMarked className="size-4" aria-hidden="true" />
+              </IconButton>
+            </div>
           </Field>
           <Field label="Номер заказа" required>
             <Input
@@ -387,6 +551,18 @@ export function TechCardsWorkspace({
       <PageToolbar
         start={
           <div className="flex min-w-0 w-full flex-1 items-center gap-1">
+            <div data-tech-card-list-view-tabs>
+              <CompactTabs
+                label="Вид техкарт"
+                size="compact"
+                value={listView}
+                onChange={(id) => router.push(viewHref(parseTechCardListView(id)))}
+                items={[
+                  { id: "list", label: "Техкарты" },
+                  { id: "kanban", label: "Канбан" },
+                ]}
+              />
+            </div>
             {orderId ? (
               <Link
                 href="/production/tech-cards"
@@ -396,69 +572,81 @@ export function TechCardsWorkspace({
                 <X className="size-3.5" aria-hidden="true" />
               </Link>
             ) : null}
-            <Input
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder="Поиск по № ТК, заказу, позиции, модели"
-              size="compact"
-              className="min-w-0 flex-1 basis-0"
-              aria-label="Поиск техкарт"
-            />
-            <div
-              className="flex shrink-0 items-center gap-1"
-              role="group"
-              aria-label="Действия списка"
-            >
-              <IconButton
-                label="Сбросить поиск"
-                variant="secondary"
-                disabled={!query}
-                onClick={() => setQuery("")}
-              >
-                <X className="size-4" aria-hidden="true" />
-              </IconButton>
-              <div className="relative" ref={filterRef}>
-                <IconButton
-                  label="Фильтр"
-                  variant={filtersActive ? "primary" : "secondary"}
-                  aria-expanded={filterOpen}
-                  aria-haspopup="dialog"
-                  onClick={() => setFilterOpen((open) => !open)}
+            {listView === "list" ? (
+              <>
+                <Input
+                  value={query}
+                  onChange={(event) => setQuery(event.target.value)}
+                  placeholder="Поиск по № ТК, заказу, позиции, модели"
+                  size="compact"
+                  className="min-w-0 flex-1 basis-0"
+                  aria-label="Поиск техкарт"
+                />
+                <div
+                  className="flex shrink-0 items-center gap-1"
+                  role="group"
+                  aria-label="Действия списка"
                 >
-                  <Filter className="size-4" aria-hidden="true" />
-                </IconButton>
-                {filterOpen ? (
-                  <div
-                    role="dialog"
-                    aria-label="Фильтр техкарт"
-                    className="absolute right-0 z-20 mt-1 w-[min(100vw-2rem,16rem)] space-y-portal-3 rounded-portal-md border border-portal-border bg-portal-surface p-portal-3 shadow-portal-card"
+                  <IconButton
+                    label="Сбросить поиск"
+                    variant="secondary"
+                    disabled={!query}
+                    onClick={() => setQuery("")}
                   >
-                    <Field label="Статус">
-                      <Select
-                        value={statusFilter}
-                        onChange={(event) => setStatusFilter(event.target.value)}
+                    <X className="size-4" aria-hidden="true" />
+                  </IconButton>
+                  <div className="relative" ref={filterRef}>
+                    <IconButton
+                      label="Фильтр"
+                      variant={filtersActive ? "primary" : "secondary"}
+                      aria-expanded={filterOpen}
+                      aria-haspopup="dialog"
+                      onClick={() => setFilterOpen((open) => !open)}
+                    >
+                      <Filter className="size-4" aria-hidden="true" />
+                    </IconButton>
+                    {filterOpen ? (
+                      <div
+                        role="dialog"
+                        aria-label="Фильтр техкарт"
+                        className="absolute right-0 z-20 mt-1 w-[min(100vw-2rem,18rem)] space-y-portal-3 rounded-portal-md border border-portal-border bg-portal-surface p-portal-3 shadow-portal-card"
                       >
-                        {STATUS_FILTER_ITEMS.map((item) => (
-                          <option key={item.value || "all"} value={item.value}>
-                            {item.label}
-                          </option>
-                        ))}
-                      </Select>
-                    </Field>
-                    <Field label="Участок">
-                      <Input
-                        value={stageFilter}
-                        onChange={(event) => setStageFilter(event.target.value)}
-                        placeholder="Подстрока участка"
-                      />
-                    </Field>
-                    <Button type="button" size="compact" onClick={clearFilters}>
-                      Очистить фильтры
-                    </Button>
+                        <Field label="Статус">
+                          <Select
+                            value={statusFilter}
+                            onChange={(event) => setStatusFilter(event.target.value)}
+                          >
+                            {STATUS_FILTER_ITEMS.map((item) => (
+                              <option key={item.value || "all"} value={item.value}>
+                                {item.label}
+                              </option>
+                            ))}
+                          </Select>
+                        </Field>
+                        <Field label="Участок">
+                          <Input
+                            value={stageFilter}
+                            onChange={(event) => setStageFilter(event.target.value)}
+                            placeholder="Подстрока участка"
+                          />
+                        </Field>
+                        <Field label="Ответственный">
+                          <Input
+                            value={responsibleFilter}
+                            onChange={(event) => setResponsibleFilter(event.target.value)}
+                            placeholder="Подстрока ФИО"
+                            data-tech-card-filter-responsible
+                          />
+                        </Field>
+                        <Button type="button" size="compact" onClick={clearFilters}>
+                          Очистить фильтры
+                        </Button>
+                      </div>
+                    ) : null}
                   </div>
-                ) : null}
-              </div>
-            </div>
+                </div>
+              </>
+            ) : null}
           </div>
         }
         end={
@@ -466,64 +654,72 @@ export function TechCardsWorkspace({
             <IconButton label="Печать" variant="secondary" onClick={onPrint}>
               <Printer className="size-4" aria-hidden="true" />
             </IconButton>
+            {listView === "list" ? (
+              <IconButton
+                label="Сбросить фильтры"
+                variant="secondary"
+                disabled={!filtersActive && !query}
+                onClick={() => {
+                  setQuery("");
+                  clearFilters();
+                }}
+              >
+                <FilterX className="size-4" aria-hidden="true" />
+              </IconButton>
+            ) : null}
             <IconButton
-              label="Сбросить фильтры"
-              variant="secondary"
-              disabled={!filtersActive && !query}
-              onClick={() => {
-                setQuery("");
-                clearFilters();
-              }}
-            >
-              <FilterX className="size-4" aria-hidden="true" />
-            </IconButton>
-            <Button
-              type="button"
+              label="Создать"
+              title="Создать"
               variant="secondary"
               disabled={creating}
+              data-tech-card-toolbar-create
               onClick={openCreate}
-              className="inline-flex items-center gap-portal-2"
             >
               <Plus className="size-4" aria-hidden="true" />
-              Создать
-            </Button>
-            <Button
-              type="button"
+            </IconButton>
+            <IconButton
+              label="Сформировать из заказа"
+              title="Сформировать из заказа"
               variant="primary"
               disabled={generating}
+              data-tech-card-toolbar-generate
               onClick={onGeneratePrimary}
-              className="inline-flex items-center gap-portal-2"
             >
               <Sparkles className="size-4" aria-hidden="true" />
-              {generating ? "Формирование…" : "Сформировать из заказа"}
-            </Button>
+            </IconButton>
           </div>
         }
       />
 
       <section className="min-h-0 min-w-0 flex-1 overflow-auto bg-portal-surface">
-        {filtered.length === 0 ? (
+        {listView === "kanban" ? (
+          kanban
+        ) : filtered.length === 0 ? (
           <EmptyState title="Нет техкарт" description={emptyDescription} />
         ) : (
           <>
             <div className="hidden min-w-0 md:block">
               <DataTableFrame className="rounded-none border-x-0 border-b-0 shadow-none">
-                <DataTable minWidthClassName="min-w-[960px]">
+                <DataTable minWidthClassName="min-w-[1100px]">
                   <DataTableHead>
                     <tr>
                       <DataTableHeaderCell className="w-40">№ ТК</DataTableHeaderCell>
                       <DataTableHeaderCell className="w-36">Заказ</DataTableHeaderCell>
                       <DataTableHeaderCell>Позиция</DataTableHeaderCell>
                       <DataTableHeaderCell className="w-44">Модель</DataTableHeaderCell>
+                      <DataTableHeaderCell className="w-36">Ответственный</DataTableHeaderCell>
                       <DataTableHeaderCell className="w-32">Статус</DataTableHeaderCell>
                       <DataTableHeaderCell className="w-36">Участок</DataTableHeaderCell>
                       <DataTableHeaderCell className="w-20">Кол-во</DataTableHeaderCell>
                       <DataTableHeaderCell className="w-36">Обновлено</DataTableHeaderCell>
+                      <DataTableHeaderCell className="w-24"> </DataTableHeaderCell>
                     </tr>
                   </DataTableHead>
                   <DataTableBody>
                     {filtered.map((card) => {
                       const status = asTechCardUiStatus(String(card.status));
+                      const isDraft = String(card.status) === "draft";
+                      const rowBusy = rowBusyId === card.id;
                       return (
                         <DataTableRow key={card.id}>
                           <DataTableCell>
@@ -541,6 +737,9 @@ export function TechCardsWorkspace({
                           <DataTableCell className="text-portal-muted">
                             {techCardModelLabel(card)}
                           </DataTableCell>
+                          <DataTableCell className="text-portal-muted">
+                            {card.responsible_name?.trim() || "—"}
+                          </DataTableCell>
                           <DataTableCell>
                             <StatusBadge size="compact" tone={techCardStatusTone(status)}>
                               {techCardStatusLabel(status)}
@@ -555,6 +754,31 @@ export function TechCardsWorkspace({
                           <DataTableCell className="text-portal-muted">
                             {formatTechCardDateTime(card.updated_at)}
                           </DataTableCell>
+                          <DataTableCell>
+                            <div
+                              className="flex items-center justify-end gap-1"
+                              data-tech-card-row-actions
+                            >
+                              <IconButton
+                                label="Копировать"
+                                variant="secondary"
+                                disabled={rowBusy}
+                                data-tech-card-row-copy
+                                onClick={() => void onCopyCard(card.id)}
+                              >
+                                <Copy className="size-4" aria-hidden="true" />
+                              </IconButton>
+                              <IconButton
+                                label="Удалить"
+                                variant="danger"
+                                disabled={rowBusy || !isDraft}
+                                data-tech-card-row-delete
+                                onClick={() => void onDeleteCard(card)}
+                              >
+                                <Trash2 className="size-4" aria-hidden="true" />
+                              </IconButton>
+                            </div>
+                          </DataTableCell>
                         </DataTableRow>
                       );
                     })}
@@ -566,6 +790,8 @@ export function TechCardsWorkspace({
             <div className="flex flex-col gap-portal-3 p-portal-4 md:hidden">
               {filtered.map((card) => {
                 const status = asTechCardUiStatus(String(card.status));
+                const isDraft = String(card.status) === "draft";
+                const rowBusy = rowBusyId === card.id;
                 return (
                   <article
                     key={card.id}
@@ -594,6 +820,10 @@ export function TechCardsWorkspace({
                         <dd className="text-right">{techCardPositionLabel(card)}</dd>
                       </div>
                       <div className="flex justify-between gap-portal-3">
+                        <dt className="text-portal-muted">Ответственный</dt>
+                        <dd className="text-right">{card.responsible_name?.trim() || "—"}</dd>
+                      </div>
+                      <div className="flex justify-between gap-portal-3">
                         <dt className="text-portal-muted">Участок</dt>
                         <dd className="text-right">{card.current_stage_label ?? "—"}</dd>
                       </div>
@@ -602,6 +832,29 @@ export function TechCardsWorkspace({
                         <dd className="text-right">{formatTechCardDateTime(card.updated_at)}</dd>
                       </div>
                     </dl>
+                    <div
+                      className="mt-portal-3 flex justify-end gap-1"
+                      data-tech-card-row-actions
+                    >
+                      <IconButton
+                        label="Копировать"
+                        variant="secondary"
+                        disabled={rowBusy}
+                        data-tech-card-row-copy
+                        onClick={() => void onCopyCard(card.id)}
+                      >
+                        <Copy className="size-4" aria-hidden="true" />
+                      </IconButton>
+                      <IconButton
+                        label="Удалить"
+                        variant="danger"
+                        disabled={rowBusy || !isDraft}
+                        data-tech-card-row-delete
+                        onClick={() => void onDeleteCard(card)}
+                      >
+                        <Trash2 className="size-4" aria-hidden="true" />
+                      </IconButton>
+                    </div>
                   </article>
                 );
               })}

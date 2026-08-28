@@ -289,12 +289,64 @@ def to_technical_card_read(db: Session, card: TechnicalCard) -> TechnicalCardRea
     return TechnicalCardRead.model_validate(data)
 
 
+def platform_user_labels(db: Session, user_ids: set[int]) -> dict[int, str]:
+    """Batch PlatformUser labels for list embed (no per-row fetch)."""
+    from app.models.auth import PlatformUser
+
+    if not user_ids:
+        return {}
+    rows = db.scalars(select(PlatformUser).where(PlatformUser.id.in_(user_ids))).all()
+    labels: dict[int, str] = {}
+    for user in rows:
+        name = (user.display_name or "").strip()
+        labels[user.id] = name or user.login
+    return labels
+
+
+def sales_order_responsible_labels(
+    db: Session, order_ids: set[int]
+) -> dict[int, str]:
+    """Batch SalesOrder.responsible → name (list embed, no per-row fetch)."""
+    if not order_ids:
+        return {}
+    rows = db.execute(
+        select(SalesOrder.id, SalesUser.name)
+        .outerjoin(SalesUser, SalesUser.id == SalesOrder.responsible_id)
+        .where(SalesOrder.id.in_(order_ids))
+    ).all()
+    return {
+        order_id: name.strip()
+        for order_id, name in rows
+        if name and name.strip()
+    }
+
+
+def list_card_responsible_name(
+    card: TechnicalCard,
+    labels: dict[int, str],
+    *,
+    order_fallback: str | None = None,
+) -> str | None:
+    assigned = (
+        labels.get(card.responsible_platform_user_id)
+        if card.responsible_platform_user_id is not None
+        else None
+    )
+    created = (
+        labels.get(card.created_by_platform_user_id)
+        if card.created_by_platform_user_id is not None
+        else None
+    )
+    return assigned or created or order_fallback
+
+
 def to_technical_card_list_read(
     card: TechnicalCard,
     *,
     order_number: str | None = None,
     planned_count: int | None = None,
     desired_date=None,
+    responsible_name: str | None = None,
 ) -> TechnicalCardListRead:
     """Slim list mapper — no composition/unit/media/sewing, no per-row Client lookups."""
     data = {
@@ -304,7 +356,7 @@ def to_technical_card_list_read(
     data["stage_results"] = list(card.stage_results)
     data["order_number"] = order_number
     data["client_name"] = None
-    data["responsible_name"] = None
+    data["responsible_name"] = responsible_name
     data["desired_date"] = desired_date
     data["product_model_cover_image_url"] = None
     data["tech_cards_planned_count"] = planned_count

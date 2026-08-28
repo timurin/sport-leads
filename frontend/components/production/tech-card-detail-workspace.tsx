@@ -5,6 +5,7 @@ import {
   ChevronDown,
   ChevronRight,
   CheckCircle2,
+  CirclePlay,
   ExternalLink,
   FileDown,
   Play,
@@ -40,7 +41,6 @@ import { TechCardMediaCarousel } from "@/components/production/tech-card-media-c
 import { TechCardOrderDataCard } from "@/components/production/tech-card-order-data-card";
 import { TechCardModelRouteCard } from "@/components/production/tech-card-model-route-card";
 import { TechCardProductNameHeader } from "@/components/production/tech-card-product-name-header";
-import { StandaloneTechCardLinkPanel } from "@/components/production/standalone-tech-card-link-panel";
 import { TechCardShopFloorBody } from "@/components/production/tech-card-shop-floor-body";
 import { OrderCollaborationPanel } from "@/components/sales/order-collaboration-panel";
 import { DocumentCard } from "@/components/entity/document-card";
@@ -109,10 +109,10 @@ import {
 const XL_COLLAB_MQ = "(min-width: 1280px)";
 
 const MANAGER_DOC_TABS = [
-  { id: "operations", label: "Операции" },
-  { id: "scheme", label: "Схема" },
-  { id: "assembly", label: "Сборки" },
+  { id: "assembly", label: "Персонализация" },
   { id: "materials", label: "Материалы" },
+  { id: "operations", label: "Операции" },
+  { id: "scheme", label: "Пошив" },
   { id: "route", label: "Маршрут" },
 ] as const;
 
@@ -454,7 +454,7 @@ export function TechCardDetailWorkspace({
   );
   const [unitImportOpen, setUnitImportOpen] = useState(false);
   const [unitImportFile, setUnitImportFile] = useState<File | null>(null);
-  const [managerDocTab, setManagerDocTab] = useState<ManagerDocTabId>("operations");
+  const [managerDocTab, setManagerDocTab] = useState<ManagerDocTabId>("assembly");
   const [collapsedBlocks, setCollapsedBlocks] = useState({
     history: true,
   });
@@ -1503,7 +1503,7 @@ export function TechCardDetailWorkspace({
                     disabled={busy}
                     onClick={() => onStartStage(activeStage.stage_order)}
                   >
-                    <Play className="size-4" aria-hidden="true" />
+                    <CirclePlay className="size-4" aria-hidden="true" />
                   </IconButton>
                 ) : null}
                 {canCompleteActiveStage && activeStage ? (
@@ -1700,11 +1700,6 @@ export function TechCardDetailWorkspace({
         data-tech-card-doc-layout="manager"
       >
       <div className="tech-card-doc-row1 order-2 min-w-0 md:order-1 xl:order-none xl:col-start-1 xl:row-start-1">
-      {!hasSalesOrder ? (
-        <div className="mb-portal-4">
-          <StandaloneTechCardLinkPanel cardId={card.id} disabled={busy} />
-        </div>
-      ) : null}
       <div className="grid grid-cols-1 gap-portal-4 xl:grid-cols-[minmax(0,3fr)_minmax(0,4fr)_minmax(0,4fr)]">
         <SectionCard
           title="Макет"

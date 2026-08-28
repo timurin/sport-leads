@@ -1,7 +1,7 @@
 # Sport-Lead — Project Structure Checklist
 
 **Code:** `SL-PROJECT-STRUCTURE-v1`
-**Updated:** `2026-08-28` (Stage **12.5.1.1**–`12.5.1.5` transfer shipped; next **12.5.1.6** owner visual; Stage **26** `26.3.13` + `26.10.1`–`26.10.8` closed; Stage **27** 1C:UNF export parked)
+**Updated:** `2026-08-29` (Stage **12.5.1.1**–`12.5.1.5` transfer shipped; next **12.5.1.6** owner visual; Stage **26** `26.3.15` + `26.10.1`–`26.10.8` closed; **`26.11.1`–`26.11.13` closed**; Stage **27** 1C:UNF export parked)
 **Project version:** `v0.9.0` / early `v1.00` Stages 0 + 20 + 21 + 22 + 23 + **24** + **25** + **26** + **27** + Stage **7** contract
 **Git branch:** `main`
 
@@ -43,7 +43,7 @@
 - [ ] Unified Work Tasks (`v1.00` Stage `23`) — ADR-028; through `23.7` / `23.10.4` (API/FE/hosts, migrate, kanban, order context; owner visuals OK `2026-08-22`); old task tables retained
 - [x] Sewing cabinet (`v1.00` Stage `24`) — ADR-029 work ledger + restricted shell + own/manager UI; owner visual OK `24.5.2` (`2026-08-24`); `PlatformUser` sewer; not `2.4.2` Employee
 - [x] Tech-card QR + shop scan (`v1.00` Stage `25`) — closed `2026-08-25` (owner visual `25.5.2`); ADR-030; Alembic `d3e4f5a6b789`; `/production/scan/{token}`
-- [ ] Owner findings / bugs-cosmetics (`v1.00` Stage `26`) — living backlog; `26.0.1` closed `2026-08-25`; `26.1.1`–`26.1.6` closed `2026-08-26`; **`26.2.1`–`26.2.2` closed `2026-08-26`**; **`26.3.1`–`26.3.13` closed `2026-08-26`/`2026-08-28`**; **`26.4.1`–`26.4.3` closed `2026-08-26`** (models whitelist; card «Варианты» removed); **`26.5.1`–`26.5.4` closed `2026-08-26`**; **`26.6.1`–`26.6.8` closed `2026-08-26`**; **`26.7.1` closed `2026-08-26`**; **`26.8.1`–`26.8.2` closed `2026-08-26`**; **`26.9.1`–`26.9.3` closed `2026-08-27`** (owner visual nav + settings slider); **`26.10.1`–`26.10.8` closed `2026-08-28`** (catalog slim + assembly inline edit); owner-pull only
+- [ ] Owner findings / bugs-cosmetics (`v1.00` Stage `26`) — living backlog; `26.0.1` closed `2026-08-25`; `26.1.1`–`26.1.6` closed `2026-08-26`; **`26.2.1`–`26.2.2` closed `2026-08-26`**; **`26.3.1`–`26.3.15` closed `2026-08-26`/`2026-08-29`**; **`26.4.1`–`26.4.3` closed `2026-08-26`** (models whitelist; card «Варианты» removed); **`26.5.1`–`26.5.4` closed `2026-08-26`**; **`26.6.1`–`26.6.8` closed `2026-08-26`**; **`26.7.1` closed `2026-08-26`**; **`26.8.1`–`26.8.2` closed `2026-08-26`**; **`26.9.1`–`26.9.3` closed `2026-08-27`** (owner visual nav + settings slider); **`26.10.1`–`26.10.8` closed `2026-08-28`** (catalog slim + assembly inline edit); **`26.11.1`–`26.11.13` closed `2026-08-29`** (tech-cards list/tabs; owner visual pending responsible + Заказ); owner-pull only
 - [ ] 1C:UNF document export (`v1.00` Stage `27`) — `27.0.1` closed `2026-08-26`; `27.1+` parked owner-pull; platform→УНФ packages; matching in 1C; inbound `16.2.1` parked
 - [x] Standalone tech cards + numbering (`v1.00` Stage `28`) — `28.0.1`–`28.5.4` closed `2026-08-27`; owner visual `28.3.3` OK
 - [ ] Production secrets management (Vault/etc.) — monitoring + DR covered in `17.2.2`/`17.2.3`; file `.env.production` remains host SoT for secrets MVP

@@ -250,7 +250,7 @@ export function ProductionOrdersWorkspace({
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <Link
-            href="/production/kanban"
+            href="/production/tech-cards?view=kanban"
             className="portal-focus-ring inline-flex h-9 items-center justify-center rounded-lg border border-portal-border bg-portal-surface px-3 text-sm font-medium text-portal-text"
           >
             Канбан

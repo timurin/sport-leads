@@ -95,6 +95,7 @@ export async function moveShopStageKanbanCardAction(input: {
     }
 
     revalidatePath("/production/kanban");
+    revalidatePath("/production/tech-cards");
     revalidatePath(`/production/tech-cards/${card.id}`);
     revalidatePath(`/production/stages/${input.fromStageCode}`);
     if (input.toStageCode !== "unassigned") {

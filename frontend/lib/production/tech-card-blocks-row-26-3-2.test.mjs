@@ -12,11 +12,13 @@ const workspace = readFileSync(
 
 test("26.3.2 manager doc blocks use tabs (ops / scheme / assembly / materials / route)", () => {
   assert.ok(workspace.includes("data-tech-card-doc-tabs"));
-  assert.ok(workspace.includes('label: "Операции"'));
-  assert.ok(workspace.includes('label: "Схема"'));
-  assert.ok(workspace.includes('label: "Сборки"'));
+  assert.ok(workspace.includes('label: "Персонализация"'));
   assert.ok(workspace.includes('label: "Материалы"'));
+  assert.ok(workspace.includes('label: "Операции"'));
+  assert.ok(workspace.includes('label: "Пошив"'));
   assert.ok(workspace.includes('label: "Маршрут"'));
+  assert.equal(workspace.includes('label: "Схема"'), false);
+  assert.equal(workspace.includes('label: "Сборки"'), false);
   assert.ok(workspace.includes('title="Операции / объёмы"'));
   assert.ok(workspace.includes('title="Схема сборки изделия"'));
   assert.ok(workspace.includes('title="Состав материалов"'));

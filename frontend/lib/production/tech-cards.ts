@@ -9,10 +9,19 @@ import type {
 } from "@/lib/sales/order-tech-cards-api";
 import type { TechCardUiStatus } from "@/lib/sales/order-tech-cards";
 
+export type TechCardListView = "list" | "kanban";
+
+export function parseTechCardListView(
+  raw: string | null | undefined,
+): TechCardListView {
+  return raw === "kanban" ? "kanban" : "list";
+}
+
 export type TechCardClientFilter = {
   search?: string;
   status?: string;
   stage?: string;
+  responsible?: string;
 };
 
 /** Max mockup images on a technical card document. */
@@ -96,6 +105,7 @@ export function filterTechCardsClient(
   const search = filters.search?.trim().toLowerCase() ?? "";
   const status = filters.status?.trim() ?? "";
   const stage = filters.stage?.trim().toLowerCase() ?? "";
+  const responsible = filters.responsible?.trim().toLowerCase() ?? "";
   const statusField = filters.statusField ?? "card";
 
   return cards.filter((card) => {
@@ -107,6 +117,12 @@ export function filterTechCardsClient(
       if (value !== status) return false;
     }
     if (stage && !(card.current_stage_label ?? "").toLowerCase().includes(stage)) {
+      return false;
+    }
+    if (
+      responsible &&
+      !(card.responsible_name ?? "").toLowerCase().includes(responsible)
+    ) {
       return false;
     }
     if (!search) return true;

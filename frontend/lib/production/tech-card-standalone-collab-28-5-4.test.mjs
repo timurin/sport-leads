@@ -15,9 +15,10 @@ test("standalone tech-card collab rail wiring (28.5.4)", () => {
   assert.ok(workspace.includes("data-standalone-tech-card-collab"));
   assert.ok(workspace.includes("showCollabRail"));
   const row1Idx = workspace.indexOf('className="tech-card-doc-row1');
-  const linkIdx = workspace.indexOf("<StandaloneTechCardLinkPanel");
+  const orderDataIdx = workspace.indexOf("<TechCardOrderDataCard");
   const collabIdx = workspace.indexOf("<TechCardOrderCollaboration card={card} surface=\"manager\"");
-  assert.ok(row1Idx > 0 && linkIdx > row1Idx && linkIdx < collabIdx);
+  assert.ok(row1Idx > 0 && orderDataIdx > row1Idx && orderDataIdx < collabIdx);
+  assert.equal(workspace.includes("StandaloneTechCardLinkPanel"), false);
 
   const panel = readFileSync(
     join(root, "components/sales/order-collaboration-panel.tsx"),

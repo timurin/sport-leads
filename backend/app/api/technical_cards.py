@@ -59,6 +59,10 @@ from app.services.standalone_technical_cards import (
     link_standalone_technical_card,
     update_technical_card_order_group,
 )
+from app.services.tech_card_copy_delete import (
+    copy_technical_card,
+    delete_draft_technical_card,
+)
 from app.services.tech_card_responsible import (
     list_responsible_candidates,
     update_technical_card_responsible,
@@ -115,6 +119,9 @@ from app.services.technical_cards import (
     technical_card_media_path,
     to_technical_card_read,
     to_technical_card_list_read,
+    list_card_responsible_name,
+    platform_user_labels,
+    sales_order_responsible_labels,
     update_operation_line_volume,
     update_unit_line,
 )
@@ -191,12 +198,33 @@ def list_order_technical_cards(
     order_number = order.number if order is not None else None
     planned_count = order.tech_cards_planned_count if order is not None else None
     desired_date = order.desired_date if order is not None else None
+    user_ids = {
+        user_id
+        for row in rows
+        for user_id in (
+            row.responsible_platform_user_id,
+            row.created_by_platform_user_id,
+        )
+        if user_id is not None
+    }
+    labels = platform_user_labels(db, user_ids)
+    order_ids = {row.sales_order_id for row in rows if row.sales_order_id is not None}
+    sales_labels = sales_order_responsible_labels(db, order_ids)
     return [
         to_technical_card_list_read(
             row,
             order_number=order_number,
             planned_count=planned_count,
             desired_date=desired_date,
+            responsible_name=list_card_responsible_name(
+                row,
+                labels,
+                order_fallback=(
+                    sales_labels.get(row.sales_order_id)
+                    if row.sales_order_id is not None
+                    else None
+                ),
+            ),
         )
         for row in rows
     ]
@@ -300,6 +328,53 @@ def create_standalone_technical_card_endpoint(
 
 
 @router.post(
+    "/technical-cards/{card_id}/copy",
+    response_model=TechnicalCardRead,
+    status_code=status.HTTP_201_CREATED,
+    operation_id="copy_technical_card",
+)
+def copy_technical_card_endpoint(
+    card_id: int,
+    db: Session = Depends(get_db),
+    current_user: PlatformUser | None = Depends(get_optional_platform_user),
+) -> TechnicalCardRead:
+    try:
+        card = copy_technical_card(
+            db,
+            card_id,
+            created_by_platform_user_id=(
+                current_user.id if current_user is not None else None
+            ),
+        )
+        db.commit()
+    except (TechnicalCardNotFoundError, TechnicalCardValidationError) as error:
+        db.rollback()
+        raise _http_error(error) from error
+    return _card_read(db, get_technical_card(db, card.id))
+
+
+@router.delete(
+    "/technical-cards/{card_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    operation_id="delete_draft_technical_card",
+)
+def delete_draft_technical_card_endpoint(
+    card_id: int,
+    db: Session = Depends(get_db),
+) -> None:
+    try:
+        delete_draft_technical_card(db, card_id)
+        db.commit()
+    except (
+        TechnicalCardNotFoundError,
+        TechnicalCardValidationError,
+        TechnicalCardConflictError,
+    ) as error:
+        db.rollback()
+        raise _http_error(error) from error
+
+
+@router.post(
     "/technical-cards/{card_id}/link-sales-order-item",
     response_model=TechnicalCardRead,
     operation_id="link_standalone_technical_card",
@@ -339,7 +414,11 @@ def patch_technical_card_order_group(
     try:
         group = update_technical_card_order_group(db, group_id, payload)
         db.commit()
-    except (TechnicalCardNotFoundError, TechnicalCardValidationError) as error:
+    except (
+        TechnicalCardNotFoundError,
+        TechnicalCardValidationError,
+        TechnicalCardConflictError,
+    ) as error:
         db.rollback()
         raise _http_error(error) from error
     db.refresh(group)
@@ -371,12 +450,37 @@ def read_technical_cards(
         limit=limit,
         offset=offset,
     )
+    user_ids = {
+        user_id
+        for card, _order_number, _planned_count, _desired_date in rows
+        for user_id in (
+            card.responsible_platform_user_id,
+            card.created_by_platform_user_id,
+        )
+        if user_id is not None
+    }
+    labels = platform_user_labels(db, user_ids)
+    order_ids = {
+        card.sales_order_id
+        for card, _order_number, _planned_count, _desired_date in rows
+        if card.sales_order_id is not None
+    }
+    sales_labels = sales_order_responsible_labels(db, order_ids)
     return [
         to_technical_card_list_read(
             card,
             order_number=order_number,
             planned_count=planned_count,
             desired_date=desired_date,
+            responsible_name=list_card_responsible_name(
+                card,
+                labels,
+                order_fallback=(
+                    sales_labels.get(card.sales_order_id)
+                    if card.sales_order_id is not None
+                    else None
+                ),
+            ),
         )
         for card, order_number, planned_count, desired_date in rows
     ]

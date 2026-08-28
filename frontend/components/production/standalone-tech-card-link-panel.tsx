@@ -9,8 +9,7 @@ import {
   previewOrderTechCardsForStandaloneLinkAction,
 } from "@/app/(workspace)/production/tech-cards/tech-card-actions";
 import { Button } from "@/components/ui/button";
-import { Field, Select } from "@/components/ui/form-controls";
-import { SectionCard } from "@/components/ui/section-card";
+import { Checkbox, Field, Input, Select } from "@/components/ui/form-controls";
 import { useToast } from "@/components/ui/toast";
 import type { ApiTechnicalCardPreviewLine } from "@/lib/sales/order-tech-cards-api";
 
@@ -18,14 +17,23 @@ type OrderOption = { id: number; number: string; client_name: string | null };
 
 export function StandaloneTechCardLinkPanel({
   cardId,
+  orderNumber,
+  draftOrderNumber,
+  onDraftOrderNumberChange,
+  manualEditable = false,
   disabled = false,
 }: {
   cardId: number;
+  orderNumber: string;
+  draftOrderNumber: string;
+  onDraftOrderNumberChange: (value: string) => void;
+  manualEditable?: boolean;
   disabled?: boolean;
 }) {
   const router = useRouter();
   const { push: pushToast } = useToast();
   const [pending, startTransition] = useTransition();
+  const [pickOrder, setPickOrder] = useState(false);
   const [orders, setOrders] = useState<OrderOption[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [orderId, setOrderId] = useState("");
@@ -38,8 +46,11 @@ export function StandaloneTechCardLinkPanel({
     () => lines.filter((line) => line.would_create),
     [lines],
   );
+  const manualValue = manualEditable ? draftOrderNumber : orderNumber;
+  const displayValue = (manualValue || "").trim() || "—";
 
   useEffect(() => {
+    if (!pickOrder) return;
     let cancelled = false;
     void listOrdersForStandaloneLinkAction().then((result) => {
       if (cancelled) return;
@@ -54,7 +65,19 @@ export function StandaloneTechCardLinkPanel({
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [pickOrder]);
+
+  const resetOrderPick = () => {
+    setOrderId("");
+    setItemId("");
+    setLines([]);
+    setFormError(null);
+  };
+
+  const onTogglePick = (checked: boolean) => {
+    setPickOrder(checked);
+    if (!checked) resetOrderPick();
+  };
 
   const onSelectOrder = (nextOrderId: string) => {
     setOrderId(nextOrderId);
@@ -79,6 +102,7 @@ export function StandaloneTechCardLinkPanel({
 
   const onSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (!pickOrder) return;
     const salesOrderItemId = Number(itemId);
     if (!Number.isInteger(salesOrderItemId) || salesOrderItemId < 1) {
       setFormError("Выберите свободную позицию заказа");
@@ -100,69 +124,112 @@ export function StandaloneTechCardLinkPanel({
   };
 
   return (
-    <SectionCard
-      title="Привязать к заказу"
-      description="Самостоятельную техкарту можно один раз привязать к свободной позиции заказа покупателя. Номер техкарты не меняется."
-      size="compact"
+    <form
+      className="min-w-0 space-y-portal-2"
+      onSubmit={onSubmit}
+      data-standalone-link-sales-order
     >
-      <form
-        className="space-y-portal-4"
-        onSubmit={onSubmit}
-        data-standalone-link-sales-order
-      >
-        {loadError ? (
-          <p className="text-portal-body text-portal-danger" role="alert">
-            {loadError}
-          </p>
-        ) : null}
-        <Field label="Заказ" required>
-          <Select
-            value={orderId}
-            onChange={(event) => onSelectOrder(event.target.value)}
-            disabled={busy || orders.length === 0}
+      {loadError ? (
+        <p className="text-portal-body text-portal-danger" role="alert">
+          {loadError}
+        </p>
+      ) : null}
+      <div className="min-w-0" data-tech-card-order-row data-form-field>
+        <div className="flex min-w-0 items-center justify-between gap-portal-2">
+          <label
+            htmlFor="tech-card-order-number"
+            className="text-portal-caption text-portal-muted"
           >
-            <option value="">Выберите заказ…</option>
-            {orders.map((order) => (
-              <option key={order.id} value={order.id}>
-                {order.number}
-                {order.client_name ? ` · ${order.client_name}` : ""}
+            Заказ
+          </label>
+          <Checkbox
+            id="tech-card-select-order"
+            label={
+              <span className="whitespace-nowrap text-portal-caption text-portal-primary">
+                Выбрать заказ
+              </span>
+            }
+            checked={pickOrder}
+            disabled={busy}
+            data-tech-card-select-order
+            onChange={(event) => onTogglePick(event.target.checked)}
+          />
+        </div>
+        <div className="mt-1 min-w-0">
+          {pickOrder ? (
+            <Select
+              id="tech-card-order-number"
+              size="compact"
+              value={orderId}
+              onChange={(event) => onSelectOrder(event.target.value)}
+              disabled={busy || (orders.length === 0 && !loadError)}
+              data-tech-card-order-select
+            >
+              <option value="">Выберите заказ…</option>
+              {orders.map((order) => (
+                <option key={order.id} value={order.id}>
+                  {order.number}
+                  {order.client_name ? ` · ${order.client_name}` : ""}
+                </option>
+              ))}
+            </Select>
+          ) : manualEditable ? (
+            <Input
+              id="tech-card-order-number"
+              size="compact"
+              value={manualValue}
+              disabled={busy}
+              placeholder="Номер из другой системы"
+              data-tech-card-order-number
+              onChange={(event) => onDraftOrderNumberChange(event.target.value)}
+            />
+          ) : (
+            <p
+              id="tech-card-order-number"
+              className="text-portal-body"
+              data-tech-card-order-number
+            >
+              {displayValue}
+            </p>
+          )}
+        </div>
+      </div>
+      {pickOrder && orderId ? (
+        <Field label="Свободная позиция" required>
+          <Select
+            size="compact"
+            value={itemId}
+            onChange={(event) => setItemId(event.target.value)}
+            disabled={busy || freeLines.length === 0}
+          >
+            <option value="">
+              {freeLines.length === 0
+                ? "Нет свободных eligible позиций"
+                : "Выберите позицию…"}
+            </option>
+            {freeLines.map((line) => (
+              <option key={line.sales_order_item_id} value={line.sales_order_item_id}>
+                {line.position}. {line.snapshot_name} · {line.quantity}
               </option>
             ))}
           </Select>
         </Field>
-        {orderId ? (
-          <Field label="Свободная позиция" required>
-            <Select
-              value={itemId}
-              onChange={(event) => setItemId(event.target.value)}
-              disabled={busy || freeLines.length === 0}
-            >
-              <option value="">
-                {freeLines.length === 0
-                  ? "Нет свободных eligible позиций"
-                  : "Выберите позицию…"}
-              </option>
-              {freeLines.map((line) => (
-                <option key={line.sales_order_item_id} value={line.sales_order_item_id}>
-                  {line.position}. {line.snapshot_name} · {line.quantity}
-                </option>
-              ))}
-            </Select>
-          </Field>
-        ) : null}
-        {formError ? (
-          <p className="text-portal-body text-portal-danger" role="alert">
-            {formError}
-          </p>
-        ) : null}
+      ) : null}
+      {formError ? (
+        <p className="text-portal-body text-portal-danger" role="alert">
+          {formError}
+        </p>
+      ) : null}
+      {pickOrder ? (
         <Button
           type="submit"
           variant="primary"
+          size="compact"
           disabled={busy || !itemId}
         >
           {pending ? "Привязка…" : "Привязать"}
         </Button>
-      </form>
-    </SectionCard>
+      ) : null}
+    </form>
   );
 }

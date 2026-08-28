@@ -401,6 +401,66 @@ export async function createStandaloneTechnicalCard(
   return (await response.json()) as ApiTechnicalCard;
 }
 
+export async function copyTechnicalCard(
+  cardId: number | string,
+  requestHeaders?: Record<string, string>,
+): Promise<ApiTechnicalCard> {
+  const response = await fetch(`${apiBaseUrl()}/technical-cards/${cardId}/copy`, {
+    method: "POST",
+    headers: { ...requestHeaders },
+    cache: "no-store",
+  });
+  if (!response.ok) {
+    throw new Error(await readError(response, "Copy failed"));
+  }
+  return (await response.json()) as ApiTechnicalCard;
+}
+
+export async function deleteTechnicalCard(
+  cardId: number | string,
+  requestHeaders?: Record<string, string>,
+): Promise<void> {
+  const response = await fetch(`${apiBaseUrl()}/technical-cards/${cardId}`, {
+    method: "DELETE",
+    headers: { ...requestHeaders },
+    cache: "no-store",
+  });
+  if (!response.ok) {
+    throw new Error(await readError(response, "Delete failed"));
+  }
+}
+
+export type ApiTechnicalCardOrderGroup = {
+  id: number;
+  order_number: string;
+  tech_cards_planned_count: number;
+  desired_date: string | null;
+  client_id?: number | null;
+};
+
+export async function updateTechnicalCardOrderGroup(
+  groupId: number,
+  payload: {
+    order_number?: string;
+    tech_cards_planned_count?: number;
+    desired_date?: string | null;
+  },
+): Promise<ApiTechnicalCardOrderGroup> {
+  const response = await fetch(
+    `${apiBaseUrl()}/technical-cards/order-groups/${groupId}`,
+    {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(payload),
+      cache: "no-store",
+    },
+  );
+  if (!response.ok) {
+    throw new Error(await readError(response, "Update order group failed"));
+  }
+  return (await response.json()) as ApiTechnicalCardOrderGroup;
+}
+
 export async function linkStandaloneTechnicalCard(
   cardId: number | string,
   salesOrderItemId: number,

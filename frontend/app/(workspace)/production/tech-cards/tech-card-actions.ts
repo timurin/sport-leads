@@ -20,7 +20,9 @@ import {
   deleteTechnicalCardCompositionLine,
   deleteTechnicalCardMedia,
   generateOrderTechnicalCards,
+  copyTechnicalCard,
   createStandaloneTechnicalCard,
+  deleteTechnicalCard,
   fetchOrderTechnicalCardsPreview,
   linkStandaloneTechnicalCard,
   importTechnicalCardUnitLinesFile,
@@ -131,6 +133,37 @@ export async function createStandaloneTechnicalCardAction(input: {
     return failure(
       error instanceof Error ? error.message : "Не удалось создать техкарту",
     );
+  }
+}
+
+export async function copyTechnicalCardAction(
+  cardId: number,
+): Promise<TechCardActionResult> {
+  try {
+    const auth = await sessionAuthHeaders();
+    const card = await copyTechnicalCard(cardId, auth);
+    revalidateTechCardPaths(card.id, card.sales_order_id);
+    return success(card, `Скопирована техкарта ${card.display_number ?? card.number}`);
+  } catch (error) {
+    return failure(
+      error instanceof Error ? error.message : "Не удалось скопировать техкарту",
+    );
+  }
+}
+
+export async function deleteTechnicalCardAction(
+  cardId: number,
+): Promise<{ ok: boolean; message: string | null }> {
+  try {
+    const auth = await sessionAuthHeaders();
+    await deleteTechnicalCard(cardId, auth);
+    revalidateTechCardPaths(cardId);
+    return { ok: true, message: "Техкарта удалена" };
+  } catch (error) {
+    return {
+      ok: false,
+      message: error instanceof Error ? error.message : "Не удалось удалить техкарту",
+    };
   }
 }
 
@@ -780,6 +813,38 @@ export async function listTechnicalCardClientCandidates(
     message: null,
     candidates: rows.map((row) => ({ id: row.id, label: clientLabel(row) })),
   };
+}
+
+export async function updateTechnicalCardOrderNumberAction(
+  groupId: number,
+  orderNumber: string,
+  cardId: number,
+): Promise<TechCardActionResult> {
+  const trimmed = orderNumber.trim();
+  if (!trimmed) {
+    return failure("Укажите номер заказа");
+  }
+  try {
+    const auth = await sessionAuthHeaders();
+    const response = await fetch(
+      `${apiBaseUrl()}/technical-cards/order-groups/${groupId}`,
+      {
+        method: "PATCH",
+        headers: { "content-type": "application/json", ...auth },
+        body: JSON.stringify({ order_number: trimmed }),
+        cache: "no-store",
+      },
+    );
+    if (!response.ok) {
+      return failure(await readApiError(response, "Не удалось сохранить номер заказа"));
+    }
+    revalidateTechCardPaths(cardId);
+    return { ok: true, message: "Номер заказа сохранён", card: null };
+  } catch (error) {
+    return failure(
+      error instanceof Error ? error.message : "Не удалось сохранить номер заказа",
+    );
+  }
 }
 
 export async function updateTechnicalCardDesiredDateAction(

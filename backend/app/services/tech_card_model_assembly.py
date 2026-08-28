@@ -16,6 +16,8 @@ from app.services.technical_cards import (
     TechnicalCardNotFoundError,
     TechnicalCardValidationError,
     _sync_sewing_operation_lines,
+    apply_routing_template,
+    get_technical_card,
 )
 
 
@@ -107,3 +109,34 @@ def update_technical_card_model_assembly(
     _sync_sewing_operation_lines(db, card)
     db.flush()
     return card
+
+
+def seed_card_from_nomenclature(db: Session, card: TechnicalCard) -> TechnicalCard:
+    """Apply first whitelist model + first active assembly + default routing (26.11.10)."""
+    if card.nomenclature_id is None:
+        return card
+    from app.models.product_model import ProductModelStatus
+    from app.repositories import nomenclature_product_models as npm_repo
+
+    model = None
+    for _link, candidate in npm_repo.list_links_for_nomenclature(db, card.nomenclature_id):
+        if candidate.status == ProductModelStatus.ACTIVE:
+            model = candidate
+            break
+    if model is None:
+        return card
+    variants = assembly_repo.list_variants(db, model.id, active_only=True)
+    variant = variants[0] if variants else None
+    update_technical_card_model_assembly(
+        db,
+        card.id,
+        product_model_id=model.id,
+        assembly_variant_id=variant.id if variant is not None else None,
+    )
+    template_id = model.default_routing_template_id
+    if template_id is not None:
+        try:
+            apply_routing_template(db, card.id, template_id)
+        except TechnicalCardValidationError:
+            pass
+    return get_technical_card(db, card.id)

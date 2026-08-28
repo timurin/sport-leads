@@ -9,10 +9,12 @@ import {
   listTechnicalCardResponsibleCandidates,
   updateTechnicalCardClientAction,
   updateTechnicalCardDesiredDateAction,
+  updateTechnicalCardOrderNumberAction,
   updateTechnicalCardResponsibleAction,
   type TechnicalCardClientCandidate,
   type TechnicalCardResponsibleCandidate,
 } from "@/app/(workspace)/production/tech-cards/tech-card-actions";
+import { StandaloneTechCardLinkPanel } from "@/components/production/standalone-tech-card-link-panel";
 import { ClientCreateDrawer } from "@/components/sales/client-create-drawer";
 import { Button, IconButton } from "@/components/ui/button";
 import { Field, Input, Select } from "@/components/ui/form-controls";
@@ -63,6 +65,7 @@ export function TechCardOrderDataCard({
   const [clientOpen, setClientOpen] = useState(false);
   const [clientActiveIndex, setClientActiveIndex] = useState(0);
   const [createClientOpen, setCreateClientOpen] = useState(false);
+  const [draftOrderNumber, setDraftOrderNumber] = useState("");
   const [draftDesiredDate, setDraftDesiredDate] = useState<string | null>(null);
   const [viewYear, setViewYear] = useState(() => new Date().getFullYear());
   const [viewMonth, setViewMonth] = useState(() => new Date().getMonth() + 1);
@@ -75,6 +78,7 @@ export function TechCardOrderDataCard({
   const defaultClientLabel = card.client_name?.trim() || "";
   const requiresClient = card.sales_order_id != null;
   const requiresDueDate = card.sales_order_id == null;
+  const isStandalone = card.sales_order_id == null;
 
   const extraRows = useMemo(() => {
     const rows: TechnicalCardResponsibleCandidate[] = [];
@@ -175,6 +179,7 @@ export function TechCardOrderDataCard({
     setQuery(defaultLabel);
     setSelectedClientId(defaultClientId);
     setClientQuery(defaultClientLabel);
+    setDraftOrderNumber(card.order_number?.trim() || "");
     setDraftDesiredDate(parsed ? toIsoDate(parsed.year, parsed.month, parsed.day) : null);
     setViewYear(parsed?.year ?? now.getFullYear());
     setViewMonth(parsed?.month ?? now.getMonth() + 1);
@@ -231,6 +236,26 @@ export function TechCardOrderDataCard({
       setError(clientResult.message ?? "Не удалось сохранить клиента");
       return;
     }
+    if (isStandalone && card.order_group_id != null) {
+      const nextOrderNumber = draftOrderNumber.trim();
+      if (!nextOrderNumber) {
+        setPending(false);
+        setError("Укажите номер заказа");
+        return;
+      }
+      if (nextOrderNumber !== (card.order_number ?? "").trim()) {
+        const orderResult = await updateTechnicalCardOrderNumberAction(
+          card.order_group_id,
+          nextOrderNumber,
+          card.id,
+        );
+        if (!orderResult.ok) {
+          setPending(false);
+          setError(orderResult.message ?? "Не удалось сохранить номер заказа");
+          return;
+        }
+      }
+    }
     const dateResult = await updateTechnicalCardDesiredDateAction(card.id, draftDesiredDate);
     setPending(false);
     if (!dateResult.ok) {
@@ -243,6 +268,7 @@ export function TechCardOrderDataCard({
 
   const managerValue = card.responsible_name?.trim() || "";
   const dueDisplay = formatDesiredDate(card.desired_date);
+  const orderDisplay = card.order_number?.trim() || "";
   const controlsDisabled = disabled || pending;
   const calendarYears = useMemo(
     () => yearOptions(viewYear, new Date().getFullYear()),
@@ -313,6 +339,22 @@ export function TechCardOrderDataCard({
         {editing ? (
           <div className="grid gap-portal-3">
             {error ? <InlineAlert tone="danger">{error}</InlineAlert> : null}
+            {isStandalone ? (
+              <div data-tech-card-order-link>
+                <StandaloneTechCardLinkPanel
+                  cardId={card.id}
+                  orderNumber={orderDisplay}
+                  draftOrderNumber={draftOrderNumber}
+                  onDraftOrderNumberChange={setDraftOrderNumber}
+                  manualEditable
+                  disabled={controlsDisabled}
+                />
+              </div>
+            ) : (
+              <Field label="Заказ">
+                <Input value={orderDisplay} readOnly disabled={controlsDisabled} />
+              </Field>
+            )}
             <Field label="Номер техкарты">
               <Input value={documentNumber} readOnly disabled={controlsDisabled} />
             </Field>
@@ -580,6 +622,22 @@ export function TechCardOrderDataCard({
           </div>
         ) : (
           <dl className="grid gap-portal-3">
+            {isStandalone ? (
+              <div data-tech-card-order-link>
+                <StandaloneTechCardLinkPanel
+                  cardId={card.id}
+                  orderNumber={orderDisplay}
+                  draftOrderNumber={orderDisplay}
+                  onDraftOrderNumberChange={() => {}}
+                  disabled={disabled}
+                />
+              </div>
+            ) : (
+              <div>
+                <dt className="text-portal-caption text-portal-muted">Заказ</dt>
+                <dd className="mt-1 text-portal-body">{orderDisplay || "—"}</dd>
+              </div>
+            )}
             <div>
               <dt className="text-portal-caption text-portal-muted">Номер техкарты</dt>
               <dd className="mt-1 text-portal-body font-medium">{documentNumber}</dd>

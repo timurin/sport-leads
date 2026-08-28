@@ -14,6 +14,8 @@ test("26.3.11 manager EntityHeader edits nomenclature_name; shop stays read-only
   assert.ok(header.includes("data-tech-card-product-name"));
   assert.ok(header.includes("data-tech-card-product-name-chrome"));
   assert.ok(header.includes("data-tech-card-product-name-input"));
+  assert.ok(header.includes("data-tech-card-print-name-label"));
+  assert.ok(header.includes("Название изделия для печати:"));
   assert.ok(header.includes("updateTechnicalCardProductNameAction"));
   assert.ok(header.includes("<Pencil"));
   assert.ok(header.includes("techCardPositionLabel"));

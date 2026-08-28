@@ -23,10 +23,12 @@ export function ShopStageKanbanWorkspace({
   cards,
   shopModules,
   canTransition = false,
+  hideToolbar = false,
 }: {
   cards: ApiTechnicalCardListItem[];
   shopModules: ShopStageModule[];
   canTransition?: boolean;
+  hideToolbar?: boolean;
 }) {
   const router = useRouter();
   const initialColumns = useMemo(
@@ -102,23 +104,36 @@ export function ShopStageKanbanWorkspace({
 
   return (
     <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-      <PageToolbar
-        start={
-          <div className="flex min-w-0 flex-1 flex-col gap-portal-2 md:flex-row md:items-center">
-            <p className="shrink-0 text-portal-body font-semibold text-portal-text">
-              Канбан цехов
-            </p>
-            <Input
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder="Поиск по № ТК / заказу"
-              size="compact"
-              className="min-w-0 flex-1"
-              aria-label="Поиск канбана цехов"
-            />
-          </div>
-        }
-      />
+      {hideToolbar ? (
+        <div className="border-b border-portal-border px-portal-4 py-portal-2">
+          <Input
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="Поиск по № ТК / заказу"
+            size="compact"
+            className="min-w-0 w-full"
+            aria-label="Поиск канбана цехов"
+          />
+        </div>
+      ) : (
+        <PageToolbar
+          start={
+            <div className="flex min-w-0 flex-1 flex-col gap-portal-2 md:flex-row md:items-center">
+              <p className="shrink-0 text-portal-body font-semibold text-portal-text">
+                Канбан цехов
+              </p>
+              <Input
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                placeholder="Поиск по № ТК / заказу"
+                size="compact"
+                className="min-w-0 flex-1"
+                aria-label="Поиск канбана цехов"
+              />
+            </div>
+          }
+        />
+      )}
 
       <div className="min-w-0 flex-1 overflow-auto p-portal-4 lg:p-portal-6">
         <InlineAlert

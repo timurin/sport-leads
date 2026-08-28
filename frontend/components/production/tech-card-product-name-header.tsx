@@ -59,36 +59,46 @@ export function TechCardProductNameHeader({
     router.refresh();
   };
 
+  const printNameCaption = (
+    <p
+      className="text-portal-caption text-portal-muted"
+      data-tech-card-print-name-label
+    >
+      Название изделия для печати:
+    </p>
+  );
+
   if (!allowEdit || !editing) {
     return (
-      <div
-        data-tech-card-product-name
-        className="flex min-w-0 flex-wrap items-center gap-1 text-portal-text"
-      >
-        <span className="min-w-0">{viewLabel}</span>
-        {allowEdit ? (
-          <div
-            className="flex items-center gap-1"
-            role="toolbar"
-            aria-label="Правка наименования изделия"
-            data-tech-card-product-name-chrome
-          >
-            <IconButton
-              label="Редактировать наименование изделия"
-              variant="ghost"
-              disabled={disabled}
-              onClick={beginEdit}
+      <div data-tech-card-product-name className="flex min-w-0 flex-col gap-0.5 text-portal-text">
+        {printNameCaption}
+        <div className="flex min-w-0 flex-wrap items-center gap-1">
+          <span className="min-w-0">{viewLabel}</span>
+          {allowEdit ? (
+            <div
+              className="flex items-center gap-1"
+              role="toolbar"
+              aria-label="Правка наименования изделия"
+              data-tech-card-product-name-chrome
             >
-              <Pencil className="size-4" aria-hidden="true" />
-            </IconButton>
-          </div>
-        ) : null}
+              <IconButton
+                label="Редактировать наименование изделия"
+                variant="ghost"
+                disabled={disabled}
+                onClick={beginEdit}
+              >
+                <Pencil className="size-4" aria-hidden="true" />
+              </IconButton>
+            </div>
+          ) : null}
+        </div>
       </div>
     );
   }
 
   return (
     <div data-tech-card-product-name className="flex min-w-0 flex-col gap-1 text-portal-text">
+      {printNameCaption}
       {error ? <InlineAlert tone="danger">{error}</InlineAlert> : null}
       <div className="flex min-w-0 flex-wrap items-center gap-1">
         <Input

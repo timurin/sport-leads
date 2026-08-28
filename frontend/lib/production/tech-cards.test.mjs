@@ -5,6 +5,7 @@ import {
   buildCompositionReplaceLines,
   buildTechCardHistoryEntries,
   filterTechCardsClient,
+  parseTechCardListView,
   findSewingHostRoutingLineIndex,
   formatVolumeUnit,
   groupOperationLinesBySource,
@@ -40,6 +41,7 @@ const sampleCards = [
     created_at: "2026-07-26T00:00:00Z",
     updated_at: "2026-07-26T12:00:00Z",
     order_number: "SO-2026-000004",
+    responsible_name: "Анна Админ",
   },
   {
     id: 2,
@@ -62,6 +64,13 @@ const sampleCards = [
     order_number: "SO-2026-000005",
   },
 ];
+
+test("parseTechCardListView treats only kanban as board view", () => {
+  assert.equal(parseTechCardListView("kanban"), "kanban");
+  assert.equal(parseTechCardListView("list"), "list");
+  assert.equal(parseTechCardListView(""), "list");
+  assert.equal(parseTechCardListView(undefined), "list");
+});
 
 test("techCardStatusTone maps card statuses", () => {
   assert.equal(techCardStatusTone("draft"), "warning");
@@ -236,6 +245,14 @@ test("filterTechCardsClient filters by search, status, and stage", () => {
   );
   assert.equal(
     filterTechCardsClient(sampleCards, { status: "completed" }).length,
+    0,
+  );
+  assert.equal(
+    filterTechCardsClient(sampleCards, { responsible: "анна" }).length,
+    1,
+  );
+  assert.equal(
+    filterTechCardsClient(sampleCards, { responsible: "нет такого" }).length,
     0,
   );
 });

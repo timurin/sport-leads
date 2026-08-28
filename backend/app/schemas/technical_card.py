@@ -817,11 +817,24 @@ class TechnicalCardNomenclatureNameUpdate(BaseModel):
 class TechnicalCardOrderGroupUpdate(BaseModel):
     tech_cards_planned_count: int | None = Field(default=None, ge=1)
     desired_date: date | None = None
+    order_number: str | None = Field(default=None, min_length=1, max_length=50)
+
+    @field_validator("order_number", mode="before")
+    @classmethod
+    def strip_order_number(cls, value: object) -> object:
+        if isinstance(value, str):
+            stripped = value.strip()
+            return stripped or None
+        return value
 
     @model_validator(mode="after")
     def require_at_least_one_field(self) -> "TechnicalCardOrderGroupUpdate":
-        if self.tech_cards_planned_count is None and self.desired_date is None:
+        if (
+            self.tech_cards_planned_count is None
+            and self.desired_date is None
+            and self.order_number is None
+        ):
             raise ValueError(
-                "At least one of tech_cards_planned_count or desired_date is required"
+                "At least one of tech_cards_planned_count, desired_date or order_number is required"
             )
         return self

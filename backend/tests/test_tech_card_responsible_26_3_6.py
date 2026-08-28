@@ -137,5 +137,10 @@ def test_responsible_candidates_default_creator_and_patch() -> None:
         assert saved["responsible_platform_user_id"] == admin_id
         assert saved["responsible_name"] == "Анна Админ"
         assert saved["created_by_platform_user_id"] == admin_id
+
+        listed = client.get("/technical-cards")
+        assert listed.status_code == 200, listed.text
+        row = next(item for item in listed.json() if item["id"] == card_id)
+        assert row["responsible_name"] == "Анна Админ"
     finally:
         app.dependency_overrides.clear()

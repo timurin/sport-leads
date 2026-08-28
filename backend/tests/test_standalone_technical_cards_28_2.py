@@ -200,9 +200,17 @@ def test_standalone_list_and_patch_planned_live_display(
     assert patched.json()["tech_cards_planned_count"] == 8
     assert patched.json()["order_number"] == "1310"
 
+    renamed = client.patch(
+        f"/technical-cards/order-groups/{created['order_group_id']}",
+        json={"order_number": "EXT-99"},
+    )
+    assert renamed.status_code == 200, renamed.text
+    assert renamed.json()["order_number"] == "EXT-99"
+
     detail = client.get(f"/technical-cards/{created['id']}")
     assert detail.status_code == 200
     assert detail.json()["number"] == "1310-1"
+    assert detail.json()["order_number"] == "EXT-99"
     assert detail.json()["display_number"] == "1310-1/8"
 
 
