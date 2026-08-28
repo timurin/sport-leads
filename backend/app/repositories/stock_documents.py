@@ -1,7 +1,7 @@
 from datetime import datetime
 from decimal import Decimal
 
-from sqlalchemy import func, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session, selectinload
 
 from app.models.stock import StockDocument, StockDocumentStatus, StockLedgerLine
@@ -14,6 +14,7 @@ def get_document(db: Session, document_id: int) -> StockDocument | None:
         .options(
             selectinload(StockDocument.ledger_lines),
             selectinload(StockDocument.inventory_lines),
+            selectinload(StockDocument.transfer_lines),
         )
     ).first()
 
@@ -57,13 +58,19 @@ def list_documents(
     statement = select(StockDocument).options(
         selectinload(StockDocument.ledger_lines),
         selectinload(StockDocument.inventory_lines),
+        selectinload(StockDocument.transfer_lines),
     )
     if doc_type is not None:
         statement = statement.where(StockDocument.doc_type == doc_type)
     if status is not None:
         statement = statement.where(StockDocument.status == status)
     if warehouse_id is not None:
-        statement = statement.where(StockDocument.warehouse_id == warehouse_id)
+        statement = statement.where(
+            or_(
+                StockDocument.warehouse_id == warehouse_id,
+                StockDocument.destination_warehouse_id == warehouse_id,
+            )
+        )
     if technical_card_id is not None:
         statement = statement.where(
             StockDocument.technical_card_id == technical_card_id

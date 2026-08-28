@@ -47,6 +47,12 @@ type TechCardQuickItem = {
   status: string;
 };
 
+type StandaloneGroupOption = {
+  orderGroupId: number;
+  orderNumber: string;
+  technicalCardCount: number;
+};
+
 const STATUS_FILTER_ITEMS: { value: string; label: string }[] = [
   { value: "", label: "Все статусы" },
   { value: "draft", label: "Черновик" },
@@ -59,10 +65,12 @@ const STATUS_FILTER_ITEMS: { value: string; label: string }[] = [
 export function ProductionOrdersWorkspace({
   orders,
   salesOrderOptions,
+  standaloneGroupOptions,
   techCardsQuick,
 }: {
   orders: ProductionOrderListItem[];
   salesOrderOptions: SalesOrderOption[];
+  standaloneGroupOptions: StandaloneGroupOption[];
   techCardsQuick: TechCardQuickItem[];
 }) {
   const router = useRouter();
@@ -70,7 +78,9 @@ export function ProductionOrdersWorkspace({
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [createOpen, setCreateOpen] = useState(false);
+  const [sourceKind, setSourceKind] = useState<"sales" | "group">("sales");
   const [salesOrderId, setSalesOrderId] = useState("");
+  const [orderGroupId, setOrderGroupId] = useState("");
   const [notes, setNotes] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -88,15 +98,22 @@ export function ProductionOrdersWorkspace({
 
   const onCreate = async (event: FormEvent) => {
     event.preventDefault();
-    const id = Number(salesOrderId.trim());
-    if (!Number.isSafeInteger(id) || id <= 0) {
-      setError("Выберите заказ покупателя");
+    const salesId = Number(salesOrderId.trim());
+    const groupId = Number(orderGroupId.trim());
+    if (sourceKind === "sales") {
+      if (!Number.isSafeInteger(salesId) || salesId <= 0) {
+        setError("Выберите заказ покупателя");
+        return;
+      }
+    } else if (!Number.isSafeInteger(groupId) || groupId <= 0) {
+      setError("Выберите standalone-группу");
       return;
     }
     setSaving(true);
     setError(null);
     const result = await createProductionOrderAction({
-      sales_order_id: id,
+      sales_order_id: sourceKind === "sales" ? salesId : undefined,
+      order_group_id: sourceKind === "group" ? groupId : undefined,
       notes: notes.trim() || null,
     });
     setSaving(false);
@@ -107,6 +124,8 @@ export function ProductionOrdersWorkspace({
     pushToast("Производственный заказ создан", "success");
     setCreateOpen(false);
     setSalesOrderId("");
+    setOrderGroupId("");
+    setSourceKind("sales");
     setNotes("");
     router.push(`/production/orders/${result.order.id}`);
     router.refresh();
@@ -117,7 +136,7 @@ export function ProductionOrdersWorkspace({
       <CreateDrawer
         open={createOpen}
         title="Новый производственный заказ"
-        description="Планировочный документ Производства по заказу покупателя (ADR-018)."
+        description="Планировочный документ Производства: заказ покупателя или standalone-группа."
         onClose={() => {
           if (saving) return;
           setCreateOpen(false);
@@ -125,24 +144,60 @@ export function ProductionOrdersWorkspace({
         }}
         variant="overlay"
       >
-        <form onSubmit={onCreate} className="flex h-full min-h-0 flex-col">
+        <form
+          onSubmit={onCreate}
+          className="flex h-full min-h-0 flex-col"
+          data-standalone-production-order-create
+        >
           <div className="min-h-0 flex-1 space-y-portal-4 overflow-y-auto p-portal-6">
-            <Field label="Заказ покупателя" required>
+            <Field label="Источник" required>
               <Select
                 autoFocus
-                required
-                value={salesOrderId}
-                onChange={(event) => setSalesOrderId(event.target.value)}
+                value={sourceKind}
+                onChange={(event) => {
+                  const next = event.target.value === "group" ? "group" : "sales";
+                  setSourceKind(next);
+                  setError(null);
+                }}
                 disabled={saving}
               >
-                <option value="">Выберите заказ…</option>
-                {salesOrderOptions.map((option) => (
-                  <option key={option.salesOrderId} value={option.salesOrderId}>
-                    {option.salesOrderNumber} · техкарты: {option.technicalCardCount}
-                  </option>
-                ))}
+                <option value="sales">Заказ покупателя</option>
+                <option value="group">Standalone-группа</option>
               </Select>
             </Field>
+            {sourceKind === "sales" ? (
+              <Field label="Заказ покупателя" required>
+                <Select
+                  required
+                  value={salesOrderId}
+                  onChange={(event) => setSalesOrderId(event.target.value)}
+                  disabled={saving}
+                >
+                  <option value="">Выберите заказ…</option>
+                  {salesOrderOptions.map((option) => (
+                    <option key={option.salesOrderId} value={option.salesOrderId}>
+                      {option.salesOrderNumber} · техкарты: {option.technicalCardCount}
+                    </option>
+                  ))}
+                </Select>
+              </Field>
+            ) : (
+              <Field label="Standalone-группа" required>
+                <Select
+                  required
+                  value={orderGroupId}
+                  onChange={(event) => setOrderGroupId(event.target.value)}
+                  disabled={saving}
+                >
+                  <option value="">Выберите группу…</option>
+                  {standaloneGroupOptions.map((option) => (
+                    <option key={option.orderGroupId} value={option.orderGroupId}>
+                      {option.orderNumber} · техкарты: {option.technicalCardCount}
+                    </option>
+                  ))}
+                </Select>
+              </Field>
+            )}
             <Field label="Примечание">
               <Input
                 value={notes}
@@ -150,10 +205,15 @@ export function ProductionOrdersWorkspace({
                 disabled={saving}
               />
             </Field>
-            {salesOrderOptions.length === 0 ? (
+            {sourceKind === "sales" && salesOrderOptions.length === 0 ? (
               <p className="text-portal-caption text-portal-muted">
                 Нет заказов покупателя с техкартами. Сначала создайте техкарты в
-                `production/tech-cards`.
+                production/tech-cards.
+              </p>
+            ) : null}
+            {sourceKind === "group" && standaloneGroupOptions.length === 0 ? (
+              <p className="text-portal-caption text-portal-muted">
+                Нет standalone-групп. Сначала создайте самостоятельную техкарту.
               </p>
             ) : null}
             {error ? (
@@ -248,7 +308,7 @@ export function ProductionOrdersWorkspace({
         {filtered.length === 0 ? (
           <EmptyState
             title="Нет производственных заказов"
-            description="Создайте заказ производства по ID заказа покупателя."
+            description="Создайте заказ производства по заказу покупателя или standalone-группе."
           />
         ) : (
           <DataTableFrame className="rounded-none border-x-0 border-b-0 shadow-none">
@@ -256,7 +316,7 @@ export function ProductionOrdersWorkspace({
               <DataTableHead>
                 <tr>
                   <DataTableHeaderCell>Номер</DataTableHeaderCell>
-                  <DataTableHeaderCell>Заказ покупателя</DataTableHeaderCell>
+                  <DataTableHeaderCell>Заказ / группа</DataTableHeaderCell>
                   <DataTableHeaderCell>Статус</DataTableHeaderCell>
                   <DataTableHeaderCell>Партии</DataTableHeaderCell>
                 </tr>
@@ -270,12 +330,16 @@ export function ProductionOrdersWorkspace({
                       </EntityLink>
                     </DataTableCell>
                     <DataTableCell>
-                      <Link
-                        href={`/sales/orders/${row.sales_order_id}`}
-                        className="text-portal-primary hover:underline"
-                      >
-                        {row.sales_order_number?.trim() || `#${row.sales_order_id}`}
-                      </Link>
+                      {row.sales_order_id != null ? (
+                        <Link
+                          href={`/sales/orders/${row.sales_order_id}`}
+                          className="text-portal-primary hover:underline"
+                        >
+                          {row.sales_order_number?.trim() || `#${row.sales_order_id}`}
+                        </Link>
+                      ) : (
+                        row.sales_order_number?.trim() || "Standalone"
+                      )}
                     </DataTableCell>
                     <DataTableCell>
                       <StatusBadge

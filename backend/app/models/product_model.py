@@ -408,9 +408,8 @@ class AssemblyVariant(Base):
 class AssemblyOperationLine(Base):
     """Ordered operation row inside an assembly variant.
 
-    Copy-on-pick from `SewingOperation`: snapshot `operation_name` + `cost` +
-    `quantity_per_item` + `duration_seconds`; optional `sewing_operation_id`
-    for catalog traceability (`6.3.6` / `6.3.9`).
+    Copy-on-pick from `SewingOperation`: snapshot `operation_name` + optional
+    `sewing_operation_id`; economics default cost=0, qty=1, duration=0 (`26.10`).
     """
 
     __tablename__ = "assembly_operation_lines"

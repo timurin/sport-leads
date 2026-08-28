@@ -16,22 +16,27 @@ import {
   copyAssemblyVariant,
   deleteAssemblyOperationLine,
   deleteAssemblyVariant,
+  updateAssemblyOperationLine,
   updateAssemblyVariant,
 } from "@/app/(workspace)/settings/catalogs/product-models/product-model-actions";
 import { AssemblyVariantSewingOpsDrawer } from "@/components/settings/assembly-variant-sewing-ops-drawer";
 import { Button, IconButton } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
+import { Input } from "@/components/ui/form-controls";
 import { SectionCard } from "@/components/ui/section-card";
 import { StatusBadge } from "@/components/ui/status-badge";
 import {
+  assemblyOperationLineFieldPatch,
   assemblyOperationLineTotal,
   formatAssemblyCost,
   sumAssemblyVariantDurationSeconds,
+  type AssemblyOperationLine,
+  type AssemblyOperationLineField,
   type AssemblyVariant,
 } from "@/lib/product-models";
 import {
   formatDurationMinutesSeconds,
-  formatDurationSecondsLabel,
+  toSewingCostInput,
   type SewingOperation,
   type SewingOperationFolder,
 } from "@/lib/sewing-operations";
@@ -59,6 +64,8 @@ export function AssemblyVariantsBlock({
   const [expandedIds, setExpandedIds] = useState<Set<number>>(() => new Set());
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [edits, setEdits] = useState<Record<string, string>>({});
+  const [invalidKey, setInvalidKey] = useState<string | null>(null);
 
   const appendExcludeIds = useMemo(() => {
     if (appendVariantId == null) return [];
@@ -130,6 +137,47 @@ export function AssemblyVariantsBlock({
   const onDeleteLine = async (variantId: number, lineId: number, name: string) => {
     if (!window.confirm(`Убрать операцию «${name}» из варианта?`)) return;
     await run(() => deleteAssemblyOperationLine(modelId, variantId, lineId));
+  };
+
+  const fieldValue = (
+    line: AssemblyOperationLine,
+    field: AssemblyOperationLineField,
+  ) => {
+    const key = economicsKey(line.id, field);
+    if (edits[key] != null) return edits[key];
+    if (field === "cost") return toSewingCostInput(line.cost);
+    if (field === "duration_seconds") return String(line.duration_seconds ?? 0);
+    return String(line.quantity_per_item ?? 1);
+  };
+
+  const commitField = async (
+    variantId: number,
+    line: AssemblyOperationLine,
+    field: AssemblyOperationLineField,
+  ) => {
+    if (busy) return;
+    const key = economicsKey(line.id, field);
+    const raw = fieldValue(line, field);
+    const result = assemblyOperationLineFieldPatch(line, field, raw);
+    if (!result.ok) {
+      setError(result.message);
+      setInvalidKey(key);
+      return;
+    }
+    setInvalidKey((current) => (current === key ? null : current));
+    setError(null);
+    const patch = result.patch;
+    if (patch == null) return;
+    const saved = await run(() =>
+      updateAssemblyOperationLine(modelId, variantId, line.id, patch),
+    );
+    if (saved) {
+      const next = patch[field];
+      setEdits((current) => ({
+        ...current,
+        [key]: next == null ? raw : String(next),
+      }));
+    }
   };
 
   return (
@@ -273,39 +321,97 @@ export function AssemblyVariantsBlock({
                   <div className="border-t border-portal-border px-portal-3 py-portal-3">
                     {variant.operation_lines.length > 0 ? (
                       <ul className="divide-y divide-portal-border overflow-hidden rounded-portal-md border border-portal-border bg-portal-surface">
-                        <li className="grid grid-cols-[minmax(0,1fr)_4.5rem_5.5rem_5.5rem_auto] items-center gap-portal-2 bg-portal-bg px-portal-3 py-portal-2 text-portal-caption text-portal-muted">
+                        <li className="grid grid-cols-[minmax(0,1fr)_4.5rem_5.5rem_4.5rem_5.5rem_auto] items-center gap-portal-2 bg-portal-bg px-portal-3 py-portal-2 text-portal-caption text-portal-muted">
                           <span>Операция</span>
                           <span className="text-right">Кол-во</span>
                           <span className="text-right">Цена</span>
+                          <span className="text-right">Время</span>
                           <span className="text-right">Сумма</span>
                           <span className="w-8" aria-hidden="true" />
                         </li>
-                        {variant.operation_lines.map((line) => (
+                        {variant.operation_lines.map((line) => {
+                          const qtyRaw = fieldValue(line, "quantity_per_item");
+                          const costRaw = fieldValue(line, "cost");
+                          const liveTotal = assemblyOperationLineTotal({
+                            cost: costRaw,
+                            quantity_per_item: Number(qtyRaw) || 1,
+                          });
+                          return (
                           <li
                             key={line.id}
-                            className="grid grid-cols-[minmax(0,1fr)_4.5rem_5.5rem_5.5rem_auto] items-center gap-portal-2 px-portal-3 py-portal-2"
+                            className="grid grid-cols-[minmax(0,1fr)_4.5rem_5.5rem_4.5rem_5.5rem_auto] items-center gap-portal-2 px-portal-3 py-portal-2"
                           >
                             <p className="min-w-0 text-portal-body text-portal-text">
                               <span className="text-portal-muted">
                                 {line.sequence}.{" "}
                               </span>
                               {line.operation_name}
-                              <span className="ml-portal-2 text-portal-caption text-portal-muted">
-                                {formatDurationSecondsLabel(
-                                  (Number(line.duration_seconds) || 0) *
-                                    Math.max(1, Number(line.quantity_per_item) || 1),
-                                )}
-                              </span>
                             </p>
-                            <span className="text-right tabular-nums text-portal-body text-portal-text">
-                              {line.quantity_per_item ?? 1}
-                            </span>
-                            <span className="text-right tabular-nums text-portal-body text-portal-text">
-                              {formatAssemblyCost(line.cost)} ₽
-                            </span>
+                            <EconomicsInput
+                              value={qtyRaw}
+                              ariaLabel="Кол-во"
+                              disabled={busy || archived}
+                              invalid={
+                                invalidKey ===
+                                economicsKey(line.id, "quantity_per_item")
+                              }
+                              onChange={(value) =>
+                                setEdits((current) => ({
+                                  ...current,
+                                  [economicsKey(line.id, "quantity_per_item")]:
+                                    value,
+                                }))
+                              }
+                              onCommit={() =>
+                                void commitField(
+                                  variant.id,
+                                  line,
+                                  "quantity_per_item",
+                                )
+                              }
+                            />
+                            <EconomicsInput
+                              value={costRaw}
+                              ariaLabel="Цена"
+                              disabled={busy || archived}
+                              invalid={
+                                invalidKey === economicsKey(line.id, "cost")
+                              }
+                              onChange={(value) =>
+                                setEdits((current) => ({
+                                  ...current,
+                                  [economicsKey(line.id, "cost")]: value,
+                                }))
+                              }
+                              onCommit={() =>
+                                void commitField(variant.id, line, "cost")
+                              }
+                            />
+                            <EconomicsInput
+                              value={fieldValue(line, "duration_seconds")}
+                              ariaLabel="Время, секунды"
+                              disabled={busy || archived}
+                              invalid={
+                                invalidKey ===
+                                economicsKey(line.id, "duration_seconds")
+                              }
+                              onChange={(value) =>
+                                setEdits((current) => ({
+                                  ...current,
+                                  [economicsKey(line.id, "duration_seconds")]:
+                                    value,
+                                }))
+                              }
+                              onCommit={() =>
+                                void commitField(
+                                  variant.id,
+                                  line,
+                                  "duration_seconds",
+                                )
+                              }
+                            />
                             <span className="text-right tabular-nums text-portal-body font-medium text-portal-text">
-                              {formatAssemblyCost(assemblyOperationLineTotal(line))}{" "}
-                              ₽
+                              {formatAssemblyCost(liveTotal)} ₽
                             </span>
                             <IconButton
                               label={`Убрать операцию ${line.operation_name}`}
@@ -322,7 +428,8 @@ export function AssemblyVariantsBlock({
                               <Trash2 className="size-4" />
                             </IconButton>
                           </li>
-                        ))}
+                          );
+                        })}
                       </ul>
                     ) : (
                       <div className="flex flex-wrap items-center justify-between gap-portal-2">
@@ -368,5 +475,45 @@ export function AssemblyVariantsBlock({
       />
       </div>
     </SectionCard>
+  );
+}
+
+function economicsKey(lineId: number, field: AssemblyOperationLineField) {
+  return `${lineId}:${field}`;
+}
+
+function EconomicsInput({
+  value,
+  ariaLabel,
+  disabled,
+  invalid,
+  onChange,
+  onCommit,
+}: {
+  value: string;
+  ariaLabel: string;
+  disabled: boolean;
+  invalid: boolean;
+  onChange: (value: string) => void;
+  onCommit: () => void;
+}) {
+  return (
+    <Input
+      size="compact"
+      className="text-right tabular-nums"
+      value={value}
+      disabled={disabled}
+      invalid={invalid}
+      aria-label={ariaLabel}
+      inputMode="decimal"
+      onChange={(event) => onChange(event.target.value)}
+      onBlur={() => onCommit()}
+      onKeyDown={(event) => {
+        if (event.key === "Enter") {
+          event.preventDefault();
+          event.currentTarget.blur();
+        }
+      }}
+    />
   );
 }

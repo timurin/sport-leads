@@ -1,6 +1,6 @@
 # ADR-031 — Specification as batch plan+fact report
 
-**Status:** принято (`2026-08-25`)  
+**Status:** принято (`2026-08-25`); **amended** `2026-08-27` (`28.5.3` nullable `sales_order_id` on contour B)  
 **Date:** `2026-08-25`  
 **Roadmap:** Stage 7 (`7.1.1` contract; `7.2` API+UI; stop at owner visual `7.2.2.6`)  
 **Amends:** ADR-004 (version lifecycle); ADR-016 (soft `specification_version_id` becomes real FK in `7.1.2`); ADR-018 (Spec parent = `ProductionBatch`)  
@@ -33,7 +33,7 @@ Specification 1 ─── N SpecificationVersion
 SpecificationVersion 1 ─── N product / material / operation lines
 ```
 
-Денормализация на шапке (read, не второй SoT): `sales_order_id`, `production_order_id`. Связанные ТК = links партии (`ProductionBatchCardLink`), не отдельная M:N на Spec.
+Денормализация на шапке (read, не второй SoT): `sales_order_id` (**nullable** `28.5.3` — копия с `ProductionOrder`; null в контуре B), `production_order_id`. Связанные ТК = links партии (`ProductionBatchCardLink`), не отдельная M:N на Spec. XOR группы на Spec **нет** — контур живёт на PO.
 
 Нумерация (default): `{productionBatchNumber}-SPEC`. Версия в UI как `v{n}`, не отдельный номер документа.
 

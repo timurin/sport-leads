@@ -19,7 +19,7 @@ from app.models.collaboration import (
     CollaborationThread,
 )
 from app.models.sales import Lead, SalesOrder
-from app.models.technical_card import TechnicalCard
+from app.models.technical_card import TechnicalCard, TechnicalCardOrderGroup
 from app.schemas.collaboration import (
     MICROTASK_TITLE_TEMPLATES,
     CollaborationMentionCandidateRead,
@@ -86,7 +86,9 @@ def get_or_create_thread(db: Session, order_id: int) -> CollaborationThread:
     )
     if thread is not None:
         return thread
-    thread = CollaborationThread(sales_order_id=order_id, lead_id=None)
+    thread = CollaborationThread(
+        sales_order_id=order_id, lead_id=None, order_group_id=None
+    )
     db.add(thread)
     db.flush()
     return thread
@@ -99,7 +101,41 @@ def get_or_create_lead_thread(db: Session, lead_id: int) -> CollaborationThread:
     )
     if thread is not None:
         return thread
-    thread = CollaborationThread(sales_order_id=None, lead_id=lead_id)
+    thread = CollaborationThread(
+        sales_order_id=None, lead_id=lead_id, order_group_id=None
+    )
+    db.add(thread)
+    db.flush()
+    return thread
+
+
+def _get_standalone_card(db: Session, card_id: int) -> TechnicalCard:
+    card = db.get(TechnicalCard, card_id)
+    if card is None:
+        raise CollaborationNotFoundError("Техкарта не найдена")
+    if card.order_group_id is None:
+        raise CollaborationValidationError(
+            "Переписка без заказа доступна только для standalone-техкарты"
+        )
+    return card
+
+
+def get_or_create_order_group_thread(
+    db: Session, order_group_id: int
+) -> CollaborationThread:
+    group = db.get(TechnicalCardOrderGroup, order_group_id)
+    if group is None:
+        raise CollaborationNotFoundError("Standalone-группа не найдена")
+    thread = db.scalar(
+        select(CollaborationThread).where(
+            CollaborationThread.order_group_id == order_group_id
+        )
+    )
+    if thread is not None:
+        return thread
+    thread = CollaborationThread(
+        sales_order_id=None, lead_id=None, order_group_id=order_group_id
+    )
     db.add(thread)
     db.flush()
     return thread
@@ -110,6 +146,7 @@ def _message_read(
     *,
     sales_order_id: int | None = None,
     lead_id: int | None = None,
+    order_group_id: int | None = None,
 ) -> CollaborationMessageRead:
     author = message.author
     return CollaborationMessageRead(
@@ -117,6 +154,7 @@ def _message_read(
         thread_id=message.thread_id,
         sales_order_id=sales_order_id,
         lead_id=lead_id,
+        order_group_id=order_group_id,
         author_platform_user_id=message.author_platform_user_id,
         author_login=author.login if author is not None else "",
         author_display_name=author.display_name if author is not None else "",
@@ -225,6 +263,7 @@ def _notification_read(row: CollaborationNotification) -> CollaborationNotificat
         body=row.body,
         sales_order_id=row.sales_order_id,
         lead_id=row.lead_id,
+        order_group_id=row.order_group_id,
         technical_card_id=row.technical_card_id,
         source_message_id=row.source_message_id,
         microtask_id=row.microtask_id,
@@ -249,15 +288,17 @@ def _emit_notification(
     body: str,
     sales_order_id: int | None = None,
     lead_id: int | None = None,
+    order_group_id: int | None = None,
     technical_card_id: int | None = None,
     source_message_id: int | None = None,
     microtask_id: int | None = None,
 ) -> None:
     if actor_id is not None and recipient_id == actor_id:
         return
-    if (sales_order_id is None) == (lead_id is None):
+    anchors = [sales_order_id, lead_id, order_group_id]
+    if sum(value is not None for value in anchors) != 1:
         raise CollaborationValidationError(
-            "Уведомление требует ровно один якорь: заказ или лид"
+            "Уведомление требует ровно один якорь: заказ, лид или standalone-группа"
         )
     db.add(
         CollaborationNotification(
@@ -267,6 +308,7 @@ def _emit_notification(
             body=body,
             sales_order_id=sales_order_id,
             lead_id=lead_id,
+            order_group_id=order_group_id,
             technical_card_id=technical_card_id,
             source_message_id=source_message_id,
             microtask_id=microtask_id,
@@ -415,6 +457,99 @@ def create_lead_message(
     )
     assert message is not None
     result = _message_read(message, lead_id=lead_id)
+    db.commit()
+    return result
+
+
+def list_standalone_card_messages(
+    db: Session,
+    card_id: int,
+) -> list[CollaborationMessageRead]:
+    card = _get_standalone_card(db, card_id)
+    thread = get_or_create_order_group_thread(db, card.order_group_id)
+    stmt = (
+        select(CollaborationMessage)
+        .options(
+            selectinload(CollaborationMessage.author),
+            selectinload(CollaborationMessage.mentions),
+        )
+        .where(
+            CollaborationMessage.thread_id == thread.id,
+            CollaborationMessage.technical_card_id == card.id,
+        )
+        .order_by(CollaborationMessage.id.asc())
+    )
+    rows = list(db.scalars(stmt).all())
+    result = [
+        _message_read(row, order_group_id=card.order_group_id) for row in rows
+    ]
+    db.commit()
+    return result
+
+
+def create_standalone_card_message(
+    db: Session,
+    card_id: int,
+    author: PlatformUser,
+    payload: CollaborationMessageCreate,
+) -> CollaborationMessageRead:
+    card = _get_standalone_card(db, card_id)
+    if (
+        payload.technical_card_id is not None
+        and payload.technical_card_id != card.id
+    ):
+        raise CollaborationValidationError(
+            "Контекст техкарты должен совпадать с документом"
+        )
+    thread = get_or_create_order_group_thread(db, card.order_group_id)
+    message = CollaborationMessage(
+        thread_id=thread.id,
+        author_platform_user_id=author.id,
+        body=payload.body,
+        technical_card_id=card.id,
+    )
+    db.add(message)
+    db.flush()
+
+    for login in parse_mention_logins(payload.body):
+        user = db.scalar(
+            select(PlatformUser).where(
+                func.lower(PlatformUser.login) == login,
+                PlatformUser.is_active.is_(True),
+            )
+        )
+        if user is None or user.id == author.id:
+            continue
+        db.add(
+            CollaborationMention(
+                message_id=message.id,
+                mentioned_platform_user_id=user.id,
+                mentioned_login_snapshot=user.login,
+            )
+        )
+        snippet = payload.body[:160]
+        _emit_notification(
+            db,
+            recipient_id=user.id,
+            actor_id=author.id,
+            kind=CollaborationNotificationKind.MENTION,
+            title=f"Упоминание в техкарте {card.number}",
+            body=f"{author.display_name} упомянул(а) вас: {snippet}",
+            order_group_id=card.order_group_id,
+            technical_card_id=card.id,
+            source_message_id=message.id,
+        )
+    db.flush()
+    message = db.scalar(
+        select(CollaborationMessage)
+        .options(
+            selectinload(CollaborationMessage.author),
+            selectinload(CollaborationMessage.mentions),
+        )
+        .where(CollaborationMessage.id == message.id)
+    )
+    assert message is not None
+    result = _message_read(message, order_group_id=card.order_group_id)
     db.commit()
     return result
 

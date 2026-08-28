@@ -5,11 +5,12 @@ from __future__ import annotations
 from datetime import datetime
 from decimal import Decimal
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 
 class ProductionOrderCreate(BaseModel):
-    sales_order_id: int = Field(gt=0)
+    sales_order_id: int | None = Field(default=None, ge=1)
+    order_group_id: int | None = Field(default=None, ge=1)
     notes: str | None = Field(default=None, max_length=4000)
 
     @field_validator("notes", mode="before")
@@ -19,6 +20,16 @@ class ProductionOrderCreate(BaseModel):
             trimmed = value.strip()
             return trimmed or None
         return value
+
+    @model_validator(mode="after")
+    def require_one_contour(self) -> ProductionOrderCreate:
+        has_sales = self.sales_order_id is not None
+        has_group = self.order_group_id is not None
+        if has_sales == has_group:
+            raise ValueError(
+                "Укажите заказ покупателя или standalone-группу, не оба"
+            )
+        return self
 
 
 class ProductionBatchCreate(BaseModel):
@@ -80,7 +91,8 @@ class ProductionOrderListItem(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
-    sales_order_id: int
+    sales_order_id: int | None = None
+    order_group_id: int | None = None
     sales_order_number: str | None = None
     number: str
     order_seq: int
@@ -95,7 +107,8 @@ class ProductionOrderRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
-    sales_order_id: int
+    sales_order_id: int | None = None
+    order_group_id: int | None = None
     sales_order_number: str | None = None
     number: str
     order_seq: int

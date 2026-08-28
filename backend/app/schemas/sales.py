@@ -329,6 +329,7 @@ class SalesOrderRead(SalesSchema):
     items_subtotal: Decimal | None = None
     amount_net: Decimal | None = None
     desired_date: date | None
+    tech_cards_planned_count: int | None = None
     source: str | None
     created_at: datetime
     updated_at: datetime
@@ -370,6 +371,12 @@ class SalesOrderCreate(BaseModel):
 
 class SalesOrderDiscountUpdate(BaseModel):
     discount_percent: Decimal | None = Field(default=None, ge=0, le=100, max_digits=5, decimal_places=2)
+
+
+class SalesOrderTechCardsPlannedCountUpdate(BaseModel):
+    """Soft planned TC count on the sales order (Stage 28.1). Null clears the field."""
+
+    tech_cards_planned_count: int | None = Field(default=None, ge=1)
 
 
 class SalesOrderClientNeedUpdate(BaseModel):

@@ -79,7 +79,7 @@ def test_export_import_round_trip_and_upsert() -> None:
         with TestClient(app) as client:
             created = client.post(
                 "/sewing-operations",
-                json={"name": "Export Op", "cost": "10.00", "duration_seconds": 30},
+                json={"name": "Export Op", "description": "export note"},
             )
             assert created.status_code == 201, created.text
 
@@ -89,11 +89,11 @@ def test_export_import_round_trip_and_upsert() -> None:
             for header in SEWING_OPERATION_FILE_HEADERS:
                 assert header in table.headers
             row = next(r for r in table.rows if r["name"] == "Export Op")
-            assert row["cost"] in {"10.00", "10.0", "10"}
+            assert row["description"] == "export note"
 
             csv = (
-                "name,cost,quantity_per_item,duration_seconds,folder_path,work_center_codes\n"
-                "Imported Op,25.50,2,45,Пошив / Швы,OV-1\n"
+                "name,description,folder_path,work_center_codes\n"
+                "Imported Op,side seam,Пошив / Швы,OV-1\n"
             )
             dry = client.post("/sewing-operations/import?dry_run=true", files=_csv_file(csv))
             assert dry.status_code == 200, dry.text
@@ -113,7 +113,7 @@ def test_export_import_round_trip_and_upsert() -> None:
             listed = client.get("/sewing-operations?search=Imported")
             assert listed.status_code == 200
             imported = listed.json()[0]
-            assert imported["quantity_per_item"] == 2
+            assert imported["description"] == "side seam"
             assert imported["work_center_ids"]
             folders = client.get("/sewing-operation-folders").json()
             names = {row["name"] for row in folders}
@@ -121,8 +121,8 @@ def test_export_import_round_trip_and_upsert() -> None:
             assert "Швы" in names
 
             upsert = (
-                "name,cost,quantity_per_item,duration_seconds\n"
-                "Imported Op,40.00,3,60\n"
+                "name,description\n"
+                "Imported Op,updated note\n"
             )
             updated = client.post(
                 "/sewing-operations/import?dry_run=false", files=_csv_file(upsert)
@@ -131,13 +131,12 @@ def test_export_import_round_trip_and_upsert() -> None:
             assert updated.json()["updated_count"] == 1
             assert updated.json()["created_count"] == 0
             after = client.get("/sewing-operations?search=Imported").json()[0]
-            assert after["quantity_per_item"] == 3
-            assert after["duration_seconds"] == 60
+            assert after["description"] == "updated note"
     finally:
         app.dependency_overrides.pop(get_db, None)
 
 
-def test_import_rejects_bad_cost_unknown_wc_and_empty_folder_path_is_root() -> None:
+def test_import_rejects_long_description_unknown_wc_and_empty_folder_path_is_root() -> None:
     factory = _session_factory()
     with factory() as db:
         _seed_sewing_wc(db)
@@ -151,21 +150,23 @@ def test_import_rejects_bad_cost_unknown_wc_and_empty_folder_path_is_root() -> N
         with TestClient(app) as client:
             created = client.post(
                 "/sewing-operations",
-                json={"name": "Root Op", "cost": "5.00"},
+                json={"name": "Root Op"},
             )
             assert created.status_code == 201
 
-            bad_cost = client.post(
+            too_long = client.post(
                 "/sewing-operations/import?dry_run=true",
-                files=_csv_file("name,cost\nBroken,-1\n"),
+                files=_csv_file("name,description\nBroken," + ("x" * 257) + "\n"),
             )
-            assert bad_cost.status_code == 200
-            assert bad_cost.json()["can_commit"] is False
-            assert any(err["code"] == "invalid_cost" for err in bad_cost.json()["errors"])
+            assert too_long.status_code == 200
+            assert too_long.json()["can_commit"] is False
+            assert any(
+                err["code"] == "invalid_description" for err in too_long.json()["errors"]
+            )
 
             unknown = client.post(
                 "/sewing-operations/import?dry_run=true",
-                files=_csv_file("name,cost,work_center_codes\nNew One,1.00,NOPE\n"),
+                files=_csv_file("name,work_center_codes\nNew One,NOPE\n"),
             )
             assert unknown.json()["can_commit"] is False
             assert any(
@@ -174,14 +175,14 @@ def test_import_rejects_bad_cost_unknown_wc_and_empty_folder_path_is_root() -> N
 
             missing_name = client.post(
                 "/sewing-operations/import?dry_run=true",
-                files=_csv_file("cost\n10.00\n"),
+                files=_csv_file("name,description\n,шов\n"),
             )
             assert missing_name.json()["can_commit"] is False
-            assert any(err["code"] == "missing_column" for err in missing_name.json()["errors"])
+            assert any(err["code"] == "required" for err in missing_name.json()["errors"])
 
             to_root = client.post(
                 "/sewing-operations/import?dry_run=false",
-                files=_csv_file("name,cost,folder_path\nRoot Op,5.00,\n"),
+                files=_csv_file("name,folder_path\nRoot Op,\n"),
             )
             assert to_root.status_code == 200, to_root.text
             assert to_root.json()["updated_count"] == 1
@@ -226,8 +227,8 @@ def test_dry_run_does_not_create_folders() -> None:
     try:
         with TestClient(app) as client:
             csv = (
-                "name,cost,folder_path\n"
-                "Ghost Op,1.00,NewFolder\n"
+                "name,folder_path\n"
+                "Ghost Op,NewFolder\n"
             )
             dry = client.post("/sewing-operations/import?dry_run=true", files=_csv_file(csv))
             assert dry.status_code == 200

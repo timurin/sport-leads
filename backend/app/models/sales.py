@@ -462,6 +462,10 @@ class SalesOrder(Base):
             "paid_amount >= 0",
             name="ck_sales_orders_paid_amount_nonnegative",
         ),
+        CheckConstraint(
+            "tech_cards_planned_count IS NULL OR tech_cards_planned_count >= 1",
+            name="ck_sales_orders_tech_cards_planned_count",
+        ),
     )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -525,6 +529,7 @@ class SalesOrder(Base):
         String(3), nullable=False, default="RUB", server_default=sa_text("'RUB'")
     )
     desired_date: Mapped[date | None] = mapped_column(Date)
+    tech_cards_planned_count: Mapped[int | None] = mapped_column(Integer, nullable=True)
     source: Mapped[str | None] = mapped_column(String(150), index=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()

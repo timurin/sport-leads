@@ -29,6 +29,38 @@ test("specification list query matches number and related documents", () => {
   assert.equal(specificationMatchesQuery(item, "неттакого"), false);
 });
 
+test("standalone specification query matches group number (28.5.3)", () => {
+  const item = {
+    number: "PO-1310-1-B1-SPEC",
+    production_batch_number: "PO-1310-1-B1",
+    sales_order_number: "1310",
+    production_order_number: "PO-1310-1",
+  };
+  assert.equal(specificationMatchesQuery(item, "1310"), true);
+});
+
+test("standalone specification UI hides sales-order deep-link (28.5.3)", async () => {
+  const { readFile } = await import("node:fs/promises");
+  const { fileURLToPath } = await import("node:url");
+  const read = (rel) =>
+    readFile(fileURLToPath(new URL(rel, import.meta.url)), "utf8");
+
+  const types = await read("./specifications.ts");
+  assert.ok(types.includes("sales_order_id: number | null"));
+
+  const list = await read(
+    "../../components/production/specifications-workspace.tsx",
+  );
+  assert.ok(list.includes("data-standalone-specification-order"));
+  assert.ok(list.includes("item.sales_order_id != null"));
+
+  const card = await read(
+    "../../components/production/specification-card.tsx",
+  );
+  assert.ok(card.includes("data-standalone-specification-order"));
+  assert.ok(card.includes("specification.sales_order_id != null"));
+});
+
 test("list DTO stays slim: batch map does not invent nested lines", () => {
   const mapped = specificationsByBatchId([
     {

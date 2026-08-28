@@ -37,9 +37,7 @@ def _to_read(row: SewingOperationTemplate) -> SewingOperationTemplateRead:
                 sewing_operation_id=line.sewing_operation_id,
                 sequence=line.sequence,
                 operation_name=op.name if op is not None else None,
-                cost=str(op.cost) if op is not None else None,
-                quantity_per_item=op.quantity_per_item if op is not None else None,
-                duration_seconds=op.duration_seconds if op is not None else None,
+                description=op.description if op is not None else None,
             )
         )
     return SewingOperationTemplateRead(

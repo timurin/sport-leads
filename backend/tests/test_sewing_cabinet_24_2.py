@@ -19,6 +19,7 @@ from app.models.sales import (
     LeadTask,
     SalesOrder,
     SalesOrderItem,
+    SalesOrderItemAssemblyOperationSnapshot,
     SalesOrderStatus,
     SalesUser,
 )
@@ -103,9 +104,7 @@ def _seed_sewing_card(db: Session, *, number: str = "SO-CAB-1") -> tuple[int, in
     order_id, item_id = _seed_order_item(db, number)
     catalog = SewingOperation(
         name="Оверлок",
-        cost=Decimal("40.00"),
-        quantity_per_item=1,
-        duration_seconds=0,
+        description="Оверлок",
     )
     db.add(catalog)
     db.flush()
@@ -124,6 +123,17 @@ def _seed_sewing_card(db: Session, *, number: str = "SO-CAB-1") -> tuple[int, in
     )
     db.add(card)
     db.flush()
+    db.add(
+        SalesOrderItemAssemblyOperationSnapshot(
+            order_item_id=item_id,
+            sequence=1,
+            operation_name="Оверлок",
+            cost=Decimal("40.00"),
+            quantity_per_item=1,
+            duration_seconds=0,
+            sewing_operation_id=catalog.id,
+        )
+    )
     db.add_all(
         [
             TechnicalCardStageResult(

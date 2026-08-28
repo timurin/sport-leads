@@ -37,6 +37,10 @@ import {
   uploadTechCardMediaAction,
 } from "@/app/(workspace)/production/tech-cards/tech-card-actions";
 import { TechCardMediaCarousel } from "@/components/production/tech-card-media-carousel";
+import { TechCardOrderDataCard } from "@/components/production/tech-card-order-data-card";
+import { TechCardModelRouteCard } from "@/components/production/tech-card-model-route-card";
+import { TechCardProductNameHeader } from "@/components/production/tech-card-product-name-header";
+import { StandaloneTechCardLinkPanel } from "@/components/production/standalone-tech-card-link-panel";
 import { TechCardShopFloorBody } from "@/components/production/tech-card-shop-floor-body";
 import { OrderCollaborationPanel } from "@/components/sales/order-collaboration-panel";
 import { DocumentCard } from "@/components/entity/document-card";
@@ -55,6 +59,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { EntityHeader } from "@/components/ui/entity-header";
 import { Field, Input, Select, Textarea } from "@/components/ui/form-controls";
 import { ImageLightbox } from "@/components/ui/image-lightbox";
+import { CompactTabs } from "@/components/ui/compact-tabs";
 import { SectionCard } from "@/components/ui/section-card";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { useToast } from "@/components/ui/toast";
@@ -70,15 +75,12 @@ import {
   buildCompositionReplaceLines,
   buildTechCardHistoryEntries,
   compositionLineKindLabel,
-  formatDesiredDate,
   formatTechCardDateTime,
   formatVolumeUnit,
   groupOperationLinesBySource,
   materialDraftsFromComposition,
   stageResultStatusLabel,
   techCardAllowsStageExecution,
-  techCardDocumentNumberLabel,
-  techCardModelLabel,
   techCardShowsCurrentStageBadge,
   techCardStatusTone,
   TECH_CARD_MEDIA_MAX,
@@ -86,6 +88,7 @@ import {
   type TechCardMaterialDraftLine,
   validateTechCardImageFile,
 } from "@/lib/production/tech-cards";
+import { techCardVisibleNumber } from "@/lib/production/tech-card-display";
 import type {
   ApiTechnicalCard,
   ApiTechnicalCardCompositionLine,
@@ -104,6 +107,16 @@ import {
 } from "@/lib/product-models";
 
 const XL_COLLAB_MQ = "(min-width: 1280px)";
+
+const MANAGER_DOC_TABS = [
+  { id: "operations", label: "Операции" },
+  { id: "scheme", label: "Схема" },
+  { id: "assembly", label: "Сборки" },
+  { id: "materials", label: "Материалы" },
+  { id: "route", label: "Маршрут" },
+] as const;
+
+type ManagerDocTabId = (typeof MANAGER_DOC_TABS)[number]["id"];
 
 function useXlCollabRail() {
   return useSyncExternalStore(
@@ -127,28 +140,40 @@ function TechCardOrderCollaboration({
   card: ApiTechnicalCard;
   surface: "manager" | "shop";
 }) {
+  const hasSalesOrder = card.sales_order_id != null;
+  const isStandalone = card.order_group_id != null && !hasSalesOrder;
+  if (!hasSalesOrder && !isStandalone) {
+    return null;
+  }
   const isXl = useXlCollabRail();
   const place =
     surface === "manager"
       ? `order-1 md:order-2 xl:order-none xl:col-start-2 xl:row-start-1 xl:row-span-2 ${COLLAB_RAIL_STICKY}`
       : `order-1 xl:order-none xl:col-start-2 xl:row-start-1 ${COLLAB_RAIL_STICKY}`;
-  const panel = (
+  const panel = hasSalesOrder && card.sales_order_id != null ? (
     <OrderCollaborationPanel
       orderId={card.sales_order_id}
       technicalCardId={card.id}
       title={`Переписка · ${card.number}`}
       deepLinkHref={`/sales/orders/${card.sales_order_id}?view=communication`}
     />
+  ) : (
+    <OrderCollaborationPanel
+      standaloneCardId={card.id}
+      technicalCardId={card.id}
+      title={`Переписка · ${card.number}`}
+    />
   );
   if (isXl) {
     return (
       <aside
         data-tech-card-collab-rail
-        aria-label="Сотрудничество по заказу"
+        data-standalone-tech-card-collab={isStandalone ? "true" : undefined}
+        aria-label={isStandalone ? "Сотрудничество по техкарте" : "Сотрудничество по заказу"}
         className={`tech-card-doc-collab min-w-0 ${place}`}
       >
         <SectionCard
-          title="Сотрудничество по заказу"
+          title={isStandalone ? "Сотрудничество" : "Сотрудничество по заказу"}
           description="Внутренняя переписка с контекстом этой техкарты (ADR-026)."
           size="compact"
         >
@@ -160,6 +185,7 @@ function TechCardOrderCollaboration({
   return (
     <details
       data-tech-card-collab-collapse
+      data-standalone-tech-card-collab={isStandalone ? "true" : undefined}
       className={`tech-card-doc-collab min-w-0 rounded-portal-lg border border-portal-border bg-portal-surface p-portal-3 shadow-portal-card ${place}`}
     >
       <summary className="cursor-pointer text-sm font-semibold text-portal-text">
@@ -428,14 +454,8 @@ export function TechCardDetailWorkspace({
   );
   const [unitImportOpen, setUnitImportOpen] = useState(false);
   const [unitImportFile, setUnitImportFile] = useState<File | null>(null);
+  const [managerDocTab, setManagerDocTab] = useState<ManagerDocTabId>("operations");
   const [collapsedBlocks, setCollapsedBlocks] = useState({
-    mockup: false,
-    orderData: false,
-    modelRouting: false,
-    operations: true,
-    assemblyScheme: true,
-    materials: true,
-    stages: true,
     history: true,
   });
   const [shopFactDrafts, setShopFactDrafts] = useState<Record<number, string>>({});
@@ -686,7 +706,45 @@ export function TechCardDetailWorkspace({
   const showCurrentStageBadge =
     techCardShowsCurrentStageBadge(status) && Boolean(card.current_stage_label);
 
-  const documentNumber = techCardDocumentNumberLabel(card.order_number, card.number);
+  const documentNumber = techCardVisibleNumber(card);
+  const hasSalesOrder = card.sales_order_id != null;
+  const showCollabRail = hasSalesOrder || card.order_group_id != null;
+
+  const managerDocTabItems = useMemo(
+    () =>
+      MANAGER_DOC_TABS.map((tab) => {
+        let count: number | undefined;
+        switch (tab.id) {
+          case "operations":
+            count = routingOps.length;
+            break;
+          case "scheme":
+            count =
+              assemblySewingOps.length > 0
+                ? assemblySewingOps.length
+                : sewingOps.length;
+            break;
+          case "assembly":
+            count = unitLineDrafts.length;
+            break;
+          case "materials":
+            count = materialDrafts.length;
+            break;
+          case "route":
+            count = stageResults.length;
+            break;
+        }
+        return { ...tab, count };
+      }),
+    [
+      assemblySewingOps.length,
+      materialDrafts.length,
+      routingOps.length,
+      sewingOps.length,
+      stageResults.length,
+      unitLineDrafts.length,
+    ],
+  );
 
   const onImportUnitLines = () => {
     if (!unitImportFile) {
@@ -1363,9 +1421,6 @@ export function TechCardDetailWorkspace({
     });
   };
 
-  const routingSelectValue =
-    card.routing_template_id != null ? String(card.routing_template_id) : "";
-
   return (
     <DocumentCard
       header={
@@ -1377,6 +1432,13 @@ export function TechCardDetailWorkspace({
               </Link>
             }
             title={card.number}
+            description={
+              <TechCardProductNameHeader
+                card={card}
+                allowEdit={!isShopContext}
+                disabled={busy || status === "cancelled"}
+              />
+            }
             status={
               <>
                 {isShopContext && activeStage ? (
@@ -1480,6 +1542,7 @@ export function TechCardDetailWorkspace({
                 >
                   <FileDown className="size-4" aria-hidden="true" />
                 </IconButton>
+                {hasSalesOrder ? (
                 <Link
                   href={`/sales/orders/${card.sales_order_id}`}
                   className="portal-focus-ring inline-flex size-portal-control-icon items-center justify-center rounded-portal-md border border-portal-border bg-portal-surface text-portal-text hover:bg-portal-state-hover"
@@ -1488,6 +1551,7 @@ export function TechCardDetailWorkspace({
                 >
                   <ExternalLink className="size-4" aria-hidden="true" />
                 </Link>
+                ) : null}
               </div>
             }
           />
@@ -1562,7 +1626,9 @@ export function TechCardDetailWorkspace({
 
       {isShopContext && shopStage ? (
         <div
-          className="tech-card-doc-layout grid min-w-0 items-start gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(18rem,22rem)]"
+          className={`tech-card-doc-layout grid min-w-0 items-start gap-4 ${
+            showCollabRail ? "xl:grid-cols-[minmax(0,1fr)_minmax(18rem,22rem)]" : ""
+          }`}
           data-tech-card-doc-layout="shop"
         >
           <TechCardOrderCollaboration card={card} surface="shop" />
@@ -1628,10 +1694,17 @@ export function TechCardDetailWorkspace({
         </div>
       ) : (
       <div
-        className="tech-card-doc-layout grid min-w-0 items-start gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(18rem,22rem)]"
+        className={`tech-card-doc-layout grid min-w-0 items-start gap-4 ${
+          showCollabRail ? "xl:grid-cols-[minmax(0,1fr)_minmax(18rem,22rem)]" : ""
+        }`}
         data-tech-card-doc-layout="manager"
       >
       <div className="tech-card-doc-row1 order-2 min-w-0 md:order-1 xl:order-none xl:col-start-1 xl:row-start-1">
+      {!hasSalesOrder ? (
+        <div className="mb-portal-4">
+          <StandaloneTechCardLinkPanel cardId={card.id} disabled={busy} />
+        </div>
+      ) : null}
       <div className="grid grid-cols-1 gap-portal-4 xl:grid-cols-[minmax(0,3fr)_minmax(0,4fr)_minmax(0,4fr)]">
         <SectionCard
           title="Макет"
@@ -1649,614 +1722,567 @@ export function TechCardDetailWorkspace({
           />
         </SectionCard>
 
-        <SectionCard
-          title="Данные по заказу"
-          size="compact"
-          collapsed={false}
-        >
-          <dl className="grid gap-portal-3">
-            <div>
-              <dt className="text-portal-caption text-portal-muted">Номер техкарты</dt>
-              <dd className="mt-1 text-portal-body font-medium">{documentNumber}</dd>
-            </div>
-            <div>
-              <dt className="text-portal-caption text-portal-muted">Ответственный менеджер</dt>
-              <dd className="mt-1 text-portal-body">{card.responsible_name ?? "—"}</dd>
-            </div>
-            <div>
-              <dt className="text-portal-caption text-portal-muted">Клиент</dt>
-              <dd className="mt-1 text-portal-body">{card.client_name ?? "—"}</dd>
-            </div>
-            <div>
-              <dt className="text-portal-caption text-portal-muted">Дата сдачи</dt>
-              <dd className="mt-1 text-portal-body">{formatDesiredDate(card.desired_date)}</dd>
-            </div>
-          </dl>
-        </SectionCard>
+        <TechCardOrderDataCard
+          card={card}
+          documentNumber={documentNumber}
+          disabled={busy || status === "cancelled"}
+        />
 
-        <SectionCard
-          title="Модель и маршрут"
-          size="compact"
-          collapsed={false}
-        >
-          <dl className="grid gap-portal-3">
-            <div>
-              <dt className="text-portal-caption text-portal-muted">Модель</dt>
-              <dd className="mt-1 text-portal-body">{techCardModelLabel(card)}</dd>
-            </div>
-            <div>
-              <dt className="text-portal-caption text-portal-muted">Сборка</dt>
-              <dd className="mt-1 text-portal-body">{card.assembly_variant_name ?? "—"}</dd>
-            </div>
-          </dl>
-          <Field label="Маршруты и операции" className="mt-portal-4">
-            <Select
-              value={routingSelectValue}
-              disabled={busy || status === "cancelled"}
-              onChange={(event) => {
-                const next = Number(event.target.value);
-                if (!Number.isSafeInteger(next) || next <= 0) return;
-                if (next === card.routing_template_id) return;
-                onApplyRouting(next);
-              }}
-            >
-              <option value="">Выберите маршрут…</option>
-              {routings.map((row) => (
-                <option key={row.id} value={row.id}>
-                  {row.code ? `${row.code} — ${row.name}` : row.name}
-                  {row.is_active ? "" : " (неактивен)"}
-                </option>
-              ))}
-            </Select>
-          </Field>
-          {card.routing_template_name ? (
-            <p className="mt-portal-2 text-portal-caption text-portal-muted">
-              Текущий: {card.routing_template_name}
-            </p>
-          ) : null}
-        </SectionCard>
+        <TechCardModelRouteCard
+          card={card}
+          routings={routings}
+          disabled={busy || status === "cancelled"}
+          onApplyRouting={onApplyRouting}
+        />
       </div>
       </div>
       <TechCardOrderCollaboration card={card} surface="manager" />
       <div className="tech-card-doc-rest order-3 min-w-0 flex flex-col gap-portal-4 xl:order-none xl:col-start-1 xl:row-start-2">
 
-      <div data-tech-card-doc-row2 className="min-w-0">
-      <SectionCard
-        title="Персонализация"
-        description="Размеры и персонализация по единицам."
-        size="compact"
-        actions={
-          <div className="flex flex-wrap items-center gap-portal-2">
-            <Button
-              type="button"
-              size="compact"
-              onClick={() => setUnitImportOpen((current) => !current)}
-              disabled={busy || !unitLinesEditable}
-            >
-              {unitImportOpen ? "Скрыть импорт" : "Импорт XLSX"}
-            </Button>
-          </div>
-        }
-      >
-        {unitImportOpen ? (
-          <div className="mb-portal-4 grid gap-portal-3 rounded-portal-md border border-portal-border p-portal-4">
-            <Field
-              label="Файл импорта"
-              help="Загрузите XLSX по шаблону techcart_example.xlsx. Тип размера = наименование размерной сетки, размер = RU / INT."
-            >
-              <input
-                ref={unitImportInputRef}
-                type="file"
-                accept=".xlsx,.xlsm,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                disabled={busy}
-                className="block w-full text-portal-body text-portal-text file:mr-portal-3 file:rounded-portal-md file:border file:border-portal-border file:bg-portal-surface file:px-portal-3 file:py-portal-2 file:text-portal-caption"
-                aria-label="Файл импорта поштучных строк"
-                onChange={(event) => {
-                  setUnitImportFile(event.target.files?.[0] ?? null);
-                  setActionError(null);
-                }}
-              />
-            </Field>
-            <p className="text-portal-caption text-portal-muted">
-              Количество в техкарте:{" "}
-              <span className="font-medium text-portal-text">{String(card.quantity)}</span>
-            </p>
-            {unitImportFile ? (
-              <p className="text-portal-caption text-portal-muted">
-                Выбран файл: {unitImportFile.name} ({Math.ceil(unitImportFile.size / 1024)} КБ)
-              </p>
-            ) : null}
-            <div className="flex flex-wrap gap-portal-2">
-              <Button type="button" variant="primary" size="compact" disabled={busy} onClick={onImportUnitLines}>
-                Импортировать
-              </Button>
-              <Button
-                type="button"
-                size="compact"
-                disabled={busy}
-                onClick={() => {
-                  setUnitImportFile(null);
-                  if (unitImportInputRef.current) {
-                    unitImportInputRef.current.value = "";
-                  }
-                }}
-              >
-                Очистить
-              </Button>
-            </div>
-          </div>
-        ) : null}
-        {unitLinesEditable && unitSizeOptions.length === 0 ? (
-          <p className="mb-portal-4 text-portal-caption text-portal-muted">
-            Размерная сетка модели не привязана или пуста. Размер можно менять вручную.
-          </p>
-        ) : null}
-        {unitLinesEditable ? (
-          <div className="mb-portal-4 flex flex-wrap gap-portal-2">
-            <div className="flex items-center rounded-portal-sm border border-portal-border px-portal-3 text-portal-caption text-portal-muted">
-              {unitLineDrafts.length} / {expectedUnitLineCount}
-            </div>
-            <Button
-              type="button"
-              size="compact"
-              onClick={addUnitLineDraft}
-              disabled={busy}
-            >
-              <Plus className="size-4" aria-hidden="true" />
-              Добавить
-            </Button>
-            <Button
-              type="button"
-              size="compact"
-              onClick={resetUnitLineDrafts}
-              disabled={busy || !unitLineDraftsDirty}
-            >
-              Сбросить
-            </Button>
-            <Button
-              type="button"
-              size="compact"
-              variant="primary"
-              onClick={onSaveUnitLines}
-              disabled={busy || !unitLineDraftsDirty || !unitLineCountMatches}
-            >
-              Сохранить
-            </Button>
-            {!unitLineCountMatches ? (
-              <span className="flex items-center text-portal-caption text-portal-danger">
-                Количество строк должно быть равно {expectedUnitLineCount}
-              </span>
-            ) : null}
-          </div>
-        ) : null}
-        {unitLineDrafts.length === 0 ? (
-          <EmptyState title="Строки не заполнены" description="Данные персонализации отсутствуют." />
-        ) : (
-          <DataTableFrame>
-            <DataTable minWidthClassName="min-w-[1040px]">
-              <DataTableHead>
-                <tr>
-                  <DataTableHeaderCell className="w-12">#</DataTableHeaderCell>
-                  <DataTableHeaderCell className="w-28">Тип размера</DataTableHeaderCell>
-                  <DataTableHeaderCell className="w-40">Размер</DataTableHeaderCell>
-                  <DataTableHeaderCell>Фамилия</DataTableHeaderCell>
-                  <DataTableHeaderCell className="w-24">Номер</DataTableHeaderCell>
-                  <DataTableHeaderCell>Примечание</DataTableHeaderCell>
-                  {unitLinesEditable ? (
-                    <DataTableHeaderCell className="w-14 text-right">Г—</DataTableHeaderCell>
-                  ) : null}
-                </tr>
-              </DataTableHead>
-              <DataTableBody>
-                {unitLineDrafts.map((line) => (
-                  <DataTableRow key={line.id}>
-                    <DataTableCell>{line.unit_index}</DataTableCell>
-                    <DataTableCell>{unitLineSizeTypeLabel(line.size_type ?? null)}</DataTableCell>
-                    <DataTableCell>
-                      {unitLinesEditable ? (
-                        unitSizeOptions.length > 0 ? (
-                          <Select
-                            value={normalizeUnitSizeValue(line.size)}
-                            disabled={busy}
-                            aria-label={`Размер строки ${line.unit_index}`}
-                            onChange={(event) =>
-                              updateUnitLineDraft(line.id, "size", event.target.value)
-                            }
-                          >
-                            <option value="">Не выбран</option>
-                            {unitSizeOptions.map((option) => (
-                              <option key={option} value={option}>
-                                {option}
-                              </option>
-                            ))}
-                          </Select>
-                        ) : (
-                          <Input
-                            value={line.size ?? ""}
-                            onChange={(event) =>
-                              updateUnitLineDraft(line.id, "size", event.target.value)
-                            }
-                            disabled={busy}
-                            className="min-w-[10rem]"
-                            aria-label={`Размер строки ${line.unit_index}`}
-                          />
-                        )
-                      ) : (
-                        line.size ?? "—"
-                      )}
-                    </DataTableCell>
-                    <DataTableCell>
-                      {unitLinesEditable ? (
-                        <Input
-                          value={line.personalization ?? ""}
-                          onChange={(event) =>
-                            updateUnitLineDraft(line.id, "personalization", event.target.value)
-                          }
-                          disabled={busy}
-                          aria-label={`Фамилия строки ${line.unit_index}`}
-                        />
-                      ) : (
-                        line.personalization ?? "—"
-                      )}
-                    </DataTableCell>
-                    <DataTableCell>
-                      {unitLinesEditable ? (
-                        <Input
-                          value={line.print_number ?? ""}
-                          onChange={(event) =>
-                            updateUnitLineDraft(line.id, "print_number", event.target.value)
-                          }
-                          disabled={busy}
-                          aria-label={`Номер строки ${line.unit_index}`}
-                        />
-                      ) : (
-                        line.print_number ?? "—"
-                      )}
-                    </DataTableCell>
-                    <DataTableCell className="text-portal-muted">
-                      {unitLinesEditable ? (
-                        <Input
-                          value={line.notes ?? ""}
-                          onChange={(event) =>
-                            updateUnitLineDraft(line.id, "notes", event.target.value)
-                          }
-                          disabled={busy}
-                          aria-label={`Примечание строки ${line.unit_index}`}
-                        />
-                      ) : (
-                        line.notes ?? "—"
-                      )}
-                    </DataTableCell>
-                    {unitLinesEditable ? (
-                      <DataTableCell className="text-right">
-                        <IconButton
-                          label={`Удалить строку ${line.unit_index}`}
-                          variant="danger"
-                          disabled={busy}
-                          onClick={() => removeUnitLineDraft(line.id)}
-                        >
-                          <Trash2 className="size-4" aria-hidden="true" />
-                        </IconButton>
-                      </DataTableCell>
-                    ) : null}
-                  </DataTableRow>
-                ))}
-              </DataTableBody>
-            </DataTable>
-          </DataTableFrame>
-        )}
-      </SectionCard>
-      </div>
       <div
-        data-tech-card-doc-row3
-        className="grid min-w-0 grid-cols-1 gap-portal-4 xl:grid-cols-3"
+        data-tech-card-doc-tabs
+        className="min-w-0 rounded-portal-lg border border-portal-border bg-portal-surface p-portal-4 shadow-portal-card"
       >
-      <SectionCard
-        title="Операции / объёмы"
-        size="compact"
-        collapsed={collapsedBlocks.operations}
-        actions={
-          <CollapseToggleButton
-            collapsed={collapsedBlocks.operations}
-            onToggle={() => toggleBlock("operations")}
-          />
-        }
-      >
-        {routingOps.length === 0 ? (
-          <EmptyState
-            title="Операции маршрута не заданы"
-            description="Выберите маршрут, чтобы заполнить операции."
-          />
-        ) : (
-          <div className="space-y-portal-3">
-            {routingOps.map((line) => (
-              <div
-                key={line.id}
-                className="rounded-portal-md border border-portal-border px-portal-4 py-portal-3"
-              >
-                <div className="grid gap-portal-2 min-[720px]:grid-cols-[3rem_minmax(0,1fr)_5rem_4rem_4rem_minmax(0,8rem)] min-[720px]:items-center">
-                  <span className="tabular-nums text-portal-muted">{line.sequence}</span>
-                  <span className="font-medium text-portal-text">{line.operation_name}</span>
-                  <span className="tabular-nums">{line.volume}</span>
-                  <span>{formatVolumeUnit(String(line.volume_unit))}</span>
-                  <span className="text-portal-muted">{line.stage_order ?? "—"}</span>
-                  <span className="text-portal-muted">{line.stage_label ?? "—"}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </SectionCard>
-
-      <SectionCard
-        title="Схема сборки изделия"
-        description={
-          card.assembly_variant_name
-            ? `Вариант: ${card.assembly_variant_name}`
-            : "Снимок швейных операций выбранного варианта сборки."
-        }
-        size="compact"
-        collapsed={collapsedBlocks.assemblyScheme}
-        actions={
-          <CollapseToggleButton
-            collapsed={collapsedBlocks.assemblyScheme}
-            onToggle={() => toggleBlock("assemblyScheme")}
-          />
-        }
-      >
-        <AssemblySchemeBlock
-          assemblySewingOps={assemblySewingOps}
-          sewingOps={sewingOps}
+        <CompactTabs
+          label="Разделы техкарты"
+          items={managerDocTabItems}
+          value={managerDocTab}
+          onChange={(id) => setManagerDocTab(id as ManagerDocTabId)}
+          wrap
+          variant="pills"
+          size="default"
         />
-      </SectionCard>
 
-        <SectionCard
-          title="Состав материалов"
-          description="План и факт по материалам; цех обязателен для hard-gate Раскрой/Печать. Факт — только цех (read-only для менеджера)."
-          size="compact"
-          collapsed={collapsedBlocks.materials}
-          actions={
-            <CollapseToggleButton
-              collapsed={collapsedBlocks.materials}
-              onToggle={() => toggleBlock("materials")}
-            />
-          }
+        <div
+          role="tabpanel"
+          data-tech-card-doc-tab-panel={managerDocTab}
+          className="mt-portal-4 min-w-0"
         >
-          {nonMaterialLines.length > 0 ? (
-            <div className="mb-portal-3 space-y-portal-1 text-portal-caption text-portal-muted">
-              {nonMaterialLines.map((line) => (
-                <div key={line.id}>
-                  {compositionLineKindLabel(String(line.line_kind))}: {line.snapshot_name}
-                  {line.notes ? ` — ${line.notes}` : ""}
-                </div>
-              ))}
+          {managerDocTab === "operations" ? (
+            <div data-tech-card-doc-row3 data-tech-card-tab="operations">
+              <SectionCard title="Операции / объёмы" size="compact" className="border-0 p-0 shadow-none">
+                {routingOps.length === 0 ? (
+                  <EmptyState
+                    title="Операции маршрута не заданы"
+                    description="Выберите маршрут, чтобы заполнить операции."
+                  />
+                ) : (
+                  <div className="space-y-portal-3">
+                    {routingOps.map((line) => (
+                      <div
+                        key={line.id}
+                        className="rounded-portal-md border border-portal-border px-portal-4 py-portal-3"
+                      >
+                        <div className="grid gap-portal-2 min-[720px]:grid-cols-[3rem_minmax(0,1fr)_5rem_4rem_4rem_minmax(0,8rem)] min-[720px]:items-center">
+                          <span className="tabular-nums text-portal-muted">{line.sequence}</span>
+                          <span className="font-medium text-portal-text">{line.operation_name}</span>
+                          <span className="tabular-nums">{line.volume}</span>
+                          <span>{formatVolumeUnit(String(line.volume_unit))}</span>
+                          <span className="text-portal-muted">{line.stage_order ?? "—"}</span>
+                          <span className="text-portal-muted">{line.stage_label ?? "—"}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </SectionCard>
             </div>
           ) : null}
 
-          {materialDrafts.length === 0 ? (
-            <EmptyState
-              title="Материалы не добавлены"
-              description="Добавьте строки номенклатуры типа «Материал» и привяжите цех."
-            />
-          ) : (
-            <DataTableFrame>
-              <DataTable minWidthClassName="min-w-[720px]">
-                <DataTableHead>
-                  <tr>
-                    <DataTableHeaderCell className="w-10">#</DataTableHeaderCell>
-                    <DataTableHeaderCell>Номенклатура (Материал)</DataTableHeaderCell>
-                    <DataTableHeaderCell className="w-36">Цех</DataTableHeaderCell>
-                    <DataTableHeaderCell className="w-24">План</DataTableHeaderCell>
-                    <DataTableHeaderCell className="w-24">Факт</DataTableHeaderCell>
-                    <DataTableHeaderCell className="w-20">Ед.</DataTableHeaderCell>
-                    {compositionEditable ? (
-                      <DataTableHeaderCell className="w-16" />
-                    ) : null}
-                  </tr>
-                </DataTableHead>
-                <DataTableBody>
-                  {materialDrafts.map((line, index) => (
-                    <DataTableRow key={line.key}>
-                      <DataTableCell>{index + 1}</DataTableCell>
-                      <DataTableCell>
-                        {compositionEditable ? (
-                          <div className="space-y-portal-1">
-                            <Select
-                              size="compact"
-                              value={line.nomenclature_id != null ? String(line.nomenclature_id) : ""}
-                              onChange={(event) => {
-                                const raw = event.target.value;
-                                onMaterialNomenclatureChange(
-                                  line.key,
-                                  raw ? Number(raw) : null,
-                                );
-                              }}
-                              aria-label={`Материал строка ${index + 1}`}
-                            >
-                              <option value="">Выберите материал…</option>
-                              {materialOptions.map((row) => (
-                                <option key={row.id} value={row.id}>
-                                  {row.name}
-                                  {row.is_active ? "" : " (архив)"}
-                                </option>
-                              ))}
-                            </Select>
-                            {line.notes ? (
-                              <p className="text-portal-caption text-portal-danger" role="alert">
-                                {line.notes}
-                              </p>
-                            ) : null}
-                          </div>
-                        ) : (
-                          <div className="space-y-portal-1">
-                            <div>{line.snapshot_name || "—"}</div>
-                            {line.notes ? (
-                              <p className="text-portal-caption text-portal-danger" role="alert">
-                                {line.notes}
-                              </p>
-                            ) : null}
-                          </div>
-                        )}
-                      </DataTableCell>
-                      <DataTableCell>
-                        {compositionEditable ? (
-                          <Select
-                            size="compact"
-                            value={
-                              line.production_stage_id != null
-                                ? String(line.production_stage_id)
-                                : ""
-                            }
-                            onChange={(event) => {
-                              const raw = event.target.value;
-                              onMaterialStageChange(line.key, raw ? Number(raw) : null);
-                            }}
-                            aria-label={`Цех материала ${index + 1}`}
-                          >
-                            <option value="">Цех…</option>
-                            {productionStages
-                              .filter((row) => row.is_active || row.id === line.production_stage_id)
-                              .map((row) => (
-                                <option key={row.id} value={row.id}>
-                                  {row.name}
-                                  {row.is_active ? "" : " (архив)"}
-                                </option>
-                              ))}
-                          </Select>
-                        ) : (
-                          stageLabel(line.production_stage_id)
-                        )}
-                      </DataTableCell>
-                      <DataTableCell>
-                        {compositionEditable ? (
-                          <Input
-                            size="compact"
-                            type="number"
-                            min="0"
-                            step="0.001"
-                            value={line.quantity}
-                            onChange={(event) =>
-                              onMaterialFieldChange(line.key, "quantity", event.target.value)
-                            }
-                            aria-label={`План материала ${index + 1}`}
-                          />
-                        ) : (
-                          <span className="tabular-nums">{line.quantity || "—"}</span>
-                        )}
-                      </DataTableCell>
-                      <DataTableCell>
-                        <span className="tabular-nums text-portal-muted">
-                          {line.fact_qty || "—"}
-                        </span>
-                      </DataTableCell>
-                      <DataTableCell>
-                        {compositionEditable ? (
-                          <Input
-                            size="compact"
-                            value={line.unit}
-                            onChange={(event) =>
-                              onMaterialFieldChange(line.key, "unit", event.target.value)
-                            }
-                            aria-label={`Единица материала ${index + 1}`}
-                          />
-                        ) : (
-                          line.unit || "—"
-                        )}
-                      </DataTableCell>
-                      {compositionEditable ? (
-                        <DataTableCell>
-                          <Button
-                            type="button"
-                            size="compact"
-                            disabled={busy}
-                            onClick={() => onRemoveMaterialRow(line.key)}
-                          >
-                            Удалить
-                          </Button>
-                        </DataTableCell>
-                      ) : null}
-                    </DataTableRow>
-                  ))}
-                </DataTableBody>
-              </DataTable>
-            </DataTableFrame>
-          )}
-
-          {compositionEditable ? (
-            <div className="mt-portal-3 flex flex-wrap gap-portal-2">
-              <Button type="button" size="compact" disabled={busy} onClick={onAddMaterialRow}>
-                Добавить материал
-              </Button>
-              <Button
-                type="button"
+          {managerDocTab === "scheme" ? (
+            <div data-tech-card-doc-tab="scheme">
+              <SectionCard
+                title="Схема сборки изделия"
+                description={
+                  card.assembly_variant_name
+                    ? `Вариант: ${card.assembly_variant_name}`
+                    : "Снимок швейных операций выбранного варианта сборки."
+                }
                 size="compact"
-                variant="primary"
-                disabled={busy}
-                onClick={onSaveComposition}
+                className="border-0 p-0 shadow-none"
               >
-                Сохранить состав
-              </Button>
+                <AssemblySchemeBlock
+                  assemblySewingOps={assemblySewingOps}
+                  sewingOps={sewingOps}
+                />
+              </SectionCard>
             </div>
           ) : null}
-        </SectionCard>
+
+          {managerDocTab === "assembly" ? (
+            <div data-tech-card-doc-row2 data-tech-card-doc-tab="assembly">
+              <SectionCard
+                title="Персонализация"
+                description="Размеры и персонализация по единицам."
+                size="compact"
+                className="border-0 p-0 shadow-none"
+                actions={
+                  <div className="flex flex-wrap items-center gap-portal-2">
+                    <Button
+                      type="button"
+                      size="compact"
+                      onClick={() => setUnitImportOpen((current) => !current)}
+                      disabled={busy || !unitLinesEditable}
+                    >
+                      {unitImportOpen ? "Скрыть импорт" : "Импорт XLSX"}
+                    </Button>
+                  </div>
+                }
+              >
+                {unitImportOpen ? (
+                  <div className="mb-portal-4 grid gap-portal-3 rounded-portal-md border border-portal-border p-portal-4">
+                    <Field
+                      label="Файл импорта"
+                      help="Загрузите XLSX по шаблону techcart_example.xlsx. Тип размера = наименование размерной сетки, размер = RU / INT."
+                    >
+                      <input
+                        ref={unitImportInputRef}
+                        type="file"
+                        accept=".xlsx,.xlsm,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                        disabled={busy}
+                        className="block w-full text-portal-body text-portal-text file:mr-portal-3 file:rounded-portal-md file:border file:border-portal-border file:bg-portal-surface file:px-portal-3 file:py-portal-2 file:text-portal-caption"
+                        aria-label="Файл импорта поштучных строк"
+                        onChange={(event) => {
+                          setUnitImportFile(event.target.files?.[0] ?? null);
+                          setActionError(null);
+                        }}
+                      />
+                    </Field>
+                    <p className="text-portal-caption text-portal-muted">
+                      Количество в техкарте:{" "}
+                      <span className="font-medium text-portal-text">{String(card.quantity)}</span>
+                    </p>
+                    {unitImportFile ? (
+                      <p className="text-portal-caption text-portal-muted">
+                        Выбран файл: {unitImportFile.name} ({Math.ceil(unitImportFile.size / 1024)} КБ)
+                      </p>
+                    ) : null}
+                    <div className="flex flex-wrap gap-portal-2">
+                      <Button type="button" variant="primary" size="compact" disabled={busy} onClick={onImportUnitLines}>
+                        Импортировать
+                      </Button>
+                      <Button
+                        type="button"
+                        size="compact"
+                        disabled={busy}
+                        onClick={() => {
+                          setUnitImportFile(null);
+                          if (unitImportInputRef.current) {
+                            unitImportInputRef.current.value = "";
+                          }
+                        }}
+                      >
+                        Очистить
+                      </Button>
+                    </div>
+                  </div>
+                ) : null}
+                {unitLinesEditable && unitSizeOptions.length === 0 ? (
+                  <p className="mb-portal-4 text-portal-caption text-portal-muted">
+                    Размерная сетка модели не привязана или пуста. Размер можно менять вручную.
+                  </p>
+                ) : null}
+                {unitLinesEditable ? (
+                  <div className="mb-portal-4 flex flex-wrap gap-portal-2">
+                    <div className="flex items-center rounded-portal-sm border border-portal-border px-portal-3 text-portal-caption text-portal-muted">
+                      {unitLineDrafts.length} / {expectedUnitLineCount}
+                    </div>
+                    <Button
+                      type="button"
+                      size="compact"
+                      onClick={addUnitLineDraft}
+                      disabled={busy}
+                    >
+                      <Plus className="size-4" aria-hidden="true" />
+                      Добавить
+                    </Button>
+                    <Button
+                      type="button"
+                      size="compact"
+                      onClick={resetUnitLineDrafts}
+                      disabled={busy || !unitLineDraftsDirty}
+                    >
+                      Сбросить
+                    </Button>
+                    <Button
+                      type="button"
+                      size="compact"
+                      variant="primary"
+                      onClick={onSaveUnitLines}
+                      disabled={busy || !unitLineDraftsDirty || !unitLineCountMatches}
+                    >
+                      Сохранить
+                    </Button>
+                    {!unitLineCountMatches ? (
+                      <span className="flex items-center text-portal-caption text-portal-danger">
+                        Количество строк должно быть равно {expectedUnitLineCount}
+                      </span>
+                    ) : null}
+                  </div>
+                ) : null}
+                {unitLineDrafts.length === 0 ? (
+                  <EmptyState title="Строки не заполнены" description="Данные персонализации отсутствуют." />
+                ) : (
+                  <DataTableFrame>
+                    <DataTable minWidthClassName="min-w-[1040px]">
+                      <DataTableHead>
+                        <tr>
+                          <DataTableHeaderCell className="w-12">#</DataTableHeaderCell>
+                          <DataTableHeaderCell className="w-28">Тип размера</DataTableHeaderCell>
+                          <DataTableHeaderCell className="w-40">Размер</DataTableHeaderCell>
+                          <DataTableHeaderCell>Фамилия</DataTableHeaderCell>
+                          <DataTableHeaderCell className="w-24">Номер</DataTableHeaderCell>
+                          <DataTableHeaderCell>Примечание</DataTableHeaderCell>
+                          {unitLinesEditable ? (
+                            <DataTableHeaderCell className="w-14 text-right">Г—</DataTableHeaderCell>
+                          ) : null}
+                        </tr>
+                      </DataTableHead>
+                      <DataTableBody>
+                        {unitLineDrafts.map((line) => (
+                          <DataTableRow key={line.id}>
+                            <DataTableCell>{line.unit_index}</DataTableCell>
+                            <DataTableCell>{unitLineSizeTypeLabel(line.size_type ?? null)}</DataTableCell>
+                            <DataTableCell>
+                              {unitLinesEditable ? (
+                                unitSizeOptions.length > 0 ? (
+                                  <Select
+                                    value={normalizeUnitSizeValue(line.size)}
+                                    disabled={busy}
+                                    aria-label={`Размер строки ${line.unit_index}`}
+                                    onChange={(event) =>
+                                      updateUnitLineDraft(line.id, "size", event.target.value)
+                                    }
+                                  >
+                                    <option value="">Не выбран</option>
+                                    {unitSizeOptions.map((option) => (
+                                      <option key={option} value={option}>
+                                        {option}
+                                      </option>
+                                    ))}
+                                  </Select>
+                                ) : (
+                                  <Input
+                                    value={line.size ?? ""}
+                                    onChange={(event) =>
+                                      updateUnitLineDraft(line.id, "size", event.target.value)
+                                    }
+                                    disabled={busy}
+                                    className="min-w-[10rem]"
+                                    aria-label={`Размер строки ${line.unit_index}`}
+                                  />
+                                )
+                              ) : (
+                                line.size ?? "—"
+                              )}
+                            </DataTableCell>
+                            <DataTableCell>
+                              {unitLinesEditable ? (
+                                <Input
+                                  value={line.personalization ?? ""}
+                                  onChange={(event) =>
+                                    updateUnitLineDraft(line.id, "personalization", event.target.value)
+                                  }
+                                  disabled={busy}
+                                  aria-label={`Фамилия строки ${line.unit_index}`}
+                                />
+                              ) : (
+                                line.personalization ?? "—"
+                              )}
+                            </DataTableCell>
+                            <DataTableCell>
+                              {unitLinesEditable ? (
+                                <Input
+                                  value={line.print_number ?? ""}
+                                  onChange={(event) =>
+                                    updateUnitLineDraft(line.id, "print_number", event.target.value)
+                                  }
+                                  disabled={busy}
+                                  aria-label={`Номер строки ${line.unit_index}`}
+                                />
+                              ) : (
+                                line.print_number ?? "—"
+                              )}
+                            </DataTableCell>
+                            <DataTableCell className="text-portal-muted">
+                              {unitLinesEditable ? (
+                                <Input
+                                  value={line.notes ?? ""}
+                                  onChange={(event) =>
+                                    updateUnitLineDraft(line.id, "notes", event.target.value)
+                                  }
+                                  disabled={busy}
+                                  aria-label={`Примечание строки ${line.unit_index}`}
+                                />
+                              ) : (
+                                line.notes ?? "—"
+                              )}
+                            </DataTableCell>
+                            {unitLinesEditable ? (
+                              <DataTableCell className="text-right">
+                                <IconButton
+                                  label={`Удалить строку ${line.unit_index}`}
+                                  variant="danger"
+                                  disabled={busy}
+                                  onClick={() => removeUnitLineDraft(line.id)}
+                                >
+                                  <Trash2 className="size-4" aria-hidden="true" />
+                                </IconButton>
+                              </DataTableCell>
+                            ) : null}
+                          </DataTableRow>
+                        ))}
+                      </DataTableBody>
+                    </DataTable>
+                  </DataTableFrame>
+                )}
+              </SectionCard>
+            </div>
+          ) : null}
+
+          {managerDocTab === "materials" ? (
+            <div data-tech-card-doc-tab="materials">
+              <SectionCard
+                title="Состав материалов"
+                description="План и факт по материалам; цех обязателен для hard-gate Раскрой/Печать. Факт — только цех (read-only для менеджера)."
+                size="compact"
+                className="border-0 p-0 shadow-none"
+              >
+                {nonMaterialLines.length > 0 ? (
+                  <div className="mb-portal-3 space-y-portal-1 text-portal-caption text-portal-muted">
+                    {nonMaterialLines.map((line) => (
+                      <div key={line.id}>
+                        {compositionLineKindLabel(String(line.line_kind))}: {line.snapshot_name}
+                        {line.notes ? ` — ${line.notes}` : ""}
+                      </div>
+                    ))}
+                  </div>
+                ) : null}
+
+                {materialDrafts.length === 0 ? (
+                  <EmptyState
+                    title="Материалы не добавлены"
+                    description="Добавьте строки номенклатуры типа «Материал» и привяжите цех."
+                  />
+                ) : (
+                  <DataTableFrame>
+                    <DataTable minWidthClassName="min-w-[720px]">
+                      <DataTableHead>
+                        <tr>
+                          <DataTableHeaderCell className="w-10">#</DataTableHeaderCell>
+                          <DataTableHeaderCell>Номенклатура (Материал)</DataTableHeaderCell>
+                          <DataTableHeaderCell className="w-36">Цех</DataTableHeaderCell>
+                          <DataTableHeaderCell className="w-24">План</DataTableHeaderCell>
+                          <DataTableHeaderCell className="w-24">Факт</DataTableHeaderCell>
+                          <DataTableHeaderCell className="w-20">Ед.</DataTableHeaderCell>
+                          {compositionEditable ? (
+                            <DataTableHeaderCell className="w-16" />
+                          ) : null}
+                        </tr>
+                      </DataTableHead>
+                      <DataTableBody>
+                        {materialDrafts.map((line, index) => (
+                          <DataTableRow key={line.key}>
+                            <DataTableCell>{index + 1}</DataTableCell>
+                            <DataTableCell>
+                              {compositionEditable ? (
+                                <div className="space-y-portal-1">
+                                  <Select
+                                    size="compact"
+                                    value={line.nomenclature_id != null ? String(line.nomenclature_id) : ""}
+                                    onChange={(event) => {
+                                      const raw = event.target.value;
+                                      onMaterialNomenclatureChange(
+                                        line.key,
+                                        raw ? Number(raw) : null,
+                                      );
+                                    }}
+                                    aria-label={`Материал строка ${index + 1}`}
+                                  >
+                                    <option value="">Выберите материал…</option>
+                                    {materialOptions.map((row) => (
+                                      <option key={row.id} value={row.id}>
+                                        {row.name}
+                                        {row.is_active ? "" : " (архив)"}
+                                      </option>
+                                    ))}
+                                  </Select>
+                                  {line.notes ? (
+                                    <p className="text-portal-caption text-portal-danger" role="alert">
+                                      {line.notes}
+                                    </p>
+                                  ) : null}
+                                </div>
+                              ) : (
+                                <div className="space-y-portal-1">
+                                  <div>{line.snapshot_name || "—"}</div>
+                                  {line.notes ? (
+                                    <p className="text-portal-caption text-portal-danger" role="alert">
+                                      {line.notes}
+                                    </p>
+                                  ) : null}
+                                </div>
+                              )}
+                            </DataTableCell>
+                            <DataTableCell>
+                              {compositionEditable ? (
+                                <Select
+                                  size="compact"
+                                  value={
+                                    line.production_stage_id != null
+                                      ? String(line.production_stage_id)
+                                      : ""
+                                  }
+                                  onChange={(event) => {
+                                    const raw = event.target.value;
+                                    onMaterialStageChange(line.key, raw ? Number(raw) : null);
+                                  }}
+                                  aria-label={`Цех материала ${index + 1}`}
+                                >
+                                  <option value="">Цех…</option>
+                                  {productionStages
+                                    .filter((row) => row.is_active || row.id === line.production_stage_id)
+                                    .map((row) => (
+                                      <option key={row.id} value={row.id}>
+                                        {row.name}
+                                        {row.is_active ? "" : " (архив)"}
+                                      </option>
+                                    ))}
+                                </Select>
+                              ) : (
+                                stageLabel(line.production_stage_id)
+                              )}
+                            </DataTableCell>
+                            <DataTableCell>
+                              {compositionEditable ? (
+                                <Input
+                                  size="compact"
+                                  type="number"
+                                  min="0"
+                                  step="0.001"
+                                  value={line.quantity}
+                                  onChange={(event) =>
+                                    onMaterialFieldChange(line.key, "quantity", event.target.value)
+                                  }
+                                  aria-label={`План материала ${index + 1}`}
+                                />
+                              ) : (
+                                <span className="tabular-nums">{line.quantity || "—"}</span>
+                              )}
+                            </DataTableCell>
+                            <DataTableCell>
+                              <span className="tabular-nums text-portal-muted">
+                                {line.fact_qty || "—"}
+                              </span>
+                            </DataTableCell>
+                            <DataTableCell>
+                              {compositionEditable ? (
+                                <Input
+                                  size="compact"
+                                  value={line.unit}
+                                  onChange={(event) =>
+                                    onMaterialFieldChange(line.key, "unit", event.target.value)
+                                  }
+                                  aria-label={`Единица материала ${index + 1}`}
+                                />
+                              ) : (
+                                line.unit || "—"
+                              )}
+                            </DataTableCell>
+                            {compositionEditable ? (
+                              <DataTableCell>
+                                <Button
+                                  type="button"
+                                  size="compact"
+                                  disabled={busy}
+                                  onClick={() => onRemoveMaterialRow(line.key)}
+                                >
+                                  Удалить
+                                </Button>
+                              </DataTableCell>
+                            ) : null}
+                          </DataTableRow>
+                        ))}
+                      </DataTableBody>
+                    </DataTable>
+                  </DataTableFrame>
+                )}
+
+                {compositionEditable ? (
+                  <div className="mt-portal-3 flex flex-wrap gap-portal-2">
+                    <Button type="button" size="compact" disabled={busy} onClick={onAddMaterialRow}>
+                      Добавить материал
+                    </Button>
+                    <Button
+                      type="button"
+                      size="compact"
+                      variant="primary"
+                      disabled={busy}
+                      onClick={onSaveComposition}
+                    >
+                      Сохранить состав
+                    </Button>
+                  </div>
+                ) : null}
+              </SectionCard>
+            </div>
+          ) : null}
+
+          {managerDocTab === "route" ? (
+            <div data-tech-card-doc-tab="route">
+              <SectionCard
+                title="Маршрут / участки"
+                description="Ход выполнения по этапам маршрута."
+                size="compact"
+                className="border-0 p-0 shadow-none"
+              >
+                {stageResults.length === 0 ? (
+                  <EmptyState
+                    title="Маршрут не назначен"
+                    description="Назначьте маршрут при формировании техкарты."
+                  />
+                ) : (
+                  <ol
+                    data-tech-card-manager-route
+                    className="flex min-w-0 flex-wrap gap-portal-3"
+                  >
+                    {stageResults.map((stage) => (
+                      <li
+                        key={stage.id}
+                        className="min-w-[13.5rem] max-w-sm flex-1"
+                      >
+                        <StageTimelineRow
+                          stage={stage}
+                          isCurrent={
+                            stageExecutionAllowed &&
+                            stage.stage_order === card.current_stage_order
+                          }
+                          busy={busy}
+                          allowActions={stageExecutionAllowed}
+                          workCenters={workCenters}
+                          onAssignWorkCenter={(workCenterId) => {
+                            void runAction(() =>
+                              assignPlannedWorkCenterAction(
+                                card.id,
+                                stage.stage_order,
+                                workCenterId,
+                                card.sales_order_id,
+                              ),
+                            );
+                          }}
+                          onStart={() => onStartStage(stage.stage_order)}
+                          onComplete={() => openCompleteForm(stage.stage_order)}
+                          onRollback={() => onRollbackStage(stage.stage_order)}
+                        />
+                      </li>
+                    ))}
+                  </ol>
+                )}
+              </SectionCard>
+            </div>
+          ) : null}
+        </div>
       </div>
-
-        <SectionCard
-          title="Маршрут / участки"
-          description="Ход выполнения по этапам маршрута."
-          size="compact"
-          collapsed={collapsedBlocks.stages}
-          actions={
-            <CollapseToggleButton
-              collapsed={collapsedBlocks.stages}
-              onToggle={() => toggleBlock("stages")}
-            />
-          }
-        >
-          {stageResults.length === 0 ? (
-            <EmptyState
-              title="Маршрут не назначен"
-              description="Назначьте маршрут при формировании техкарты."
-            />
-          ) : (
-            <ol
-              data-tech-card-manager-route
-              className="flex min-w-0 flex-wrap gap-portal-3"
-            >
-              {stageResults.map((stage) => (
-                <li
-                  key={stage.id}
-                  className="min-w-[13.5rem] max-w-sm flex-1"
-                >
-                <StageTimelineRow
-                  stage={stage}
-                  isCurrent={
-                    stageExecutionAllowed &&
-                    stage.stage_order === card.current_stage_order
-                  }
-                  busy={busy}
-                  allowActions={stageExecutionAllowed}
-                  workCenters={workCenters}
-                  onAssignWorkCenter={(workCenterId) => {
-                    void runAction(() =>
-                      assignPlannedWorkCenterAction(
-                        card.id,
-                        stage.stage_order,
-                        workCenterId,
-                        card.sales_order_id,
-                      ),
-                    );
-                  }}
-                  onStart={() => onStartStage(stage.stage_order)}
-                  onComplete={() => openCompleteForm(stage.stage_order)}
-                  onRollback={() => onRollbackStage(stage.stage_order)}
-                />
-                </li>
-              ))}
-            </ol>
-          )}
-        </SectionCard>
-
 
       <SectionCard
         title="История"

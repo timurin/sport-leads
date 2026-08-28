@@ -91,6 +91,38 @@ test("maps active card status and document href", () => {
   assert.equal(summary.missingCount, 0);
   assert.equal(summary.manufacturingComplete, false);
   assert.equal(summary.readinessPercent, 0);
+  assert.equal(summary.createdVsPlannedLabel, null);
+});
+
+test("row number and soft progress use live planned count", () => {
+  const cards = [
+    {
+      id: 77,
+      sales_order_id: 4,
+      sales_order_item_id: 11,
+      number: "1310-1",
+      display_number: "1310-1/5",
+      tech_cards_planned_count: 5,
+      card_seq: 1,
+      status: "draft",
+      quantity: "12",
+      nomenclature_id: 1,
+      nomenclature_name: "Футболка игровая",
+      product_model_article: null,
+      product_model_name: null,
+      assembly_variant_name: null,
+      current_stage_order: 1,
+      current_stage_label: "Раскрой",
+      unit_lines: [{}, {}],
+      created_at: "2026-07-26T00:00:00Z",
+      updated_at: "2026-07-26T00:00:00Z",
+    },
+  ];
+  const rows = buildOrderTechCardRows(preview, cards);
+  assert.equal(rows[0].number, "1310-1/5");
+  const summary = buildOrderTechCardsSummary(4, rows, cards, 5);
+  assert.equal(summary.createdVsPlannedLabel, "1 из 5");
+  assert.equal(summary.plannedCount, 5);
 });
 
 test("completed cards mark manufacturing complete", () => {

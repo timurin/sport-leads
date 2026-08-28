@@ -10,9 +10,7 @@ class SewingOperationTemplateLineRead(BaseModel):
     sewing_operation_id: int
     sequence: int
     operation_name: str | None = None
-    cost: str | None = None
-    quantity_per_item: int | None = None
-    duration_seconds: int | None = None
+    description: str | None = None
 
 
 class SewingOperationTemplateBase(BaseModel):

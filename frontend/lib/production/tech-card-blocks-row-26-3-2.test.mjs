@@ -10,25 +10,16 @@ const workspace = readFileSync(
   "utf8",
 );
 
-test("26.3.2 manager ops / assembly / materials share one xl 3-col row", () => {
-  const personalization = workspace.indexOf('title="Персонализация"');
-  const rowStart = workspace.indexOf("data-tech-card-doc-row3");
-  const ops = workspace.indexOf('title="Операции / объёмы"');
-  const scheme = workspace.indexOf('title="Схема сборки изделия"');
-  const materials = workspace.indexOf('title="Состав материалов"');
-  const route = workspace.indexOf('title="Маршрут / участки"');
-
-  assert.ok(rowStart > 0);
-  assert.ok(workspace.includes("xl:grid-cols-3"));
-  assert.ok(personalization > 0 && personalization < rowStart);
-  assert.ok(rowStart < ops && ops < scheme && scheme < materials);
-  assert.ok(materials < workspace.indexOf("</div>", materials));
-  assert.ok(materials < route);
-
-  const rowChunk = workspace.slice(rowStart, route);
-  assert.ok(rowChunk.includes('title="Операции / объёмы"'));
-  assert.ok(rowChunk.includes('title="Схема сборки изделия"'));
-  assert.ok(rowChunk.includes('title="Состав материалов"'));
-  assert.equal(rowChunk.includes('title="Маршрут / участки"'), false);
-  assert.equal(rowChunk.includes('title="Персонализация"'), false);
+test("26.3.2 manager doc blocks use tabs (ops / scheme / assembly / materials / route)", () => {
+  assert.ok(workspace.includes("data-tech-card-doc-tabs"));
+  assert.ok(workspace.includes('label: "Операции"'));
+  assert.ok(workspace.includes('label: "Схема"'));
+  assert.ok(workspace.includes('label: "Сборки"'));
+  assert.ok(workspace.includes('label: "Материалы"'));
+  assert.ok(workspace.includes('label: "Маршрут"'));
+  assert.ok(workspace.includes('title="Операции / объёмы"'));
+  assert.ok(workspace.includes('title="Схема сборки изделия"'));
+  assert.ok(workspace.includes('title="Состав материалов"'));
+  assert.ok(workspace.includes('title="Маршрут / участки"'));
+  assert.ok(workspace.includes("<CompactTabs"));
 });

@@ -1,11 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { Filter, FilterX, Printer, Sparkles, X } from "lucide-react";
+import { Filter, FilterX, Plus, Printer, Sparkles, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { type FormEvent, useEffect, useMemo, useRef, useState } from "react";
 
-import { generateTechCardsFromOrderAction } from "@/app/(workspace)/production/tech-cards/tech-card-actions";
+import { createStandaloneTechnicalCardAction, generateTechCardsFromOrderAction } from "@/app/(workspace)/production/tech-cards/tech-card-actions";
 import { Button, IconButton } from "@/components/ui/button";
 import { CreateDrawer } from "@/components/ui/create-drawer";
 import {
@@ -33,6 +33,7 @@ import {
   techCardPositionLabel,
   techCardStatusTone,
 } from "@/lib/production/tech-cards";
+import { techCardVisibleNumber } from "@/lib/production/tech-card-display";
 import type { ApiTechnicalCardListItem } from "@/lib/sales/order-tech-cards-api";
 import { techCardStatusLabel } from "@/lib/sales/order-tech-cards";
 
@@ -44,13 +45,28 @@ const STATUS_FILTER_ITEMS: { value: string; label: string }[] = [
   { value: "cancelled", label: "Отменена" },
 ];
 
+export type TechCardCreateNomenclatureOption = {
+  id: number;
+  name: string;
+};
+
+function TechCardOrderCell({ card }: { card: ApiTechnicalCardListItem }) {
+  const label = techCardOrderLabel(card);
+  if (card.sales_order_id == null) {
+    return <span>{label}</span>;
+  }
+  return <EntityLink href={`/sales/orders/${card.sales_order_id}`}>{label}</EntityLink>;
+}
+
 /** PT-02 production technical cards list. */
 export function TechCardsWorkspace({
   cards,
   orderId,
+  productNomenclatures = [],
 }: {
   cards: ApiTechnicalCardListItem[];
   orderId?: string;
+  productNomenclatures?: TechCardCreateNomenclatureOption[];
 }) {
   const router = useRouter();
   const { push: pushToast } = useToast();
@@ -62,6 +78,14 @@ export function TechCardsWorkspace({
   const [generateOrderId, setGenerateOrderId] = useState(orderId ?? "");
   const [generating, setGenerating] = useState(false);
   const [generateError, setGenerateError] = useState<string | null>(null);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [createError, setCreateError] = useState<string | null>(null);
+  const [createNomenclatureId, setCreateNomenclatureId] = useState("");
+  const [createOrderNumber, setCreateOrderNumber] = useState("");
+  const [createPlannedCount, setCreatePlannedCount] = useState("1");
+  const [createDesiredDate, setCreateDesiredDate] = useState("");
+  const [createQuantity, setCreateQuantity] = useState("1");
   const filterRef = useRef<HTMLDivElement>(null);
 
   const filtersActive = Boolean(statusFilter) || Boolean(stageFilter.trim());
@@ -152,6 +176,74 @@ export function TechCardsWorkspace({
     pushToast("Печать списка техкарт — скоро", "neutral");
   };
 
+  const resetCreateForm = () => {
+    setCreateNomenclatureId("");
+    setCreateOrderNumber("");
+    setCreatePlannedCount("1");
+    setCreateDesiredDate("");
+    setCreateQuantity("1");
+    setCreateError(null);
+  };
+
+  const openCreate = () => {
+    resetCreateForm();
+    setCreateOpen(true);
+  };
+
+  const runCreate = async () => {
+    const nomenclatureId = Number(createNomenclatureId);
+    const plannedCount = Number(createPlannedCount);
+    const quantity = Number(createQuantity);
+    if (!Number.isSafeInteger(nomenclatureId) || nomenclatureId <= 0) {
+      setCreateError("Выберите номенклатуру");
+      return;
+    }
+    if (!createOrderNumber.trim()) {
+      setCreateError("Укажите номер заказа");
+      return;
+    }
+    if (!Number.isSafeInteger(plannedCount) || plannedCount < 1) {
+      setCreateError("План ТК должен быть целым числом ≥ 1");
+      return;
+    }
+    if (!createDesiredDate.trim()) {
+      setCreateError("Укажите дату отгрузки");
+      return;
+    }
+    if (!Number.isSafeInteger(quantity) || quantity < 1) {
+      setCreateError("Количество должно быть целым числом ≥ 1");
+      return;
+    }
+
+    setCreating(true);
+    setCreateError(null);
+    try {
+      const result = await createStandaloneTechnicalCardAction({
+        nomenclatureId,
+        orderNumber: createOrderNumber.trim(),
+        plannedCount,
+        desiredDate: createDesiredDate.trim(),
+        quantity,
+      });
+      if (!result.ok || result.card == null) {
+        setCreateError(result.message ?? "Ошибка создания");
+        setCreating(false);
+        return;
+      }
+      pushToast(result.message ?? "Техкарта создана", "success");
+      setCreateOpen(false);
+      router.push(`/production/tech-cards/${result.card.id}`);
+    } catch {
+      setCreateError("Не удалось создать техкарту");
+    }
+    setCreating(false);
+  };
+
+  const onCreateSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    void runCreate();
+  };
+
   const detailHref = (cardId: number) => {
     const base = `/production/tech-cards/${cardId}`;
     return orderId ? `${base}?orderId=${encodeURIComponent(orderId)}` : base;
@@ -160,8 +252,8 @@ export function TechCardsWorkspace({
   const emptyDescription =
     cards.length === 0
       ? orderId
-        ? "По этому заказу техкарт нет. Сформируйте их из заказа."
-        : "Техкарт пока нет. Сформируйте их из заказа продаж."
+        ? "По этому заказу техкарт нет. Сформируйте их из заказа или создайте standalone."
+        : "Техкарт пока нет. Создайте standalone-техкарту или сформируйте из заказа продаж."
       : "Измените поиск или фильтры, либо сбросьте их.";
 
   return (
@@ -196,6 +288,96 @@ export function TechCardsWorkspace({
               {generating ? "Формирование…" : "Сформировать"}
             </Button>
             <Button type="button" disabled={generating} onClick={() => setGenerateOpen(false)}>
+              Отмена
+            </Button>
+          </div>
+        </form>
+      </CreateDrawer>
+
+      <CreateDrawer
+        open={createOpen}
+        title="Создать техкарту"
+        description="Без заказа продаж: номенклатура, номер, план ТК, дата отгрузки и количество единиц."
+        onClose={() => {
+          if (creating) return;
+          setCreateOpen(false);
+        }}
+        variant="overlay"
+      >
+        <form
+          className="space-y-portal-4"
+          onSubmit={onCreateSubmit}
+          data-standalone-tech-card-create
+        >
+          <Field label="Номенклатура" required>
+            <Select
+              value={createNomenclatureId}
+              onChange={(event) => setCreateNomenclatureId(event.target.value)}
+              disabled={creating}
+            >
+              <option value="">Выберите продукцию…</option>
+              {productNomenclatures.map((row) => (
+                <option key={row.id} value={row.id}>
+                  {row.name}
+                </option>
+              ))}
+            </Select>
+          </Field>
+          <Field label="Номер заказа" required>
+            <Input
+              value={createOrderNumber}
+              onChange={(event) => setCreateOrderNumber(event.target.value)}
+              placeholder="Например, 1310"
+              disabled={creating}
+            />
+          </Field>
+          <Field label="План ТК" required>
+            <Input
+              type="number"
+              min={1}
+              step={1}
+              value={createPlannedCount}
+              onChange={(event) => setCreatePlannedCount(event.target.value)}
+              disabled={creating}
+            />
+          </Field>
+          <Field label="Дата отгрузки" required>
+            <Input
+              type="date"
+              value={createDesiredDate}
+              onChange={(event) => setCreateDesiredDate(event.target.value)}
+              disabled={creating}
+            />
+          </Field>
+          <Field label="Количество" required>
+            <Input
+              type="number"
+              min={1}
+              step={1}
+              value={createQuantity}
+              onChange={(event) => setCreateQuantity(event.target.value)}
+              disabled={creating}
+            />
+          </Field>
+          {productNomenclatures.length === 0 ? (
+            <p className="text-portal-body text-portal-muted">
+              Нет активной номенклатуры типа «Продукция».
+            </p>
+          ) : null}
+          {createError ? (
+            <p className="text-portal-body text-portal-danger" role="alert">
+              {createError}
+            </p>
+          ) : null}
+          <div className="flex flex-wrap gap-portal-2">
+            <Button
+              type="submit"
+              variant="primary"
+              disabled={creating || productNomenclatures.length === 0}
+            >
+              {creating ? "Создание…" : "Создать"}
+            </Button>
+            <Button type="button" disabled={creating} onClick={() => setCreateOpen(false)}>
               Отмена
             </Button>
           </div>
@@ -297,6 +479,16 @@ export function TechCardsWorkspace({
             </IconButton>
             <Button
               type="button"
+              variant="secondary"
+              disabled={creating}
+              onClick={openCreate}
+              className="inline-flex items-center gap-portal-2"
+            >
+              <Plus className="size-4" aria-hidden="true" />
+              Создать
+            </Button>
+            <Button
+              type="button"
               variant="primary"
               disabled={generating}
               onClick={onGeneratePrimary}
@@ -339,13 +531,11 @@ export function TechCardsWorkspace({
                               href={detailHref(card.id)}
                               className="font-medium text-portal-primary hover:underline"
                             >
-                              {card.number}
+                              {techCardVisibleNumber(card)}
                             </Link>
                           </DataTableCell>
                           <DataTableCell>
-                            <EntityLink href={`/sales/orders/${card.sales_order_id}`}>
-                              {techCardOrderLabel(card)}
-                            </EntityLink>
+                            <TechCardOrderCell card={card} />
                           </DataTableCell>
                           <DataTableCell>{techCardPositionLabel(card)}</DataTableCell>
                           <DataTableCell className="text-portal-muted">
@@ -386,7 +576,7 @@ export function TechCardsWorkspace({
                         href={detailHref(card.id)}
                         className="font-semibold text-portal-primary hover:underline"
                       >
-                        {card.number}
+                        {techCardVisibleNumber(card)}
                       </Link>
                       <StatusBadge size="compact" tone={techCardStatusTone(status)}>
                         {techCardStatusLabel(status)}
@@ -396,9 +586,7 @@ export function TechCardsWorkspace({
                       <div className="flex justify-between gap-portal-3">
                         <dt className="text-portal-muted">Заказ</dt>
                         <dd>
-                          <EntityLink href={`/sales/orders/${card.sales_order_id}`}>
-                            {techCardOrderLabel(card)}
-                          </EntityLink>
+                          <TechCardOrderCell card={card} />
                         </dd>
                       </div>
                       <div className="flex justify-between gap-portal-3">

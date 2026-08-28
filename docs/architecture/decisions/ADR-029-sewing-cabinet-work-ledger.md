@@ -1,6 +1,6 @@
 # ADR-029 — Sewing cabinet work ledger
 
-**Status:** принято (`2026-08-24`)  
+**Status:** принято (`2026-08-24`); **amended `2026-08-28` (`26.10.1`):** `operation` `unit_price` from assembly snapshot, not catalog  
 **Date:** `2026-08-24`  
 **Roadmap:** Stage `24` (`24.0.1`–`24.0.2` contract)  
 **Amends:** ADR-016 §6.4 (Пошив shop fact stays; this ADR adds a **separate** multi-sewer work ledger); ADR-024 (sewing cabinet codes/roles seeded in `24.1.1`); **amended by ADR-030** (split WIP: take/queue by unit lines on sewing)  
@@ -11,7 +11,7 @@
 
 Цех Пошив уже пишет **факт этапа** на ТК (`11.7`: `performer_name` / `work_done` / `duration_seconds` на `TechnicalCardStageResult`). Это поверхность «цех прошёл шаг», без поштучного учёта, кто какую штуку или операцию **взял**.
 
-Нужен кабинет швеи: несколько `PlatformUser` на одной ТК, резерв штук и/или операций пошива, заработок по снимку цены каталога, ограниченная оболочка (швея видит только свой кабинет). Справочник `Employee` (`2.4.2`) — не этот контур. QR и разрез карты по цехам — Stage `25`.
+Нужен кабинет швеи: несколько `PlatformUser` на одной ТК, резерв штук и/или операций пошива, заработок по снимку **цены сборки** (вариант / order-item snapshot), ограниченная оболочка (швея видит только свой кабинет). Справочник `Employee` (`2.4.2`) — не этот контур. QR и разрез карты по цехам — Stage `25`.
 
 ## Решение
 
@@ -49,10 +49,10 @@
 
 | `kind` | `unit_price` на take |
 |--------|----------------------|
-| `operation` | `SewingOperation.cost` каталога (live на момент take; дальше не пересчитывать) |
+| `operation` | Assembly economics: order-item sewing-op snapshot matching the TC line, else live `AssemblyOperationLine` on the variant linked to the TC (`26.10.7`). **Not** `SewingOperation.cost` (catalog has no cost after `26.10.2`) |
 | `piece` | `TechnicalCard.assembly_variant_total_cost` (per item). Если null — take `piece` отклоняется, пока нет стоимости варианта |
 
-Заработок строки = `qty × unit_price` только в статусе `completed`. `released` = 0. Пересчёт каталога после take **не** меняет снимок.
+Заработок строки = `qty × unit_price` только в статусе `completed`. `released` = 0. Пересчёт сборки / каталога после take **не** меняет снимок.
 
 ### 4. Пулы остатка (shared remaining)
 
@@ -120,5 +120,5 @@
 
 - Писать резерв в `TechnicalCardStageResult.performer_name` — нет qty, нет нескольких швей, нет снимка цены.
 - Швея = `Employee` — ломает Stage 21 login и очередь `24`/`25` (owner: sewer = `PlatformUser`).
-- Live-пересчёт `SewingOperation.cost` после take — ломает заработок за период.
+- Live-пересчёт `SewingOperation.cost` после take — ломает заработок за период (после `26.10` каталог cost не существует; то же правило для live `AssemblyOperationLine.cost` после take).
 - Общий пул «заказ qty» на операции и штуки вместе — разные единицы (`volume` vs unit lines).

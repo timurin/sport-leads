@@ -93,14 +93,21 @@ export function SpecificationCard({ specification }: Props) {
                 {specification.production_batch_number?.trim() ||
                   `#${specification.production_batch_id}`}
               </Link>
-              <Link
-                href={`/sales/orders/${specification.sales_order_id}`}
-                className="text-portal-primary hover:underline"
-              >
-                Заказ{" "}
-                {specification.sales_order_number?.trim() ||
-                  `#${specification.sales_order_id}`}
-              </Link>
+              {specification.sales_order_id != null ? (
+                <Link
+                  href={`/sales/orders/${specification.sales_order_id}`}
+                  className="text-portal-primary hover:underline"
+                >
+                  Заказ{" "}
+                  {specification.sales_order_number?.trim() ||
+                    `#${specification.sales_order_id}`}
+                </Link>
+              ) : (
+                <span data-standalone-specification-order>
+                  Группа{" "}
+                  {specification.sales_order_number?.trim() || "Standalone"}
+                </span>
+              )}
             </>
           }
           actions={

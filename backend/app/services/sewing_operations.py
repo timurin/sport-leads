@@ -1,5 +1,3 @@
-from decimal import Decimal
-
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, selectinload
 from sqlalchemy import select
@@ -132,9 +130,7 @@ def create_sewing_operation(
 
     row = SewingOperation(
         name=payload.name,
-        cost=payload.cost,
-        quantity_per_item=payload.quantity_per_item,
-        duration_seconds=payload.duration_seconds,
+        description=payload.description,
         folder_id=payload.folder_id,
         sort_order=sort_order,
     )
@@ -178,33 +174,17 @@ def update_sewing_operation(
                 db, changes["folder_id"]
             )
 
-    if "cost" in changes and changes["cost"] is not None:
-        cost = changes["cost"]
-        if not isinstance(cost, Decimal):
-            cost = Decimal(str(cost))
-        if cost < 0:
-            raise SewingOperationValidationError("Стоимость не может быть отрицательной")
-        changes["cost"] = cost
-
-    if "duration_seconds" in changes and changes["duration_seconds"] is not None:
-        duration = int(changes["duration_seconds"])
-        if duration < 0:
-            raise SewingOperationValidationError(
-                "Время выполнения не может быть отрицательным"
-            )
-        changes["duration_seconds"] = duration
-
-    if "quantity_per_item" in changes and changes["quantity_per_item"] is not None:
-        quantity = int(changes["quantity_per_item"])
-        if quantity < 1:
-            raise SewingOperationValidationError(
-                "Количество операций на изделие должно быть ≥ 1"
-            )
-        changes["quantity_per_item"] = quantity
-
     if "sort_order" in changes and changes["sort_order"] is not None:
         if int(changes["sort_order"]) < 0:
             raise SewingOperationValidationError("Порядок не может быть отрицательным")
+
+    if "description" in changes and changes["description"] is not None:
+        text = str(changes["description"]).strip()
+        if len(text) > 256:
+            raise SewingOperationValidationError(
+                "Описание не длиннее 256 символов"
+            )
+        changes["description"] = text or None
 
     repo.apply_sewing_operation_updates(row, changes)
     if work_center_ids is not None:

@@ -30,11 +30,11 @@ def test_sewing_operation_templates_crud_and_lines() -> None:
         with TestClient(app) as client:
             op1 = client.post(
                 "/sewing-operations",
-                json={"name": "Cut", "cost": "5.00"},
+                json={"name": "Cut"},
             )
             op2 = client.post(
                 "/sewing-operations",
-                json={"name": "Sew", "cost": "8.00"},
+                json={"name": "Sew"},
             )
             assert op1.status_code == 201, op1.text
             assert op2.status_code == 201, op2.text

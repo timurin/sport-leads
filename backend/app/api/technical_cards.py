@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, 
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 
-from app.api.deps_auth import require_permission
+from app.api.deps_auth import get_current_platform_user, get_optional_platform_user, require_permission
 from app.database.session import get_db
 from app.models.auth import PlatformUser
 from app.models.sales import SalesOrder
@@ -26,12 +26,22 @@ from app.schemas.technical_card import (
     TechnicalCardOperationLinesPrefillRead,
     TechnicalCardOperationLinesReplace,
     TechnicalCardOperationLineVolumeUpdate,
+    TechnicalCardOrderGroupRead,
+    TechnicalCardOrderGroupUpdate,
     TechnicalCardPreviewRead,
     TechnicalCardRead,
+    TechnicalCardResponsibleCandidateRead,
+    TechnicalCardResponsibleUpdate,
+    TechnicalCardClientUpdate,
+    TechnicalCardDesiredDateUpdate,
+    TechnicalCardModelAssemblyUpdate,
+    TechnicalCardNomenclatureNameUpdate,
     TechnicalCardStageCompleteRequest,
     TechnicalCardStageFactRequest,
     TechnicalCardPlannedWorkCenterRequest,
     TechnicalCardStageStartRequest,
+    TechnicalCardStandaloneCreate,
+    TechnicalCardLinkSalesOrderItem,
     TechnicalCardUnitLineRead,
     TechnicalCardUnitLinesBulkUpdate,
     TechnicalCardUnitLinesImport,
@@ -44,6 +54,19 @@ from app.services.order_manufacturing_completeness import (
     OrderManufacturingNotFoundError,
     compute_order_manufacturing_completeness,
 )
+from app.services.standalone_technical_cards import (
+    create_standalone_technical_card,
+    link_standalone_technical_card,
+    update_technical_card_order_group,
+)
+from app.services.tech_card_responsible import (
+    list_responsible_candidates,
+    update_technical_card_responsible,
+)
+from app.services.tech_card_client import update_technical_card_client
+from app.services.tech_card_desired_date import update_technical_card_desired_date
+from app.services.tech_card_model_assembly import update_technical_card_model_assembly
+from app.services.tech_card_product_name import update_technical_card_nomenclature_name
 from app.services.technical_card_settings import (
     get_technical_card_settings,
     update_technical_card_settings,
@@ -166,7 +189,17 @@ def list_order_technical_cards(
         raise _http_error(error) from error
     order = db.get(SalesOrder, order_id)
     order_number = order.number if order is not None else None
-    return [to_technical_card_list_read(row, order_number=order_number) for row in rows]
+    planned_count = order.tech_cards_planned_count if order is not None else None
+    desired_date = order.desired_date if order is not None else None
+    return [
+        to_technical_card_list_read(
+            row,
+            order_number=order_number,
+            planned_count=planned_count,
+            desired_date=desired_date,
+        )
+        for row in rows
+    ]
 
 
 @router.get(
@@ -218,6 +251,7 @@ def generate_order_technical_cards(
     order_id: int,
     payload: TechnicalCardGenerateRequest | None = None,
     db: Session = Depends(get_db),
+    current_user: PlatformUser | None = Depends(get_optional_platform_user),
 ) -> TechnicalCardGenerateRead:
     body = payload or TechnicalCardGenerateRequest()
     try:
@@ -225,6 +259,9 @@ def generate_order_technical_cards(
             db,
             order_id,
             sales_order_item_ids=body.sales_order_item_ids,
+            created_by_platform_user_id=(
+                current_user.id if current_user is not None else None
+            ),
         )
     except (TechnicalCardNotFoundError, TechnicalCardValidationError) as error:
         raise _http_error(error) from error
@@ -236,6 +273,79 @@ def generate_order_technical_cards(
     )
 
 
+@router.post(
+    "/technical-cards/standalone",
+    response_model=TechnicalCardRead,
+    status_code=status.HTTP_201_CREATED,
+    operation_id="create_standalone_technical_card",
+)
+def create_standalone_technical_card_endpoint(
+    payload: TechnicalCardStandaloneCreate,
+    db: Session = Depends(get_db),
+    current_user: PlatformUser | None = Depends(get_optional_platform_user),
+) -> TechnicalCardRead:
+    try:
+        card = create_standalone_technical_card(
+            db,
+            payload,
+            created_by_platform_user_id=(
+                current_user.id if current_user is not None else None
+            ),
+        )
+        db.commit()
+    except (TechnicalCardNotFoundError, TechnicalCardValidationError) as error:
+        db.rollback()
+        raise _http_error(error) from error
+    return _card_read(db, get_technical_card(db, card.id))
+
+
+@router.post(
+    "/technical-cards/{card_id}/link-sales-order-item",
+    response_model=TechnicalCardRead,
+    operation_id="link_standalone_technical_card",
+)
+def link_standalone_technical_card_endpoint(
+    card_id: int,
+    payload: TechnicalCardLinkSalesOrderItem,
+    db: Session = Depends(get_db),
+) -> TechnicalCardRead:
+    try:
+        card = link_standalone_technical_card(
+            db,
+            card_id,
+            sales_order_item_id=payload.sales_order_item_id,
+        )
+        db.commit()
+    except (
+        TechnicalCardNotFoundError,
+        TechnicalCardValidationError,
+        TechnicalCardConflictError,
+    ) as error:
+        db.rollback()
+        raise _http_error(error) from error
+    return _card_read(db, get_technical_card(db, card.id))
+
+
+@router.patch(
+    "/technical-cards/order-groups/{group_id}",
+    response_model=TechnicalCardOrderGroupRead,
+    operation_id="update_technical_card_order_group",
+)
+def patch_technical_card_order_group(
+    group_id: int,
+    payload: TechnicalCardOrderGroupUpdate,
+    db: Session = Depends(get_db),
+) -> TechnicalCardOrderGroupRead:
+    try:
+        group = update_technical_card_order_group(db, group_id, payload)
+        db.commit()
+    except (TechnicalCardNotFoundError, TechnicalCardValidationError) as error:
+        db.rollback()
+        raise _http_error(error) from error
+    db.refresh(group)
+    return TechnicalCardOrderGroupRead.model_validate(group)
+
+
 @router.get(
     "/technical-cards",
     response_model=list[TechnicalCardListRead],
@@ -243,6 +353,7 @@ def generate_order_technical_cards(
 )
 def read_technical_cards(
     sales_order_id: int | None = Query(default=None, ge=1),
+    order_group_id: int | None = Query(default=None, ge=1),
     status_filter: str | None = Query(default=None, alias="status", max_length=30),
     stage: str | None = Query(default=None, max_length=255),
     search: str | None = Query(default=None, max_length=255),
@@ -253,6 +364,7 @@ def read_technical_cards(
     rows = list_technical_cards(
         db,
         sales_order_id=sales_order_id,
+        order_group_id=order_group_id,
         status=status_filter,
         stage=stage,
         search=search,
@@ -260,9 +372,169 @@ def read_technical_cards(
         offset=offset,
     )
     return [
-        to_technical_card_list_read(card, order_number=order_number)
-        for card, order_number in rows
+        to_technical_card_list_read(
+            card,
+            order_number=order_number,
+            planned_count=planned_count,
+            desired_date=desired_date,
+        )
+        for card, order_number, planned_count, desired_date in rows
     ]
+
+
+@router.get(
+    "/technical-cards/responsible-candidates",
+    response_model=list[TechnicalCardResponsibleCandidateRead],
+    operation_id="list_technical_card_responsible_candidates",
+)
+def read_technical_card_responsible_candidates(
+    _user: PlatformUser = Depends(get_current_platform_user),
+    db: Session = Depends(get_db),
+) -> list[TechnicalCardResponsibleCandidateRead]:
+    return [
+        TechnicalCardResponsibleCandidateRead(
+            id=user.id,
+            login=user.login,
+            display_name=(user.display_name or "").strip() or user.login,
+        )
+        for user in list_responsible_candidates(db)
+    ]
+
+
+@router.patch(
+    "/technical-cards/{card_id}/responsible",
+    response_model=TechnicalCardRead,
+    operation_id="update_technical_card_responsible",
+)
+def update_technical_card_responsible_endpoint(
+    card_id: int,
+    payload: TechnicalCardResponsibleUpdate,
+    db: Session = Depends(get_db),
+    _user: PlatformUser = Depends(get_current_platform_user),
+) -> TechnicalCardRead:
+    try:
+        card = update_technical_card_responsible(
+            db,
+            card_id,
+            responsible_platform_user_id=payload.responsible_platform_user_id,
+        )
+        db.commit()
+    except (
+        TechnicalCardNotFoundError,
+        TechnicalCardValidationError,
+    ) as error:
+        db.rollback()
+        raise _http_error(error) from error
+    return _card_read(db, get_technical_card(db, card.id))
+
+
+@router.patch(
+    "/technical-cards/{card_id}/client",
+    response_model=TechnicalCardRead,
+    operation_id="update_technical_card_client",
+)
+def update_technical_card_client_endpoint(
+    card_id: int,
+    payload: TechnicalCardClientUpdate,
+    db: Session = Depends(get_db),
+    _user: PlatformUser = Depends(get_current_platform_user),
+) -> TechnicalCardRead:
+    try:
+        card = update_technical_card_client(
+            db,
+            card_id,
+            client_id=payload.client_id,
+        )
+        db.commit()
+    except (
+        TechnicalCardNotFoundError,
+        TechnicalCardValidationError,
+    ) as error:
+        db.rollback()
+        raise _http_error(error) from error
+    return _card_read(db, get_technical_card(db, card.id))
+
+
+@router.patch(
+    "/technical-cards/{card_id}/desired-date",
+    response_model=TechnicalCardRead,
+    operation_id="update_technical_card_desired_date",
+)
+def update_technical_card_desired_date_endpoint(
+    card_id: int,
+    payload: TechnicalCardDesiredDateUpdate,
+    db: Session = Depends(get_db),
+    _user: PlatformUser = Depends(get_current_platform_user),
+) -> TechnicalCardRead:
+    try:
+        card = update_technical_card_desired_date(
+            db,
+            card_id,
+            desired_date=payload.desired_date,
+        )
+        db.commit()
+    except (
+        TechnicalCardNotFoundError,
+        TechnicalCardValidationError,
+    ) as error:
+        db.rollback()
+        raise _http_error(error) from error
+    return _card_read(db, get_technical_card(db, card.id))
+
+
+@router.patch(
+    "/technical-cards/{card_id}/model-assembly",
+    response_model=TechnicalCardRead,
+    operation_id="update_technical_card_model_assembly",
+)
+def update_technical_card_model_assembly_endpoint(
+    card_id: int,
+    payload: TechnicalCardModelAssemblyUpdate,
+    db: Session = Depends(get_db),
+    _user: PlatformUser = Depends(get_current_platform_user),
+) -> TechnicalCardRead:
+    try:
+        card = update_technical_card_model_assembly(
+            db,
+            card_id,
+            product_model_id=payload.product_model_id,
+            assembly_variant_id=payload.assembly_variant_id,
+        )
+        db.commit()
+    except (
+        TechnicalCardNotFoundError,
+        TechnicalCardValidationError,
+    ) as error:
+        db.rollback()
+        raise _http_error(error) from error
+    return _card_read(db, get_technical_card(db, card.id))
+
+
+@router.patch(
+    "/technical-cards/{card_id}/nomenclature-name",
+    response_model=TechnicalCardRead,
+    operation_id="update_technical_card_nomenclature_name",
+)
+def update_technical_card_nomenclature_name_endpoint(
+    card_id: int,
+    payload: TechnicalCardNomenclatureNameUpdate,
+    db: Session = Depends(get_db),
+    _user: PlatformUser = Depends(get_current_platform_user),
+) -> TechnicalCardRead:
+    try:
+        card = update_technical_card_nomenclature_name(
+            db,
+            card_id,
+            nomenclature_name=payload.nomenclature_name,
+        )
+        db.commit()
+    except (
+        TechnicalCardNotFoundError,
+        TechnicalCardValidationError,
+    ) as error:
+        db.rollback()
+        raise _http_error(error) from error
+    return _card_read(db, get_technical_card(db, card.id))
 
 
 @router.get(

@@ -130,9 +130,6 @@ def _seed_batch_with_card(
     if with_sewing:
         sewing = SewingOperation(
             name=f"Оверлок {order_number}",
-            cost=Decimal("10"),
-            quantity_per_item=1,
-            duration_seconds=30,
         )
         db.add(sewing)
         db.flush()

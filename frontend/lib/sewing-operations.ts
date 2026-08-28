@@ -1,9 +1,7 @@
 export type SewingOperation = {
   id: number;
   name: string;
-  cost: string;
-  quantity_per_item: number;
-  duration_seconds: number;
+  description: string | null;
   folder_id: number | null;
   sort_order: number;
   work_center_ids: number[];
@@ -22,9 +20,7 @@ export type SewingOperationFolder = {
 
 export type SewingOperationCreateDraft = {
   name: string;
-  cost: string;
-  quantity_per_item: string;
-  duration_seconds: string;
+  description: string;
   folder_id: number | null;
   work_center_ids: number[];
 };
@@ -141,6 +137,8 @@ export function formatDurationSecondsLabel(totalSeconds: number): string {
   return `${sec} с`;
 }
 
+export const SEWING_OPERATION_DESCRIPTION_MAX = 256;
+
 export function validateSewingOperationDraft(
   draft: SewingOperationCreateDraft,
 ): string | null {
@@ -150,14 +148,8 @@ export function validateSewingOperationDraft(
   if (draft.name.trim().length > 255) {
     return "Наименование не длиннее 255 символов";
   }
-  if (parseSewingCostInput(draft.cost) == null) {
-    return "Укажите стоимость (число ≥ 0)";
-  }
-  if (parseQuantityPerItemInput(draft.quantity_per_item) == null) {
-    return "Укажите количество операций на 1 изделие (целое ≥ 1)";
-  }
-  if (parseDurationSecondsInput(draft.duration_seconds) == null) {
-    return "Укажите время выполнения в секундах (целое ≥ 0)";
+  if (draft.description.trim().length > SEWING_OPERATION_DESCRIPTION_MAX) {
+    return `Описание не длиннее ${SEWING_OPERATION_DESCRIPTION_MAX} символов`;
   }
   return null;
 }

@@ -42,6 +42,7 @@ Effective permissions = ∪ permissions всех ролей пользовате
 | `sewing_cabinet.read_any` | Any sewer cabinet + sewer list | `24.1.1` |
 | `sewing_cabinet.write` | Take / release / complete sewing work ledger | `24.1.1` |
 | `leads.card_fields.manage` | Create/delete extra fields on the lead card | `26.5.4` |
+| `technical_cards.create` | Eligible to be assigned as tech-card responsible (combobox); seed on `admin` | `26.3.6` |
 
 Catalog is seed-extensible; new modules add codes via migration seed, not free-text.
 
@@ -88,6 +89,8 @@ Response adds:
 Per-stage executor directory (`17.1.2.8`) is a follow-on: table `platform_user_stage_access` + `GET /shop-stage-executors` with **role_fallback** (`shop_operator`/`admin`) until the directory is filled.
 
 **Amend `2026-08-26` (Stage `26.5.4`):** catalog includes `leads.card_fields.manage` (create/delete extra fields on the lead card). Seed: `ensure_rbac_seed` + Alembic `g6h7i8j9k012`. Granted to `admin` by default; other roles get it only when assigned in `/settings/users`. Values of extra fields can be filled by any signed-in user who can edit the lead.
+
+**Amend `2026-08-27` (Stage `26.3.6`):** catalog includes `technical_cards.create`. Seed: `ensure_rbac_seed` + Alembic `n3o4p5q6r789`. Granted to `admin` by default; other roles get it only when assigned in `/settings/users`. Used to filter the tech-card responsible combobox and to validate `PATCH /technical-cards/{id}/responsible`. Existing generate/standalone POSTs stay ungated in this slice.
 ## Последствия
 
 - `17.1.2.2` creates tables + seeds permissions/roles + links bootstrap admin.

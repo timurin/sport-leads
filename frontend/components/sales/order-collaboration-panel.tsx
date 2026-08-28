@@ -7,9 +7,11 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import {
   createLeadCollaborationMessage,
   createOrderCollaborationMessage,
+  createStandaloneTechCardCollaborationMessage,
   listCollaborationMentionCandidates,
   listLeadCollaborationMessages,
   listOrderCollaborationMessages,
+  listStandaloneTechCardCollaborationMessages,
   type CollaborationMentionCandidate,
   type CollaborationMessage,
 } from "@/app/(workspace)/sales/orders/[orderId]/collaboration-actions";
@@ -57,6 +59,7 @@ function highlightMentions(body: string, mentions: CollaborationMessage["mention
 type OrderCollaborationPanelProps = {
   orderId?: number | string;
   leadId?: number | string;
+  standaloneCardId?: number | string;
   technicalCardId?: number | null;
   embedded?: boolean;
   compact?: boolean;
@@ -68,6 +71,7 @@ type OrderCollaborationPanelProps = {
 export function OrderCollaborationPanel({
   orderId,
   leadId,
+  standaloneCardId,
   technicalCardId = null,
   embedded = false,
   compact = false,
@@ -75,10 +79,16 @@ export function OrderCollaborationPanel({
   title = "Внутренняя переписка",
   deepLinkHref = null,
 }: OrderCollaborationPanelProps) {
-  if ((orderId == null) === (leadId == null)) {
-    throw new Error("OrderCollaborationPanel requires exactly one of orderId or leadId");
+  const anchorCount = [orderId, leadId, standaloneCardId].filter(
+    (value) => value != null,
+  ).length;
+  if (anchorCount !== 1) {
+    throw new Error(
+      "OrderCollaborationPanel requires exactly one of orderId, leadId, or standaloneCardId",
+    );
   }
   const isLead = leadId != null;
+  const isStandalone = standaloneCardId != null;
   const [messages, setMessages] = useState<CollaborationMessage[]>([]);
   const [candidates, setCandidates] = useState<CollaborationMentionCandidate[]>([]);
   const [draft, setDraft] = useState("");
@@ -94,9 +104,11 @@ export function OrderCollaborationPanel({
     setLoading(true);
     setError("");
     const [msgRes, candRes] = await Promise.all([
-      isLead
-        ? listLeadCollaborationMessages(leadId)
-        : listOrderCollaborationMessages(orderId!, technicalCardId),
+      isStandalone
+        ? listStandaloneTechCardCollaborationMessages(standaloneCardId)
+        : isLead
+          ? listLeadCollaborationMessages(leadId)
+          : listOrderCollaborationMessages(orderId!, technicalCardId),
       listCollaborationMentionCandidates(),
     ]);
     if (!msgRes.ok) {
@@ -107,7 +119,7 @@ export function OrderCollaborationPanel({
     setMessages(msgRes.data);
     if (candRes.ok) setCandidates(candRes.data);
     setLoading(false);
-  }, [isLead, leadId, orderId, technicalCardId]);
+  }, [isLead, isStandalone, leadId, orderId, standaloneCardId, technicalCardId]);
 
   useEffect(() => {
     void refresh();
@@ -166,12 +178,16 @@ export function OrderCollaborationPanel({
     if (!body || busy) return;
     setBusy(true);
     setError("");
-    const result = isLead
-      ? await createLeadCollaborationMessage(leadId!, { body })
-      : await createOrderCollaborationMessage(orderId!, {
+    const result = isStandalone
+      ? await createStandaloneTechCardCollaborationMessage(standaloneCardId, {
           body,
-          technical_card_id: technicalCardId,
-        });
+        })
+      : isLead
+        ? await createLeadCollaborationMessage(leadId!, { body })
+        : await createOrderCollaborationMessage(orderId!, {
+            body,
+            technical_card_id: technicalCardId,
+          });
     setBusy(false);
     if (!result.ok) {
       setError(result.message);
@@ -198,7 +214,9 @@ export function OrderCollaborationPanel({
               ? `Контекст ТК #${technicalCardId}`
               : isLead
                 ? "Внутренний чат по лиду"
-                : "По заказу (все сообщения)"}
+                : isStandalone
+                  ? "Внутренний чат по standalone-техкарте"
+                  : "По заказу (все сообщения)"}
           </p>
         </div>
         <div className="flex shrink-0 gap-1.5">

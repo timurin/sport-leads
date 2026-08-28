@@ -5,10 +5,6 @@ import { revalidatePath } from "next/cache";
 import { fetchBackend } from "@/lib/backend-fetch";
 import {
   nextSewingOperationCopyName,
-  parseDurationSecondsInput,
-  parseQuantityPerItemInput,
-  parseSewingCostInput,
-  toSewingCostInput,
   validateSewingOperationDraft,
   type SewingOperation,
   type SewingOperationCreateDraft,
@@ -43,8 +39,10 @@ function normalizeWorkCenterIds(value: unknown): number[] {
 function normalizeOperation(operation: SewingOperation): SewingOperation {
   return {
     ...operation,
-    quantity_per_item: Math.max(1, Number(operation.quantity_per_item ?? 1) || 1),
-    duration_seconds: Number(operation.duration_seconds ?? 0) || 0,
+    description:
+      operation.description == null || String(operation.description).trim() === ""
+        ? null
+        : String(operation.description).trim(),
     folder_id:
       operation.folder_id == null || Number(operation.folder_id) <= 0
         ? null
@@ -74,23 +72,14 @@ async function readError(response: Response): Promise<string> {
 
 function payloadFromDraft(draft: SewingOperationCreateDraft): {
   name: string;
-  cost: string;
-  quantity_per_item: number;
-  duration_seconds: number;
+  description: string | null;
   folder_id: number | null;
   work_center_ids: number[];
-} | null {
-  const cost = parseSewingCostInput(draft.cost);
-  const quantityPerItem = parseQuantityPerItemInput(draft.quantity_per_item);
-  const durationSeconds = parseDurationSecondsInput(draft.duration_seconds);
-  if (cost == null || quantityPerItem == null || durationSeconds == null) {
-    return null;
-  }
+} {
+  const description = draft.description.trim();
   return {
     name: draft.name.trim(),
-    cost,
-    quantity_per_item: quantityPerItem,
-    duration_seconds: durationSeconds,
+    description: description === "" ? null : description,
     folder_id: draft.folder_id,
     work_center_ids: normalizeWorkCenterIds(draft.work_center_ids),
   };
@@ -104,12 +93,6 @@ export async function createSewingOperation(
     return { ok: false, message: validationError };
   }
   const body = payloadFromDraft(draft);
-  if (body == null) {
-    return {
-      ok: false,
-      message: "Проверьте стоимость, количество и время выполнения",
-    };
-  }
 
   const response = await fetchBackend(`${apiBaseUrl()}/sewing-operations`, {
     method: "POST",
@@ -146,9 +129,7 @@ export async function copySewingOperation(
   );
   const draft: SewingOperationCreateDraft = {
     name: nextSewingOperationCopyName(source.name, existingNames),
-    cost: toSewingCostInput(source.cost),
-    quantity_per_item: String(source.quantity_per_item ?? 1),
-    duration_seconds: String(source.duration_seconds ?? 0),
+    description: source.description ?? "",
     folder_id: source.folder_id,
     work_center_ids: [...(source.work_center_ids ?? [])],
   };
@@ -164,12 +145,6 @@ export async function updateSewingOperation(
     return { ok: false, message: validationError };
   }
   const body = payloadFromDraft(draft);
-  if (body == null) {
-    return {
-      ok: false,
-      message: "Проверьте стоимость, количество и время выполнения",
-    };
-  }
 
   const response = await fetchBackend(
     `${apiBaseUrl()}/sewing-operations/${operationId}`,

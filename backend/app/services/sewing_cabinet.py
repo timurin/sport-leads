@@ -10,8 +10,12 @@ from sqlalchemy import Select, func, select
 from sqlalchemy.orm import Session, selectinload
 
 from app.models.auth import PlatformUser
+from app.models.product_model import AssemblyOperationLine
 from app.models.rbac import Permission, Role
-from app.models.sewing_operation import SewingOperation
+from app.models.sales import (
+    SalesOrderItem,
+    SalesOrderItemAssemblyOperationSnapshot,
+)
 from app.models.sewing_work_ledger import (
     SewingWorkKind,
     SewingWorkLedgerEntry,
@@ -144,6 +148,54 @@ def ensure_cabinet_access(user: PlatformUser) -> None:
 
 def _money(value: Decimal) -> Decimal:
     return value.quantize(MONEY_QUANT, rounding=ROUND_HALF_UP)
+
+
+def _match_assembly_economics(
+    rows: list,
+    line: TechnicalCardOperationLine,
+) -> Decimal | None:
+    """Pick cost from snapshot or live variant lines (26.10.7)."""
+    by_op_id = None
+    by_name = None
+    for row in rows:
+        if (
+            line.sewing_operation_id is not None
+            and row.sewing_operation_id == line.sewing_operation_id
+        ):
+            by_op_id = row
+            break
+        if by_name is None and row.operation_name == line.operation_name:
+            by_name = row
+    match = by_op_id or by_name
+    if match is None:
+        return None
+    return _money(Decimal(match.cost))
+
+
+def _operation_unit_price(
+    db: Session,
+    card: TechnicalCard,
+    line: TechnicalCardOperationLine,
+) -> Decimal | None:
+    """Resolve operation take/queue price from assembly, not catalog."""
+    if card.sales_order_item_id is not None:
+        item = db.get(SalesOrderItem, card.sales_order_item_id)
+        if item is not None:
+            snaps = list(item.assembly_operation_snapshots)
+            found = _match_assembly_economics(snaps, line)
+            if found is not None:
+                return found
+    if card.assembly_variant_id is not None:
+        variant_lines = list(
+            db.scalars(
+                select(AssemblyOperationLine).where(
+                    AssemblyOperationLine.assembly_variant_id
+                    == card.assembly_variant_id
+                )
+            ).all()
+        )
+        return _match_assembly_economics(variant_lines, line)
+    return None
 
 
 def _entry_amount(entry: SewingWorkLedgerEntry) -> Decimal:
@@ -305,19 +357,32 @@ def list_sewing_queue(db: Session) -> list[SewingQueueCardRead]:
         elif operation_line_id is not None:
             busy_op[operation_line_id] = amount
 
-    sewing_op_ids = {
-        line.sewing_operation_id
+    item_ids = {
+        card.sales_order_item_id
         for card in sewing_cards
-        for line in card.operation_lines
-        if line.source_kind == TechnicalCardOperationLineSourceKind.SEWING
-        and line.sewing_operation_id is not None
+        if card.sales_order_item_id is not None
     }
-    costs: dict[int, Decimal] = {}
-    if sewing_op_ids:
-        for row in db.scalars(
-            select(SewingOperation).where(SewingOperation.id.in_(sewing_op_ids))
+    snapshots_by_item: dict[int, list[SalesOrderItemAssemblyOperationSnapshot]] = {}
+    if item_ids:
+        for snap in db.scalars(
+            select(SalesOrderItemAssemblyOperationSnapshot).where(
+                SalesOrderItemAssemblyOperationSnapshot.order_item_id.in_(item_ids)
+            )
         ).all():
-            costs[row.id] = row.cost
+            snapshots_by_item.setdefault(snap.order_item_id, []).append(snap)
+    variant_ids = {
+        card.assembly_variant_id
+        for card in sewing_cards
+        if card.assembly_variant_id is not None
+    }
+    lines_by_variant: dict[int, list[AssemblyOperationLine]] = {}
+    if variant_ids:
+        for row in db.scalars(
+            select(AssemblyOperationLine).where(
+                AssemblyOperationLine.assembly_variant_id.in_(variant_ids)
+            )
+        ).all():
+            lines_by_variant.setdefault(row.assembly_variant_id, []).append(row)
 
     result: list[SewingQueueCardRead] = []
     for card in sewing_cards:
@@ -327,11 +392,17 @@ def list_sewing_queue(db: Session) -> list[SewingQueueCardRead]:
                 continue
             volume = Decimal(line.volume)
             remaining = volume - busy_op.get(line.id, Decimal("0"))
-            live_cost = (
-                costs.get(line.sewing_operation_id)
-                if line.sewing_operation_id is not None
-                else None
-            )
+            live_cost = None
+            if card.sales_order_item_id is not None:
+                live_cost = _match_assembly_economics(
+                    snapshots_by_item.get(card.sales_order_item_id, []),
+                    line,
+                )
+            if live_cost is None and card.assembly_variant_id is not None:
+                live_cost = _match_assembly_economics(
+                    lines_by_variant.get(card.assembly_variant_id, []),
+                    line,
+                )
             operations.append(
                 SewingQueueOperationRead(
                     operation_line_id=line.id,
@@ -418,10 +489,10 @@ def take_work(
             raise SewingCabinetValidationError(
                 "Take операции недоступен: нет операции каталога"
             )
-        catalog = db.get(SewingOperation, line.sewing_operation_id)
-        if catalog is None:
+        unit_price = _operation_unit_price(db, card, line)
+        if unit_price is None:
             raise SewingCabinetValidationError(
-                "Take операции недоступен: операция каталога не найдена"
+                "Take операции недоступен: нет стоимости в сборке"
             )
         remaining = remaining_operation_qty(db, line)
         if qty > remaining:
@@ -433,7 +504,7 @@ def take_work(
             operation_line_id=line.id,
             qty=qty,
             status=SewingWorkStatus.RESERVED,
-            unit_price=_money(Decimal(catalog.cost)),
+            unit_price=unit_price,
             price_label=line.operation_name,
             taken_at=now,
         )

@@ -98,7 +98,7 @@ class SpecificationListItem(BaseModel):
     number: str
     production_batch_id: int
     production_batch_number: str | None = None
-    sales_order_id: int
+    sales_order_id: int | None = None
     sales_order_number: str | None = None
     production_order_id: int
     production_order_number: str | None = None

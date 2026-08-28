@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from decimal import Decimal, InvalidOperation
 from typing import Any
 
 from sqlalchemy import func, select
@@ -18,6 +17,7 @@ from app.schemas.sewing_operation import (
     SewingOperationImportResult,
     SewingOperationRead,
     SewingOperationUpdate,
+    SEWING_OPERATION_DESCRIPTION_MAX,
 )
 from app.services.file_io import (
     FileIoParseError,
@@ -48,12 +48,8 @@ COLUMN_ALIASES: dict[str, str] = {
     "name": "name",
     "наименование": "name",
     "название": "name",
-    "cost": "cost",
-    "стоимость": "cost",
-    "quantity_per_item": "quantity_per_item",
-    "количество": "quantity_per_item",
-    "duration_seconds": "duration_seconds",
-    "длительность": "duration_seconds",
+    "description": "description",
+    "описание": "description",
     "folder_path": "folder_path",
     "папка": "folder_path",
     "sort_order": "sort_order",
@@ -71,9 +67,7 @@ class _RowPlan:
         self,
         *,
         name: str,
-        cost: Decimal | None,
-        quantity_per_item: int | None,
-        duration_seconds: int | None,
+        description: str | None,
         folder_parts: list[str] | None,
         sort_order: int | None,
         work_center_ids: list[int] | None,
@@ -81,9 +75,7 @@ class _RowPlan:
         present: set[str],
     ) -> None:
         self.name = name
-        self.cost = cost
-        self.quantity_per_item = quantity_per_item
-        self.duration_seconds = duration_seconds
+        self.description = description
         self.folder_parts = folder_parts
         self.sort_order = sort_order
         self.work_center_ids = work_center_ids
@@ -210,9 +202,7 @@ def import_sewing_operations_from_bytes(
                     {
                         "id": plan.existing.id if plan.existing is not None else None,
                         "name": plan.name,
-                        "cost": str(plan.cost) if plan.cost is not None else None,
-                        "quantity_per_item": plan.quantity_per_item,
-                        "duration_seconds": plan.duration_seconds,
+                        "description": plan.description,
                         "folder_path": (
                             FOLDER_PATH_SEPARATOR.join(plan.folder_parts)
                             if plan.folder_parts is not None
@@ -250,9 +240,7 @@ def import_sewing_operations_from_bytes(
             if plan.existing is None:
                 create_data: dict[str, Any] = {
                     "name": plan.name,
-                    "cost": plan.cost,
-                    "quantity_per_item": plan.quantity_per_item or 1,
-                    "duration_seconds": plan.duration_seconds or 0,
+                    "description": plan.description,
                     "folder_id": folder_id,
                     "work_center_ids": plan.work_center_ids or [],
                 }
@@ -268,12 +256,8 @@ def import_sewing_operations_from_bytes(
             update_data: dict[str, Any] = {}
             if "name" in plan.present:
                 update_data["name"] = plan.name
-            if "cost" in plan.present:
-                update_data["cost"] = plan.cost
-            if "quantity_per_item" in plan.present and plan.quantity_per_item is not None:
-                update_data["quantity_per_item"] = plan.quantity_per_item
-            if "duration_seconds" in plan.present and plan.duration_seconds is not None:
-                update_data["duration_seconds"] = plan.duration_seconds
+            if "description" in plan.present:
+                update_data["description"] = plan.description
             if "folder_path" in plan.present:
                 update_data["folder_id"] = folder_id
             if "sort_order" in plan.present and plan.sort_order is not None:
@@ -399,109 +383,26 @@ def _plan_row(
     elif name:
         existing = _get_by_name_ci(db, name)
 
-    cost: Decimal | None = None
-    if "cost" in present:
-        cost_raw = _cell(mapped, "cost")
-        if cost_raw:
-            try:
-                cost = Decimal(cost_raw.replace(",", "."))
-            except (InvalidOperation, ValueError):
+    description: str | None = None
+    if "description" in present:
+        desc_raw = _cell(mapped, "description")
+        if desc_raw:
+            if len(desc_raw) > SEWING_OPERATION_DESCRIPTION_MAX:
                 errors.append(
                     FileIoRowError(
                         row_number=index,
-                        column="cost",
-                        code="invalid_cost",
-                        message="cost must be a non-negative decimal",
+                        column="description",
+                        code="invalid_description",
+                        message=(
+                            "description must be ≤ "
+                            f"{SEWING_OPERATION_DESCRIPTION_MAX} characters"
+                        ),
                     )
                 )
             else:
-                if cost < 0:
-                    errors.append(
-                        FileIoRowError(
-                            row_number=index,
-                            column="cost",
-                            code="invalid_cost",
-                            message="cost must be ≥ 0",
-                        )
-                    )
-        elif existing is None:
-            errors.append(
-                FileIoRowError(
-                    row_number=index,
-                    column="cost",
-                    code="required",
-                    message="cost is required when creating an operation",
-                )
-            )
-    elif existing is None:
-        errors.append(
-            FileIoRowError(
-                row_number=index,
-                column="cost",
-                code="required",
-                message="cost is required when creating an operation",
-            )
-        )
-
-    quantity: int | None = None
-    if "quantity_per_item" in present:
-        qty_raw = _cell(mapped, "quantity_per_item")
-        if qty_raw:
-            try:
-                quantity = int(qty_raw)
-            except ValueError:
-                errors.append(
-                    FileIoRowError(
-                        row_number=index,
-                        column="quantity_per_item",
-                        code="invalid_quantity",
-                        message="quantity_per_item must be an integer ≥ 1",
-                    )
-                )
-            else:
-                if quantity < 1:
-                    errors.append(
-                        FileIoRowError(
-                            row_number=index,
-                            column="quantity_per_item",
-                            code="invalid_quantity",
-                            message="quantity_per_item must be ≥ 1",
-                        )
-                    )
+                description = desc_raw
         else:
-            quantity = 1 if existing is None else None
-    elif existing is None:
-        quantity = 1
-
-    duration: int | None = None
-    if "duration_seconds" in present:
-        dur_raw = _cell(mapped, "duration_seconds")
-        if dur_raw:
-            try:
-                duration = int(dur_raw)
-            except ValueError:
-                errors.append(
-                    FileIoRowError(
-                        row_number=index,
-                        column="duration_seconds",
-                        code="invalid_duration",
-                        message="duration_seconds must be an integer ≥ 0",
-                    )
-                )
-            else:
-                if duration < 0:
-                    errors.append(
-                        FileIoRowError(
-                            row_number=index,
-                            column="duration_seconds",
-                            code="invalid_duration",
-                            message="duration_seconds must be ≥ 0",
-                        )
-                    )
-        else:
-            duration = 0 if existing is None else None
-    elif existing is None:
-        duration = 0
+            description = None
 
     sort_order: int | None = None
     if "sort_order" in present:
@@ -578,16 +479,12 @@ def _plan_row(
 
     if errors or not name:
         return errors, None
-    if existing is None and cost is None:
-        return errors, None
 
     return (
         [],
         _RowPlan(
             name=name,
-            cost=cost,
-            quantity_per_item=quantity,
-            duration_seconds=duration,
+            description=description,
             folder_parts=folder_parts,
             sort_order=sort_order,
             work_center_ids=work_center_ids,

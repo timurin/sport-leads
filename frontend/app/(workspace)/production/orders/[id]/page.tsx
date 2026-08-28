@@ -50,10 +50,17 @@ export default async function ProductionOrderDetailPage({
     const [viewer, cards, rollup, rollupsByBatch, specsResult, tasksResult, stages, users] =
       await Promise.all([
         getMe(),
-        fetchTechnicalCards({
-          sales_order_id: order.sales_order_id,
-          limit: 500,
-        }),
+        order.sales_order_id != null
+          ? fetchTechnicalCards({
+              sales_order_id: order.sales_order_id,
+              limit: 500,
+            })
+          : order.order_group_id != null
+            ? fetchTechnicalCards({
+                order_group_id: order.order_group_id,
+                limit: 500,
+              })
+            : Promise.resolve([]),
         fetchProductionOrderFactRollup(orderId),
         fetchProductionOrderBatchFactRollups(orderId),
         getSpecificationsList({ production_order_id: orderId, limit: 500 }),

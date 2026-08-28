@@ -27,15 +27,28 @@ function revalidateProductionOrderPaths(orderId?: number) {
 }
 
 export async function createProductionOrderAction(input: {
-  sales_order_id: number;
+  sales_order_id?: number;
+  order_group_id?: number;
   notes?: string | null;
 }): Promise<ProductionOrderActionResult> {
-  if (!Number.isSafeInteger(input.sales_order_id) || input.sales_order_id <= 0) {
-    return { ok: false, message: "Укажите корректный ID заказа покупателя" };
+  const hasSales =
+    input.sales_order_id != null &&
+    Number.isSafeInteger(input.sales_order_id) &&
+    input.sales_order_id > 0;
+  const hasGroup =
+    input.order_group_id != null &&
+    Number.isSafeInteger(input.order_group_id) &&
+    input.order_group_id > 0;
+  if (hasSales === hasGroup) {
+    return {
+      ok: false,
+      message: "Укажите заказ покупателя или standalone-группу, не оба",
+    };
   }
   try {
     const order = await createProductionOrderApi({
-      sales_order_id: input.sales_order_id,
+      sales_order_id: hasSales ? input.sales_order_id : undefined,
+      order_group_id: hasGroup ? input.order_group_id : undefined,
       notes: input.notes?.trim() || null,
     });
     revalidateProductionOrderPaths(order.id);

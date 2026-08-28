@@ -36,9 +36,6 @@ def test_folder_default_template_seeds_base_assembly_on_model_create() -> None:
                 "/sewing-operations",
                 json={
                     "name": "Оверлок",
-                    "cost": "10.00",
-                    "quantity_per_item": 1,
-                    "duration_seconds": 30,
                 },
             )
             assert op_a.status_code == 201, op_a.text
@@ -46,9 +43,6 @@ def test_folder_default_template_seeds_base_assembly_on_model_create() -> None:
                 "/sewing-operations",
                 json={
                     "name": "Распошив",
-                    "cost": "20.00",
-                    "quantity_per_item": 2,
-                    "duration_seconds": 40,
                 },
             )
             assert op_b.status_code == 201, op_b.text
@@ -102,7 +96,10 @@ def test_folder_default_template_seeds_base_assembly_on_model_create() -> None:
                 id_a,
                 id_b,
             ]
-            assert Decimal(rows[0]["total_cost"]) == Decimal("50.00")
+            assert Decimal(rows[0]["total_cost"]) == Decimal("0.00")
+            assert all(line["cost"] == "0.00" for line in rows[0]["operation_lines"])
+            assert all(line["quantity_per_item"] == 1 for line in rows[0]["operation_lines"])
+            assert all(line["duration_seconds"] == 0 for line in rows[0]["operation_lines"])
 
             # Folder template change must not rewrite existing variant.
             other = client.post(

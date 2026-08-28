@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 
 import { InventoryCreateDrawer } from "@/components/warehouse/inventory-create-drawer";
+import { TransferCreateDrawer } from "@/components/warehouse/transfer-create-drawer";
 import { Button } from "@/components/ui/button";
 
 import {
@@ -28,6 +29,7 @@ import {
   stockDocumentStatusLabel,
   stockDocumentStatusTone,
   stockDocumentTypeLabel,
+  stockWarehouseColumnLabel,
   type StockDocument,
 } from "@/lib/stock-documents";
 import type { Warehouse } from "@/lib/warehouses";
@@ -39,6 +41,7 @@ const DOC_TYPE_FILTER: { value: string; label: string }[] = [
   { value: "fg_receipt", label: "Приход ГП" },
   { value: "fg_issue", label: "Списание ГП" },
   { value: "inventory", label: "Инвентаризация" },
+  { value: "transfer", label: "Перемещение" },
 ];
 
 const STATUS_FILTER: { value: string; label: string }[] = [
@@ -63,6 +66,7 @@ export function WarehouseMovementsWorkspace({
   const [docTypeFilter, setDocTypeFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [createOpen, setCreateOpen] = useState(false);
+  const [transferOpen, setTransferOpen] = useState(false);
 
   const filtered = useMemo(() => {
     let rows = filterStockDocumentsClient(documents, query);
@@ -81,6 +85,11 @@ export function WarehouseMovementsWorkspace({
         open={createOpen}
         warehouses={warehouses}
         onClose={() => setCreateOpen(false)}
+      />
+      <TransferCreateDrawer
+        open={transferOpen}
+        warehouses={warehouses}
+        onClose={() => setTransferOpen(false)}
       />
       <PageToolbar
         start={
@@ -122,22 +131,33 @@ export function WarehouseMovementsWorkspace({
           </div>
         }
         end={
-          <Button
-            type="button"
-            variant="primary"
-            size="compact"
-            onClick={() => setCreateOpen(true)}
-          >
-            <Plus className="size-4" aria-hidden="true" />
-            Инвентаризация
-          </Button>
+          <div className="flex flex-wrap items-center gap-portal-2">
+            <Button
+              type="button"
+              variant="secondary"
+              size="compact"
+              onClick={() => setCreateOpen(true)}
+            >
+              <Plus className="size-4" aria-hidden="true" />
+              Инвентаризация
+            </Button>
+            <Button
+              type="button"
+              variant="primary"
+              size="compact"
+              onClick={() => setTransferOpen(true)}
+            >
+              <Plus className="size-4" aria-hidden="true" />
+              Перемещение
+            </Button>
+          </div>
         }
       />
 
       {filtered.length === 0 ? (
         <EmptyState
           title="Нет складских документов"
-          description="Приходы, списания и инвентаризации появятся после создания и проводок."
+          description="Приходы, списания, инвентаризации и перемещения появятся после создания и проводок."
         />
       ) : (
         <section className="flex min-h-0 min-w-0 flex-1 flex-col">
@@ -177,8 +197,7 @@ export function WarehouseMovementsWorkspace({
                       </StatusBadge>
                     </DataTableCell>
                     <DataTableCell className="text-portal-muted">
-                      {warehouseNames[row.warehouse_id] ??
-                        `#${row.warehouse_id}`}
+                      {stockWarehouseColumnLabel(row, warehouseNames)}
                     </DataTableCell>
                     <DataTableCell className="whitespace-nowrap text-portal-muted">
                       {formatStockDateTime(row.posted_at)}

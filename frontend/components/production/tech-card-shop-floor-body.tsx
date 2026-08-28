@@ -30,10 +30,10 @@ import {
   formatTechCardDateTime,
   formatVolumeUnit,
   stageResultStatusLabel,
-  techCardDocumentNumberLabel,
   techCardModelLabel,
   unitLineSizeTypeLabel,
 } from "@/lib/production/tech-cards";
+import { techCardVisibleNumber } from "@/lib/production/tech-card-display";
 import type {
   ApiTechnicalCard,
   ApiTechnicalCardAssemblySewingOp,
@@ -163,7 +163,7 @@ export function TechCardShopFloorBody({
   onCompleteActiveStage,
   onRollbackActiveStage,
 }: TechCardShopFloorBodyProps) {
-  const documentNumber = techCardDocumentNumberLabel(card.order_number, card.number);
+  const documentNumber = techCardVisibleNumber(card);
   const mediaEditable = shopStage.code === "design" && shopStageMatchesCurrent;
   const unitLines = [...(card.unit_lines ?? [])]
     .sort((a, b) => a.unit_index - b.unit_index)

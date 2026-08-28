@@ -161,9 +161,12 @@ export type ApiTechnicalCardStageResult = {
 
 export type ApiTechnicalCard = {
   id: number;
-  sales_order_id: number;
-  sales_order_item_id: number;
+  sales_order_id: number | null;
+  sales_order_item_id: number | null;
+  order_group_id?: number | null;
   number: string;
+  display_number?: string | null;
+  tech_cards_planned_count?: number | null;
   card_seq: number;
   status: TechnicalCardStatus | string;
   quantity: string | number;
@@ -191,8 +194,12 @@ export type ApiTechnicalCard = {
   design_mockup_url?: string | null;
   notes?: string | null;
   order_number?: string | null;
+  client_id?: number | null;
   client_name?: string | null;
   responsible_name?: string | null;
+  created_by_platform_user_id?: number | null;
+  created_by_name?: string | null;
+  responsible_platform_user_id?: number | null;
   desired_date?: string | null;
   composition_lines?: ApiTechnicalCardCompositionLine[];
   unit_lines: ApiTechnicalCardUnitLine[];
@@ -206,9 +213,12 @@ export type ApiTechnicalCard = {
 
 export type ApiTechnicalCardListItem = {
   id: number;
-  sales_order_id: number;
-  sales_order_item_id: number;
+  sales_order_id: number | null;
+  sales_order_item_id: number | null;
+  order_group_id?: number | null;
   number: string;
+  display_number?: string | null;
+  tech_cards_planned_count?: number | null;
   card_seq: number;
   status: TechnicalCardStatus | string;
   quantity: string | number;
@@ -243,6 +253,7 @@ export type ApiTechnicalCardListItem = {
 
 export type TechnicalCardsListParams = {
   sales_order_id?: number | string;
+  order_group_id?: number | string;
   status?: string;
   stage?: string;
   search?: string;
@@ -350,10 +361,11 @@ export async function fetchOrderTechnicalCards(
 export async function generateOrderTechnicalCards(
   orderId: number | string,
   salesOrderItemIds?: number[],
+  requestHeaders?: Record<string, string>,
 ): Promise<ApiTechnicalCardGenerateResult> {
   const response = await fetch(`${apiBaseUrl()}/orders/${orderId}/technical-cards/generate`, {
     method: "POST",
-    headers: { "content-type": "application/json" },
+    headers: { "content-type": "application/json", ...requestHeaders },
     body: JSON.stringify(
       salesOrderItemIds ? { sales_order_item_ids: salesOrderItemIds } : {},
     ),
@@ -363,6 +375,49 @@ export async function generateOrderTechnicalCards(
     throw new Error(await readError(response, "Generate failed"));
   }
   return (await response.json()) as ApiTechnicalCardGenerateResult;
+}
+
+export type StandaloneTechnicalCardCreateInput = {
+  nomenclature_id: number;
+  order_number: string;
+  tech_cards_planned_count: number;
+  desired_date: string;
+  quantity: number;
+};
+
+export async function createStandaloneTechnicalCard(
+  input: StandaloneTechnicalCardCreateInput,
+  requestHeaders?: Record<string, string>,
+): Promise<ApiTechnicalCard> {
+  const response = await fetch(`${apiBaseUrl()}/technical-cards/standalone`, {
+    method: "POST",
+    headers: { "content-type": "application/json", ...requestHeaders },
+    body: JSON.stringify(input),
+    cache: "no-store",
+  });
+  if (!response.ok) {
+    throw new Error(await readError(response, "Standalone create failed"));
+  }
+  return (await response.json()) as ApiTechnicalCard;
+}
+
+export async function linkStandaloneTechnicalCard(
+  cardId: number | string,
+  salesOrderItemId: number,
+): Promise<ApiTechnicalCard> {
+  const response = await fetch(
+    `${apiBaseUrl()}/technical-cards/${cardId}/link-sales-order-item`,
+    {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ sales_order_item_id: salesOrderItemId }),
+      cache: "no-store",
+    },
+  );
+  if (!response.ok) {
+    throw new Error(await readError(response, "Link to sales order item failed"));
+  }
+  return (await response.json()) as ApiTechnicalCard;
 }
 
 export async function fetchTechnicalCard(
@@ -381,6 +436,9 @@ function buildListQuery(params: TechnicalCardsListParams): string {
   const query = new URLSearchParams();
   if (params.sales_order_id != null && String(params.sales_order_id).trim()) {
     query.set("sales_order_id", String(params.sales_order_id));
+  }
+  if (params.order_group_id != null && String(params.order_group_id).trim()) {
+    query.set("order_group_id", String(params.order_group_id));
   }
   if (params.status?.trim()) query.set("status", params.status.trim());
   if (params.stage?.trim()) query.set("stage", params.stage.trim());

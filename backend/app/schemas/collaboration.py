@@ -33,6 +33,7 @@ class CollaborationMessageRead(BaseModel):
     thread_id: int
     sales_order_id: int | None = None
     lead_id: int | None = None
+    order_group_id: int | None = None
     author_platform_user_id: int
     author_login: str
     author_display_name: str
@@ -95,6 +96,7 @@ class CollaborationNotificationRead(BaseModel):
     body: str
     sales_order_id: int | None = None
     lead_id: int | None = None
+    order_group_id: int | None = None
     technical_card_id: int | None = None
     source_message_id: int | None = None
     microtask_id: int | None = None

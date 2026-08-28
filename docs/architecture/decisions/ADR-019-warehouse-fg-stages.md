@@ -3,7 +3,7 @@
 **Status:** принято (`2026-07-30`)
 **Date:** `2026-07-30`
 **Roadmap:** Stage `12.0` / bridge `11.2.2.1`; feeds `12.1`–`12.5`, `11.2.2.2`–`11.2.2.5`; owns ledger formerly sketched as `4.6.5.*`
-**Amended:** `2026-08-24` (Stage `25` / ADR-030: partial FG qty from unit lines); `2026-08-25` (Stage `12.4` inventory document)
+**Amended:** `2026-08-24` (Stage `25` / ADR-030: partial FG qty from unit lines); `2026-08-25` (Stage `12.4` inventory document); `2026-08-27` (Stage `12.5.1` warehouse transfer)
 
 **Evidence:** `docs/tasks/v0.9.0-stage-11.2.2.1-warehouse-fg-contract.md`
 
@@ -41,7 +41,7 @@
 | Сущность | Роль |
 |----------|------|
 | **Warehouse** | Справочник складов; seed default «Основной» |
-| **StockDocument** | Шапка движения: типы `receipt` / `issue` / `fg_receipt` / `fg_issue` / **`inventory`** (Stage `12.4`); позже `transfer`. Status `draft` / `posted` / `cancelled` |
+| **StockDocument** | Шапка движения: типы `receipt` / `issue` / `fg_receipt` / `fg_issue` / **`inventory`** (Stage `12.4`) / **`transfer`** (Stage `12.5.1`). Status `draft` / `posted` / `cancelled` |
 | **StockLedgerLine** | Проводка регистра: `warehouse_id`, `nomenclature_id`, signed `qty`, `posted_at`, FK/soft на document; soft refs `technical_card_id`, `sales_order_id` |
 | **Balance projection** | Read-model: Σ ledger по `(warehouse_id, nomenclature_id)` — наполняет `GET /stock/balances` (`12.1.2` contract; fill in `12.2`) |
 
@@ -96,7 +96,7 @@ receipt_qty = max(0, TC.quantity − sum(scrap_qty on QC stage_results))
 - Procurement receipts, returns, reserves
 - Multi-bin / lots
 - 1С exchange of stock docs
-- Warehouse **transfers** (`12.5.1`) — separate document type, not inventory
+- Warehouse **reserves** (`12.5.2`) — later; not a transfer
 
 ## Последствия
 
@@ -125,8 +125,25 @@ receipt_qty = max(0, TC.quantity − sum(scrap_qty on QC stage_results))
 
 Task: `docs/tasks/v1.00-stage-12.4-inventory.md` (`SL-STOCK-INVENTORY-v1`).
 
+## Amend `2026-08-27` — warehouse transfer (`12.5.1`)
+
+`StockDocument.doc_type = transfer` is one **inter-warehouse move**, not a second register, not inventory, and not a pair of independent `issue` + `receipt` documents.
+
+| Правило | Решение |
+|---------|---------|
+| Header | Same `StockDocument`. Source = existing `warehouse_id`. Dest = `destination_warehouse_id` (required when `doc_type = transfer`, NULL on other types). CHECK dest ≠ source. Status `draft` / `posted` / `cancelled`. No `technical_card_id` / `sales_order_id` required. Number stays in the `STK-*` sequence. Instant post — no in-transit warehouse. |
+| Transfer lines | Own table `stock_transfer_lines`: `nomenclature_id`, `quantity` (> 0). Unique nomenclature per document. Draft display only — not a ledger row. |
+| Post | For each line, insert two `StockLedgerLine` rows with the same `posted_at`: `quantity = −qty` on the source warehouse, `quantity = +qty` on the dest warehouse. Empty lines cannot post. Posted document is immutable. |
+| Balance SoT | Posted ledger only (ADR-012). Transfer does not store remainder on `Nomenclature`. |
+| Negative remainder | Same as existing `issue`: MVP does **not** block posting when source goes below zero. |
+| List filter | `warehouse_id` query matches source **or** dest. Slim list omits nested transfer lines. |
+| UI host | `/warehouse/movements` + document card (PT-02/PT-07). No Documents module. No bins/lots. |
+| Out of this amend | Reserves (`12.5.2`), in-transit, 1C, serials. |
+
+Task: `docs/tasks/v1.00-stage-12.5-transfers.md` (`SL-STOCK-TRANSFER-v1`).
+
 ## Evidence
 
-- Roadmap: `11.2.2.1`, `12.0`, `12.4.1.*`
-- Task: `docs/tasks/v0.9.0-stage-11.2.2.1-warehouse-fg-contract.md`; inventory `docs/tasks/v1.00-stage-12.4-inventory.md`
+- Roadmap: `11.2.2.1`, `12.0`, `12.4.1.*`, `12.5.1.*`
+- Task: `docs/tasks/v0.9.0-stage-11.2.2.1-warehouse-fg-contract.md`; inventory `docs/tasks/v1.00-stage-12.4-inventory.md`; transfer `docs/tasks/v1.00-stage-12.5-transfers.md`
 - Related: ADR-012, ADR-016, ADR-017, ADR-018, ADR-004, ADR-030

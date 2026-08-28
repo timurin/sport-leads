@@ -73,6 +73,7 @@ export type ApiSalesOrderDetails = {
   items_subtotal?: number | string | null;
   amount_net?: number | string | null;
   desired_date: string | null;
+  tech_cards_planned_count?: number | null;
   source: string | null;
   created_at: string;
   updated_at: string;
@@ -201,6 +202,8 @@ export type SalesOrderDetails = {
   desiredDate: string;
   /** ISO date `YYYY-MM-DD` or empty for editors (`20.4.2`). */
   desiredDateValue: string;
+  /** Soft planned TC count (Stage 28); null = unset. */
+  techCardsPlannedCount: number | null;
   source: string;
   sourceValue: string;
   sourceLeadHref: string | null;
@@ -363,6 +366,8 @@ export function fromApiSalesOrder(order: ApiSalesOrderDetails): SalesOrderDetail
     updatedAtIso: order.updated_at,
     desiredDate: formatDate(order.desired_date),
     desiredDateValue: order.desired_date ?? "",
+    techCardsPlannedCount:
+      order.tech_cards_planned_count == null ? null : Number(order.tech_cards_planned_count),
     source: order.source ?? "Не указан",
     sourceValue: order.source ?? "",
     sourceLeadHref:

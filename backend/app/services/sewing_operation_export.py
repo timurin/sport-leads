@@ -105,9 +105,7 @@ def _item_to_export_row(
     return {
         "id": str(item.id),
         "name": item.name or "",
-        "cost": str(item.cost) if item.cost is not None else "",
-        "quantity_per_item": str(item.quantity_per_item),
-        "duration_seconds": str(item.duration_seconds),
+        "description": item.description or "",
         "folder_path": folder_path_for(item.folder_id, folders),
         "sort_order": str(item.sort_order),
         "work_center_codes": LIST_VALUE_SEPARATOR.join(codes),

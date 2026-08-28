@@ -1,3 +1,4 @@
+import { techCardVisibleNumber } from "../production/tech-card-display.ts";
 import type {
   ApiTechnicalCardListItem,
   ApiTechnicalCardPreview,
@@ -55,6 +56,8 @@ export type OrderTechCardsSummary = {
   readinessPercent: number;
   manufacturingComplete: boolean;
   statusLabel: string;
+  plannedCount: number | null;
+  createdVsPlannedLabel: string | null;
   openListHref: string;
 };
 
@@ -117,7 +120,7 @@ export function buildOrderTechCardRows(
         : card?.status === "cancelled"
           ? "cancelled"
           : "missing";
-      const number = active?.number ?? "—";
+      const number = active ? techCardVisibleNumber(active) : "—";
       const title = `${number === "—" ? `Позиция ${line.position}` : number} — ${line.snapshot_name}`;
 
       return {
@@ -188,6 +191,7 @@ export function buildOrderTechCardsSummary(
   orderId: number | string,
   rows: OrderTechCardRow[],
   cards: OrderTechCardListCard[],
+  plannedCount: number | null = null,
 ): OrderTechCardsSummary {
   const eligibleCount = rows.length;
   const draftCount = rows.filter((row) => row.status === "draft").length;
@@ -219,6 +223,11 @@ export function buildOrderTechCardsSummary(
     else statusLabel = "Черновики техкарт";
   }
 
+  let createdVsPlannedLabel: string | null = null;
+  if (plannedCount != null && plannedCount >= 1) {
+    createdVsPlannedLabel = `${presentCount} из ${plannedCount}`;
+  }
+
   return {
     eligibleCount,
     presentCount,
@@ -231,6 +240,8 @@ export function buildOrderTechCardsSummary(
     readinessPercent,
     manufacturingComplete,
     statusLabel,
+    plannedCount,
+    createdVsPlannedLabel,
     openListHref: `/production/tech-cards?orderId=${orderId}`,
   };
 }

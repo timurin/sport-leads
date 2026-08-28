@@ -221,3 +221,44 @@ test("buildTechnicalCardPrintRequest supports pdf output", () => {
   assert.match(request.payload.html.model_photo_block, /Фото модели не задано/);
   assert.match(request.payload.html.assembly_scheme_block, /Швейные операции сборки не заполнены/);
 });
+
+test("standalone contour B print uses live display number and group ship date", () => {
+  const request = buildTechnicalCardPrintRequest({
+    id: 90,
+    sales_order_id: null,
+    sales_order_item_id: null,
+    order_group_id: 3,
+    number: "1310-1",
+    display_number: "1310-1/5",
+    tech_cards_planned_count: 5,
+    card_seq: 1,
+    status: "draft",
+    quantity: "3",
+    nomenclature_id: 9,
+    nomenclature_name: "Футболка внутренняя",
+    product_model_id: null,
+    product_model_article: null,
+    product_model_name: null,
+    product_model_size_type: null,
+    assembly_variant_name: null,
+    current_stage_order: null,
+    current_stage_label: null,
+    design_mockup_url: null,
+    order_number: "1310",
+    client_name: null,
+    responsible_name: null,
+    desired_date: "2026-09-15",
+    unit_lines: [],
+    composition_lines: [],
+    operation_lines: [],
+    stage_results: [],
+    media_items: [],
+    created_at: "2026-08-27T10:00:00Z",
+    updated_at: "2026-08-27T10:00:00Z",
+  });
+
+  assert.equal(request.payload.document_number, "1310-1/5");
+  assert.equal(request.payload.header.card_number, "1310-1/5");
+  assert.equal(request.payload.header.order_number, "1310");
+  assert.equal(request.payload.header.desired_date, "15.09.2026");
+});

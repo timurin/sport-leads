@@ -2,6 +2,7 @@ import { Suspense } from "react";
 
 import { TechCardsWorkspace } from "@/components/production/tech-cards-workspace";
 import { PageLayout } from "@/components/layout/page-layout";
+import { getNomenclature } from "@/lib/nomenclature";
 import { fetchTechnicalCards } from "@/lib/sales/order-tech-cards-api";
 
 async function loadCards(orderId: string | undefined) {
@@ -19,6 +20,17 @@ async function loadCards(orderId: string | undefined) {
   }
 }
 
+async function loadProductNomenclatures() {
+  try {
+    const rows = await getNomenclature();
+    return rows
+      .filter((row) => row.nomenclature_type === "PRODUCT" && row.is_active)
+      .map((row) => ({ id: row.id, name: row.name }));
+  } catch {
+    return [];
+  }
+}
+
 export default async function ProductionTechCardsPage({
   searchParams,
 }: {
@@ -26,7 +38,10 @@ export default async function ProductionTechCardsPage({
 }) {
   const params = await searchParams;
   const orderId = params.orderId?.trim() || undefined;
-  const state = await loadCards(orderId);
+  const [state, productNomenclatures] = await Promise.all([
+    loadCards(orderId),
+    loadProductNomenclatures(),
+  ]);
 
   return (
     <PageLayout className="flex min-h-0 flex-1 flex-col">
@@ -45,7 +60,11 @@ export default async function ProductionTechCardsPage({
           </div>
         }
       >
-        <TechCardsWorkspace cards={state.cards} orderId={orderId} />
+        <TechCardsWorkspace
+          cards={state.cards}
+          orderId={orderId}
+          productNomenclatures={productNomenclatures}
+        />
       </Suspense>
     </PageLayout>
   );

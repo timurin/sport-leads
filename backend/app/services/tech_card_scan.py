@@ -33,6 +33,7 @@ from app.services.sewing_cabinet import (
     user_can_write_cabinet,
 )
 from app.services.stage_executors import user_is_stage_executor
+from app.services.tech_card_display import format_tech_card_display_number
 from app.services.tech_card_qr import ensure_qr_token, scan_url_for_token
 from app.services.tech_card_wip import (
     TRANSFER_ACCEPT,
@@ -208,9 +209,15 @@ def _to_scan_read(
         )
     ]
     wip = compute_wip_status(db, card)
+    planned_count = None
+    if card.order is not None:
+        planned_count = card.order.tech_cards_planned_count
+    elif card.order_group is not None:
+        planned_count = card.order_group.tech_cards_planned_count
     return TechCardScanRead(
         technical_card_id=card.id,
         number=card.number,
+        display_number=format_tech_card_display_number(card.number, planned_count),
         status=card.status.value if hasattr(card.status, "value") else str(card.status),
         wip_status=wip,
         wip_status_label=WIP_STATUS_LABELS.get(wip, wip),

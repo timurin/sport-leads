@@ -1,16 +1,24 @@
 from datetime import datetime
-from decimal import Decimal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from app.schemas.file_io import FileIoRowError
 
+SEWING_OPERATION_DESCRIPTION_MAX = 256
+
+
+def _strip_optional_text(value: object) -> object:
+    if value is None:
+        return None
+    if isinstance(value, str):
+        stripped = value.strip()
+        return stripped or None
+    return value
+
 
 class SewingOperationBase(BaseModel):
     name: str = Field(min_length=1, max_length=255)
-    cost: Decimal = Field(ge=0, max_digits=14, decimal_places=2)
-    quantity_per_item: int = Field(default=1, ge=1)
-    duration_seconds: int = Field(default=0, ge=0)
+    description: str | None = Field(default=None, max_length=SEWING_OPERATION_DESCRIPTION_MAX)
     folder_id: int | None = None
     sort_order: int = Field(default=0, ge=0)
 
@@ -19,6 +27,11 @@ class SewingOperationBase(BaseModel):
     def strip_name(cls, value: object) -> object:
         return value.strip() if isinstance(value, str) else value
 
+    @field_validator("description", mode="before")
+    @classmethod
+    def strip_description(cls, value: object) -> object:
+        return _strip_optional_text(value)
+
 
 class SewingOperationCreate(SewingOperationBase):
     work_center_ids: list[int] = Field(default_factory=list)
@@ -26,9 +39,7 @@ class SewingOperationCreate(SewingOperationBase):
 
 class SewingOperationUpdate(BaseModel):
     name: str | None = Field(default=None, min_length=1, max_length=255)
-    cost: Decimal | None = Field(default=None, ge=0, max_digits=14, decimal_places=2)
-    quantity_per_item: int | None = Field(default=None, ge=1)
-    duration_seconds: int | None = Field(default=None, ge=0)
+    description: str | None = Field(default=None, max_length=SEWING_OPERATION_DESCRIPTION_MAX)
     folder_id: int | None = None
     sort_order: int | None = Field(default=None, ge=0)
     work_center_ids: list[int] | None = None
@@ -37,6 +48,11 @@ class SewingOperationUpdate(BaseModel):
     @classmethod
     def strip_name(cls, value: object) -> object:
         return value.strip() if isinstance(value, str) else value
+
+    @field_validator("description", mode="before")
+    @classmethod
+    def strip_description(cls, value: object) -> object:
+        return _strip_optional_text(value)
 
 
 class SewingOperationRead(SewingOperationBase):
@@ -54,9 +70,7 @@ class SewingOperationRead(SewingOperationBase):
             return {
                 "id": data.id,
                 "name": data.name,
-                "cost": data.cost,
-                "quantity_per_item": data.quantity_per_item,
-                "duration_seconds": data.duration_seconds,
+                "description": data.description,
                 "folder_id": data.folder_id,
                 "sort_order": data.sort_order,
                 "work_center_ids": [row.id for row in data.work_centers],

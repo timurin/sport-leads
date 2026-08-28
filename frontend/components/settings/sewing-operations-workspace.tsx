@@ -72,11 +72,7 @@ import { triggerBrowserDownload } from "@/lib/file-download";
 import {
   buildSewingCatalogTreeRows,
   filterSewingOperations,
-  formatDurationSecondsLabel,
-  formatSewingCost,
   formatSewingEquipmentLabels,
-  sewingOperationLineTotal,
-  toSewingCostInput,
   visibleSewingCatalogTreeRows,
   type SewingOperation,
   type SewingOperationCreateDraft,
@@ -401,9 +397,7 @@ export function SewingOperationsWorkspace({
     setEditingId(row.id);
     setDraft({
       name: row.name,
-      cost: toSewingCostInput(row.cost),
-      quantity_per_item: String(row.quantity_per_item ?? 1),
-      duration_seconds: String(row.duration_seconds ?? 0),
+      description: row.description ?? "",
       folder_id: row.folder_id,
       work_center_ids: [...(row.work_center_ids ?? [])],
     });
@@ -743,15 +737,8 @@ export function SewingOperationsWorkspace({
                     />
                   </DataTableHeaderCell>
                 ) : null}
-                <DataTableHeaderCell>Наименование</DataTableHeaderCell>
-                <DataTableHeaderCell className="w-[7rem]">
-                  Стоимость
-                </DataTableHeaderCell>
-                <DataTableHeaderCell className="w-[5rem]">
-                  Кол-во
-                </DataTableHeaderCell>
-                <DataTableHeaderCell className="w-[7rem]">Сумма</DataTableHeaderCell>
-                <DataTableHeaderCell className="w-[6rem]">Время</DataTableHeaderCell>
+                <DataTableHeaderCell>Операция</DataTableHeaderCell>
+                <DataTableHeaderCell>Описание</DataTableHeaderCell>
                 <DataTableHeaderCell>Оборудование</DataTableHeaderCell>
                 <DataTableHeaderCell className="w-[12rem]" />
               </DataTableRow>
@@ -759,7 +746,7 @@ export function SewingOperationsWorkspace({
             <DataTableBody>
               {visibleRows.length === 0 ? (
                 <DataTableRow>
-                  <DataTableCell colSpan={moveSelectMode ? 8 : 7}>
+                  <DataTableCell colSpan={moveSelectMode ? 5 : 4}>
                     <EmptyState
                       title="Нет строк"
                       description={
@@ -786,7 +773,7 @@ export function SewingOperationsWorkspace({
                         {({ handle }) => (
                           <>
                             {moveSelectMode ? <DataTableCell /> : null}
-                            <DataTableCell colSpan={6}>
+                            <DataTableCell colSpan={3}>
                               <CatalogTreeDepthCell depth={row.depth}>
                                 {handle}
                                 <IconButton
@@ -919,57 +906,20 @@ export function SewingOperationsWorkspace({
                           <DataTableCell>
                             {editing ? (
                               <Input
-                                value={draft.cost}
+                                value={draft.description}
+                                maxLength={256}
                                 onChange={(event) =>
                                   setDraft({
                                     ...draft,
-                                    cost: event.target.value,
+                                    description: event.target.value,
                                   })
                                 }
-                                aria-label="Стоимость"
+                                aria-label="Описание"
                               />
                             ) : (
-                              formatSewingCost(op.cost)
-                            )}
-                          </DataTableCell>
-                          <DataTableCell>
-                            {editing ? (
-                              <Input
-                                value={draft.quantity_per_item}
-                                onChange={(event) =>
-                                  setDraft({
-                                    ...draft,
-                                    quantity_per_item: event.target.value,
-                                  })
-                                }
-                                aria-label="Количество"
-                              />
-                            ) : (
-                              op.quantity_per_item
-                            )}
-                          </DataTableCell>
-                          <DataTableCell>
-                            {formatSewingCost(
-                              sewingOperationLineTotal(
-                                op.cost,
-                                op.quantity_per_item,
-                              ),
-                            )}
-                          </DataTableCell>
-                          <DataTableCell>
-                            {editing ? (
-                              <Input
-                                value={draft.duration_seconds}
-                                onChange={(event) =>
-                                  setDraft({
-                                    ...draft,
-                                    duration_seconds: event.target.value,
-                                  })
-                                }
-                                aria-label="Время, с"
-                              />
-                            ) : (
-                              formatDurationSecondsLabel(op.duration_seconds)
+                              <span className="text-portal-muted">
+                                {op.description ?? "—"}
+                              </span>
                             )}
                           </DataTableCell>
                           <DataTableCell>

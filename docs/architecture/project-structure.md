@@ -1,7 +1,7 @@
 # Sport-Lead — Project Structure Checklist
 
 **Code:** `SL-PROJECT-STRUCTURE-v1`
-**Updated:** `2026-08-26` (push to `main` auto-deploys VPS; Stage **12.4** closed; next **12.5.1**; Stage **27** 1C:UNF export parked)
+**Updated:** `2026-08-28` (Stage **12.5.1.1**–`12.5.1.5` transfer shipped; next **12.5.1.6** owner visual; Stage **26** `26.3.13` + `26.10.1`–`26.10.8` closed; Stage **27** 1C:UNF export parked)
 **Project version:** `v0.9.0` / early `v1.00` Stages 0 + 20 + 21 + 22 + 23 + **24** + **25** + **26** + **27** + Stage **7** contract
 **Git branch:** `main`
 
@@ -43,8 +43,9 @@
 - [ ] Unified Work Tasks (`v1.00` Stage `23`) — ADR-028; through `23.7` / `23.10.4` (API/FE/hosts, migrate, kanban, order context; owner visuals OK `2026-08-22`); old task tables retained
 - [x] Sewing cabinet (`v1.00` Stage `24`) — ADR-029 work ledger + restricted shell + own/manager UI; owner visual OK `24.5.2` (`2026-08-24`); `PlatformUser` sewer; not `2.4.2` Employee
 - [x] Tech-card QR + shop scan (`v1.00` Stage `25`) — closed `2026-08-25` (owner visual `25.5.2`); ADR-030; Alembic `d3e4f5a6b789`; `/production/scan/{token}`
-- [ ] Owner findings / bugs-cosmetics (`v1.00` Stage `26`) — living backlog; `26.0.1` closed `2026-08-25`; `26.1.1`–`26.1.6` closed `2026-08-26`; **`26.2.1`–`26.2.2` closed `2026-08-26`**; **`26.3.1`–`26.3.4` closed `2026-08-26`**; **`26.4.1`–`26.4.3` closed `2026-08-26`** (models whitelist; card «Варианты» removed); **`26.5.1`–`26.5.4` closed `2026-08-26`**; **`26.6.1`–`26.6.8` closed `2026-08-26`**; **`26.7.1` closed `2026-08-26`**; **`26.8.1`–`26.8.2` closed `2026-08-26`**; **`26.9.1`–`26.9.3` closed `2026-08-27`** (owner visual nav + settings slider); owner-pull only
+- [ ] Owner findings / bugs-cosmetics (`v1.00` Stage `26`) — living backlog; `26.0.1` closed `2026-08-25`; `26.1.1`–`26.1.6` closed `2026-08-26`; **`26.2.1`–`26.2.2` closed `2026-08-26`**; **`26.3.1`–`26.3.13` closed `2026-08-26`/`2026-08-28`**; **`26.4.1`–`26.4.3` closed `2026-08-26`** (models whitelist; card «Варианты» removed); **`26.5.1`–`26.5.4` closed `2026-08-26`**; **`26.6.1`–`26.6.8` closed `2026-08-26`**; **`26.7.1` closed `2026-08-26`**; **`26.8.1`–`26.8.2` closed `2026-08-26`**; **`26.9.1`–`26.9.3` closed `2026-08-27`** (owner visual nav + settings slider); **`26.10.1`–`26.10.8` closed `2026-08-28`** (catalog slim + assembly inline edit); owner-pull only
 - [ ] 1C:UNF document export (`v1.00` Stage `27`) — `27.0.1` closed `2026-08-26`; `27.1+` parked owner-pull; platform→УНФ packages; matching in 1C; inbound `16.2.1` parked
+- [x] Standalone tech cards + numbering (`v1.00` Stage `28`) — `28.0.1`–`28.5.4` closed `2026-08-27`; owner visual `28.3.3` OK
 - [ ] Production secrets management (Vault/etc.) — monitoring + DR covered in `17.2.2`/`17.2.3`; file `.env.production` remains host SoT for secrets MVP
 
 ## 2. CRM and Leads
@@ -137,7 +138,7 @@
 - [x] Product types directory + model link + list column/filter — `ProductType` (`6.1.14`–`6.1.16`); Alembic `y5z6a7b8c901` / `a1b2c3d4e515`
 - [x] Assembly variants API + model-card UI (sewing-ops picker) — `AssemblyVariantsBlock` + copy-on-pick (`6.1.12` / `6.3.6`); owner visual OK `6.1.12.6` (`2026-07-22`)
 - [x] Model routing whitelist + operation material norms on product model — Stage `6.1.17` shipped (owner visual OK `2026-07-27`; plan hint; fact on TC/`11.5`–`11.6`)
-- [x] Sewing operations flat catalog API + PT-02 list UI — `sewing_operations` / `/settings/catalogs/sewing_operations` (`6.3.1–5`; owner visual OK `6.3.4.5` / `6.3.5.4` / `6.4.3.3`); PatternSet withdrawn; catalog CSV/XLSX `4.5.4` (owner visual OK `4.5.4.4` `2026-08-24`)
+- [x] Sewing operations flat catalog API + PT-02 list UI — `sewing_operations` / `/settings/catalogs/sewing_operations` (`6.3.1–5`; owner visual OK `6.3.4.5` / `6.3.5.4` / `6.4.3.3`); PatternSet withdrawn; catalog CSV/XLSX `4.5.4` (owner visual OK `4.5.4.4` `2026-08-24`); **`26.10` shipped:** leaf = name+description; I/O columns slim; economics on `AssemblyOperationLine` (pick 0/1/0 + inline edit + cabinet snapshot)
 - [x] Sewing operations folder tree catalog (`6.3.11`) + templates library modal (`6.3.12`) + apply template to assembly (`6.3.13`) — owner visual OK `2026-08-02`; Alembic `a4b5c6d7e890` / `b5c6d7e8f901`
 - [x] Product-model folders catalog tree (`6.1.18`) + folder default sewing template (`6.1.19`) — owner visual OK `2026-08-03`; Alembic `c6d7e8f9a012` / `d7e8f9a0b123`
 - [x] Sewing operation normative duration (`duration_seconds`) + assembly-line snapshot — `6.3.8`; Alembic `d5e6f7a8b901`
@@ -174,7 +175,7 @@
 - [x] Tech-card QR / shop scan (`v1.00` Stage `25`) — ADR-030; owner visual OK `25.5.2` (`2026-08-25`); token/print/scan/status/FG
 - [x] Warehouse nomenclature PT-04 `/warehouse/stock` — tree CRUD + list + settings redirects + остаток column/filter + owner visual OK (`4.10.1`–`4.10.7`); live ledger column `12.2.3` (ADR-019)
 - [x] Warehouse Stage 12 ledger MVP `12.2` (`12.2.1`–`12.2.5` / former `4.6.5.*`) — StockDocument/Ledger + post/API + live `/warehouse/stock` column + regression + docs sync
-- [x] Warehouse FG docs + movements `12.3` (`12.3.1`–`12.3.3`) shipped; inventory `12.4` closed `2026-08-26` (owner visual `12.4.1.6`); transfers `12.5` open
+- [x] Warehouse FG docs + movements `12.3` (`12.3.1`–`12.3.3`) shipped; inventory `12.4` closed `2026-08-26` (owner visual `12.4.1.6`); transfers `12.5.1.1`–`12.5.1.5` shipped, owner visual `12.5.1.6` open
 - [ ] Procurement requests, supplier orders, receipts, and returns
 - [ ] Shipping documents, delivery tracking, and confirmation of receipt
 

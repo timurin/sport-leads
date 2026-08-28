@@ -256,12 +256,14 @@ export function buildShopStageKanbanColumns(
     columnCards.push({
       id: String(card.id),
       status: code,
-      title: card.number,
+      title: card.display_number?.trim() || card.number,
       href:
         code === "unassigned"
           ? `/production/tech-cards/${card.id}`
           : shopStageCardHref(code, card.id),
-      subtitle: card.order_number?.trim() || `Заказ #${card.sales_order_id}`,
+      subtitle:
+        card.order_number?.trim() ||
+        (card.sales_order_id != null ? `Заказ #${card.sales_order_id}` : "Без заказа"),
       amount: String(card.quantity),
       badge: {
         label: STAGE_RESULT_BADGE_LABEL[stageStatus] ?? stageStatus,

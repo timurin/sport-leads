@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from datetime import datetime
-from decimal import Decimal
 from typing import TYPE_CHECKING
 
 from sqlalchemy import (
@@ -10,7 +9,6 @@ from sqlalchemy import (
     DateTime,
     ForeignKey,
     Integer,
-    Numeric,
     String,
     Table,
     UniqueConstraint,
@@ -83,20 +81,14 @@ class SewingOperationFolder(Base):
 
 
 class SewingOperation(Base):
-    """Leaf sewing-operation catalog row (name + cost + qty + duration). Stage 6.3."""
+    """Leaf sewing-operation catalog row (name + description + folder + equipment).
+
+    Economics live on `AssemblyOperationLine` (`26.10`).
+    """
 
     __tablename__ = "sewing_operations"
     __table_args__ = (
         UniqueConstraint("name", name="uq_sewing_operations_name"),
-        CheckConstraint("cost >= 0", name="ck_sewing_operations_cost_non_negative"),
-        CheckConstraint(
-            "quantity_per_item >= 1",
-            name="ck_sewing_operations_quantity_per_item_positive",
-        ),
-        CheckConstraint(
-            "duration_seconds >= 0",
-            name="ck_sewing_operations_duration_seconds_non_negative",
-        ),
         CheckConstraint(
             "sort_order >= 0",
             name="ck_sewing_operations_sort_order_nonnegative",
@@ -105,9 +97,7 @@ class SewingOperation(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     name: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
-    cost: Mapped[Decimal] = mapped_column(Numeric(14, 2), nullable=False)
-    quantity_per_item: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
-    duration_seconds: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    description: Mapped[str | None] = mapped_column(String(256), nullable=True)
     folder_id: Mapped[int | None] = mapped_column(
         ForeignKey("sewing_operation_folders.id", ondelete="RESTRICT"),
         nullable=True,

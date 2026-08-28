@@ -79,6 +79,18 @@ class StockInventoryLineRead(BaseModel):
     delta: Decimal
 
 
+class StockTransferLineRead(BaseModel):
+    """Draft transfer line for document detail (`12.5.1.4`). Not a ledger row."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    sequence: int
+    nomenclature_id: int
+    nomenclature_name: str | None = None
+    quantity: Decimal
+
+
 class StockDocumentRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -87,6 +99,7 @@ class StockDocumentRead(BaseModel):
     doc_type: str
     status: str
     warehouse_id: int
+    destination_warehouse_id: int | None = None
     posted_at: datetime | None
     technical_card_id: int | None
     sales_order_id: int | None
@@ -95,6 +108,7 @@ class StockDocumentRead(BaseModel):
     updated_at: datetime
     ledger_lines: list[StockLedgerLineRead] = Field(default_factory=list)
     inventory_lines: list[StockInventoryLineRead] = Field(default_factory=list)
+    transfer_lines: list[StockTransferLineRead] = Field(default_factory=list)
 
 
 class InventoryDocumentCreate(BaseModel):
@@ -117,3 +131,23 @@ class InventoryDocumentCreate(BaseModel):
 class InventoryCountedUpdate(BaseModel):
     nomenclature_id: int = Field(ge=1)
     counted_qty: Decimal = Field(ge=0, max_digits=14, decimal_places=3)
+
+
+class TransferDocumentCreate(BaseModel):
+    warehouse_id: int = Field(ge=1, description="Source warehouse")
+    destination_warehouse_id: int = Field(ge=1, description="Destination warehouse")
+    notes: str | None = Field(default=None, max_length=4000)
+    lines: list[StockDocumentLineCreate] = Field(default_factory=list)
+
+    @field_validator("notes", mode="before")
+    @classmethod
+    def strip_notes(cls, value: object) -> object:
+        if isinstance(value, str):
+            stripped = value.strip()
+            return stripped or None
+        return value
+
+
+class TransferLineUpdate(BaseModel):
+    nomenclature_id: int = Field(ge=1)
+    quantity: Decimal = Field(gt=0, max_digits=14, decimal_places=3)

@@ -5,6 +5,7 @@ import type {
   ApiTechnicalCardOperationLine,
 } from "../sales/order-tech-cards-api";
 import { sameOriginApiMediaUrl } from "../api-media.ts";
+import { techCardVisibleNumber } from "./tech-card-display.ts";
 
 export type TechnicalCardPrintRequest = {
   binding_type: "model";
@@ -533,11 +534,11 @@ export function buildTechnicalCardPrintRequest(
     payload: {
       document_kind: "technical_card",
       document_id: card.id,
-      document_number: card.number,
+      document_number: techCardVisibleNumber(card),
       issued_at: card.updated_at,
       header: {
         order_number: textValue(card.order_number),
-        card_number: textValue(card.number),
+        card_number: textValue(techCardVisibleNumber(card)),
         client_name: textValue(card.client_name),
         responsible_name: textValue(card.responsible_name),
         desired_date: formatDesiredDate(card.desired_date),

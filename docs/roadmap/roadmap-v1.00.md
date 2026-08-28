@@ -1,7 +1,7 @@
 # Sport-Lead — Roadmap v1.00
 
 **Code:** `SL-ROADMAP-v1.00`
-**Updated:** `2026-08-27` (Stage **12.4** closed; next **12.5.1**; parked `0.5.13` S3 media; Stage **26** `26.9.1`–`26.9.3` closed; Stage **27** 1C:UNF export parked; **Stage 28** standalone TC + numbering parked)
+**Updated:** `2026-08-28` (Stage **12.5.1.1**–`12.5.1.5` transfer shipped; next **12.5.1.6** owner visual; parked `0.5.13` S3 media; Stage **26** `26.9.1`–`26.9.3` closed, **`26.3.5`–`26.3.13` closed**, **`26.10.1`–`26.10.8` closed** (sewing catalog slim); Stage **27** 1C:UNF export parked; **Stage 28** closed including `28.5.1`–`28.5.4`)
 **Project version:** `v1.00`
 **Status:** Confirmed carry-over from `v0.9.0` (Stages **1.4.3**, **2** group, **7**, **12.4**–**12.5**, **13**, **14**, **15**, **16**, **18.4**) + **new** Stages **0** (performance + LAN + order-without-lead + **canonical VPS `0.5`**), **20** (Lead / Order UX, closed), **21** (Settings / Users cabinet, closed), **22** (Design v1.0), **23** (Unified Work Tasks), **24** (Sewing cabinet), **25** (Tech-card QR / shop scan), **26** (owner findings: bugs / cosmetics), **27** (1C:UNF document export), **28** (standalone tech cards + unified numbering). Owner started early (`2026-08-05`).
 **Languages / Языки:** English + Russian (this MD). Interactive switch: `docs/erp/status/roadmap-v1.00.html`
@@ -29,7 +29,7 @@
 ## Rules / Правила
 
 - `[x]` = done / выполнено; `[ ]` = open / не выполнено.
-- Codes keep `v0.9.0` numbering for carried work (`1.4.3.*`, `2.2.3.*`, `2.2.4.*`, `2.3.*`, `2.4.*`, `7.*`, `12.4`–`12.5`, `13.*`, `14.*`, `15.*`, `16.*`, `18.4.*`). New Stages **0** (`0.1` / `0.2.*` / `0.3.*` / `0.4.*` / **`0.5.*`**), **20** (`20.1`–`20.4`), **21** (`21.1`–`21.5`), **22** (`22.0`–`22.9` Design v1.0; process `docs/design/design-v1-process.md`), **23** (`23.0`–`23.10` Unified Work Tasks; ADR-028), **24** (`24.0`–`24.5` Sewing cabinet), **25** (`25.0`–`25.5` Tech-card QR / shop scan), **26** (`26.0`–`26.9` owner findings; living; owner-pull), **27** (`27.0`–`27.5` 1C:UNF export; owner-pull), **28** (`28.0`–`28.5` standalone tech cards + `{order}-{seq}/{N}`; owner-pull).
+- Codes keep `v0.9.0` numbering for carried work (`1.4.3.*`, `2.2.3.*`, `2.2.4.*`, `2.3.*`, `2.4.*`, `7.*`, `12.4`–`12.5`, `13.*`, `14.*`, `15.*`, `16.*`, `18.4.*`). New Stages **0** (`0.1` / `0.2.*` / `0.3.*` / `0.4.*` / **`0.5.*`**), **20** (`20.1`–`20.4`), **21** (`21.1`–`21.5`), **22** (`22.0`–`22.9` Design v1.0; process `docs/design/design-v1-process.md`), **23** (`23.0`–`23.10` Unified Work Tasks; ADR-028), **24** (`24.0`–`24.5` Sewing cabinet), **25** (`25.0`–`25.5` Tech-card QR / shop scan), **26** (`26.0`–`26.10` owner findings; living; **`26.3.5`–`26.3.13` closed**; **`26.10.1`–`26.10.8` closed** sewing catalog slim; owner-pull), **27** (`27.0`–`27.5` 1C:UNF export; owner-pull), **28** (`28.0`–`28.5` standalone tech cards + `{order}-{seq}/{N}`; owner-pull).
 - Do not execute `v1.00` while `v0.9.0` is still the active project version, unless the owner explicitly starts early.
 - Не исполнять `v1.00`, пока активная версия проекта — `v0.9.0`, если владелец явно не начал раньше.
 - **Owner early start:** `2026-08-05` — execution of `v1.00` begun (`0.1.1` closed).
@@ -68,9 +68,9 @@
 | **27** | 1C:UNF document export (platform → УНФ) | Выгрузка документов в 1С:УНФ (платформа → УНФ) |
 | **28** | Standalone tech cards + unified numbering `{order}-{seq}/{N}` | Самостоятельные техкарты + единая нумерация `{заказ}-{seq}/{N}` |
 
-> **EN:** Stage 0 is **new** in `v1.00`: slow-data (`0.1`/`0.2`), **LAN** (`0.3`), **create SalesOrder without Lead** (`0.4`), and **canonical VPS** (`0.5`, ADR-032). Stages **20** / **21** closed. Stage **22** = Design v1.0 (do **not** re-open `20.*` data contracts). Do **not** re-open closed `3.5.*` / `19.*` / `17.1.2.*` / `17.2.1`–`17.2.3` in `v0.9.0`. Stage **2** closed `2026-08-24`. Stage **24** sewing cabinet closed `2026-08-24`. Stage **25** QR/scan closed `2026-08-25` (owner visual `25.5.2`). Stage **7** Specifications closed `2026-08-25` (owner visual `7.2.2.6`). Stage **26** = living owner findings (bugs/cosmetics); `26.0.1` closed; seed parked; **owner-pull only** — do not auto-start. Stage **27** = 1C:UNF **outbound** document packages (contour D); `27.0.1` closed; `27.1+` parked; **owner-pull only** — do not auto-start; inbound `16.2.1` parked. Stage **28** = standalone TechnicalCard (no required SalesOrder) + planned TC count + display `{orderNo}-{seq}/{N}`; **owner-pull**; do not auto-start; task `docs/tasks/v1.00-stage-28-standalone-tech-cards.md`. Stage **12.4** inventory closed `2026-08-26` (owner visual `12.4.1.6`). Current slice: Stage **12.5** transfers (`12.5.1`). Stage **`0.5`** live apply closed `2026-08-25` (smoke `0.5.12`: `https://sport-lead.ru/login`). Parked **`0.5.13`** S3-compatible media (**owner-pull**; do **not** auto-start; keep VPS disk `0.5.10` while the project is small). `2.4.2` Employees is **not** a 24/25 dependency (sewer = `PlatformUser`). `12.5` / 13–16 / `18.4` / **27** / **28** are not blockers.
+> **EN:** Stage 0 is **new** in `v1.00`: slow-data (`0.1`/`0.2`), **LAN** (`0.3`), **create SalesOrder without Lead** (`0.4`), and **canonical VPS** (`0.5`, ADR-032). Stages **20** / **21** closed. Stage **22** = Design v1.0 (do **not** re-open `20.*` data contracts). Do **not** re-open closed `3.5.*` / `19.*` / `17.1.2.*` / `17.2.1`–`17.2.3` in `v0.9.0`. Stage **2** closed `2026-08-24`. Stage **24** sewing cabinet closed `2026-08-24`. Stage **25** QR/scan closed `2026-08-25` (owner visual `25.5.2`). Stage **7** Specifications closed `2026-08-25` (owner visual `7.2.2.6`). Stage **26** = living owner findings (bugs/cosmetics); `26.0.1` closed; seed parked; **`26.10.1`–`26.10.8` closed** (catalog slim + pick 0/1/0 + cabinet snapshot price + assembly inline edit); **owner-pull only** — do not auto-start. Stage **27** = 1C:UNF **outbound** document packages (contour D); `27.0.1` closed; `27.1+` parked; **owner-pull only** — do not auto-start; inbound `16.2.1` parked. Stage **28** = standalone TechnicalCard (no required SalesOrder) + planned TC count + display `{orderNo}-{seq}/{N}`; **owner-pull**; do not auto-start; task `docs/tasks/v1.00-stage-28-standalone-tech-cards.md`. Stage **12.4** inventory closed `2026-08-26` (owner visual `12.4.1.6`). Current slice: Stage **12.5** transfers (`12.5.1`). Stage **`0.5`** live apply closed `2026-08-25` (smoke `0.5.12`: `https://sport-lead.ru/login`). Parked **`0.5.13`** S3-compatible media (**owner-pull**; do **not** auto-start; keep VPS disk `0.5.10` while the project is small). `2.4.2` Employees is **not** a 24/25 dependency (sewer = `PlatformUser`). `12.5` / 13–16 / `18.4` / **27** / **28** are not blockers.
 >
-> **RU:** Stage 0: slow-data + **LAN** (`0.3`) + **заказ без лида** (`0.4`) + **канонический VPS** (`0.5`). Stages **20** / **21** закрыты. Stage **22** = Design v1.0. Stage **2** закрыт `2026-08-24`. Stage **24** закрыт `2026-08-24`. Stage **25** закрыт `2026-08-25`. Stage **7** закрыт `2026-08-25` (owner visual `7.2.2.6`). Stage **26** — живой backlog находок; `26.0.1` закрыт; seed припаркован; старт только по явному коду владельца. Stage **27** — выгрузка документов в 1С:УНФ; `27.0.1` закрыт; `27.1+` припаркован; **owner-pull**; inbound `16.2.1` припаркован. Stage **28** — самостоятельные ТК + плановое кол-во + показ `{заказ}-{seq}/{N}`; **owner-pull**; не стартовать сам; task `docs/tasks/v1.00-stage-28-standalone-tech-cards.md`. Stage **12.4** закрыт `2026-08-26` (owner visual `12.4.1.6`). Текущий срез: Stage **12.5** (`12.5.1` перемещения). Stage **`0.5`** live apply закрыт `2026-08-25` (smoke `https://sport-lead.ru/login`). Припаркован **`0.5.13`** S3 для медиа (**owner-pull**; не стартовать; SoT пока диск VPS `0.5.10`). `2.4.2` Employees **не** зависимость (швея = `PlatformUser`).
+> **RU:** Stage 0: slow-data + **LAN** (`0.3`) + **заказ без лида** (`0.4`) + **канонический VPS** (`0.5`). Stages **20** / **21** закрыты. Stage **22** = Design v1.0. Stage **2** закрыт `2026-08-24`. Stage **24** закрыт `2026-08-24`. Stage **25** закрыт `2026-08-25`. Stage **7** закрыт `2026-08-25` (owner visual `7.2.2.6`). Stage **26** — живой backlog находок; `26.0.1` закрыт; seed припаркован; **`26.10.1`–`26.10.8` закрыты** (каталог slim + pick 0/1/0 + цена кабинета из snapshot + inline edit сборки); старт только по явному коду владельца. Stage **27** — выгрузка документов в 1С:УНФ; `27.0.1` закрыт; `27.1+` припаркован; **owner-pull**; inbound `16.2.1` припаркован. Stage **28** — самостоятельные ТК + плановое кол-во + показ `{заказ}-{seq}/{N}`; **owner-pull**; не стартовать сам; task `docs/tasks/v1.00-stage-28-standalone-tech-cards.md`. Stage **12.4** закрыт `2026-08-26` (owner visual `12.4.1.6`). Текущий срез: Stage **12.5** (`12.5.1` перемещения). Stage **`0.5`** live apply закрыт `2026-08-25` (smoke `https://sport-lead.ru/login`). Припаркован **`0.5.13`** S3 для медиа (**owner-pull**; не стартовать; SoT пока диск VPS `0.5.10`). `2.4.2` Employees **не** зависимость (швея = `PlatformUser`).
 
 ### Remain in v0.9.0 / Остаются в v0.9.0
 
@@ -309,10 +309,10 @@
 **Moved from:** `v0.9.0` `12.4`, `12.5`
 **Перенесено из:** `v0.9.0`, `12.4`, `12.5`
 
-> **EN:** `12.1` structure + `12.2` ledger MVP already shipped in `v0.9.0`. FG docs `12.3` (+ wire `11.2.2.4`) **remain** in `v0.9.0`. Inventory = `StockDocument` type `inventory` + recount lines; post writes signed deltas to the same ledger (ADR-019 amend `2026-08-25`). Task: `docs/tasks/v1.00-stage-12.4-inventory.md`.
-> **RU:** `12.1` + `12.2` уже в `v0.9.0`. FG `12.3` (+ `11.2.2.4`) **остаются** в `v0.9.0`. Инвентаризация = тип `inventory` + строки пересчёта; проведение пишет signed delta в тот же регистр.
+> **EN:** `12.1` structure + `12.2` ledger MVP already shipped in `v0.9.0`. FG docs `12.3` (+ wire `11.2.2.4`) **remain** in `v0.9.0`. Inventory = `StockDocument` type `inventory` + recount lines; post writes signed deltas to the same ledger (ADR-019 amend `2026-08-25`). Transfer = type `transfer` + source/dest warehouses; post writes `−qty` source / `+qty` dest (ADR-019 amend `2026-08-27`). Tasks: `docs/tasks/v1.00-stage-12.4-inventory.md`, `docs/tasks/v1.00-stage-12.5-transfers.md`.
+> **RU:** `12.1` + `12.2` уже в `v0.9.0`. FG `12.3` (+ `11.2.2.4`) **остаются** в `v0.9.0`. Инвентаризация = тип `inventory` + строки пересчёта. Перемещение = тип `transfer` + два склада; проведение пишет `−qty` источник / `+qty` получатель.
 
-**Execute after / Исполнять после:** Stage 7 closed `2026-08-25`. Stage **12.4** closed `2026-08-26` (owner visual `12.4.1.6`). Next **`12.5.1`**.
+**Execute after / Исполнять после:** Stage 7 closed `2026-08-25`. Stage **12.4** closed `2026-08-26` (owner visual `12.4.1.6`). Next **`12.5.1.6`** owner visual.
 
 ### 12.4 — Inventory / Инвентаризация
 
@@ -327,7 +327,15 @@
 
 ### 12.5 — Transfers and reserves / Перемещения и резервы
 
-- [ ] 12.5.1 — Transfers between warehouses / Перемещения между складами
+#### 12.5.1 — Transfers between warehouses / Перемещения между складами
+
+- [x] 12.5.1.1 — Define transfer document + paired ledger post (source −qty / dest +qty) / Контракт перемещения + парные проводки — `v1.00` `2026-08-27`; ADR-019 amend; `SL-STOCK-TRANSFER-v1` / Контракт
+- [x] 12.5.1.2 — Add SQLAlchemy + Alembic for `transfer` type, dest warehouse, transfer lines / SQLAlchemy + Alembic тип `transfer` + строки — `v1.00` `2026-08-27`; Alembic `j9k0l1m2n345`; `test_stock_transfer_12_5_1_2.py` / модели + миграция
+- [x] 12.5.1.3 — Add service: create, set/remove lines, post paired ledger / Service: create, строки, проведение — `v1.00` `2026-08-27`; `stock_transfer.py`; `test_stock_transfer_12_5_1_3.py` / paired post
+- [x] 12.5.1.4 — Add API + backend regression tests / API + backend tests — `v1.00` `2026-08-27`; `POST /stock/transfers`; `test_stock_transfer_12_5_1_4.py` / slim list
+- [x] 12.5.1.5 — Add UI on `/warehouse/movements` (create drawer + card lines/post) / UI журнал + карточка — `v1.00` `2026-08-27`; create drawer + PT-07 lines; `stock-transfer.test.mjs` / UI; стоп на visual `12.5.1.6`
+- [ ] 12.5.1.6 — Visual verification / Визуальная проверка
+
 - [ ] 12.5.2 — Reserves (sales/production) — later / Резервы (продажи/производство) — later
 
 ---
@@ -841,13 +849,22 @@
 
 ### 26.3 — Tech-card document / Документ техкарты `/production/tech-cards/[id]`
 
-> **EN:** Host `tech-card-detail-workspace.tsx`. Shop `?stage=` layout stays; 26.3.3 is manager document only (shop already has horizontal chips).
-> **RU:** Хост документа ТК. Цеховой `?stage=` не ломаем; 26.3.3 — только менеджерский документ.
+> **EN:** Host `tech-card-detail-workspace.tsx`. Shop `?stage=` layout stays; 26.3.3 is manager document only (shop already has horizontal chips). `26.3.5`–`26.3.13` closed (`2026-08-27`/`2026-08-28`).
+> **RU:** Хост документа ТК. Цеховой `?stage=` не ломаем; 26.3.3 — только менеджерский документ. `26.3.5`–`26.3.13` закрыты.
 
 - [x] 26.3.1 — Move «Сотрудничество по заказу» (ADR-026) to a right rail on xl+ (sticky); tablet collapse; mobile accordion after header; owner visual on layout in the task file — `v1.00` `2026-08-26`; `tech-card-detail-workspace.tsx`; shop `?stage=` mockup without chat / Правый рейл переписки
 - [x] 26.3.2 — «Операции / объёмы», «Схема сборки», «Состав материалов» in one row on large screens — `v1.00` `2026-08-26`; `tech-card-detail-workspace.tsx` `data-tech-card-doc-row3` `xl:grid-cols-3` / Три блока в ряд
 - [x] 26.3.3 — Manager «Маршрут / участки» horizontal (shop floor already has chips — do not break) — `v1.00` `2026-08-26`; `data-tech-card-manager-route`; shop `tech-card-shop-floor-body.tsx` chips unchanged / Горизонтальный маршрут менеджера
 - [x] 26.3.4 — Rename «Поштучно» → «Персонализация»; move to row 2 after Макет / order data / model+route — `v1.00` `2026-08-26`; `data-tech-card-doc-row2`; shop title unchanged / Персонализация на строке 2
+- [x] 26.3.5 — Block «Данные по заказу»: edit / cancel / save icons (inline edit chrome) — `v1.00` `2026-08-27`; owner visual OK; `tech-card-order-data-card.tsx`; example `/production/tech-cards/6` / Правка блока Данные по заказу
+- [x] 26.3.6 — Responsible manager: default = tech-card creator when empty; combobox of Users with permission to create tech cards — `v1.00` `2026-08-28`; owner visual OK; `technical_cards.create`; Alembic `n3o4p5q6r789`; example `/production/tech-cards/6` / Ответственный менеджер
+- [x] 26.3.7 — Client: typeahead from clients catalog; modal to create client if not found — `v1.00` `2026-08-28`; owner visual OK; Alembic `o4p5q6r7s890`; example `/production/tech-cards/6` / Клиент: подбор и модалка создания
+- [x] 26.3.8 — Due date («Дата сдачи»): calendar with day + month/year in edit mode — `v1.00` `2026-08-28`; owner visual OK; `PATCH /technical-cards/{id}/desired-date`; example `/production/tech-cards/6` / Календарь даты сдачи
+- [x] 26.3.9 — «Модель и маршрут»: edit / cancel / save; model from `/settings/catalogs/product-models`; assembly variants of selected model; keep routing Select — `v1.00` `2026-08-28`; owner visual OK; `PATCH /technical-cards/{id}/model-assembly`; example `/production/tech-cards/6` / Модель и сборка
+- [x] 26.3.10 — Операции / Схема / Состав материалов stacked full-width like Маршрут/История (not 3-col); do not restore `26.3.2` 3-col — `v1.00` `2026-08-28`; owner visual OK; `data-tech-card-doc-row3` `flex-col`; example `/production/tech-cards/6` / Три блока столбиком на всю ширину
+- [x] 26.3.11 — Toolbar / EntityHeader: editable product name («наименование изделия»); persist candidate `nomenclature_name` — `v1.00` `2026-08-28`; owner visual OK; `PATCH /technical-cards/{id}/nomenclature-name`; example `/production/tech-cards/6` / Наименование изделия в тулбаре
+- [x] 26.3.12 — Restore add/delete of tech-card mockup images (manager Макет; not shop read-only; hover-only icons) — `v1.00` `2026-08-28`; owner visual OK; already in `tech-card-media-carousel.tsx`; example `/production/tech-cards/6` / Картинки макета: добавить/удалить
+- [x] 26.3.13 — Restore internal collab on the tech card (including contour B / `sales_order_id` null); cross-link `28.5.4`; do not auto-start `28.5.1`–`28.5.3` — `v1.00` `2026-08-28`; owner visual OK; rail/accordion (`26.3.1` + `28.5.4`); example `/production/tech-cards/6` / Внутренняя переписка по ТК
 
 ### 26.4 — Nomenclature card / Карточка номенклатуры `/settings/catalogs/nomenclature/[id]`
 
@@ -905,6 +922,23 @@
 - [x] 26.9.1 — Sidebar three groups: (1) **Продажи** = Главная + Продажи + Отчеты + Финансы + Аналитика; (2) **Производство** = Производство + Склад + Закупки; (3) **Настройки** until `26.9.2`. Map existing `appSections` (`dashboard` / `sales` / finance reports + sales nested «Отчёты» — no new report module; `finance`; `analytics`; `production`; `warehouse`; `purchases`; `settings`) — `v1.00` `2026-08-27`; `SIDEBAR_CONTOURS` + `groupSectionsByContour`; reports section reuses `/sales/reports/*`; `app-sidebar.tsx` / Три раздела левого меню
 - [x] 26.9.2 — Move **Настройки** out of the sidebar to a DS-SHELL-02 top-right icon; open `/settings` in a right slider like the lead (`LeadCardSlider` / `@leadSlider`); nested `/settings/...` keep URL; full-page route remains for refresh/deep link — `v1.00` `2026-08-27`; `@settingsSlider/(.)settings`; `settings-card-slider.tsx`; `data-settings-topbar-link` / Настройки иконкой и слайдером
 - [x] 26.9.3 — Owner visual: expanded + compact sidebar; desktop + md; settings icon + slider vs full `/settings` — `v1.00` `2026-08-27` / Visual меню и слайдера настроек
+
+### 26.10 — Sewing catalog slim + assembly economics on model / Каталог операций пошива + экономика на модели
+
+> **EN:** Move cost / qty / time **off** `SewingOperation` catalog leaf (`/settings/catalogs/sewing_operations`); add **description** (≤256). **AssemblyOperationLine** on product model (`/settings/catalogs/product-models/[id]`, e.g. `101`) becomes SoT for cost / qty / duration — editable inline. Pick from catalog → defaults `0` / `1` / `0`. Sewing cabinet `unit_price` for `operation` kind reads assembly snapshot, not catalog. Amend `sewing-operations-domain.md`, ADR-014, ADR-029. Agent does **not** auto-start. Task: `docs/tasks/v1.00-stage-26-10-sewing-ops-economics.md`. Contract: `SL-SEWING-OPS-ECONOMICS-v1`.
+>
+> **RU:** Убрать Стоимость/Кол-во/Сумма/Время с каталога операций; добавить **Описание** (≤256). На карточке модели в «Вариантах сборки» — редактируемые **Кол-во / Цена / Время** на строке. При добавлении из каталога — defaults 0/1/0. Кабинет швеи берёт цену из snapshot сборки. Не стартовать сам. Task `v1.00-stage-26-10-sewing-ops-economics.md`.
+
+**Execute after / Исполнять после:** only when the owner names a code (e.g. «делай 26.10.1»). Do not interrupt `12.5`. / только по явному коду владельца. Не прерывать `12.5`.
+
+- [x] 26.10.1 — Contract + domain doc amend (`SL-SEWING-OPS-ECONOMICS-v1`); ADR-014/029 pointers; task `docs/tasks/v1.00-stage-26-10-sewing-ops-economics.md` — `v1.00` `2026-08-28`; `sewing-operations-domain.md` §2.1/§4; ADR-014 §6; ADR-029 §3 / Контракт: каталог slim + экономика на модели
+- [x] 26.10.2 — Alembic: `sewing_operations.description` VARCHAR(256); drop `cost`, `quantity_per_item`, `duration_seconds` + CHECK constraints — `v1.00` `2026-08-28`; `p5q6r7s8t901` / Миграция каталога
+- [x] 26.10.3 — Backend catalog: schemas/services/API/import/export/templates — slim leaf; breaking I/O columns (`4.5.4`) — `v1.00` `2026-08-28`; `test_sewing_operations.py` / `test_sewing_operation_import_export_4_5_4.py` / Backend каталога + import/export
+- [x] 26.10.4 — FE sewing-operations workspace + create/import drawers: remove Стоимость/Кол-во/Сумма/Время; add **Описание** — `v1.00` `2026-08-28`; `sewing-operations-workspace.tsx` / FE каталог операций
+- [x] 26.10.5 — Assembly pick: defaults cost=0 qty=1 duration=0; drawer shows name + description (no catalog totals) — `v1.00` `2026-08-28`; `_append_sewing_operation_lines`; `assembly-variant-sewing-ops-drawer.tsx` / Pick: defaults + drawer
+- [x] 26.10.6 — FE product model [`assembly-variants-block.tsx`](frontend/components/settings/assembly-variants-block.tsx): inline edit **Кол-во / Цена / Время**; wire `PATCH …/operation-lines/{id}` — `v1.00` `2026-08-28`; `updateAssemblyOperationLine`; `test_patch_operation_line_economics_26_10_6` / FE редактирование строк сборки
+- [x] 26.10.7 — Sewing cabinet: `unit_price` from assembly snapshot / variant line — not `SewingOperation.cost` — `v1.00` `2026-08-28`; `sewing_cabinet.py` `_operation_unit_price`; `test_sewing_cabinet_24_2.py` / Кабинет швеи: цена из snapshot
+- [x] 26.10.8 — Tests + erp-check / project-structure notes / Регрессия + docs checkpoint — `v1.00` `2026-08-28`; pytest sewing/assembly/cabinet 30 pass; FE node 34; alembic `p5q6r7s8t901`
 
 ---
 
@@ -983,56 +1017,56 @@
 >
 > **RU:** Контур A сохраняется. Контур B: ТК без обязательного заказа покупателя (брак, подарки и т.п.) через группу с ручным номером заказа (unique), плановым кол-вом ТК и датой отгрузки. Показ номера `{заказ}-{seq}/{N}`; `N` вручную, live. Мягкий прогресс — без hard-лимита create/generate. Create B: номенклатура + номер + план + дата + qty → unit lines; автосоздания N карт нет. `28.5` припаркован. Не стартовать сам. Срез — **12.5**.
 
-**Execute after / Исполнять после:** only when the owner names a code (e.g. «делай 28.0.1»). Do not interrupt `12.5`. Do not auto-start `26.9` / `27.1+`. / только по явному коду владельца. Не прерывать `12.5`.
+**Execute after / Исполнять после:** owner named Stage 28 (`2026-08-27`). `28.0.1`–`28.5.4` closed `2026-08-27`. Do not auto-start `27.1+` / `26.3.6`+. / Stage 28 закрыт.
 
 ### 28.0 — Contract / Контракт
 
-- [ ] 28.0.1 — Contract + ADR amend plan (016/004): dual contour A/B; display `{orderNo}-{seq}/{N}`; soft planned count; no auto-spawn; task `docs/tasks/v1.00-stage-28-standalone-tech-cards.md`; `SL-STANDALONE-TC-v1` / Контракт standalone ТК + нумерация
+- [x] 28.0.1 — Contract + ADR amend plan (016/004): dual contour A/B; display `{orderNo}-{seq}/{N}`; soft planned count; no auto-spawn; task `docs/tasks/v1.00-stage-28-standalone-tech-cards.md`; `SL-STANDALONE-TC-v1` — `v1.00` `2026-08-27`; ADR-016 §1.1; ADR-004 dual chain / Контракт standalone ТК + нумерация
 
 ### 28.1 — Planned count on SalesOrder + unified display number / Плановое кол-во ТК на заказе + единый показ номера
 
 > **EN:** Path A keeps generate from eligible PRODUCT lines. Planned count is a separate manager field for display/progress.
 > **RU:** Generate от позиций не меняется. Плановое кол-во — отдельное ручное поле для показа/прогресса.
 
-- [ ] 28.1.1 — Alembic: `sales_orders.tech_cards_planned_count` (nullable int; when set ≥ 1) / Миграция поля планового кол-ва ТК
-- [ ] 28.1.2 — API/schemas: read + PATCH planned count on sales order / API чтения и PATCH планового кол-ва
-- [ ] 28.1.3 — Display helper: stored `number` = `{orderNo}-{seq}`; UI/print/list show `…/{N}` live from order field / Хранение без `/{N}`; показ live
-- [ ] 28.1.4 — Soft progress on order TC panel (created / planned + status split); no hard gate on create/generate / Мягкий индикатор на панели ТК заказа
-- [ ] 28.1.5 — FE: edit planned count on sales order card / FE: поле на карточке заказа
-- [ ] 28.1.6 — Tests (API + display helper) / Тесты API и helper показа
+- [x] 28.1.1 — Alembic: `sales_orders.tech_cards_planned_count` (nullable int; when set ≥ 1) — `v1.00` `2026-08-27`; `h7i8j9k0l123` / Миграция поля планового кол-ва ТК
+- [x] 28.1.2 — API/schemas: read + PATCH planned count on sales order — `v1.00` `2026-08-27`; `PATCH /orders/{id}/tech-cards-planned-count` / API чтения и PATCH планового кол-ва
+- [x] 28.1.3 — Display helper: stored `number` = `{orderNo}-{seq}`; UI/print/list show `…/{N}` live from order field — `v1.00` `2026-08-27`; `format_tech_card_display_number` / `display_number` / Хранение без `/{N}`; показ live
+- [x] 28.1.4 — Soft progress on order TC panel (created / planned + status split); no hard gate on create/generate — `v1.00` `2026-08-27`; `createdVsPlannedLabel` / Мягкий индикатор на панели ТК заказа
+- [x] 28.1.5 — FE: edit planned count on sales order card — `v1.00` `2026-08-27`; `data-order-tech-cards-planned-count` / FE: поле на карточке заказа
+- [x] 28.1.6 — Tests (API + display helper) — `v1.00` `2026-08-27`; `test_tech_card_display_28_1.py` / `test_sales_order_tech_cards_planned_28_1.py` / Тесты API и helper показа
 
 ### 28.2 — Standalone group + nullable TC FKs + create API / Группа standalone + nullable FK + create API
 
 > **EN:** Group table holds manual order number (unique among groups), planned count, desired date. TC may omit SalesOrder FKs.
 > **RU:** Группа хранит ручной номер, план и дату отгрузки. ТК может быть без FK заказа.
 
-- [ ] 28.2.1 — Alembic: `technical_card_order_groups` (`order_number` unique, `tech_cards_planned_count`, `desired_date`); nullable `technical_cards.sales_order_id` / `sales_order_item_id`; FK `order_group_id`; CHECK both SO FKs null or both set; UNIQUE item only when not null / Миграция группы + nullable FK
-- [ ] 28.2.2 — Service: create/find group by `order_number`; next `card_seq`; create TC (PRODUCT + qty → unit lines; nomenclature snapshot) / Сервис create группы и ТК
-- [ ] 28.2.3 — API `POST` standalone create (+ PATCH group planned count / desired_date) / API create + PATCH группы
-- [ ] 28.2.4 — List/detail serializers null-order safe; `order_number` / `desired_date` / `/{N}` from group or SalesOrder / Сериализаторы без обязательного заказа
-- [ ] 28.2.5 — Backend tests (unique group number; seq; qty→units; soft over-plan create allowed) / Backend-тесты standalone
+- [x] 28.2.1 — Alembic: `technical_card_order_groups` (`order_number` unique, `tech_cards_planned_count`, `desired_date`); nullable `technical_cards.sales_order_id` / `sales_order_item_id`; FK `order_group_id`; CHECK both SO FKs null or both set; UNIQUE item only when not null — `v1.00` `2026-08-27`; `i8j9k0l1m234` / Миграция группы + nullable FK
+- [x] 28.2.2 — Service: create/find group by `order_number`; next `card_seq`; create TC (PRODUCT + qty → unit lines; nomenclature snapshot) — `v1.00` `2026-08-27`; `standalone_technical_cards.py` / Сервис create группы и ТК
+- [x] 28.2.3 — API `POST` standalone create (+ PATCH group planned count / desired_date) — `v1.00` `2026-08-27`; `POST /technical-cards/standalone` / API create + PATCH группы
+- [x] 28.2.4 — List/detail serializers null-order safe; `order_number` / `desired_date` / `/{N}` from group or SalesOrder — `v1.00` `2026-08-27`; outerjoin + `display_number` / Сериализаторы без обязательного заказа
+- [x] 28.2.5 — Backend tests (unique group number; seq; qty→units; soft over-plan create allowed) — `v1.00` `2026-08-27`; `test_standalone_technical_cards_28_2.py` / Backend-тесты standalone
 
 ### 28.3 — FE production create + document branches / FE create и ветки документа
 
-- [ ] 28.3.1 — Create drawer on `/production/tech-cards`: nomenclature, order number, planned TC count, ship date, qty / Drawer создания standalone ТК
-- [ ] 28.3.2 — Detail/list standalone branch: no `/sales/orders/{id}` deep-link; hide order collab rail when no `sales_order_id` / Ветка UI без заказа
-- [ ] 28.3.3 — Owner visual: create + list + document header (`…/N`) / Owner visual create/list/шапка
+- [x] 28.3.1 — Create drawer on `/production/tech-cards`: nomenclature, order number, planned TC count, ship date, qty — `v1.00` `2026-08-27`; `data-standalone-tech-card-create` / Drawer создания standalone ТК
+- [x] 28.3.2 — Detail/list standalone branch: no `/sales/orders/{id}` deep-link; hide order collab rail when no `sales_order_id` — `v1.00` `2026-08-27`; `TechCardOrderCell` / collab hide / Ветка UI без заказа
+- [x] 28.3.3 — Owner visual: create + list + document header (`…/N`) — `v1.00` `2026-08-27`; owner OK / Owner visual create/list/шапка
 
 ### 28.4 — Print / shop / FG regression + docs checkpoint / Печать / цех / ГП + docs
 
-- [ ] 28.4.1 — Print (`18.3.8`): display number + ship date from SalesOrder **or** order group / Печать: номер и дата отгрузки
-- [ ] 28.4.2 — Scan / kanban / FG paths null-order safe / Скан / канбан / ГП без обязательного заказа
-- [ ] 28.4.3 — Regression tests + erp-check / project-structure notes / Регрессия + docs checkpoint
+- [x] 28.4.1 — Print (`18.3.8`): display number + ship date from SalesOrder **or** order group — `v1.00` `2026-08-27`; `tech-card-print.test.mjs` standalone payload / Печать: номер и дата отгрузки
+- [x] 28.4.2 — Scan / kanban / FG paths null-order safe — `v1.00` `2026-08-27`; `test_standalone_null_order_paths_28_4.py` / Скан / канбан / ГП без обязательного заказа
+- [x] 28.4.3 — Regression tests + erp-check / project-structure notes — `v1.00` `2026-08-27`; Stage 28 MVP closed; `28.5` parked / Регрессия + docs checkpoint
 
 ### 28.5 — Parked follow-ups / Припаркованные продолжения
 
-> **EN:** Owner-pull; do **not** auto-start with MVP `28.1`–`28.4`.
-> **RU:** Owner-pull; не стартовать вместе с MVP.
+> **EN:** Owner named `28.5.1`–`28.5.4` `2026-08-27`. Stage 28 follow-ups closed.
+> **RU:** Владелец назвал `28.5.1`–`28.5.4`. Продолжения Stage 28 закрыты.
 
-- [ ] 28.5.1 — Optional link standalone TC → `SalesOrderItem` (if item free) — parked / Опциональная привязка B→A — припарковано
-- [ ] 28.5.2 — `ProductionOrder.sales_order_id` nullable for standalone groups — parked / PO без SalesOrder — припарковано
-- [ ] 28.5.3 — Spec header without required SalesOrder — parked / Spec без SalesOrder — припарковано
-- [ ] 28.5.4 — Collaboration context on TC without order (ADR-026 amend) — parked / Collab без заказа — припарковано
+- [x] 28.5.1 — Optional link standalone TC → free `SalesOrderItem` (convert B→A; stored number kept) — `v1.00` `2026-08-27`; `POST /technical-cards/{id}/link-sales-order-item`; owner visual OK / Привязка B→A
+- [x] 28.5.2 — `ProductionOrder.sales_order_id` nullable for standalone groups — `v1.00` `2026-08-27`; Alembic `k0l1m2n3o456`; `test_production_orders_standalone_28_5_2.py` / PO без SalesOrder
+- [x] 28.5.3 — Spec header without required SalesOrder — `v1.00` `2026-08-27`; Alembic `l1m2n3o4p567`; `test_specifications_standalone_28_5_3.py` / Spec без SalesOrder
+- [x] 28.5.4 — Collaboration context on TC without order (ADR-026 amend) — `v1.00` `2026-08-27`; Alembic `m2n3o4p5q678`; `test_collaboration_standalone_28_5_4.py` / Collab без заказа
 
 ---
 
@@ -1159,4 +1193,37 @@
 | `2026-08-27` | Closed `26.9.1`: three sidebar contours; Отчеты = existing `/sales/reports/*`; Склад+Закупки in Производство; settings stay in rail | Закрыт `26.9.1`: три раздела меню |
 | `2026-08-27` | Closed `26.9.2`: settings leave the rail; DS-SHELL-02 gear; `/settings` intercept slider like lead; nested `/settings/...` stay full pages; hard refresh full hub | Закрыт `26.9.2`: настройки иконкой и слайдером |
 | `2026-08-27` | Closed `26.9.3`: owner visual OK expanded + compact sidebar; desktop + md; settings gear + slider vs full `/settings` | Закрыт `26.9.3`: owner OK меню и слайдер настроек |
-| `2026-08-27` | New Stage **28** standalone tech cards + unified display `{order}-{seq}/{N}`; soft planned TC count; all `28.0`–`28.5` open; owner-pull; task `v1.00-stage-28-standalone-tech-cards.md`; `SL-STANDALONE-TC-v1` | Новый Stage **28** самостоятельные ТК + нумерация; все коды открыты; owner-pull |
+| `2026-08-27` | Closed `28.0.1`: ADR-016 dual contour A/B + live display `/{N}`; ADR-004 dual chain; contract `SL-STANDALONE-TC-v1` | Закрыт `28.0.1`: контракт standalone ТК + ADR |
+| `2026-08-27` | Closed `28.1.1`–`28.1.6`: SalesOrder planned TC count; live display `/{N}`; soft progress; no generate gate | Закрыт `28.1`: плановое кол-во ТК и показ номера |
+| `2026-08-27` | Closed `28.2.1`–`28.2.5`: standalone group + nullable TC FKs; `POST /technical-cards/standalone`; outerjoin list | Закрыт `28.2`: группа и create API |
+| `2026-08-27` | Closed `28.3.1`–`28.3.2`: create drawer + list/detail without sales-order deep-link; stop at owner visual `28.3.3` | Закрыт `28.3.1`–`28.3.2`; стоп на visual |
+| `2026-08-27` | Closed `28.3.3`: owner visual OK create + list + document header `…/N` | Закрыт `28.3.3`: owner visual OK |
+| `2026-08-27` | Closed `28.4.1`–`28.4.3`: print display `/{N}` + group date; scan/kanban/FG null-order; `28.5` parked | Закрыт `28.4`: печать/скан/ГП; Stage 28 MVP |
+| `2026-08-27` | Closed `28.5.1`: convert standalone TC → free SalesOrderItem (B→A); stored number kept; owner visual OK | Закрыт `28.5.1`: привязка B→A; owner visual OK |
+| `2026-08-27` | Closed `28.5.2`: `ProductionOrder.sales_order_id` nullable; XOR `order_group_id`; Alembic `k0l1m2n3o456` | Закрыт `28.5.2`: PO без SalesOrder |
+| `2026-08-27` | Closed `28.5.3`: Spec header `sales_order_id` nullable; Alembic `l1m2n3o4p567` | Закрыт `28.5.3`: Spec без SalesOrder |
+| `2026-08-27` | Closed `28.5.4`: collab on standalone TC; thread XOR `order_group_id`; Alembic `m2n3o4p5q678` | Закрыт `28.5.4`: collab без заказа |
+| `2026-08-27` | Split `12.5.1` → `12.5.1.1`–`12.5.1.6`; closed `12.5.1.1`–`12.5.1.5` warehouse transfer (source/dest, paired ledger); stop at owner visual `12.5.1.6` | Закрыты `12.5.1.1`–`12.5.1.5`: перемещения; стоп на visual `12.5.1.6` |
+| `2026-08-27` | Parked `26.3.5`–`26.3.13`: tech-card document edit (order data, client, due date, model/assembly, row3 on small, product name, media, collab); example `/production/tech-cards/6`; owner-pull | Припаркованы `26.3.5`–`26.3.13`: правки документа ТК; owner-pull |
+| `2026-08-27` | Closed `26.3.5`: owner visual OK order-data edit chrome (Pencil / X / Save) on `/production/tech-cards/6` | Закрыт `26.3.5`: owner visual OK хром правки |
+| `2026-08-27` | `26.3.6` responsible PlatformUser combobox shipped (`technical_cards.create`, Alembic `n3o4p5q6r789`); stop for owner visual; `26.3.7`–`26.3.13` still parked | `26.3.6` комбобокс готов; стоп на visual; `26.3.7`+ припаркованы |
+| `2026-08-28` | Closed `26.3.6`: owner visual OK responsible combobox on `/production/tech-cards/6` | Закрыт `26.3.6`: owner visual OK ответственный |
+| `2026-08-28` | `26.3.7` client typeahead + create modal shipped (Alembic `o4p5q6r7s890`); stop for owner visual; `26.3.8`–`26.3.13` still parked | `26.3.7` клиент готов; стоп на visual; `26.3.8`+ припаркованы |
+| `2026-08-28` | Closed `26.3.7`: owner visual OK client typeahead + create modal on `/production/tech-cards/6` | Закрыт `26.3.7`: owner visual OK клиент |
+| `2026-08-28` | `26.3.8` due-date calendar shipped (`PATCH /technical-cards/{id}/desired-date`); stop for owner visual; `26.3.9`–`26.3.13` still parked | `26.3.8` календарь даты сдачи; стоп на visual; `26.3.9`+ припаркованы |
+| `2026-08-28` | Closed `26.3.8`: owner visual OK due-date calendar on `/production/tech-cards/6` | Закрыт `26.3.8`: owner visual OK календарь даты сдачи |
+| `2026-08-28` | `26.3.9` model + assembly edit shipped (`PATCH /technical-cards/{id}/model-assembly`); routing Select kept; stop for owner visual; `26.3.10`–`26.3.13` still parked | `26.3.9` модель и сборка; стоп на visual; `26.3.10`+ припаркованы |
+| `2026-08-28` | Closed `26.3.9`: owner visual OK model + assembly edit on `/production/tech-cards/6` | Закрыт `26.3.9`: owner visual OK модель и сборка |
+| `2026-08-28` | `26.3.10` ops/scheme/materials 3-col on all viewports (`grid-cols-3`); do not reopen `26.3.2`; stop for owner visual; `26.3.11`–`26.3.13` still parked | `26.3.10` три блока в ряд на узких; стоп на visual; `26.3.11`+ припаркованы |
+| `2026-08-28` | Closed `26.3.10`: owner visual OK 3-col ops/scheme/materials on `/production/tech-cards/6` | Закрыт `26.3.10`: owner visual OK три блока в ряд |
+| `2026-08-28` | `26.3.11` product name in EntityHeader shipped (`PATCH /technical-cards/{id}/nomenclature-name`); shop `?stage=` read-only; stop for owner visual; `26.3.12`–`26.3.13` still parked | `26.3.11` наименование изделия в шапке; стоп на visual; `26.3.12`+ припаркованы |
+| `2026-08-28` | Reopened `26.3.10`: owner rejected 3-col; ops/scheme/materials now full-width stack (`flex-col`) like Маршрут/История; stop for visual | `26.3.10` переоткрыт: столбик на всю ширину, не три колонки |
+| `2026-08-28` | Closed `26.3.10`: owner visual OK full-width stack ops/scheme/materials on `/production/tech-cards/6` | Закрыт `26.3.10`: owner visual OK столбик на всю ширину |
+| `2026-08-28` | New Stage **26.10** sewing catalog slim + assembly economics on model (`26.10.1`–`26.10.8` open; owner-pull); task `v1.00-stage-26-10-sewing-ops-economics.md`; `SL-SEWING-OPS-ECONOMICS-v1` | Новый **26.10**: каталог операций slim + экономика на модели; все коды открыты; owner-pull |
+| `2026-08-28` | Closed `26.3.11`: owner visual OK product name in EntityHeader on `/production/tech-cards/6` | Закрыт `26.3.11`: owner visual OK наименование изделия |
+| `2026-08-28` | Closed `26.3.12`: owner confirmed mockup add/delete already works (hover icons; shop readOnly); regression test; `26.3.13` still parked | Закрыт `26.3.12`: макет add/delete OK; `26.3.13` припаркован |
+| `2026-08-28` | Closed `26.3.13`: owner visual OK collab on tech-card document (A + standalone B via `28.5.4`); `/production/tech-cards/6` | Закрыт `26.3.13`: owner visual OK переписка на ТК |
+| `2026-08-28` | Closed `26.10.1`: contract `SL-SEWING-OPS-ECONOMICS-v1` locked; `sewing-operations-domain.md` §2.1/§4; ADR-014 §6; ADR-029 §3; `26.10.2`–`26.10.8` still open | Закрыт `26.10.1`: контракт каталога slim; код с `26.10.2` |
+| `2026-08-28` | Closed `26.10.2`–`26.10.5` + `26.10.7`: catalog slim (alembic `p5q6r7s8t901`), API/I/O, FE catalog, pick 0/1/0, cabinet snapshot price; `26.10.6` + `26.10.8` still open | Закрыты `26.10.2`–`26.10.5` + `26.10.7`; открыты `26.10.6` (inline edit) и `26.10.8` |
+| `2026-08-28` | Closed `26.10.6`: inline qty/price/time on model assembly lines (`PATCH …/operation-lines/{id}`); `26.10.8` still open | Закрыт `26.10.6`: inline Кол-во/Цена/Время на строках сборки |
+| `2026-08-28` | Closed `26.10.8`: sewing catalog slim checkpoint (pytest 30 + FE 34 + tsc; domain/ADR-014 notes; HTML twin synced) | Закрыт `26.10.8`: Stage 26.10 закрыт |

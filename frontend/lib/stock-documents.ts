@@ -7,7 +7,8 @@ export type StockDocumentType =
   | "issue"
   | "fg_receipt"
   | "fg_issue"
-  | "inventory";
+  | "inventory"
+  | "transfer";
 
 export type StockDocumentStatus = "draft" | "posted" | "cancelled";
 
@@ -33,12 +34,21 @@ export type StockInventoryLine = {
   delta: string | number;
 };
 
+export type StockTransferLine = {
+  id: number;
+  sequence: number;
+  nomenclature_id: number;
+  nomenclature_name?: string | null;
+  quantity: string | number;
+};
+
 export type StockDocument = {
   id: number;
   number: string;
   doc_type: StockDocumentType | string;
   status: StockDocumentStatus | string;
   warehouse_id: number;
+  destination_warehouse_id?: number | null;
   posted_at: string | null;
   technical_card_id: number | null;
   sales_order_id: number | null;
@@ -47,6 +57,7 @@ export type StockDocument = {
   updated_at: string;
   ledger_lines: StockLedgerLine[];
   inventory_lines?: StockInventoryLine[];
+  transfer_lines?: StockTransferLine[];
 };
 
 export type StockDocumentListParams = {
@@ -78,6 +89,8 @@ export function stockDocumentTypeLabel(docType: string): string {
       return "Списание ГП";
     case "inventory":
       return "Инвентаризация";
+    case "transfer":
+      return "Перемещение";
     default:
       return docType;
   }
@@ -125,6 +138,29 @@ export function isInventoryDocument(row: { doc_type: string }): boolean {
   return row.doc_type === "inventory";
 }
 
+export function isTransferDocument(row: { doc_type: string }): boolean {
+  return row.doc_type === "transfer";
+}
+
+export function stockWarehouseColumnLabel(
+  row: {
+    doc_type: string;
+    warehouse_id: number;
+    destination_warehouse_id?: number | null;
+  },
+  warehouseNames: Record<number, string>,
+): string {
+  const source =
+    warehouseNames[row.warehouse_id] ?? `#${row.warehouse_id}`;
+  if (!isTransferDocument(row) || row.destination_warehouse_id == null) {
+    return source;
+  }
+  const dest =
+    warehouseNames[row.destination_warehouse_id] ??
+    `#${row.destination_warehouse_id}`;
+  return `${source} → ${dest}`;
+}
+
 export function inventoryLineDelta(
   bookQty: string | number,
   countedQty: string | number,
@@ -161,6 +197,9 @@ export function filterStockDocumentsClient(
       row.technical_card_id != null ? String(row.technical_card_id) : "",
       row.sales_order_id != null ? String(row.sales_order_id) : "",
       row.notes ?? "",
+      row.destination_warehouse_id != null
+        ? String(row.destination_warehouse_id)
+        : "",
     ]
       .join(" ")
       .toLocaleLowerCase("ru");
@@ -327,6 +366,91 @@ export async function postInventoryDocument(
   if (!response.ok) {
     throw new Error(
       await readStockApiError(response, "Не удалось провести инвентаризацию"),
+    );
+  }
+  return (await response.json()) as StockDocument;
+}
+
+export type TransferDocumentCreatePayload = {
+  warehouse_id: number;
+  destination_warehouse_id: number;
+  notes?: string | null;
+  lines?: { nomenclature_id: number; quantity: string }[];
+};
+
+export async function createTransferDocument(
+  payload: TransferDocumentCreatePayload,
+): Promise<StockDocument> {
+  const response = await fetch(`${apiBaseUrl()}/stock/transfers`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      warehouse_id: payload.warehouse_id,
+      destination_warehouse_id: payload.destination_warehouse_id,
+      notes: payload.notes ?? null,
+      lines: payload.lines ?? [],
+    }),
+    cache: "no-store",
+  });
+  if (!response.ok) {
+    throw new Error(
+      await readStockApiError(response, "Не удалось создать перемещение"),
+    );
+  }
+  return (await response.json()) as StockDocument;
+}
+
+export async function setTransferLine(
+  documentId: number,
+  nomenclatureId: number,
+  quantity: string,
+): Promise<StockDocument> {
+  const response = await fetch(
+    `${apiBaseUrl()}/stock/transfers/${documentId}/lines`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        nomenclature_id: nomenclatureId,
+        quantity,
+      }),
+      cache: "no-store",
+    },
+  );
+  if (!response.ok) {
+    throw new Error(
+      await readStockApiError(response, "Не удалось сохранить строку перемещения"),
+    );
+  }
+  return (await response.json()) as StockDocument;
+}
+
+export async function removeTransferLine(
+  documentId: number,
+  nomenclatureId: number,
+): Promise<StockDocument> {
+  const response = await fetch(
+    `${apiBaseUrl()}/stock/transfers/${documentId}/lines/${nomenclatureId}`,
+    { method: "DELETE", cache: "no-store" },
+  );
+  if (!response.ok) {
+    throw new Error(
+      await readStockApiError(response, "Не удалось удалить строку перемещения"),
+    );
+  }
+  return (await response.json()) as StockDocument;
+}
+
+export async function postTransferDocument(
+  documentId: number,
+): Promise<StockDocument> {
+  const response = await fetch(
+    `${apiBaseUrl()}/stock/transfers/${documentId}/post`,
+    { method: "POST", cache: "no-store" },
+  );
+  if (!response.ok) {
+    throw new Error(
+      await readStockApiError(response, "Не удалось провести перемещение"),
     );
   }
   return (await response.json()) as StockDocument;

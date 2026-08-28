@@ -10,7 +10,7 @@ Soft refs without FK:
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import date, datetime
 from decimal import Decimal
 from enum import Enum
 from typing import TYPE_CHECKING
@@ -18,6 +18,7 @@ from typing import TYPE_CHECKING
 from sqlalchemy import (
     Boolean,
     CheckConstraint,
+    Date,
     DateTime,
     ForeignKey,
     Index,
@@ -33,8 +34,44 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.database.base import Base
 
 if TYPE_CHECKING:
+    from app.models.auth import PlatformUser
     from app.models.sales import SalesOrder, SalesOrderItem
     from app.models.specification import SpecificationVersion
+
+
+class TechnicalCardOrderGroup(Base):
+    """Standalone order envelope for contour B (Stage 28 / SL-STANDALONE-TC-v1)."""
+
+    __tablename__ = "technical_card_order_groups"
+    __table_args__ = (
+        UniqueConstraint("order_number", name="uq_technical_card_order_groups_order_number"),
+        CheckConstraint(
+            "tech_cards_planned_count >= 1",
+            name="ck_technical_card_order_groups_planned_count",
+        ),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    order_number: Mapped[str] = mapped_column(String(50), nullable=False)
+    tech_cards_planned_count: Mapped[int] = mapped_column(Integer, nullable=False)
+    desired_date: Mapped[date] = mapped_column(Date, nullable=False)
+    client_id: Mapped[int | None] = mapped_column(
+        ForeignKey("clients.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+        onupdate=func.now(),
+    )
+    cards: Mapped[list["TechnicalCard"]] = relationship(back_populates="order_group")
 
 
 class TechnicalCardStatus(str, Enum):
@@ -80,6 +117,7 @@ class TechnicalCard(Base):
     __table_args__ = (
         UniqueConstraint("sales_order_item_id", name="uq_technical_cards_sales_order_item_id"),
         UniqueConstraint("sales_order_id", "card_seq", name="uq_technical_cards_order_card_seq"),
+        UniqueConstraint("order_group_id", "card_seq", name="uq_technical_cards_group_card_seq"),
         UniqueConstraint("number", name="uq_technical_cards_number"),
         UniqueConstraint("qr_token", name="uq_technical_cards_qr_token"),
         CheckConstraint("card_seq >= 1", name="ck_technical_cards_card_seq"),
@@ -103,19 +141,33 @@ class TechnicalCard(Base):
             "current_stage_order IS NULL OR current_stage_order >= 1",
             name="ck_technical_cards_current_stage_order",
         ),
+        CheckConstraint(
+            "("
+            "(sales_order_id IS NOT NULL AND sales_order_item_id IS NOT NULL "
+            "AND order_group_id IS NULL) OR "
+            "(sales_order_id IS NULL AND sales_order_item_id IS NULL "
+            "AND order_group_id IS NOT NULL)"
+            ")",
+            name="ck_technical_cards_contour_xor",
+        ),
         Index("ix_technical_cards_sales_order_id", "sales_order_id"),
+        Index("ix_technical_cards_order_group_id", "order_group_id"),
         Index("ix_technical_cards_status", "status"),
         Index("ix_technical_cards_updated_at", "updated_at"),
     )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    sales_order_id: Mapped[int] = mapped_column(
+    sales_order_id: Mapped[int | None] = mapped_column(
         ForeignKey("sales_orders.id", ondelete="RESTRICT"),
-        nullable=False,
+        nullable=True,
     )
-    sales_order_item_id: Mapped[int] = mapped_column(
+    sales_order_item_id: Mapped[int | None] = mapped_column(
         ForeignKey("sales_order_items.id", ondelete="RESTRICT"),
-        nullable=False,
+        nullable=True,
+    )
+    order_group_id: Mapped[int | None] = mapped_column(
+        ForeignKey("technical_card_order_groups.id", ondelete="RESTRICT"),
+        nullable=True,
     )
     number: Mapped[str] = mapped_column(String(80), nullable=False)
     qr_token: Mapped[str | None] = mapped_column(String(64), nullable=True)
@@ -170,6 +222,17 @@ class TechnicalCard(Base):
     design_mockup_url: Mapped[str | None] = mapped_column(String(1000), nullable=True)
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
 
+    created_by_platform_user_id: Mapped[int | None] = mapped_column(
+        ForeignKey("platform_users.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+    responsible_platform_user_id: Mapped[int | None] = mapped_column(
+        ForeignKey("platform_users.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,
@@ -182,8 +245,11 @@ class TechnicalCard(Base):
         onupdate=func.now(),
     )
 
-    order: Mapped[SalesOrder] = relationship()
-    order_item: Mapped[SalesOrderItem] = relationship()
+    order: Mapped[SalesOrder | None] = relationship()
+    order_item: Mapped[SalesOrderItem | None] = relationship()
+    order_group: Mapped[TechnicalCardOrderGroup | None] = relationship(
+        back_populates="cards"
+    )
     specification_version: Mapped[SpecificationVersion | None] = relationship(
         "SpecificationVersion",
         foreign_keys="TechnicalCard.specification_version_id",

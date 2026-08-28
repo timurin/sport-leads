@@ -44,6 +44,12 @@ class Settings:
         "POSTGRES_PASSWORD"
     )
 
+    # Default QueuePool is 5+10=15; product-model card Promise.all is ~14 GETs
+    # plus in-flight work (routing delete, collab). Undersize → TimeoutError 500.
+    db_pool_size: int = int(os.getenv("DB_POOL_SIZE", "20"))
+    db_max_overflow: int = int(os.getenv("DB_MAX_OVERFLOW", "20"))
+    db_pool_timeout: int = int(os.getenv("DB_POOL_TIMEOUT", "30"))
+
     log_level: str = os.getenv(
         "LOG_LEVEL",
         "INFO",

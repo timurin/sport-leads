@@ -99,7 +99,7 @@ export function SpecificationsWorkspace({ specifications, loadError }: Props) {
                 <DataTableRow>
                   <DataTableHeaderCell>Номер</DataTableHeaderCell>
                   <DataTableHeaderCell>Партия</DataTableHeaderCell>
-                  <DataTableHeaderCell>Заказ покупателя</DataTableHeaderCell>
+                  <DataTableHeaderCell>Заказ / группа</DataTableHeaderCell>
                   <DataTableHeaderCell>Производственный заказ</DataTableHeaderCell>
                   <DataTableHeaderCell>Версия</DataTableHeaderCell>
                   <DataTableHeaderCell>Статус</DataTableHeaderCell>
@@ -121,13 +121,19 @@ export function SpecificationsWorkspace({ specifications, loadError }: Props) {
                         `#${item.production_batch_id}`}
                     </DataTableCell>
                     <DataTableCell>
-                      <Link
-                        href={`/sales/orders/${item.sales_order_id}`}
-                        className="text-portal-primary hover:underline"
-                      >
-                        {item.sales_order_number?.trim() ||
-                          `#${item.sales_order_id}`}
-                      </Link>
+                      {item.sales_order_id != null ? (
+                        <Link
+                          href={`/sales/orders/${item.sales_order_id}`}
+                          className="text-portal-primary hover:underline"
+                        >
+                          {item.sales_order_number?.trim() ||
+                            `#${item.sales_order_id}`}
+                        </Link>
+                      ) : (
+                        <span data-standalone-specification-order>
+                          {item.sales_order_number?.trim() || "Standalone"}
+                        </span>
+                      )}
                     </DataTableCell>
                     <DataTableCell>
                       <Link

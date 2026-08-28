@@ -17,6 +17,7 @@ export type CollaborationMessage = {
   thread_id: number;
   sales_order_id: number | null;
   lead_id?: number | null;
+  order_group_id?: number | null;
   author_platform_user_id: number;
   author_login: string;
   author_display_name: string;
@@ -337,6 +338,46 @@ export async function listLeadCollaborationMessages(
     };
   }
   return { ok: true, data: (await response.json()) as CollaborationMessage[] };
+}
+
+export async function listStandaloneTechCardCollaborationMessages(
+  cardId: number | string,
+): Promise<ActionResult<CollaborationMessage[]>> {
+  const auth = await sessionAuthHeaders();
+  const response = await fetch(
+    `${apiBaseUrl()}/technical-cards/${cardId}/collaboration/messages`,
+    { headers: { ...auth }, cache: "no-store" },
+  );
+  if (!response.ok) {
+    return {
+      ok: false,
+      message: await readError(response, "Не удалось загрузить переписку техкарты"),
+    };
+  }
+  return { ok: true, data: (await response.json()) as CollaborationMessage[] };
+}
+
+export async function createStandaloneTechCardCollaborationMessage(
+  cardId: number | string,
+  payload: { body: string },
+): Promise<ActionResult<CollaborationMessage>> {
+  const auth = await sessionAuthHeaders();
+  const response = await fetch(
+    `${apiBaseUrl()}/technical-cards/${cardId}/collaboration/messages`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...auth },
+      body: JSON.stringify({ body: payload.body }),
+      cache: "no-store",
+    },
+  );
+  if (!response.ok) {
+    return {
+      ok: false,
+      message: await readError(response, "Не удалось отправить сообщение"),
+    };
+  }
+  return { ok: true, data: (await response.json()) as CollaborationMessage };
 }
 
 export async function createLeadCollaborationMessage(

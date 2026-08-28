@@ -1,5 +1,3 @@
-from decimal import Decimal
-
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
@@ -62,7 +60,6 @@ def test_sewing_operation_folders_tree_and_reorder() -> None:
                 "/sewing-operations",
                 json={
                     "name": "Оверлок",
-                    "cost": "10.00",
                     "folder_id": child_id,
                 },
             )
@@ -74,7 +71,6 @@ def test_sewing_operation_folders_tree_and_reorder() -> None:
                 "/sewing-operations",
                 json={
                     "name": "Распошив",
-                    "cost": "12.00",
                     "folder_id": child_id,
                 },
             )
@@ -138,15 +134,12 @@ def test_sewing_operations_crud_still_works_with_folder_fields() -> None:
                 "/sewing-operations",
                 json={
                     "name": " Базовая сборка ",
-                    "cost": "120.50",
-                    "quantity_per_item": 2,
-                    "duration_seconds": 125,
                 },
             )
             assert created.status_code == 201, created.text
             body = created.json()
             assert body["folder_id"] is None
             assert "sort_order" in body
-            assert Decimal(body["cost"]) == Decimal("120.50")
+            assert body.get("description") is None
     finally:
         app.dependency_overrides.clear()

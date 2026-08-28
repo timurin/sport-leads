@@ -1,6 +1,6 @@
 # ADR-014 — Pattern-base boundary: product models, size grids, sewing operations, assembly variants
 
-**Status:** принято (с поправкой `2026-07-22`: `PatternSet` / «Лекала» заменены на плоский справочник `SewingOperation`)  
+**Status:** принято (с поправкой `2026-07-22`: `PatternSet` / «Лекала» заменены на плоский справочник `SewingOperation`; **amended `2026-08-28` / `26.10.1`:** catalog slim, economics on `AssemblyOperationLine`)  
 **Date:** `2026-07-22`  
 **Roadmap:** Stage 6 § `6.0.1` / `6.3`  
 **Depends on:** ADR-004, ADR-006, ADR-010, ADR-012
@@ -11,8 +11,8 @@
 
 - коммерческий вариант номенклатуры (цвет / принт, ADR-010);
 - конструкторскую модель изделия (артикул + тип размера);
-- менеджерский пакет сборки/отделки с стоимостью операций;
-- плоский справочник операций пошива (наименование + стоимость);
+- плоский справочник операций пошива (наименование + описание; без стоимости);
+- менеджерский пакет сборки/отделки с стоимостью операций **на строках варианта**;
 - цеховой маршрут исполнения (Stage 8).
 
 Согласованная бизнес-модель: плоская карточка модели без вложенных контуров «М/Ж/Д» внутри одной записи; whitelist моделей на PRODUCT-номенклатуре; варианты сборки живут на модели и копируются в спецификацию.
@@ -27,10 +27,10 @@
 |----------|------|-----------------|
 | **ProductModel** | Справочник модели изделия: то, что выбирают в лиде / заказе / ТК / спецификации | Stage 6 (`6.1`) |
 | **SizeGrid** | Размерная сетка модели (размеры внутри одного `size_type`) | Stage 6 (`6.2`) |
-| **SewingOperation** | Листовая операция пошива: `name` + `cost` (+ qty/duration/equipment); опционально в папке | Stage 6 (`6.3`) |
+| **SewingOperation** | Листовая операция пошива: `name` + `description` (≤256) + папка + оборудование; **без** cost/qty/time | Stage 6 (`6.3`); slim `26.10` |
 | **SewingOperationFolder** | Навигационные папки parent/child для каталога операций (`6.3.11`) | Stage 6 (`6.3.11`) |
 | **AssemblyVariant** | Именованный пакет сборки/отделки модели («С отстрочкой», …) | Stage 6 (`6.1.12`) |
-| **AssemblyOperationLine** | Упорядоченная строка варианта: операция + стоимость | Stage 6 (`6.1.12`) |
+| **AssemblyOperationLine** | Упорядоченная строка варианта: операция + **SoT** cost / qty / duration | Stage 6 (`6.1.12`); economics `26.10` |
 | **ProductModelRoutingLink** | Whitelist модели ↔ существующий `ShopRoutingTemplate` (ordered; no clone) | Stage 6 (`6.1.17`); тело маршрута = Stage 8 |
 | **ProductModelOperationNorm** | Plan hint: `norm_qty_per_item` + unit на link+цех/op | Stage 6 (`6.1.17`); факт qty — ТК / Stage 11 |
 | **NomenclatureVariant** | Коммерческий SKU (характеристики) | ADR-010 — **не** модель лекал |
@@ -115,14 +115,17 @@ Nomenclature (PRODUCT)
 
 ### 6. Строки операций варианта vs справочник операций пошива
 
-**Справочник (`6.3`):** `SewingOperation` — листовой каталог (`name` unique, `cost ≥ 0`, …). UI: `/settings/catalogs/sewing_operations`.
+**Справочник (`6.3` + `26.10`):** `SewingOperation` — листовой каталог (`name` unique, optional `description` ≤256, folder, equipment). **Не** хранит cost / qty / duration. UI: `/settings/catalogs/sewing_operations` — колонки Операция | Описание | Оборудование.
 
 **Amend `2026-07-31` (`6.3.10`):** optional M:N link to sewing-shop `WorkCenter` (цех Пошив / `code=sewing`) for catalog compatibility. Does **not** replace Stage 8 routing / TC planned equipment (`11.1.2`). Domain: `sewing-operations-domain.md`.
 
 **Amend `2026-08-02` (`6.3.11`):** `SewingOperationFolder` parent/child tree for catalog navigation; ops have nullable `folder_id` + sibling `sort_order`. Folders are **not** assembly snapshot targets; pick/apply remain leaf-only. Domain: `sewing-operations-domain.md` §2.2 / §3.
 
 **Amend `2026-08-02` (`6.3.12`):** `SewingOperationTemplate` library — ordered refs to leaf sewing ops (no cost snapshot on template lines). Apply to assembly variant is `6.3.13`. Not Stage 8 `TechOperation`. Domain: `sewing-operations-domain.md` §2.3.
-**Вариант сборки (`6.1.12` + `6.3.6`):** группа выбранных операций пошива. Create/add — copy-on-pick: в `AssemblyOperationLine` пишутся snapshot `operation_name` + `cost` и nullable `sewing_operation_id`. Итог варианта = Σ строк. Правки каталога не переписывают уже сохранённые варианты / заказы.
+
+**Вариант сборки (`6.1.12` + `6.3.6` + `26.10`):** группа выбранных операций пошива. `AssemblyOperationLine` — **SoT** economics (`cost`, `quantity_per_item`, `duration_seconds`); editable on the model card (`PATCH …/operation-lines/{id}`). Create/add — copy-on-pick: snapshot `operation_name` + nullable `sewing_operation_id`; economics defaults `0` / `1` / `0` (`26.10.5`). Existing lines keep stored values (no mass backfill). Итог варианта = Σ (`cost × quantity_per_item`). Правки каталога не переписывают уже сохранённые варианты / заказы.
+
+**Amend `2026-08-28` (`26.10.1`):** catalog vs assembly economics boundary locked (`SL-SEWING-OPS-ECONOMICS-v1`). Schema/UI shipped `26.10.2`–`26.10.7`; checkpoint `26.10.8`. Sewing cabinet price: ADR-029. Domain: `sewing-operations-domain.md` §2.1 / §4.
 
 Стоимость варианта всегда считается как сумма строк в money-safe типах (`Decimal` / `Numeric`).
 
@@ -142,4 +145,4 @@ Nomenclature (PRODUCT)
 - Планируемый ADR технических карт — **ADR-016** (принято `2026-07-26`; ADR-015 = unified characteristics catalog).
 
 **Связанные решения:** ADR-004, ADR-006, ADR-010, ADR-012.  
-**Evidence:** `docs/architecture/sewing-operations-domain.md` (`6.3.1`); `docs/architecture/product-model-domain.md` §7 (`6.1.17.1`); `docs/roadmap/roadmap.md` § `6.3` / `6.1.17`.
+**Evidence:** `docs/architecture/sewing-operations-domain.md` (`6.3.1`, amend `26.10.1`); `docs/architecture/product-model-domain.md` §7 (`6.1.17.1`); `docs/roadmap/roadmap-v1.00.md` § `26.10` / `6.3` / `6.1.17`.

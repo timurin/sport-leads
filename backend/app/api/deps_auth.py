@@ -31,6 +31,19 @@ def get_current_platform_user(
         ) from error
 
 
+def get_optional_platform_user(
+    request: Request,
+    db: Session = Depends(get_db),
+) -> PlatformUser | None:
+    token = request.cookies.get(SESSION_COOKIE_NAME)
+    if not token:
+        return None
+    try:
+        return resolve_session_user(db, token)
+    except AuthUnauthorizedError:
+        return None
+
+
 def require_permission(code: str) -> Callable[..., PlatformUser]:
     def _dependency(
         user: PlatformUser = Depends(get_current_platform_user),

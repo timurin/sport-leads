@@ -1,6 +1,6 @@
 # ADR-026 — Internal collaboration (order / technical-card chat)
 
-**Status:** принято (`2026-08-03`); **amended** `2026-08-05` by ADR-027 (lead XOR anchor / Stage `20.3`)  
+**Status:** принято (`2026-08-03`); **amended** `2026-08-05` by ADR-027 (lead XOR anchor / Stage `20.3`); **amended** `2026-08-27` (`28.5.4` standalone order-group XOR)  
 **Date:** `2026-08-03`  
 **Roadmap:** Stage `19.0.1` (contract); feeds `19.0.2`–`19.5`  
 **Depends on:** ADR-023 (session `platform_user_id` author), ADR-024 (authenticated staff), ADR-016 (optional `technical_card_id` context), ADR-001 / order card surface `3.5.7`  
@@ -32,7 +32,7 @@
 
 | Entity | Cardinality / keys |
 |--------|--------------------|
-| **CollaborationThread** | Один primary thread на `sales_order_id` (required). Сообщения могут нести optional `technical_card_id` (контекст ТК). Отдельный thread на каждую ТК **не** обязателен в MVP — фильтр по `technical_card_id` на сообщениях. |
+| **CollaborationThread** | Один primary thread. Якорь **XOR**: ровно одно из `sales_order_id` \| `lead_id` (ADR-027) \| `order_group_id` (`28.5.4`, контур B). Сообщения могут нести optional `technical_card_id` (контекст ТК). Отдельный thread на каждую ТК **не** обязателен — фильтр по `technical_card_id` на сообщениях. |
 | **CollaborationMessage** | `thread_id`, `author_platform_user_id`, `body`, `created_at` (tz-aware), optional `technical_card_id` |
 | **CollaborationMention** | `message_id`, `mentioned_platform_user_id` (+ optional display snapshot) |
 | **CollaborationMicrotask** | `title`, `status` (`open` \| `done`), `assignee_platform_user_id`, `sales_order_id`, optional `technical_card_id`, optional `source_message_id`, `created_by_platform_user_id` |
@@ -40,6 +40,7 @@
 Правила:
 
 - Автор и assignee = **`platform_user_id`** (ADR-023). Справочник сотрудников `2.4.2` (→ v1.00) — **мягкая** зависимость: mention picker MVP = platform users с доступом к заказу; связка user↔employee — когда directory появится.
+- Контур B (`28.5.4`): thread на `technical_card_order_groups`; API `GET/POST /technical-cards/{id}/collaboration/messages` (только если у ТК `order_group_id` и нет SalesOrder). Microtasks остаются XOR заказ\|лид в этом срезе.
 - Сообщения и микрозадачи **append/update status only** — удаление истории не в MVP (soft-delete later if needed).
 - Закрытие микрозадачи **не** удаляет сообщения.
 - Нет demo/local fallback UI при отсутствии API.

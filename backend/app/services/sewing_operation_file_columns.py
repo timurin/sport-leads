@@ -1,6 +1,7 @@
 """Shared sewing-operation catalog file columns (import ↔ export / template).
 
 Roadmap `4.5.4` / ADR-020 contour A — third catalog adapter.
+Amended `26.10.3`: drop catalog economics; add `description`.
 """
 
 from __future__ import annotations
@@ -14,9 +15,7 @@ FOLDER_PATH_SEPARATOR = " / "
 SEWING_OPERATION_FILE_HEADERS: tuple[str, ...] = (
     "id",
     "name",
-    "cost",
-    "quantity_per_item",
-    "duration_seconds",
+    "description",
     "folder_path",
     "sort_order",
     "work_center_codes",
@@ -28,9 +27,7 @@ SEWING_OPERATION_TEMPLATE_SAMPLE_ROWS: tuple[dict[str, str], ...] = (
     {
         "id": "",
         "name": "Стачивание бокового шва",
-        "cost": "50.00",
-        "quantity_per_item": "1",
-        "duration_seconds": "90",
+        "description": "Боковой шов",
         "folder_path": "Пошив / Швы",
         "sort_order": "",
         "work_center_codes": "OV-1",
@@ -40,9 +37,7 @@ SEWING_OPERATION_TEMPLATE_SAMPLE_ROWS: tuple[dict[str, str], ...] = (
     {
         "id": "",
         "name": "Обметать срез",
-        "cost": "25.50",
-        "quantity_per_item": "2",
-        "duration_seconds": "45",
+        "description": "",
         "folder_path": "",
         "sort_order": "",
         "work_center_codes": "",

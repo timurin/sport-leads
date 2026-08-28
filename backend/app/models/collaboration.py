@@ -24,7 +24,7 @@ from app.database.base import Base
 if TYPE_CHECKING:
     from app.models.auth import PlatformUser
     from app.models.sales import Lead, SalesOrder
-    from app.models.technical_card import TechnicalCard
+    from app.models.technical_card import TechnicalCard, TechnicalCardOrderGroup
 
 
 class CollaborationMicrotaskStatus(str, Enum):
@@ -33,17 +33,22 @@ class CollaborationMicrotaskStatus(str, Enum):
 
 
 class CollaborationThread(Base):
-    """Staff collaboration thread: XOR sales_order_id | lead_id (ADR-026/027)."""
+    """Staff collaboration thread: XOR sales_order_id | lead_id | order_group_id."""
 
     __tablename__ = "collaboration_threads"
     __table_args__ = (
         UniqueConstraint("sales_order_id", name="uq_collaboration_threads_sales_order_id"),
         UniqueConstraint("lead_id", name="uq_collaboration_threads_lead_id"),
+        UniqueConstraint("order_group_id", name="uq_collaboration_threads_order_group_id"),
         Index("ix_collaboration_threads_sales_order_id", "sales_order_id"),
         Index("ix_collaboration_threads_lead_id", "lead_id"),
+        Index("ix_collaboration_threads_order_group_id", "order_group_id"),
         CheckConstraint(
-            "(sales_order_id IS NOT NULL AND lead_id IS NULL) "
-            "OR (sales_order_id IS NULL AND lead_id IS NOT NULL)",
+            "("
+            "(sales_order_id IS NOT NULL AND lead_id IS NULL AND order_group_id IS NULL) OR "
+            "(sales_order_id IS NULL AND lead_id IS NOT NULL AND order_group_id IS NULL) OR "
+            "(sales_order_id IS NULL AND lead_id IS NULL AND order_group_id IS NOT NULL)"
+            ")",
             name="ck_collaboration_threads_anchor_xor",
         ),
     )
@@ -55,6 +60,10 @@ class CollaborationThread(Base):
     )
     lead_id: Mapped[int | None] = mapped_column(
         ForeignKey("leads.id", ondelete="CASCADE"),
+        nullable=True,
+    )
+    order_group_id: Mapped[int | None] = mapped_column(
+        ForeignKey("technical_card_order_groups.id", ondelete="CASCADE"),
         nullable=True,
     )
     created_at: Mapped[datetime] = mapped_column(
@@ -71,6 +80,9 @@ class CollaborationThread(Base):
 
     sales_order: Mapped[SalesOrder | None] = relationship("SalesOrder")
     lead: Mapped[Lead | None] = relationship("Lead")
+    order_group: Mapped[TechnicalCardOrderGroup | None] = relationship(
+        "TechnicalCardOrderGroup"
+    )
     messages: Mapped[list[CollaborationMessage]] = relationship(
         back_populates="thread",
         cascade="all, delete-orphan",
@@ -258,9 +270,13 @@ class CollaborationNotification(Base):
         Index("ix_collaboration_notifications_read_at", "read_at"),
         Index("ix_collaboration_notifications_kind", "kind"),
         Index("ix_collaboration_notifications_lead_id", "lead_id"),
+        Index("ix_collaboration_notifications_order_group_id", "order_group_id"),
         CheckConstraint(
-            "(sales_order_id IS NOT NULL AND lead_id IS NULL) "
-            "OR (sales_order_id IS NULL AND lead_id IS NOT NULL)",
+            "("
+            "(sales_order_id IS NOT NULL AND lead_id IS NULL AND order_group_id IS NULL) OR "
+            "(sales_order_id IS NULL AND lead_id IS NOT NULL AND order_group_id IS NULL) OR "
+            "(sales_order_id IS NULL AND lead_id IS NULL AND order_group_id IS NOT NULL)"
+            ")",
             name="ck_collaboration_notifications_anchor_xor",
         ),
     )
@@ -279,6 +295,10 @@ class CollaborationNotification(Base):
     )
     lead_id: Mapped[int | None] = mapped_column(
         ForeignKey("leads.id", ondelete="CASCADE"),
+        nullable=True,
+    )
+    order_group_id: Mapped[int | None] = mapped_column(
+        ForeignKey("technical_card_order_groups.id", ondelete="CASCADE"),
         nullable=True,
     )
     technical_card_id: Mapped[int | None] = mapped_column(

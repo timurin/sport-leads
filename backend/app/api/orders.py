@@ -15,6 +15,7 @@ from app.schemas.sales import (
     SalesOrderClientUpdate,
     SalesOrderDesignApprovalUpdate,
     SalesOrderDiscountUpdate,
+    SalesOrderTechCardsPlannedCountUpdate,
     SalesOrderMaterialReserveUpdate,
     SalesOrderOrganizationUpdate,
     SalesOrderPaymentUpdate,
@@ -60,6 +61,10 @@ from app.services.sales_order_items import (
     order_items_subtotal,
     update_sales_order_discount,
     update_sales_order_item,
+)
+from app.services.sales_order_tech_cards_planned import (
+    SalesOrderTechCardsPlannedCountError,
+    update_sales_order_tech_cards_planned_count,
 )
 from app.services.sales_commercial_documents import (
     SalesCommercialDocumentError,
@@ -238,6 +243,26 @@ def patch_order_discount(
     except SalesOrderItemError as error:
         db.rollback()
         raise HTTPException(status_code=_item_error_status(error), detail=str(error)) from error
+    return get_order(order_id, db)
+
+
+@router.patch("/{order_id}/tech-cards-planned-count", response_model=SalesOrderRead)
+def patch_order_tech_cards_planned_count(
+    order_id: int,
+    payload: SalesOrderTechCardsPlannedCountUpdate,
+    db: Session = Depends(get_db),
+) -> dict[str, object]:
+    try:
+        update_sales_order_tech_cards_planned_count(
+            db, order_id, payload.tech_cards_planned_count
+        )
+        db.commit()
+    except SalesOrderNotFoundError as error:
+        db.rollback()
+        raise HTTPException(status_code=404, detail=str(error)) from error
+    except SalesOrderTechCardsPlannedCountError as error:
+        db.rollback()
+        raise HTTPException(status_code=422, detail=str(error)) from error
     return get_order(order_id, db)
 
 

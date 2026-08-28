@@ -1,6 +1,6 @@
 # ADR-016 — Technical card domain boundary
 
-**Status:** принято (`2026-07-26`); amend numbering + TechOperation / op-volume lines (`2026-07-26`); amend Spec↔ТК dependency (`2026-07-26`); amend Spec = план+факт report (`2026-07-26`); amend screen mockups on TC max 3 + sewing snapshot lines (`2026-07-27`); **amend composition plan/fact + hard material gate cutting/print (`2026-07-27`)**; **amend aggregate personalization import + history block + TechOperation material prefill (`2026-07-28`)**; **amend shop-module platform contract (`11.3.1`, `2026-07-28`)**; **amend Раскрой shop domain (`11.5.1`, `2026-07-28`)**; **amend Печать shop domain (`11.6.1`, `2026-07-28`)**; **amend Пошив shop domain (`11.7.1`, `2026-07-28`)**; **amend Упаковка shop domain (`11.10.1`, `2026-07-29`)**; **amend DesignProject SoT ADR-021 (`2026-08-01`)**; **amend Stage 19 internal collaboration context (`2026-08-04`, ADR-026)**; **amend sewing work ledger pointer Stage 24 / ADR-029 (`2026-08-24`)**; **amend unit-line location + split WIP Stage 25 / ADR-030 (`2026-08-24`)**; **amend Spec version FK Stage 7 / ADR-031 (`2026-08-25`)**
+**Status:** принято (`2026-07-26`); amend numbering + TechOperation / op-volume lines (`2026-07-26`); amend Spec↔ТК dependency (`2026-07-26`); amend Spec = план+факт report (`2026-07-26`); amend screen mockups on TC max 3 + sewing snapshot lines (`2026-07-27`); **amend composition plan/fact + hard material gate cutting/print (`2026-07-27`)**; **amend aggregate personalization import + history block + TechOperation material prefill (`2026-07-28`)**; **amend shop-module platform contract (`11.3.1`, `2026-07-28`)**; **amend Раскрой shop domain (`11.5.1`, `2026-07-28`)**; **amend Печать shop domain (`11.6.1`, `2026-07-28`)**; **amend Пошив shop domain (`11.7.1`, `2026-07-28`)**; **amend Упаковка shop domain (`11.10.1`, `2026-07-29`)**; **amend DesignProject SoT ADR-021 (`2026-08-01`)**; **amend Stage 19 internal collaboration context (`2026-08-04`, ADR-026)**; **amend sewing work ledger pointer Stage 24 / ADR-029 (`2026-08-24`)**; **amend unit-line location + split WIP Stage 25 / ADR-030 (`2026-08-24`)**; **amend Spec version FK Stage 7 / ADR-031 (`2026-08-25`)**; **amend dual contour A/B + display `{orderNo}-{seq}/{N}` Stage 28 (`2026-08-27`)**
 
 **Date:** `2026-07-26`  
 **Roadmap:** Stage 9 § `9.1.1` (+ Stage `8.1.3` TechOperation catalog; Stage `9.3.3` volume lines; Stage `9.3.4` plan/fact materials; Stage `9.3.5` required materials prefill; document layout `9.4.2.7` / history `9.4.2.8`; shop Упаковка `11.10`)  
@@ -45,12 +45,36 @@
 
 **Нумерация (default):** `{orderNo}-{cardSeq}`
 
-- `orderNo` — номер заказа покупателя;
-- `cardSeq` — порядковый номер ТК **внутри заказа** (1…N среди сформированных карт этого заказа), стабильный после создания;
+- `orderNo` — номер заказа покупателя (контур A) или ручной номер группы (контур B, Stage 28);
+- `cardSeq` — порядковый номер ТК **внутри заказа / группы** (1…N среди сформированных карт), стабильный после создания;
 - разделитель **дефис** (`-`), согласован с печатным шаблоном Excel «НомерЗаказа-НомерТехкарты»;
 - шаблон строки может уточняться в настройках `9.6`, default остаётся hyphen.
 
-UNIQUE: не более одной ТК на один `sales_order_item_id` (когда карта создана).
+UNIQUE: не более одной ТК на один `sales_order_item_id` (когда карта создана; в контуре B поле null).
+
+### 1.1 Dual contours + display number (Stage 28 / `SL-STANDALONE-TC-v1`)
+
+| Contour | Entry | Order FKs |
+|---------|--------|-----------|
+| **A** | `SalesOrder` → `SalesOrderItem` → PRODUCT → generate (ADR-016 §1 unchanged; ≤1 TC per eligible item) | `sales_order_id` + `sales_order_item_id` both set |
+| **B** | Manual create without required SalesOrder (scrap, gifts, internal ops) | both SalesOrder FKs **null**; `order_group_id` → `technical_card_order_groups` |
+
+Contour B group: free-text `order_number` unique among groups (may coincide with a real `SalesOrder.number` — no FK); `tech_cards_planned_count` ≥ 1; `desired_date` snapshot. Create B: nomenclature + order number + planned count + ship date + qty ≥ 1 → **qty unit lines**. **No** auto-spawn of N cards.
+
+**Link B→A (`28.5.1`):** optional convert of a contour-B card onto a **free** eligible `SalesOrderItem` (no existing TC on that item; ≤1 TC per item). Sets both SalesOrder FKs and **clears** `order_group_id` (XOR unchanged). Stored `number` is not rewritten. `card_seq` becomes next seq on the target SalesOrder. Item nomenclature must match the card when both ids are set. Unit lines stay. One-way (no unlink in this slice). After link, display `/{N}` uses the SalesOrder planned count.
+
+**Planned TC count (soft):** manager field on `SalesOrder` (A) or the order group (B). Meaning: how many tech cards are expected. Create/generate is **not** blocked when actual ≠ planned.
+
+**Stored vs display:**
+
+| Layer | Format |
+|-------|--------|
+| Stored `TechnicalCard.number` | `{orderNo}-{card_seq}` |
+| UI / print / list | `{orderNo}-{card_seq}/{N}` |
+
+`N` = **live** planned count. Changing planned count does not rewrite stored `number`. When planned is unset, display = stored number.
+
+Parked: none remaining in Stage 28. `28.5.2` closed: `ProductionOrder.sales_order_id` nullable via standalone group XOR. `28.5.3` closed: Spec header `sales_order_id` nullable copy from PO. `28.5.4` closed: collab on TC without order (ADR-026 order-group XOR).
 
 ### 2. Unit lines — поштучная матрица (`9.1.1.2`)
 
@@ -271,7 +295,8 @@ API не отдаёт ORM; деньги/нормы/объёмы — `Decimal`/`N
 - Stage `11.10` Упаковка: stage fact only (`performer` / `work_done` / `duration`); no material gate; no WorkCenter/QC scrap fields in MVP.
 - **Stage 25 / ADR-030:** split WIP lives on unit-line location; FG auto-post qty follows arriving units (`12.3.2` amend).
 - ADR-004: «технология» = заполненная ТК + snapshot маршрута; Spec — сводный отчёт план+факт по партии, опирается на ТК и факт, не предшествует create ТК.
-- **Stage 19 / ADR-026:** document UI may show the order’s internal staff collaboration thread filtered by optional `technical_card_id`. ТК is **context**, not a second chat store; messages live on the order thread.
+- **Stage 19 / ADR-026:** document UI may show the order’s internal staff collaboration thread filtered by optional `technical_card_id`. ТК is **context**, not a second chat store; messages live on the order thread. Contour B: same domain, thread on `order_group_id` (`28.5.4`).
+- **Stage 28:** second entry path B + live display `/{N}` + soft planned count. Shop / QR / FG stay on the TechnicalCard (null-order-safe in `28.4`).
 
 ## Ограничения / вне scope ADR
 

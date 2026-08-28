@@ -113,6 +113,7 @@ export function filterTechCardsClient(
 
     const haystack = [
       card.number,
+      card.display_number,
       card.order_number,
       card.nomenclature_name,
       card.product_model_article,
@@ -223,16 +224,16 @@ export function techCardModelLabel(card: {
 
 export function techCardPositionLabel(card: {
   nomenclature_name: string | null;
-  sales_order_item_id: number;
+  sales_order_item_id: number | null;
 }): string {
-  return card.nomenclature_name ?? `Строка #${card.sales_order_item_id}`;
+  return card.nomenclature_name ?? (card.sales_order_item_id != null ? `Строка #${card.sales_order_item_id}` : "—");
 }
 
 export function techCardOrderLabel(card: {
   order_number: string | null | undefined;
-  sales_order_id: number;
+  sales_order_id: number | null;
 }): string {
-  return card.order_number?.trim() || `#${card.sales_order_id}`;
+  return card.order_number?.trim() || (card.sales_order_id != null ? `#${card.sales_order_id}` : "Без заказа");
 }
 
 export function compositionLineKindLabel(kind: string): string {

@@ -29,6 +29,7 @@ from app.models.technical_card import (
     TechnicalCardCompositionLineKind,
     TechnicalCardOperationLine,
     TechnicalCardOperationLineSourceKind,
+    TechnicalCardOrderGroup,
     TechnicalCardStageResult,
     TechnicalCardStageResultStatus,
     TechnicalCardStatus,
@@ -108,7 +109,9 @@ def _header_load_options():
         ),
         selectinload(Specification.batch),
         selectinload(Specification.sales_order),
-        selectinload(Specification.production_order),
+        selectinload(Specification.production_order).selectinload(
+            ProductionOrder.order_group
+        ),
     )
 
 
@@ -117,8 +120,19 @@ def _list_load_options():
         selectinload(Specification.versions),
         selectinload(Specification.batch),
         selectinload(Specification.sales_order),
-        selectinload(Specification.production_order),
+        selectinload(Specification.production_order).selectinload(
+            ProductionOrder.order_group
+        ),
     )
+
+
+def _sales_order_display_number(spec: Specification) -> str | None:
+    if spec.sales_order is not None:
+        return spec.sales_order.number
+    order = spec.production_order
+    if order is not None and order.order_group is not None:
+        return order.order_group.order_number
+    return None
 
 
 def _to_list_item(spec: Specification) -> SpecificationListItem:
@@ -129,9 +143,7 @@ def _to_list_item(spec: Specification) -> SpecificationListItem:
         production_batch_id=spec.production_batch_id,
         production_batch_number=spec.batch.number if spec.batch is not None else None,
         sales_order_id=spec.sales_order_id,
-        sales_order_number=(
-            spec.sales_order.number if spec.sales_order is not None else None
-        ),
+        sales_order_number=_sales_order_display_number(spec),
         production_order_id=spec.production_order_id,
         production_order_number=(
             spec.production_order.number if spec.production_order is not None else None
@@ -217,15 +229,17 @@ def list_specifications(
     if needle:
         pattern = f"%{needle.lower()}%"
         statement = (
-            statement.join(Specification.batch)
-            .join(Specification.sales_order)
-            .join(Specification.production_order)
+            statement.outerjoin(Specification.batch)
+            .outerjoin(Specification.sales_order)
+            .outerjoin(Specification.production_order)
+            .outerjoin(ProductionOrder.order_group)
             .where(
                 or_(
                     func.lower(Specification.number).like(pattern),
                     func.lower(ProductionBatch.number).like(pattern),
                     func.lower(SalesOrder.number).like(pattern),
                     func.lower(ProductionOrder.number).like(pattern),
+                    func.lower(TechnicalCardOrderGroup.order_number).like(pattern),
                 )
             )
         )

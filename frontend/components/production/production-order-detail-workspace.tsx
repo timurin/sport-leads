@@ -225,14 +225,20 @@ export function ProductionOrderDetailWorkspace({
         <SectionCard title="Реквизиты" size="compact">
           <dl className="grid gap-portal-3 sm:grid-cols-2">
             <div>
-              <dt className="text-portal-caption text-portal-muted">Заказ покупателя</dt>
+              <dt className="text-portal-caption text-portal-muted">
+                {order.sales_order_id != null ? "Заказ покупателя" : "Standalone-группа"}
+              </dt>
               <dd className="mt-1 text-portal-body">
+                {order.sales_order_id != null ? (
                 <Link
                   href={`/sales/orders/${order.sales_order_id}`}
                   className="text-portal-primary hover:underline"
                 >
                   {order.sales_order_number?.trim() || `#${order.sales_order_id}`}
                 </Link>
+                ) : (
+                  order.sales_order_number?.trim() || "—"
+                )}
               </dd>
             </div>
             <div>
@@ -279,7 +285,7 @@ export function ProductionOrderDetailWorkspace({
         {order.batches.length === 0 ? (
           <EmptyState
             title="Нет партий"
-            description="Создайте партию и привяжите техкарты того же заказа покупателя."
+            description="Создайте партию и привяжите техкарты того же заказа покупателя или standalone-группы."
           />
         ) : (
           order.batches.map((batch) => {

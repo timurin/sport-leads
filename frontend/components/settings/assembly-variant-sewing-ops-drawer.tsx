@@ -18,8 +18,6 @@ import { CreateDrawer } from "@/components/ui/create-drawer";
 import { Checkbox, Field, Input, Select } from "@/components/ui/form-controls";
 import { EmptyState } from "@/components/ui/empty-state";
 import {
-  formatAssemblyCost,
-  sumSelectedSewingOperationCosts,
   validateAssemblyVariantDraft,
 } from "@/lib/product-models";
 import {
@@ -29,9 +27,6 @@ import {
 import {
   buildSewingCatalogTreeRows,
   filterSewingOperations,
-  formatDurationMinutesSeconds,
-  formatSewingCost,
-  sewingOperationLineTotal,
   visibleSewingCatalogTreeRows,
   type SewingOperation,
   type SewingOperationFolder,
@@ -123,20 +118,6 @@ export function AssemblyVariantSewingOpsDrawer({
     }
     return visibleSewingCatalogTreeRows(catalogTree, folderExpanded);
   }, [availableOps, catalogTree, folderExpanded, folders, search]);
-
-  const selectedOps = useMemo(() => {
-    const byId = new Map(sewingOperations.map((row) => [row.id, row]));
-    return selectedIds
-      .map((id) => byId.get(id))
-      .filter((row): row is SewingOperation => row != null);
-  }, [selectedIds, sewingOperations]);
-
-  const total = sumSelectedSewingOperationCosts(selectedOps);
-  const totalDuration = selectedOps.reduce((sum, operation) => {
-    const duration = Number(operation.duration_seconds) || 0;
-    const qty = Math.max(1, Number(operation.quantity_per_item) || 1);
-    return sum + duration * qty;
-  }, 0);
 
   const selectedTemplate = useMemo(() => {
     if (!templateId) return null;
@@ -345,9 +326,7 @@ export function AssemblyVariantSewingOpsDrawer({
                 Операции пошива
               </h3>
               <p className="text-portal-caption text-portal-muted">
-                Выбрано: {selectedIds.length} · Итого: {formatAssemblyCost(total)}{" "}
-                ₽ · Время сборки 1 изделия{" "}
-                {formatDurationMinutesSeconds(totalDuration)}
+                Выбрано: {selectedIds.length}
               </p>
             </div>
             <Field label="Поиск">
@@ -424,7 +403,11 @@ export function AssemblyVariantSewingOpsDrawer({
                         checked={checked}
                         disabled={saving}
                         onChange={() => toggle(operation.id)}
-                        label={`${operation.name} — ${formatSewingCost(operation.cost)} ₽ × ${operation.quantity_per_item ?? 1} = ${formatSewingCost(sewingOperationLineTotal(operation.cost, operation.quantity_per_item))} ₽ · ${operation.duration_seconds ?? 0} с`}
+                        label={
+                          operation.description
+                            ? `${operation.name} — ${operation.description}`
+                            : operation.name
+                        }
                       />
                     </li>
                   );

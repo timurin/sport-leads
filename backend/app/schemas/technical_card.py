@@ -3,7 +3,7 @@
 from datetime import date, datetime
 from decimal import Decimal
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from app.models.technical_card import (
     TechnicalCardCompositionLineKind,
@@ -372,8 +372,9 @@ class TechnicalCardRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
-    sales_order_id: int
-    sales_order_item_id: int
+    sales_order_id: int | None = None
+    sales_order_item_id: int | None = None
+    order_group_id: int | None = None
     number: str
     card_seq: int
     status: TechnicalCardStatus
@@ -409,9 +410,15 @@ class TechnicalCardRead(BaseModel):
     notes: str | None = None
 
     order_number: str | None = None
+    client_id: int | None = None
     client_name: str | None = None
     responsible_name: str | None = None
+    created_by_platform_user_id: int | None = None
+    created_by_name: str | None = None
+    responsible_platform_user_id: int | None = None
     desired_date: date | None = None
+    tech_cards_planned_count: int | None = None
+    display_number: str | None = None
 
     composition_lines: list[TechnicalCardCompositionLineRead] = Field(default_factory=list)
     unit_lines: list[TechnicalCardUnitLineRead] = Field(default_factory=list)
@@ -432,8 +439,9 @@ class TechnicalCardListRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
-    sales_order_id: int
-    sales_order_item_id: int
+    sales_order_id: int | None = None
+    sales_order_item_id: int | None = None
+    order_group_id: int | None = None
     number: str
     card_seq: int
     status: TechnicalCardStatus
@@ -468,6 +476,8 @@ class TechnicalCardListRead(BaseModel):
     client_name: str | None = None
     responsible_name: str | None = None
     desired_date: date | None = None
+    tech_cards_planned_count: int | None = None
+    display_number: str | None = None
 
     stage_results: list[TechnicalCardStageResultRead] = Field(default_factory=list)
 
@@ -732,3 +742,86 @@ class TechnicalCardOperationLinesPrefillRead(BaseModel):
     prefilled: bool
     catalog_available: bool
     message: str
+
+
+class TechnicalCardStandaloneCreate(BaseModel):
+    """Contour B create (Stage 28.2) — no SalesOrder required."""
+
+    nomenclature_id: int = Field(ge=1)
+    order_number: str = Field(min_length=1, max_length=50)
+    tech_cards_planned_count: int = Field(ge=1)
+    desired_date: date
+    quantity: Decimal = Field(gt=0, max_digits=14, decimal_places=3)
+
+    @field_validator("order_number", mode="before")
+    @classmethod
+    def strip_order_number(cls, value: object) -> object:
+        if isinstance(value, str):
+            return value.strip()
+        return value
+
+
+class TechnicalCardLinkSalesOrderItem(BaseModel):
+    """Convert contour B → A (`28.5.1`). Item must be free."""
+
+    sales_order_item_id: int = Field(ge=1)
+
+
+class TechnicalCardOrderGroupRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    order_number: str
+    tech_cards_planned_count: int
+    desired_date: date
+    client_id: int | None = None
+    created_at: datetime
+    updated_at: datetime
+
+
+class TechnicalCardResponsibleCandidateRead(BaseModel):
+    id: int
+    login: str
+    display_name: str
+
+
+class TechnicalCardResponsibleUpdate(BaseModel):
+    responsible_platform_user_id: int | None = None
+
+
+class TechnicalCardClientUpdate(BaseModel):
+    client_id: int | None = None
+
+
+class TechnicalCardDesiredDateUpdate(BaseModel):
+    desired_date: date | None = None
+
+
+class TechnicalCardModelAssemblyUpdate(BaseModel):
+    product_model_id: int | None = None
+    assembly_variant_id: int | None = None
+
+
+class TechnicalCardNomenclatureNameUpdate(BaseModel):
+    nomenclature_name: str | None = Field(default=None, max_length=255)
+
+    @field_validator("nomenclature_name", mode="before")
+    @classmethod
+    def strip_nomenclature_name(cls, value: object) -> object:
+        if isinstance(value, str):
+            stripped = value.strip()
+            return stripped or None
+        return value
+
+
+class TechnicalCardOrderGroupUpdate(BaseModel):
+    tech_cards_planned_count: int | None = Field(default=None, ge=1)
+    desired_date: date | None = None
+
+    @model_validator(mode="after")
+    def require_at_least_one_field(self) -> TechnicalCardOrderGroupUpdate:
+        if self.tech_cards_planned_count is None and self.desired_date is None:
+            raise ValueError(
+                "At least one of tech_cards_planned_count or desired_date is required"
+            )
+        return self

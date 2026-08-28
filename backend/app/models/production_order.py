@@ -7,6 +7,7 @@ from enum import Enum
 from typing import TYPE_CHECKING
 
 from sqlalchemy import (
+    CheckConstraint,
     DateTime,
     ForeignKey,
     Index,
@@ -23,7 +24,7 @@ from app.database.base import Base
 if TYPE_CHECKING:
     from app.models.sales import SalesOrder
     from app.models.specification import Specification
-    from app.models.technical_card import TechnicalCard
+    from app.models.technical_card import TechnicalCard, TechnicalCardOrderGroup
 
 
 class ProductionOrderStatus(str, Enum):
@@ -42,7 +43,7 @@ class ProductionBatchStatus(str, Enum):
 
 
 class ProductionOrder(Base):
-    """Planning document under Production, linked to one SalesOrder (ADR-018)."""
+    """Planning document under Production (ADR-018). Contour A: SalesOrder; B: order group (`28.5.2`)."""
 
     __tablename__ = "production_orders"
     __table_args__ = (
@@ -51,15 +52,32 @@ class ProductionOrder(Base):
             "order_seq",
             name="uq_production_orders_sales_order_seq",
         ),
+        UniqueConstraint(
+            "order_group_id",
+            "order_seq",
+            name="uq_production_orders_order_group_seq",
+        ),
         UniqueConstraint("number", name="uq_production_orders_number"),
+        CheckConstraint(
+            "("
+            "(sales_order_id IS NOT NULL AND order_group_id IS NULL) OR "
+            "(sales_order_id IS NULL AND order_group_id IS NOT NULL)"
+            ")",
+            name="ck_production_orders_contour_xor",
+        ),
         Index("ix_production_orders_sales_order_id", "sales_order_id"),
+        Index("ix_production_orders_order_group_id", "order_group_id"),
         Index("ix_production_orders_status", "status"),
     )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    sales_order_id: Mapped[int] = mapped_column(
+    sales_order_id: Mapped[int | None] = mapped_column(
         ForeignKey("sales_orders.id", ondelete="RESTRICT"),
-        nullable=False,
+        nullable=True,
+    )
+    order_group_id: Mapped[int | None] = mapped_column(
+        ForeignKey("technical_card_order_groups.id", ondelete="RESTRICT"),
+        nullable=True,
     )
     number: Mapped[str] = mapped_column(String(80), nullable=False)
     order_seq: Mapped[int] = mapped_column(Integer, nullable=False)
@@ -82,7 +100,10 @@ class ProductionOrder(Base):
         onupdate=func.now(),
     )
 
-    sales_order: Mapped[SalesOrder] = relationship("SalesOrder")
+    sales_order: Mapped[SalesOrder | None] = relationship("SalesOrder")
+    order_group: Mapped[TechnicalCardOrderGroup | None] = relationship(
+        "TechnicalCardOrderGroup"
+    )
     batches: Mapped[list[ProductionBatch]] = relationship(
         "ProductionBatch",
         back_populates="production_order",

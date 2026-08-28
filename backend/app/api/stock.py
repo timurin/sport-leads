@@ -8,6 +8,8 @@ from app.schemas.stock import (
     StockBalanceRead,
     StockDocumentCreate,
     StockDocumentRead,
+    TransferDocumentCreate,
+    TransferLineUpdate,
 )
 from app.services.stock_balances import (
     StockBalanceNotFoundError,
@@ -31,6 +33,12 @@ from app.services.stock_inventory import (
     post_inventory_document,
     refresh_inventory_book,
     set_inventory_counted,
+)
+from app.services.stock_transfer import (
+    create_transfer_document,
+    post_transfer_document,
+    remove_transfer_line,
+    set_transfer_line,
 )
 
 router = APIRouter(prefix="/stock", tags=["Stock"])
@@ -291,6 +299,104 @@ def post_inventory_document_endpoint(
 ) -> StockDocumentRead:
     try:
         return serialize_stock_document(db, post_inventory_document(db, document_id))
+    except (
+        StockDocumentNotFoundError,
+        StockDocumentConflictError,
+        StockDocumentValidationError,
+    ) as error:
+        raise _inventory_http_error(error) from error
+
+
+@router.post(
+    "/transfers",
+    response_model=StockDocumentRead,
+    status_code=status.HTTP_201_CREATED,
+    operation_id="create_transfer_document",
+)
+def create_transfer_document_endpoint(
+    payload: TransferDocumentCreate,
+    db: Session = Depends(get_db),
+) -> StockDocumentRead:
+    try:
+        document = create_transfer_document(
+            db,
+            warehouse_id=payload.warehouse_id,
+            destination_warehouse_id=payload.destination_warehouse_id,
+            notes=payload.notes,
+            lines=[
+                (line.nomenclature_id, line.quantity) for line in payload.lines
+            ],
+        )
+        return serialize_stock_document(db, document)
+    except (
+        StockDocumentNotFoundError,
+        StockDocumentConflictError,
+        StockDocumentValidationError,
+    ) as error:
+        raise _inventory_http_error(error) from error
+
+
+@router.post(
+    "/transfers/{document_id}/lines",
+    response_model=StockDocumentRead,
+    operation_id="set_transfer_line",
+)
+def set_transfer_line_endpoint(
+    document_id: int,
+    payload: TransferLineUpdate,
+    db: Session = Depends(get_db),
+) -> StockDocumentRead:
+    try:
+        return serialize_stock_document(
+            db,
+            set_transfer_line(
+                db,
+                document_id,
+                payload.nomenclature_id,
+                quantity=payload.quantity,
+            ),
+        )
+    except (
+        StockDocumentNotFoundError,
+        StockDocumentConflictError,
+        StockDocumentValidationError,
+    ) as error:
+        raise _inventory_http_error(error) from error
+
+
+@router.delete(
+    "/transfers/{document_id}/lines/{nomenclature_id}",
+    response_model=StockDocumentRead,
+    operation_id="remove_transfer_line",
+)
+def remove_transfer_line_endpoint(
+    document_id: int,
+    nomenclature_id: int,
+    db: Session = Depends(get_db),
+) -> StockDocumentRead:
+    try:
+        return serialize_stock_document(
+            db, remove_transfer_line(db, document_id, nomenclature_id)
+        )
+    except (
+        StockDocumentNotFoundError,
+        StockDocumentConflictError,
+        StockDocumentValidationError,
+    ) as error:
+        raise _inventory_http_error(error) from error
+
+
+@router.post(
+    "/transfers/{document_id}/post",
+    response_model=StockDocumentRead,
+    operation_id="post_transfer_document",
+)
+def post_transfer_document_endpoint(
+    document_id: int,
+    db: Session = Depends(get_db),
+) -> StockDocumentRead:
+    try:
+        return serialize_stock_document(db, post_transfer_document(db, document_id))
     except (
         StockDocumentNotFoundError,
         StockDocumentConflictError,

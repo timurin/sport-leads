@@ -13,7 +13,7 @@ from app.models.production_order import (
     ProductionOrderStatus,
 )
 from app.models.sales import SalesOrder
-from app.models.technical_card import TechnicalCard
+from app.models.technical_card import TechnicalCard, TechnicalCardOrderGroup
 from app.repositories import production_orders as repo
 from app.schemas.production_order import (
     ProductionBatchAttachCardRequest,
@@ -96,6 +96,7 @@ def _order_read(
     return ProductionOrderRead(
         id=order.id,
         sales_order_id=order.sales_order_id,
+        order_group_id=order.order_group_id,
         sales_order_number=sales_order_number,
         number=order.number,
         order_seq=order.order_seq,
@@ -128,6 +129,7 @@ def list_production_orders(
         ProductionOrderListItem(
             id=order.id,
             sales_order_id=order.sales_order_id,
+            order_group_id=order.order_group_id,
             sales_order_number=sales_order_number,
             number=order.number,
             order_seq=order.order_seq,
@@ -145,25 +147,46 @@ def get_production_order(db: Session, order_id: int) -> ProductionOrderRead:
     order = repo.get_production_order(db, order_id)
     if order is None:
         raise ProductionOrderNotFoundError("Производственный заказ не найден")
-    sales_order = db.get(SalesOrder, order.sales_order_id)
-    return _order_read(order, sales_order.number if sales_order else None)
+    sales_order_number = None
+    if order.sales_order_id is not None:
+        sales_order = db.get(SalesOrder, order.sales_order_id)
+        sales_order_number = sales_order.number if sales_order else None
+    elif order.order_group_id is not None:
+        group = db.get(TechnicalCardOrderGroup, order.order_group_id)
+        sales_order_number = group.order_number if group else None
+    return _order_read(order, sales_order_number)
 
 
 def create_production_order(
     db: Session, payload: ProductionOrderCreate
 ) -> ProductionOrderRead:
-    sales_order = db.get(SalesOrder, payload.sales_order_id)
-    if sales_order is None:
-        raise ProductionOrderValidationError("Заказ покупателя не найден")
-
-    order_seq = repo.next_order_seq(db, sales_order.id)
-    row = ProductionOrder(
-        sales_order_id=sales_order.id,
-        number=_order_number(sales_order.number, order_seq),
-        order_seq=order_seq,
-        status=ProductionOrderStatus.DRAFT.value,
-        notes=payload.notes,
-    )
+    if payload.sales_order_id is not None:
+        sales_order = db.get(SalesOrder, payload.sales_order_id)
+        if sales_order is None:
+            raise ProductionOrderValidationError("Заказ покупателя не найден")
+        order_seq = repo.next_order_seq(db, sales_order.id)
+        row = ProductionOrder(
+            sales_order_id=sales_order.id,
+            order_group_id=None,
+            number=_order_number(sales_order.number, order_seq),
+            order_seq=order_seq,
+            status=ProductionOrderStatus.DRAFT.value,
+            notes=payload.notes,
+        )
+    else:
+        assert payload.order_group_id is not None
+        group = db.get(TechnicalCardOrderGroup, payload.order_group_id)
+        if group is None:
+            raise ProductionOrderValidationError("Standalone-группа не найдена")
+        order_seq = repo.next_order_seq_for_group(db, group.id)
+        row = ProductionOrder(
+            sales_order_id=None,
+            order_group_id=group.id,
+            number=_order_number(group.order_number, order_seq),
+            order_seq=order_seq,
+            status=ProductionOrderStatus.DRAFT.value,
+            notes=payload.notes,
+        )
     try:
         db.add(row)
         db.commit()
@@ -279,9 +302,14 @@ def _attach_card_to_batch(
         raise ProductionOrderValidationError(
             f"Техкарта #{technical_card_id} не найдена"
         )
-    if card.sales_order_id != order.sales_order_id:
+    if order.sales_order_id is not None:
+        if card.sales_order_id != order.sales_order_id:
+            raise ProductionOrderValidationError(
+                f"Техкарта #{technical_card_id} принадлежит другому заказу покупателя"
+            )
+    elif card.order_group_id != order.order_group_id:
         raise ProductionOrderValidationError(
-            f"Техкарта #{technical_card_id} принадлежит другому заказу покупателя"
+            f"Техкарта #{technical_card_id} не из этой standalone-группы"
         )
     existing = repo.get_card_link_by_technical_card(db, technical_card_id)
     if existing is not None:

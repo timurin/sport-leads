@@ -108,7 +108,7 @@ export function TechCardScanWorkspace({
       <PageToolbar
         start={
           <p className="text-portal-body font-semibold text-portal-text">
-            {current ? `Скан ${current.number}` : "Скан техкарты"}
+            {current ? `Скан ${current.display_number ?? current.number}` : "Скан техкарты"}
           </p>
         }
       />

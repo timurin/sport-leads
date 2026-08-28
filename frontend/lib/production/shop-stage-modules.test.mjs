@@ -229,6 +229,37 @@ test("buildShopStageKanbanColumns groups active cards by current stage", () => {
   assert.equal(columns.find((column) => column.id === "print")?.cards.length, 0);
 });
 
+test("buildShopStageKanbanColumns keeps standalone cards without sales order", () => {
+  const columns = buildShopStageKanbanColumns([
+    {
+      id: 31,
+      sales_order_id: null,
+      sales_order_item_id: null,
+      order_group_id: 8,
+      number: "1310-1",
+      display_number: "1310-1/5",
+      card_seq: 1,
+      status: "in_progress",
+      quantity: "3",
+      nomenclature_id: 1,
+      nomenclature_name: "Футболка",
+      product_model_article: null,
+      product_model_name: null,
+      assembly_variant_name: null,
+      current_stage_order: 2,
+      current_stage_label: "Раскрой",
+      unit_lines: [],
+      created_at: "2026-08-27T00:00:00Z",
+      updated_at: "2026-08-27T00:00:00Z",
+      order_number: "1310",
+    },
+  ]);
+  const cutting = columns.find((column) => column.id === "cutting");
+  assert.equal(cutting?.cards.length, 1);
+  assert.equal(cutting?.cards[0]?.title, "1310-1/5");
+  assert.equal(cutting?.cards[0]?.subtitle, "1310");
+});
+
 test("shopStageCodeByTitle accepts QC catalog alias", () => {
   assert.equal(shopStageCodeByTitle("Контроль качества"), "qc");
   assert.equal(shopStageCodeByTitle("ОТК"), "qc");

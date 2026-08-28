@@ -118,8 +118,9 @@ export function SewingOperationImportDrawer({
                 по строке заголовка.
               </li>
               <li>
-                Обязательная колонка: <code className="text-portal-text">name</code>. При
-                создании нужен <code className="text-portal-text">cost</code>.
+                Обязательная колонка: <code className="text-portal-text">name</code>.
+                Описание: <code className="text-portal-text">description</code> (до 256
+                символов).
               </li>
               <li>
                 Папка: <code className="text-portal-text">folder_path</code> с разделителем{" "}
@@ -144,8 +145,8 @@ export function SewingOperationImportDrawer({
               Шаблон для заполнения
             </p>
             <p className="text-portal-caption text-portal-muted">
-              Колонки: id, name, cost, quantity_per_item, duration_seconds, folder_path,
-              sort_order, work_center_codes (+ даты для round-trip).
+              Колонки: id, name, description, folder_path, sort_order,
+              work_center_codes (+ даты для round-trip).
             </p>
             <div className="flex flex-wrap gap-portal-2">
               <Button

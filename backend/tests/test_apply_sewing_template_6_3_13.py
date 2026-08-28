@@ -37,15 +37,15 @@ def test_apply_sewing_template_append_and_replace() -> None:
 
             op_a = client.post(
                 "/sewing-operations",
-                json={"name": "A", "cost": "10.00", "duration_seconds": 10},
+                json={"name": "A"},
             )
             op_b = client.post(
                 "/sewing-operations",
-                json={"name": "B", "cost": "20.00", "duration_seconds": 20},
+                json={"name": "B"},
             )
             op_c = client.post(
                 "/sewing-operations",
-                json={"name": "C", "cost": "30.00", "duration_seconds": 30},
+                json={"name": "C"},
             )
             assert op_a.status_code == 201 and op_b.status_code == 201
             assert op_c.status_code == 201
@@ -90,6 +90,8 @@ def test_apply_sewing_template_append_and_replace() -> None:
             assert replaced.status_code == 200, replaced.text
             names = [line["operation_name"] for line in replaced.json()["operation_lines"]]
             assert names == ["A", "B"]
-            assert replaced.json()["operation_lines"][0]["cost"] == "10.00"
+            assert replaced.json()["operation_lines"][0]["cost"] == "0.00"
+            assert replaced.json()["operation_lines"][0]["quantity_per_item"] == 1
+            assert replaced.json()["operation_lines"][0]["duration_seconds"] == 0
     finally:
         app.dependency_overrides.pop(get_db, None)

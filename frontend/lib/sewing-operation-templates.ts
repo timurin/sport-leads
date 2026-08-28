@@ -3,9 +3,7 @@ export type SewingOperationTemplateLine = {
   sewing_operation_id: number;
   sequence: number;
   operation_name: string | null;
-  cost: string | null;
-  quantity_per_item: number | null;
-  duration_seconds: number | null;
+  description: string | null;
 };
 
 export type SewingOperationTemplate = {
@@ -33,14 +31,10 @@ function normalizeTemplate(
           ...line,
           sewing_operation_id: Number(line.sewing_operation_id),
           sequence: Number(line.sequence),
-          quantity_per_item:
-            line.quantity_per_item == null
+          description:
+            line.description == null || String(line.description).trim() === ""
               ? null
-              : Number(line.quantity_per_item),
-          duration_seconds:
-            line.duration_seconds == null
-              ? null
-              : Number(line.duration_seconds),
+              : String(line.description),
         }))
       : [],
   };

@@ -13,7 +13,7 @@ export type ApiSpecificationListItem = {
   number: string;
   production_batch_id: number;
   production_batch_number: string | null;
-  sales_order_id: number;
+  sales_order_id: number | null;
   sales_order_number: string | null;
   production_order_id: number;
   production_order_number: string | null;

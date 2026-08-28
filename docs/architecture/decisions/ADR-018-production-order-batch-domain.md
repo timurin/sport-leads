@@ -1,6 +1,6 @@
 # ADR-018 — ProductionOrder + ProductionBatch domain
 
-**Status:** принято (`2026-07-30`); **amended** `2026-07-30` (`11.2.1.1` aggregate fact roll-up contract); **amended** `2026-07-30` (`11.2.2.1` / ADR-019 FG warehouse stages); **amended** `2026-08-25` (Spec parent 1:1 batch / ADR-031)
+**Status:** принято (`2026-07-30`); **amended** `2026-07-30` (`11.2.1.1` aggregate fact roll-up contract); **amended** `2026-07-30` (`11.2.2.1` / ADR-019 FG warehouse stages); **amended** `2026-08-25` (Spec parent 1:1 batch / ADR-031); **amended** `2026-08-27` (`28.5.2` nullable `sales_order_id` / standalone group XOR)
 
 **Date:** `2026-07-30`  
 **Roadmap:** Stage 11 § `11.1.1.1` (orders/batches); feeds `11.1.1.2`–`11.1.1.5`, `11.2`, Spec Stage 7  
@@ -25,17 +25,18 @@
 
 | Сущность | Роль |
 |----------|------|
-| **ProductionOrder** | Планировочный документ Производства. Живёт в контуре `/production/orders`. Привязан к одному `SalesOrder`. Не заменяет коммерческий заказ. |
+| **ProductionOrder** | Планировочный документ Производства. Живёт в контуре `/production/orders`. Контур A: привязан к одному `SalesOrder`. Контур B (`28.5.2`): `sales_order_id` null, `order_group_id` → `technical_card_order_groups`. Не заменяет коммерческий заказ. |
 | **ProductionBatch** | Партия выпуска внутри производственного заказа. Группирует существующие `TechnicalCard` для планирования / roll-up / будущего родителя Spec. |
 | **ProductionBatchCardLink** | Связь партия ↔ ТК (`UNIQUE(technical_card_id)` в MVP: карта не более чем в одной активной партии). |
 
 ### 2. Кардинальность (MVP)
 
 ```
-SalesOrder 1 ─── N ProductionOrder
+SalesOrder 1 ─── N ProductionOrder     (contour A; optional)
+TechnicalCardOrderGroup 1 ─── N ProductionOrder  (contour B, 28.5.2)
 ProductionOrder 1 ─── N ProductionBatch
 ProductionBatch N ─── M TechnicalCard   (через link; MVP: TC ∈ ≤1 batch)
-TechnicalCard 1 ─── 1 SalesOrderItem    (ADR-016, без изменений)
+TechnicalCard 1 ─── 0..1 SalesOrderItem    (ADR-016; contour B: no item)
 ```
 
 Допускается:
@@ -74,7 +75,7 @@ TechnicalCard 1 ─── 1 SalesOrderItem    (ADR-016, без изменени�
 
 | Document | Pattern | Notes |
 |----------|---------|-------|
-| ProductionOrder | `PO-{salesOrderNumber}-{seq}` | `seq` = 1…N внутри `SalesOrder`, стабилен после create |
+| ProductionOrder | `PO-{salesOrderNumber}-{seq}` / contour B: `PO-{groupOrderNumber}-{seq}` | `seq` = 1…N внутри `SalesOrder` **или** standalone group; стабилен после create |
 | ProductionBatch | `{productionOrderNumber}-B{seq}` | `seq` = 1…N внутри `ProductionOrder` |
 
 Разделитель дефис; шаблоны могут уточняться позже в настройках — default фиксируем здесь.
@@ -83,7 +84,7 @@ TechnicalCard 1 ─── 1 SalesOrderItem    (ADR-016, без изменени�
 
 | Контур | Правило |
 |--------|---------|
-| `SalesOrder` | Live FK на `ProductionOrder.sales_order_id`; коммерческие статусы заказа **не** зеркалятся автоматически |
+| `SalesOrder` | Live FK `ProductionOrder.sales_order_id` **nullable** (`28.5.2`); XOR with `order_group_id`. Коммерческие статусы заказа **не** зеркалятся автоматически |
 | `TechnicalCard` | Soft/link via `ProductionBatchCardLink`; snapshot номера/модели опциональны на UI; master TC не переписывается партией |
 | Shop modules `11.3`–`11.10` | SoT факта остаётся на ТК / stage results / MATERIAL `fact_qty`; партия **не** принимает shop fact writes |
 | Aggregate fact `11.2` | Roll-up **читает** ТК, сгруппированные партией; не дублирует SoT — see §8 |

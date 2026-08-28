@@ -6,22 +6,22 @@ import test from "node:test";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "../..");
 
-test("26.3.4 manager Персонализация is row 2 after Макет; shop title stays Поштучно", () => {
+test("26.3.4 manager Персонализация lives in Сборки tab; shop title stays Поштучно", () => {
   const workspace = readFileSync(
     join(root, "components/production/tech-card-detail-workspace.tsx"),
     "utf8",
   );
   const mockup = workspace.indexOf('title="Макет"');
-  const orderData = workspace.indexOf('title="Данные по заказу"');
-  const model = workspace.indexOf('title="Модель и маршрут"');
-  const row2 = workspace.indexOf("data-tech-card-doc-row2");
+  const orderData = workspace.indexOf("<TechCardOrderDataCard");
+  const model = workspace.indexOf("<TechCardModelRouteCard");
+  const tabs = workspace.indexOf("data-tech-card-doc-tabs");
+  const assemblyTab = workspace.indexOf('data-tech-card-doc-tab="assembly"');
   const personalization = workspace.indexOf('title="Персонализация"');
-  const row3 = workspace.indexOf("data-tech-card-doc-row3");
   const route = workspace.indexOf('title="Маршрут / участки"');
 
   assert.ok(mockup > 0 && mockup < orderData && orderData < model);
-  assert.ok(model < row2 && row2 < personalization);
-  assert.ok(personalization < row3 && row3 < route);
+  assert.ok(model < tabs && tabs < assemblyTab);
+  assert.ok(assemblyTab < personalization && personalization < route);
   assert.equal(workspace.includes('title="Поштучно"'), false);
 
   const shop = readFileSync(

@@ -18,6 +18,7 @@ from pathlib import Path
 from sqlalchemy import func, inspect, select, text
 from sqlalchemy.orm import Session, selectinload
 
+from app.services.tech_card_display import format_tech_card_display_number
 from app.models.nomenclature import Nomenclature, NomenclatureType
 from app.models.product_model import ProductModel, ProductModelOperationNorm
 from app.models.production_stage import ProductionStage
@@ -31,6 +32,7 @@ from app.models.technical_card import (
     TechnicalCardMedia,
     TechnicalCardOperationLine,
     TechnicalCardOperationLineSourceKind,
+    TechnicalCardOrderGroup,
     TechnicalCardStageResult,
     TechnicalCardStageResultStatus,
     TechnicalCardStatus,
@@ -149,6 +151,7 @@ def _card_load_options(db: Session):
     options.extend(
         [
             selectinload(TechnicalCard.order),
+            selectinload(TechnicalCard.order_group),
             selectinload(TechnicalCard.order_item).selectinload(
                 SalesOrderItem.assembly_operation_snapshots
             ),
@@ -171,12 +174,21 @@ def to_technical_card_read(db: Session, card: TechnicalCard) -> TechnicalCardRea
     order = card.order
     if order is None and card.sales_order_id is not None:
         order = db.get(SalesOrder, card.sales_order_id)
+    group = card.order_group
+    if group is None and card.order_group_id is not None:
+        group = db.get(TechnicalCardOrderGroup, card.order_group_id)
 
-    order_number = order.number if order is not None else None
-    desired_date = order.desired_date if order is not None else None
+    order_number = None
+    desired_date = None
+    planned_count = None
+    client_id: int | None = None
     client_name: str | None = None
     responsible_name: str | None = None
     if order is not None:
+        order_number = order.number
+        desired_date = order.desired_date
+        planned_count = order.tech_cards_planned_count
+        client_id = order.client_id
         client = db.get(Client, order.client_id)
         if client is not None:
             client_name = client.company_name or client.contact_name
@@ -184,6 +196,15 @@ def to_technical_card_read(db: Session, card: TechnicalCard) -> TechnicalCardRea
             responsible = db.get(SalesUser, order.responsible_id)
             if responsible is not None:
                 responsible_name = responsible.name
+    elif group is not None:
+        order_number = group.order_number
+        desired_date = group.desired_date
+        planned_count = group.tech_cards_planned_count
+        client_id = group.client_id
+        if group.client_id is not None:
+            client = db.get(Client, group.client_id)
+            if client is not None:
+                client_name = client.company_name or client.contact_name
 
     media_items: list[TechnicalCardMediaRead] = []
     if _technical_card_media_table_available(db):
@@ -247,10 +268,19 @@ def to_technical_card_read(db: Session, card: TechnicalCard) -> TechnicalCardRea
     data["media_items"] = media_items
     data["assembly_sewing_operations"] = assembly_sewing_operations
     data["product_model_cover_image_url"] = product_model_cover_image_url
+    from app.services.tech_card_responsible import resolve_responsible_name
+
+    responsible_name, created_name = resolve_responsible_name(
+        db, card, order_responsible_name=responsible_name
+    )
     data["order_number"] = order_number
+    data["client_id"] = client_id
     data["client_name"] = client_name
     data["responsible_name"] = responsible_name
+    data["created_by_name"] = created_name
     data["desired_date"] = desired_date
+    data["tech_cards_planned_count"] = planned_count
+    data["display_number"] = format_tech_card_display_number(card.number, planned_count)
     from app.services.tech_card_qr import attach_qr_fields
     from app.services.tech_card_wip import compute_wip_status
 
@@ -260,7 +290,11 @@ def to_technical_card_read(db: Session, card: TechnicalCard) -> TechnicalCardRea
 
 
 def to_technical_card_list_read(
-    card: TechnicalCard, *, order_number: str | None = None
+    card: TechnicalCard,
+    *,
+    order_number: str | None = None,
+    planned_count: int | None = None,
+    desired_date=None,
 ) -> TechnicalCardListRead:
     """Slim list mapper — no composition/unit/media/sewing, no per-row Client lookups."""
     data = {
@@ -271,8 +305,10 @@ def to_technical_card_list_read(
     data["order_number"] = order_number
     data["client_name"] = None
     data["responsible_name"] = None
-    data["desired_date"] = None
+    data["desired_date"] = desired_date
     data["product_model_cover_image_url"] = None
+    data["tech_cards_planned_count"] = planned_count
+    data["display_number"] = format_tech_card_display_number(card.number, planned_count)
     return TechnicalCardListRead.model_validate(data)
 
 
@@ -305,20 +341,35 @@ def list_technical_cards(
     db: Session,
     *,
     sales_order_id: int | None = None,
+    order_group_id: int | None = None,
     status: str | None = None,
     stage: str | None = None,
     search: str | None = None,
     limit: int = 100,
     offset: int = 0,
-) -> list[tuple[TechnicalCard, str | None]]:
-    """Global production list. Returns (card, order_number) pairs."""
+) -> list[tuple[TechnicalCard, str | None, int | None, object]]:
+    """Global production list. Returns (card, order_number, planned_count, desired_date)."""
     statement = (
-        select(TechnicalCard, SalesOrder.number)
-        .join(SalesOrder, SalesOrder.id == TechnicalCard.sales_order_id)
+        select(
+            TechnicalCard,
+            func.coalesce(SalesOrder.number, TechnicalCardOrderGroup.order_number),
+            func.coalesce(
+                SalesOrder.tech_cards_planned_count,
+                TechnicalCardOrderGroup.tech_cards_planned_count,
+            ),
+            func.coalesce(SalesOrder.desired_date, TechnicalCardOrderGroup.desired_date),
+        )
+        .outerjoin(SalesOrder, SalesOrder.id == TechnicalCard.sales_order_id)
+        .outerjoin(
+            TechnicalCardOrderGroup,
+            TechnicalCardOrderGroup.id == TechnicalCard.order_group_id,
+        )
         .options(*_list_card_load_options())
     )
     if sales_order_id is not None:
         statement = statement.where(TechnicalCard.sales_order_id == sales_order_id)
+    if order_group_id is not None:
+        statement = statement.where(TechnicalCard.order_group_id == order_group_id)
     if status and status.strip():
         statement = statement.where(TechnicalCard.status == status.strip())
     if stage and stage.strip():
@@ -333,7 +384,10 @@ def list_technical_cards(
             | func.lower(func.coalesce(TechnicalCard.nomenclature_name, "")).like(pattern)
             | func.lower(func.coalesce(TechnicalCard.product_model_article, "")).like(pattern)
             | func.lower(func.coalesce(TechnicalCard.product_model_name, "")).like(pattern)
-            | func.lower(SalesOrder.number).like(pattern)
+            | func.lower(func.coalesce(SalesOrder.number, "")).like(pattern)
+            | func.lower(func.coalesce(TechnicalCardOrderGroup.order_number, "")).like(
+                pattern
+            )
         )
     statement = (
         statement.order_by(TechnicalCard.updated_at.desc(), TechnicalCard.id.desc())
@@ -341,7 +395,10 @@ def list_technical_cards(
         .limit(limit)
     )
     rows = db.execute(statement).unique().all()
-    return [(card, order_number) for card, order_number in rows]
+    return [
+        (card, order_number, planned_count, desired_date)
+        for card, order_number, planned_count, desired_date in rows
+    ]
 
 
 def unit_line_count_from_quantity(quantity: Decimal) -> int:
@@ -601,7 +658,9 @@ def _resolve_sewing_stage_binding(
 
 
 def _sync_sewing_operation_lines(db: Session, card: TechnicalCard) -> None:
-    """Replace sewing-sourced op lines from order-item assembly snapshots; re-sequence all."""
+    """Replace sewing-sourced op lines from order-item snapshots or live assembly."""
+    from app.repositories import assembly_variants as assembly_repo
+
     for row in list(card.operation_lines):
         if _operation_line_source_value(row) == TechnicalCardOperationLineSourceKind.SEWING.value:
             card.operation_lines.remove(row)
@@ -618,11 +677,17 @@ def _sync_sewing_operation_lines(db: Session, card: TechnicalCard) -> None:
             .where(SalesOrderItem.id == card.sales_order_item_id)
         )
 
-    snapshots = (
-        sorted(order_item.assembly_operation_snapshots, key=lambda row: row.sequence)
-        if order_item is not None
-        else []
-    )
+    snapshots: list[object] = []
+    if order_item is not None:
+        snapshots = sorted(
+            order_item.assembly_operation_snapshots, key=lambda row: row.sequence
+        )
+    elif card.assembly_variant_id is not None:
+        variant = assembly_repo.get_variant(db, card.assembly_variant_id)
+        if variant is not None:
+            snapshots = sorted(
+                variant.operation_lines, key=lambda row: (row.sequence, row.id or 0)
+            )
     # Temporary unique sequences until the full 1..n re-sequence below.
     temp_base = max((row.sequence for row in card.operation_lines), default=0)
     for offset, snap in enumerate(snapshots, start=1):
@@ -1114,6 +1179,7 @@ def _build_new_card(
     order: SalesOrder,
     item: SalesOrderItem,
     nomenclature: Nomenclature,
+    created_by_platform_user_id: int | None = None,
 ) -> TechnicalCard:
     card_seq = _next_card_seq(db, order.id)
     settings = get_technical_card_settings(db)
@@ -1126,6 +1192,7 @@ def _build_new_card(
         card_seq=card_seq,
         status=TechnicalCardStatus.DRAFT,
         quantity=item.quantity,
+        created_by_platform_user_id=created_by_platform_user_id,
         unit_lines=[],
         composition_lines=[],
         operation_lines=[],
@@ -1246,6 +1313,7 @@ def generate_technical_cards(
     order_id: int,
     *,
     sales_order_item_ids: list[int] | None = None,
+    created_by_platform_user_id: int | None = None,
 ) -> TechnicalCardGenerateResult:
     order = db.get(SalesOrder, order_id)
     if order is None:
@@ -1290,7 +1358,11 @@ def generate_technical_cards(
 
         if existing is None:
             card = _build_new_card(
-                db, order=order, item=item, nomenclature=nomenclature
+                db,
+                order=order,
+                item=item,
+                nomenclature=nomenclature,
+                created_by_platform_user_id=created_by_platform_user_id,
             )
             created.append(card)
             continue
@@ -1326,6 +1398,10 @@ def generate_technical_cards(
 
 def sync_technical_card_unit_lines(db: Session, card_id: int) -> TechnicalCard:
     card = get_technical_card(db, card_id)
+    if card.sales_order_item_id is None:
+        raise TechnicalCardValidationError(
+            "Standalone technical card has no order item to sync from"
+        )
     item = db.get(SalesOrderItem, card.sales_order_item_id)
     if item is None:
         raise TechnicalCardValidationError("Order item not found for technical card")

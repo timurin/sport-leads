@@ -58,13 +58,11 @@ test("formatDurationMinutesSeconds formats minutes and seconds", () => {
   assert.equal(formatDurationMinutesSeconds(1), "0 минут 1 секунда");
 });
 
-test("validateSewingOperationDraft requires name, cost, qty and duration", () => {
+test("validateSewingOperationDraft requires name; description is optional ≤256", () => {
   assert.equal(
     validateSewingOperationDraft({
       name: "",
-      cost: "10",
-      quantity_per_item: "1",
-      duration_seconds: "0",
+      description: "",
       folder_id: null,
       work_center_ids: [],
     }),
@@ -73,42 +71,16 @@ test("validateSewingOperationDraft requires name, cost, qty and duration", () =>
   assert.equal(
     validateSewingOperationDraft({
       name: "Сборка",
-      cost: "abc",
-      quantity_per_item: "1",
-      duration_seconds: "0",
+      description: "x".repeat(257),
       folder_id: null,
       work_center_ids: [],
     }),
-    "Укажите стоимость (число ≥ 0)",
+    "Описание не длиннее 256 символов",
   );
   assert.equal(
     validateSewingOperationDraft({
       name: "Сборка",
-      cost: "10,00",
-      quantity_per_item: "0",
-      duration_seconds: "0",
-      folder_id: null,
-      work_center_ids: [],
-    }),
-    "Укажите количество операций на 1 изделие (целое ≥ 1)",
-  );
-  assert.equal(
-    validateSewingOperationDraft({
-      name: "Сборка",
-      cost: "10,00",
-      quantity_per_item: "1",
-      duration_seconds: "",
-      folder_id: null,
-      work_center_ids: [],
-    }),
-    "Укажите время выполнения в секундах (целое ≥ 0)",
-  );
-  assert.equal(
-    validateSewingOperationDraft({
-      name: "Сборка",
-      cost: "10,00",
-      quantity_per_item: "2",
-      duration_seconds: "90",
+      description: "шов",
       folder_id: null,
       work_center_ids: [3],
     }),
@@ -142,9 +114,7 @@ test("filterSewingOperations matches name", () => {
     {
       id: 1,
       name: "Базовая сборка",
-      cost: "100.00",
-      quantity_per_item: 1,
-      duration_seconds: 60,
+      description: null,
       folder_id: null,
       sort_order: 0,
       work_center_ids: [],
@@ -154,9 +124,7 @@ test("filterSewingOperations matches name", () => {
     {
       id: 2,
       name: "Отстрочка",
-      cost: "50.00",
-      quantity_per_item: 2,
-      duration_seconds: 30,
+      description: "кант",
       folder_id: null,
       sort_order: 1,
       work_center_ids: [1],
@@ -191,9 +159,7 @@ test("buildSewingCatalogTreeRows folders then ops by sort_order", () => {
     {
       id: 10,
       name: "Op root",
-      cost: "1",
-      quantity_per_item: 1,
-      duration_seconds: 0,
+      description: null,
       folder_id: null,
       sort_order: 0,
       work_center_ids: [],
@@ -203,9 +169,7 @@ test("buildSewingCatalogTreeRows folders then ops by sort_order", () => {
     {
       id: 11,
       name: "Op child",
-      cost: "1",
-      quantity_per_item: 1,
-      duration_seconds: 0,
+      description: null,
       folder_id: 2,
       sort_order: 0,
       work_center_ids: [],

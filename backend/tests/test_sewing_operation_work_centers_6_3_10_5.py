@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from decimal import Decimal
-
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
@@ -61,14 +59,12 @@ def test_sewing_op_equipment_link_survives_crud_without_assembly_fields() -> Non
                 "/sewing-operations",
                 json={
                     "name": "Регресс шов",
-                    "cost": "15.00",
                     "work_center_ids": [wc_id],
                 },
             )
             assert created.status_code == 201, created.text
             body = created.json()
             assert body["work_center_ids"] == [wc_id]
-            assert Decimal(body["cost"]) == Decimal("15.00")
             # catalog payload stays flat; no routing/TC fields
             assert "work_center_id" not in body
     finally:

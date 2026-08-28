@@ -23,9 +23,7 @@ import type { WorkCenter } from "@/lib/shop-routings";
 function emptyDraft(folderId: number | null = null): SewingOperationCreateDraft {
   return {
     name: "",
-    cost: "",
-    quantity_per_item: "1",
-    duration_seconds: "0",
+    description: "",
     folder_id: folderId,
     work_center_ids: [],
   };
@@ -154,38 +152,13 @@ export function SewingOperationCreateDrawer({
                   disabled={saving}
                 />
               </Field>
-              <Field label="Стоимость" required>
+              <Field label="Описание">
                 <Input
-                  required
-                  inputMode="decimal"
-                  value={draft.cost}
-                  onChange={(event) => update("cost", event.target.value)}
+                  maxLength={256}
+                  value={draft.description}
+                  onChange={(event) => update("description", event.target.value)}
                   disabled={saving}
-                  placeholder="0,00"
-                />
-              </Field>
-              <Field label="Количество операций на 1 изделие" required>
-                <Input
-                  required
-                  inputMode="numeric"
-                  value={draft.quantity_per_item}
-                  onChange={(event) =>
-                    update("quantity_per_item", event.target.value)
-                  }
-                  disabled={saving}
-                  placeholder="1"
-                />
-              </Field>
-              <Field label="Время выполнения операции, сек" required>
-                <Input
-                  required
-                  inputMode="numeric"
-                  value={draft.duration_seconds}
-                  onChange={(event) =>
-                    update("duration_seconds", event.target.value)
-                  }
-                  disabled={saving}
-                  placeholder="0"
+                  placeholder="Необязательно"
                 />
               </Field>
               <Field label="Оборудование (цех Пошив)">

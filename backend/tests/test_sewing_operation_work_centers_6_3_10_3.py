@@ -80,7 +80,6 @@ def test_sewing_operation_work_center_ids_create_update_and_reject() -> None:
                 "/sewing-operations",
                 json={
                     "name": "Стачивание бокового шва",
-                    "cost": "50.00",
                     "work_center_ids": [sewing_wc_id],
                 },
             )
@@ -121,7 +120,6 @@ def test_sewing_operation_work_center_ids_create_update_and_reject() -> None:
                 "/sewing-operations",
                 json={
                     "name": "Плохой станок",
-                    "cost": "10.00",
                     "work_center_ids": [cutting_wc_id],
                 },
             )

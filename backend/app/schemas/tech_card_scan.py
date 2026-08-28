@@ -76,6 +76,7 @@ class TechCardScanStageRead(BaseModel):
 class TechCardScanRead(BaseModel):
     technical_card_id: int
     number: str
+    display_number: str | None = None
     status: str
     wip_status: str
     wip_status_label: str

@@ -94,6 +94,7 @@ from app.models.stock import (
     StockDocumentType,
     StockInventoryLine,
     StockLedgerLine,
+    StockTransferLine,
 )
 from app.models.tech_operation import TechOperation, TechOperationRequiredMaterial
 from app.models.production_stage import ProductionStage
@@ -125,6 +126,7 @@ from app.models.technical_card import (
     TechnicalCardMedia,
     TechnicalCardOperationLine,
     TechnicalCardOperationLineSourceKind,
+    TechnicalCardOrderGroup,
     TechnicalCardStageResult,
     TechnicalCardStageResultStatus,
     TechnicalCardStatus,
@@ -261,6 +263,7 @@ __all__ = [
     "StockDocumentType",
     "StockInventoryLine",
     "StockLedgerLine",
+    "StockTransferLine",
     "ProductionStage",
     "ProductionOrder",
     "ProductionOrderStatus",
@@ -285,6 +288,7 @@ __all__ = [
     "TechnicalCardMedia",
     "TechnicalCardOperationLine",
     "TechnicalCardOperationLineSourceKind",
+    "TechnicalCardOrderGroup",
     "TechnicalCardStageResult",
     "TechnicalCardStageResultStatus",
     "TechnicalCardStatus",

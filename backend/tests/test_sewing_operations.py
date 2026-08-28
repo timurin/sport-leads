@@ -1,5 +1,3 @@
-from decimal import Decimal
-
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
@@ -34,23 +32,22 @@ def test_sewing_operations_crud_and_unique_name() -> None:
                 "/sewing-operations",
                 json={
                     "name": " Базовая сборка ",
-                    "cost": "120.50",
-                    "quantity_per_item": 2,
-                    "duration_seconds": 125,
+                    "description": "  шов  ",
                 },
             )
             assert created.status_code == 201, created.text
             body = created.json()
             assert body["name"] == "Базовая сборка"
-            assert Decimal(body["cost"]) == Decimal("120.50")
-            assert body["quantity_per_item"] == 2
-            assert body["duration_seconds"] == 125
+            assert body["description"] == "шов"
+            assert "cost" not in body
+            assert "quantity_per_item" not in body
+            assert "duration_seconds" not in body
             assert body["work_center_ids"] == []
             operation_id = body["id"]
 
             duplicate = client.post(
                 "/sewing-operations",
-                json={"name": "Базовая сборка", "cost": "10.00"},
+                json={"name": "Базовая сборка"},
             )
             assert duplicate.status_code == 409
 
@@ -64,30 +61,16 @@ def test_sewing_operations_crud_and_unique_name() -> None:
 
             patched = client.patch(
                 f"/sewing-operations/{operation_id}",
-                json={"cost": "130.00", "quantity_per_item": 3, "duration_seconds": 90},
+                json={"description": "обновлено"},
             )
             assert patched.status_code == 200, patched.text
-            assert Decimal(patched.json()["cost"]) == Decimal("130.00")
-            assert patched.json()["quantity_per_item"] == 3
-            assert patched.json()["duration_seconds"] == 90
+            assert patched.json()["description"] == "обновлено"
 
-            negative = client.post(
+            too_long = client.post(
                 "/sewing-operations",
-                json={"name": "Брак", "cost": "-1"},
+                json={"name": "Брак", "description": "x" * 257},
             )
-            assert negative.status_code == 422
-
-            zero_qty = client.post(
-                "/sewing-operations",
-                json={"name": "Брак", "cost": "1", "quantity_per_item": 0},
-            )
-            assert zero_qty.status_code == 422
-
-            negative_duration = client.post(
-                "/sewing-operations",
-                json={"name": "Брак", "cost": "1", "duration_seconds": -5},
-            )
-            assert negative_duration.status_code == 422
+            assert too_long.status_code == 422
 
             deleted = client.delete(f"/sewing-operations/{operation_id}")
             assert deleted.status_code == 204

@@ -128,7 +128,7 @@ def _seed_order_with_card(db: Session) -> tuple[int, int]:
     )
     db.add(item)
     db.flush()
-    sewing = SewingOperation(name="Строчка", cost=Decimal("50"), duration_seconds=120)
+    sewing = SewingOperation(name="Строчка")
     db.add(sewing)
     db.flush()
     db.add(

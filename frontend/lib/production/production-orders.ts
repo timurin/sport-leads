@@ -4,7 +4,8 @@ import type { StatusBadgeTone } from "@/components/ui/status-badge";
 
 export type ProductionOrderListItem = {
   id: number;
-  sales_order_id: number;
+  sales_order_id: number | null;
+  order_group_id: number | null;
   sales_order_number: string | null;
   number: string;
   order_seq: number;
@@ -37,7 +38,8 @@ export type ProductionBatch = {
 
 export type ProductionOrderDetail = {
   id: number;
-  sales_order_id: number;
+  sales_order_id: number | null;
+  order_group_id: number | null;
   sales_order_number: string | null;
   number: string;
   order_seq: number;
@@ -203,7 +205,8 @@ export function filterProductionOrdersClient(
     (row) =>
       row.number.toLocaleLowerCase("ru").includes(needle) ||
       (row.sales_order_number ?? "").toLocaleLowerCase("ru").includes(needle) ||
-      String(row.sales_order_id).includes(needle),
+      String(row.sales_order_id ?? "").includes(needle) ||
+      String(row.order_group_id ?? "").includes(needle),
   );
 }
 
@@ -246,7 +249,8 @@ export async function fetchProductionOrder(
 }
 
 export async function createProductionOrderApi(payload: {
-  sales_order_id: number;
+  sales_order_id?: number;
+  order_group_id?: number;
   notes?: string | null;
 }): Promise<ProductionOrderDetail> {
   const response = await fetch(`${apiBaseUrl()}/production-orders`, {

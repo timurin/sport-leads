@@ -19,6 +19,7 @@ PERM_SEWING_CABINET_READ_OWN = "sewing_cabinet.read_own"
 PERM_SEWING_CABINET_READ_ANY = "sewing_cabinet.read_any"
 PERM_SEWING_CABINET_WRITE = "sewing_cabinet.write"
 PERM_LEADS_CARD_FIELDS_MANAGE = "leads.card_fields.manage"
+PERM_TECHNICAL_CARDS_CREATE = "technical_cards.create"
 
 MVP_PERMISSIONS: tuple[tuple[str, str], ...] = (
     (PERM_SIZE_GRIDS_WRITE, "Create/update/delete size grids and rows"),
@@ -38,6 +39,10 @@ MVP_PERMISSIONS: tuple[tuple[str, str], ...] = (
         PERM_LEADS_CARD_FIELDS_MANAGE,
         "Create and delete extra fields on the lead card",
     ),
+    (
+        PERM_TECHNICAL_CARDS_CREATE,
+        "Create technical cards (generate / standalone)",
+    ),
 )
 
 MVP_ROLES: tuple[tuple[str, str, tuple[str, ...]], ...] = (
@@ -56,6 +61,7 @@ MVP_ROLES: tuple[tuple[str, str, tuple[str, ...]], ...] = (
             PERM_SEWING_CABINET_READ_ANY,
             PERM_SEWING_CABINET_WRITE,
             PERM_LEADS_CARD_FIELDS_MANAGE,
+            PERM_TECHNICAL_CARDS_CREATE,
         ),
     ),
     ("catalog_editor", "Catalog editor", (PERM_SIZE_GRIDS_WRITE,)),

@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  assemblyOperationLineFieldPatch,
   buildProductModelCatalogTreeRows,
   compareProductModelsByListSort,
   filterProductModels,
@@ -360,6 +361,51 @@ test("validateAssemblyVariantDraft and operation line draft", () => {
   assert.equal(
     validateAssemblyOperationLineDraft({ operation_name: "Отстрочка", cost: "50,00" }),
     null,
+  );
+});
+
+const sampleLine = {
+  quantity_per_item: 1,
+  cost: "10.00",
+  duration_seconds: 0,
+};
+
+test("assemblyOperationLineFieldPatch qty/cost/time for 26.10.6", () => {
+  assert.deepEqual(
+    assemblyOperationLineFieldPatch(sampleLine, "quantity_per_item", "2"),
+    { ok: true, patch: { quantity_per_item: 2 } },
+  );
+  assert.deepEqual(
+    assemblyOperationLineFieldPatch(sampleLine, "quantity_per_item", "1"),
+    { ok: true, patch: null },
+  );
+  assert.equal(
+    assemblyOperationLineFieldPatch(sampleLine, "quantity_per_item", "0").ok,
+    false,
+  );
+  assert.deepEqual(
+    assemblyOperationLineFieldPatch(sampleLine, "cost", "12,5"),
+    { ok: true, patch: { cost: "12.50" } },
+  );
+  assert.deepEqual(
+    assemblyOperationLineFieldPatch(sampleLine, "cost", "10"),
+    { ok: true, patch: null },
+  );
+  assert.equal(
+    assemblyOperationLineFieldPatch(sampleLine, "cost", "-1").ok,
+    false,
+  );
+  assert.deepEqual(
+    assemblyOperationLineFieldPatch(sampleLine, "duration_seconds", "90"),
+    { ok: true, patch: { duration_seconds: 90 } },
+  );
+  assert.deepEqual(
+    assemblyOperationLineFieldPatch(sampleLine, "duration_seconds", "0"),
+    { ok: true, patch: null },
+  );
+  assert.equal(
+    assemblyOperationLineFieldPatch(sampleLine, "duration_seconds", "").ok,
+    false,
   );
 });
 

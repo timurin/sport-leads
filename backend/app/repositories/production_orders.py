@@ -11,6 +11,7 @@ from app.models.production_order import (
     ProductionOrder,
 )
 from app.models.sales import SalesOrder
+from app.models.technical_card import TechnicalCardOrderGroup
 
 
 def list_production_orders(
@@ -29,8 +30,16 @@ def list_production_orders(
         .scalar_subquery()
     )
     statement = (
-        select(ProductionOrder, SalesOrder.number, batch_count)
+        select(
+            ProductionOrder,
+            func.coalesce(SalesOrder.number, TechnicalCardOrderGroup.order_number),
+            batch_count,
+        )
         .outerjoin(SalesOrder, SalesOrder.id == ProductionOrder.sales_order_id)
+        .outerjoin(
+            TechnicalCardOrderGroup,
+            TechnicalCardOrderGroup.id == ProductionOrder.order_group_id,
+        )
     )
     if sales_order_id is not None:
         statement = statement.where(ProductionOrder.sales_order_id == sales_order_id)
@@ -41,7 +50,10 @@ def list_production_orders(
         statement = statement.where(
             or_(
                 func.lower(ProductionOrder.number).like(pattern),
-                func.lower(SalesOrder.number).like(pattern),
+                func.lower(func.coalesce(SalesOrder.number, "")).like(pattern),
+                func.lower(
+                    func.coalesce(TechnicalCardOrderGroup.order_number, "")
+                ).like(pattern),
             )
         )
     statement = (
@@ -78,6 +90,15 @@ def next_order_seq(db: Session, sales_order_id: int) -> int:
     current = db.scalar(
         select(func.max(ProductionOrder.order_seq)).where(
             ProductionOrder.sales_order_id == sales_order_id
+        )
+    )
+    return int(current or 0) + 1
+
+
+def next_order_seq_for_group(db: Session, order_group_id: int) -> int:
+    current = db.scalar(
+        select(func.max(ProductionOrder.order_seq)).where(
+            ProductionOrder.order_group_id == order_group_id
         )
     )
     return int(current or 0) + 1

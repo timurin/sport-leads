@@ -100,7 +100,9 @@ export async function moveShopStageKanbanCardAction(input: {
     if (input.toStageCode !== "unassigned") {
       revalidatePath(`/production/stages/${input.toStageCode}`);
     }
-    revalidatePath(`/sales/orders/${card.sales_order_id}`);
+    if (card.sales_order_id != null) {
+      revalidatePath(`/sales/orders/${card.sales_order_id}`);
+    }
 
     return {
       ok: true,

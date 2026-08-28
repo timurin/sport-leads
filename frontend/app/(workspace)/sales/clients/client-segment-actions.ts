@@ -78,7 +78,7 @@ export async function createClientRecord(payload: {
   phone: string;
   inn: string;
   tags: string[];
-}): Promise<{ ok: true; id: number } | { ok: false; message: string }> {
+}): Promise<{ ok: true; id: number; label: string } | { ok: false; message: string }> {
   const response = await fetch(`${apiBaseUrl()}/clients`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -91,11 +91,16 @@ export async function createClientRecord(payload: {
     cache: "no-store",
   });
   if (!response.ok) return { ok: false, message: await readError(response) };
-  const created = (await response.json()) as { id: number };
+  const created = (await response.json()) as {
+    id: number;
+    company_name: string | null;
+    contact_name: string;
+  };
   if (payload.tags.length > 0) {
     const segments = await saveClientSegments(created.id, payload.tags);
     if (!segments.ok) return segments;
   }
   revalidatePath("/sales/clients");
-  return { ok: true, id: created.id };
+  const label = (created.company_name ?? "").trim() || created.contact_name;
+  return { ok: true, id: created.id, label };
 }

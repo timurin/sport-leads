@@ -28,6 +28,7 @@ import {
   techCardPositionLabel,
   techCardShopStageStatus,
 } from "@/lib/production/tech-cards";
+import { techCardVisibleNumber } from "@/lib/production/tech-card-display";
 import type { ApiTechnicalCardListItem } from "@/lib/sales/order-tech-cards-api";
 
 const STAGE_STATUS_FILTER_ITEMS: { value: string; label: string }[] = [
@@ -140,7 +141,7 @@ export function ShopStageQueueWorkspace({
                               href={cardHref(card.id)}
                               className="font-medium text-portal-primary hover:underline"
                             >
-                              {card.number}
+                              {techCardVisibleNumber(card)}
                             </Link>
                           </DataTableCell>
                           <DataTableCell>{techCardOrderLabel(card)}</DataTableCell>
@@ -181,7 +182,7 @@ export function ShopStageQueueWorkspace({
                         href={cardHref(card.id)}
                         className="font-semibold text-portal-primary hover:underline"
                       >
-                        {card.number}
+                        {techCardVisibleNumber(card)}
                       </Link>
                       <StatusBadge
                         size="compact"

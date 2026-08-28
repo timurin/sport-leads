@@ -464,6 +464,32 @@ export async function deleteAssemblyOperationLine(
   return { ok: true };
 }
 
+export async function updateAssemblyOperationLine(
+  modelId: number,
+  variantId: number,
+  lineId: number,
+  payload: {
+    cost?: string;
+    quantity_per_item?: number;
+    duration_seconds?: number;
+  },
+): Promise<AssemblyActionResult> {
+  const response = await fetch(
+    `${apiBaseUrl()}/product-models/${modelId}/assembly-variants/${variantId}/operation-lines/${lineId}`,
+    {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(payload),
+      cache: "no-store",
+    },
+  );
+  if (!response.ok) {
+    return { ok: false, message: await readError(response) };
+  }
+  revalidateModel(modelId);
+  return { ok: true };
+}
+
 export type RoutingActionResult =
   | { ok: true }
   | { ok: false; message: string };

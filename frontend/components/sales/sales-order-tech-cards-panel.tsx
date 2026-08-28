@@ -2,6 +2,7 @@
 
 import { ClipboardList, ExternalLink, Plus, RefreshCw } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState, useTransition, type ReactNode } from "react";
 
 import {
@@ -9,6 +10,7 @@ import {
   loadOrderTechCardsState,
   type OrderTechCardsState,
 } from "@/app/(workspace)/sales/orders/[orderId]/order-tech-card-actions";
+import { saveOrderTechCardsPlannedCount } from "@/app/(workspace)/sales/orders/[orderId]/order-tech-cards-planned-actions";
 import { Button, IconButton } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { SectionCard } from "@/components/ui/section-card";
@@ -115,25 +117,57 @@ export function SalesOrderTechCardsPanel({
 }) {
   const [state, setState] = useState<OrderTechCardsState | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [plannedDraft, setPlannedDraft] = useState(
+    order.techCardsPlannedCount == null ? "" : String(order.techCardsPlannedCount),
+  );
   const [isPending, startTransition] = useTransition();
+  const router = useRouter();
+
+  const plannedCount = order.techCardsPlannedCount;
 
   const refresh = useCallback(() => {
     startTransition(async () => {
-      const next = await loadOrderTechCardsState(order.id);
+      const next = await loadOrderTechCardsState(order.id, plannedCount);
       setState(next);
       setError(next.ok ? null : next.message);
     });
-  }, [order.id]);
+  }, [order.id, plannedCount]);
 
   useEffect(() => {
     refresh();
   }, [refresh]);
 
+  useEffect(() => {
+    setPlannedDraft(
+      order.techCardsPlannedCount == null ? "" : String(order.techCardsPlannedCount),
+    );
+  }, [order.techCardsPlannedCount]);
+
   const onGenerate = () => {
     startTransition(async () => {
-      const next = await generateOrderTechCardsAction(order.id);
+      const next = await generateOrderTechCardsAction(order.id, plannedCount);
       setState(next);
       setError(next.ok ? null : next.message);
+    });
+  };
+
+  const onSavePlanned = () => {
+    const trimmed = plannedDraft.trim();
+    const nextValue = trimmed === "" ? null : Number(trimmed);
+    if (nextValue != null && (!Number.isInteger(nextValue) || nextValue < 1)) {
+      setError("Плановое количество ТК — целое число ≥ 1 или пусто");
+      return;
+    }
+    startTransition(async () => {
+      const saved = await saveOrderTechCardsPlannedCount(order.id, nextValue);
+      if (!saved.ok) {
+        setError(saved.message);
+        return;
+      }
+      setError(null);
+      router.refresh();
+      const next = await loadOrderTechCardsState(order.id, saved.order.techCardsPlannedCount);
+      setState(next);
     });
   };
 
@@ -146,13 +180,37 @@ export function SalesOrderTechCardsPanel({
     <SectionCard
       title="Технические карты"
       afterTitle={summary ? <ReadinessBar value={summary.readinessPercent} /> : null}
-      description="Одна ТК на производимую позицию (PRODUCT). Данные из API `9.2.1` — без демо-подстановки."
+      description={
+        summary?.createdVsPlannedLabel
+          ? `Создано ${summary.createdVsPlannedLabel}. Одна ТК на производимую позицию (PRODUCT). План не блокирует формирование.`
+          : "Одна ТК на производимую позицию (PRODUCT). Данные из API `9.2.1` — без демо-подстановки."
+      }
       size="compact"
       className="min-w-0"
       collapsed={collapsed}
       actions={(
         <div className="flex flex-wrap items-center gap-1">
           {headerActions}
+          <label className="flex items-center gap-1 text-[11px] text-portal-muted">
+            План ТК
+            <input
+              type="number"
+              min={1}
+              inputMode="numeric"
+              value={plannedDraft}
+              disabled={isPending}
+              onChange={(event) => setPlannedDraft(event.target.value)}
+              onBlur={onSavePlanned}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  event.currentTarget.blur();
+                }
+              }}
+              aria-label="Плановое количество техкарт"
+              data-order-tech-cards-planned-count
+              className="h-portal-control-compact w-16 rounded-portal-sm border border-portal-border bg-portal-surface px-2 text-portal-caption tabular-nums text-portal-text outline-none focus:border-portal-primary"
+            />
+          </label>
           <IconButton
             label="Обновить список техкарт"
             variant="secondary"

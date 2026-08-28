@@ -31,13 +31,14 @@ if TYPE_CHECKING:
 
 
 class StockDocumentType(str, Enum):
-    """Movement types including FG subtypes and inventory recount (`12.4`)."""
+    """Movement types including FG, inventory recount (`12.4`), transfer (`12.5.1`)."""
 
     RECEIPT = "receipt"
     ISSUE = "issue"
     FG_RECEIPT = "fg_receipt"
     FG_ISSUE = "fg_issue"
     INVENTORY = "inventory"
+    TRANSFER = "transfer"
 
 
 class StockDocumentStatus(str, Enum):
@@ -47,22 +48,32 @@ class StockDocumentStatus(str, Enum):
 
 
 class StockDocument(Base):
-    """Stock movement header (Приход / Списание / FG / inventory). Balance SoT is ledger only."""
+    """Stock movement header (Приход / Списание / FG / inventory / transfer). Balance SoT is ledger only."""
 
     __tablename__ = "stock_documents"
     __table_args__ = (
         UniqueConstraint("number", name="uq_stock_documents_number"),
         Index("ix_stock_documents_warehouse_id", "warehouse_id"),
+        Index("ix_stock_documents_destination_warehouse_id", "destination_warehouse_id"),
         Index("ix_stock_documents_status", "status"),
         Index("ix_stock_documents_doc_type", "doc_type"),
         Index("ix_stock_documents_posted_at", "posted_at"),
         CheckConstraint(
-            "doc_type IN ('receipt', 'issue', 'fg_receipt', 'fg_issue', 'inventory')",
+            "doc_type IN ('receipt', 'issue', 'fg_receipt', 'fg_issue', 'inventory', 'transfer')",
             name="ck_stock_documents_doc_type",
         ),
         CheckConstraint(
             "status IN ('draft', 'posted', 'cancelled')",
             name="ck_stock_documents_status",
+        ),
+        CheckConstraint(
+            "("
+            "doc_type <> 'transfer' AND destination_warehouse_id IS NULL"
+            ") OR ("
+            "doc_type = 'transfer' AND destination_warehouse_id IS NOT NULL "
+            "AND destination_warehouse_id <> warehouse_id"
+            ")",
+            name="ck_stock_documents_transfer_destination",
         ),
     )
 
@@ -78,6 +89,10 @@ class StockDocument(Base):
     warehouse_id: Mapped[int] = mapped_column(
         ForeignKey("warehouses.id", ondelete="RESTRICT"),
         nullable=False,
+    )
+    destination_warehouse_id: Mapped[int | None] = mapped_column(
+        ForeignKey("warehouses.id", ondelete="RESTRICT"),
+        nullable=True,
     )
     posted_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True),
@@ -106,7 +121,12 @@ class StockDocument(Base):
         onupdate=func.now(),
     )
 
-    warehouse: Mapped[Warehouse] = relationship()
+    warehouse: Mapped[Warehouse] = relationship(
+        foreign_keys="StockDocument.warehouse_id",
+    )
+    destination_warehouse: Mapped[Warehouse | None] = relationship(
+        foreign_keys="StockDocument.destination_warehouse_id",
+    )
     technical_card: Mapped[TechnicalCard | None] = relationship()
     sales_order: Mapped[SalesOrder | None] = relationship()
     ledger_lines: Mapped[list[StockLedgerLine]] = relationship(
@@ -118,6 +138,11 @@ class StockDocument(Base):
         back_populates="stock_document",
         cascade="all, delete-orphan",
         order_by="StockInventoryLine.sequence",
+    )
+    transfer_lines: Mapped[list[StockTransferLine]] = relationship(
+        back_populates="stock_document",
+        cascade="all, delete-orphan",
+        order_by="StockTransferLine.sequence",
     )
 
 
@@ -234,5 +259,52 @@ class StockInventoryLine(Base):
 
     stock_document: Mapped[StockDocument] = relationship(
         back_populates="inventory_lines"
+    )
+    nomenclature: Mapped[Nomenclature] = relationship()
+
+
+class StockTransferLine(Base):
+    """Draft transfer qty (ADR-019 / 12.5.1). Not a ledger row until post."""
+
+    __tablename__ = "stock_transfer_lines"
+    __table_args__ = (
+        UniqueConstraint(
+            "stock_document_id",
+            "nomenclature_id",
+            name="uq_stock_transfer_lines_document_nomenclature",
+        ),
+        UniqueConstraint(
+            "stock_document_id",
+            "sequence",
+            name="uq_stock_transfer_lines_document_sequence",
+        ),
+        Index("ix_stock_transfer_lines_nomenclature_id", "nomenclature_id"),
+        CheckConstraint("sequence >= 1", name="ck_stock_transfer_lines_sequence"),
+        CheckConstraint(
+            "quantity > 0",
+            name="ck_stock_transfer_lines_quantity_positive",
+        ),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    stock_document_id: Mapped[int] = mapped_column(
+        ForeignKey("stock_documents.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    sequence: Mapped[int] = mapped_column(Integer, nullable=False)
+    nomenclature_id: Mapped[int] = mapped_column(
+        ForeignKey("nomenclatures.id", ondelete="RESTRICT"),
+        nullable=False,
+    )
+    quantity: Mapped[Decimal] = mapped_column(Numeric(14, 3), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+    )
+
+    stock_document: Mapped[StockDocument] = relationship(
+        back_populates="transfer_lines"
     )
     nomenclature: Mapped[Nomenclature] = relationship()

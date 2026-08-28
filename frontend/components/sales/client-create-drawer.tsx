@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 
 import {
   createClientRecord,
@@ -23,9 +23,16 @@ import { validateInn } from "@/lib/sales/client-requisites";
 type Props = {
   open: boolean;
   onClose: () => void;
+  initialContactName?: string;
+  onCreated?: (client: { id: number; label: string }) => void;
 };
 
-export function ClientCreateDrawer({ open, onClose }: Props) {
+export function ClientCreateDrawer({
+  open,
+  onClose,
+  initialContactName = "",
+  onCreated,
+}: Props) {
   const router = useRouter();
   const [contactName, setContactName] = useState("");
   const [companyName, setCompanyName] = useState("");
@@ -38,7 +45,7 @@ export function ClientCreateDrawer({ open, onClose }: Props) {
   const [pending, startTransition] = useTransition();
 
   const reset = () => {
-    setContactName("");
+    setContactName(initialContactName.trim());
     setCompanyName("");
     setPhone("");
     setInn("");
@@ -47,6 +54,13 @@ export function ClientCreateDrawer({ open, onClose }: Props) {
     setError(null);
     setCandidates([]);
   };
+
+  useEffect(() => {
+    if (open) {
+      setContactName(initialContactName.trim());
+      setError(null);
+    }
+  }, [open, initialContactName]);
 
   const refreshDuplicates = () => {
     startTransition(async () => {
@@ -98,6 +112,13 @@ export function ClientCreateDrawer({ open, onClose }: Props) {
             }
             reset();
             onClose();
+            if (onCreated) {
+              onCreated({
+                id: result.id,
+                label: result.label,
+              });
+              return;
+            }
             router.push(`/sales/clients/${result.id}`);
             router.refresh();
           });

@@ -123,9 +123,9 @@ def _append_sewing_operation_lines(
             assembly_variant_id=variant.id,
             sequence=start_sequence + offset,
             operation_name=operation.name,
-            cost=operation.cost,
-            quantity_per_item=operation.quantity_per_item,
-            duration_seconds=operation.duration_seconds,
+            cost=Decimal("0"),
+            quantity_per_item=1,
+            duration_seconds=0,
             sewing_operation_id=operation.id,
         )
         repo.add_operation_line(db, line)

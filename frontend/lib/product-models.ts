@@ -1,4 +1,8 @@
 import { rasterImageMimeOrNull, sameOriginApiMediaUrl } from "./api-media.ts";
+import {
+  parseDurationSecondsInput,
+  parseQuantityPerItemInput,
+} from "./sewing-operations.ts";
 
 export type ProductModelSizeType = "men" | "women" | "kids";
 export type ProductModelStatus = "draft" | "active" | "archived";
@@ -721,6 +725,55 @@ export function parseAssemblyCostInput(raw: string): string | null {
   const amount = Number(normalized);
   if (!Number.isFinite(amount) || amount < 0) return null;
   return amount.toFixed(2);
+}
+
+export type AssemblyOperationLineField =
+  | "quantity_per_item"
+  | "cost"
+  | "duration_seconds";
+
+export type AssemblyOperationLineEconomicsPatch = {
+  quantity_per_item?: number;
+  cost?: string;
+  duration_seconds?: number;
+};
+
+/** Parse one inline economics cell and return a slim PATCH body, or null if unchanged. */
+export function assemblyOperationLineFieldPatch(
+  line: Pick<
+    AssemblyOperationLine,
+    "quantity_per_item" | "cost" | "duration_seconds"
+  >,
+  field: AssemblyOperationLineField,
+  raw: string,
+):
+  | { ok: true; patch: AssemblyOperationLineEconomicsPatch | null }
+  | { ok: false; message: string } {
+  if (field === "quantity_per_item") {
+    const qty = parseQuantityPerItemInput(raw);
+    if (qty == null) {
+      return { ok: false, message: "Количество — целое число ≥ 1" };
+    }
+    const current = Math.max(1, Number(line.quantity_per_item) || 1);
+    if (qty === current) return { ok: true, patch: null };
+    return { ok: true, patch: { quantity_per_item: qty } };
+  }
+  if (field === "cost") {
+    const cost = parseAssemblyCostInput(raw);
+    if (cost == null) {
+      return { ok: false, message: "Цена — число ≥ 0" };
+    }
+    const current = parseAssemblyCostInput(String(line.cost));
+    if (current === cost) return { ok: true, patch: null };
+    return { ok: true, patch: { cost } };
+  }
+  const duration = parseDurationSecondsInput(raw);
+  if (duration == null) {
+    return { ok: false, message: "Время — целое число секунд ≥ 0" };
+  }
+  const current = Math.max(0, Number(line.duration_seconds) || 0);
+  if (duration === current) return { ok: true, patch: null };
+  return { ok: true, patch: { duration_seconds: duration } };
 }
 
 export function validateAssemblyVariantDraft(

@@ -35,7 +35,7 @@ Stage `20.3` требует единого UX внутренней staff-пер�
 | Вопрос | Решение MVP (`20.3`) |
 |--------|----------------------|
 | Shared **UI shell**? | **Да.** Вынести/переиспользовать chrome `OrderCollaborationPanel` (лента, composer, @mention, микрозадачи) как общий компонент; hosts: lead card, order «Коммуникация», TC panel. |
-| Shared **thread SoT**? | **Да, один домен.** Не второй чат на `LeadMessage`. Расширить `CollaborationThread`: якорь **XOR** — ровно одно из `sales_order_id` \| `lead_id`. |
+| Shared **thread SoT**? | **Да, один домен.** Не второй чат на `LeadMessage`. Расширить `CollaborationThread`: якорь **XOR** — ровно одно из `sales_order_id` \| `lead_id` \| `order_group_id` (`28.5.4`). |
 | Один thread на convert lead→order? | **Нет auto-merge в MVP.** Thread лида остаётся на `lead_id`; thread заказа — отдельный на `sales_order_id`. Deep-link / «история на лиде» — UI only. Merge/copy — отдельный later microtask if owner asks. |
 | Заказ без лида (`0.4`) | Только order-anchored thread (как сегодня). |
 

@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 
 import { WarehouseMovementDocumentCard } from "@/components/warehouse/warehouse-movement-document-card";
 import { PageLayout } from "@/components/layout/page-layout";
+import { getNomenclature } from "@/lib/nomenclature";
 import { getStockDocument } from "@/lib/stock-documents";
 import { getWarehouses } from "@/lib/warehouses";
 
@@ -21,10 +22,16 @@ export default async function WarehouseMovementDocumentPage({
     notFound();
   }
 
-  const warehouses = await getWarehouses({ limit: 500 });
+  const [warehouses, nomenclatureRows] = await Promise.all([
+    getWarehouses({ limit: 500 }),
+    getNomenclature(),
+  ]);
+  const warehouseNames: Record<number, string> = {};
+  for (const warehouse of warehouses) {
+    warehouseNames[warehouse.id] = warehouse.name;
+  }
   const warehouseName =
-    warehouses.find((row) => row.id === document.warehouse_id)?.name ??
-    `Склад #${document.warehouse_id}`;
+    warehouseNames[document.warehouse_id] ?? `Склад #${document.warehouse_id}`;
 
   const nomenclatureNames: Record<number, string> = {};
   for (const line of document.ledger_lines) {
@@ -35,13 +42,23 @@ export default async function WarehouseMovementDocumentPage({
     const name = line.nomenclature_name?.trim();
     if (name) nomenclatureNames[line.nomenclature_id] = name;
   }
+  for (const line of document.transfer_lines ?? []) {
+    const name = line.nomenclature_name?.trim();
+    if (name) nomenclatureNames[line.nomenclature_id] = name;
+  }
+
+  const nomenclatures = nomenclatureRows
+    .filter((row) => row.is_active && row.nomenclature_type !== "SERVICE")
+    .map((row) => ({ id: row.id, name: row.name }));
 
   return (
     <PageLayout className="flex min-h-0 flex-1 flex-col">
       <WarehouseMovementDocumentCard
         document={document}
         warehouseName={warehouseName}
+        warehouseNames={warehouseNames}
         nomenclatureNames={nomenclatureNames}
+        nomenclatures={nomenclatures}
       />
     </PageLayout>
   );

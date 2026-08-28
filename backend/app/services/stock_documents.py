@@ -25,6 +25,7 @@ from app.schemas.stock import (
     StockDocumentRead,
     StockInventoryLineRead,
     StockLedgerLineRead,
+    StockTransferLineRead,
 )
 
 
@@ -59,7 +60,10 @@ _FG_TYPES = frozenset(
     }
 )
 _ALL_DOC_TYPES = _RECEIPT_TYPES | _ISSUE_TYPES
-_LISTABLE_DOC_TYPES = _ALL_DOC_TYPES | {StockDocumentType.INVENTORY.value}
+_LISTABLE_DOC_TYPES = _ALL_DOC_TYPES | {
+    StockDocumentType.INVENTORY.value,
+    StockDocumentType.TRANSFER.value,
+}
 
 
 def _now() -> datetime:
@@ -227,6 +231,10 @@ def post_stock_document(db: Session, document_id: int) -> StockDocument:
         raise StockDocumentValidationError(
             "Инвентаризацию нужно проводить отдельной операцией"
         )
+    if document.doc_type == StockDocumentType.TRANSFER.value:
+        raise StockDocumentValidationError(
+            "Перемещение нужно проводить отдельной операцией"
+        )
     if document.status == StockDocumentStatus.POSTED.value:
         raise StockDocumentValidationError("Документ уже проведён")
     if document.status == StockDocumentStatus.CANCELLED.value:
@@ -262,6 +270,7 @@ def to_stock_document_read(
     names: dict[int, str],
     *,
     include_inventory_lines: bool = False,
+    include_transfer_lines: bool = False,
 ) -> StockDocumentRead:
     inventory_lines: list[StockInventoryLineRead] = []
     if include_inventory_lines:
@@ -277,12 +286,25 @@ def to_stock_document_read(
             )
             for line in document.inventory_lines
         ]
+    transfer_lines: list[StockTransferLineRead] = []
+    if include_transfer_lines:
+        transfer_lines = [
+            StockTransferLineRead(
+                id=line.id,
+                sequence=line.sequence,
+                nomenclature_id=line.nomenclature_id,
+                nomenclature_name=names.get(line.nomenclature_id),
+                quantity=line.quantity,
+            )
+            for line in document.transfer_lines
+        ]
     return StockDocumentRead(
         id=document.id,
         number=document.number,
         doc_type=document.doc_type,
         status=document.status,
         warehouse_id=document.warehouse_id,
+        destination_warehouse_id=document.destination_warehouse_id,
         posted_at=document.posted_at,
         technical_card_id=document.technical_card_id,
         sales_order_id=document.sales_order_id,
@@ -304,6 +326,7 @@ def to_stock_document_read(
             for line in document.ledger_lines
         ],
         inventory_lines=inventory_lines,
+        transfer_lines=transfer_lines,
     )
 
 
@@ -311,10 +334,12 @@ def serialize_stock_document(db: Session, document: StockDocument) -> StockDocum
     """Embed nomenclature display names — one batch lookup (`0.2.7`)."""
     ids = [line.nomenclature_id for line in document.ledger_lines]
     ids.extend(line.nomenclature_id for line in document.inventory_lines)
+    ids.extend(line.nomenclature_id for line in document.transfer_lines)
     return to_stock_document_read(
         document,
         _nomenclature_names_by_ids(db, ids),
         include_inventory_lines=True,
+        include_transfer_lines=True,
     )
 
 
@@ -328,6 +353,11 @@ def serialize_stock_documents(
     ]
     names = _nomenclature_names_by_ids(db, ids)
     return [
-        to_stock_document_read(document, names, include_inventory_lines=False)
+        to_stock_document_read(
+            document,
+            names,
+            include_inventory_lines=False,
+            include_transfer_lines=False,
+        )
         for document in documents
     ]

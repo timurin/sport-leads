@@ -66,9 +66,9 @@ class Specification(Base):
         nullable=False,
     )
     number: Mapped[str] = mapped_column(String(120), nullable=False)
-    sales_order_id: Mapped[int] = mapped_column(
+    sales_order_id: Mapped[int | None] = mapped_column(
         ForeignKey("sales_orders.id", ondelete="RESTRICT"),
-        nullable=False,
+        nullable=True,
     )
     production_order_id: Mapped[int] = mapped_column(
         ForeignKey("production_orders.id", ondelete="RESTRICT"),
@@ -91,7 +91,7 @@ class Specification(Base):
         "ProductionBatch",
         back_populates="specification",
     )
-    sales_order: Mapped[SalesOrder] = relationship("SalesOrder")
+    sales_order: Mapped[SalesOrder | None] = relationship("SalesOrder")
     production_order: Mapped[ProductionOrder] = relationship("ProductionOrder")
     versions: Mapped[list[SpecificationVersion]] = relationship(
         "SpecificationVersion",

@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 
+import { sessionAuthHeaders } from "@/lib/auth/api-headers";
 import {
   fetchOrderTechnicalCards,
   fetchOrderTechnicalCardsPreview,
@@ -23,11 +24,14 @@ export type OrderTechCardsState = {
   reviveCount: number;
 };
 
-async function loadState(orderId: string): Promise<OrderTechCardsState> {
+async function loadState(
+  orderId: string,
+  plannedCount: number | null = null,
+): Promise<OrderTechCardsState> {
   const preview = await fetchOrderTechnicalCardsPreview(orderId);
   const cards = await fetchOrderTechnicalCards(orderId);
   const rows = buildOrderTechCardRows(preview, cards);
-  const summary = buildOrderTechCardsSummary(orderId, rows, cards);
+  const summary = buildOrderTechCardsSummary(orderId, rows, cards, plannedCount);
   return {
     ok: true,
     message: null,
@@ -38,9 +42,12 @@ async function loadState(orderId: string): Promise<OrderTechCardsState> {
   };
 }
 
-export async function loadOrderTechCardsState(orderId: string): Promise<OrderTechCardsState> {
+export async function loadOrderTechCardsState(
+  orderId: string,
+  plannedCount: number | null = null,
+): Promise<OrderTechCardsState> {
   try {
-    return await loadState(orderId);
+    return await loadState(orderId, plannedCount);
   } catch (error) {
     return {
       ok: false,
@@ -55,12 +62,14 @@ export async function loadOrderTechCardsState(orderId: string): Promise<OrderTec
 
 export async function generateOrderTechCardsAction(
   orderId: string,
+  plannedCount: number | null = null,
 ): Promise<OrderTechCardsState & { generated: number }> {
   try {
-    const result = await generateOrderTechnicalCards(orderId);
+    const auth = await sessionAuthHeaders();
+    const result = await generateOrderTechnicalCards(orderId, undefined, auth);
     revalidatePath(`/sales/orders/${orderId}`);
     revalidatePath("/production/tech-cards");
-    const state = await loadState(orderId);
+    const state = await loadState(orderId, plannedCount);
     const generated = result.created.length + result.revived.length;
     return {
       ...state,

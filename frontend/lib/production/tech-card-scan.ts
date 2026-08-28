@@ -37,6 +37,7 @@ export type TechCardScanMaterial = {
 export type TechCardScan = {
   technical_card_id: number;
   number: string;
+  display_number?: string | null;
   status: string;
   wip_status: TechCardWipStatus | string;
   wip_status_label: string;
