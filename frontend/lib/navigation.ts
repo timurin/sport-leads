@@ -465,6 +465,11 @@ export function buildAppSections(
             href: "/settings/catalogs/product-types",
           },
           {
+            id: "detailing",
+            title: "Деталировка",
+            href: "/settings/catalogs/detailing",
+          },
+          {
             id: "size-grids",
             title: "Размерные сетки",
             href: "/settings/catalogs/size-grids",

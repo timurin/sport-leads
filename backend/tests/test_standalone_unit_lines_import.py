@@ -91,7 +91,9 @@ def test_standalone_unit_lines_import_file_without_order_item() -> None:
                 },
             )
             assert imported.status_code == 200, imported.text
-            unit_lines = imported.json()["unit_lines"]
+            body = imported.json()
+            assert Decimal(str(body["quantity"])) == Decimal("3")
+            unit_lines = body["unit_lines"]
             assert len(unit_lines) == 3
             assert unit_lines[0]["personalization"] == "Иванов"
             assert unit_lines[0]["print_number"] == "10"

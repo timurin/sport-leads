@@ -35,6 +35,17 @@ from app.schemas.product_model import (
     ProductModelVersionCreate,
     ProductModelVersionRead,
 )
+from app.schemas.product_model_material import (
+    ProductModelMaterialLineRead,
+    ProductModelMaterialLinesReplace,
+)
+from app.services.detailing import DetailingConflictError, DetailingValidationError
+from app.services.product_model_materials import (
+    ModelMaterialNotFoundError,
+    ModelMaterialValidationError,
+    list_model_material_lines,
+    replace_model_material_lines,
+)
 from app.repositories import assembly_variants as assembly_variants_repo
 from app.services.assembly_variants import (
     AssemblyOperationLineNotFoundError,
@@ -1145,3 +1156,39 @@ def remove_product_model_folder(
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(error)
         ) from error
+
+
+@router.get(
+    "/{model_id}/material-lines",
+    response_model=list[ProductModelMaterialLineRead],
+    operation_id="list_product_model_material_lines",
+)
+def read_product_model_material_lines(
+    model_id: int,
+    kind: str | None = Query(default=None, max_length=32),
+    db: Session = Depends(get_db),
+) -> list[ProductModelMaterialLineRead]:
+    try:
+        return list_model_material_lines(db, model_id, kind=kind)
+    except ModelMaterialNotFoundError as error:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(error)) from error
+
+
+@router.put(
+    "/{model_id}/material-lines",
+    response_model=list[ProductModelMaterialLineRead],
+    operation_id="replace_product_model_material_lines",
+)
+def put_product_model_material_lines(
+    model_id: int,
+    payload: ProductModelMaterialLinesReplace,
+    db: Session = Depends(get_db),
+) -> list[ProductModelMaterialLineRead]:
+    try:
+        return replace_model_material_lines(db, model_id, payload)
+    except ModelMaterialNotFoundError as error:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(error)) from error
+    except (ModelMaterialValidationError, DetailingValidationError) as error:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(error)) from error
+    except DetailingConflictError as error:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(error)) from error

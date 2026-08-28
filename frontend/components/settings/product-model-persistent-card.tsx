@@ -19,6 +19,7 @@ import {
 import { CatalogVersionedCardLayout } from "@/components/entity/catalog-versioned-card-layout";
 import { VersionedWorkspace } from "@/components/entity/versioned-workspace";
 import { AssemblyVariantsBlock } from "@/components/settings/assembly-variants-block";
+import { ProductModelMaterialsBlock } from "@/components/settings/product-model-materials-block";
 import { ProductModelRoutingsBlock } from "@/components/settings/product-model-routings-block";
 import { ProductModelMediaCarousel } from "@/components/settings/product-model-media-carousel";
 import { ProductModelToolbarActions } from "@/components/settings/product-model-toolbar-actions";
@@ -49,6 +50,9 @@ import {
   type ProductModelStatus,
   type ProductModelVersionView,
 } from "@/lib/product-models";
+import type { DetailingItem } from "@/lib/detailing";
+import type { CharacteristicOption } from "@/lib/nomenclature";
+import type { ProductModelMaterialLine } from "@/lib/product-model-materials";
 import type { ProductModelRoutingLink } from "@/lib/product-model-routings";
 import { whitelistedRoutingTemplateIds } from "@/lib/product-model-routings";
 import type { ProductionStage } from "@/lib/production-stages";
@@ -83,6 +87,11 @@ export function ProductModelPersistentCard({
   productionStages = [],
   techOperations = [],
   catalogFolders = [],
+  materialLines = [],
+  materialOptions = [],
+  detailingItems = [],
+  hardwareTypeOptions = [],
+  colorOptions = [],
   initialEditing = false,
 }: {
   model: ProductModel;
@@ -101,6 +110,16 @@ export function ProductModelPersistentCard({
   productionStages?: ProductionStage[];
   techOperations?: TechOperation[];
   catalogFolders?: ProductModelFolder[];
+  materialLines?: ProductModelMaterialLine[];
+  materialOptions?: Array<{
+    id: number;
+    name: string;
+    unit: string;
+    is_active: boolean;
+  }>;
+  detailingItems?: DetailingItem[];
+  hardwareTypeOptions?: CharacteristicOption[];
+  colorOptions?: CharacteristicOption[];
   initialEditing?: boolean;
 }) {
   const router = useRouter();
@@ -1063,6 +1082,15 @@ export function ProductModelPersistentCard({
                   </div>
                 )}
               </SectionCard>
+
+              <ProductModelMaterialsBlock
+                modelId={current.id}
+                initialLines={materialLines}
+                materials={materialOptions}
+                detailingItems={detailingItems}
+                typeOptions={hardwareTypeOptions}
+                colorOptions={colorOptions}
+              />
 
               <AssemblyVariantsBlock
                 modelId={current.id}

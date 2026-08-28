@@ -872,7 +872,9 @@ def apply_routing_template(
 
     _apply_routing_template(db, card, template)
     _sync_sewing_operation_lines(db, card)
-    _sync_route_required_materials_to_composition(db, card)
+    # BOM prefill is SoT on model bind; do not rewrite manager materials when BOM exists.
+    if not _model_has_material_bom(db, card.product_model_id):
+        _sync_route_required_materials_to_composition(db, card)
     _apply_planned_qty_hints_to_composition(db, card)
     db.commit()
     return get_technical_card(db, card_id)
@@ -1143,6 +1145,143 @@ def _apply_planned_qty_hints_to_composition(db: Session, card: TechnicalCard) ->
     return filled
 
 
+_BOM_KIND_TO_STAGE_CODE: dict[str, str] = {
+    "print": "print",
+    "cutting": "cutting",
+    "hardware": "sewing",
+    "packaging": "packaging",
+}
+
+
+def _model_has_material_bom(db: Session, product_model_id: int | None) -> bool:
+    if product_model_id is None:
+        return False
+    from app.models.product_model_material import ProductModelMaterialLine
+
+    return (
+        db.scalar(
+            select(func.count())
+            .select_from(ProductModelMaterialLine)
+            .where(ProductModelMaterialLine.product_model_id == product_model_id)
+        )
+        or 0
+    ) > 0
+
+
+def _clear_material_composition_lines(db: Session, card: TechnicalCard) -> None:
+    for row in list(card.composition_lines):
+        kind = row.line_kind
+        kind_value = kind.value if hasattr(kind, "value") else str(kind)
+        if kind_value != TechnicalCardCompositionLineKind.MATERIAL.value:
+            continue
+        card.composition_lines.remove(row)
+        db.delete(row)
+    db.flush()
+
+
+def _bom_stage_code(line) -> str | None:
+    kind = line.kind
+    kind_value = kind.value if hasattr(kind, "value") else str(kind)
+    if kind_value == "fabric":
+        return line.fabric_stage_code
+    return _BOM_KIND_TO_STAGE_CODE.get(kind_value)
+
+
+def _sync_model_bom_to_composition(db: Session, card: TechnicalCard) -> int:
+    """Prefill MATERIAL rows from product-model Materials BOM (ADR-035 / 26.13.5).
+
+    Returns created line count. Empty BOM → 0 (caller may fall back to TechOp sync).
+    Replaces existing MATERIAL composition lines when BOM is non-empty.
+    """
+    if card.product_model_id is None:
+        return 0
+
+    from app.models.product_model_material import ProductModelMaterialLine
+    from app.repositories.production_stages import get_production_stage_by_code
+
+    bom_lines = list(
+        db.scalars(
+            select(ProductModelMaterialLine)
+            .where(
+                ProductModelMaterialLine.product_model_id == card.product_model_id
+            )
+            .options(
+                selectinload(ProductModelMaterialLine.nomenclature),
+                selectinload(ProductModelMaterialLine.type_option),
+                selectinload(ProductModelMaterialLine.color_option),
+                selectinload(ProductModelMaterialLine.detailing_items),
+            )
+            .order_by(
+                ProductModelMaterialLine.kind,
+                ProductModelMaterialLine.sequence,
+                ProductModelMaterialLine.id,
+            )
+        )
+        .unique()
+        .all()
+    )
+    if not bom_lines:
+        return 0
+
+    _clear_material_composition_lines(db, card)
+
+    try:
+        order_qty = Decimal(card.quantity)
+    except (InvalidOperation, TypeError):
+        order_qty = Decimal("1")
+    if order_qty <= 0:
+        order_qty = Decimal("1")
+
+    max_sequence = max((row.sequence for row in card.composition_lines), default=0)
+    created = 0
+    for bom in bom_lines:
+        nomenclature = bom.nomenclature
+        if nomenclature is None:
+            continue
+        stage_code = _bom_stage_code(bom)
+        stage = (
+            get_production_stage_by_code(db, stage_code) if stage_code else None
+        )
+        notes_parts: list[str] = []
+        if bom.type_option is not None:
+            notes_parts.append(f"Тип: {bom.type_option.label}")
+        if bom.color_option is not None:
+            notes_parts.append(f"Цвет: {bom.color_option.label}")
+        detailing_names = [item.name for item in (bom.detailing_items or [])]
+        if detailing_names:
+            notes_parts.append(f"Деталировка: {', '.join(detailing_names)}")
+        max_sequence += 1
+        card.composition_lines.append(
+            TechnicalCardCompositionLine(
+                sequence=max_sequence,
+                line_kind=TechnicalCardCompositionLineKind.MATERIAL,
+                nomenclature_id=bom.nomenclature_id,
+                snapshot_name=nomenclature.name,
+                production_stage_id=stage.id if stage is not None else None,
+                planned_qty=compute_planned_qty_hint(bom.planned_qty, order_qty),
+                unit=nomenclature.unit,
+                notes="; ".join(notes_parts) if notes_parts else None,
+            )
+        )
+        created += 1
+    return created
+
+
+def _sync_materials_to_composition(
+    db: Session,
+    card: TechnicalCard,
+    *,
+    model_changed: bool = False,
+) -> int:
+    """Prefer model BOM; fall back to route TechOp required materials when BOM empty."""
+    bom_created = _sync_model_bom_to_composition(db, card)
+    if bom_created > 0:
+        return bom_created
+    if model_changed:
+        _clear_material_composition_lines(db, card)
+    return _sync_route_required_materials_to_composition(db, card)
+
+
 def _sync_route_required_materials_to_composition(db: Session, card: TechnicalCard) -> int:
     """Prefill MATERIAL rows from route TechOperation required materials (`9.3.5`)."""
     if card.product_model_id is None or card.routing_template_id is None:
@@ -1255,7 +1394,7 @@ def _build_new_card(
         card.unit_lines.append(_default_unit_line(item, index, settings=settings))
     _seed_pattern_line_from_model(db, card)
     _apply_routing_snapshot_from_model(db, card, item=item)
-    _sync_route_required_materials_to_composition(db, card)
+    _sync_materials_to_composition(db, card)
     # MATERIAL planned_qty hints apply when materials are added with stage (`9.3.4.2`).
     _apply_planned_qty_hints_to_composition(db, card)
     db.add(card)
@@ -1297,7 +1436,7 @@ def _revive_cancelled_card(
         card.unit_lines.append(_default_unit_line(item, index, settings=settings))
     _seed_pattern_line_from_model(db, card)
     _apply_routing_snapshot_from_model(db, card, item=item)
-    _sync_route_required_materials_to_composition(db, card)
+    _sync_materials_to_composition(db, card)
     _apply_planned_qty_hints_to_composition(db, card)
     db.flush()
     return card
@@ -1739,7 +1878,7 @@ def refresh_model_and_pattern_composition(db: Session, card_id: int) -> Technica
             )
         )
 
-    _sync_route_required_materials_to_composition(db, card)
+    _sync_materials_to_composition(db, card, model_changed=True)
     _apply_planned_qty_hints_to_composition(db, card)
     db.commit()
     return get_technical_card(db, card_id)
@@ -1901,7 +2040,15 @@ def replace_unit_lines(
     card = get_technical_card(db, card_id)
     _assert_unit_lines_editable(card)
     expected, order_item = _unit_line_expectation(db, card)
-    if len(lines) != expected:
+    if order_item is None:
+        # Contour B / no order item: personalization sum defines card.quantity.
+        if len(lines) < 1:
+            raise TechnicalCardValidationError(
+                "Нужна хотя бы одна строка персонализации"
+            )
+        expected = len(lines)
+        card.quantity = Decimal(expected)
+    elif len(lines) != expected:
         raise TechnicalCardValidationError(
             f"Unit line count must equal order quantity ({expected})"
         )
@@ -1930,6 +2077,8 @@ def replace_unit_lines(
         target.notes = payload.notes
     if order_item is not None:
         card.quantity = order_item.quantity
+    else:
+        card.quantity = Decimal(expected)
     db.commit()
     return get_technical_card(db, card_id)
 
@@ -1966,12 +2115,20 @@ def import_unit_lines(
     """Aggregate import hook: validate sum and expand into N unit lines."""
     card = get_technical_card(db, card_id)
     _assert_unit_lines_editable(card)
-    expected, _order_item = _unit_line_expectation(db, card)
+    expected, order_item = _unit_line_expectation(db, card)
     settings = get_technical_card_settings(db)
     total = sum(row.quantity for row in items)
-    if total != expected:
+    if total < 1:
         raise TechnicalCardValidationError(
-            f"Сумма значений в колонке «Количество» должна совпадать с количеством в техкарте ({expected})"
+            "Сумма значений в колонке «Количество» должна быть не меньше 1"
+        )
+    if order_item is None:
+        # Create without qty (26.11.14): personalization import defines card.quantity.
+        card.quantity = Decimal(total)
+        db.flush()
+    elif total != expected:
+        raise TechnicalCardValidationError(
+            f"Сумма значений в колонке «Количество» должна совпадать с количеством в заказе ({expected})"
         )
 
     expanded: list[TechnicalCardUnitLineWrite] = []

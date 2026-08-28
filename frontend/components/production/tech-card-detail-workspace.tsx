@@ -8,11 +8,15 @@ import {
   CirclePlay,
   ExternalLink,
   FileDown,
+  FileUp,
+  Pencil,
   Play,
   Plus,
   Printer,
   RotateCcw,
+  Save,
   Trash2,
+  X,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState, useTransition, useSyncExternalStore } from "react";
@@ -240,6 +244,8 @@ type UnitLineDraft = {
   personalization?: string | null;
   print_number?: string | null;
   notes?: string | null;
+  /** Aggregate qty for identical personalization (UI); expands to N unit lines on save. */
+  quantity: number;
 };
 
 let materialDraftKeySeq = 0;
@@ -271,6 +277,84 @@ function sortMedia(items: ApiTechnicalCardMedia[]): ApiTechnicalCardMedia[] {
   );
 }
 
+function personalizationAggregateKey(line: {
+  size_type?: string | null;
+  size?: string | null;
+  personalization?: string | null;
+  print_number?: string | null;
+  notes?: string | null;
+}): string {
+  return [
+    normalizeUnitLineValue(line.size_type),
+    normalizeUnitSizeValue(line.size),
+    normalizeUnitLineValue(line.personalization),
+    normalizeUnitLineValue(line.print_number),
+    normalizeUnitLineValue(line.notes),
+  ].join("\u0000");
+}
+
+function unitLinesToAggregateDrafts(
+  lines: ApiTechnicalCardUnitLine[],
+): UnitLineDraft[] {
+  const groups = new Map<string, UnitLineDraft>();
+  const ordered: UnitLineDraft[] = [];
+  for (const line of [...lines].sort((a, b) => a.unit_index - b.unit_index)) {
+    const key = personalizationAggregateKey(line);
+    const existing = groups.get(key);
+    if (existing) {
+      existing.quantity += 1;
+      continue;
+    }
+    const draft: UnitLineDraft = {
+      id: line.id,
+      unit_index: ordered.length + 1,
+      size_type: line.size_type ?? null,
+      size: line.size ?? null,
+      personalization: line.personalization ?? null,
+      print_number: line.print_number ?? null,
+      notes: line.notes ?? null,
+      quantity: 1,
+    };
+    groups.set(key, draft);
+    ordered.push(draft);
+  }
+  return ordered;
+}
+
+function expandAggregateDrafts(lines: UnitLineDraft[]): Array<{
+  unit_index: number;
+  size_type: string | null;
+  size: string | null;
+  personalization: string | null;
+  print_number: string | null;
+  notes: string | null;
+}> {
+  const expanded: Array<{
+    unit_index: number;
+    size_type: string | null;
+    size: string | null;
+    personalization: string | null;
+    print_number: string | null;
+    notes: string | null;
+  }> = [];
+  let nextIndex = 1;
+  for (const line of lines) {
+    const qty = Math.max(0, Math.floor(Number(line.quantity) || 0));
+    for (let i = 0; i < qty; i += 1) {
+      expanded.push({
+        unit_index: nextIndex,
+        size_type: normalizeUnitLineValue(line.size_type) || null,
+        size: normalizeUnitSizeValue(line.size) || null,
+        personalization: normalizeUnitLineValue(line.personalization) || null,
+        print_number: normalizeUnitLineValue(line.print_number) || null,
+        notes: normalizeUnitLineValue(line.notes) || null,
+      });
+      nextIndex += 1;
+    }
+  }
+  return expanded;
+}
+
 function unitLineToDraft(line: ApiTechnicalCardUnitLine): UnitLineDraft {
   return {
     id: line.id,
@@ -280,6 +364,7 @@ function unitLineToDraft(line: ApiTechnicalCardUnitLine): UnitLineDraft {
     personalization: line.personalization ?? null,
     print_number: line.print_number ?? null,
     notes: line.notes ?? null,
+    quantity: 1,
   };
 }
 
@@ -306,6 +391,13 @@ function reindexUnitLineDrafts(lines: UnitLineDraft[]): UnitLineDraft[] {
   }));
 }
 
+function personalizationQuantitySum(lines: UnitLineDraft[]): number {
+  return lines.reduce(
+    (sum, line) => sum + Math.max(0, Math.floor(Number(line.quantity) || 0)),
+    0,
+  );
+}
+
 function unitLineDraftsEqual(left: UnitLineDraft[], right: UnitLineDraft[]): boolean {
   if (left.length !== right.length) return false;
   return left.every((draft, index) => {
@@ -314,6 +406,7 @@ function unitLineDraftsEqual(left: UnitLineDraft[], right: UnitLineDraft[]): boo
     return (
       draft.id === other.id &&
       draft.unit_index === other.unit_index &&
+      draft.quantity === other.quantity &&
       normalizeUnitLineValue(draft.size_type) === normalizeUnitLineValue(other.size_type) &&
       normalizeUnitSizeValue(draft.size) === normalizeUnitSizeValue(other.size) &&
       normalizeUnitLineValue(draft.personalization) ===
@@ -450,12 +543,12 @@ export function TechCardDetailWorkspace({
     materialDraftsFromComposition(card.composition_lines ?? []),
   );
   const [unitLineDrafts, setUnitLineDrafts] = useState<UnitLineDraft[]>(() =>
-    [...(card.unit_lines ?? [])]
-      .sort((a, b) => a.unit_index - b.unit_index)
-      .map(unitLineToDraft),
+    unitLinesToAggregateDrafts(card.unit_lines ?? []),
   );
   const [unitImportOpen, setUnitImportOpen] = useState(false);
   const [unitImportFile, setUnitImportFile] = useState<File | null>(null);
+  const [unitLinesEditMode, setUnitLinesEditMode] = useState(false);
+  const [materialsEditMode, setMaterialsEditMode] = useState(false);
   const [managerDocTab, setManagerDocTab] = useState<ManagerDocTabId>("assembly");
   const [collapsedBlocks, setCollapsedBlocks] = useState({
     history: true,
@@ -527,14 +620,12 @@ export function TechCardDetailWorkspace({
 
   useEffect(() => {
     setMaterialDrafts(materialDraftsFromComposition(card.composition_lines ?? []));
+    setMaterialsEditMode(false);
   }, [card.id, card.updated_at]);
 
   useEffect(() => {
-    setUnitLineDrafts(
-      [...(card.unit_lines ?? [])]
-        .sort((a, b) => a.unit_index - b.unit_index)
-        .map(unitLineToDraft),
-    );
+    setUnitLineDrafts(unitLinesToAggregateDrafts(card.unit_lines ?? []));
+    setUnitLinesEditMode(false);
   }, [card.id, card.unit_lines, card.updated_at]);
 
   useEffect(() => {
@@ -556,17 +647,23 @@ export function TechCardDetailWorkspace({
 
   const compositionEditable =
     !isShopContext && status !== "cancelled" && status !== "completed";
+  const materialsRowsEditable = compositionEditable && materialsEditMode;
   const unitLinesEditable = compositionEditable;
+  const unitLinesRowsEditable = unitLinesEditable && unitLinesEditMode;
   const persistedUnitLineDrafts = useMemo(
-    () => unitLines.map(unitLineToDraft),
-    [unitLines],
+    () => unitLinesToAggregateDrafts(card.unit_lines ?? []),
+    [card.unit_lines],
   );
   const unitLineDraftsDirty = !unitLineDraftsEqual(
     unitLineDrafts,
     persistedUnitLineDrafts,
   );
-  const expectedUnitLineCount = Math.max(0, Number(card.quantity) || 0);
-  const unitLineCountMatches = unitLineDrafts.length === expectedUnitLineCount;
+  const personalizationSum = personalizationQuantitySum(unitLineDrafts);
+  const isStandaloneCard = card.sales_order_item_id == null;
+  const orderLinkedExpectedQty = Math.max(0, Number(card.quantity) || 0);
+  const unitLineCountMatches = isStandaloneCard
+    ? personalizationSum >= 1
+    : personalizationSum === orderLinkedExpectedQty;
   const unitSizeOptions = useMemo(() => {
     const seen = new Set<string>();
     const options: string[] = [];
@@ -727,7 +824,7 @@ export function TechCardDetailWorkspace({
                 : sewingOps.length;
             break;
           case "assembly":
-            count = unitLineDrafts.length;
+            count = personalizationQuantitySum(unitLineDrafts);
             break;
           case "materials":
             count = materialDrafts.length;
@@ -744,7 +841,7 @@ export function TechCardDetailWorkspace({
       routingOps.length,
       sewingOps.length,
       stageResults.length,
-      unitLineDrafts.length,
+      unitLineDrafts,
     ],
   );
 
@@ -759,7 +856,14 @@ export function TechCardDetailWorkspace({
       importUnitLinesFileAction(card.id, formData, card.sales_order_id),
     ).then((result) => {
       if (!result?.ok) return;
+      if (result.card) {
+        setUnitLineDrafts(
+          unitLinesToAggregateDrafts(result.card.unit_lines ?? []),
+        );
+      }
       setUnitImportFile(null);
+      setUnitImportOpen(false);
+      setUnitLinesEditMode(false);
       if (unitImportInputRef.current) {
         unitImportInputRef.current.value = "";
       }
@@ -772,14 +876,20 @@ export function TechCardDetailWorkspace({
     value: string,
   ) => {
     setUnitLineDrafts((current) =>
-      current.map((line) =>
-        line.id === lineId
-          ? {
-              ...line,
-              [field]: value,
-            }
-          : line,
-      ),
+      current.map((line) => {
+        if (line.id !== lineId) return line;
+        if (field === "quantity") {
+          const parsed = Math.floor(Number(value.replace(",", ".")));
+          return {
+            ...line,
+            quantity: Number.isFinite(parsed) && parsed > 0 ? parsed : 1,
+          };
+        }
+        return {
+          ...line,
+          [field]: value,
+        };
+      }),
     );
     setActionError(null);
   };
@@ -801,6 +911,7 @@ export function TechCardDetailWorkspace({
           personalization: null,
           print_number: null,
           notes: null,
+          quantity: 1,
         },
       ]),
     );
@@ -815,18 +926,22 @@ export function TechCardDetailWorkspace({
   };
 
   const onSaveUnitLines = () => {
+    const expanded = expandAggregateDrafts(unitLineDrafts);
+    if (expanded.length < 1) {
+      setActionError("Укажите количество хотя бы в одной строке персонализации");
+      return;
+    }
+    if (!isStandaloneCard && expanded.length !== orderLinkedExpectedQty) {
+      setActionError(
+        `Сумма «Количество» должна совпадать с количеством в заказе (${orderLinkedExpectedQty})`,
+      );
+      return;
+    }
     void runAction(
       () =>
         replaceUnitLinesAction(
           card.id,
-          unitLineDrafts.map((line) => ({
-            unit_index: line.unit_index,
-            size_type: normalizeUnitLineValue(line.size_type) || null,
-            size: normalizeUnitSizeValue(line.size) || null,
-            personalization: normalizeUnitLineValue(line.personalization) || null,
-            print_number: normalizeUnitLineValue(line.print_number) || null,
-            notes: normalizeUnitLineValue(line.notes) || null,
-          })),
+          expanded,
           card.sales_order_id,
         ),
       { skipRefresh: true },
@@ -834,11 +949,8 @@ export function TechCardDetailWorkspace({
       if (!result?.ok) return;
       const nextCard = result.card;
       if (!nextCard) return;
-      setUnitLineDrafts(
-        [...(nextCard.unit_lines ?? [])]
-          .sort((a, b) => a.unit_index - b.unit_index)
-          .map(unitLineToDraft),
-      );
+      setUnitLineDrafts(unitLinesToAggregateDrafts(nextCard.unit_lines ?? []));
+      setUnitLinesEditMode(false);
     });
   };
 
@@ -1320,7 +1432,13 @@ export function TechCardDetailWorkspace({
     const lines = buildCompositionReplaceLines(compositionLines, materialDrafts);
     void runAction(() =>
       replaceCompositionAction(card.id, lines, card.sales_order_id),
-    );
+    ).then((result) => {
+      if (result?.ok) setMaterialsEditMode(false);
+    });
+  };
+
+  const resetMaterialDrafts = () => {
+    setMaterialDrafts(materialDraftsFromComposition(card.composition_lines ?? []));
   };
 
   const onAddMedia = (files: File[]) => {
@@ -1814,16 +1932,67 @@ export function TechCardDetailWorkspace({
                 size="compact"
                 className="border-0 p-0 shadow-none"
                 actions={
-                  <div className="flex flex-wrap items-center gap-portal-2">
-                    <Button
-                      type="button"
-                      size="compact"
-                      onClick={() => setUnitImportOpen((current) => !current)}
-                      disabled={busy || !unitLinesEditable}
+                  unitLinesEditable ? (
+                    <div
+                      className="flex flex-wrap items-center gap-portal-1"
+                      data-tech-card-personalization-actions
                     >
-                      {unitImportOpen ? "Скрыть импорт" : "Импорт XLSX"}
-                    </Button>
-                  </div>
+                      {unitLinesEditMode ? (
+                        <IconButton
+                          label="Отменить редактирование"
+                          variant="secondary"
+                          disabled={busy}
+                          onClick={() => {
+                            resetUnitLineDrafts();
+                            setUnitLinesEditMode(false);
+                            setUnitImportOpen(false);
+                            setActionError(null);
+                          }}
+                          data-tech-card-personalization-cancel
+                        >
+                          <X className="size-4" aria-hidden="true" />
+                        </IconButton>
+                      ) : (
+                        <IconButton
+                          label="Редактировать"
+                          variant="secondary"
+                          disabled={busy}
+                          onClick={() => {
+                            setUnitLinesEditMode(true);
+                            setActionError(null);
+                          }}
+                          data-tech-card-personalization-edit
+                        >
+                          <Pencil className="size-4" aria-hidden="true" />
+                        </IconButton>
+                      )}
+                      <IconButton
+                        label="Сохранить"
+                        variant="primary"
+                        disabled={
+                          busy ||
+                          !unitLinesEditMode ||
+                          !unitLineDraftsDirty ||
+                          !unitLineCountMatches
+                        }
+                        onClick={onSaveUnitLines}
+                        data-tech-card-personalization-save
+                      >
+                        <Save className="size-4" aria-hidden="true" />
+                      </IconButton>
+                      <IconButton
+                        label={unitImportOpen ? "Скрыть импорт" : "Импорт"}
+                        variant="secondary"
+                        disabled={busy}
+                        onClick={() =>
+                          setUnitImportOpen((current) => !current)
+                        }
+                        data-tech-card-personalization-import
+                      >
+                        <FileUp className="size-4" aria-hidden="true" />
+                      </IconButton>
+                    </div>
+                  ) : null
                 }
               >
                 {unitImportOpen ? (
@@ -1885,8 +2054,24 @@ export function TechCardDetailWorkspace({
                       />
                     </Field>
                     <p className="text-portal-caption text-portal-muted">
-                      Количество в техкарте:{" "}
-                      <span className="font-medium text-portal-text">{String(card.quantity)}</span>
+                      Количество (сумма):{" "}
+                      <span className="font-medium text-portal-text">
+                        {personalizationSum}
+                      </span>
+                      {!isStandaloneCard ? (
+                        <>
+                          {" "}
+                          · в заказе:{" "}
+                          <span className="font-medium text-portal-text">
+                            {orderLinkedExpectedQty}
+                          </span>
+                        </>
+                      ) : (
+                        <>
+                          {" "}
+                          · задаётся суммой строк персонализации
+                        </>
+                      )}
                     </p>
                     {unitImportFile ? (
                       <p className="text-portal-caption text-portal-muted">
@@ -1913,15 +2098,23 @@ export function TechCardDetailWorkspace({
                     </div>
                   </div>
                 ) : null}
-                {unitLinesEditable && unitSizeOptions.length === 0 ? (
+                {unitLinesRowsEditable && unitSizeOptions.length === 0 ? (
                   <p className="mb-portal-4 text-portal-caption text-portal-muted">
                     Размерная сетка модели не привязана или пуста. Размер можно менять вручную.
                   </p>
                 ) : null}
-                {unitLinesEditable ? (
-                  <div className="mb-portal-4 flex flex-wrap gap-portal-2">
+                {unitLinesRowsEditable ? (
+                  <div className="mb-portal-4 flex flex-wrap items-center gap-portal-2">
+                    <Field label="Количество (сумма)" className="min-w-[10rem]">
+                      <Input
+                        value={String(personalizationSum)}
+                        readOnly
+                        disabled
+                        aria-label="Количество сумма по персонализации"
+                      />
+                    </Field>
                     <div className="flex items-center rounded-portal-sm border border-portal-border px-portal-3 text-portal-caption text-portal-muted">
-                      {unitLineDrafts.length} / {expectedUnitLineCount}
+                      строк: {unitLineDrafts.length}
                     </div>
                     <Button
                       type="button"
@@ -1940,27 +2133,27 @@ export function TechCardDetailWorkspace({
                     >
                       Сбросить
                     </Button>
-                    <Button
-                      type="button"
-                      size="compact"
-                      variant="primary"
-                      onClick={onSaveUnitLines}
-                      disabled={busy || !unitLineDraftsDirty || !unitLineCountMatches}
-                    >
-                      Сохранить
-                    </Button>
                     {!unitLineCountMatches ? (
                       <span className="flex items-center text-portal-caption text-portal-danger">
-                        Количество строк должно быть равно {expectedUnitLineCount}
+                        {isStandaloneCard
+                          ? "Сумма «Количество» должна быть не меньше 1"
+                          : `Сумма «Количество» должна совпадать с заказом (${orderLinkedExpectedQty})`}
                       </span>
                     ) : null}
                   </div>
-                ) : null}
+                ) : (
+                  <p className="mb-portal-4 text-portal-caption text-portal-muted">
+                    Количество (сумма):{" "}
+                    <span className="font-medium text-portal-text">
+                      {personalizationSum || String(card.quantity)}
+                    </span>
+                  </p>
+                )}
                 {unitLineDrafts.length === 0 ? (
                   <EmptyState title="Строки не заполнены" description="Данные персонализации отсутствуют." />
                 ) : (
                   <DataTableFrame>
-                    <DataTable minWidthClassName="min-w-[1040px]">
+                    <DataTable minWidthClassName="min-w-[1120px]">
                       <DataTableHead>
                         <tr>
                           <DataTableHeaderCell className="w-12">#</DataTableHeaderCell>
@@ -1968,8 +2161,9 @@ export function TechCardDetailWorkspace({
                           <DataTableHeaderCell className="w-40">Размер</DataTableHeaderCell>
                           <DataTableHeaderCell>Фамилия</DataTableHeaderCell>
                           <DataTableHeaderCell className="w-24">Номер</DataTableHeaderCell>
+                          <DataTableHeaderCell className="w-28">Количество</DataTableHeaderCell>
                           <DataTableHeaderCell>Примечание</DataTableHeaderCell>
-                          {unitLinesEditable ? (
+                          {unitLinesRowsEditable ? (
                             <DataTableHeaderCell className="w-14 text-right">Г—</DataTableHeaderCell>
                           ) : null}
                         </tr>
@@ -1980,7 +2174,7 @@ export function TechCardDetailWorkspace({
                             <DataTableCell>{line.unit_index}</DataTableCell>
                             <DataTableCell>{unitLineSizeTypeLabel(line.size_type ?? null)}</DataTableCell>
                             <DataTableCell>
-                              {unitLinesEditable ? (
+                              {unitLinesRowsEditable ? (
                                 unitSizeOptions.length > 0 ? (
                                   <Select
                                     value={normalizeUnitSizeValue(line.size)}
@@ -2013,7 +2207,7 @@ export function TechCardDetailWorkspace({
                               )}
                             </DataTableCell>
                             <DataTableCell>
-                              {unitLinesEditable ? (
+                              {unitLinesRowsEditable ? (
                                 <Input
                                   value={line.personalization ?? ""}
                                   onChange={(event) =>
@@ -2027,7 +2221,7 @@ export function TechCardDetailWorkspace({
                               )}
                             </DataTableCell>
                             <DataTableCell>
-                              {unitLinesEditable ? (
+                              {unitLinesRowsEditable ? (
                                 <Input
                                   value={line.print_number ?? ""}
                                   onChange={(event) =>
@@ -2040,8 +2234,26 @@ export function TechCardDetailWorkspace({
                                 line.print_number ?? "—"
                               )}
                             </DataTableCell>
+                            <DataTableCell>
+                              {unitLinesRowsEditable ? (
+                                <Input
+                                  type="number"
+                                  min={1}
+                                  step={1}
+                                  value={String(line.quantity)}
+                                  onChange={(event) =>
+                                    updateUnitLineDraft(line.id, "quantity", event.target.value)
+                                  }
+                                  disabled={busy}
+                                  className="w-24"
+                                  aria-label={`Количество строки ${line.unit_index}`}
+                                />
+                              ) : (
+                                line.quantity
+                              )}
+                            </DataTableCell>
                             <DataTableCell className="text-portal-muted">
-                              {unitLinesEditable ? (
+                              {unitLinesRowsEditable ? (
                                 <Input
                                   value={line.notes ?? ""}
                                   onChange={(event) =>
@@ -2054,7 +2266,7 @@ export function TechCardDetailWorkspace({
                                 line.notes ?? "—"
                               )}
                             </DataTableCell>
-                            {unitLinesEditable ? (
+                            {unitLinesRowsEditable ? (
                               <DataTableCell className="text-right">
                                 <IconButton
                                   label={`Удалить строку ${line.unit_index}`}
@@ -2083,6 +2295,53 @@ export function TechCardDetailWorkspace({
                 description="План и факт по материалам; цех обязателен для hard-gate Раскрой/Печать. Факт — только цех (read-only для менеджера)."
                 size="compact"
                 className="border-0 p-0 shadow-none"
+                actions={
+                  compositionEditable ? (
+                    <div
+                      className="flex flex-wrap items-center gap-portal-1"
+                      data-tech-card-materials-actions
+                    >
+                      {materialsEditMode ? (
+                        <IconButton
+                          label="Отменить редактирование"
+                          variant="secondary"
+                          disabled={busy}
+                          onClick={() => {
+                            resetMaterialDrafts();
+                            setMaterialsEditMode(false);
+                            setActionError(null);
+                          }}
+                          data-tech-card-materials-cancel
+                        >
+                          <X className="size-4" aria-hidden="true" />
+                        </IconButton>
+                      ) : (
+                        <IconButton
+                          label="Редактировать"
+                          variant="secondary"
+                          disabled={busy}
+                          onClick={() => {
+                            resetMaterialDrafts();
+                            setMaterialsEditMode(true);
+                            setActionError(null);
+                          }}
+                          data-tech-card-materials-edit
+                        >
+                          <Pencil className="size-4" aria-hidden="true" />
+                        </IconButton>
+                      )}
+                      <IconButton
+                        label="Сохранить состав"
+                        variant="primary"
+                        disabled={busy || !materialsEditMode}
+                        onClick={onSaveComposition}
+                        data-tech-card-materials-save
+                      >
+                        <Save className="size-4" aria-hidden="true" />
+                      </IconButton>
+                    </div>
+                  ) : null
+                }
               >
                 {nonMaterialLines.length > 0 ? (
                   <div className="mb-portal-3 space-y-portal-1 text-portal-caption text-portal-muted">
@@ -2111,7 +2370,7 @@ export function TechCardDetailWorkspace({
                           <DataTableHeaderCell className="w-24">План</DataTableHeaderCell>
                           <DataTableHeaderCell className="w-24">Факт</DataTableHeaderCell>
                           <DataTableHeaderCell className="w-20">Ед.</DataTableHeaderCell>
-                          {compositionEditable ? (
+                          {materialsRowsEditable ? (
                             <DataTableHeaderCell className="w-16" />
                           ) : null}
                         </tr>
@@ -2121,7 +2380,7 @@ export function TechCardDetailWorkspace({
                           <DataTableRow key={line.key}>
                             <DataTableCell>{index + 1}</DataTableCell>
                             <DataTableCell>
-                              {compositionEditable ? (
+                              {materialsRowsEditable ? (
                                 <div className="space-y-portal-1">
                                   <Select
                                     size="compact"
@@ -2161,7 +2420,7 @@ export function TechCardDetailWorkspace({
                               )}
                             </DataTableCell>
                             <DataTableCell>
-                              {compositionEditable ? (
+                              {materialsRowsEditable ? (
                                 <Select
                                   size="compact"
                                   value={
@@ -2190,7 +2449,7 @@ export function TechCardDetailWorkspace({
                               )}
                             </DataTableCell>
                             <DataTableCell>
-                              {compositionEditable ? (
+                              {materialsRowsEditable ? (
                                 <Input
                                   size="compact"
                                   type="number"
@@ -2212,7 +2471,7 @@ export function TechCardDetailWorkspace({
                               </span>
                             </DataTableCell>
                             <DataTableCell>
-                              {compositionEditable ? (
+                              {materialsRowsEditable ? (
                                 <Input
                                   size="compact"
                                   value={line.unit}
@@ -2225,7 +2484,7 @@ export function TechCardDetailWorkspace({
                                 line.unit || "—"
                               )}
                             </DataTableCell>
-                            {compositionEditable ? (
+                            {materialsRowsEditable ? (
                               <DataTableCell>
                                 <Button
                                   type="button"
@@ -2244,19 +2503,10 @@ export function TechCardDetailWorkspace({
                   </DataTableFrame>
                 )}
 
-                {compositionEditable ? (
+                {materialsRowsEditable ? (
                   <div className="mt-portal-3 flex flex-wrap gap-portal-2">
                     <Button type="button" size="compact" disabled={busy} onClick={onAddMaterialRow}>
                       Добавить материал
-                    </Button>
-                    <Button
-                      type="button"
-                      size="compact"
-                      variant="primary"
-                      disabled={busy}
-                      onClick={onSaveComposition}
-                    >
-                      Сохранить состав
                     </Button>
                   </div>
                 ) : null}

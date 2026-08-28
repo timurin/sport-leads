@@ -1,7 +1,7 @@
 # Sport-Lead — Roadmap v1.00
 
 **Code:** `SL-ROADMAP-v1.00`
-**Updated:** `2026-08-29` (Stage **13.1.2** purchase orders in flight — stop at owner visual `13.1.2.6`; ADR-034; Stage **27** parked)
+**Updated:** `2026-08-31` (Stage **26.13** complete — owner visual OK `26.13.6`; Stage **13.1.2** stop at owner visual `13.1.2.6`; Stage **27** parked)
 **Project version:** `v1.00`
 **Status:** Confirmed carry-over from `v0.9.0` (Stages **1.4.3**, **2** group, **7**, **12.4**–**12.5**, **13**, **14**, **15**, **16**, **18.4**) + **new** Stages **0** (performance + LAN + order-without-lead + **canonical VPS `0.5`**), **20** (Lead / Order UX, closed), **21** (Settings / Users cabinet, closed), **22** (Design v1.0), **23** (Unified Work Tasks), **24** (Sewing cabinet), **25** (Tech-card QR / shop scan), **26** (owner findings: bugs / cosmetics), **27** (1C:UNF document export), **28** (standalone tech cards + unified numbering). Owner started early (`2026-08-05`).
 **Languages / Языки:** English + Russian (this MD). Interactive switch: `docs/erp/status/roadmap-v1.00.html`
@@ -29,7 +29,7 @@
 ## Rules / Правила
 
 - `[x]` = done / выполнено; `[ ]` = open / не выполнено.
-- Codes keep `v0.9.0` numbering for carried work (`1.4.3.*`, `2.2.3.*`, `2.2.4.*`, `2.3.*`, `2.4.*`, `7.*`, `12.4`–`12.5`, `13.*`, `14.*`, `15.*`, `16.*`, `18.4.*`). New Stages **0** (`0.1` / `0.2.*` / `0.3.*` / `0.4.*` / **`0.5.*`**), **20** (`20.1`–`20.4`), **21** (`21.1`–`21.5`), **22** (`22.0`–`22.9` Design v1.0; process `docs/design/design-v1-process.md`), **23** (`23.0`–`23.10` Unified Work Tasks; ADR-028), **24** (`24.0`–`24.5` Sewing cabinet), **25** (`25.0`–`25.5` Tech-card QR / shop scan), **26** (`26.0`–`26.11` owner findings; living; **`26.3.5`–`26.3.15`**, **`26.9.1`–`26.9.5`**, **`26.10.1`–`26.10.8`**, **`26.11.1`–`26.11.14` closed**; further findings owner-pull), **27** (`27.0`–`27.5` 1C:UNF export; owner-pull), **28** (`28.0`–`28.5` standalone tech cards + `{order}-{seq}/{N}`; closed).
+- Codes keep `v0.9.0` numbering for carried work (`1.4.3.*`, `2.2.3.*`, `2.2.4.*`, `2.3.*`, `2.4.*`, `7.*`, `12.4`–`12.5`, `13.*`, `14.*`, `15.*`, `16.*`, `18.4.*`). New Stages **0** (`0.1` / `0.2.*` / `0.3.*` / `0.4.*` / **`0.5.*`**), **20** (`20.1`–`20.4`), **21** (`21.1`–`21.5`), **22** (`22.0`–`22.9` Design v1.0; process `docs/design/design-v1-process.md`), **23** (`23.0`–`23.10` Unified Work Tasks; ADR-028), **24** (`24.0`–`24.5` Sewing cabinet), **25** (`25.0`–`25.5` Tech-card QR / shop scan), **26** (`26.0`–`26.13` owner findings; living; **`26.3.5`–`26.3.15`**, **`26.9.1`–`26.9.5`**, **`26.10.1`–`26.10.8`**, **`26.11.1`–`26.11.14`**, **`26.12.1`–`26.12.2`**, **`26.13.1`–`26.13.6` closed**), **27** (`27.0`–`27.5` 1C:UNF export; owner-pull), **28** (`28.0`–`28.5` standalone tech cards + `{order}-{seq}/{N}`; closed).
 - Do not execute `v1.00` while `v0.9.0` is still the active project version, unless the owner explicitly starts early.
 - Не исполнять `v1.00`, пока активная версия проекта — `v0.9.0`, если владелец явно не начал раньше.
 - **Owner early start:** `2026-08-05` — execution of `v1.00` begun (`0.1.1` closed).
@@ -68,9 +68,9 @@
 | **27** | 1C:UNF document export (platform → УНФ) | Выгрузка документов в 1С:УНФ (платформа → УНФ) |
 | **28** | Standalone tech cards + unified numbering `{order}-{seq}/{N}` | Самостоятельные техкарты + единая нумерация `{заказ}-{seq}/{N}` |
 
-> **EN:** Stage 0 is **new** in `v1.00`: slow-data (`0.1`/`0.2`), **LAN** (`0.3`), **create SalesOrder without Lead** (`0.4`), and **canonical VPS** (`0.5`, ADR-032). Stages **20** / **21** closed. Stage **22** = Design v1.0 (do **not** re-open `20.*` data contracts). Do **not** re-open closed `3.5.*` / `19.*` / `17.1.2.*` / `17.2.1`–`17.2.3` in `v0.9.0`. Stage **2** closed `2026-08-24`. Stage **24** sewing cabinet closed `2026-08-24`. Stage **25** QR/scan closed `2026-08-25` (owner visual `25.5.2`). Stage **7** Specifications closed `2026-08-25` (owner visual `7.2.2.6`). Stage **26** = living owner findings (bugs/cosmetics); seed parked; shipped through **`26.11.14`** — further findings **owner-pull only**. Stage **27** = 1C:UNF **outbound** document packages (contour D); `27.0.1` closed; `27.1+` parked; **owner-pull only** — do not auto-start; inbound `16.2.1` parked. Stage **28** = standalone TechnicalCard + `{orderNo}-{seq}/{N}` — **closed** (`28.0`–`28.5`). Stage **12.4** inventory closed `2026-08-26`. **Stage 12.5.1** transfers closed `2026-08-29`. **Stage 13.1.1** suppliers closed `2026-08-29`. **Stage 13.1.2** purchase orders in flight — stop at owner visual `13.1.2.6`; do **not** auto-start Stage **27**. Parked **`0.5.13`** S3 (**owner-pull**). Stage **`0.5`** live apply closed `2026-08-25`.
+> **EN:** Stage 0 is **new** in `v1.00`: slow-data (`0.1`/`0.2`), **LAN** (`0.3`), **create SalesOrder without Lead** (`0.4`), and **canonical VPS** (`0.5`, ADR-032). Stages **20** / **21** closed. Stage **22** = Design v1.0 (do **not** re-open `20.*` data contracts). Do **not** re-open closed `3.5.*` / `19.*` / `17.1.2.*` / `17.2.1`–`17.2.3` in `v0.9.0`. Stage **2** closed `2026-08-24`. Stage **24** sewing cabinet closed `2026-08-24`. Stage **25** QR/scan closed `2026-08-25` (owner visual `25.5.2`). Stage **7** Specifications closed `2026-08-25` (owner visual `7.2.2.6`). Stage **26** = living owner findings (bugs/cosmetics); seed parked; shipped through **`26.13.6`** (detailing + model Materials + TC prefill; owner visual OK) — further findings **owner-pull only**. Stage **27** = 1C:UNF **outbound** document packages (contour D); `27.0.1` closed; `27.1+` parked; **owner-pull only** — do not auto-start; inbound `16.2.1` parked. Stage **28** = standalone TechnicalCard + `{orderNo}-{seq}/{N}` — **closed** (`28.0`–`28.5`). Stage **12.4** inventory closed `2026-08-26`. **Stage 12.5.1** transfers closed `2026-08-29`. **Stage 13.1.1** suppliers closed `2026-08-29`. **Stage 13.1.2** purchase orders in flight — stop at owner visual `13.1.2.6`; do **not** auto-start Stage **27**. Parked **`0.5.13`** S3 (**owner-pull**). Stage **`0.5`** live apply closed `2026-08-25`.
 >
-> **RU:** Stage 0: slow-data + **LAN** (`0.3`) + **заказ без лида** (`0.4`) + **канонический VPS** (`0.5`). Stages **20** / **21** / **22** / **2** / **24** / **25** / **7** закрыты. Stage **26** — живой backlog до **`26.11.14`**; новые находки **owner-pull**. Stage **27** припаркован. Stage **28** закрыт. Stage **12.5.1** закрыт. **Stage 13.1.1** закрыт. **Stage 13.1.2** ЗП — до owner visual `13.1.2.6`; Stage **27** не стартовать. Припаркован **`0.5.13`** S3.
+> **RU:** Stage 0: slow-data + **LAN** (`0.3`) + **заказ без лида** (`0.4`) + **канонический VPS** (`0.5`). Stages **20** / **21** / **22** / **2** / **24** / **25** / **7** закрыты. Stage **26** — живой backlog до **`26.13.6`** (owner visual OK); новые находки **owner-pull**. Stage **27** припаркован. Stage **28** закрыт. Stage **12.5.1** закрыт. **Stage 13.1.1** закрыт. **Stage 13.1.2** ЗП — до owner visual `13.1.2.6`; Stage **27** не стартовать. Припаркован **`0.5.13`** S3.
 
 ### Remain in v0.9.0 / Остаются в v0.9.0
 
@@ -986,6 +986,23 @@
 - [x] 26.11.12 — Tests + erp-check / project-structure checkpoint — `v1.00` `2026-08-29`; pytest copy/delete + standalone; FE `tech-card-list-26-11.test.mjs`; tsc / Регрессия + docs
 - [x] 26.11.13 — List `responsible_name` embed (batch PlatformUser / SalesUser) + toolbar filter «Ответственный» — `v1.00` `2026-08-29`; owner visual pending `/production/tech-cards`; `list_card_responsible_name` / Список: ответственный и фильтр
 - [x] 26.11.14 — Create modal: allow free-text nomenclature (no catalog id); remove Количество (qty=1); fix false «Выберите номенклатуру» — `v1.00` `2026-08-29`; `TechnicalCardStandaloneCreate.nomenclature_name`; FE `tech-cards-workspace.tsx` / Модалка: ручная номенклатура + без количества
+- [x] 26.12.1 — Personalization: row Количество + Количество (сумма); import sets standalone card.quantity from sum — `v1.00` `2026-08-29`; aggregate UI + `import_unit_lines`; stop at owner visual / Персонализация: кол-во в строке и сумма
+- [x] 26.12.2 — Product model card modal: open from list + tech-card; view by default; Edit / Save / Cancel icons — `v1.00` `2026-08-29`; `product-model-card-modal.tsx`; stop at owner visual / Модалка карточки модели
+
+### 26.13 — Detailing catalog + model Materials BOM + TC materials chrome / Деталировка + Материалы модели + Материалы ТК
+
+> **EN:** Catalog «Деталировка»; Materials tabs on product model (Печать / Ткань / Раскрой / Фурнитура / Упаковка); TC Materials prefill from model BOM on bind/change + Edit/Cancel/Save; fact = `fact_qty`. Owner-pull after `26.13.1`. Task: `docs/tasks/v1.00-stage-26.13-model-materials.md`. ADR-035. Contracts: `SL-MODEL-MATERIALS-v1`, `SL-DETAILING-v1`.
+>
+> **RU:** Справочник Деталировка; табы Материалы на модели; префилл состава ТК из BOM модели; chrome Редактировать/Отмена/Сохранить; факт = `fact_qty`. Owner-pull после `26.13.1`.
+
+**Execute after / Исполнять после:** only when the owner names a code (e.g. «делай 26.13.2»). / только по явному коду владельца.
+
+- [x] 26.13.1 — Contract ADR-035 + `SL-MODEL-MATERIALS-v1` / `SL-DETAILING-v1` (locked decisions: fabric stage A; applicability=product_type; MATERIAL pick; prefill-only sync; packaging=`packaging`; hardware chars) — `v1.00` `2026-08-29`; ADR-035; task `v1.00-stage-26.13-model-materials.md` / Контракт материалов модели + деталировки
+- [x] 26.13.2 — Detailing catalog: models + API + settings UI + nav — `v1.00` `2026-08-29`; `/settings/catalogs/detailing`; migration `s8t9u0v1w234` / Справочник Деталировка
+- [x] 26.13.3 — Product model Materials group: tabs Печать / Ткань / Раскрой / Фурнитура / Упаковка + CRUD lines (MATERIAL pick) — `v1.00` `2026-08-29`; `product-model-materials-block.tsx` / Табы Материалы на карточке модели
+- [x] 26.13.4 — Fabric tab: stage print|cutting per row; multi Detailing + create-on-miss (applicability=product_type) — `v1.00` `2026-08-29` / Ткань: цех + деталировка multi
+- [x] 26.13.5 — TC Materials: prefill from model BOM on bind/change; Edit/Cancel/Save chrome; fact_qty column UX (manager RO) — `v1.00` `2026-08-29`; `_sync_model_bom_to_composition` / Материалы ТК: префилл + chrome + факт
+- [x] 26.13.6 — Tests + owner visual + docs twins checkpoint — `v1.00` `2026-08-31`; owner visual OK detailing + model Materials + TC Materials; `test_model_materials_26_13.py` / Регрессия + owner visual + docs
 
 ---
 
@@ -1281,6 +1298,11 @@
 | `2026-08-29` | Closed `26.3.15`: restore Заказ text + platform pick; compact one row; `PATCH` group `order_number`; owner visual pending `/production/tech-cards/6` | Закрыт `26.3.15`: Заказ вручную или из платформы |
 | `2026-08-29` | Closed `26.11.13`: list `responsible_name` from document + toolbar filter «Ответственный»; owner visual pending `/production/tech-cards` | Закрыт `26.11.13`: ответственный в списке и фильтре |
 | `2026-08-29` | Closed `26.11.14`: create modal free-text nomenclature (no false «Выберите номенклатуру»); remove Количество (qty=1) | Закрыт `26.11.14`: ручная номенклатура + без количества |
+| `2026-08-29` | Closed `26.12.1`: personalization row qty + sum; standalone import sets card.quantity; stop at owner visual | Закрыт `26.12.1`: кол-во персонализации + сумма |
+| `2026-08-29` | Closed `26.12.2`: product model card modal (list + tech-card); view default; Edit/Save/Cancel; owner visual pending | Закрыт `26.12.2`: модалка карточки модели |
+| `2026-08-29` | Closed `26.13.1`: ADR-035 + model materials / detailing contracts; parked `26.13.2`–`26.13.6` owner-pull | Закрыт `26.13.1`: контракт; `26.13.2+` припаркованы |
+| `2026-08-29` | Closed `26.13.2`–`26.13.5`: detailing catalog + model Materials BOM + TC prefill/chrome; tests ok; **stop at owner visual** `26.13.6` | Закрыты `26.13.2`–`26.13.5`; стоп на visual `26.13.6` |
+| `2026-08-31` | Closed `26.13.6`: owner visual OK (detailing, model Materials, TC Materials); Stage **26.13** complete | Закрыт `26.13.6`: owner visual OK; 26.13 закрыт |
 | `2026-08-29` | Closed `26.9.4`: settings hub links from soft-nav slider stuck under overlay; hard leave via `SettingsHubLink` | Закрыт `26.9.4`: ссылки из слайдера Настройки |
 | `2026-08-29` | Closed `26.9.5`: topbar section dropdown portaled (was clipped by overflow-x-auto); DS-SHELL-02 preserved | Закрыт `26.9.5`: выпадающее меню топбара |
 | `2026-08-29` | Closed `12.5.1.6`: owner visual OK warehouse transfers; Stage **12.5.1** complete; `12.5.2` later; Stage **27** not started | Закрыт `12.5.1.6`: owner visual OK; 12.5.1 закрыт |

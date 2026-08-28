@@ -15,6 +15,8 @@ from app.services.sales_order_items import (
 from app.services.technical_cards import (
     TechnicalCardNotFoundError,
     TechnicalCardValidationError,
+    _apply_planned_qty_hints_to_composition,
+    _sync_materials_to_composition,
     _sync_sewing_operation_lines,
     apply_routing_template,
     get_technical_card,
@@ -38,6 +40,7 @@ def update_technical_card_model_assembly(
     if assembly_variant_id is not None and product_model_id is None:
         raise TechnicalCardValidationError("Сборка требует выбранную модель")
 
+    previous_model_id = card.product_model_id
     model: ProductModel | None = None
     if product_model_id is not None:
         model = db.get(ProductModel, product_model_id)
@@ -107,6 +110,9 @@ def update_technical_card_model_assembly(
 
     db.flush()
     _sync_sewing_operation_lines(db, card)
+    if card.product_model_id != previous_model_id:
+        _sync_materials_to_composition(db, card, model_changed=True)
+        _apply_planned_qty_hints_to_composition(db, card)
     db.flush()
     return card
 

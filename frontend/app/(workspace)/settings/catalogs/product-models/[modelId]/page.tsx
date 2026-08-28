@@ -13,6 +13,13 @@ import {
   parseProductModelRouteId,
   toProductModelVersionViews,
 } from "@/lib/product-models";
+import { getDetailingItems } from "@/lib/detailing";
+import { getNomenclature } from "@/lib/nomenclature";
+import {
+  getCharacteristicDefinitions,
+  getCharacteristicOptions,
+} from "@/lib/nomenclature";
+import { getProductModelMaterialLines } from "@/lib/product-model-materials";
 import { getProductModelRoutings } from "@/lib/product-model-routings";
 import { getProductionStages } from "@/lib/production-stages";
 import { getShopRoutings } from "@/lib/shop-routings";
@@ -67,6 +74,10 @@ export default async function ProductModelRoute({
     productionStages,
     techOperations,
     catalogFolders,
+    materialLines,
+    nomenclature,
+    characteristicDefinitions,
+    detailingItems,
   ] = await Promise.all([
     getProductModelVersions(id),
     getProductModelMedia(id),
@@ -82,6 +93,30 @@ export default async function ProductModelRoute({
     getProductionStages({ active_only: true, limit: 500 }),
     getTechOperations({ active_only: true, limit: 500 }),
     getProductModelFolders(),
+    getProductModelMaterialLines(id),
+    getNomenclature(),
+    getCharacteristicDefinitions(),
+    getDetailingItems({ limit: 500 }),
+  ]);
+
+  const materialOptions = nomenclature
+    .filter((row) => row.nomenclature_type === "MATERIAL")
+    .map((row) => ({
+      id: row.id,
+      name: row.name,
+      unit: row.unit,
+      is_active: row.is_active,
+    }));
+
+  const hardwareTypeDef = characteristicDefinitions.find(
+    (row) => row.code === "hardware_type",
+  );
+  const colorDef = characteristicDefinitions.find((row) => row.code === "color");
+  const [hardwareTypeOptions, colorOptions] = await Promise.all([
+    hardwareTypeDef
+      ? getCharacteristicOptions(hardwareTypeDef.id)
+      : Promise.resolve([]),
+    colorDef ? getCharacteristicOptions(colorDef.id) : Promise.resolve([]),
   ]);
 
   return (
@@ -101,6 +136,11 @@ export default async function ProductModelRoute({
       productionStages={productionStages}
       techOperations={techOperations}
       catalogFolders={catalogFolders}
+      materialLines={materialLines}
+      materialOptions={materialOptions}
+      detailingItems={detailingItems}
+      hardwareTypeOptions={hardwareTypeOptions.filter((row) => row.is_active)}
+      colorOptions={colorOptions.filter((row) => row.is_active)}
       initialEditing={initialEditing}
     />
   );

@@ -46,6 +46,7 @@ from app.api.product_models import (
 )
 from app.api.product_models import router as product_models_router
 from app.api.product_types import router as product_types_router
+from app.api.detailing import router as detailing_router
 from app.api.sewing_operations import (
     folders_router as sewing_operation_folders_router,
 )
@@ -172,6 +173,7 @@ app.include_router(sales_users_router)
 app.include_router(product_models_router)
 app.include_router(product_model_folders_router)
 app.include_router(product_types_router)
+app.include_router(detailing_router)
 app.include_router(sewing_operations_router)
 app.include_router(sewing_operation_folders_router)
 app.include_router(sewing_operation_templates_router)

@@ -1,6 +1,6 @@
 "use client";
 
-import { Pencil, Save, X } from "lucide-react";
+import { ExternalLink, Pencil, Save, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useId, useMemo, useState } from "react";
 
@@ -11,6 +11,7 @@ import {
   type TechnicalCardAssemblyCandidate,
   type TechnicalCardModelCandidate,
 } from "@/app/(workspace)/production/tech-cards/tech-card-actions";
+import { ProductModelCardModal } from "@/components/settings/product-model-card-modal";
 import { IconButton } from "@/components/ui/button";
 import { Field, Select } from "@/components/ui/form-controls";
 import { InlineAlert } from "@/components/ui/inline-alert";
@@ -55,6 +56,7 @@ export function TechCardModelRouteCard({
   const [modelActiveIndex, setModelActiveIndex] = useState(0);
   const [assemblies, setAssemblies] = useState<TechnicalCardAssemblyCandidate[]>([]);
   const [selectedAssemblyId, setSelectedAssemblyId] = useState<number | null>(null);
+  const [modelCardOpen, setModelCardOpen] = useState(false);
 
   const defaultModelId = card.product_model_id ?? null;
   const defaultModelLabel = techCardModelLabel(card);
@@ -345,7 +347,20 @@ export function TechCardModelRouteCard({
           <dl className="grid gap-portal-3">
             <div>
               <dt className="text-portal-caption text-portal-muted">Модель</dt>
-              <dd className="mt-1 text-portal-body">{techCardModelLabel(card)}</dd>
+              <dd className="mt-1 flex flex-wrap items-center gap-portal-2 text-portal-body">
+                <span>{techCardModelLabel(card)}</span>
+                {defaultModelId != null ? (
+                  <IconButton
+                    label="Открыть карточку модели"
+                    variant="secondary"
+                    disabled={disabled}
+                    onClick={() => setModelCardOpen(true)}
+                    data-tech-card-open-model-card
+                  >
+                    <ExternalLink className="size-4" aria-hidden="true" />
+                  </IconButton>
+                ) : null}
+              </dd>
             </div>
             <div>
               <dt className="text-portal-caption text-portal-muted">Сборка</dt>
@@ -380,6 +395,13 @@ export function TechCardModelRouteCard({
           </p>
         ) : null}
       </div>
+      {defaultModelId != null ? (
+        <ProductModelCardModal
+          modelId={defaultModelId}
+          open={modelCardOpen}
+          onClose={() => setModelCardOpen(false)}
+        />
+      ) : null}
     </SectionCard>
   );
 }

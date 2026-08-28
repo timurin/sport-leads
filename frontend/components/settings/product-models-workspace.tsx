@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import {
   ArrowDown,
   ArrowDownUp,
@@ -45,6 +44,7 @@ import {
   CatalogTreeRootDropZone,
 } from "@/components/settings/catalog-folder-tree-dnd";
 import { CatalogFolderTemplateModal } from "@/components/settings/catalog-folder-template-modal";
+import { ProductModelCardModal } from "@/components/settings/product-model-card-modal";
 import {
   canNestCatalogFolder,
   catalogFolderRowSurfaceClass,
@@ -89,9 +89,6 @@ import {
 import type { ProductType } from "@/lib/product-types";
 import type { SewingOperationTemplate } from "@/lib/sewing-operation-templates";
 import type { SizeGridListItem } from "@/lib/size-grids";
-
-const ROW_ICON_LINK =
-  "portal-focus-ring inline-flex size-portal-control-icon shrink-0 items-center justify-center rounded-portal-md border border-portal-border bg-portal-surface text-portal-muted hover:bg-portal-state-hover hover:text-portal-text";
 
 function CoverThumb({
   model,
@@ -174,6 +171,7 @@ export function ProductModelsWorkspace({
   const [templateFolder, setTemplateFolder] = useState<ProductModelFolder | null>(
     null,
   );
+  const [cardModalModelId, setCardModalModelId] = useState<number | null>(null);
   const [exportPending, startExportTransition] = useTransition();
   const [exportError, setExportError] = useState<string | null>(null);
   const [sortField, setSortField] = useState<ProductModelListSortField | null>(
@@ -700,7 +698,6 @@ export function ProductModelsWorkspace({
   };
 
   const modelMeta = (model: ProductModel) => {
-    const href = `/settings/catalogs/product-models/${model.id}`;
     const grid = sizeGrids.find((row) => row.id === model.size_grid_id);
     const gridLabel = grid
       ? `${grid.name} · ${PRODUCT_MODEL_SIZE_TYPE_LABELS[grid.size_type]}`
@@ -709,11 +706,10 @@ export function ProductModelsWorkspace({
       model.product_type_name?.trim() ||
       productTypes.find((row) => row.id === model.product_type_id)?.name ||
       "—";
-    return { href, gridLabel, productTypeLabel };
+    return { gridLabel, productTypeLabel };
   };
 
   const rowActions = (model: ProductModel) => {
-    const href = `/settings/catalogs/product-models/${model.id}`;
     const busy = busyId === model.id || saving;
     return (
       <div className="flex flex-wrap items-center justify-end gap-1" role="group" aria-label="Действия">
@@ -733,14 +729,14 @@ export function ProductModelsWorkspace({
         >
           <Copy className="size-4" aria-hidden="true" />
         </IconButton>
-        <Link
-          href={href}
-          className={ROW_ICON_LINK}
-          aria-label={`Открыть ${model.name}`}
-          title="Открыть"
+        <IconButton
+          label={`Открыть карточку ${model.name}`}
+          variant="secondary"
+          disabled={busy}
+          onClick={() => setCardModalModelId(model.id)}
         >
           <ExternalLink className="size-4" aria-hidden="true" />
-        </Link>
+        </IconButton>
       </div>
     );
   };
@@ -836,6 +832,15 @@ export function ProductModelsWorkspace({
       <ProductModelImportDrawer
         open={importOpen}
         onClose={() => setImportOpen(false)}
+      />
+
+      <ProductModelCardModal
+        modelId={cardModalModelId}
+        open={cardModalModelId != null}
+        onClose={() => setCardModalModelId(null)}
+        onSaved={(model) => {
+          setPatched((current) => ({ ...current, [model.id]: model }));
+        }}
       />
 
       <CatalogFolderTemplateModal
@@ -1178,8 +1183,7 @@ export function ProductModelsWorkspace({
                     }
 
                     const model = row.model;
-                    const { href, gridLabel, productTypeLabel } =
-                      modelMeta(model);
+                    const { gridLabel, productTypeLabel } = modelMeta(model);
                     const checked = selectedIds.has(model.id);
 
                     return (
@@ -1207,20 +1211,22 @@ export function ProductModelsWorkspace({
                           </CatalogTreeDepthCell>
                         </DataTableCell>
                         <DataTableCell className="font-medium">
-                          <Link
-                            href={href}
-                            className="font-mono text-portal-text hover:text-portal-primary hover:underline"
+                          <button
+                            type="button"
+                            className="portal-focus-ring font-mono text-portal-text hover:text-portal-primary hover:underline"
+                            onClick={() => setCardModalModelId(model.id)}
                           >
                             {model.article}
-                          </Link>
+                          </button>
                         </DataTableCell>
                         <DataTableCell>
-                          <Link
-                            href={href}
-                            className="font-medium text-portal-text hover:text-portal-primary hover:underline"
+                          <button
+                            type="button"
+                            className="portal-focus-ring font-medium text-portal-text hover:text-portal-primary hover:underline"
+                            onClick={() => setCardModalModelId(model.id)}
                           >
                             {model.name}
-                          </Link>
+                          </button>
                         </DataTableCell>
                         <DataTableCell>{productTypeLabel}</DataTableCell>
                         <DataTableCell>{gridLabel}</DataTableCell>
@@ -1300,7 +1306,7 @@ export function ProductModelsWorkspace({
                 }
 
                 const model = row.model;
-                const { href, gridLabel, productTypeLabel } = modelMeta(model);
+                const { gridLabel, productTypeLabel } = modelMeta(model);
 
                 return (
                   <article
@@ -1321,12 +1327,13 @@ export function ProductModelsWorkspace({
                         <CoverThumb model={model} onOpen={openLightbox} />
                         <div className="min-w-0 flex-1 space-y-portal-2">
                           <h3 className="truncate text-portal-body font-semibold text-portal-text">
-                            <Link
-                              href={href}
-                              className="hover:text-portal-primary hover:underline"
+                            <button
+                              type="button"
+                              className="portal-focus-ring max-w-full truncate text-left hover:text-portal-primary hover:underline"
+                              onClick={() => setCardModalModelId(model.id)}
                             >
                               {model.name}
-                            </Link>
+                            </button>
                           </h3>
                           <p className="truncate text-portal-caption text-portal-muted">
                             {model.article} · {productTypeLabel} · {gridLabel}

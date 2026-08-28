@@ -247,7 +247,7 @@
       en: {
         brandTitle: "Roadmap v1.00",
         brandSub: "HTML twin for SL-ROADMAP-v1.00",
-        chipUpdated: "Updated: 2026-08-29",
+        chipUpdated: "Updated: 2026-08-31",
         chipCarry: "Carry: 1.4.3, 2 group, 7, 12.4–12.5, 13–16, 18.4 + Stages 0, 20–28",
         chipActive: "Active: v1.00 — 13.1.2 stop at visual 13.1.2.6",
         legendTitle: "Legend",
@@ -296,7 +296,7 @@
       ru: {
         brandTitle: "Roadmap v1.00",
         brandSub: "HTML-близнец SL-ROADMAP-v1.00",
-        chipUpdated: "Обновлено: 2026-08-29",
+        chipUpdated: "Обновлено: 2026-08-31",
         chipCarry: "Перенос: 1.4.3, группа 2, 7, 12.4–12.5, 13–16, 18.4 + Stages 0, 20–28",
         chipActive: "Активно: v1.00 — 13.1.2 стоп на visual 13.1.2.6",
         legendTitle: "Легенда",
@@ -4294,8 +4294,8 @@
           ru: "Этап 26 — Находки владельца: баги, косметика, UX"
         },
         note: {
-          en: "New in v1.00 (2026-08-25). Living backlog. Agent does not auto-start. Stage 13.1.1 closed. Do not reopen 20/22/3.5/19. Do not auto-start Stage 27. Task v1.00-stage-26-owner-findings.md. SL-OWNER-FINDINGS-v1. 26.10.1–26.10.8 closed. 26.11.1–26.11.14 closed (owner visual pending list responsible). 26.3.15 closed (owner visual pending Заказ). Owner-pull.",
-          ru: "Новое в v1.00. Живой backlog. Агент не стартует сам. Stage 13.1.1 закрыт. Не переоткрывать 20/22/3.5/19. Stage 27 не стартовать сам. 26.10 закрыт. 26.11.1–26.11.14 закрыты (owner visual pending ответственный). 26.3.15 закрыт (owner visual pending Заказ). Owner-pull."
+          en: "New in v1.00 (2026-08-25). Living backlog. Agent does not auto-start. Stage 13.1.1 closed. Do not reopen 20/22/3.5/19. Do not auto-start Stage 27. Task v1.00-stage-26-owner-findings.md. SL-OWNER-FINDINGS-v1. Through 26.13.6 closed (detailing + model Materials + TC prefill; owner visual OK). Owner-pull.",
+          ru: "Новое в v1.00. Живой backlog. Агент не стартует сам. Stage 13.1.1 закрыт. Не переоткрывать 20/22/3.5/19. Stage 27 не стартовать сам. До 26.13.6 закрыто (owner visual OK). Owner-pull."
         },
         blocks: [
           {
@@ -5206,6 +5206,110 @@
                 note: {
                   en: "v1.00 2026-08-29; TechnicalCardStandaloneCreate.nomenclature_name; tech-cards-workspace",
                   ru: "v1.00 2026-08-29; nomenclature_name + qty=1; без «Выберите номенклатуру»"
+                }
+              },
+              {
+                code: "26.12.1",
+                done: true,
+                title: {
+                  en: "Personalization: row Количество + Количество (сумма); import sets standalone card.quantity from sum",
+                  ru: "Персонализация: кол-во в строке и сумма"
+                },
+                note: {
+                  en: "v1.00 2026-08-29; aggregate UI + import_unit_lines; owner visual pending",
+                  ru: "v1.00 2026-08-29; UI + импорт; owner visual pending"
+                }
+              },
+              {
+                code: "26.12.2",
+                done: true,
+                title: {
+                  en: "Product model card modal: open from list + tech-card; view by default; Edit / Save / Cancel icons",
+                  ru: "Модалка карточки модели"
+                },
+                note: {
+                  en: "v1.00 2026-08-29; product-model-card-modal.tsx; owner visual pending",
+                  ru: "v1.00 2026-08-29; модалка; Edit/Save/Cancel; owner visual pending"
+                }
+              }
+            ]
+          },
+          {
+            title: {
+              en: "26.13 — Detailing + model Materials BOM + TC materials chrome",
+              ru: "26.13 — Деталировка + Материалы модели + Материалы ТК"
+            },
+            items: [
+              {
+                code: "26.13.1",
+                done: true,
+                title: {
+                  en: "Contract ADR-035 + SL-MODEL-MATERIALS-v1 / SL-DETAILING-v1 (locked owner decisions)",
+                  ru: "Контракт материалов модели + деталировки"
+                },
+                note: {
+                  en: "v1.00 2026-08-29; ADR-035; task v1.00-stage-26.13-model-materials.md",
+                  ru: "v1.00 2026-08-29; ADR-035"
+                }
+              },
+              {
+                code: "26.13.2",
+                done: true,
+                title: {
+                  en: "Detailing catalog: models + API + settings UI + nav",
+                  ru: "Справочник Деталировка"
+                },
+                note: {
+                  en: "v1.00 2026-08-29; /settings/catalogs/detailing; migration s8t9u0v1w234",
+                  ru: "v1.00 2026-08-29; /settings/catalogs/detailing"
+                }
+              },
+              {
+                code: "26.13.3",
+                done: true,
+                title: {
+                  en: "Product model Materials group: tabs Печать / Ткань / Раскрой / Фурнитура / Упаковка + CRUD (MATERIAL pick)",
+                  ru: "Табы Материалы на карточке модели"
+                },
+                note: {
+                  en: "v1.00 2026-08-29; product-model-materials-block.tsx",
+                  ru: "v1.00 2026-08-29; блок Материалы на модели"
+                }
+              },
+              {
+                code: "26.13.4",
+                done: true,
+                title: {
+                  en: "Fabric tab: stage print|cutting per row; multi Detailing + create-on-miss (applicability=product_type)",
+                  ru: "Ткань: цех + деталировка multi"
+                },
+                note: {
+                  en: "v1.00 2026-08-29",
+                  ru: "v1.00 2026-08-29"
+                }
+              },
+              {
+                code: "26.13.5",
+                done: true,
+                title: {
+                  en: "TC Materials: prefill from model BOM on bind/change; Edit/Cancel/Save chrome; fact_qty column UX",
+                  ru: "Материалы ТК: префилл + chrome + факт"
+                },
+                note: {
+                  en: "v1.00 2026-08-29; _sync_model_bom_to_composition",
+                  ru: "v1.00 2026-08-29; префилл BOM + chrome"
+                }
+              },
+              {
+                code: "26.13.6",
+                done: true,
+                title: {
+                  en: "Tests + owner visual + docs twins checkpoint",
+                  ru: "Регрессия + owner visual + docs"
+                },
+                note: {
+                  en: "v1.00 2026-08-31; owner visual OK detailing + model Materials + TC Materials; test_model_materials_26_13.py",
+                  ru: "v1.00 2026-08-31; owner visual OK; 26.13 закрыт"
                 }
               }
             ]

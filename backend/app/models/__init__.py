@@ -76,6 +76,12 @@ from app.models.product_model import (
     NomenclatureProductModel,
 )
 from app.models.product_type import ProductType
+from app.models.detailing import DetailingItem, detailing_item_product_types
+from app.models.product_model_material import (
+    ProductModelMaterialKind,
+    ProductModelMaterialLine,
+    product_model_material_line_detailings,
+)
 from app.models.sewing_operation import (
     SewingOperation,
     SewingOperationFolder,
