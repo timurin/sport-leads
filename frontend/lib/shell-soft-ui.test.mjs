@@ -37,6 +37,11 @@ test("Soft UI shell keeps nav SoT and compact mechanics", async () => {
     assert.ok(topbar.includes(marker), `topbar missing ${marker}`);
   }
 
+  assert.ok(topbar.includes("data-topnav-section-menu"));
+  assert.ok(topbar.includes("data-topnav-scroll"));
+  assert.ok(topbar.includes("createPortal"));
+  assert.ok(topbar.includes('className="fixed z-portal-popover'));
+
   assert.ok(css.includes("--portal-shell-sidebar-expanded: max(220px, 10vw)"));
   assert.ok(css.includes("flex-basis: var(--portal-shell-sidebar-expanded)"));
   assert.ok(sidebar.includes('data-sidebar-mode={mode}'));

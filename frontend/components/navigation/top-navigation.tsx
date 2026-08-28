@@ -12,10 +12,12 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
 } from "react";
+import { createPortal } from "react-dom";
 
 import {
   appSections,
@@ -42,6 +44,128 @@ item.children?.some((child) =>
 isNavigationPathActive(pathname, child.href),
 ),
 );
+}
+
+/** Desktop section dropdown — portaled so `overflow-x-auto` nav strip cannot clip it (DS-SHELL-02). */
+function TopNavSectionMenu({
+  item,
+  active,
+  open,
+  pathname,
+  onToggle,
+  onClose,
+}: {
+  item: NavigationGroup;
+  active: boolean;
+  open: boolean;
+  pathname: string;
+  onToggle: () => void;
+  onClose: () => void;
+}) {
+  const buttonRef = useRef<HTMLButtonElement | null>(null);
+  const [mounted, setMounted] = useState(false);
+  const [coords, setCoords] = useState<{ top: number; left: number } | null>(
+    null,
+  );
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useLayoutEffect(() => {
+    if (!open || !buttonRef.current) {
+      setCoords(null);
+      return;
+    }
+
+    const place = () => {
+      const button = buttonRef.current;
+      if (!button) return;
+      const rect = button.getBoundingClientRect();
+      const menuWidth = Math.min(260, window.innerWidth - 24);
+      const left = Math.min(
+        Math.max(12, rect.left),
+        window.innerWidth - menuWidth - 12,
+      );
+      setCoords({ top: rect.bottom - 1, left });
+    };
+
+    place();
+    const scrollParent = buttonRef.current.closest("[data-topnav-scroll]");
+    window.addEventListener("resize", place);
+    window.addEventListener("scroll", place, true);
+    scrollParent?.addEventListener("scroll", place);
+    return () => {
+      window.removeEventListener("resize", place);
+      window.removeEventListener("scroll", place, true);
+      scrollParent?.removeEventListener("scroll", place);
+    };
+  }, [open]);
+
+  return (
+    <div className="relative flex h-full items-center">
+      <button
+        ref={buttonRef}
+        type="button"
+        onClick={onToggle}
+        className={[
+          "flex h-[30px] items-center gap-1 whitespace-nowrap rounded-full px-3 text-[12px] font-semibold outline-none transition-colors focus-visible:ring-2 focus-visible:ring-portal-focus-ring",
+          active || open
+            ? "bg-white text-portal-primary-hover shadow-sm"
+            : "text-portal-muted hover:bg-white/80 hover:text-portal-text",
+        ].join(" ")}
+        aria-expanded={open}
+        aria-haspopup="menu"
+      >
+        <span>{item.title}</span>
+        <ChevronDown
+          size={13}
+          aria-hidden="true"
+          className={[
+            "shrink-0 transition-transform",
+            open ? "rotate-180" : "",
+          ].join(" ")}
+        />
+      </button>
+
+      {open && mounted && coords
+        ? createPortal(
+            <div
+              data-topnav-section-menu
+              role="menu"
+              style={{ top: coords.top, left: coords.left }}
+              className="fixed z-portal-popover w-[260px] max-w-[calc(100vw-24px)] rounded-lg border border-portal-border bg-portal-surface p-1.5 shadow-portal-overlay"
+            >
+              {(item.children ?? []).map((child) => {
+                const childActive = isNavigationPathActive(pathname, child.href);
+                return (
+                  <Link
+                    key={child.id}
+                    href={child.href}
+                    onClick={onClose}
+                    className={[
+                      "block rounded-md px-3 py-2 outline-none transition-colors focus-visible:ring-2 focus-visible:ring-portal-focus-ring",
+                      childActive
+                        ? "bg-portal-primary-soft text-portal-primary-hover"
+                        : "text-portal-text hover:bg-portal-surface-secondary hover:text-portal-text",
+                    ].join(" ")}
+                    role="menuitem"
+                  >
+                    <div className="text-[13px] font-medium">{child.title}</div>
+                    {child.description ? (
+                      <div className="mt-0.5 text-[11px] leading-4 text-portal-muted">
+                        {child.description}
+                      </div>
+                    ) : null}
+                  </Link>
+                );
+              })}
+            </div>,
+            document.body,
+          )
+        : null}
+    </div>
+  );
 }
 
 type TopNavigationProps = {
@@ -177,12 +301,17 @@ const target = event.target as Node;
     navigationRef.current &&
     !navigationRef.current.contains(target);
 
+  const outsidePortaledMenu = !document
+    .querySelector("[data-topnav-section-menu]")
+    ?.contains(target);
+
   const outsideMobileNavigation =
     mobileNavigationRef.current &&
     !mobileNavigationRef.current.contains(target);
 
   if (
     outsideDesktopNavigation &&
+    outsidePortaledMenu &&
     outsideMobileNavigation
   ) {
     setOpenMenuId(null);
@@ -318,6 +447,7 @@ return ( <header data-sl-shell="v1" className="sl-shell-v1 relative z-portal-she
     <div className="flex h-[var(--portal-shell-topbar-sm)] min-w-0 items-center gap-1.5 px-2.5 sm:px-3 md:h-[var(--portal-shell-topbar)] lg:gap-2 lg:px-4">
       <div
         ref={navigationRef}
+        data-topnav-scroll
         className="hidden h-full min-w-0 flex-1 items-center overflow-x-auto lg:flex"
       >
         <nav
@@ -331,86 +461,20 @@ return ( <header data-sl-shell="v1" className="sl-shell-v1 relative z-portal-she
             );
 
             if (item.children?.length) {
-              const menuOpen =
-                openMenuId === item.id;
+              const menuOpen = openMenuId === item.id;
 
               return (
-                <div
+                <TopNavSectionMenu
                   key={item.id}
-                  className="relative flex h-full items-center"
-                >
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setOpenMenuId(
-                        menuOpen ? null : item.id,
-                      );
-                    }}
-                    className={[
-                      "flex h-[30px] items-center gap-1 whitespace-nowrap rounded-full px-3 text-[12px] font-semibold outline-none transition-colors focus-visible:ring-2 focus-visible:ring-portal-focus-ring",
-                      active || menuOpen
-                        ? "bg-white text-portal-primary-hover shadow-sm"
-                        : "text-portal-muted hover:bg-white/80 hover:text-portal-text",
-                    ].join(" ")}
-                    aria-expanded={menuOpen}
-                    aria-haspopup="menu"
-                  >
-                    <span>{item.title}</span>
-
-                    <ChevronDown
-                      size={13}
-                      aria-hidden="true"
-                      className={[
-                        "shrink-0 transition-transform",
-                        menuOpen
-                          ? "rotate-180"
-                          : "",
-                      ].join(" ")}
-                    />
-                  </button>
-
-                  {menuOpen ? (
-                    <div
-                      className="absolute left-0 top-[calc(100%-1px)] z-portal-popover w-[260px] max-w-[calc(100vw-24px)] rounded-lg border border-portal-border bg-portal-surface p-1.5 shadow-portal-overlay"
-                      role="menu"
-                    >
-                      {item.children.map((child) => {
-                        const childActive =
-                          isNavigationPathActive(
-                            pathname,
-                            child.href,
-                          );
-
-                        return (
-                          <Link
-                            key={child.id}
-                            href={child.href}
-                            onClick={() => {
-                              setOpenMenuId(null);
-                            }}
-                            className={[
-                              "block rounded-md px-3 py-2 outline-none transition-colors focus-visible:ring-2 focus-visible:ring-portal-focus-ring",
-                              childActive
-                                ? "bg-portal-primary-soft text-portal-primary-hover"
-                                : "text-portal-text hover:bg-portal-surface-secondary hover:text-portal-text",
-                            ].join(" ")}
-                            role="menuitem"
-                          >
-                            <div className="text-[13px] font-medium">
-                              {child.title}
-                            </div>
-
-                            {child.description ? (
-                              <div className="mt-0.5 text-[11px] leading-4 text-portal-muted">
-                                {child.description}
-                              </div>
-                            ) : null}
-                          </Link>
-                        );
-                      })}
-                    </div>
-                  ) : null}
-                </div>
+                  item={item}
+                  active={active}
+                  open={menuOpen}
+                  pathname={pathname}
+                  onToggle={() => {
+                    setOpenMenuId(menuOpen ? null : item.id);
+                  }}
+                  onClose={() => setOpenMenuId(null)}
+                />
               );
             }
 

@@ -1,7 +1,7 @@
 # Sport-Lead — Roadmap v1.00
 
 **Code:** `SL-ROADMAP-v1.00`
-**Updated:** `2026-08-29` (Stage **12.5.1.1**–`12.5.1.5` transfer shipped; next **12.5.1.6** owner visual; parked `0.5.13` S3 media; Stage **26** `26.9.1`–`26.9.4` closed, **`26.3.5`–`26.3.15` closed**, **`26.10.1`–`26.10.8` closed**, **`26.11.1`–`26.11.13` closed** (owner visual pending list responsible + Заказ); Stage **27** 1C:UNF export parked; **Stage 28** closed including `28.5.1`–`28.5.4`)
+**Updated:** `2026-08-29` (Stage **12.5.1.1**–`12.5.1.5` transfer shipped; next **12.5.1.6** owner visual; parked `0.5.13` S3 media; Stage **26** `26.9.1`–`26.9.5` closed, **`26.3.5`–`26.3.15` closed**, **`26.10.1`–`26.10.8` closed**, **`26.11.1`–`26.11.13` closed** (owner visual pending list responsible + Заказ); Stage **27** 1C:UNF export parked; **Stage 28** closed including `28.5.1`–`28.5.4`)
 **Project version:** `v1.00`
 **Status:** Confirmed carry-over from `v0.9.0` (Stages **1.4.3**, **2** group, **7**, **12.4**–**12.5**, **13**, **14**, **15**, **16**, **18.4**) + **new** Stages **0** (performance + LAN + order-without-lead + **canonical VPS `0.5`**), **20** (Lead / Order UX, closed), **21** (Settings / Users cabinet, closed), **22** (Design v1.0), **23** (Unified Work Tasks), **24** (Sewing cabinet), **25** (Tech-card QR / shop scan), **26** (owner findings: bugs / cosmetics), **27** (1C:UNF document export), **28** (standalone tech cards + unified numbering). Owner started early (`2026-08-05`).
 **Languages / Языки:** English + Russian (this MD). Interactive switch: `docs/erp/status/roadmap-v1.00.html`
@@ -925,6 +925,7 @@
 - [x] 26.9.2 — Move **Настройки** out of the sidebar to a DS-SHELL-02 top-right icon; open `/settings` in a right slider like the lead (`LeadCardSlider` / `@leadSlider`); nested `/settings/...` keep URL; full-page route remains for refresh/deep link — `v1.00` `2026-08-27`; `@settingsSlider/(.)settings`; `settings-card-slider.tsx`; `data-settings-topbar-link` / Настройки иконкой и слайдером
 - [x] 26.9.3 — Owner visual: expanded + compact sidebar; desktop + md; settings icon + slider vs full `/settings` — `v1.00` `2026-08-27` / Visual меню и слайдера настроек
 - [x] 26.9.4 — Settings slider: hub category links must open target page (leave soft-nav intercept; was URL change under stuck overlay) — `v1.00` `2026-08-29`; `SettingsHubLink` + `window.location.assign` from `[data-settings-card-slider]` / Ссылки из слайдера Настройки
+- [x] 26.9.5 — Topbar section dropdown clipped by `overflow-x-auto` (scrollbar; menu invisible); portal + fixed position — `v1.00` `2026-08-29`; `TopNavSectionMenu` `createPortal`; DS-SHELL-02 chrome preserved / Выпадающее меню топбара
 
 ### 26.10 — Sewing catalog slim + assembly economics on model / Каталог операций пошива + экономика на модели
 
@@ -1259,3 +1260,4 @@
 | `2026-08-29` | Closed `26.3.15`: restore Заказ text + platform pick; compact one row; `PATCH` group `order_number`; owner visual pending `/production/tech-cards/6` | Закрыт `26.3.15`: Заказ вручную или из платформы |
 | `2026-08-29` | Closed `26.11.13`: list `responsible_name` from document + toolbar filter «Ответственный»; owner visual pending `/production/tech-cards` | Закрыт `26.11.13`: ответственный в списке и фильтре |
 | `2026-08-29` | Closed `26.9.4`: settings hub links from soft-nav slider stuck under overlay; hard leave via `SettingsHubLink` | Закрыт `26.9.4`: ссылки из слайдера Настройки |
+| `2026-08-29` | Closed `26.9.5`: topbar section dropdown portaled (was clipped by overflow-x-auto); DS-SHELL-02 preserved | Закрыт `26.9.5`: выпадающее меню топбара |
