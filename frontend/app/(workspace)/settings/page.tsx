@@ -15,9 +15,9 @@ import {
   Users,
   Warehouse,
 } from "lucide-react";
-import Link from "next/link";
 
 import { PageLayout } from "@/components/layout/page-layout";
+import { SettingsHubLink } from "@/components/settings/settings-hub-link";
 
 const settingsGroups = [
   {
@@ -249,12 +249,12 @@ export default function SettingsPage() {
               </span>
             </div>
           </div>
-          <Link
+          <SettingsHubLink
             href="/settings/users"
             className="portal-focus-ring inline-flex h-9 items-center justify-center rounded-lg border border-portal-border bg-portal-primary px-3 text-sm font-medium text-portal-primary-on"
           >
             Пользователи
-          </Link>
+          </SettingsHubLink>
         </section>
 
         {settingsGroups.map((group) => {
@@ -277,7 +277,7 @@ export default function SettingsPage() {
                   const Icon = item.icon;
 
                   return (
-                    <Link
+                    <SettingsHubLink
                       key={item.href}
                       href={item.href}
                       className="sl-soft-panel group flex items-start gap-4 p-portal-4 hover:bg-portal-state-hover"
@@ -294,7 +294,7 @@ export default function SettingsPage() {
                           Открыть →
                         </div>
                       </div>
-                    </Link>
+                    </SettingsHubLink>
                   );
                 })}
               </div>
