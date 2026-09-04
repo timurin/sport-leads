@@ -273,8 +273,11 @@ def test_print_form_generate_pdf_uses_html_template_fallback() -> None:
             yield db
 
     app.dependency_overrides[get_db] = override_get_db
-    original_render_pdf_bytes = print_forms_service._render_pdf_bytes
-    print_forms_service._render_pdf_bytes = lambda html: f"PDF::{html}".encode("utf-8")
+    # Generate PDF uses Chrome headless path; stub it so CI needs no browser.
+    original_render_pdf_bytes_chrome = print_forms_service._render_pdf_bytes_chrome
+    print_forms_service._render_pdf_bytes_chrome = (
+        lambda html: f"PDF::{html}".encode("utf-8")
+    )
     try:
         with factory() as db:
             ensure_user_with_role(db, login="admin", role_code="admin")
@@ -332,5 +335,5 @@ def test_print_form_generate_pdf_uses_html_template_fallback() -> None:
             assert body["content_encoding"] == "base64"
             assert body["file_name"].endswith(".pdf")
     finally:
-        print_forms_service._render_pdf_bytes = original_render_pdf_bytes
+        print_forms_service._render_pdf_bytes_chrome = original_render_pdf_bytes_chrome
         app.dependency_overrides.pop(get_db, None)
