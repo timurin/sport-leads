@@ -156,6 +156,7 @@ def copy_technical_card(
                 stage_order=line.stage_order,
                 production_stage_id=line.production_stage_id,
                 stage_label=line.stage_label,
+                cutting_method=line.cutting_method,
             )
         )
     db.add(clone)

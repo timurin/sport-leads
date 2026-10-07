@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from decimal import Decimal
 
+import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
@@ -15,6 +16,8 @@ from app.main import app
 from app.models.nomenclature import Nomenclature, NomenclatureType
 from app.models.product_model import ProductModel, ProductModelSizeType, ProductModelStatus
 from app.models.sales import Lead, LeadTask, SalesUser
+from app.models.product_model_material import ProductModelMaterialLine
+from app.models.technical_card import TechnicalCardCompositionLine
 
 
 def _session_factory() -> sessionmaker[Session]:
@@ -93,7 +96,8 @@ def _seed(db: Session) -> dict[str, int]:
     }
 
 
-def test_composition_replace_apply_spec_and_refresh_model() -> None:
+@pytest.mark.parametrize("source", ["empty", "partial_bom"])
+def test_composition_replace_apply_spec_and_refresh_model(source: str) -> None:
     factory = _session_factory()
 
     def override_get_db():
@@ -176,6 +180,14 @@ def test_composition_replace_apply_spec_and_refresh_model() -> None:
             assert replaced.status_code == 200, replaced.text
             kinds = [row["line_kind"] for row in replaced.json()["composition_lines"]]
             assert kinds == ["pattern", "material"]
+            manual_material = replaced.json()["composition_lines"][1]
+            for _ in range(2):
+                response = client.post(
+                    f"/technical-cards/{card_id}/composition/refresh-model"
+                )
+                assert response.status_code == 200, response.text
+                assert [row for row in response.json()["composition_lines"]
+                        if row["line_kind"] == "material"] == [manual_material]
 
             applied = client.post(
                 f"/technical-cards/{card_id}/composition/apply-specification",
@@ -209,6 +221,26 @@ def test_composition_replace_apply_spec_and_refresh_model() -> None:
             ]
             assert body["composition_lines"][0]["planned_qty"] == "2.000"
 
+            # Master edits must not overwrite the stored material snapshot/fact.
+            with factory() as db:
+                model = db.get(ProductModel, ids["model"])
+                model.name = "Обновлённая модель"
+                model.patterns_path = "//files/patterns/revised"
+                material_line = db.get(
+                    TechnicalCardCompositionLine, body["composition_lines"][0]["id"]
+                )
+                material_line.fact_qty = Decimal("0.750")
+                if source == "partial_bom":
+                    db.add(ProductModelMaterialLine(
+                        product_model_id=ids["model"], kind="print",
+                        nomenclature_id=ids["material"], planned_qty=Decimal("9"),
+                        sequence=1,
+                    ))
+                db.commit()
+            expected_material = client.get(
+                f"/technical-cards/{card_id}"
+            ).json()["composition_lines"][0]
+
             # Refresh model re-adds pattern line from ProductModel.patterns_path
             refreshed = client.post(
                 f"/technical-cards/{card_id}/composition/refresh-model"
@@ -224,9 +256,34 @@ def test_composition_replace_apply_spec_and_refresh_model() -> None:
                 for row in refreshed.json()["composition_lines"]
                 if row["line_kind"] == "pattern"
             )
-            assert pattern["notes"] == "//files/patterns/pm-901"
+            assert pattern["notes"] == "//files/patterns/revised"
+            assert refreshed.json()["product_model_name"] == "Обновлённая модель"
             # Spec stamp preserved on refresh
             assert refreshed.json()["specification_version_id"] == 42
+            for response in [refreshed, client.post(
+                f"/technical-cards/{card_id}/composition/refresh-model"
+            )]:
+                assert response.status_code == 200, response.text
+                rows = response.json()["composition_lines"]
+                assert [row for row in rows if row["line_kind"] == "material"] == [expected_material]
+                assert len([row for row in rows if row["line_kind"] == "pattern"]) == 1
+                assert [row for row in rows if row["line_kind"] == "note"] == [body["composition_lines"][1]]
+
+            # An explicit composition replacement still updates/removes materials.
+            edited = client.put(f"/technical-cards/{card_id}/composition", json={
+                "lines": [{"sequence": 1, "line_kind": "material",
+                           "nomenclature_id": ids["material"],
+                           "snapshot_name": "Ручная правка", "planned_qty": "3.500", "unit": "м"}]
+            })
+            assert edited.status_code == 200, edited.text
+            edited_material = edited.json()["composition_lines"][0]
+            again = client.post(f"/technical-cards/{card_id}/composition/refresh-model")
+            assert again.status_code == 200, again.text
+            assert [row for row in again.json()["composition_lines"]
+                    if row["line_kind"] == "material"] == [edited_material]
+            removed = client.put(f"/technical-cards/{card_id}/composition", json={"lines": []})
+            assert removed.status_code == 200, removed.text
+            assert removed.json()["composition_lines"] == []
 
             cancelled = client.post(f"/technical-cards/{card_id}/cancel")
             assert cancelled.status_code == 200

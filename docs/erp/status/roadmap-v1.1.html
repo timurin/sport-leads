@@ -1,0 +1,1399 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sport-Lead — Roadmap v1.1</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f3f6fb;
+      --surface: #ffffff;
+      --surface-2: #f7f9fc;
+      --line: #d8e1eb;
+      --line-strong: #b6c4d6;
+      --text: #10243a;
+      --muted: #637487;
+      --accent: #1d5eff;
+      --accent-soft: #e9efff;
+      --done: #147b4d;
+      --done-soft: #e7f6ee;
+      --todo: #985d00;
+      --todo-soft: #fff3df;
+      --carry: #0f6e8c;
+      --carry-soft: #e5f6fb;
+      --shadow: 0 16px 46px rgba(16, 36, 58, 0.08);
+      --radius: 18px;
+      --font: "Segoe UI", Arial, sans-serif;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; }
+    body {
+      background:
+        radial-gradient(circle at top left, rgba(29, 94, 255, 0.08), transparent 30%),
+        linear-gradient(180deg, #f7f9fd 0%, var(--bg) 100%);
+      color: var(--text);
+      font: 14px/1.5 var(--font);
+    }
+    .layout {
+      display: grid;
+      grid-template-columns: 300px minmax(0, 1fr);
+      min-height: 100vh;
+    }
+    .sidebar {
+      position: sticky; top: 0; align-self: start; height: 100vh; overflow: auto;
+      padding: 22px 18px; border-right: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.92); backdrop-filter: blur(12px);
+    }
+    .brand { display: grid; gap: 10px; margin-bottom: 18px; }
+    .brand-badge {
+      width: 44px; height: 44px; border-radius: 14px; display: grid; place-items: center;
+      background: linear-gradient(135deg, #1d5eff, #0f4ad2); color: #fff; font-weight: 800;
+    }
+    .brand h1 { margin: 0; font-size: 20px; line-height: 1.15; }
+    .brand p, .sidebar-note, .meta-list { color: var(--muted); }
+    .meta-list, .sidebar-note, .nav-links { display: grid; gap: 8px; }
+    .chip {
+      display: inline-flex; align-items: center; gap: 8px; width: fit-content;
+      padding: 8px 10px; border-radius: 999px; border: 1px solid var(--line);
+      background: var(--surface-2); font-size: 12px; color: var(--muted);
+    }
+    .lang-switch {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 14px 0 4px;
+    }
+    .lang-switch button {
+      border: 1px solid var(--line-strong); border-radius: 12px; padding: 10px 12px;
+      background: #fff; color: var(--text); font: inherit; font-weight: 700; cursor: pointer;
+    }
+    .lang-switch button.active {
+      background: var(--accent-soft); border-color: #cad8ff; color: var(--accent);
+    }
+    .lang-switch button:hover, .lang-switch button:focus-visible {
+      border-color: var(--accent); outline: none;
+    }
+    .nav-links a {
+      display: flex; justify-content: space-between; gap: 12px; text-decoration: none; color: inherit;
+      padding: 10px 12px; border-radius: 12px; border: 1px solid transparent;
+    }
+    .nav-links a:hover, .nav-links a:focus-visible { background: var(--accent-soft); border-color: #cad8ff; outline: none; }
+    .nav-links small { color: var(--muted); }
+    .content { padding: 24px; }
+    .hero, .toolbar, .stage-card, .panel {
+      background: rgba(255,255,255,0.95); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow);
+    }
+    .hero { padding: 28px; display: grid; gap: 18px; margin-bottom: 18px; }
+    .hero-top { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; align-items: flex-start; }
+    .hero h2 { margin: 0 0 8px; font-size: 30px; line-height: 1.1; }
+    .hero p { margin: 0; color: var(--muted); max-width: 900px; }
+    .stats { display: grid; grid-template-columns: repeat(5, minmax(0,1fr)); gap: 12px; }
+    .stat {
+      padding: 16px; border-radius: 16px; border: 1px solid var(--line);
+      background: linear-gradient(180deg, #fff 0%, #f8fbff 100%);
+    }
+    .stat strong { display: block; font-size: 28px; line-height: 1; margin-bottom: 6px; }
+    .stat span { color: var(--muted); font-size: 13px; }
+    .progress-shell { display: grid; gap: 8px; }
+    .progress-row { display: flex; justify-content: space-between; gap: 12px; color: var(--muted); font-size: 13px; }
+    .progress-bar { width: 100%; height: 12px; border-radius: 999px; background: #e8eef5; border: 1px solid #dde6ef; overflow: hidden; }
+    .progress-bar span { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #1d5eff, #4b85ff); }
+    .toolbar {
+      padding: 18px; display: grid; grid-template-columns: minmax(240px,1fr) auto auto auto; gap: 12px;
+      margin-bottom: 18px; align-items: center;
+    }
+    .toolbar input, .toolbar select, .toolbar button {
+      border: 1px solid var(--line-strong); border-radius: 12px; padding: 11px 12px; background: #fff; color: var(--text); font: inherit;
+    }
+    .toolbar .button-row { display: flex; gap: 10px; }
+    .toolbar button { cursor: pointer; font-weight: 700; background: var(--surface-2); }
+    .toolbar .lang-inline { display: flex; gap: 8px; }
+    .toolbar .lang-inline button.active {
+      background: var(--accent-soft); border-color: #cad8ff; color: var(--accent);
+    }
+    .legend { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 18px; }
+    .legend-item {
+      display: inline-flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 999px;
+      border: 1px solid var(--line); background: rgba(255,255,255,0.95); box-shadow: var(--shadow);
+    }
+    .panel { padding: 20px; margin-bottom: 18px; display: grid; gap: 12px; }
+    .panel h3 { margin: 0; font-size: 18px; }
+    .panel p, .panel li { color: var(--muted); }
+    .panel ul { margin: 0; padding-left: 18px; display: grid; gap: 6px; }
+    .stages { display: grid; gap: 16px; }
+    .stage-card { overflow: hidden; }
+    .stage-header {
+      padding: 18px 20px; display: flex; justify-content: space-between; gap: 16px; align-items: center;
+      background: linear-gradient(180deg, #fff 0%, #f8fbff 100%); border-bottom: 1px solid var(--line); cursor: pointer;
+    }
+    .stage-header h3 { margin: 0 0 6px; font-size: 20px; line-height: 1.15; }
+    .stage-header p { margin: 0; color: var(--muted); font-size: 13px; }
+    .stage-meta { display: flex; flex-wrap: wrap; gap: 10px; justify-content: flex-end; }
+    .badge { display: inline-flex; align-items: center; gap: 7px; padding: 7px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; }
+    .badge.done { background: var(--done-soft); color: var(--done); }
+    .badge.todo { background: var(--todo-soft); color: var(--todo); }
+    .badge.carry { background: var(--carry-soft); color: var(--carry); }
+    .stage-body { padding: 18px 20px 20px; }
+    .stage-body[hidden] { display: none; }
+    .block-grid { display: grid; gap: 14px; }
+    .block-card { border: 1px solid var(--line); border-radius: 16px; background: var(--surface); overflow: hidden; }
+    .block-head { padding: 14px 16px; background: var(--surface-2); border-bottom: 1px solid var(--line); }
+    .block-head h4 { margin: 0; font-size: 16px; line-height: 1.2; }
+    .item-list { display: grid; gap: 10px; padding: 14px 16px 16px; }
+    .item-card { border: 1px solid var(--line); border-radius: 14px; background: #fff; padding: 12px 14px; display: grid; gap: 8px; }
+    .item-top { display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: start; }
+    .check-icon {
+      width: 22px; height: 22px; border-radius: 7px; display: grid; place-items: center;
+      border: 1px solid var(--line-strong); font-size: 12px; font-weight: 800; background: #fff; color: var(--muted);
+    }
+    .check-icon.done { background: var(--done-soft); border-color: #9fd6b8; color: var(--done); }
+    .check-icon.todo { background: var(--todo-soft); border-color: #f0d39a; color: var(--todo); }
+    .item-title { display: grid; gap: 4px; }
+    .item-title strong { font-size: 14px; }
+    .item-title span, .item-note { color: var(--muted); font-size: 13px; }
+    .item-status { font-size: 12px; font-weight: 700; color: var(--muted); }
+    .note-box {
+      margin: 0 16px 14px; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--line);
+      background: var(--surface-2); color: var(--muted); font-size: 13px;
+    }
+    .footer-note { margin-top: 18px; color: var(--muted); font-size: 12px; }
+    @media (max-width: 980px) {
+      .layout { grid-template-columns: 1fr; }
+      .sidebar { position: static; height: auto; }
+      .stats { grid-template-columns: repeat(2, minmax(0,1fr)); }
+      .toolbar { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-badge">SL</div>
+        <div>
+          <h1 id="ui-brand-title">Roadmap v1.1</h1>
+          <p id="ui-brand-sub">HTML twin for SL-ROADMAP-v1.1</p>
+        </div>
+      </div>
+      <div class="lang-switch" role="group" aria-label="Language">
+        <button type="button" data-lang="en" class="active">EN</button>
+        <button type="button" data-lang="ru">RU</button>
+      </div>
+      <div class="meta-list">
+        <div class="chip" id="chip-updated">Updated: 2026-10-05</div>
+        <div class="chip">Version: v1.1</div>
+        <div class="chip" id="chip-carry">Open queue from v1.00</div>
+        <div class="chip" id="chip-active">Next: 13.2.1</div>
+      </div>
+      <div class="sidebar-note" style="margin:18px 0;">
+        <strong id="ui-legend-title" style="color:var(--text)">Legend</strong>
+        <div id="ui-legend-done">`[x]` done</div>
+        <div id="ui-legend-todo">`[ ]` open</div>
+        <div id="ui-legend-html">HTML is a report. Markdown is the source of truth.</div>
+      </div>
+      <nav class="nav-links" id="nav-links" aria-label="Roadmap stages"></nav>
+    </aside>
+    <main class="content">
+      <section class="hero">
+        <div class="hero-top">
+          <div>
+            <h2 id="ui-hero-title">Sport-Lead Roadmap v1.1</h2>
+            <p id="ui-hero-text">Open queue carried from v1.00.</p>
+          </div>
+          <div class="chip">Source: docs/roadmap/roadmap-v1.1.md</div>
+        </div>
+        <div class="stats" id="stats"></div>
+        <div class="progress-shell">
+          <div class="progress-row">
+            <strong id="ui-progress-label">Overall progress</strong>
+            <span id="overall-progress-label"></span>
+          </div>
+          <div class="progress-bar" aria-hidden="true"><span id="overall-progress-bar"></span></div>
+        </div>
+      </section>
+      <section class="panel" id="transfer">
+        <h3 id="ui-transfer-title">Carry from v1.00</h3>
+        <p id="ui-transfer-text"></p>
+        <ul id="ui-transfer-list"></ul>
+      </section>
+      <section class="toolbar" aria-label="Search and filters">
+        <input id="search" type="search" placeholder="Search stages and microtasks">
+        <select id="filter">
+          <option value="all">All items</option>
+          <option value="todo">Open only</option>
+          <option value="done">Done only</option>
+        </select>
+        <div class="lang-inline" role="group" aria-label="Language toolbar">
+          <button type="button" data-lang="en" class="active">EN</button>
+          <button type="button" data-lang="ru">RU</button>
+        </div>
+        <div class="button-row">
+          <button id="expand-all" type="button">Expand all</button>
+          <button id="collapse-all" type="button">Collapse all</button>
+        </div>
+      </section>
+      <div class="legend" id="legend"></div>
+      <div class="stages" id="stages"></div>
+      <div class="footer-note" id="ui-footer">Twin of docs/roadmap/roadmap-v1.1.md.</div>
+    </main>
+  </div>
+  <script>
+
+    const STORAGE_KEY = "sport-lead-roadmap-v11-lang";
+
+    const ui = {
+      en: {
+        brandTitle: "Roadmap v1.1",
+        brandSub: "HTML twin for SL-ROADMAP-v1.1",
+        chipUpdated: "Updated: 2026-10-05",
+        chipCarry: "Open queue from v1.00",
+        chipActive: "Next procurement: 13.2.1 (owner names the code)",
+        legendTitle: "Legend",
+        legendDone: "`[x]` done",
+        legendTodo: "`[ ]` open",
+        legendHtml: "HTML is a report. Markdown is the source of truth.",
+        heroTitle: "Sport-Lead Roadmap v1.1",
+        heroText: "Open items carried from v1.00 on 2026-10-02. Owner visual of shipped work is closed in v1.00 (13.1.2.6, 26.3.14, 26.3.15, 26.11.13, 26.12.1, 26.12.2). Parked owner-pull: 0.5.13, 12.5.2, 16.2.1, Stage 27. Next procurement item is 13.2.1.",
+        progressLabel: "Overall progress",
+        transferTitle: "Carry from v1.00",
+        transferText: "Still-open v1.00 items live here. Visual checks of already shipped screens were closed by the owner on 2026-10-02 and stay in roadmap-v1.00.md.",
+        transferItems: [
+          "Closed in v1.00: 13.1.2.6 purchase-order visual; Stage 13.1.2 complete",
+          "Closed in v1.00: 26.3.14 / 26.3.15 / 26.11.13 / 26.12.1 / 26.12.2 owner visual OK",
+          "Open here: 0.5.13 S3 (parked), 12.5.2 reserves (later)",
+          "Open here: 13.2 receipts — next procurement item when the owner names 13.2.1",
+          "Open here: Stage 14 shipping and payments",
+          "Open here: Stage 15 costing and ERP analytics (15.2.1 already shipped)",
+          "Open here: Stage 16 integrations (16.2.1 inbound parked; outbound = Stage 27)",
+          "Open here: 18.4 operations journal",
+          "Open here: Stage 27 1C:UNF export (27.0.1 closed in v1.00; 27.1+ owner-pull)"
+        ],
+        searchPlaceholder: "Search stages and microtasks",
+        filterAll: "All items",
+        filterTodo: "Open only",
+        filterDone: "Done only",
+        expand: "Expand all",
+        collapse: "Collapse all",
+        footer: "Twin of docs/roadmap/roadmap-v1.1.md. Open queue carried from v1.00 on 2026-10-02.",
+        stats: { stages: "Stages", blocks: "Blocks", items: "Microtasks", done: "Done [x]", todo: "Open [ ]" },
+        legendItems: ["Open", "Done", "Carried from v1.00"],
+        sourcePrefix: "Source v1.00:",
+        noteLabel: "Note"
+      },
+      ru: {
+        brandTitle: "Roadmap v1.1",
+        brandSub: "HTML-близнец SL-ROADMAP-v1.1",
+        chipUpdated: "Обновлено: 2026-10-05",
+        chipCarry: "Открытая очередь из v1.00",
+        chipActive: "Дальше закупки: 13.2.1 (когда владелец назовёт код)",
+        legendTitle: "Легенда",
+        legendDone: "`[x]` выполнено",
+        legendTodo: "`[ ]` открыто",
+        legendHtml: "HTML — отчёт. Источник истины — Markdown.",
+        heroTitle: "Sport-Lead Roadmap v1.1",
+        heroText: "Открытые пункты перенесены из v1.00 2026-10-02. Визуал уже сданного закрыт в v1.00 (13.1.2.6, 26.3.14, 26.3.15, 26.11.13, 26.12.1, 26.12.2). Owner-pull: 0.5.13, 12.5.2, 16.2.1, Stage 27. Следующий пункт закупок — 13.2.1.",
+        progressLabel: "Общий прогресс",
+        transferTitle: "Перенос из v1.00",
+        transferText: "Здесь только ещё открытое из v1.00. Визуальные проверки уже сданных экранов владелец закрыл 2026-10-02; они остаются в roadmap-v1.00.md.",
+        transferItems: [
+          "Закрыто в v1.00: visual 13.1.2.6; Stage 13.1.2 закрыт",
+          "Закрыто в v1.00: owner visual 26.3.14 / 26.3.15 / 26.11.13 / 26.12.1 / 26.12.2",
+          "Открыто здесь: 0.5.13 S3 (parked), 12.5.2 резервы (later)",
+          "Открыто здесь: 13.2 поступления — следующий пункт закупок по коду 13.2.1",
+          "Открыто здесь: этап 14 отгрузка и платежи",
+          "Открыто здесь: этап 15 себестоимость и ERP-аналитика (15.2.1 уже закрыт)",
+          "Открыто здесь: этап 16 интеграции (16.2.1 inbound parked; выгрузка = Stage 27)",
+          "Открыто здесь: 18.4 журнал операций",
+          "Открыто здесь: Stage 27 выгрузка в 1С:УНФ (27.0.1 закрыт в v1.00; 27.1+ owner-pull)"
+        ],
+        searchPlaceholder: "Поиск по этапам и микрозадачам",
+        filterAll: "Все пункты",
+        filterTodo: "Только открытые",
+        filterDone: "Только выполненные",
+        expand: "Раскрыть все",
+        collapse: "Свернуть все",
+        footer: "Близнец docs/roadmap/roadmap-v1.1.md. Открытая очередь из v1.00 на 2026-10-02.",
+        stats: { stages: "Этапы", blocks: "Блоки", items: "Микрозадачи", done: "Готово [x]", todo: "Открыто [ ]" },
+        legendItems: ["Открыто", "Готово", "Перенесено из v1.00"],
+        sourcePrefix: "Источник v1.00:",
+        noteLabel: "Заметка"
+      }
+    };
+
+    const roadmap = [
+{
+        code: "0.5",
+        title: { en: "Stage 0.5 — S3 media / S3 медиа", ru: "Stage 0.5 — S3 media / S3 медиа" },
+        note: { en: "Only the parked remainder of canonical VPS. Disk SoT `0.5.10` stays until the owner pulls `0.5.13`. No s3fs. ADR-011/022. Do not auto-start.", ru: "Только припаркованный остаток канонического VPS. Диск `0.5.10` остаётся, пока владелец не вызовет `0.5.13`. Без s3fs. ADR-011/022. Не стартовать самому." },
+        blocks: [
+          {
+            title: { en: "0.5.13 — Object storage", ru: "Объектное хранилище" },
+            items: [
+              {
+              code: "0.5.13",
+              done: false,
+              title: { en: "S3-compatible object storage for media (private bucket; API on VPS; replace disk SoT `0.5.10`) — parked; owner-pull; do not auto-start while the project is small; no s3fs; ADR-011/022 / S3 медиа, когда диск VPS станет узким", ru: "S3-compatible object storage for media (private bucket; API on VPS; replace disk SoT `0.5.10`) — parked; owner-pull; do not auto-start while the project is small; no s3fs; ADR-011/022 / S3 медиа, когда диск VPS станет узким" },
+              note: { en: "Carried open from v1.00 → v1.1 (2026-10-02)", ru: "Открытый перенос из v1.00 → v1.1 (2026-10-02)" }
+            }
+            ]
+          }
+        ]
+      },
+{
+        code: "12.5",
+        title: { en: "Stage 12.5 — Reserves", ru: "Резервы" },
+        note: { en: "`12.4` inventory and `12.5.1` transfers are closed in `v1.00`. `12.5.2` is later / owner-pull. Do not auto-start.", ru: "Инвентаризация `12.4` и перемещения `12.5.1` закрыты в `v1.00`. `12.5.2` — later / owner-pull. Не стартовать самому." },
+        blocks: [
+          {
+            title: { en: "12.5.2 — Reserves", ru: "Резервы" },
+            items: [
+              {
+              code: "12.5.2",
+              done: false,
+              title: { en: "Reserves (sales/production) — later", ru: "Резервы (продажи/производство) — later" },
+              note: { en: "Carried open from v1.00 → v1.1 (2026-10-02)", ru: "Открытый перенос из v1.00 → v1.1 (2026-10-02)" }
+            }
+            ]
+          }
+        ]
+      },
+{
+        code: "13.2",
+        title: { en: "Stage 13.2 — Supply execution", ru: "Исполнение поставок" },
+        note: { en: "Suppliers `13.1.1` and purchase orders `13.1.2` are closed in `v1.00` (owner visual `13.1.2.6` OK `2026-10-02`, ADR-033 / ADR-034). Next procurement slice is receipts. Do not start until the owner names `13.2.1`.", ru: "Поставщики `13.1.1` и заказы поставщикам `13.1.2` закрыты в `v1.00` (owner visual `13.1.2.6` OK `2026-10-02`). Дальше — поступления. Не начинать, пока владелец не назовёт `13.2.1`." },
+        blocks: [
+          {
+            title: { en: "13.2 — Receipts and demand", ru: "Поступления и потребность" },
+            items: [
+              {
+              code: "13.2.1",
+              done: false,
+              title: { en: "Receipts and returns", ru: "Поступления и возвраты" },
+              note: { en: "Carried open from v1.00 → v1.1 (2026-10-02)", ru: "Открытый перенос из v1.00 → v1.1 (2026-10-02)" }
+            },
+            {
+              code: "13.2.2",
+              done: false,
+              title: { en: "Demand planning and minimum stock linkage", ru: "Планирование потребности и связь с минимальным остатком" },
+              note: { en: "Carried open from v1.00 → v1.1 (2026-10-02)", ru: "Открытый перенос из v1.00 → v1.1 (2026-10-02)" }
+            }
+            ]
+          }
+        ]
+      },
+{
+        code: "14",
+        title: { en: "Stage 14 — Shipping and Payments", ru: "Отгрузка и платежи" },
+        note: { en: "Carried from `v1.00` / `v0.9.0`. Shipping documents sit on top of the warehouse issue that is already `shipped` (ADR-019). Do not duplicate that issue.", ru: "Перенесено из `v1.00` / `v0.9.0`. Документы отгрузки — поверх уже `shipped` складского списания (ADR-019). Issue не дублировать." },
+        blocks: [
+          {
+            title: { en: "14.1 — Shipping", ru: "Отгрузка" },
+            items: [
+              {
+              code: "14.1.1",
+              done: false,
+              title: { en: "Shipping orders, packaging, delivery, and documents — on top of already `shipped` warehouse issue (ADR-019); do not duplicate issue", ru: "Заказы на отгрузку, упаковка, доставка и документы — поверх уже `shipped` (складское списание ADR-019); не дублировать issue" },
+              note: { en: "Carried open from v1.00 → v1.1 (2026-10-02)", ru: "Открытый перенос из v1.00 → v1.1 (2026-10-02)" }
+            }
+            ]
+          },
+          {
+            title: { en: "14.2 — Payments", ru: "Платежи" },
+            items: [
+              {
+              code: "14.2.1",
+              done: false,
+              title: { en: "Invoices, payments, advances, and debt", ru: "Счета, оплаты, авансы и задолженность" },
+              note: { en: "Carried open from v1.00 → v1.1 (2026-10-02)", ru: "Открытый перенос из v1.00 → v1.1 (2026-10-02)" }
+            },
+            {
+              code: "14.2.2",
+              done: false,
+              title: { en: "Settlements by order and client", ru: "Взаиморасчёты по заказу и клиенту" },
+              note: { en: "Carried open from v1.00 → v1.1 (2026-10-02)", ru: "Открытый перенос из v1.00 → v1.1 (2026-10-02)" }
+            }
+            ]
+          }
+        ]
+      },
+{
+        code: "15",
+        title: { en: "Stage 15 — Costing and Analytics", ru: "Себестоимость и аналитика" },
+        note: { en: "`15.2.1` CRM dashboard and base order analytics already shipped in `v0.9.0`. Not repeated here.", ru: "`15.2.1` CRM-дашборд и базовая аналитика заказов уже закрыты в `v0.9.0`. Здесь не повторяется." },
+        blocks: [
+          {
+            title: { en: "15.1 — Costing", ru: "Себестоимость" },
+            items: [
+              {
+              code: "15.1.1",
+              done: false,
+              title: { en: "Planned, normative, and actual costing", ru: "Плановая, нормативная и фактическая себестоимость" },
+              note: { en: "Carried open from v1.00 → v1.1 (2026-10-02)", ru: "Открытый перенос из v1.00 → v1.1 (2026-10-02)" }
+            },
+            {
+              code: "15.1.2",
+              done: false,
+              title: { en: "Margin and plan-fact analysis", ru: "Маржа и план-факт анализ" },
+              note: { en: "Carried open from v1.00 → v1.1 (2026-10-02)", ru: "Открытый перенос из v1.00 → v1.1 (2026-10-02)" }
+            }
+            ]
+          },
+          {
+            title: { en: "15.2 — Analytics", ru: "Аналитика" },
+            items: [
+              {
+              code: "15.2.2",
+              done: false,
+              title: { en: "ERP analytics and management P&L / ERP-аналитика и управленческий P&L", ru: "ERP analytics and management P&L / ERP-аналитика и управленческий P&L" },
+              note: { en: "Carried open from v1.00 → v1.1 (2026-10-02)", ru: "Открытый перенос из v1.00 → v1.1 (2026-10-02)" }
+            }
+            ]
+          }
+        ]
+      },
+{
+        code: "16",
+        title: { en: "Stage 16 — Integrations", ru: "Интеграции" },
+        note: { en: "Lead ingest adapters stay `1.4.3` (closed in `v1.00`). Canonical 1C:UNF outbound is Stage **27**, not `16.2.1`. `16.2.1` inbound Excel stays parked, not MVP.", ru: "Ingest лидов — закрытый `1.4.3`. Канон выгрузки в 1С:УНФ — Stage **27**, не `16.2.1`. Inbound Excel `16.2.1` припаркован, не MVP." },
+        blocks: [
+          {
+            title: { en: "16.1 — External channels", ru: "Внешние каналы" },
+            note: { en: "Platform channel connectors. Lead ingest stays `1.4.3` (shared transport OK, no duplicate CRM SoT).", ru: "Канальные коннекторы. Ingest лидов — `1.4.3` (общий transport OK, без дубля CRM SoT)." },
+            items: [
+              {
+              code: "16.1.1",
+              done: false,
+              title: { en: "Website forms, email, VK, Telegram, and telephony", ru: "Формы сайта, email, VK, Telegram и телефония" },
+              note: { en: "Carried open from v1.00 → v1.1 (2026-10-02)", ru: "Открытый перенос из v1.00 → v1.1 (2026-10-02)" }
+            },
+            {
+              code: "16.1.2",
+              done: false,
+              title: { en: "Google Sheets and webhooks / Google Sheets и webhooks", ru: "Google Sheets and webhooks / Google Sheets и webhooks" },
+              note: { en: "Carried open from v1.00 → v1.1 (2026-10-02)", ru: "Открытый перенос из v1.00 → v1.1 (2026-10-02)" }
+            }
+            ]
+          },
+          {
+            title: { en: "16.2 — Enterprise exchange", ru: "Корпоративный обмен" },
+            note: { en: "Contour D (ADR-020). Outbound UNF packages = Stage 27. `16.2.1` parked inbound. Neighbor job shell = `16.3`.", ru: "Контур D (ADR-020). Выгрузка в УНФ = Stage 27. `16.2.1` — припаркованный inbound. Оболочка заданий = `16.3`." },
+            items: [
+              {
+              code: "16.2.1",
+              done: false,
+              title: { en: "1C:UNF inbound SalesOrder Excel (UNF → platform) — parked; not MVP; canonical outbound = Stage 27; neighbor to `16.3`, not catalog Excel buttons / Inbound Excel заказов УНФ→платформа — припаркован; не MVP; канон выгрузки = Stage 27", ru: "1C:UNF inbound SalesOrder Excel (UNF → platform) — parked; not MVP; canonical outbound = Stage 27; neighbor to `16.3`, not catalog Excel buttons / Inbound Excel заказов УНФ→платформа — припаркован; не MVP; канон выгрузки = Stage 27" },
+              note: { en: "Carried open from v1.00 → v1.1 (2026-10-02)", ru: "Открытый перенос из v1.00 → v1.1 (2026-10-02)" }
+            },
+            {
+              code: "16.2.2",
+              done: false,
+              title: { en: "Delivery and payment-system integrations", ru: "Интеграции доставки и платёжных систем" },
+              note: { en: "Carried open from v1.00 → v1.1 (2026-10-02)", ru: "Открытый перенос из v1.00 → v1.1 (2026-10-02)" }
+            },
+            {
+              code: "16.2.3",
+              done: false,
+              title: { en: "External API for third-party systems", ru: "Внешний API для сторонних систем" },
+              note: { en: "Carried open from v1.00 → v1.1 (2026-10-02)", ru: "Открытый перенос из v1.00 → v1.1 (2026-10-02)" }
+            }
+            ]
+          },
+          {
+            title: { en: "16.3 — Universal import and export", ru: "Универсальный импорт и экспорт" },
+            note: { en: "ADR-020 job shell (section picker + journal) over the same adapters as section toolbars (`4.5`). Do not pull domain-inline `9.3.2` here.", ru: "ADR-020: оболочка заданий поверх адаптеров тулбаров (`4.5`). Доменный inline `9.3.2` сюда не тянуть." },
+            items: [
+              {
+              code: "16.3.1",
+              done: false,
+              title: { en: "Contract: job runner + section adapter registry (upload → map → validate → dry-run → commit; audit hooks)", ru: "Контракт: runner заданий + реестр адаптеров разделов (upload → map → validate → dry-run → commit; audit hooks)" },
+              note: { en: "Carried open from v1.00 → v1.1 (2026-10-02)", ru: "Открытый перенос из v1.00 → v1.1 (2026-10-02)" }
+            },
+            {
+              code: "16.3.2",
+              done: false,
+              title: { en: "Wire nomenclature adapter from `4.5` into the job shell", ru: "Подключить адаптер номенклатуры из `4.5` к оболочке заданий" },
+              note: { en: "Carried open from v1.00 → v1.1 (2026-10-02)", ru: "Открытый перенос из v1.00 → v1.1 (2026-10-02)" }
+            },
+            {
+              code: "16.3.3",
+              done: false,
+              title: { en: "Administration UI: jobs list + section picker (no duplicate SoT) / UI администрирования: список заданий + выбор раздела (без дубля SoT)", ru: "Administration UI: jobs list + section picker (no duplicate SoT) / UI администрирования: список заданий + выбор раздела (без дубля SoT)" },
+              note: { en: "Carried open from v1.00 → v1.1 (2026-10-02)", ru: "Открытый перенос из v1.00 → v1.1 (2026-10-02)" }
+            },
+            {
+              code: "16.3.4",
+              done: false,
+              title: { en: "Regression tests + documentation checkpoint", ru: "Регрессионные тесты + checkpoint документации" },
+              note: { en: "Carried open from v1.00 → v1.1 (2026-10-02)", ru: "Открытый перенос из v1.00 → v1.1 (2026-10-02)" }
+            }
+            ]
+          }
+        ]
+      },
+{
+        code: "18.4",
+        title: { en: "Stage 18.4 — Global operations journal", ru: "Глобальный журнал операций" },
+        note: { en: "Full carry from `v0.9.0` via `v1.00`. Stubs `product_model_has_journal_operations` and characteristic journal hooks still return `False`. Admin shell `18.1`–`18.3` stays in `v0.9.0`.", ru: "Полный перенос из `v0.9.0` через `v1.00`. Stubs журнала всё ещё возвращают `False`. Оболочка admin `18.1`–`18.3` остаётся в `v0.9.0`." },
+        blocks: [
+          {
+            title: { en: "18.4 — Journal microtasks", ru: "Микрозадачи журнала" },
+            items: [
+              {
+              code: "18.4.1",
+              done: false,
+              title: { en: "Domain contract: OperationJournal entry fields, sources (sales / production), idempotency, retention", ru: "Контракт: поля записи, источники (sales / production), idempotency, retention" },
+              note: { en: "Carried open from v1.00 → v1.1 (2026-10-02)", ru: "Открытый перенос из v1.00 → v1.1 (2026-10-02)" }
+            },
+            {
+              code: "18.4.2",
+              done: false,
+              title: { en: "Database model, migration, schemas for global operations journal", ru: "Модель БД, миграция, schemas" },
+              note: { en: "Carried open from v1.00 → v1.1 (2026-10-02)", ru: "Открытый перенос из v1.00 → v1.1 (2026-10-02)" }
+            },
+            {
+              code: "18.4.3",
+              done: false,
+              title: { en: "Service API: append / query by entity (`product_model_id`, …); `has_operations(entity)` helper / Service API: append / query; helper `has_operations`", ru: "Service API: append / query by entity (`product_model_id`, …); `has_operations(entity)` helper / Service API: append / query; helper `has_operations`" },
+              note: { en: "Carried open from v1.00 → v1.1 (2026-10-02)", ru: "Открытый перенос из v1.00 → v1.1 (2026-10-02)" }
+            },
+            {
+              code: "18.4.4",
+              done: false,
+              title: { en: "Write path: sales order uses model → append journal row (no write if model not used) / Write path: продажа с моделью → строка журнала", ru: "Write path: sales order uses model → append journal row (no write if model not used) / Write path: продажа с моделью → строка журнала" },
+              note: { en: "Carried open from v1.00 → v1.1 (2026-10-02)", ru: "Открытый перенос из v1.00 → v1.1 (2026-10-02)" }
+            },
+            {
+              code: "18.4.5",
+              done: false,
+              title: { en: "Write path: production / ТК uses model → append journal row / Write path: производство", ru: "ТК → строка журнала" },
+              note: { en: "Carried open from v1.00 → v1.1 (2026-10-02)", ru: "Открытый перенос из v1.00 → v1.1 (2026-10-02)" }
+            },
+            {
+              code: "18.4.6",
+              done: false,
+              title: { en: "Wire product-model guards (`revert_to_draft`, size-grid change) to real `has_operations` (replace Stage-6 stub)", ru: "Подключить guards модели к реальному `has_operations` (заменить stub)" },
+              note: { en: "Carried open from v1.00 → v1.1 (2026-10-02)", ru: "Открытый перенос из v1.00 → v1.1 (2026-10-02)" }
+            },
+            {
+              code: "18.4.7",
+              done: false,
+              title: { en: "Administration UI: journal list/filter (PT-02) under Администрирование → Журнал операций / UI администрирования: список/фильтр журнала", ru: "Administration UI: journal list/filter (PT-02) under Администрирование → Журнал операций / UI администрирования: список/фильтр журнала" },
+              note: { en: "Carried open from v1.00 → v1.1 (2026-10-02)", ru: "Открытый перенос из v1.00 → v1.1 (2026-10-02)" }
+            },
+            {
+              code: "18.4.8",
+              done: false,
+              title: { en: "Regression tests + documentation checkpoint", ru: "Регрессия + checkpoint документации" },
+              note: { en: "Carried open from v1.00 → v1.1 (2026-10-02)", ru: "Открытый перенос из v1.00 → v1.1 (2026-10-02)" }
+            }
+            ]
+          }
+        ]
+      },
+{
+        code: "27",
+        title: { en: "Stage 27 — 1C:UNF document export", ru: "Выгрузка документов в 1С:УНФ" },
+        note: { en: "`27.0.1` contract is closed in `v1.00` (`SL-1C-UNF-EXPORT-v1`). `27.1+` stays owner-pull. Do not auto-start. Matching UI is out of repo. Inbound `16.2.1` stays parked. Field maps are written when that document ships (`27.2.1` / `27.3.1` / `27.4.2`).", ru: "Контракт `27.0.1` закрыт в `v1.00`. `27.1+` — owner-pull. Не стартовать самому. Обработка УНФ вне репо. Inbound `16.2.1` припаркован." },
+        blocks: [
+          {
+            title: { en: "27.1 — Shared export shell", ru: "Общая выгрузка" },
+            note: { en: "No per-document field maps in this block. Package carries stable platform ids. Execute `27.1` before `27.2`.", ru: "Карт полей документов здесь нет. В пакете — id платформы. `27.1` до `27.2`." },
+            items: [
+              {
+              code: "27.1.1",
+              done: false,
+              title: { en: "Export journal + idempotency by platform document id; package carries ids for order / client / organization / nomenclature / variant / Spec version", ru: "Журнал выгрузок + идемпотентность; id сущностей в пакете" },
+              note: { en: "Carried open from v1.00 → v1.1 (2026-10-02)", ru: "Открытый перенос из v1.00 → v1.1 (2026-10-02)" }
+            },
+            {
+              code: "27.1.2",
+              done: false,
+              title: { en: "File transport MVP (xlsx/csv) + UI entry (not catalog toolbar `4.5`; not print `18.3`; not job hub `16.3` as SoT)", ru: "Транспорт файла и точка UI" },
+              note: { en: "Carried open from v1.00 → v1.1 (2026-10-02)", ru: "Открытый перенос из v1.00 → v1.1 (2026-10-02)" }
+            },
+            {
+              code: "27.1.3",
+              done: false,
+              title: { en: "Tests for journal/idempotency without live 1C", ru: "Тесты журнала без живой 1С" },
+              note: { en: "Carried open from v1.00 → v1.1 (2026-10-02)", ru: "Открытый перенос из v1.00 → v1.1 (2026-10-02)" }
+            }
+            ]
+          },
+          {
+            title: { en: "27.2 — Sales order → Заказ покупателя", ru: "27.2 — Sales order → Заказ покупателя" },
+            note: { en: "First field map. Prefer before `27.3`.", ru: "Первый маппинг. Желателен до `27.3`." },
+            items: [
+              {
+              code: "27.2.1",
+              done: false,
+              title: { en: "Field map for this document (owner + UNF load form) — first implement slice", ru: "Карта полей заказа покупателя" },
+              note: { en: "Carried open from v1.00 → v1.1 (2026-10-02)", ru: "Открытый перенос из v1.00 → v1.1 (2026-10-02)" }
+            },
+            {
+              code: "27.2.2",
+              done: false,
+              title: { en: "Adapter: `SalesOrder` export package", ru: "Адаптер пакета заказа" },
+              note: { en: "Carried open from v1.00 → v1.1 (2026-10-02)", ru: "Открытый перенос из v1.00 → v1.1 (2026-10-02)" }
+            },
+            {
+              code: "27.2.3",
+              done: false,
+              title: { en: "Owner visual of file / dry-run / Owner visual файла", ru: "Owner visual of file / dry-run / Owner visual файла" },
+              note: { en: "Carried open from v1.00 → v1.1 (2026-10-02)", ru: "Открытый перенос из v1.00 → v1.1 (2026-10-02)" }
+            }
+            ]
+          },
+          {
+            title: { en: "27.3 — Specification → Заказ на производство", ru: "27.3 — Specification → Заказ на производство" },
+            note: { en: "Export last `approved` Spec only, not a raw production order.", ru: "Только последняя `approved` Spec, не сырой производственный заказ." },
+            items: [
+              {
+              code: "27.3.1",
+              done: false,
+              title: { en: "Field map (approved Spec only)", ru: "Карта полей спецификации" },
+              note: { en: "Carried open from v1.00 → v1.1 (2026-10-02)", ru: "Открытый перенос из v1.00 → v1.1 (2026-10-02)" }
+            },
+            {
+              code: "27.3.2",
+              done: false,
+              title: { en: "Adapter: approved Specification package", ru: "Адаптер пакета Spec" },
+              note: { en: "Carried open from v1.00 → v1.1 (2026-10-02)", ru: "Открытый перенос из v1.00 → v1.1 (2026-10-02)" }
+            },
+            {
+              code: "27.3.3",
+              done: false,
+              title: { en: "Owner visual / Owner visual", ru: "Owner visual / Owner visual" },
+              note: { en: "Carried open from v1.00 → v1.1 (2026-10-02)", ru: "Открытый перенос из v1.00 → v1.1 (2026-10-02)" }
+            }
+            ]
+          },
+          {
+            title: { en: "27.4 — Consignment note / UTD / ТН", ru: "УПД" },
+            note: { en: "No УПД domain document yet. Decide SoT in `27.4.1` before the field map.", ru: "Документа УПД в домене нет. Сначала SoT в `27.4.1`, затем карта полей." },
+            items: [
+              {
+              code: "27.4.1",
+              done: false,
+              title: { en: "SoT: new sales document on the order, or assemble from order plus shipped and fg_issue / SoT накладной", ru: "SoT: new sales document on the order, or assemble from order plus shipped and fg_issue / SoT накладной" },
+              note: { en: "Carried open from v1.00 → v1.1 (2026-10-02)", ru: "Открытый перенос из v1.00 → v1.1 (2026-10-02)" }
+            },
+            {
+              code: "27.4.2",
+              done: false,
+              title: { en: "Field map", ru: "Карта полей ТН/УПД" },
+              note: { en: "Carried open from v1.00 → v1.1 (2026-10-02)", ru: "Открытый перенос из v1.00 → v1.1 (2026-10-02)" }
+            },
+            {
+              code: "27.4.3",
+              done: false,
+              title: { en: "Adapter: ТН/УПД package", ru: "Адаптер пакета" },
+              note: { en: "Carried open from v1.00 → v1.1 (2026-10-02)", ru: "Открытый перенос из v1.00 → v1.1 (2026-10-02)" }
+            },
+            {
+              code: "27.4.4",
+              done: false,
+              title: { en: "Owner visual / Owner visual", ru: "Owner visual / Owner visual" },
+              note: { en: "Carried open from v1.00 → v1.1 (2026-10-02)", ru: "Открытый перенос из v1.00 → v1.1 (2026-10-02)" }
+            }
+            ]
+          },
+          {
+            title: { en: "27.5 — Checkpoint / Checkpoint", ru: "27.5 — Checkpoint / Checkpoint" },
+            items: [
+              {
+              code: "27.5.1",
+              done: false,
+              title: { en: "Regression + docs (contour D, erp-check, project-structure, `16.2.1` pointer)", ru: "Регрессия + docs" },
+              note: { en: "Carried open from v1.00 → v1.1 (2026-10-02)", ru: "Открытый перенос из v1.00 → v1.1 (2026-10-02)" }
+            }
+            ]
+          }
+        ]
+      }
+,
+{
+  "code": "PC",
+  "title": {
+    "en": "Production Calendar v0.1 — manual-first",
+    "ru": "Производственный календарь v0.1 — ручное планирование"
+  },
+  "note": {
+    "en": "Design frozen 2026-10-05; UI-A–UI-H OWNER-APPROVED. Owner-selected PC-03.1 lightweight queue MVP implemented: one CalendarAssignment table, weekly UI-A and CRUD; project check 10/10, live responsive QA. PC-03 remains in progress; PC-04…PC-10 open. This slice supersedes the earlier five-table persistence proposal only within its explicit scope.",
+    "ru": "Design frozen 2026-10-05; UI-A–UI-H OWNER-APPROVED. Owner-selected PC-03.1 lightweight queue MVP implemented: one CalendarAssignment table, weekly UI-A and CRUD; project check 10/10, live responsive QA. PC-03 remains in progress; PC-04…PC-10 open. This slice supersedes the earlier five-table persistence proposal only within its explicit scope."
+  },
+  "blocks": [
+    {
+      "title": {
+        "en": "PC-01…PC-10 — product and implementation",
+        "ru": "PC-01…PC-10 — продукт и реализация"
+      },
+      "items": [
+        {
+          "code": "PC-01",
+          "done": true,
+          "title": {
+            "en": "Read-only repository audit",
+            "ru": "Read-only repository audit"
+          },
+          "note": {
+            "en": "Read-only audit 2026-10-03: docs/tasks/production-calendar-pc-01-audit.md; app/migrations unchanged; diff check passed, project check 7/10 (environment and existing lint errors); PC-02 open",
+            "ru": "Read-only аудит 2026-10-03: docs/tasks/production-calendar-pc-01-audit.md; приложение/миграции без изменений; diff check пройден, project check 7/10 (окружение и существующие lint-ошибки); PC-02 открыт"
+          }
+        },
+        {
+          "code": "PC-02",
+          "done": true,
+          "title": {
+            "en": "Data contract and schema",
+            "ru": "Data contract and schema"
+          },
+          "note": {
+            "en": "Architecture contract 2026-10-03: docs/architecture/production-calendar-pc-02.md; docs only; diff/twin passed, project check 7/10; business decisions and failed check block implementation",
+            "ru": "Архитектурный контракт 2026-10-03: docs/architecture/production-calendar-pc-02.md; только документы; diff/близнец пройдены, project check 7/10; бизнес-решения и сбой проверки блокируют реализацию"
+          }
+        },
+        {
+          "code": "PC-02.1",
+          "done": true,
+          "title": {
+            "en": "Lightweight design freeze and minimal implementation contract",
+            "ru": "Фиксация лёгкого дизайна и минимальный контракт реализации"
+          },
+          "note": {
+            "en": "Lightweight design freeze and minimal implementation contract; CLOSED 2026-10-05 per docs/tasks/pc-02-1-lightweight-design-freeze-implementation-contract.md; docs/architecture/production-calendar-implementation-v0.1.md; documentation-only, P1 B1 closed 2026-10-05 (13 regression tests); baseline checks remain open, PC-03 not started",
+            "ru": "Документационный design freeze закрыт 2026-10-05 по задаче владельца; минимальный контракт production-calendar-implementation-v0.1.md; P1 B1 закрыт (13 регрессионных тестов), baseline открыт, PC-03 не начат"
+          }
+        },
+        {
+          "code": "PC-02.1-B1",
+          "done": true,
+          "title": {
+            "en": "P1 technical-card refresh-model material loss",
+            "ru": "P1: потеря материала ТК после refresh-model"
+          },
+          "note": {
+            "en": "B1 CLOSED 2026-10-05: refresh updates header/pattern only; saved materials, plan/fact and IDs preserved; 13 regression tests passed; PC-03 not started; docs/tasks/pc-02-1-b1-fix-refresh-model-material-loss.md; baseline DB/lint checks remain open",
+            "ru": "B1 закрыт 2026-10-05: refresh сохраняет материалы/план/факт/id; 13 регрессионных тестов passed; API/БД без изменений; baseline БД/lint открыты; PC-03 не начат"
+          }
+        },
+        {
+          "code": "PC-03",
+          "done": false,
+          "title": {
+            "en": "Minimal lightweight calendar implementation",
+            "ru": "Минимальная реализация лёгкого календаря"
+          },
+          "note": {
+            "en": "In progress: PC-03.1 lightweight queue MVP complete per docs/tasks/pc-03-1-lightweight-production-queue-mvp.md; remaining implementation checkpoints open. Capacity, dependency engine, execution, dashboard/deviations excluded from this slice.",
+            "ru": "In progress: PC-03.1 lightweight queue MVP complete per docs/tasks/pc-03-1-lightweight-production-queue-mvp.md; remaining implementation checkpoints open. Capacity, dependency engine, execution, dashboard/deviations excluded from this slice."
+          }
+        },
+        {
+          "code": "PC-03.1",
+          "done": true,
+          "title": {
+            "en": "Lightweight Production Queue MVP",
+            "ru": "Лёгкая производственная очередь MVP"
+          },
+          "note": {
+            "en": "PC-03.1 lightweight queue MVP CLOSED 2026-10-05; CalendarAssignment only, migration u0v1w2x3y456; authenticated batch API and /production/calendar UI-A; 479 backend / 299 frontend tests, project check 10/10, live CRUD/reload/filter and 1440/1024/768/390/320 px. Evidence: docs/tasks/pc-03-1-lightweight-production-queue-mvp.md. PC-03 remains open; capacity/workflow/UI-G/H deferred.",
+            "ru": "PC-03.1 lightweight queue MVP CLOSED 2026-10-05; CalendarAssignment only, migration u0v1w2x3y456; authenticated batch API and /production/calendar UI-A; 479 backend / 299 frontend tests, project check 10/10, live CRUD/reload/filter and 1440/1024/768/390/320 px. Evidence: docs/tasks/pc-03-1-lightweight-production-queue-mvp.md. PC-03 remains open; capacity/workflow/UI-G/H deferred."
+          }
+        },
+        {
+          "code": "PC-03.2",
+          "done": true,
+          "title": {
+            "en": "Production Queue navigation integration",
+            "ru": "Интеграция навигации очереди производства"
+          },
+          "note": {
+            "en": "PC-03.2 navigation integration CLOSED 2026-10-05; Production → Очередь производства, five primary links, parent opens /production/calendar; UI-E/F/G/H entry pages explicitly not implemented. 15 navigation / 300 frontend / 479 backend tests; project check 10/10; isolated shell browser QA 1440/1024/768/390/320 px; authenticated route QA limited by bootstrap 401. Evidence: docs/tasks/pc-03-2-production-queue-navigation.md. Backend/DB/business logic unchanged; PC-03 open.",
+            "ru": "PC-03.2 navigation integration CLOSED 2026-10-05; Production → Очередь производства, five primary links, parent opens /production/calendar; UI-E/F/G/H entry pages explicitly not implemented. 15 navigation / 300 frontend / 479 backend tests; project check 10/10; isolated shell browser QA 1440/1024/768/390/320 px; authenticated route QA limited by bootstrap 401. Evidence: docs/tasks/pc-03-2-production-queue-navigation.md. Backend/DB/business logic unchanged; PC-03 open."
+          }
+        },
+        {
+          "code": "PC-03.3",
+          "done": true,
+          "title": {
+            "en": "Manual scheduling on CalendarAssignment",
+            "ru": "Ручное планирование на CalendarAssignment"
+          },
+          "note": {
+            "en": "PC-03.3 manual scheduling on CalendarAssignment CLOSED 2026-10-05; /production/calendar/planning, UI-A assignment deep link, date/stage/position/note prefill, before/after preview, existing PUT and return to destination week; quantity read-only from TC. Backend/API/DB/migrations unchanged. 23 targeted frontend / 11 existing calendar backend / 305 full frontend / 479 full backend tests; project check 10/10; live Chromium 1440/1366/1280/1024/768/390/320 px, real 409 and reload persistence. Evidence: docs/tasks/pc-03-3-manual-scheduling-calendar-assignment.md; PC-03 open, UI-F/G/H deferred.",
+            "ru": "PC-03.3 manual scheduling on CalendarAssignment CLOSED 2026-10-05; /production/calendar/planning, UI-A assignment deep link, date/stage/position/note prefill, before/after preview, existing PUT and return to destination week; quantity read-only from TC. Backend/API/DB/migrations unchanged. 23 targeted frontend / 11 existing calendar backend / 305 full frontend / 479 full backend tests; project check 10/10; live Chromium 1440/1366/1280/1024/768/390/320 px, real 409 and reload persistence. Evidence: docs/tasks/pc-03-3-manual-scheduling-calendar-assignment.md; PC-03 open, UI-F/G/H deferred."
+          }
+        },
+        {
+          "code": "PC-03.4A",
+          "done": true,
+          "title": {
+            "en": "Capacity backend contract",
+            "ru": "Backend-контракт мощностей"
+          },
+          "note": {
+            "en": "PC-03.4A Capacity backend contract CLOSED 2026-10-05; 14 logical resource keys reusing ProductionStage/WorkCenter; two settings/exception tables, migration v1w2x3y4z567; GET/PUT capacity/settings, PUT/DELETE dated exceptions, read-only POST capacity/load-state with separate units and unknown norms. 45 targeted / 513 full backend tests; project check 10/10; local PostgreSQL upgrade/check/downgrade/upgrade/check and live persistence passed. Contract: docs/architecture/production-calendar-capacity-pc-03-4a.md. Frontend/UI-A unchanged by Codex; PC-03.4B temporary adapter still requires contract alignment; UI-F integration not claimed. PC-03 open.",
+            "ru": "PC-03.4A Capacity backend contract CLOSED 2026-10-05; 14 logical resource keys reusing ProductionStage/WorkCenter; two settings/exception tables, migration v1w2x3y4z567; GET/PUT capacity/settings, PUT/DELETE dated exceptions, read-only POST capacity/load-state with separate units and unknown norms. 45 targeted / 513 full backend tests; project check 10/10; local PostgreSQL upgrade/check/downgrade/upgrade/check and live persistence passed. Contract: docs/architecture/production-calendar-capacity-pc-03-4a.md. Frontend/UI-A unchanged by Codex; PC-03.4B temporary adapter still requires contract alignment; UI-F integration not claimed. PC-03 open."
+          }
+        },
+        {
+          "code": "PC-03.4D",
+          "done": true,
+          "title": {
+            "en": "Queue load indicators",
+            "ru": "Индикаторы загрузки очереди"
+          },
+          "note": {
+            "en": "PC-03.4D Queue Load Indicators CLOSED 2026-10-05; UI-A stage/date badges from existing POST capacity/load-state, one settings read + bounded resource/date requests (six in flight), no frontend formulas or mixed-unit section percentage; unknown stays explicit, reserve/near/over never gate assignment creation/move. 17 targeted / 323 frontend / 513 backend tests; project check 10/10; real API Chromium seven widths, four states, empty days, create/move while over, 503/retry. Evidence: docs/tasks/pc-03-4d-queue-load-indicators-cursor.md. Backend/DB/UI-F/navigation unchanged; PC-03 open.",
+            "ru": "PC-03.4D Queue Load Indicators CLOSED 2026-10-05; UI-A stage/date badges from existing POST capacity/load-state, one settings read + bounded resource/date requests (six in flight), no frontend formulas or mixed-unit section percentage; unknown stays explicit, reserve/near/over never gate assignment creation/move. 17 targeted / 323 frontend / 513 backend tests; project check 10/10; real API Chromium seven widths, four states, empty days, create/move while over, 503/retry. Evidence: docs/tasks/pc-03-4d-queue-load-indicators-cursor.md. Backend/DB/UI-F/navigation unchanged; PC-03 open."
+          }
+        },
+        {
+          "code": "PC-03.5A",
+          "done": true,
+          "title": {
+            "en": "Automatic entry stage",
+            "ru": "Автоматическая стартовая стадия"
+          },
+          "note": {
+            "en": "PC-03.5A Automatic Entry Stage CLOSED 2026-10-05; minimal POST assignments accepts technical_card_id/planned_date/optional note, server chooses launch_preparation (Подготовка к запуску) and stable date/stage tail position; legacy create stage/position rejected422. Existing dispatcher PUT/read/reference quantity preserved. Data-only migration w2x3y4z5a678; procurement remains milestone on entry stage. 61 targeted / 529 backend tests; project check10/10; local migration cycle, eight concurrent creates and durable move verified. Contract docs/architecture/production-calendar-entry-pc-03-5a.md. Frontend PC-03.5B separate; PC-03 open.",
+            "ru": "PC-03.5A Automatic Entry Stage CLOSED 2026-10-05; minimal POST assignments accepts technical_card_id/planned_date/optional note, server chooses launch_preparation (Подготовка к запуску) and stable date/stage tail position; legacy create stage/position rejected422. Existing dispatcher PUT/read/reference quantity preserved. Data-only migration w2x3y4z5a678; procurement remains milestone on entry stage. 61 targeted / 529 backend tests; project check10/10; local migration cycle, eight concurrent creates and durable move verified. Contract docs/architecture/production-calendar-entry-pc-03-5a.md. Frontend PC-03.5B separate; PC-03 open."
+          }
+        },
+        {
+          "code": "PC-03.6A",
+          "done": true,
+          "title": {
+            "en": "Operation date range",
+            "ru": "Operation date range"
+          },
+          "note": {
+            "en": "PC-03.6A Operation Date Range implemented 2026-10-06: planned_start_date aliases legacy planned_date; persisted planned_end_date with inclusive range CHECK/backfill; PUT accepts start/end, GET board uses overlap, minimal POST remains single-day. Migration x3y4z5a6b789; 71 targeted / 539 backend tests passed; PostgreSQL migration cycle/backfill verified. Contract docs/architecture/production-calendar-date-range-pc-03-6a.md. Frontend PC-03.6B separate; PC-03 remains open.",
+            "ru": "PC-03.6A Operation Date Range implemented 2026-10-06: planned_start_date aliases legacy planned_date; persisted planned_end_date with inclusive range CHECK/backfill; PUT accepts start/end, GET board uses overlap, minimal POST remains single-day. Migration x3y4z5a6b789; 71 targeted / 539 backend tests passed; PostgreSQL migration cycle/backfill verified. Contract docs/architecture/production-calendar-date-range-pc-03-6a.md. Frontend PC-03.6B separate; PC-03 remains open."
+          }
+        },
+        {
+          "code": "PC-03.7A",
+          "done": true,
+          "title": {
+            "en": "Shared capacity resources",
+            "ru": "Shared capacity resources"
+          },
+          "note": {
+            "en": "PC-03.7A Shared CapacityResource CLOSED 2026-10-06 per owner M:N decision: TechOperation owns technology, CapacityResource owns capacity; existing settings renamed in place, dated exceptions preserved, print_operator shared by sublimation and heat_transfer without resource copies. Migration y4z5a6b7c890; canonical resource CRUD and operation links, legacy capacity/load-state compatible. 53 targeted / 555 backend / 331 frontend tests; project check 10/10; isolated PostgreSQL migration cycle and exact data preservation verified. Contract docs/architecture/production-calendar-shared-capacity-pc-03-7a.md. Other resources remain unlinked until explicitly selected; frontend PC-03.7B separate; PC-03 open.",
+            "ru": "PC-03.7A Shared CapacityResource CLOSED 2026-10-06 per owner M:N decision: TechOperation owns technology, CapacityResource owns capacity; existing settings renamed in place, dated exceptions preserved, print_operator shared by sublimation and heat_transfer without resource copies. Migration y4z5a6b7c890; canonical resource CRUD and operation links, legacy capacity/load-state compatible. 53 targeted / 555 backend / 331 frontend tests; project check 10/10; isolated PostgreSQL migration cycle and exact data preservation verified. Contract docs/architecture/production-calendar-shared-capacity-pc-03-7a.md. Other resources remain unlinked until explicitly selected; frontend PC-03.7B separate; PC-03 open."
+          }
+        },
+        {
+          "code": "PC-03.7B",
+          "done": false,
+          "title": {
+            "en": "Unified Tech Operation Capacity UI",
+            "ru": "Unified Tech Operation Capacity UI"
+          },
+          "note": {
+            "en": "In progress: Unified Tech Operation Capacity UI; follows owner M:N decision in production-calendar-shared-capacity-pc-03-7a.md. Owner-selected guarded edit modal PC-03.7B-B1 complete; shared CapacityResource/link adapter integration and authenticated runtime acceptance remain open. docs/tasks/pc-03-7b-unified-tech-operation-capacity-ui-cursor.md; no scheduler.",
+            "ru": "In progress: Unified Tech Operation Capacity UI; follows owner M:N decision in production-calendar-shared-capacity-pc-03-7a.md. Owner-selected guarded edit modal PC-03.7B-B1 complete; shared CapacityResource/link adapter integration and authenticated runtime acceptance remain open. docs/tasks/pc-03-7b-unified-tech-operation-capacity-ui-cursor.md; no scheduler."
+          }
+        },
+        {
+          "code": "PC-03.7B-B1",
+          "done": true,
+          "title": {
+            "en": "Guarded TechOperation edit modal",
+            "ru": "Guarded TechOperation edit modal"
+          },
+          "note": {
+            "en": "PC-03.7B-B1 Guarded TechOperation edit modal CLOSED 2026-10-06 per owner visual request: desktop/mobile Edit opens populated dialog, header Save/Cancel/X, dirty discard confirmation for Cancel/X/Escape/backdrop, beforeunload and pending-save protection; pending date exception and failed save preserve inputs. DS-PT-02-CATALOG; 17 Chromium checks at 1440/1366/1280/1024/768/390/320 px; 7 targeted / 331 frontend / 555 backend tests, project check 10/10. Evidence docs/tasks/pc-03-7b-b1-tech-operation-edit-modal.md. Backend/contracts/migrations unchanged; complete shared-resource frontend integration PC-03.7B remains open.",
+            "ru": "PC-03.7B-B1 Guarded TechOperation edit modal CLOSED 2026-10-06 per owner visual request: desktop/mobile Edit opens populated dialog, header Save/Cancel/X, dirty discard confirmation for Cancel/X/Escape/backdrop, beforeunload and pending-save protection; pending date exception and failed save preserve inputs. DS-PT-02-CATALOG; 17 Chromium checks at 1440/1366/1280/1024/768/390/320 px; 7 targeted / 331 frontend / 555 backend tests, project check 10/10. Evidence docs/tasks/pc-03-7b-b1-tech-operation-edit-modal.md. Backend/contracts/migrations unchanged; complete shared-resource frontend integration PC-03.7B remains open."
+          }
+        },
+        {
+          "code": "PC-04",
+          "done": false,
+          "title": {
+            "en": "Add existing technical card to calendar queue",
+            "ru": "Add existing technical card to calendar queue"
+          },
+          "note": {
+            "en": "Add existing technical card to calendar queue; sources prefilled, no duplicate order; detail in minimal implementation contract",
+            "ru": "Добавление существующей ТК в очередь; данные подставляются, второго заказа нет; минимальный контракт"
+          }
+        },
+        {
+          "code": "PC-04.2",
+          "done": true,
+          "title": {
+            "en": "Demand calculation architecture contract",
+            "ru": "Demand calculation architecture contract"
+          },
+          "note": {
+            "en": "PC-04.2 Demand Calculation Contract CLOSED as architecture specification 2026-10-07 per owner task after stated PC-04.1 prerequisites. Canonical production-demand-pc-04-2.md defines step-scoped ResourceDemand DTO/status/provenance, adapter registry, verified TC/assembly inputs, exact unit equality, shared resources, missing/manual policy and future tests. No executable Demand/API/DB/frontend/Scheduler changes; hourly-throughput mismatches and absent fixed/operator/design/split inputs remain explicit implementation limits. Project check10/10; 565 backend tests. docs/tasks/pc-04-2-demand-calculation-contract.md. Historical PC-04 queue checkpoint and Scheduler implementation remain open.",
+            "ru": "PC-04.2 Demand Calculation Contract CLOSED as architecture specification 2026-10-07 per owner task after stated PC-04.1 prerequisites. Canonical production-demand-pc-04-2.md defines step-scoped ResourceDemand DTO/status/provenance, adapter registry, verified TC/assembly inputs, exact unit equality, shared resources, missing/manual policy and future tests. No executable Demand/API/DB/frontend/Scheduler changes; hourly-throughput mismatches and absent fixed/operator/design/split inputs remain explicit implementation limits. Project check10/10; 565 backend tests. docs/tasks/pc-04-2-demand-calculation-contract.md. Historical PC-04 queue checkpoint and Scheduler implementation remain open."
+          }
+        },
+        {
+          "code": "PC-05",
+          "done": false,
+          "title": {
+            "en": "Route operation generation",
+            "ru": "Route operation generation"
+          },
+          "note": {
+            "en": "Proposed; detail in production-calendar-v0.1.md and integration task; owner approval required",
+            "ru": "План; детали в production-calendar-v0.1.md и задаче интеграции; требуется согласование"
+          }
+        },
+        {
+          "code": "PC-06",
+          "done": false,
+          "title": {
+            "en": "Manual day allocation",
+            "ru": "Manual day allocation"
+          },
+          "note": {
+            "en": "Proposed; detail in production-calendar-v0.1.md and integration task; owner approval required",
+            "ru": "План; детали в production-calendar-v0.1.md и задаче интеграции; требуется согласование"
+          }
+        },
+        {
+          "code": "PC-07",
+          "done": false,
+          "title": {
+            "en": "Load calculation",
+            "ru": "Load calculation"
+          },
+          "note": {
+            "en": "Proposed; detail in production-calendar-v0.1.md and integration task; owner approval required",
+            "ru": "План; детали в production-calendar-v0.1.md и задаче интеграции; требуется согласование"
+          }
+        },
+        {
+          "code": "PC-08",
+          "done": false,
+          "title": {
+            "en": "Weekly board",
+            "ru": "Weekly board"
+          },
+          "note": {
+            "en": "Proposed; detail in production-calendar-v0.1.md and integration task; owner approval required",
+            "ru": "План; детали в production-calendar-v0.1.md и задаче интеграции; требуется согласование"
+          }
+        },
+        {
+          "code": "PC-09",
+          "done": false,
+          "title": {
+            "en": "Read-only fact and launch eligibility",
+            "ru": "Read-only fact and launch eligibility"
+          },
+          "note": {
+            "en": "Read-only technical-card fact and launch eligibility; existing execution API unchanged; detail in minimal implementation contract",
+            "ru": "Read-only факт ТК и допуск запуска; существующий API исполнения сохранён; минимальный контракт"
+          }
+        },
+        {
+          "code": "PC-10",
+          "done": false,
+          "title": {
+            "en": "Regression and release",
+            "ru": "Regression and release"
+          },
+          "note": {
+            "en": "Proposed; detail in production-calendar-v0.1.md and integration task; owner approval required",
+            "ru": "План; детали в production-calendar-v0.1.md и задаче интеграции; требуется согласование"
+          }
+        }
+      ]
+    },
+    {
+      "title": {
+        "en": "PC-UI-01…PC-UI-12 — interface design",
+        "ru": "PC-UI-01…PC-UI-12 — дизайн интерфейсов"
+      },
+      "items": [
+        {
+          "code": "PC-UI-01",
+          "done": true,
+          "title": {
+            "en": "Platform UI audit",
+            "ru": "Platform UI audit"
+          },
+          "note": {
+            "en": "Owner approved UI-A–UI-E 2026-10-03 per PC-09 design task; evidence docs/design/production-calendar/ui-audit.md; app shell unchanged",
+            "ru": "Владелец утвердил UI-A–UI-E 2026-10-03 по задаче дизайна PC-09; подтверждение docs/design/production-calendar/ui-audit.md; оболочка приложения не менялась"
+          }
+        },
+        {
+          "code": "PC-UI-02",
+          "done": true,
+          "title": {
+            "en": "Screen map and navigation",
+            "ru": "Screen map and navigation"
+          },
+          "note": {
+            "en": "Screen map and navigation; OWNER-APPROVED 2026-10-05 per lightweight design freeze; docs/design/production-calendar/navigation.md; proposed runtime routes in minimal contract, no application changes",
+            "ru": "Карта экранов и навигация OWNER-APPROVED 2026-10-05; navigation.md и минимальный контракт; runtime не реализован"
+          }
+        },
+        {
+          "code": "PC-UI-03",
+          "done": true,
+          "title": {
+            "en": "Unified UI contract",
+            "ru": "Unified UI contract"
+          },
+          "note": {
+            "en": "Unified UI contract; OWNER-APPROVED 2026-10-05 per lightweight design freeze; docs/design/production-calendar/ui-contract.md; DESIGN-APPROVED=true, runtime QA remains an implementation check",
+            "ru": "UI-контракт OWNER-APPROVED 2026-10-05; DESIGN-APPROVED=true, runtime QA относится к реализации"
+          }
+        },
+        {
+          "code": "PC-UI-04",
+          "done": true,
+          "title": {
+            "en": "UI-A weekly load board",
+            "ru": "UI-A weekly load board"
+          },
+          "note": {
+            "en": "Owner approved 2026-10-03 per PC-09 design task; screens/weekly-board.md and standalone HTML; DESIGN-APPROVED=true per owner freeze 2026-10-05",
+            "ru": "Владелец утвердил 2026-10-03 по задаче дизайна PC-09; screens/weekly-board.md и автономный HTML; DESIGN-APPROVED=true по решению владельца 2026-10-05"
+          }
+        },
+        {
+          "code": "PC-UI-05",
+          "done": true,
+          "title": {
+            "en": "UI-B create order",
+            "ru": "UI-B create order"
+          },
+          "note": {
+            "en": "Owner approved per docs/tasks/pc-ui-06-production-order-detail-prototype.md after PC-UI-05.1; screens/create-order.md and autonomous create-order-prototype.html, checks in screen spec; no app/API changes; DESIGN-APPROVED remains open",
+            "ru": "Утверждено владельцем по docs/tasks/pc-ui-06-production-order-detail-prototype.md после PC-UI-05.1; screens/create-order.md и автономный create-order-prototype.html, проверки в спецификации; приложение/API не менялись, DESIGN-APPROVED=true по решению владельца 2026-10-05"
+          }
+        },
+        {
+          "code": "PC-UI-06",
+          "done": true,
+          "title": {
+            "en": "UI-C order detail",
+            "ru": "UI-C order detail"
+          },
+          "note": {
+            "en": "OWNER-APPROVED per docs/tasks/pc-ui-07-section-day-detail-prototype.md after PC-UI-06.1; screens/production-order.md and autonomous HTML; app/API unchanged, DESIGN-APPROVED=true per owner freeze 2026-10-05",
+            "ru": "OWNER-APPROVED по docs/tasks/pc-ui-07-section-day-detail-prototype.md после PC-UI-06.1; screens/production-order.md и автономный HTML; приложение/API не менялись, DESIGN-APPROVED=true по решению владельца 2026-10-05"
+          }
+        },
+        {
+          "code": "PC-UI-07",
+          "done": true,
+          "title": {
+            "en": "UI-D section day",
+            "ru": "UI-D section day"
+          },
+          "note": {
+            "en": "Owner approved 2026-10-03 per PC-09 design task; screens/section-day.md and autonomous HTML; no app/API changes",
+            "ru": "Владелец утвердил 2026-10-03 по задаче дизайна PC-09; screens/section-day.md и автономный HTML; приложение/API не менялись"
+          }
+        },
+        {
+          "code": "PC-UI-08",
+          "done": true,
+          "title": {
+            "en": "UI-E manual planning",
+            "ru": "UI-E manual planning"
+          },
+          "note": {
+            "en": "Owner approved base UI-E 2026-10-03 per PC-09 design task; screens/manual-scheduling.md, autonomous HTML and resource contract; Edge 1440/1366/1280/1024/768/390/320 checks; no app/API changes; DESIGN-APPROVED=true per owner freeze 2026-10-05",
+            "ru": "Владелец утвердил базовый UI-E 2026-10-03 по задаче дизайна PC-09; screens/manual-scheduling.md, автономный HTML и ресурсный контракт; Edge 1440/1366/1280/1024/768/390/320; приложение/API не менялись, DESIGN-APPROVED=true по решению владельца 2026-10-05"
+          }
+        },
+        {
+          "code": "PC-UI-09",
+          "done": true,
+          "title": {
+            "en": "UI-F capacities",
+            "ru": "UI-F capacities"
+          },
+          "note": {
+            "en": "OWNER-APPROVED after PC-UI-09.1 per docs/tasks/pc-ui-10-11-gantt-risks-autonomous-v01.md; screens/capacity-settings.md, autonomous HTML and Edge scenarios; no app/API changes, DESIGN-APPROVED=true per owner freeze 2026-10-05",
+            "ru": "OWNER-APPROVED после PC-UI-09.1 по docs/tasks/pc-ui-10-11-gantt-risks-autonomous-v01.md; screens/capacity-settings.md, автономный HTML и проверки Edge; приложение/API не менялись, DESIGN-APPROVED=true по решению владельца 2026-10-05"
+          }
+        },
+        {
+          "code": "PC-UI-10",
+          "done": true,
+          "title": {
+            "en": "UI-G production calendar dashboard",
+            "ru": "UI-G дашборд производственного календаря"
+          },
+          "note": {
+            "en": "UI-G production calendar dashboard; OWNER-APPROVED 2026-10-05 per lightweight design freeze; screens/gantt.md and gantt-prototype.html; source path retained, application not implemented",
+            "ru": "UI-G Дашборд производственного календаря OWNER-APPROVED 2026-10-05; screens/gantt.md и сохранённый HTML-путь; приложение не реализовано"
+          }
+        },
+        {
+          "code": "PC-UI-11",
+          "done": true,
+          "title": {
+            "en": "UI-H deviation center",
+            "ru": "UI-H центр отклонений"
+          },
+          "note": {
+            "en": "UI-H deviation center; OWNER-APPROVED 2026-10-05 per lightweight design freeze; screens/risks-conflicts.md and autonomous HTML; application not implemented",
+            "ru": "UI-H Центр отклонений OWNER-APPROVED 2026-10-05; screens/risks-conflicts.md и автономный HTML; приложение не реализовано"
+          }
+        },
+        {
+          "code": "PC-UI-12",
+          "done": true,
+          "title": {
+            "en": "Cross-screen design freeze and scalability",
+            "ru": "Сквозное утверждение дизайна и масштабирование"
+          },
+          "note": {
+            "en": "Cross-screen design freeze and scalability 5/30/50/100; OWNER-APPROVED 2026-10-05; docs/design/production-calendar/review-checklist.md; DESIGN-APPROVED=true per lightweight design freeze; previous Edge/runtime QA not falsely marked passed",
+            "ru": "Сквозной дизайн и масштаб 5/30/50/100 OWNER-APPROVED 2026-10-05; review-checklist.md; DESIGN-APPROVED=true; прежние Edge/runtime проверки не объявлены выполненными"
+          }
+        }
+      ]
+    }
+  ]
+}
+    ];
+
+    const state = {
+      lang: localStorage.getItem(STORAGE_KEY) === "ru" ? "ru" : "en",
+      search: "",
+      filter: "all",
+      collapsed: new Set()
+    };
+
+    const stagesRoot = document.getElementById("stages");
+    const navLinks = document.getElementById("nav-links");
+    const statsRoot = document.getElementById("stats");
+    const overallLabel = document.getElementById("overall-progress-label");
+    const overallBar = document.getElementById("overall-progress-bar");
+    const legendRoot = document.getElementById("legend");
+    const searchInput = document.getElementById("search");
+    const filterSelect = document.getElementById("filter");
+
+    function t(path) {
+      return ui[state.lang][path];
+    }
+
+    function loc(obj) {
+      if (!obj) return "";
+      if (typeof obj === "string") return obj;
+      return obj[state.lang] || obj.en || "";
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;");
+    }
+
+    function flattenItems(stage) {
+      return stage.blocks.flatMap((block) => block.items);
+    }
+
+    function countStage(stage) {
+      const items = flattenItems(stage);
+      const done = items.filter((item) => item.done).length;
+      return { total: items.length, done, todo: items.length - done, blocks: stage.blocks.length };
+    }
+
+    function matches(item, stage, block) {
+      if (state.filter === "done" && !item.done) return false;
+      if (state.filter === "todo" && item.done) return false;
+      if (!state.search) return true;
+      const hay = `${loc(stage.title)} ${loc(block.title)} ${item.code} ${loc(item.title)} ${loc(item.note)}`.toLowerCase();
+      return hay.includes(state.search);
+    }
+
+    function setLanguage(lang) {
+      state.lang = lang === "ru" ? "ru" : "en";
+      localStorage.setItem(STORAGE_KEY, state.lang);
+      document.documentElement.lang = state.lang;
+      applyUi();
+      renderAll();
+    }
+
+    function applyUi() {
+      const copy = ui[state.lang];
+      document.getElementById("ui-brand-title").textContent = copy.brandTitle;
+      document.getElementById("ui-brand-sub").textContent = copy.brandSub;
+      document.getElementById("chip-updated").textContent = copy.chipUpdated;
+      document.getElementById("chip-carry").textContent = copy.chipCarry;
+      document.getElementById("chip-active").textContent = copy.chipActive;
+      document.getElementById("ui-legend-title").textContent = copy.legendTitle;
+      document.getElementById("ui-legend-done").textContent = copy.legendDone;
+      document.getElementById("ui-legend-todo").textContent = copy.legendTodo;
+      document.getElementById("ui-legend-html").textContent = copy.legendHtml;
+      document.getElementById("ui-hero-title").textContent = copy.heroTitle;
+      document.getElementById("ui-hero-text").textContent = copy.heroText;
+      document.getElementById("ui-progress-label").textContent = copy.progressLabel;
+      document.getElementById("ui-transfer-title").textContent = copy.transferTitle;
+      document.getElementById("ui-transfer-text").textContent = copy.transferText;
+      document.getElementById("ui-transfer-list").innerHTML = copy.transferItems
+        .map((item) => `<li>${escapeHtml(item)}</li>`)
+        .join("");
+      document.getElementById("ui-footer").textContent = copy.footer;
+      document.title = state.lang === "ru"
+        ? "Sport-Lead — Roadmap v1.1"
+        : "Sport-Lead — Roadmap v1.1";
+
+      searchInput.placeholder = copy.searchPlaceholder;
+      filterSelect.options[0].textContent = copy.filterAll;
+      filterSelect.options[1].textContent = copy.filterTodo;
+      filterSelect.options[2].textContent = copy.filterDone;
+      document.getElementById("expand-all").textContent = copy.expand;
+      document.getElementById("collapse-all").textContent = copy.collapse;
+
+      document.querySelectorAll("[data-lang]").forEach((btn) => {
+        btn.classList.toggle("active", btn.dataset.lang === state.lang);
+      });
+    }
+
+    function renderStats() {
+      let total = 0, done = 0, blocks = 0;
+      roadmap.forEach((stage) => {
+        const c = countStage(stage);
+        total += c.total;
+        done += c.done;
+        blocks += c.blocks;
+      });
+      const percent = total === 0 ? 0 : Math.round((done / total) * 100);
+      overallLabel.textContent = `${done} / ${total} (${percent}%)`;
+      overallBar.style.width = `${percent}%`;
+      const labels = t("stats");
+      statsRoot.innerHTML = [
+        { value: roadmap.length, label: labels.stages },
+        { value: blocks, label: labels.blocks },
+        { value: total, label: labels.items },
+        { value: done, label: labels.done },
+        { value: total - done, label: labels.todo }
+      ].map((entry) => `
+        <div class="stat"><strong>${entry.value}</strong><span>${escapeHtml(entry.label)}</span></div>
+      `).join("");
+    }
+
+    function renderNav() {
+      navLinks.innerHTML = roadmap.map((stage, index) => {
+        const c = countStage(stage);
+        return `<a href="#stage-${index + 1}"><span>${escapeHtml(loc(stage.title))}</span><small>${c.done}/${c.total}</small></a>`;
+      }).join("");
+    }
+
+    function renderLegend() {
+      const items = t("legendItems");
+      legendRoot.innerHTML = `
+        <div class="legend-item"><span class="check-icon todo"> </span><span>${escapeHtml(items[0])}</span></div>
+        <div class="legend-item"><span class="check-icon done">x</span><span>${escapeHtml(items[1])}</span></div>
+        <div class="legend-item"><span class="badge carry">${escapeHtml(items[2])}</span></div>
+      `;
+    }
+
+    function renderStages() {
+      stagesRoot.innerHTML = roadmap.map((stage, stageIndex) => {
+        const c = countStage(stage);
+        const percent = c.total === 0 ? 0 : Math.round((c.done / c.total) * 100);
+        const visibleBlocks = stage.blocks.map((block) => {
+          const visibleItems = block.items.filter((item) => matches(item, stage, block));
+          return { block, visibleItems };
+        }).filter((entry) => entry.visibleItems.length > 0);
+
+        if (visibleBlocks.length === 0) return "";
+        const collapsed = state.collapsed.has(stageIndex);
+
+        return `
+          <article class="stage-card" id="stage-${stageIndex + 1}">
+            <div class="stage-header" data-stage="${stageIndex}" role="button" tabindex="0">
+              <div>
+                <h3>${escapeHtml(loc(stage.title))}</h3>
+                <p>${escapeHtml(loc(stage.note))}</p>
+              </div>
+              <div class="stage-meta">
+                <span class="badge carry">${state.lang === "ru" ? "перенос" : "carry"}</span>
+                <span class="badge ${c.todo ? "todo" : "done"}">${c.done}/${c.total} · ${percent}%</span>
+              </div>
+            </div>
+            <div class="stage-body" ${collapsed ? "hidden" : ""}>
+              <div class="block-grid">
+                ${visibleBlocks.map(({ block, visibleItems }) => `
+                  <div class="block-card">
+                    <div class="block-head"><h4>${escapeHtml(loc(block.title))}</h4></div>
+                    ${block.note ? `<div class="note-box"><strong>${escapeHtml(t("noteLabel"))}:</strong> ${escapeHtml(loc(block.note))}</div>` : ""}
+                    <div class="item-list">
+                      ${visibleItems.map((item) => `
+                        <div class="item-card">
+                          <div class="item-top">
+                            <span class="check-icon ${item.done ? "done" : "todo"}">${item.done ? "x" : " "}</span>
+                            <div class="item-title">
+                              <strong>${escapeHtml(item.code)} — ${escapeHtml(loc(item.title))}</strong>
+                              ${item.note ? `<span>${escapeHtml(loc(item.note))}</span>` : ""}
+                            </div>
+                            <span class="item-status">${item.done ? "[x]" : "[ ]"}</span>
+                          </div>
+                        </div>
+                      `).join("")}
+                    </div>
+                  </div>
+                `).join("")}
+              </div>
+            </div>
+          </article>
+        `;
+      }).join("");
+
+      stagesRoot.querySelectorAll(".stage-header").forEach((header) => {
+        const toggle = () => {
+          const idx = Number(header.dataset.stage);
+          if (state.collapsed.has(idx)) state.collapsed.delete(idx);
+          else state.collapsed.add(idx);
+          renderStages();
+        };
+        header.addEventListener("click", toggle);
+        header.addEventListener("keydown", (event) => {
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            toggle();
+          }
+        });
+      });
+    }
+
+    function renderAll() {
+      renderStats();
+      renderNav();
+      renderLegend();
+      renderStages();
+    }
+
+    document.querySelectorAll("[data-lang]").forEach((btn) => {
+      btn.addEventListener("click", () => setLanguage(btn.dataset.lang));
+    });
+
+    searchInput.addEventListener("input", (event) => {
+      state.search = event.target.value.trim().toLowerCase();
+      renderStages();
+    });
+    filterSelect.addEventListener("change", (event) => {
+      state.filter = event.target.value;
+      renderStages();
+    });
+    document.getElementById("expand-all").addEventListener("click", () => {
+      state.collapsed.clear();
+      renderStages();
+    });
+    document.getElementById("collapse-all").addEventListener("click", () => {
+      roadmap.forEach((_, index) => state.collapsed.add(index));
+      renderStages();
+    });
+
+    applyUi();
+    renderAll();
+  </script>
+</body>
+</html>

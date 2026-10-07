@@ -2,15 +2,19 @@ import { Suspense } from "react";
 
 import { TechOperationsWorkspace } from "@/components/settings/tech-operations-workspace";
 import { PageLayout } from "@/components/layout/page-layout";
+import { getCapacityResources } from "@/lib/capacity-resources";
 import { getNomenclature } from "@/lib/nomenclature";
 import { getProductionStages } from "@/lib/production-stages";
+import { getWorkCenters } from "@/lib/shop-routings";
 import { getTechOperations } from "@/lib/tech-operations";
 
 export default async function TechOperationsListPage() {
-  const [operations, productionStages, nomenclature] = await Promise.all([
+  const [operations, productionStages, nomenclature, resources, workCenters] = await Promise.all([
     getTechOperations(),
     getProductionStages({ active_only: true, limit: 500 }),
     getNomenclature(),
+    getCapacityResources(),
+    getWorkCenters({ active_only: true, limit: 500 }),
   ]);
   const materialOptions = nomenclature.filter(
     (row) => row.nomenclature_type === "MATERIAL" && row.is_active,
@@ -28,6 +32,8 @@ export default async function TechOperationsListPage() {
         <TechOperationsWorkspace
           operations={operations}
           productionStages={productionStages}
+          workCenters={workCenters}
+          resources={resources}
           materialOptions={materialOptions}
         />
       </Suspense>

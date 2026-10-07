@@ -1,7 +1,7 @@
 # Sport-Lead — Roadmap v1.00
 
 **Code:** `SL-ROADMAP-v1.00`
-**Updated:** `2026-08-31` (Stage **26.13** complete — owner visual OK `26.13.6`; Stage **13.1.2** stop at owner visual `13.1.2.6`; Stage **27** parked)
+**Updated:** `2026-10-02` (owner visual OK `13.1.2.6`; pending visuals `26.3.14`/`26.3.15`/`26.11.13`/`26.12.1`/`26.12.2` OK; open remainder → `docs/roadmap/roadmap-v1.1.md`)
 **Project version:** `v1.00`
 **Status:** Confirmed carry-over from `v0.9.0` (Stages **1.4.3**, **2** group, **7**, **12.4**–**12.5**, **13**, **14**, **15**, **16**, **18.4**) + **new** Stages **0** (performance + LAN + order-without-lead + **canonical VPS `0.5`**), **20** (Lead / Order UX, closed), **21** (Settings / Users cabinet, closed), **22** (Design v1.0), **23** (Unified Work Tasks), **24** (Sewing cabinet), **25** (Tech-card QR / shop scan), **26** (owner findings: bugs / cosmetics), **27** (1C:UNF document export), **28** (standalone tech cards + unified numbering). Owner started early (`2026-08-05`).
 **Languages / Языки:** English + Russian (this MD). Interactive switch: `docs/erp/status/roadmap-v1.00.html`
@@ -11,7 +11,8 @@
 - HTML report: `docs/erp/status/roadmap-v1.00.html`
 
 **Related:**
-- Active until close: `docs/roadmap/roadmap.md` (`SL-ROADMAP-v1`, `v0.9.0`)
+- History `v0.9.0`: `docs/roadmap/roadmap.md` (`SL-ROADMAP-v1`)
+- Open queue `v1.1`: `docs/roadmap/roadmap-v1.1.md` (+ HTML twin)
 - Structure: `docs/architecture/project-structure.md`
 - ERP-check: `docs/architecture/erp-check.md`
 
@@ -68,9 +69,9 @@
 | **27** | 1C:UNF document export (platform → УНФ) | Выгрузка документов в 1С:УНФ (платформа → УНФ) |
 | **28** | Standalone tech cards + unified numbering `{order}-{seq}/{N}` | Самостоятельные техкарты + единая нумерация `{заказ}-{seq}/{N}` |
 
-> **EN:** Stage 0 is **new** in `v1.00`: slow-data (`0.1`/`0.2`), **LAN** (`0.3`), **create SalesOrder without Lead** (`0.4`), and **canonical VPS** (`0.5`, ADR-032). Stages **20** / **21** closed. Stage **22** = Design v1.0 (do **not** re-open `20.*` data contracts). Do **not** re-open closed `3.5.*` / `19.*` / `17.1.2.*` / `17.2.1`–`17.2.3` in `v0.9.0`. Stage **2** closed `2026-08-24`. Stage **24** sewing cabinet closed `2026-08-24`. Stage **25** QR/scan closed `2026-08-25` (owner visual `25.5.2`). Stage **7** Specifications closed `2026-08-25` (owner visual `7.2.2.6`). Stage **26** = living owner findings (bugs/cosmetics); seed parked; shipped through **`26.13.6`** (detailing + model Materials + TC prefill; owner visual OK) — further findings **owner-pull only**. Stage **27** = 1C:UNF **outbound** document packages (contour D); `27.0.1` closed; `27.1+` parked; **owner-pull only** — do not auto-start; inbound `16.2.1` parked. Stage **28** = standalone TechnicalCard + `{orderNo}-{seq}/{N}` — **closed** (`28.0`–`28.5`). Stage **12.4** inventory closed `2026-08-26`. **Stage 12.5.1** transfers closed `2026-08-29`. **Stage 13.1.1** suppliers closed `2026-08-29`. **Stage 13.1.2** purchase orders in flight — stop at owner visual `13.1.2.6`; do **not** auto-start Stage **27**. Parked **`0.5.13`** S3 (**owner-pull**). Stage **`0.5`** live apply closed `2026-08-25`.
+> **EN:** Stage 0 is **new** in `v1.00`: slow-data (`0.1`/`0.2`), **LAN** (`0.3`), **create SalesOrder without Lead** (`0.4`), and **canonical VPS** (`0.5`, ADR-032). Stages **20** / **21** closed. Stage **22** = Design v1.0 (do **not** re-open `20.*` data contracts). Do **not** re-open closed `3.5.*` / `19.*` / `17.1.2.*` / `17.2.1`–`17.2.3` in `v0.9.0`. Stage **2** closed `2026-08-24`. Stage **24** sewing cabinet closed `2026-08-24`. Stage **25** QR/scan closed `2026-08-25` (owner visual `25.5.2`). Stage **7** Specifications closed `2026-08-25` (owner visual `7.2.2.6`). Stage **26** = living owner findings (bugs/cosmetics); seed parked; shipped through **`26.13.6`** (detailing + model Materials + TC prefill; owner visual OK) — further findings **owner-pull only**. Stage **27** = 1C:UNF **outbound** document packages (contour D); `27.0.1` closed; `27.1+` parked; **owner-pull only** — do not auto-start; inbound `16.2.1` parked. Stage **28** = standalone TechnicalCard + `{orderNo}-{seq}/{N}` — **closed** (`28.0`–`28.5`). Stage **12.4** inventory closed `2026-08-26`. **Stage 12.5.1** transfers closed `2026-08-29`. **Stage 13.1.1** suppliers closed `2026-08-29`. **Stage 13.1.2** closed `2026-10-02` (owner visual `13.1.2.6`). Open remainder **moved → v1.1**. Stage **27** stays owner-pull. Parked **`0.5.13`** S3 (**owner-pull**). Stage **`0.5`** live apply closed `2026-08-25`.
 >
-> **RU:** Stage 0: slow-data + **LAN** (`0.3`) + **заказ без лида** (`0.4`) + **канонический VPS** (`0.5`). Stages **20** / **21** / **22** / **2** / **24** / **25** / **7** закрыты. Stage **26** — живой backlog до **`26.13.6`** (owner visual OK); новые находки **owner-pull**. Stage **27** припаркован. Stage **28** закрыт. Stage **12.5.1** закрыт. **Stage 13.1.1** закрыт. **Stage 13.1.2** ЗП — до owner visual `13.1.2.6`; Stage **27** не стартовать. Припаркован **`0.5.13`** S3.
+> **RU:** Stage 0: slow-data + **LAN** (`0.3`) + **заказ без лида** (`0.4`) + **канонический VPS** (`0.5`). Stages **20** / **21** / **22** / **2** / **24** / **25** / **7** закрыты. Stage **26** — живой backlog до **`26.13.6`** (owner visual OK); новые находки **owner-pull**. Stage **27** припаркован. Stage **28** закрыт. Stage **12.5.1** закрыт. **Stage 13.1.1** закрыт. **Stage 13.1.2** закрыт `2026-10-02` (owner visual `13.1.2.6`). Открытый остаток **перенесён в v1.1**. Stage **27** остаётся owner-pull. Припаркован **`0.5.13`** S3.
 
 ### Remain in v0.9.0 / Остаются в v0.9.0
 
@@ -149,7 +150,7 @@
 - [x] 0.5.10 — Storage sync script; media SoT = VPS disk — `v1.00` `2026-08-25`; `scripts/sync-storage-from-vps.ps1` / Sync media
 - [x] 0.5.11 — Cron `prod-backup-db.sh` on VPS (off-box copy) — `v1.00` `2026-08-25`; deploy crontab `15 2 * * *`; dump `sport_leads-prod-20260825-175911.dump`; off-box `backup/vps-offbox/` / Cron backup
 - [x] 0.5.12 — Owner smoke: `https://sport-lead.ru/login` + optional local `:3001` via tunnel; docs checkpoint — `v1.00` `2026-08-25`; HTTPS login form + `/health/ready` 200; Stage `0.5` live apply complete / Smoke на sport-lead.ru
-- [ ] 0.5.13 — S3-compatible object storage for media (private bucket; API on VPS; replace disk SoT `0.5.10`) — **parked**; owner-pull; do **not** auto-start while the project is small; no s3fs; ADR-011/022 — `v1.00` / S3 медиа, когда диск VPS станет узким
+- [ ] 0.5.13 — S3-compatible object storage for media (private bucket; API on VPS; replace disk SoT `0.5.10`) — **parked**; owner-pull; do **not** auto-start while the project is small; no s3fs; ADR-011/022 — `v1.00` / S3 медиа, когда диск VPS станет узким — **moved → v1.1** (`docs/roadmap/roadmap-v1.1.md`)
 
 ---
 
@@ -336,7 +337,7 @@
 - [x] 12.5.1.5 — Add UI on `/warehouse/movements` (create drawer + card lines/post) / UI журнал + карточка — `v1.00` `2026-08-27`; create drawer + PT-07 lines; `stock-transfer.test.mjs` / UI; стоп на visual `12.5.1.6`
 - [x] 12.5.1.6 — Visual verification / Визуальная проверка — `v1.00` `2026-08-29`; owner visual OK `/warehouse/movements` transfer create + card; Stage 12.5.1 complete / Owner visual OK; 12.5.1 закрыт
 
-- [ ] 12.5.2 — Reserves (sales/production) — later / Резервы (продажи/производство) — later
+- [ ] 12.5.2 — Reserves (sales/production) — later / Резервы (продажи/производство) — later — **moved → v1.1** (`docs/roadmap/roadmap-v1.1.md`)
 
 ---
 
@@ -348,7 +349,7 @@
 > **EN:** Soft UI hub `/purchases` already shipped (`22.6`, empty — no demo). Stage **13** owns suppliers, POs, receipts. Tasks: `v1.00-stage-13.1.1-suppliers.md`, `v1.00-stage-13.1.2-purchase-orders.md`. ADR-033 / ADR-034.
 > **RU:** Хаб Soft UI `/purchases` уже есть (`22.6`). Stage **13** — поставщики, ЗП, поступления. Tasks + ADR-033 / ADR-034.
 
-**Execute after / Исполнять после:** Stage **13.1.1** closed `2026-08-29`. Current: **`13.1.2`** (owner-pull «до визуал чек»). Stop at `13.1.2.6`. Do not auto-start Stage **27** / `13.2.*`.
+**Execute after / Исполнять после:** Stage **13.1.2** closed `2026-10-02` (owner visual `13.1.2.6`). Open `13.2.*` **moved → v1.1**. Do not auto-start Stage **27**.
 
 ### 13.1 — Supplier contour / Контур поставщиков
 
@@ -368,12 +369,12 @@
 - [x] 13.1.2.3 — Service + API CRUD (PO + lines + confirm/cancel) + backend tests / Service + API + backend tests — `v1.00` `2026-08-29`; `/purchase-orders`; `test_purchase_orders_13_1_2_3.py` / API CRUD
 - [x] 13.1.2.4 — FE list `/purchases/orders` (PT-02, no demo) / FE список ЗП — `v1.00` `2026-08-29`; `purchase-orders-workspace.tsx` / PT-02 list
 - [x] 13.1.2.5 — FE card + lines editor + confirm/cancel (PT-05) / FE карточка + строки — `v1.00` `2026-08-29`; `purchase-order-card.tsx`; stop at visual `13.1.2.6` / PT-05 + confirm
-- [ ] 13.1.2.6 — Regression + owner visual / Регрессия + визуальная проверка владельцем
+- [x] 13.1.2.6 — Regression + owner visual / Регрессия + визуальная проверка владельцем — `v1.00` `2026-10-02`; owner visual OK `/purchases/orders` list + card; Stage 13.1.2 complete / Owner visual OK; 13.1.2 закрыт
 
 ### 13.2 — Supply execution / Исполнение поставок
 
-- [ ] 13.2.1 — Receipts and returns / Поступления и возвраты
-- [ ] 13.2.2 — Demand planning and minimum stock linkage / Планирование потребности и связь с минимальным остатком
+- [ ] 13.2.1 — Receipts and returns / Поступления и возвраты — **moved → v1.1** (`docs/roadmap/roadmap-v1.1.md`)
+- [ ] 13.2.2 — Demand planning and minimum stock linkage / Планирование потребности и связь с минимальным остатком — **moved → v1.1** (`docs/roadmap/roadmap-v1.1.md`)
 
 ---
 
@@ -384,12 +385,12 @@
 
 ### 14.1 — Shipping / Отгрузка
 
-- [ ] 14.1.1 — Shipping orders, packaging, delivery, and documents — on top of already `shipped` warehouse issue (ADR-019); do not duplicate issue / Заказы на отгрузку, упаковка, доставка и документы — **поверх** уже `shipped` (складское списание ADR-019); не дублировать issue
+- [ ] 14.1.1 — Shipping orders, packaging, delivery, and documents — on top of already `shipped` warehouse issue (ADR-019); do not duplicate issue / Заказы на отгрузку, упаковка, доставка и документы — **поверх** уже `shipped` (складское списание ADR-019); не дублировать issue — **moved → v1.1** (`docs/roadmap/roadmap-v1.1.md`)
 
 ### 14.2 — Payments / Платежи
 
-- [ ] 14.2.1 — Invoices, payments, advances, and debt / Счета, оплаты, авансы и задолженность
-- [ ] 14.2.2 — Settlements by order and client / Взаиморасчёты по заказу и клиенту
+- [ ] 14.2.1 — Invoices, payments, advances, and debt / Счета, оплаты, авансы и задолженность — **moved → v1.1** (`docs/roadmap/roadmap-v1.1.md`)
+- [ ] 14.2.2 — Settlements by order and client / Взаиморасчёты по заказу и клиенту — **moved → v1.1** (`docs/roadmap/roadmap-v1.1.md`)
 
 ---
 
@@ -400,13 +401,13 @@
 
 ### 15.1 — Costing / Себестоимость
 
-- [ ] 15.1.1 — Planned, normative, and actual costing / Плановая, нормативная и фактическая себестоимость
-- [ ] 15.1.2 — Margin and plan-fact analysis / Маржа и план-факт анализ
+- [ ] 15.1.1 — Planned, normative, and actual costing / Плановая, нормативная и фактическая себестоимость — **moved → v1.1** (`docs/roadmap/roadmap-v1.1.md`)
+- [ ] 15.1.2 — Margin and plan-fact analysis / Маржа и план-факт анализ — **moved → v1.1** (`docs/roadmap/roadmap-v1.1.md`)
 
 ### 15.2 — Analytics / Аналитика
 
 - [x] 15.2.1 — CRM dashboard and base order analytics / CRM-дашборд и базовая аналитика заказов — already shipped in `v0.9.0` / уже закрыто в `v0.9.0`
-- [ ] 15.2.2 — ERP analytics and management P&L / ERP-аналитика и управленческий P&L
+- [ ] 15.2.2 — ERP analytics and management P&L / ERP-аналитика и управленческий P&L — **moved → v1.1** (`docs/roadmap/roadmap-v1.1.md`)
 
 ---
 
@@ -420,27 +421,27 @@
 > **EN:** Platform channel connectors. Lead **ingest** adapters owned by `1.4.3.*` (shared transport OK, no duplicate CRM SoT).
 > **RU:** Канальные коннекторы платформы. Адаптеры **ingest лидов** — `1.4.3.*` (общий transport OK, без дубля CRM SoT).
 
-- [ ] 16.1.1 — Website forms, email, VK, Telegram, and telephony / Формы сайта, email, VK, Telegram и телефония
-- [ ] 16.1.2 — Google Sheets and webhooks / Google Sheets и webhooks
+- [ ] 16.1.1 — Website forms, email, VK, Telegram, and telephony / Формы сайта, email, VK, Telegram и телефония — **moved → v1.1** (`docs/roadmap/roadmap-v1.1.md`)
+- [ ] 16.1.2 — Google Sheets and webhooks / Google Sheets и webhooks — **moved → v1.1** (`docs/roadmap/roadmap-v1.1.md`)
 
 ### 16.2 — Enterprise exchange / Корпоративный обмен
 
 > **EN:** Contour **D** (ADR-020). **Canonical 1C:UNF outbound** (SalesOrder / approved Spec / ТН-УПД packages; matching **in** УНФ) = Stage **27** — not this block. **`16.2.1` parked:** optional later **inbound** SalesOrder Excel from UNF → platform (`file_io` + dry-run; depends `0.4`; column map after sample). Do not treat inbound as MVP. Neighbor job shell → `16.3`. Delivery/API stay here.
 > **RU:** Контур **D**. **Канон выгрузки в 1С:УНФ** = Stage **27**, не этот блок. **`16.2.1` припаркован:** опциональный later **inbound** Excel заказов УНФ→платформа. Не MVP. Оболочка заданий → `16.3`. Доставка/API остаются здесь.
 
-- [ ] 16.2.1 — 1C:UNF **inbound** SalesOrder Excel (UNF → platform) — parked; not MVP; canonical outbound = Stage **27**; neighbor to `16.3`, not catalog Excel buttons / Inbound Excel заказов УНФ→платформа — припаркован; не MVP; канон выгрузки = Stage **27**
-- [ ] 16.2.2 — Delivery and payment-system integrations / Интеграции доставки и платёжных систем
-- [ ] 16.2.3 — External API for third-party systems / Внешний API для сторонних систем
+- [ ] 16.2.1 — 1C:UNF **inbound** SalesOrder Excel (UNF → platform) — parked; not MVP; canonical outbound = Stage **27**; neighbor to `16.3`, not catalog Excel buttons / Inbound Excel заказов УНФ→платформа — припаркован; не MVP; канон выгрузки = Stage **27** — **moved → v1.1** (`docs/roadmap/roadmap-v1.1.md`)
+- [ ] 16.2.2 — Delivery and payment-system integrations / Интеграции доставки и платёжных систем — **moved → v1.1** (`docs/roadmap/roadmap-v1.1.md`)
+- [ ] 16.2.3 — External API for third-party systems / Внешний API для сторонних систем — **moved → v1.1** (`docs/roadmap/roadmap-v1.1.md`)
 
 ### 16.3 — Universal import and export (orchestration) / Универсальный импорт и экспорт (оркестрация)
 
 > **EN:** ADR-020: platform **job shell** (section picker + journal) over the same adapters used by section toolbars (`4.5`). Do not pull domain-inline `9.3.2` here.
 > **RU:** ADR-020: платформенная **оболочка заданий** (выбор раздела + журнал) поверх тех же адаптеров, что у тулбаров разделов (`4.5`). Не тянуть сюда доменный inline `9.3.2`.
 
-- [ ] 16.3.1 — Contract: job runner + section adapter registry (upload → map → validate → dry-run → commit; audit hooks) / Контракт: runner заданий + реестр адаптеров разделов (upload → map → validate → dry-run → commit; audit hooks)
-- [ ] 16.3.2 — Wire nomenclature adapter from `4.5` into the job shell / Подключить адаптер номенклатуры из `4.5` к оболочке заданий
-- [ ] 16.3.3 — Administration UI: jobs list + section picker (no duplicate SoT) / UI администрирования: список заданий + выбор раздела (без дубля SoT)
-- [ ] 16.3.4 — Regression tests + documentation checkpoint / Регрессионные тесты + checkpoint документации
+- [ ] 16.3.1 — Contract: job runner + section adapter registry (upload → map → validate → dry-run → commit; audit hooks) / Контракт: runner заданий + реестр адаптеров разделов (upload → map → validate → dry-run → commit; audit hooks) — **moved → v1.1** (`docs/roadmap/roadmap-v1.1.md`)
+- [ ] 16.3.2 — Wire nomenclature adapter from `4.5` into the job shell / Подключить адаптер номенклатуры из `4.5` к оболочке заданий — **moved → v1.1** (`docs/roadmap/roadmap-v1.1.md`)
+- [ ] 16.3.3 — Administration UI: jobs list + section picker (no duplicate SoT) / UI администрирования: список заданий + выбор раздела (без дубля SoT) — **moved → v1.1** (`docs/roadmap/roadmap-v1.1.md`)
+- [ ] 16.3.4 — Regression tests + documentation checkpoint / Регрессионные тесты + checkpoint документации — **moved → v1.1** (`docs/roadmap/roadmap-v1.1.md`)
 
 ---
 
@@ -454,14 +455,14 @@
 
 ### 18.4 — Journal microtasks / Микрозадачи журнала
 
-- [ ] 18.4.1 — Domain contract: OperationJournal entry fields, sources (sales / production), idempotency, retention / Контракт: поля записи, источники (sales / production), idempotency, retention
-- [ ] 18.4.2 — Database model, migration, schemas for global operations journal / Модель БД, миграция, schemas
-- [ ] 18.4.3 — Service API: append / query by entity (`product_model_id`, …); `has_operations(entity)` helper / Service API: append / query; helper `has_operations`
-- [ ] 18.4.4 — Write path: sales order uses model → append journal row (no write if model not used) / Write path: продажа с моделью → строка журнала
-- [ ] 18.4.5 — Write path: production / ТК uses model → append journal row / Write path: производство / ТК → строка журнала
-- [ ] 18.4.6 — Wire product-model guards (`revert_to_draft`, size-grid change) to real `has_operations` (replace Stage-6 stub) / Подключить guards модели к реальному `has_operations` (заменить stub)
-- [ ] 18.4.7 — Administration UI: journal list/filter (PT-02) under Администрирование → Журнал операций / UI администрирования: список/фильтр журнала
-- [ ] 18.4.8 — Regression tests + documentation checkpoint / Регрессия + checkpoint документации
+- [ ] 18.4.1 — Domain contract: OperationJournal entry fields, sources (sales / production), idempotency, retention / Контракт: поля записи, источники (sales / production), idempotency, retention — **moved → v1.1** (`docs/roadmap/roadmap-v1.1.md`)
+- [ ] 18.4.2 — Database model, migration, schemas for global operations journal / Модель БД, миграция, schemas — **moved → v1.1** (`docs/roadmap/roadmap-v1.1.md`)
+- [ ] 18.4.3 — Service API: append / query by entity (`product_model_id`, …); `has_operations(entity)` helper / Service API: append / query; helper `has_operations` — **moved → v1.1** (`docs/roadmap/roadmap-v1.1.md`)
+- [ ] 18.4.4 — Write path: sales order uses model → append journal row (no write if model not used) / Write path: продажа с моделью → строка журнала — **moved → v1.1** (`docs/roadmap/roadmap-v1.1.md`)
+- [ ] 18.4.5 — Write path: production / ТК uses model → append journal row / Write path: производство / ТК → строка журнала — **moved → v1.1** (`docs/roadmap/roadmap-v1.1.md`)
+- [ ] 18.4.6 — Wire product-model guards (`revert_to_draft`, size-grid change) to real `has_operations` (replace Stage-6 stub) / Подключить guards модели к реальному `has_operations` (заменить stub) — **moved → v1.1** (`docs/roadmap/roadmap-v1.1.md`)
+- [ ] 18.4.7 — Administration UI: journal list/filter (PT-02) under Администрирование → Журнал операций / UI администрирования: список/фильтр журнала — **moved → v1.1** (`docs/roadmap/roadmap-v1.1.md`)
+- [ ] 18.4.8 — Regression tests + documentation checkpoint / Регрессия + checkpoint документации — **moved → v1.1** (`docs/roadmap/roadmap-v1.1.md`)
 
 ---
 
@@ -869,8 +870,8 @@
 
 ### 26.3 — Tech-card document / Документ техкарты `/production/tech-cards/[id]`
 
-> **EN:** Host `tech-card-detail-workspace.tsx`. Shop `?stage=` layout stays; 26.3.3 is manager document only (shop already has horizontal chips). `26.3.5`–`26.3.15` closed (`2026-08-27`/`2026-08-29`); `26.3.14`/`26.3.15` owner visual pending.
-> **RU:** Хост документа ТК. Цеховой `?stage=` не ломаем; 26.3.3 — только менеджерский документ. `26.3.5`–`26.3.15` закрыты; `26.3.14`/`26.3.15` owner visual pending.
+> **EN:** Host `tech-card-detail-workspace.tsx`. Shop `?stage=` layout stays; 26.3.3 is manager document only (shop already has horizontal chips). `26.3.5`–`26.3.15` closed (`2026-08-27`/`2026-08-29`); `26.3.14`/`26.3.15` owner visual OK `2026-10-02`.
+> **RU:** Хост документа ТК. Цеховой `?stage=` не ломаем; 26.3.3 — только менеджерский документ. `26.3.5`–`26.3.15` закрыты; `26.3.14`/`26.3.15` owner visual OK `2026-10-02`.
 
 - [x] 26.3.1 — Move «Сотрудничество по заказу» (ADR-026) to a right rail on xl+ (sticky); tablet collapse; mobile accordion after header; owner visual on layout in the task file — `v1.00` `2026-08-26`; `tech-card-detail-workspace.tsx`; shop `?stage=` mockup without chat / Правый рейл переписки
 - [x] 26.3.2 — «Операции / объёмы», «Схема сборки», «Состав материалов» in one row on large screens — `v1.00` `2026-08-26`; `tech-card-detail-workspace.tsx` `data-tech-card-doc-row3` `xl:grid-cols-3` / Три блока в ряд
@@ -885,8 +886,8 @@
 - [x] 26.3.11 — Toolbar / EntityHeader: editable product name («наименование изделия»); persist candidate `nomenclature_name` — `v1.00` `2026-08-28`; owner visual OK; `PATCH /technical-cards/{id}/nomenclature-name`; example `/production/tech-cards/6` / Наименование изделия в тулбаре
 - [x] 26.3.12 — Restore add/delete of tech-card mockup images (manager Макет; not shop read-only; hover-only icons) — `v1.00` `2026-08-28`; owner visual OK; already in `tech-card-media-carousel.tsx`; example `/production/tech-cards/6` / Картинки макета: добавить/удалить
 - [x] 26.3.13 — Restore internal collab on the tech card (including contour B / `sales_order_id` null); cross-link `28.5.4`; do not auto-start `28.5.1`–`28.5.3` — `v1.00` `2026-08-28`; owner visual OK; rail/accordion (`26.3.1` + `28.5.4`); example `/production/tech-cards/6` / Внутренняя переписка по ТК
-- [x] 26.3.14 — Remove standalone «Привязать к заказу» card; move Заказ into «Данные по заказу»; checkbox «Выбрать заказ» (default off) — `v1.00` `2026-08-29`; owner visual pending `/production/tech-cards/6` / Заказ в данные по заказу
-- [x] 26.3.15 — Restore Заказ: manual `order_number` (other system) or platform pick; compact one-row «Выбрать заказ» + «Заказ» — `v1.00` `2026-08-29`; owner visual pending `/production/tech-cards/6`; `PATCH /technical-cards/order-groups/{id}` `order_number` / Заказ: ввод или выбор
+- [x] 26.3.14 — Remove standalone «Привязать к заказу» card; move Заказ into «Данные по заказу»; checkbox «Выбрать заказ» (default off) — `v1.00` `2026-10-02`; owner visual OK `/production/tech-cards/6` / Заказ в данные по заказу
+- [x] 26.3.15 — Restore Заказ: manual `order_number` (other system) or platform pick; compact one-row «Выбрать заказ» + «Заказ» — `v1.00` `2026-10-02`; owner visual OK `/production/tech-cards/6`; `PATCH /technical-cards/order-groups/{id}` `order_number` / Заказ: ввод или выбор
 
 ### 26.4 — Nomenclature card / Карточка номенклатуры `/settings/catalogs/nomenclature/[id]`
 
@@ -984,10 +985,10 @@
 - [x] 26.11.10 — Fan-out model/assembly/routing from picked nomenclature — `v1.00` `2026-08-29`; `seed_card_from_nomenclature`; owner visual OK создание / Подтянуть модель и маршрут
 - [x] 26.11.11 — Manager tabs: Персонализация → Материалы → Операции → Пошив → Маршрут — `v1.00` `2026-08-29`; owner visual OK `/production/tech-cards/6` / Табы документа
 - [x] 26.11.12 — Tests + erp-check / project-structure checkpoint — `v1.00` `2026-08-29`; pytest copy/delete + standalone; FE `tech-card-list-26-11.test.mjs`; tsc / Регрессия + docs
-- [x] 26.11.13 — List `responsible_name` embed (batch PlatformUser / SalesUser) + toolbar filter «Ответственный» — `v1.00` `2026-08-29`; owner visual pending `/production/tech-cards`; `list_card_responsible_name` / Список: ответственный и фильтр
+- [x] 26.11.13 — List `responsible_name` embed (batch PlatformUser / SalesUser) + toolbar filter «Ответственный» — `v1.00` `2026-10-02`; owner visual OK `/production/tech-cards`; `list_card_responsible_name` / Список: ответственный и фильтр
 - [x] 26.11.14 — Create modal: allow free-text nomenclature (no catalog id); remove Количество (qty=1); fix false «Выберите номенклатуру» — `v1.00` `2026-08-29`; `TechnicalCardStandaloneCreate.nomenclature_name`; FE `tech-cards-workspace.tsx` / Модалка: ручная номенклатура + без количества
-- [x] 26.12.1 — Personalization: row Количество + Количество (сумма); import sets standalone card.quantity from sum — `v1.00` `2026-08-29`; aggregate UI + `import_unit_lines`; stop at owner visual / Персонализация: кол-во в строке и сумма
-- [x] 26.12.2 — Product model card modal: open from list + tech-card; view by default; Edit / Save / Cancel icons — `v1.00` `2026-08-29`; `product-model-card-modal.tsx`; stop at owner visual / Модалка карточки модели
+- [x] 26.12.1 — Personalization: row Количество + Количество (сумма); import sets standalone card.quantity from sum — `v1.00` `2026-10-02`; owner visual OK; aggregate UI + `import_unit_lines` / Персонализация: кол-во в строке и сумма
+- [x] 26.12.2 — Product model card modal: open from list + tech-card; view by default; Edit / Save / Cancel icons — `v1.00` `2026-10-02`; owner visual OK; `product-model-card-modal.tsx` / Модалка карточки модели
 
 ### 26.13 — Detailing catalog + model Materials BOM + TC materials chrome / Деталировка + Материалы модели + Материалы ТК
 
@@ -1034,41 +1035,41 @@
 > **EN:** No per-document field maps in this block. Payload must carry stable platform ids. Execute `27.1` before `27.2`.
 > **RU:** Карт полей документов здесь нет. В пакете — id платформы. `27.1` до `27.2`.
 
-- [ ] 27.1.1 — Export journal + idempotency by platform document id; package carries ids for order / client / organization / nomenclature / variant / Spec version / Журнал выгрузок + идемпотентность; id сущностей в пакете
-- [ ] 27.1.2 — File transport MVP (xlsx/csv) + UI entry (not catalog toolbar `4.5`; not print `18.3`; not job hub `16.3` as SoT) / Транспорт файла и точка UI
-- [ ] 27.1.3 — Tests for journal/idempotency without live 1C / Тесты журнала без живой 1С
+- [ ] 27.1.1 — Export journal + idempotency by platform document id; package carries ids for order / client / organization / nomenclature / variant / Spec version / Журнал выгрузок + идемпотентность; id сущностей в пакете — **moved → v1.1** (`docs/roadmap/roadmap-v1.1.md`)
+- [ ] 27.1.2 — File transport MVP (xlsx/csv) + UI entry (not catalog toolbar `4.5`; not print `18.3`; not job hub `16.3` as SoT) / Транспорт файла и точка UI — **moved → v1.1** (`docs/roadmap/roadmap-v1.1.md`)
+- [ ] 27.1.3 — Tests for journal/idempotency without live 1C / Тесты журнала без живой 1С — **moved → v1.1** (`docs/roadmap/roadmap-v1.1.md`)
 
 ### 27.2 — Sales order → Заказ покупателя
 
 > **EN:** First pointwise field map. Prefer before `27.3` so counterparty/nomenclature matching already exists in УНФ.
 > **RU:** Первый точечный маппинг. Желателен до `27.3`.
 
-- [ ] 27.2.1 — Field map for this document (owner + UNF load form) — first implement slice / Карта полей заказа покупателя
-- [ ] 27.2.2 — Adapter: `SalesOrder` export package / Адаптер пакета заказа
-- [ ] 27.2.3 — Owner visual of file / dry-run / Owner visual файла
+- [ ] 27.2.1 — Field map for this document (owner + UNF load form) — first implement slice / Карта полей заказа покупателя — **moved → v1.1** (`docs/roadmap/roadmap-v1.1.md`)
+- [ ] 27.2.2 — Adapter: `SalesOrder` export package / Адаптер пакета заказа — **moved → v1.1** (`docs/roadmap/roadmap-v1.1.md`)
+- [ ] 27.2.3 — Owner visual of file / dry-run / Owner visual файла — **moved → v1.1** (`docs/roadmap/roadmap-v1.1.md`)
 
 ### 27.3 — Specification → Заказ на производство
 
 > **EN:** Export last `approved` Spec only — not raw `ProductionOrder` / batch. Spec = plan+fact report (ADR-004/031); UNF production order is the receiver.
 > **RU:** Только `approved` Spec, не сырой производственный заказ.
 
-- [ ] 27.3.1 — Field map (approved Spec only) / Карта полей спецификации
-- [ ] 27.3.2 — Adapter: approved Specification package / Адаптер пакета Spec
-- [ ] 27.3.3 — Owner visual / Owner visual
+- [ ] 27.3.1 — Field map (approved Spec only) / Карта полей спецификации — **moved → v1.1** (`docs/roadmap/roadmap-v1.1.md`)
+- [ ] 27.3.2 — Adapter: approved Specification package / Адаптер пакета Spec — **moved → v1.1** (`docs/roadmap/roadmap-v1.1.md`)
+- [ ] 27.3.3 — Owner visual / Owner visual — **moved → v1.1** (`docs/roadmap/roadmap-v1.1.md`)
 
 ### 27.4 — Consignment note / UTD / ТН / УПД
 
 > **EN:** Platform has no УПД domain document yet (ADR-005 left it out of invoice MVP). Decide SoT before field map.
 > **RU:** УПД в домене нет. Сначала SoT (`27.4.1`), затем карта полей.
 
-- [ ] 27.4.1 — SoT: new sales document on the order **or** assemble from order + `shipped` / `fg_issue` / SoT накладной
-- [ ] 27.4.2 — Field map / Карта полей ТН/УПД
-- [ ] 27.4.3 — Adapter: ТН/УПД package / Адаптер пакета
-- [ ] 27.4.4 — Owner visual / Owner visual
+- [ ] 27.4.1 — SoT: new sales document on the order **or** assemble from order + `shipped` / `fg_issue` / SoT накладной — **moved → v1.1** (`docs/roadmap/roadmap-v1.1.md`)
+- [ ] 27.4.2 — Field map / Карта полей ТН/УПД — **moved → v1.1** (`docs/roadmap/roadmap-v1.1.md`)
+- [ ] 27.4.3 — Adapter: ТН/УПД package / Адаптер пакета — **moved → v1.1** (`docs/roadmap/roadmap-v1.1.md`)
+- [ ] 27.4.4 — Owner visual / Owner visual — **moved → v1.1** (`docs/roadmap/roadmap-v1.1.md`)
 
 ### 27.5 — Checkpoint / Checkpoint
 
-- [ ] 27.5.1 — Regression + docs (contour D, erp-check, project-structure, `16.2.1` pointer) / Регрессия + docs
+- [ ] 27.5.1 — Regression + docs (contour D, erp-check, project-structure, `16.2.1` pointer) / Регрессия + docs — **moved → v1.1** (`docs/roadmap/roadmap-v1.1.md`)
 
 ---
 
@@ -1312,3 +1313,4 @@
 | `2026-08-29` | Closed `13.1.1.6`: owner visual OK `/purchases/suppliers`; Stage **13.1.1** complete | Закрыт `13.1.1.6`: owner visual OK; 13.1.1 закрыт |
 | `2026-08-29` | Split `13.1.2` → `13.1.2.1`–`13.1.2.6`; closed `13.1.2.1` PO contract (ADR-034); stop at visual `13.1.2.6` | Закрыт `13.1.2.1`: контракт ЗП; далее модели/API/FE |
 | `2026-08-29` | Closed `13.1.2.2`–`13.1.2.5`: Alembic `r7s8t9u0v123` + `/purchase-orders` API + FE list/card; stop at owner visual `13.1.2.6` | Закрыты `13.1.2.2`–`13.1.2.5`; стоп на visual |
+| `2026-10-02` | Owner visual OK `13.1.2.6` (Stage 13.1.2 complete) and pending `26.3.14` / `26.3.15` / `26.11.13` / `26.12.1` / `26.12.2`. Open remainder moved to `docs/roadmap/roadmap-v1.1.md`. | Owner visual OK `13.1.2.6` (13.1.2 закрыт) и `26.3.14` / `26.3.15` / `26.11.13` / `26.12.1` / `26.12.2`. Открытый остаток перенесён в `docs/roadmap/roadmap-v1.1.md`. |

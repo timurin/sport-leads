@@ -31,6 +31,7 @@ class TechOperationRequiredMaterialRead(TechOperationRequiredMaterialBase):
 
 
 class TechOperationBase(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     name: str = Field(min_length=1, max_length=255)
     code: str = Field(min_length=1, max_length=64)
     volume_unit: TechOperationVolumeUnitSchema
@@ -38,6 +39,7 @@ class TechOperationBase(BaseModel):
     is_active: bool = True
     sort_order: int = Field(default=0, ge=0)
     required_materials: list[TechOperationRequiredMaterialWrite] = Field(default_factory=list)
+    capacity_resource_keys: list[str] = Field(default_factory=list, max_length=100)
 
     @field_validator("name", "code", mode="before")
     @classmethod
@@ -50,6 +52,7 @@ class TechOperationCreate(TechOperationBase):
 
 
 class TechOperationUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     name: str | None = Field(default=None, min_length=1, max_length=255)
     code: str | None = Field(default=None, min_length=1, max_length=64)
     volume_unit: TechOperationVolumeUnitSchema | None = None
@@ -57,6 +60,7 @@ class TechOperationUpdate(BaseModel):
     is_active: bool | None = None
     sort_order: int | None = Field(default=None, ge=0)
     required_materials: list[TechOperationRequiredMaterialWrite] | None = None
+    capacity_resource_keys: list[str] | None = Field(default=None, max_length=100)
 
     @field_validator("name", "code", mode="before")
     @classmethod

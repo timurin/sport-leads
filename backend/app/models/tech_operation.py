@@ -71,6 +71,10 @@ class TechOperation(Base):
     )
 
     production_stage = relationship("ProductionStage")
+    capacity_resources = relationship(
+        "CapacityResource", secondary="tech_operation_capacity_resources",
+        order_by="CapacityResource.resource_key",
+    )
     required_materials: Mapped[list["TechOperationRequiredMaterial"]] = relationship(
         back_populates="tech_operation",
         cascade="all, delete-orphan",

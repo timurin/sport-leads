@@ -1,13 +1,13 @@
 "use client";
 
-import { Check, FilterX, Pencil, Plus, Trash2, X } from "lucide-react";
+import { FilterX, Pencil, Plus, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 
 import {
   deleteTechOperation,
-  updateTechOperation,
 } from "@/app/(workspace)/settings/catalogs/tech-operations/tech-operation-actions";
+import { TechOperationEditModal } from "@/components/settings/tech-operation-edit-modal";
 import { TechOperationCreateDrawer } from "@/components/settings/tech-operation-create-drawer";
 import { IconButton } from "@/components/ui/button";
 import {
@@ -20,29 +20,35 @@ import {
   DataTableRow,
 } from "@/components/ui/data-table";
 import { EmptyState } from "@/components/ui/empty-state";
-import { Checkbox, Input, Select } from "@/components/ui/form-controls";
+import { Input } from "@/components/ui/form-controls";
 import { ListTotals } from "@/components/ui/list-pagination";
 import { PageToolbar } from "@/components/ui/page-header";
 import { StatusBadge } from "@/components/ui/status-badge";
 import {
-  TECH_OPERATION_VOLUME_UNIT_LABELS,
+  formatOperationCapacity,
+  type CapacityResource,
+} from "@/lib/tech-operation-capacity";
+import {
   filterTechOperations,
   formatTechOperationVolumeUnit,
   type TechOperation,
-  type TechOperationDraft,
-  type TechOperationVolumeUnit,
 } from "@/lib/tech-operations";
 import type { ProductionStage } from "@/lib/production-stages";
+import type { WorkCenter } from "@/lib/shop-routings";
 import { TechOperationMaterialsDrawer } from "@/components/settings/tech-operation-materials-drawer";
 
 /** PT-02 tech-operations catalog list (`DS-PT-02-CATALOG`, etalon sewing-operations). */
 export function TechOperationsWorkspace({
   operations,
   productionStages,
+  workCenters,
+  resources: initialResources,
   materialOptions,
 }: {
   operations: TechOperation[];
   productionStages: ProductionStage[];
+  workCenters: WorkCenter[];
+  resources: CapacityResource[];
   materialOptions: Array<{ id: number; name: string; unit: string; is_active: boolean }>;
 }) {
   const router = useRouter();
@@ -50,12 +56,17 @@ export function TechOperationsWorkspace({
   const [patched, setPatched] = useState<Record<number, TechOperation>>({});
   const [removedIds, setRemovedIds] = useState<Set<number>>(() => new Set());
   const [query, setQuery] = useState("");
-  const [editingId, setEditingId] = useState<number | null>(null);
-  const [draft, setDraft] = useState<TechOperationDraft | null>(null);
+  const [editingOperation, setEditingOperation] = useState<TechOperation | null>(null);
   const [saving, setSaving] = useState(false);
   const [rowError, setRowError] = useState<string | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
   const [materialsEditing, setMaterialsEditing] = useState<TechOperation | null>(null);
+  const [resources, setResources] = useState(initialResources);
+  const [seenResources, setSeenResources] = useState(initialResources);
+  if (seenResources !== initialResources) {
+    setSeenResources(initialResources);
+    setResources(initialResources);
+  }
 
   const rows = useMemo(() => {
     const byId = new Map<number, TechOperation>();
@@ -77,45 +88,6 @@ export function TechOperationsWorkspace({
 
   const clearFilters = () => setQuery("");
 
-  const startEdit = (row: TechOperation) => {
-    setEditingId(row.id);
-    setDraft({
-      name: row.name,
-      code: row.code,
-      volume_unit: row.volume_unit,
-      production_stage_id: row.production_stage_id,
-      is_active: row.is_active,
-      required_materials: row.required_materials,
-    });
-    setRowError(null);
-  };
-
-  const cancelEdit = () => {
-    setEditingId(null);
-    setDraft(null);
-    setRowError(null);
-  };
-
-  const saveEdit = async () => {
-    if (editingId == null || draft == null) return;
-    setSaving(true);
-    setRowError(null);
-    try {
-      const result = await updateTechOperation(editingId, draft);
-      if (!result.ok) {
-        setRowError(result.message);
-        setSaving(false);
-        return;
-      }
-      setPatched((prev) => ({ ...prev, [result.operation.id]: result.operation }));
-      cancelEdit();
-      router.refresh();
-    } catch {
-      setRowError("Не удалось сохранить изменения.");
-    }
-    setSaving(false);
-  };
-
   const onDelete = async (row: TechOperation) => {
     if (!window.confirm(`Удалить тех операцию «${row.name}»?`)) return;
     setSaving(true);
@@ -128,7 +100,6 @@ export function TechOperationsWorkspace({
         return;
       }
       setRemovedIds((prev) => new Set(prev).add(row.id));
-      if (editingId === row.id) cancelEdit();
       router.refresh();
     } catch {
       setRowError("Не удалось удалить операцию.");
@@ -151,12 +122,49 @@ export function TechOperationsWorkspace({
 
   return (
     <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+      {editingOperation ? (
+        <TechOperationEditModal
+          key={editingOperation.id}
+          operation={editingOperation}
+          productionStages={productionStages}
+          workCenters={workCenters}
+          resources={resources}
+          operations={rows}
+          materialOptions={materialOptions}
+          onClose={() => setEditingOperation(null)}
+          onSaved={(operation) => {
+            setPatched((prev) => ({ ...prev, [operation.id]: operation }));
+            setEditingOperation(null);
+            router.refresh();
+          }}
+          onResourceSaved={(resource) => {
+            setResources((current) => [
+              ...current.filter((item) => item.key !== resource.key),
+              resource,
+            ]);
+          }}
+          onOperationKeys={(operationId, keys) => {
+            const current = rows.find((row) => row.id === operationId);
+            if (!current) return;
+            setPatched((prev) => ({ ...prev, [operationId]: { ...current, capacity_resource_keys: keys } }));
+          }}
+        />
+      ) : null}
       <TechOperationCreateDrawer
         open={createOpen}
         onClose={() => setCreateOpen(false)}
         onCreated={handleCreated}
         productionStages={productionStages}
+        workCenters={workCenters}
+        resources={resources}
+        operations={rows}
         materialOptions={materialOptions}
+        onResourceSaved={(resource) => {
+          setResources((current) => [
+            ...current.filter((item) => item.key !== resource.key),
+            resource,
+          ]);
+        }}
       />
       <TechOperationMaterialsDrawer
         operation={materialsEditing}
@@ -211,7 +219,7 @@ export function TechOperationsWorkspace({
 
         <div className="hidden min-w-0 md:block">
           <DataTableFrame className="rounded-none border-x-0 border-b-0 shadow-none">
-            <DataTable minWidthClassName="min-w-[920px]">
+            <DataTable minWidthClassName="min-w-[1040px]">
               <DataTableHead>
                 <tr>
                   <DataTableHeaderCell>Наименование</DataTableHeaderCell>
@@ -221,6 +229,7 @@ export function TechOperationsWorkspace({
                   </DataTableHeaderCell>
                   <DataTableHeaderCell>Необходимые материалы</DataTableHeaderCell>
                   <DataTableHeaderCell className="w-44">Цех</DataTableHeaderCell>
+                  <DataTableHeaderCell className="w-40">Мощность</DataTableHeaderCell>
                   <DataTableHeaderCell className="w-28">Статус</DataTableHeaderCell>
                   <DataTableHeaderCell className="w-28">
                     Действия
@@ -229,71 +238,20 @@ export function TechOperationsWorkspace({
               </DataTableHead>
               <DataTableBody>
                 {filtered.map((row) => {
-                  const editing = editingId === row.id && draft != null;
                   return (
                     <DataTableRow key={row.id}>
                       <DataTableCell>
-                        {editing ? (
-                          <Input
-                            value={draft.name}
-                            onChange={(event) =>
-                              setDraft((prev) =>
-                                prev ? { ...prev, name: event.target.value } : prev,
-                              )
-                            }
-                            disabled={saving}
-                            aria-label="Наименование"
-                          />
-                        ) : (
-                          <span className="font-medium text-portal-text">
+                        <span className="font-medium text-portal-text">
                             {row.name}
                           </span>
-                        )}
                       </DataTableCell>
                       <DataTableCell>
-                        {editing ? (
-                          <Input
-                            value={draft.code}
-                            onChange={(event) =>
-                              setDraft((prev) =>
-                                prev ? { ...prev, code: event.target.value } : prev,
-                              )
-                            }
-                            disabled={saving}
-                            aria-label="Код"
-                          />
-                        ) : (
-                          <span className="font-mono text-portal-caption text-portal-muted">
+                        <span className="font-mono text-portal-caption text-portal-muted">
                             {row.code}
                           </span>
-                        )}
                       </DataTableCell>
                       <DataTableCell>
-                        {editing ? (
-                          <Select
-                            value={draft.volume_unit}
-                            onChange={(event) =>
-                              setDraft((prev) =>
-                                prev
-                                  ? {
-                                      ...prev,
-                                      volume_unit: event.target
-                                        .value as TechOperationVolumeUnit,
-                                    }
-                                  : prev,
-                              )
-                            }
-                            disabled={saving}
-                            aria-label="Единица объёма"
-                          >
-                            <option value="pieces">
-                              {TECH_OPERATION_VOLUME_UNIT_LABELS.pieces}
-                            </option>
-                            <option value="linear_meters">
-                              {TECH_OPERATION_VOLUME_UNIT_LABELS.linear_meters}
-                            </option>
-                          </Select>
-                        ) : (
+                        {(
                           formatTechOperationVolumeUnit(row.volume_unit)
                         )}
                       </DataTableCell>
@@ -312,97 +270,28 @@ export function TechOperationsWorkspace({
                         )}
                       </DataTableCell>
                       <DataTableCell>
-                        {editing ? (
-                          <Select
-                            value={
-                              draft.production_stage_id == null
-                                ? ""
-                                : String(draft.production_stage_id)
-                            }
-                            onChange={(event) =>
-                              setDraft((prev) =>
-                                prev
-                                  ? {
-                                      ...prev,
-                                      production_stage_id: event.target.value
-                                        ? Number(event.target.value)
-                                        : null,
-                                    }
-                                  : prev,
-                              )
-                            }
-                            disabled={saving}
-                            aria-label="Цех"
-                          >
-                            <option value="">Не указан</option>
-                            {productionStages
-                              .filter((stage) => stage.is_active)
-                              .sort(
-                                (a, b) =>
-                                  a.sort_order - b.sort_order ||
-                                  a.name.localeCompare(b.name, "ru"),
-                              )
-                              .map((stage) => (
-                                <option key={stage.id} value={stage.id}>
-                                  {stage.name}
-                                </option>
-                              ))}
-                          </Select>
-                        ) : (
+                        {(
                           productionStages.find(
                             (stage) => stage.id === row.production_stage_id,
                           )?.name ?? "—"
                         )}
                       </DataTableCell>
+                      <DataTableCell>{formatOperationCapacity(row.capacity_resource_keys ?? [], resources)}</DataTableCell>
                       <DataTableCell>
-                        {editing ? (
-                          <Checkbox
-                            checked={draft.is_active}
-                            onChange={(event) =>
-                              setDraft((prev) =>
-                                prev
-                                  ? { ...prev, is_active: event.target.checked }
-                                  : prev,
-                              )
-                            }
-                            disabled={saving}
-                            label="Активна"
-                          />
-                        ) : (
-                          <StatusBadge
+                        <StatusBadge
                             size="compact"
                             tone={row.is_active ? "success" : "neutral"}
                           >
                             {row.is_active ? "Активна" : "Отключена"}
                           </StatusBadge>
-                        )}
                       </DataTableCell>
                       <DataTableCell>
                         <div className="flex items-center gap-1">
-                          {editing ? (
-                            <>
-                              <IconButton
-                                label="Сохранить"
-                                variant="primary"
-                                disabled={saving}
-                                onClick={() => void saveEdit()}
-                              >
-                                <Check className="size-4" aria-hidden="true" />
-                              </IconButton>
-                              <IconButton
-                                label="Отмена"
-                                disabled={saving}
-                                onClick={cancelEdit}
-                              >
-                                <X className="size-4" aria-hidden="true" />
-                              </IconButton>
-                            </>
-                          ) : (
-                            <>
+                          <>
                               <IconButton
                                 label="Редактировать"
                                 disabled={saving}
-                                onClick={() => startEdit(row)}
+                                onClick={() => setEditingOperation(row)}
                               >
                                 <Pencil className="size-4" aria-hidden="true" />
                               </IconButton>
@@ -421,7 +310,6 @@ export function TechOperationsWorkspace({
                                 <Trash2 className="size-4" aria-hidden="true" />
                               </IconButton>
                             </>
-                          )}
                         </div>
                       </DataTableCell>
                     </DataTableRow>
@@ -434,124 +322,12 @@ export function TechOperationsWorkspace({
 
         <div className="space-y-portal-3 p-portal-4 md:hidden">
           {filtered.map((row) => {
-            const editing = editingId === row.id && draft != null;
             return (
               <article
                 key={row.id}
                 className="rounded-portal-md border border-portal-border bg-portal-surface p-portal-4"
               >
-                {editing ? (
-                  <div className="grid gap-portal-3">
-                    <Input
-                      value={draft.name}
-                      onChange={(event) =>
-                        setDraft((prev) =>
-                          prev ? { ...prev, name: event.target.value } : prev,
-                        )
-                      }
-                      disabled={saving}
-                      aria-label="Наименование"
-                    />
-                    <Input
-                      value={draft.code}
-                      onChange={(event) =>
-                        setDraft((prev) =>
-                          prev ? { ...prev, code: event.target.value } : prev,
-                        )
-                      }
-                      disabled={saving}
-                      aria-label="Код"
-                    />
-                    <Select
-                      value={draft.volume_unit}
-                      onChange={(event) =>
-                        setDraft((prev) =>
-                          prev
-                            ? {
-                                ...prev,
-                                volume_unit: event.target
-                                  .value as TechOperationVolumeUnit,
-                              }
-                            : prev,
-                        )
-                      }
-                      disabled={saving}
-                      aria-label="Единица объёма"
-                    >
-                      <option value="pieces">
-                        {TECH_OPERATION_VOLUME_UNIT_LABELS.pieces}
-                      </option>
-                      <option value="linear_meters">
-                        {TECH_OPERATION_VOLUME_UNIT_LABELS.linear_meters}
-                      </option>
-                    </Select>
-                    <Select
-                      value={
-                        draft.production_stage_id == null
-                          ? ""
-                          : String(draft.production_stage_id)
-                      }
-                      onChange={(event) =>
-                        setDraft((prev) =>
-                          prev
-                            ? {
-                                ...prev,
-                                production_stage_id: event.target.value
-                                  ? Number(event.target.value)
-                                  : null,
-                              }
-                            : prev,
-                        )
-                      }
-                      disabled={saving}
-                      aria-label="Цех"
-                    >
-                      <option value="">Не указан</option>
-                      {productionStages
-                        .filter((stage) => stage.is_active)
-                        .sort(
-                          (a, b) =>
-                            a.sort_order - b.sort_order ||
-                            a.name.localeCompare(b.name, "ru"),
-                        )
-                        .map((stage) => (
-                          <option key={stage.id} value={stage.id}>
-                            {stage.name}
-                          </option>
-                        ))}
-                    </Select>
-                    <Checkbox
-                      checked={draft.is_active}
-                      onChange={(event) =>
-                        setDraft((prev) =>
-                          prev
-                            ? { ...prev, is_active: event.target.checked }
-                            : prev,
-                        )
-                      }
-                      disabled={saving}
-                      label="Активна"
-                    />
-                    <div className="flex gap-1">
-                      <IconButton
-                        label="Сохранить"
-                        variant="primary"
-                        disabled={saving}
-                        onClick={() => void saveEdit()}
-                      >
-                        <Check className="size-4" aria-hidden="true" />
-                      </IconButton>
-                      <IconButton
-                        label="Отмена"
-                        disabled={saving}
-                        onClick={cancelEdit}
-                      >
-                        <X className="size-4" aria-hidden="true" />
-                      </IconButton>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="flex items-start justify-between gap-portal-3">
+                <div className="flex items-start justify-between gap-portal-3">
                     <div>
                       <p className="font-medium text-portal-text">{row.name}</p>
                       <p className="text-portal-caption text-portal-muted">
@@ -560,6 +336,7 @@ export function TechOperationsWorkspace({
                           (stage) => stage.id === row.production_stage_id,
                         )?.name ?? "Цех не указан"}
                       </p>
+                      <p className="mt-1 text-portal-caption text-portal-muted">{formatOperationCapacity(row.capacity_resource_keys ?? [], resources)}</p>
                       {row.required_materials.length > 0 ? (
                         <p className="mt-1 text-portal-caption text-portal-muted">
                           {row.required_materials
@@ -575,7 +352,7 @@ export function TechOperationsWorkspace({
                       <IconButton
                         label="Редактировать"
                         disabled={saving}
-                        onClick={() => startEdit(row)}
+                        onClick={() => setEditingOperation(row)}
                       >
                         <Pencil className="size-4" aria-hidden="true" />
                       </IconButton>
@@ -595,7 +372,6 @@ export function TechOperationsWorkspace({
                       </IconButton>
                     </div>
                   </div>
-                )}
               </article>
             );
           })}
@@ -608,6 +384,7 @@ export function TechOperationsWorkspace({
           />
         ) : null}
       </section>
+
 
       <ListTotals primary={`Всего: ${filtered.length} операций`} />
     </div>

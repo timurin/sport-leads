@@ -1374,6 +1374,8 @@ def _build_new_card(
 ) -> TechnicalCard:
     card_seq = _next_card_seq(db, order.id)
     settings = get_technical_card_settings(db)
+    from app.services.technical_card_planning import new_card_planning_start
+
     card = TechnicalCard(
         sales_order_id=order.id,
         sales_order_item_id=item.id,
@@ -1384,6 +1386,7 @@ def _build_new_card(
         status=TechnicalCardStatus.DRAFT,
         quantity=item.quantity,
         created_by_platform_user_id=created_by_platform_user_id,
+        planning_start_date=new_card_planning_start(db),
         unit_lines=[],
         composition_lines=[],
         operation_lines=[],
@@ -1878,8 +1881,10 @@ def refresh_model_and_pattern_composition(db: Session, card_id: int) -> Technica
             )
         )
 
-    _sync_materials_to_composition(db, card, model_changed=True)
-    _apply_planned_qty_hints_to_composition(db, card)
+    # Refresh is not a composition replacement. Material rows are editable
+    # snapshots (including shop fact), with no stored BOM/route ownership.
+    # Re-prefilling here would overwrite valid manual/specification data.
+    # Creation/revival prefill and explicit composition edits remain separate.
     db.commit()
     return get_technical_card(db, card_id)
 
@@ -2402,12 +2407,32 @@ def _load_tech_operation_row(db: Session, tech_operation_id: int) -> dict | None
 
     result = db.execute(
         text(
-            "SELECT id, name, volume_unit FROM tech_operations "
+            "SELECT id, name, code, volume_unit FROM tech_operations "
             "WHERE id = :id AND is_active = true"
         ),
         {"id": tech_operation_id},
     ).mappings().first()
     return dict(result) if result is not None else None
+
+
+def _tech_operation_code(db: Session, tech_operation_id: int | None) -> str | None:
+    if tech_operation_id is None or not _tech_operations_table_available(db):
+        return None
+    from sqlalchemy import text
+
+    return db.execute(
+        text("SELECT code FROM tech_operations WHERE id = :id"),
+        {"id": tech_operation_id},
+    ).scalar()
+
+
+def _assert_cutting_method(cutting_method: str | None, operation_code: str | None) -> None:
+    if cutting_method is None:
+        return
+    if operation_code != "manual-cut":
+        raise TechnicalCardValidationError(
+            "cutting_method is only valid for the manual-cut operation"
+        )
 
 
 def _validate_operation_lines_payload(
@@ -2432,6 +2457,12 @@ def _validate_operation_lines_payload(
             raise TechnicalCardValidationError(
                 f"Unsupported volume_unit: {line.volume_unit}"
             )
+        if line.cutting_method is not None and (
+            line.tech_operation_id is None or not catalog_available
+        ):
+            raise TechnicalCardValidationError(
+                "cutting_method is only valid for the manual-cut operation"
+            )
         if line.tech_operation_id is None:
             continue
         if not catalog_available:
@@ -2452,6 +2483,7 @@ def _validate_operation_lines_payload(
             raise TechnicalCardValidationError(
                 "volume_unit must match TechOperation catalog snapshot"
             )
+        _assert_cutting_method(line.cutting_method, catalog["code"])
 
 
 def list_operation_lines(db: Session, card_id: int) -> list[TechnicalCardOperationLine]:
@@ -2483,6 +2515,7 @@ def _append_operation_lines(
                 stage_order=line.stage_order,
                 production_stage_id=line.production_stage_id,
                 stage_label=line.stage_label,
+                cutting_method=line.cutting_method,
             )
         )
 
@@ -2514,6 +2547,8 @@ def update_operation_line_volume(
     volume: Decimal,
     operation_name: str | None = None,
     shop_stage_code: str | None = None,
+    cutting_method: str | None = None,
+    update_cutting_method: bool = False,
 ) -> TechnicalCard:
     card = get_technical_card(db, card_id)
     _assert_operation_lines_editable(card)
@@ -2550,6 +2585,12 @@ def update_operation_line_volume(
             )
 
     line.volume = volume
+    if update_cutting_method:
+        _assert_cutting_method(
+            cutting_method,
+            _tech_operation_code(db, line.tech_operation_id),
+        )
+        line.cutting_method = cutting_method
     if operation_name is not None:
         if card.status != TechnicalCardStatus.DRAFT:
             raise TechnicalCardValidationError(

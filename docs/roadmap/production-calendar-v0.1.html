@@ -1,0 +1,300 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="color-scheme" content="light"><title>Production Calendar v0.1 — roadmap</title>
+<style>
+:root{--page:#f6f8fc;--surface:#fff;--soft:#f8fafc;--text:#101828;--muted:#667085;--border:#dfe5ef;--blue:#1f5eff;--green:#059669;--amber:#b54708;--red:#d92d20;--radius:12px}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--page);color:var(--text);font:14px/1.5 Inter,"Segoe UI",Arial,sans-serif}button{font:inherit}a{color:var(--blue);text-decoration:none}a:hover{text-decoration:underline}a:focus-visible,button:focus-visible,summary:focus-visible{outline:3px solid #9ab6ff;outline-offset:2px}.wrap{max-width:1240px;margin:auto;padding:28px 32px 64px}.top{display:flex;justify-content:space-between;gap:20px;align-items:center}.brand{font-weight:800;letter-spacing:.12em;color:var(--blue);font-size:12px}.topnav{display:flex;gap:16px;flex-wrap:wrap}h1{font-size:clamp(27px,3vw,40px);line-height:1.15;letter-spacing:-.03em;margin:24px 0 8px}h2{font-size:20px;letter-spacing:-.02em;margin:0 0 6px}h3{font-size:15px;margin:0 0 8px}p{margin:0}.intro{max-width:820px;color:var(--muted);font-size:15px}.hero{display:grid;grid-template-columns:1fr 270px;gap:24px;align-items:end;padding:24px 0 28px}.progressbox,.panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius)}.progressbox{padding:18px}.progressrow{display:flex;justify-content:space-between;align-items:baseline}.progressrow strong{font-size:27px;line-height:1}.progressrow span{color:var(--muted)}progress{width:100%;height:8px;margin:14px 0 2px;accent-color:var(--blue)}.progressbox small{color:var(--muted)}.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:24px}.metric{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:13px 15px}.metric strong{display:block;font-size:22px}.metric span{color:var(--muted);font-size:12px}.toolbar{display:flex;align-items:center;justify-content:space-between;gap:16px;margin:0 0 22px}.filters{display:flex;gap:7px;flex-wrap:wrap}.filter{padding:7px 12px;border:1px solid var(--border);background:var(--surface);color:var(--muted);border-radius:8px;cursor:pointer}.filter[aria-pressed="true"]{background:#eaf0ff;border-color:#aabfff;color:#1849a9;font-weight:700}.count{color:var(--muted)}.section{margin:28px 0}.section-head{margin-bottom:14px}.section-head p{color:var(--muted)}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.card{min-width:0;background:var(--surface);border:1px solid var(--border);border-radius:10px;align-self:start}.card[hidden]{display:none}.card summary{list-style:none;display:flex;align-items:center;gap:10px;cursor:pointer;padding:14px 15px;min-height:60px}.card summary::-webkit-details-marker{display:none}.code{font-size:12px;color:var(--blue);font-weight:800;white-space:nowrap}.card-title{font-weight:650;flex:1;min-width:0}.badge{font-size:11px;font-weight:700;border-radius:6px;padding:3px 7px;white-space:nowrap}.badge.done{color:#027a48;background:#ecfdf3}.badge.work{color:#1849a9;background:#eff4ff}.badge.planned{color:#475467;background:#f2f4f7}.badge.blocked{color:#b42318;background:#fef3f2}.chevron{color:var(--muted);font-size:20px;line-height:1;transition:transform .15s}details[open] .chevron{transform:rotate(180deg)}.card-body{border-top:1px solid var(--border);padding:14px 16px 17px;display:grid;gap:11px}.fact>span{display:block;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px}.fact p{overflow-wrap:anywhere}.check{display:flex;gap:8px;color:var(--muted);font-size:12px}.check>span:first-child{font-size:17px;color:var(--blue);line-height:1}.panel{padding:20px;margin-top:16px}.panel p,.panel li{color:#475467}.panel ul{margin:8px 0 0;padding-left:20px}.panel li+li{margin-top:6px}.gate{display:grid;grid-template-columns:1fr 1fr;gap:12px}.gate>div{background:var(--soft);border:1px solid var(--border);border-radius:9px;padding:14px}.gate span{display:block;color:var(--muted);font-size:12px}.gate strong{display:block;margin:4px 0}.sources{display:flex;gap:10px 18px;flex-wrap:wrap;margin-top:12px}.sources a{white-space:nowrap}.foot{color:var(--muted);font-size:12px;margin-top:28px;border-top:1px solid var(--border);padding-top:16px}.empty{color:var(--muted);padding:12px 0}
+@media(max-width:1023px){.wrap{padding:22px 24px 48px}.hero{grid-template-columns:1fr 240px}}@media(max-width:767px){.wrap{padding:18px 16px 40px}.top,.toolbar{align-items:flex-start;flex-direction:column}.hero{grid-template-columns:1fr;gap:18px}.metrics{grid-template-columns:repeat(2,1fr)}.grid,.gate{grid-template-columns:1fr}.card summary{min-height:56px}.topnav{gap:8px 14px}}@media(max-width:380px){.card summary{flex-wrap:wrap}.card-title{flex-basis:calc(100% - 75px)}.badge{margin-left:auto}}
+</style></head><body><main class="wrap">
+<header class="top"><div class="brand">SPORT UNIFORM / SL-UI-BASE-v1</div><nav class="topnav" aria-label="Разделы"><a href="#stages">Этапы</a><a href="#ui">PC-UI</a><a href="#questions">Вопросы и риски</a></nav></header>
+<div class="hero"><div><h1>Production Calendar <span style="color:var(--blue)">v0.1</span></h1><p class="intro">Автономный производственный календарь · ручное планирование. Статусы этапов и дизайна ниже синхронизированы с Markdown; PC-03.1 — рабочая очередь; PC-03.2 — навигация; PC-03.3 — ручное планирование; PC-03.4A — backend мощностей; PC-03.4D — индикация очереди; PC-03.5A — автоматический вход; остальные этапы открыты.</p></div><div class="progressbox" aria-label="Общий прогресс"><div class="progressrow"><strong>26/35</strong><span>выполнено</span></div><progress value="26" max="35"></progress><small>74% микротасков · данные из roadmap-v1.1.md</small></div></div>
+<div class="metrics"><div class="metric"><strong>10</strong><span>этапов PC-01–PC-10</span></div><div class="metric"><strong>12</strong><span>микротасков PC-UI</span></div><div class="metric"><strong>12</strong><span>PC-02.1, P1 B1, PC-03.1…3, PC-03.4A/D, PC-03.5A/6A/7A, PC-03.7B-B1, PC-04.2 spec</span></div><div class="metric"><strong>0</strong><span>заблокировано</span></div></div>
+<div class="toolbar"><div class="filters" role="group" aria-label="Фильтр по статусу"><button class="filter" data-filter="all" aria-pressed="true">Все</button><button class="filter" data-filter="done" aria-pressed="false">Завершено</button><button class="filter" data-filter="work" aria-pressed="false">В работе</button><button class="filter" data-filter="planned" aria-pressed="false">Запланировано</button><button class="filter" data-filter="blocked" aria-pressed="false">Заблокировано</button></div><span class="count" id="visible-count" aria-live="polite">Показано 35 из 35</span></div>
+<section class="section" id="stages"><div class="section-head"><h2>Этапы продукта</h2><p>Разверните карточку, чтобы увидеть задачу, зависимость и критерий готовности.</p></div><div class="grid"><details class="card" data-status="done" id="PC-01">
+      <summary><span class="code">PC-01</span><span class="card-title">Read-only аудит (BLOCKER)</span><span class="badge done">Завершено</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+      <div class="card-body"><div class="fact"><span>Задача</span><p>Проверить AGENTS.md, project-structure.md, erp-check.md, корневой roadmap.md; найти реальные модели/маршруты/техкарты, поля «количество/время» и единицы, доступные API, справочник участков, календарь, права и компоненты UI. Артефакт: матрица переиспользования + риски + список вопросов без догадок.</p></div>
+      <div class="fact"><span>Зависимость</span><p>Старт</p></div>
+      <div class="fact"><span>Критерий готовности</span><p>ни один продуктивный файл/миграция не изменены.</p></div>
+      <div class="check"><span aria-hidden="true">☑</span><span>Статус из Markdown: завершено</span></div>
+      <a href="../tasks/production-calendar-pc-01-audit.md">Исходный документ ↗</a></div>
+    </details>
+<details class="card" data-status="done" id="PC-02">
+      <summary><span class="code">PC-02</span><span class="card-title">Контракт и схема данных</span><span class="badge done">Завершено</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+      <div class="card-body"><div class="fact"><span>Задача</span><p>Определить границы новых сущностей, ссылки на уже реализованные модели/техкарты/маршруты, правила историчности нормативов, статусы и зависимости, решение при отсутствии норм.</p></div>
+      <div class="fact"><span>Зависимость</span><p>PC-01</p></div>
+      <div class="fact"><span>Критерий готовности</span><p>нет обязательной связи с SalesOrder, нет дубликатов существующих справочников, миграции только добавляющие. Архитектурный результат 2026-10-03: docs/architecture/production-calendar-pc-02.md; нерешённые бизнес-вопросы перечислены там и остаются gate до реализации.</p></div>
+      <div class="check"><span aria-hidden="true">☑</span><span>Статус из Markdown: завершено</span></div>
+      <a href="../architecture/production-calendar-pc-02.md">Исходный документ ↗</a></div>
+    </details>
+<details class="card" data-status="done" id="PC-02.1">
+      <summary><span class="code">PC-02.1</span><span class="card-title">Lightweight design freeze и минимальный implementation contract (CLOSED 2026-10-05)</span><span class="badge done">Завершено</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+      <div class="card-body"><div class="fact"><span>Задача</span><p>Семантика норм исследована, UI-A–UI-H OWNER-APPROVED, DESIGN-APPROVED = true по docs/tasks/pc-02-1-lightweight-design-freeze-implementation-contract.md.</p></div>
+      <div class="fact"><span>Зависимость</span><p>PC-02</p></div>
+      <div class="fact"><span>Критерий готовности</span><p>минимальные новые записи/API/переиспользование и короткий план PC-03 документированы, MD/HTML синхронизированы. P1 B1 закрыт 2026-10-05 (13 регрессионных тестов); прежние сбои проверок сохраняются как отдельные ограничения реализации; закрытие не исправляет их и не начинает PC-03.</p></div>
+      <div class="check"><span aria-hidden="true">☑</span><span>Статус из Markdown: завершено</span></div>
+      <a href="../tasks/production-calendar-pc-02-1-validation.md">Исходный документ ↗</a></div>
+    </details>
+<details class="card" data-status="done" id="PC-02.1-B1">
+      <summary><span class="code">PC-02.1-B1</span><span class="card-title">P1: потеря материала ТК после refresh-model (CLOSED 2026-10-05)</span><span class="badge done">Завершено</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+      <div class="card-body"><div class="fact"><span>Задача</span><p>Исправление: docs/tasks/pc-02-1-b1-fix-refresh-model-material-loss.md; refresh обновляет только заголовок/лекала, не префиллит материал повторно.</p></div>
+      <div class="fact"><span>Зависимость</span><p>Обнаружен в PC-02.1; отдельное исправление</p></div>
+      <div class="fact"><span>Критерий готовности</span><p>13 targeted regression tests passed: ручные/Spec/route материалы сохраняют id, количество, факт и привязки после повторных refresh; пустой/частичный BOM не заменяет состав; явные edits/delete и initial BOM prefill работают. API/БД/миграции без изменений; baseline DB/lint проверки открыты, PC-03 не начат.</p></div>
+      <div class="check"><span aria-hidden="true">☑</span><span>Статус из Markdown: завершено</span></div>
+      <a href="../tasks/production-calendar-pc-02-1-b1-refresh-model-material-loss.md">Исходный документ ↗</a></div>
+    </details>
+<details class="card" data-status="work" id="PC-03">
+      <summary><span class="code">PC-03</span><span class="card-title">Минимальная реализация лёгкого календаря (в работе)</span><span class="badge work">В работе</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+      <div class="card-body"><div class="fact"><span>Задача</span><p>In progress: PC-03.1 lightweight queue MVP complete per docs/tasks/pc-03-1-lightweight-production-queue-mvp.md; remaining implementation checkpoints open. Capacity, dependency engine, execution, dashboard/deviations excluded from this slice.</p></div>
+      <div class="fact"><span>Зависимость</span><p>PC-02.1 · DESIGN-APPROVED · устранение P1 B1 и обязательные проверки</p></div>
+      <div class="fact"><span>Критерий готовности</span><p>оставшиеся checkpoint-ы требуют отдельных задач; PC-04…PC-10 не закрыты.</p></div>
+      <div class="check"><span aria-hidden="true">☐</span><span>Статус из Markdown: в работе</span></div>
+      <a href="production-calendar-v0.1.md">Исходный документ ↗</a></div>
+    </details>
+<details class="card" data-status="done" id="PC-03.1">
+      <summary><span class="code">PC-03.1</span><span class="card-title">Lightweight Production Queue MVP (CLOSED 2026-10-05)</span><span class="badge done">Завершено</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+      <div class="card-body"><div class="fact"><span>Задача</span><p>PC-03.1 lightweight queue MVP CLOSED 2026-10-05; CalendarAssignment only, migration u0v1w2x3y456; authenticated batch API and /production/calendar UI-A; 479 backend / 299 frontend tests, project check 10/10, live CRUD/reload/filter and 1440/1024/768/390/320 px. Evidence: docs/tasks/pc-03-1-lightweight-production-queue-mvp.md. PC-03 remains open; capacity/workflow/UI-G/H deferred.</p></div>
+      <div class="fact"><span>Зависимость</span><p>PC-03 · owner-selected lightweight queue slice</p></div>
+      <div class="fact"><span>Критерий готовности</span><p>существующая standalone ТК назначается на участок/дату; перенос/удаление/фильтр/ссылка/перезагрузка сохраняют данные; один reversible additive migration, без изменения ERP факта.</p></div>
+      <div class="check"><span aria-hidden="true">☑</span><span>Статус из Markdown: завершено</span></div>
+      <a href="../tasks/pc-03-1-lightweight-production-queue-mvp.md">Исходный документ ↗</a></div>
+    </details>
+<details class="card" data-status="done" id="PC-03.2">
+      <summary><span class="code">PC-03.2</span><span class="card-title">Production Queue Navigation Integration (CLOSED 2026-10-05)</span><span class="badge done">Завершено</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+      <div class="card-body"><div class="fact"><span>Задача</span><p>PC-03.2 navigation integration CLOSED 2026-10-05; Production → Очередь производства, five primary links, parent opens /production/calendar; UI-E/F/G/H entry pages explicitly not implemented. 15 navigation / 300 frontend / 479 backend tests; project check 10/10; isolated shell browser QA 1440/1024/768/390/320 px; authenticated route QA limited by bootstrap 401. Evidence: docs/tasks/pc-03-2-production-queue-navigation.md. Backend/DB/business logic unchanged; PC-03 open.</p></div>
+      <div class="fact"><span>Зависимость</span><p>PC-03.1 · owner-selected navigation integration</p></div>
+      <div class="fact"><span>Критерий готовности</span><p>один родитель, пять маршрутов, раскрытие и активный подпункт; будущие экраны явно обозначены, persistent readiness не закрыта.</p></div>
+      <div class="check"><span aria-hidden="true">☑</span><span>Статус из Markdown: завершено</span></div>
+      <a href="../tasks/pc-03-2-production-queue-navigation.md">Исходный документ ↗</a></div>
+    </details>
+<details class="card" data-status="done" id="PC-03.3">
+      <summary><span class="code">PC-03.3</span><span class="card-title">Manual Scheduling on CalendarAssignment (CLOSED 2026-10-05)</span><span class="badge done">Завершено</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+      <div class="card-body"><div class="fact"><span>Задача</span><p>PC-03.3 manual scheduling on CalendarAssignment CLOSED 2026-10-05; /production/calendar/planning, UI-A assignment deep link, date/stage/position/note prefill, before/after preview, existing PUT and return to destination week; quantity read-only from TC. Backend/API/DB/migrations unchanged. 23 targeted frontend / 11 existing calendar backend / 305 full frontend / 479 full backend tests; project check 10/10; live Chromium 1440/1366/1280/1024/768/390/320 px, real 409 and reload persistence. Evidence: docs/tasks/pc-03-3-manual-scheduling-calendar-assignment.md; PC-03 open, UI-F/G/H deferred.</p></div>
+      <div class="fact"><span>Зависимость</span><p>PC-03.2 · owner-selected CalendarAssignment manual scheduling</p></div>
+      <div class="fact"><span>Критерий готовности</span><p>UI-A → UI-E → дата/участок → сохранение → целевая неделя → reload; quantity не редактируется.</p></div>
+      <div class="check"><span aria-hidden="true">☑</span><span>Статус из Markdown: завершено</span></div>
+      <a href="../tasks/pc-03-3-manual-scheduling-calendar-assignment.md">Исходный документ ↗</a></div>
+    </details>
+<details class="card" data-status="done" id="PC-03.4A">
+      <summary><span class="code">PC-03.4A</span><span class="card-title">Capacity Backend Contract (CLOSED 2026-10-05)</span><span class="badge done">Завершено</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+      <div class="card-body"><div class="fact"><span>Задача</span><p>PC-03.4A Capacity backend contract CLOSED 2026-10-05; 14 logical resource keys reusing ProductionStage/WorkCenter; two settings/exception tables, migration v1w2x3y4z567; GET/PUT capacity/settings, PUT/DELETE dated exceptions, read-only POST capacity/load-state with separate units and unknown norms. 45 targeted / 513 full backend tests; project check 10/10; local PostgreSQL upgrade/check/downgrade/upgrade/check and live persistence passed. Contract: docs/architecture/production-calendar-capacity-pc-03-4a.md. Frontend/UI-A unchanged by Codex; PC-03.4B temporary adapter still requires contract alignment; UI-F integration not claimed. PC-03 open.</p></div>
+      <div class="fact"><span>Зависимость</span><p>PC-03.3 · backend-only capacity contract; frontend PC-03.4B separate</p></div>
+      <div class="fact"><span>Критерий готовности</span><p>stable native API, durable settings/exceptions, warning-only load, no catalogs/shift engine; frontend adapter alignment belongs to PC-03.4B.</p></div>
+      <div class="check"><span aria-hidden="true">☑</span><span>Статус из Markdown: завершено</span></div>
+      <a href="../tasks/pc-03-4a-capacity-backend-contract-codex.md">Исходный документ ↗</a></div>
+    </details>
+<details class="card" data-status="done" id="PC-03.4D">
+      <summary><span class="code">PC-03.4D</span><span class="card-title">Queue Load Indicators (CLOSED 2026-10-05)</span><span class="badge done">Завершено</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+      <div class="card-body"><div class="fact"><span>Задача</span><p>PC-03.4D Queue Load Indicators CLOSED 2026-10-05; UI-A stage/date badges from existing POST capacity/load-state, one settings read + bounded resource/date requests (six in flight), no frontend formulas or mixed-unit section percentage; unknown stays explicit, reserve/near/over never gate assignment creation/move. 17 targeted / 323 frontend / 513 backend tests; project check 10/10; real API Chromium seven widths, four states, empty days, create/move while over, 503/retry. Evidence: docs/tasks/pc-03-4d-queue-load-indicators-cursor.md. Backend/DB/UI-F/navigation unchanged; PC-03 open.</p></div>
+      <div class="fact"><span>Зависимость</span><p>PC-03.4A · PC-03.4C live adapter per owner task context</p></div>
+      <div class="fact"><span>Критерий готовности</span><p>backend-only calculation, four states/unknown≠0, compact per-cell details, manual create/move not blocked; missing meters/method/manual hours remain unknown.</p></div>
+      <div class="check"><span aria-hidden="true">☑</span><span>Статус из Markdown: завершено</span></div>
+      <a href="../tasks/pc-03-4d-queue-load-indicators-cursor.md">Исходный документ ↗</a></div>
+    </details>
+<details class="card" data-status="done" id="PC-03.5A">
+      <summary><span class="code">PC-03.5A</span><span class="card-title">Automatic Entry Stage (CLOSED 2026-10-05)</span><span class="badge done">Завершено</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+      <div class="card-body"><div class="fact"><span>Задача</span><p>PC-03.5A Automatic Entry Stage CLOSED 2026-10-05; minimal POST assignments accepts technical_card_id/planned_date/optional note, server chooses launch_preparation (Подготовка к запуску) and stable date/stage tail position; legacy create stage/position rejected422. Existing dispatcher PUT/read/reference quantity preserved. Data-only migration w2x3y4z5a678; procurement remains milestone on entry stage. 61 targeted / 529 backend tests; project check10/10; local migration cycle, eight concurrent creates and durable move verified. Contract docs/architecture/production-calendar-entry-pc-03-5a.md. Frontend PC-03.5B separate; PC-03 open.</p></div>
+      <div class="fact"><span>Зависимость</span><p>PC-03.4D · owner-selected automatic queue entry; PC-03.5B frontend separate</p></div>
+      <div class="fact"><span>Критерий готовности</span><p>safe preparation entry/no manager stage or position, stable tail, persistence, preserved dispatcher PUT; no full dependency/workflow engine.</p></div>
+      <div class="check"><span aria-hidden="true">☑</span><span>Статус из Markdown: завершено</span></div>
+      <a href="../tasks/pc-03-5a-auto-entry-stage-codex.md">Исходный документ ↗</a></div>
+    </details>
+<details class="card" data-status="done" id="PC-03.6A">
+      <summary><span class="code">PC-03.6A</span><span class="card-title">Operation Date Range (CLOSED 2026-10-06)</span><span class="badge done">Завершено</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+      <div class="card-body"><div class="fact"><span>Задача</span><p>PC-03.6A Operation Date Range implemented 2026-10-06: planned_start_date aliases legacy planned_date; persisted planned_end_date with inclusive range CHECK/backfill; PUT accepts start/end, GET board uses overlap, minimal POST remains single-day. Migration x3y4z5a6b789; 71 targeted / 539 backend tests passed; PostgreSQL migration cycle/backfill verified. Contract docs/architecture/production-calendar-date-range-pc-03-6a.md. Frontend PC-03.6B separate; PC-03 remains open.</p></div>
+      <div class="fact"><span>Зависимость</span><p>PC-03.5A - backend range contract; frontend PC-03.6B separate</p></div>
+      <div class="fact"><span>Критерий готовности</span><p>old single-day compatibility, multi-day edit/reload, invalid ranges rejected, inclusive overlap across week boundaries; no auto-scheduling or frontend changes.</p></div>
+      <div class="check"><span aria-hidden="true">☑</span><span>Статус из Markdown: завершено</span></div>
+      <a href="../tasks/pc-03-6a-operation-date-range-codex.md">Исходный документ ↗</a></div>
+    </details>
+<details class="card" data-status="done" id="PC-03.7A">
+      <summary><span class="code">PC-03.7A</span><span class="card-title">Shared Capacity Resources (CLOSED 2026-10-06)</span><span class="badge done">Завершено</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+      <div class="card-body"><div class="fact"><span>Задача</span><p>PC-03.7A Shared CapacityResource CLOSED 2026-10-06 per owner M:N decision: TechOperation owns technology, CapacityResource owns capacity; existing settings renamed in place, dated exceptions preserved, print_operator shared by sublimation and heat_transfer without resource copies. Migration y4z5a6b7c890; canonical resource CRUD and operation links, legacy capacity/load-state compatible. 53 targeted / 555 backend / 331 frontend tests; project check 10/10; isolated PostgreSQL migration cycle and exact data preservation verified. Contract docs/architecture/production-calendar-shared-capacity-pc-03-7a.md. Other resources remain unlinked until explicitly selected; frontend PC-03.7B separate; PC-03 open.</p></div>
+      <div class="fact"><span>Зависимость</span><p>PC-03.6A - owner-approved shared resources; frontend PC-03.7B separate</p></div>
+      <div class="fact"><span>Критерий готовности</span><p>one shared resource across operations, preserved data and exceptions, legacy load compatibility, no route/TC semantics change or frontend edits.</p></div>
+      <div class="check"><span aria-hidden="true">☑</span><span>Статус из Markdown: завершено</span></div>
+      <a href="../tasks/pc-03-7a-tech-operations-capacity-source-codex.md">Исходный документ ↗</a></div>
+    </details>
+<details class="card" data-status="work" id="PC-03.7B">
+      <summary><span class="code">PC-03.7B</span><span class="card-title">Unified Tech Operation Capacity UI (IN PROGRESS)</span><span class="badge work">В работе</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+      <div class="card-body"><div class="fact"><span>Задача</span><p>In progress: Unified Tech Operation Capacity UI; follows owner M:N decision in production-calendar-shared-capacity-pc-03-7a.md. Owner-selected guarded edit modal PC-03.7B-B1 complete; shared CapacityResource/link adapter integration and authenticated runtime acceptance remain open. docs/tasks/pc-03-7b-unified-tech-operation-capacity-ui-cursor.md; no scheduler.</p></div>
+      <div class="fact"><span>Зависимость</span><p>PC-03.7A - M:N resource contract; integration remains open</p></div>
+      <div class="fact"><span>Критерий готовности</span><p>both editors consume shared resource data and M:N keys without independent capacity copies; overall task remains open.</p></div>
+      <div class="check"><span aria-hidden="true">☐</span><span>Статус из Markdown: в работе</span></div>
+      <a href="../tasks/pc-03-7b-unified-tech-operation-capacity-ui-cursor.md">Исходный документ ↗</a></div>
+    </details>
+<details class="card" data-status="done" id="PC-03.7B-B1">
+      <summary><span class="code">PC-03.7B-B1</span><span class="card-title">Guarded TechOperation Edit Modal (CLOSED 2026-10-06)</span><span class="badge done">Завершено</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+      <div class="card-body"><div class="fact"><span>Задача</span><p>PC-03.7B-B1 Guarded TechOperation edit modal CLOSED 2026-10-06 per owner visual request: desktop/mobile Edit opens populated dialog, header Save/Cancel/X, dirty discard confirmation for Cancel/X/Escape/backdrop, beforeunload and pending-save protection; pending date exception and failed save preserve inputs. DS-PT-02-CATALOG; 17 Chromium checks at 1440/1366/1280/1024/768/390/320 px; 7 targeted / 331 frontend / 555 backend tests, project check 10/10. Evidence docs/tasks/pc-03-7b-b1-tech-operation-edit-modal.md. Backend/contracts/migrations unchanged; complete shared-resource frontend integration PC-03.7B remains open.</p></div>
+      <div class="fact"><span>Зависимость</span><p>PC-03.7A - explicit owner modal task within PC-03.7B</p></div>
+      <div class="fact"><span>Критерий готовности</span><p>populated modal, header actions, close/dirty/pending-save guards, errors keep draft, seven responsive widths; no complete capacity integration claim.</p></div>
+      <div class="check"><span aria-hidden="true">☑</span><span>Статус из Markdown: завершено</span></div>
+      <a href="../tasks/pc-03-7b-b1-tech-operation-edit-modal.md">Исходный документ ↗</a></div>
+    </details>
+<details class="card" data-status="planned" id="PC-04">
+      <summary><span class="code">PC-04</span><span class="card-title">Добавление существующей ТК в календарную очередь</span><span class="badge planned">Запланировано</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+      <div class="card-body"><div class="fact"><span>Задача</span><p>UI-B подставляет номер группы, изделие/модель/вариант/количество/маршрут; создаётся CalendarPlan, а не второй заказ.</p></div>
+      <div class="fact"><span>Зависимость</span><p>PC-02.1 · DESIGN-APPROVED</p></div>
+      <div class="fact"><span>Критерий готовности</span><p>данные источника read-only, нет обязательного SalesOrder/ProductionOrder, повторное добавление ТК идемпотентно.</p></div>
+      <div class="check"><span aria-hidden="true">☐</span><span>Статус из Markdown: запланировано</span></div>
+      <a href="production-calendar-v0.1.md">Исходный документ ↗</a></div>
+    </details>
+<details class="card" data-status="done" id="PC-04.2">
+      <summary><span class="code">PC-04.2</span><span class="card-title">Demand Calculation Contract (ARCHITECTURE SPECIFICATION CLOSED 2026-10-07)</span><span class="badge done">Завершено</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+      <div class="card-body"><div class="fact"><span>Задача</span><p>PC-04.2 Demand Calculation Contract CLOSED as architecture specification 2026-10-07 per owner task after stated PC-04.1 prerequisites. Canonical production-demand-pc-04-2.md defines step-scoped ResourceDemand DTO/status/provenance, adapter registry, verified TC/assembly inputs, exact unit equality, shared resources, missing/manual policy and future tests. No executable Demand/API/DB/frontend/Scheduler changes; hourly-throughput mismatches and absent fixed/operator/design/split inputs remain explicit implementation limits. Project check10/10; 565 backend tests. docs/tasks/pc-04-2-demand-calculation-contract.md. Historical PC-04 queue checkpoint and Scheduler implementation remain open.</p></div>
+      <div class="fact"><span>Зависимость</span><p>PC-04.1 stated complete in owner task; specification only, no stage transition</p></div>
+      <div class="fact"><span>Критерий готовности</span><p>verified-source contract covers every step with ready/manual/missing/not_applicable outcomes, no calendar dependence or implicit conversions. Documentation completion only; executable service remains future work.</p></div>
+      <div class="check"><span aria-hidden="true">☑</span><span>Статус из Markdown: завершено</span></div>
+      <a href="../tasks/pc-04-2-demand-calculation-contract.md">Исходный документ ↗</a></div>
+    </details>
+<details class="card" data-status="planned" id="PC-05">
+      <summary><span class="code">PC-05</span><span class="card-title">Формирование маршрута</span><span class="badge planned">Запланировано</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+      <div class="card-body"><div class="fact"><span>Задача</span><p>Создать независимые календарные операции по выбранному маршруту с параллельными «Закупка» и «Дизайн» и последовательными последующими.</p></div>
+      <div class="fact"><span>Зависимость</span><p>PC-03 · PC-04</p></div>
+      <div class="fact"><span>Критерий готовности</span><p>печать ждёт двух предшественников; операции можно планировать до завершения предыдущих.</p></div>
+      <div class="check"><span aria-hidden="true">☐</span><span>Статус из Markdown: запланировано</span></div>
+      <a href="production-calendar-v0.1.md">Исходный документ ↗</a></div>
+    </details>
+<details class="card" data-status="planned" id="PC-06">
+      <summary><span class="code">PC-06</span><span class="card-title">Ручное размещение по датам</span><span class="badge planned">Запланировано</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+      <div class="card-body"><div class="fact"><span>Задача</span><p>Добавить задания на один/несколько дней, редактирование и удаление распределений, предупреждение о конфликтах.</p></div>
+      <div class="fact"><span>Зависимость</span><p>PC-05</p></div>
+      <div class="fact"><span>Критерий готовности</span><p>одно задание 14 ч может иметь 8 ч в первый и 6 ч во второй день; пересчёт корректен.</p></div>
+      <div class="check"><span aria-hidden="true">☐</span><span>Статус из Markdown: запланировано</span></div>
+      <a href="production-calendar-v0.1.md">Исходный документ ↗</a></div>
+    </details>
+<details class="card" data-status="planned" id="PC-07">
+      <summary><span class="code">PC-07</span><span class="card-title">Расчёт загрузки</span><span class="badge planned">Запланировано</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+      <div class="card-body"><div class="fact"><span>Задача</span><p>Подтверждённые снимки норм и мощность одного ресурса в одной единице; ручная оценка дизайна/недостающего метража явно маркируется, пустая норма пошива остаётся unknown.</p></div>
+      <div class="fact"><span>Зависимость</span><p>PC-06</p></div>
+      <div class="fact"><span>Критерий готовности</span><p>нет 0% при отсутствующей норме, нет деления на ноль, перегрузка &gt;100%, операторы/машины/общий пул и бригада разделены.</p></div>
+      <div class="check"><span aria-hidden="true">☐</span><span>Статус из Markdown: запланировано</span></div>
+      <a href="production-calendar-v0.1.md">Исходный документ ↗</a></div>
+    </details>
+<details class="card" data-status="planned" id="PC-08">
+      <summary><span class="code">PC-08</span><span class="card-title">Недельное табло</span><span class="badge planned">Запланировано</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+      <div class="card-body"><div class="fact"><span>Задача</span><p>Матрица по участкам/датам, карточка дня, план/факт, перегрузка, адаптивность.</p></div>
+      <div class="fact"><span>Зависимость</span><p>PC-06 · PC-07</p></div>
+      <div class="fact"><span>Критерий готовности</span><p>неделя с датами, предыдущая/следующая, задания по клику, корректная мобильная прокрутка.</p></div>
+      <div class="check"><span aria-hidden="true">☐</span><span>Статус из Markdown: запланировано</span></div>
+      <a href="production-calendar-v0.1.md">Исходный документ ↗</a></div>
+    </details>
+<details class="card" data-status="planned" id="PC-09">
+      <summary><span class="code">PC-09</span><span class="card-title">Read-only факт и допуск запуска</span><span class="badge planned">Запланировано</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+      <div class="card-body"><div class="fact"><span>Задача</span><p>Чтение ТК/этапов, calendar DAG snapshot, launchEligibility и аудит календарных правок.</p></div>
+      <div class="fact"><span>Зависимость</span><p>PC-06 · PC-07</p></div>
+      <div class="fact"><span>Критерий готовности</span><p>план до готовности допустим; неизвестная обязательная норма/готовность или предшественник блокируют предлагаемый запуск. Существующие start/complete API сохраняются, глобальная интеграция calendar gates и второй производственный факт не реализуются в v0.1.</p></div>
+      <div class="check"><span aria-hidden="true">☐</span><span>Статус из Markdown: запланировано</span></div>
+      <a href="production-calendar-v0.1.md">Исходный документ ↗</a></div>
+    </details>
+<details class="card" data-status="planned" id="PC-10">
+      <summary><span class="code">PC-10</span><span class="card-title">Стабилизация и выпуск</span><span class="badge planned">Запланировано</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+      <div class="card-body"><div class="fact"><span>Задача</span><p>Проверки backend/frontend/typecheck/build/migrations/permissions, регрессия CRM/заказов/моделей/техкарт, документация, демонстрационный сценарий.</p></div>
+      <div class="fact"><span>Зависимость</span><p>PC-08 · PC-09</p></div>
+      <div class="fact"><span>Критерий готовности</span><p>существующие тесты проходят; новый модуль не пишет в исходные бизнес-сущности; UI не нарушает SL-UI-BASE-v1; известные ограничения описаны.</p></div>
+      <div class="check"><span aria-hidden="true">☐</span><span>Статус из Markdown: запланировано</span></div>
+      <a href="production-calendar-v0.1.md">Исходный документ ↗</a></div>
+    </details></div><p class="empty" hidden>В этом разделе задач с выбранным статусом нет.</p></section>
+<section class="section" id="ui"><div class="section-head"><h2>Проектирование интерфейсов · PC-UI</h2><p>Отдельная дизайн-фаза: спецификации восьми экранов UI-A…UI-H. Реализация приложения не начата.</p></div><div class="grid"><details class="card" data-status="done" id="PC-UI-01">
+      <summary><span class="code">PC-UI-01</span><span class="card-title">Аудит UI-платформы (read-only)</span><span class="badge done">Завершено</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+      <div class="card-body"><div class="fact"><span>Задача</span><p>Найти AppShell, sidebar, topbar, табы, таблицы, диалоги, формы, date picker, select, карточки, responsive breakpoints, CSS-токены, SL-UI-BASE-v1 и дизайн-документы. Зафиксировать точные пути, поддерживаемые паттерны и несовместимости референсов.</p></div>
+      <div class="fact"><span>Зависимость</span><p>Отдельная дизайн-фаза</p></div>
+      <div class="fact"><span>Критерий готовности</span><p>каждый переиспользуемый компонент подтверждён реальным файлом; никаких изменений приложения.</p></div>
+      <div class="check"><span aria-hidden="true">☑</span><span>Статус из Markdown: завершено</span></div>
+      <a href="../tasks/integrate-production-calendar-v0.1-roadmap.md">Исходный документ ↗</a></div>
+    </details>
+<details class="card" data-status="done" id="PC-UI-02">
+      <summary><span class="code">PC-UI-02</span><span class="card-title">Карта экранов и навигация</span><span class="badge done">Завершено</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+      <div class="card-body"><div class="fact"><span>Задача</span><p>Описать маршруты и переходы UI-A…UI-H, меню «Производство», хлебные крошки, действия назад, deep links, пустые и ошибочные состояния. Исключить путаницу между «Заказами покупателей» CRM и самостоятельными «Производственными заказами календаря». Не создавать реальные Next.js routes.</p></div>
+      <div class="fact"><span>Зависимость</span><p>Отдельная дизайн-фаза</p></div>
+      <div class="fact"><span>Критерий готовности</span><p>из недельного табло доступны заказ и конкретный день; ни одного тупикового перехода.</p></div>
+      <div class="check"><span aria-hidden="true">☑</span><span>Статус из Markdown: завершено</span></div>
+      <a href="../tasks/integrate-production-calendar-v0.1-roadmap.md">Исходный документ ↗</a></div>
+    </details>
+<details class="card" data-status="done" id="PC-UI-03">
+      <summary><span class="code">PC-UI-03</span><span class="card-title">Единый UI-контракт</span><span class="badge done">Завершено</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+      <div class="card-body"><div class="fact"><span>Задача</span><p>Определить размеры, сетку, отступы, типографику, иконки, плотность таблиц, состояния кнопок, фокус, клавиатурную навигацию, role/permission-based visibility; светлая палитра, плоские монохромные иконки, согласованность SL-UI-BASE-v1. Документировать desktop ≥1440, laptop 1024–1439, tablet 768–1023, mobile &lt;768 без жёсткого изменения существующих breakpoint-токенов.</p></div>
+      <div class="fact"><span>Зависимость</span><p>Отдельная дизайн-фаза</p></div>
+      <div class="fact"><span>Критерий готовности</span><p>единые паттерны для 8 экранов и адаптивность без двойного скролла страницы.</p></div>
+      <div class="check"><span aria-hidden="true">☑</span><span>Статус из Markdown: завершено</span></div>
+      <a href="../tasks/integrate-production-calendar-v0.1-roadmap.md">Исходный документ ↗</a></div>
+    </details>
+<details class="card" data-status="done" id="PC-UI-04">
+      <summary><span class="code">PC-UI-04</span><span class="card-title">UI-A: недельное табло</span><span class="badge done">Завершено</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+      <div class="card-body"><div class="fact"><span>Задача</span><p>Спроектировать недельный переключатель с датами и локалью, 6 участков по маршруту, ячейки с % = плановые эквивалентные ресурсные часы / доступные часы × 100, состояние &gt;100%, 0 мощности, отсутствие нормы, выходной, пустой день; фильтры, drill-down в день, очередь нераспределённых.</p></div>
+      <div class="fact"><span>Зависимость</span><p>PC-UI-03</p></div>
+      <div class="fact"><span>Критерий готовности</span><p>90–100% не называется перегрузкой; реальные перегрузки только &gt;100%; no capacity / no norm отдельно от 0%.</p></div>
+      <div class="check"><span aria-hidden="true">☑</span><span>Статус из Markdown: завершено</span></div>
+      <a href="../tasks/integrate-production-calendar-v0.1-roadmap.md">Исходный документ ↗</a></div>
+    </details>
+<details class="card" data-status="done" id="PC-UI-05">
+      <summary><span class="code">PC-UI-05</span><span class="card-title">UI-B: модальное создание</span><span class="badge done">Завершено</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+      <div class="card-body"><div class="fact"><span>Задача</span><p>Поля: номер заказа вручную, выбор техкарты по правилам платформы, название изделия вручную, выбор модели, количество &gt;0, существующий маршрут, желаемая дата готовности (опциональность согласовать). Проверить обусловленные техкартой связи и не допускать противоречивого выбора; описать состояния loading/no results/validation/duplicate number/cancel/save/error.</p></div>
+      <div class="fact"><span>Зависимость</span><p>PC-UI-03</p></div>
+      <div class="fact"><span>Критерий готовности</span><p>никаких CRM SalesOrder и вымышленных API; форма компактная, доступная с клавиатуры, безопасное закрытие с несохранёнными изменениями.</p></div>
+      <div class="check"><span aria-hidden="true">☑</span><span>Статус из Markdown: завершено</span></div>
+      <a href="../tasks/integrate-production-calendar-v0.1-roadmap.md">Исходный документ ↗</a></div>
+    </details>
+<details class="card" data-status="done" id="PC-UI-06">
+      <summary><span class="code">PC-UI-06</span><span class="card-title">UI-C: карточка задания</span><span class="badge done">Завершено</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+      <div class="card-body"><div class="fact"><span>Задача</span><p>Шапка с номером, изделием, моделью, техкартой, количеством, маршрутом, сроком; граф с двумя параллельными стартовыми ветками «Закупка» + «Дизайн» и далее Печать → Раскрой → Пошив → Упаковка; таблица операции/план/факт/статус/нагрузка. Выделить редактирование календарных записей без записи в исходные модели, техкарты или маршрут.</p></div>
+      <div class="fact"><span>Зависимость</span><p>PC-UI-03</p></div>
+      <div class="fact"><span>Критерий готовности</span><p>планирование будущей операции допустимо, фактический «Начать» заблокирован до завершения всех предшественников.</p></div>
+      <div class="check"><span aria-hidden="true">☑</span><span>Статус из Markdown: завершено</span></div>
+      <a href="../tasks/integrate-production-calendar-v0.1-roadmap.md">Исходный документ ↗</a></div>
+    </details>
+<details class="card" data-status="done" id="PC-UI-07">
+      <summary><span class="code">PC-UI-07</span><span class="card-title">UI-D: детали дня и участка</span><span class="badge done">Завершено</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+      <div class="card-body"><div class="fact"><span>Задача</span><p>Мощность/занятость/резерв, задачи с указанием нагрузки именно на выбранный день, многодневные операции, фильтры, переход к заказу, перенос, доступные действия. Не обещать точную почасовую раздачу 8 швей из одной суммарной нормы, пока не определено распределение по бригадам.</p></div>
+      <div class="fact"><span>Зависимость</span><p>PC-UI-03</p></div>
+      <div class="fact"><span>Критерий готовности</span><p>сумма дневных назначений совпадает с KPI; превышение нормы видно без маскировки.</p></div>
+      <div class="check"><span aria-hidden="true">☑</span><span>Статус из Markdown: завершено</span></div>
+      <a href="../tasks/integrate-production-calendar-v0.1-roadmap.md">Исходный документ ↗</a></div>
+    </details>
+<details class="card" data-status="done" id="PC-UI-08">
+      <summary><span class="code">PC-UI-08</span><span class="card-title">UI-E: ручное планирование</span><span class="badge done">Завершено</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+      <div class="card-body"><div class="fact"><span>Задача</span><p>Слева очередь незапланированных операций заказа (не дубли целого заказа на каждый участок), справа матрица участок×дата, назначение/перенос/удаление, операции на несколько дней, подтверждение сохранения, undo/cancel, проверки конфликтов. Drag-and-drop — дополнительный метод; обязательно доступная альтернатива через кнопки и модальное назначение дат на touch/mobile.</p></div>
+      <div class="fact"><span>Зависимость</span><p>PC-UI-03</p></div>
+      <div class="fact"><span>Критерий готовности</span><p>одна операция на 14 ч распределяется 8+6 ч без создания второй операции; сохранение не запускает исполнение.</p></div>
+      <div class="check"><span aria-hidden="true">☑</span><span>Статус из Markdown: завершено</span></div>
+      <a href="../tasks/integrate-production-calendar-v0.1-roadmap.md">Исходный документ ↗</a></div>
+    </details>
+<details class="card" data-status="done" id="PC-UI-09">
+      <summary><span class="code">PC-UI-09</span><span class="card-title">UI-F: мощности и календарь исключений</span><span class="badge done">Завершено</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+      <div class="card-body"><div class="fact"><span>Задача</span><p>Настройки швей/смен/часов/коэффициента для пошива, рабочая неделя, исключения на конкретные даты (отпуска, 6 вместо 8 швей, выходной, дополнительная смена). Демонстрация формулы N × H × смены × K, деление на норму времени одной единицы из модели только для пошива; прочим участкам не подставлять эту норму.</p></div>
+      <div class="fact"><span>Зависимость</span><p>PC-UI-03</p></div>
+      <div class="fact"><span>Критерий готовности</span><p>0 швей или выходной дают 0 доступных часов; изменения нормы модели не меняют бесконтрольно уже зафиксированный план; никакой дублирующей нормы модели.</p></div>
+      <div class="check"><span aria-hidden="true">☑</span><span>Статус из Markdown: завершено</span></div>
+      <a href="../tasks/integrate-production-calendar-v0.1-roadmap.md">Исходный документ ↗</a></div>
+    </details>
+<details class="card" data-status="done" id="PC-UI-10">
+      <summary><span class="code">PC-UI-10</span><span class="card-title">UI-G: Дашборд производственного календаря</span><span class="badge done">Завершено</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+      <div class="card-body"><div class="fact"><span>Задача</span><p>KPI периода, план/мощность/резерв отдельно по ресурсам, дневная/недельная динамика и drill-down к участку/дате без строк всех операций по умолчанию.</p></div>
+      <div class="fact"><span>Зависимость</span><p>PC-UI-03</p></div>
+      <div class="fact"><span>Критерий готовности</span><p>5/30/50/100 синтетических заказов, unknown/zero и независимые ресурсные единицы; OWNER-APPROVED 2026-10-05 по задаче design freeze.</p></div>
+      <div class="check"><span aria-hidden="true">☑</span><span>Статус из Markdown: завершено</span></div>
+      <a href="../tasks/integrate-production-calendar-v0.1-roadmap.md">Исходный документ ↗</a></div>
+    </details>
+<details class="card" data-status="done" id="PC-UI-11">
+      <summary><span class="code">PC-UI-11</span><span class="card-title">UI-H: Центр отклонений</span><span class="badge done">Завершено</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+      <div class="card-body"><div class="fact"><span>Задача</span><p>Агрегированные группы причин, уникальные затронутые заказы и сигналы отдельно, общий конфликт ресурса/даты одним случаем с полным списком участников, поиск/фильтры/сортировка/пагинация/детали.</p></div>
+      <div class="fact"><span>Зависимость</span><p>PC-UI-03</p></div>
+      <div class="fact"><span>Критерий готовности</span><p>hard/risk/unknown раздельны, фильтр не удаляет события, 100 заказов без бесконечного журнала; OWNER-APPROVED 2026-10-05 по задаче design freeze.</p></div>
+      <div class="check"><span aria-hidden="true">☑</span><span>Статус из Markdown: завершено</span></div>
+      <a href="../tasks/integrate-production-calendar-v0.1-roadmap.md">Исходный документ ↗</a></div>
+    </details>
+<details class="card" data-status="done" id="PC-UI-12">
+      <summary><span class="code">PC-UI-12</span><span class="card-title">Сквозной UX, состояния, доступность и согласование</span><span class="badge done">Завершено</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+      <div class="card-body"><div class="fact"><span>Задача</span><p>Описать сценарий: создать заказ → получить операции → вручную назначить закупку/дизайн → печать/раскрой/пошив/упаковку → увидеть нагрузку и конфликт → перенести → завершить этап → разблокировать следующий. Для всех экранов: empty/loading/error/permission/validation, keyboard focus, contrast, responsive, отсутствие горизонтальной прокрутки всей страницы (допустима внутренняя прокрутка широких сеток), единые статусы и подписи.</p></div>
+      <div class="fact"><span>Зависимость</span><p>PC-UI-03</p></div>
+      <div class="fact"><span>Критерий готовности</span><p>все состояния и переходы описаны, несогласованные вопросы перечислены, получено явное пользовательское «дизайн утверждён» до любой реализации.</p></div>
+      <div class="check"><span aria-hidden="true">☑</span><span>Статус из Markdown: завершено</span></div>
+      <a href="../tasks/integrate-production-calendar-v0.1-roadmap.md">Исходный документ ↗</a></div>
+    </details></div><p class="empty" hidden>В этом разделе задач с выбранным статусом нет.</p></section>
+<section class="panel" aria-labelledby="gate-title"><h2 id="gate-title">Контрольные точки дизайна</h2><div class="gate"><div><span>PC-UI-04…11</span><strong>Утверждение каждого экрана</strong><p>Концепт → спецификация → просмотр владельцем → правки → утверждение. Состояние каждого экрана показано выше по Markdown.</p></div><div><span>PC-UI-12 · DESIGN-APPROVED</span><strong>Утверждено владельцем</strong><p>UI-A–UI-H OWNER-APPROVED; DESIGN-APPROVED = true. Документационный freeze не подтверждает реализацию или исправление P1.</p></div></div></section>
+<section class="panel" id="questions"><h2>Открытые вопросы и риски</h2><ul><li><strong>Норматив:</strong> семантика одной швеи на изделие утверждена; пустые/нулевые/неприменимые строки дают unknown, ручная норма пошива в v0.1 не вводится.</li><li><strong>Мощность:</strong> реальные смены, численность, перерывы, timezone и привязки оборудования задаются перед применением; недостающие значения дают capacity_unknown.</li><li><strong>Закупка:</strong> ручной флаг с автором/временем/причиной; PO, остатки и состав ТК не подтверждают его автоматически.</li><li><strong>ТК B1:</strong> CLOSED 2026-10-05; refresh не заменяет сохранённые материалы; 13 regression tests passed. Историческое воспроизведение выше сохранено. Baseline DB/lint сбои остаются препятствием для PC-03.</li><li><strong>Gate:</strong> PC-02.1 CLOSED документационно 2026-10-05; UI-A–UI-H OWNER-APPROVED, DESIGN-APPROVED = true. PC-03 не начат; старые сбои project check и непроверенное runtime/Edge QA сохранены.</li></ul><div class="sources"><a href="../tasks/production-calendar-pc-02-1-validation.md">Проверка PC-02.1 ↗</a><a href="../tasks/production-calendar-pc-02-1-b1-refresh-model-material-loss.md">P1 B1 ↗</a><a href="../architecture/production-calendar-pc-02.md">Архитектура PC-02 ↗</a></div></section>
+<section class="panel"><h2>Источники и повторная генерация</h2><p>Статусы берутся из Markdown, изменения в этой странице не сохраняются. После правки Markdown синхронизируйте ERP HTML-близнец и запустите <code>python scripts/generate_production_calendar_roadmap.py</code>; для сверки используйте <code>--check</code>.</p><div class="sources"><a href="production-calendar-v0.1.md">Детальный roadmap ↗</a><a href="roadmap-v1.1.md">Статусы этапов ↗</a><a href="../tasks/integrate-production-calendar-v0.1-roadmap.md">PC-UI задачи ↗</a><a href="../tasks/production-calendar-pc-01-audit.md">Аудит PC-01 ↗</a><a href="../architecture/production-calendar-pc-02.md">PC-02 ↗</a></div></section>
+<footer class="foot">Статический локальный документ · Источник истины: Markdown · Генерация: scripts/generate_production_calendar_roadmap.py</footer></main>
+<script>
+const buttons=[...document.querySelectorAll('.filter')];const cards=[...document.querySelectorAll('.card')];
+function applyFilter(status){let visible=0;for(const card of cards){card.hidden=status!=='all'&&card.dataset.status!==status;if(!card.hidden)visible++}for(const button of buttons)button.setAttribute('aria-pressed',String(button.dataset.filter===status));document.getElementById('visible-count').textContent=`Показано ${visible} из 35`;for(const section of document.querySelectorAll('.section'))section.querySelector('.empty').hidden=[...section.querySelectorAll('.card')].some(card=>!card.hidden)}
+for(const button of buttons)button.addEventListener('click',()=>applyFilter(button.dataset.filter));
+</script></body></html>

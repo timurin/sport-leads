@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import Link from "next/link";
 import {
@@ -148,10 +148,10 @@ function TechCardOrderCollaboration({
 }) {
   const hasSalesOrder = card.sales_order_id != null;
   const isStandalone = card.order_group_id != null && !hasSalesOrder;
+  const isXl = useXlCollabRail();
   if (!hasSalesOrder && !isStandalone) {
     return null;
   }
-  const isXl = useXlCollabRail();
   const place =
     surface === "manager"
       ? `order-1 md:order-2 xl:order-none xl:col-start-2 xl:row-start-1 xl:row-span-2 ${COLLAB_RAIL_STICKY}`

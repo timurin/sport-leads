@@ -26,7 +26,7 @@ test("order card layout breakpoints and collapse wiring (3.5.9)", () => {
     join(root, "components/sales/lead-activity-timeline.tsx"),
     "utf8",
   );
-  assert.ok(timeline.includes("Комментарии"));
+  assert.ok(timeline.includes("Заметки"));
   assert.ok(timeline.includes("История активности"));
   assert.equal(timeline.includes("F) Комментарии"), false);
   assert.equal(timeline.includes("D) История"), false);

@@ -27,6 +27,7 @@ from sqlalchemy import (
     String,
     Text,
     UniqueConstraint,
+    false,
     func,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -130,6 +131,10 @@ class TechnicalCard(Base):
             name="ck_technical_cards_quantity_positive",
         ),
         CheckConstraint(
+            "priority IS NULL OR priority >= 1",
+            name="ck_technical_cards_priority",
+        ),
+        CheckConstraint(
             "product_model_size_type IS NULL OR product_model_size_type IN ('men', 'women', 'kids')",
             name="ck_technical_cards_product_model_size_type",
         ),
@@ -221,6 +226,13 @@ class TechnicalCard(Base):
 
     design_mockup_url: Mapped[str | None] = mapped_column(String(1000), nullable=True)
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+    planning_start_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+    shipping_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+    priority: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    plan_locked: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, server_default=false()
+    )
 
     created_by_platform_user_id: Mapped[int | None] = mapped_column(
         ForeignKey("platform_users.id", ondelete="SET NULL"),
@@ -449,6 +461,10 @@ class TechnicalCardOperationLine(Base):
             "source_kind IN ('routing', 'sewing')",
             name="ck_technical_card_operation_lines_source_kind",
         ),
+        CheckConstraint(
+            "cutting_method IS NULL OR cutting_method IN ('manual_single', 'manual_lay')",
+            name="ck_technical_card_operation_lines_cutting_method",
+        ),
         Index("ix_technical_card_operation_lines_card_id", "technical_card_id"),
         Index("ix_technical_card_operation_lines_tech_operation_id", "tech_operation_id"),
         Index("ix_technical_card_operation_lines_sewing_operation_id", "sewing_operation_id"),
@@ -483,6 +499,7 @@ class TechnicalCardOperationLine(Base):
         index=True,
     )
     stage_label: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    cutting_method: Mapped[str | None] = mapped_column(String(32), nullable=True)
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),

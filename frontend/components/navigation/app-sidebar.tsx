@@ -67,6 +67,9 @@ const sectionIcons = {
 
 function getSectionLinks(section: AppSection) {
   return section.topNavigation.flatMap((group) => {
+    if (group.children?.length) {
+      return group.children;
+    }
     if (group.href) {
       return [
         {
@@ -115,6 +118,47 @@ function NavigationGroupContent({
   group: NavigationGroup;
   pathname: string;
 }) {
+  const [collapsedPath, setCollapsedPath] = useState<string | null>(null);
+  if (group.href && group.children?.length) {
+    const expanded = collapsedPath !== pathname;
+    const active = group.children.some((child) =>
+      isNavigationPathActive(pathname, child.href),
+    );
+    return (
+      <div>
+        <div className="flex min-w-0 items-center">
+          <Link
+            href={group.href}
+            className={[
+              "relative flex min-h-9 min-w-0 flex-1 items-center rounded-lg px-3 pl-8 text-[12px] transition-colors",
+              active
+                ? "font-bold text-portal-primary-hover"
+                : "text-[color:var(--portal-shell-nav)] hover:bg-portal-page hover:text-portal-text",
+            ].join(" ")}
+          >
+            <span className="min-w-0 flex-1 truncate">{group.title}</span>
+          </Link>
+          <button
+            type="button"
+            aria-label={`${expanded ? "Свернуть" : "Развернуть"} ${group.title}`}
+            aria-expanded={expanded}
+            aria-controls={`${group.id}-children`}
+            onClick={() => setCollapsedPath(expanded ? pathname : null)}
+            className="flex size-9 shrink-0 items-center justify-center rounded-lg text-[color:var(--portal-shell-nav)] hover:bg-portal-page hover:text-portal-text"
+          >
+            {expanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+          </button>
+        </div>
+        {expanded ? (
+          <div id={`${group.id}-children`} className="grid gap-0.5">
+            {group.children.map((child) => (
+              <NavigationGroupContent key={child.id} group={child} pathname={pathname} />
+            ))}
+          </div>
+        ) : null}
+      </div>
+    );
+  }
   if (group.href) {
     const active = isNavigationPathActive(
       pathname,

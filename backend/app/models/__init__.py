@@ -1,4 +1,7 @@
 from app.models.import_run import ImportRun, ImportStatus
+from app.models.calendar_allocation import CalendarAllocation
+from app.models.calendar_assignment import CalendarAssignment
+from app.models.production_capacity import CapacityResource, ProductionCapacityException, ProductionCapacitySettings, TechOperationCapacityResource
 from app.models.source import Source
 from app.models.sport_event import SportEvent
 from app.models.nomenclature import (
@@ -196,6 +199,8 @@ from app.models.work_tasks import (
 
 
 __all__ = [
+    "ProductionCapacitySettings",
+    "ProductionCapacityException",
     "Source",
     "SportEvent",
     "ImportRun",

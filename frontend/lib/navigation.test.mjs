@@ -9,6 +9,29 @@ import {
   isNavigationPathActive,
 } from "./navigation.ts";
 
+test("PC-03.6B production calendar is a single sidebar item", () => {
+  const production = appSections.find((section) => section.id === "production");
+  const entries = production.topNavigation.filter((item) =>
+    item.href?.startsWith("/production/calendar") || item.title === "Производственный календарь",
+  );
+  assert.equal(entries.length, 1);
+  const queue = entries[0];
+  assert.equal(queue.title, "Производственный календарь");
+  assert.equal(queue.href, "/production/calendar");
+  assert.equal(queue.children, undefined);
+  assert.equal(isNavigationPathActive("/production/calendar", queue.href), true);
+  assert.equal(isNavigationPathActive("/production/calendar/planning", queue.href), true);
+  for (const pathname of ["/production/calendar/planning", "/production/calendar/capacity", "/production/calendar/dashboard", "/production/calendar/deviations"]) {
+    assert.equal(getSectionByPathname(pathname).id, "production");
+    assert.equal(isNavigationPathActive(pathname, "/production"), false);
+  }
+  assert.equal(isNavigationPathActive("/production/calendar-other", queue.href), false);
+  assert.equal(production.topNavigation.some((item) => item.title === "Ручное планирование"), false);
+  assert.equal(production.topNavigation.some((item) => item.title === "Мощности"), false);
+  const restricted = filterAppSectionsForSession(appSections, ["sewing_cabinet.read_own"]);
+  assert.equal(restricted[0].topNavigation.some((item) => item.id === queue.id), false);
+});
+
 test("sales navigation exposes leads and customer orders without deals", () => {
   const sales = appSections.find((section) => section.id === "sales");
   assert.ok(sales);
@@ -187,6 +210,7 @@ test("settings navigation exposes pattern-base catalogs", () => {
     [
       { id: "product-models", href: "/settings/catalogs/product-models" },
       { id: "product-types", href: "/settings/catalogs/product-types" },
+      { id: "detailing", href: "/settings/catalogs/detailing" },
       { id: "size-grids", href: "/settings/catalogs/size-grids" },
       {
         id: "sewing-operations",

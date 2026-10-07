@@ -1,10 +1,12 @@
 from decimal import Decimal
 
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.models.nomenclature import Nomenclature, NomenclatureType
 from app.models.tech_operation import TechOperation
+from app.models.production_capacity import CapacityResource
 from app.repositories import tech_operations as repo
 from app.schemas.tech_operation import (
     TechOperationCreate,
@@ -24,6 +26,15 @@ class TechOperationConflictError(RuntimeError):
 
 class TechOperationValidationError(RuntimeError):
     pass
+
+
+def _capacity_resources(db: Session, keys: list[str] | None) -> list[CapacityResource]:
+    if keys is None or len(keys) != len(set(keys)):
+        raise TechOperationValidationError("capacity_resource_keys must be a unique list")
+    rows = list(db.scalars(select(CapacityResource).where(CapacityResource.resource_key.in_(keys))))
+    if len(rows) != len(keys):
+        raise TechOperationValidationError("Capacity resource not found")
+    return rows
 
 
 def _validate_required_materials(
@@ -81,6 +92,7 @@ def _to_read(row: TechOperation) -> TechOperationRead:
             "production_stage_id": row.production_stage_id,
             "is_active": row.is_active,
             "sort_order": row.sort_order,
+            "capacity_resource_keys": sorted(resource.resource_key for resource in row.capacity_resources),
             "required_materials": [
                 {
                     "id": material.id,
@@ -138,6 +150,7 @@ def create_tech_operation(db: Session, payload: TechOperationCreate) -> TechOper
         if stages_repo.get_production_stage(db, payload.production_stage_id) is None:
             raise TechOperationValidationError("Этап производства не найден")
 
+    resources = _capacity_resources(db, payload.capacity_resource_keys)
     validated_materials = _validate_required_materials(db, payload.required_materials)
     row = TechOperation(
         name=payload.name,
@@ -147,6 +160,7 @@ def create_tech_operation(db: Session, payload: TechOperationCreate) -> TechOper
         is_active=payload.is_active,
         sort_order=payload.sort_order,
     )
+    row.capacity_resources = resources
     _replace_required_materials(
         row,
         payload.required_materials,
@@ -175,6 +189,7 @@ def update_tech_operation(
     changes = payload.model_dump(exclude_unset=True)
     if not changes:
         raise TechOperationValidationError("Нет полей для обновления")
+    resources = _capacity_resources(db, changes["capacity_resource_keys"]) if "capacity_resource_keys" in changes else None
 
     if "name" in changes:
         existing = repo.get_tech_operation_by_name(db, changes["name"])
@@ -199,8 +214,10 @@ def update_tech_operation(
         validated_materials = _validate_required_materials(db, payload.required_materials or [])
 
     repo.apply_tech_operation_updates(
-        row, {key: value for key, value in changes.items() if key != "required_materials"}
+        row, {key: value for key, value in changes.items() if key not in {"required_materials", "capacity_resource_keys"}}
     )
+    if resources is not None:
+        row.capacity_resources = resources
     if validated_materials is not None:
         _replace_required_materials(
             row,

@@ -297,6 +297,11 @@ export function buildAppSections(
         href: "/production",
       },
       {
+        id: "production-calendar",
+        title: "Производственный календарь",
+        href: "/production/calendar",
+      },
+      {
         id: "production-tech-cards",
         title: "Техкарты",
         href: "/production/tech-cards",

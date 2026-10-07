@@ -10,6 +10,8 @@ import { Button } from "@/components/ui/button";
 import { CreateDrawer } from "@/components/ui/create-drawer";
 import { Checkbox, Field, Input, Select } from "@/components/ui/form-controls";
 import { useToast } from "@/components/ui/toast";
+import { TechOperationResourcesPanel } from "@/components/settings/tech-operation-capacity-fields";
+import type { CapacityResource } from "@/lib/tech-operation-capacity";
 import {
   TECH_OPERATION_VOLUME_UNIT_LABELS,
   validateTechOperationDraft,
@@ -19,6 +21,7 @@ import {
   type TechOperationVolumeUnit,
 } from "@/lib/tech-operations";
 import type { ProductionStage } from "@/lib/production-stages";
+import type { WorkCenter } from "@/lib/shop-routings";
 
 const emptyDraft: TechOperationDraft = {
   name: "",
@@ -27,6 +30,7 @@ const emptyDraft: TechOperationDraft = {
   production_stage_id: null,
   is_active: true,
   required_materials: [],
+  capacity_resource_keys: [],
 };
 
 type TechOperationMaterialOption = {
@@ -41,7 +45,11 @@ type TechOperationCreateDrawerProps = {
   onClose: () => void;
   onCreated?: (operation: TechOperation) => void;
   productionStages: ProductionStage[];
+  workCenters: WorkCenter[];
+  resources: CapacityResource[];
+  operations: TechOperation[];
   materialOptions: TechOperationMaterialOption[];
+  onResourceSaved: (resource: CapacityResource) => void;
 };
 
 /** CreateDrawer host for tech operations (PT-02 catalog). */
@@ -50,7 +58,11 @@ export function TechOperationCreateDrawer({
   onClose,
   onCreated,
   productionStages,
+  workCenters,
+  resources,
+  operations,
   materialOptions,
+  onResourceSaved,
 }: TechOperationCreateDrawerProps) {
   const { push: pushToast } = useToast();
   const [draft, setDraft] = useState<TechOperationDraft>(emptyDraft);
@@ -287,6 +299,19 @@ export function TechOperationCreateDrawer({
                   ))
                 )}
               </div>
+            </div>
+            <div className="mt-portal-5 border-t border-portal-border pt-portal-5">
+              <TechOperationResourcesPanel
+                operationId={null}
+                resourceKeys={draft.capacity_resource_keys ?? []}
+                resources={resources}
+                operations={operations}
+                productionStages={productionStages}
+                workCenters={workCenters}
+                disabled={saving}
+                onKeysChange={(keys) => update("capacity_resource_keys", keys)}
+                onResourceSaved={onResourceSaved}
+              />
             </div>
             {error ? (
               <p

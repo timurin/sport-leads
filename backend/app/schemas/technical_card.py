@@ -2,6 +2,7 @@
 
 from datetime import date, datetime
 from decimal import Decimal
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
@@ -156,6 +157,7 @@ class TechnicalCardOperationLineWrite(BaseModel):
     stage_order: int | None = Field(default=None, ge=1)
     production_stage_id: int | None = Field(default=None, ge=1)
     stage_label: str | None = Field(default=None, max_length=255)
+    cutting_method: Literal["manual_single", "manual_lay"] | None = None
 
     @field_validator("operation_name", "stage_label", mode="before")
     @classmethod
@@ -417,6 +419,10 @@ class TechnicalCardRead(BaseModel):
     created_by_name: str | None = None
     responsible_platform_user_id: int | None = None
     desired_date: date | None = None
+    planning_start_date: date | None = None
+    shipping_date: date | None = None
+    priority: int | None = None
+    plan_locked: bool = False
     tech_cards_planned_count: int | None = None
     display_number: str | None = None
 
@@ -476,6 +482,10 @@ class TechnicalCardListRead(BaseModel):
     client_name: str | None = None
     responsible_name: str | None = None
     desired_date: date | None = None
+    planning_start_date: date | None = None
+    shipping_date: date | None = None
+    priority: int | None = None
+    plan_locked: bool = False
     tech_cards_planned_count: int | None = None
     display_number: str | None = None
 
@@ -725,6 +735,7 @@ class TechnicalCardOperationLineVolumeUpdate(BaseModel):
     volume: Decimal = Field(ge=0, max_digits=14, decimal_places=3)
     operation_name: str | None = Field(default=None, min_length=1, max_length=255)
     shop_stage_code: str | None = Field(default=None, max_length=50)
+    cutting_method: Literal["manual_single", "manual_lay"] | None = None
 
     @field_validator("operation_name", "shop_stage_code", mode="before")
     @classmethod
@@ -757,6 +768,10 @@ class TechnicalCardStandaloneCreate(BaseModel):
     tech_cards_planned_count: int = Field(ge=1)
     desired_date: date
     quantity: Decimal = Field(default=Decimal("1"), gt=0, max_digits=14, decimal_places=3)
+    planning_start_date: date | None = None
+    shipping_date: date | None = None
+    priority: int | None = Field(default=None, ge=1)
+    plan_locked: bool = False
 
     @field_validator("order_number", "nomenclature_name", mode="before")
     @classmethod
@@ -811,6 +826,17 @@ class TechnicalCardClientUpdate(BaseModel):
 
 class TechnicalCardDesiredDateUpdate(BaseModel):
     desired_date: date | None = None
+
+
+class TechnicalCardPlanningUpdate(BaseModel):
+    """Card planning fields. `desired_date` is not accepted here."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    planning_start_date: date | None = None
+    shipping_date: date | None = None
+    priority: int | None = Field(default=None, ge=1)
+    plan_locked: bool | None = None
 
 
 class TechnicalCardModelAssemblyUpdate(BaseModel):

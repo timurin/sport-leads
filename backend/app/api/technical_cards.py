@@ -34,6 +34,7 @@ from app.schemas.technical_card import (
     TechnicalCardResponsibleUpdate,
     TechnicalCardClientUpdate,
     TechnicalCardDesiredDateUpdate,
+    TechnicalCardPlanningUpdate,
     TechnicalCardModelAssemblyUpdate,
     TechnicalCardNomenclatureNameUpdate,
     TechnicalCardStageCompleteRequest,
@@ -69,6 +70,9 @@ from app.services.tech_card_responsible import (
 )
 from app.services.tech_card_client import update_technical_card_client
 from app.services.tech_card_desired_date import update_technical_card_desired_date
+from app.schemas.production_demand import CardDemandRead
+from app.services.production_demand import read_technical_card_demand
+from app.services.technical_card_planning import update_technical_card_planning
 from app.services.tech_card_model_assembly import update_technical_card_model_assembly
 from app.services.tech_card_product_name import update_technical_card_nomenclature_name
 from app.services.technical_card_settings import (
@@ -588,6 +592,29 @@ def update_technical_card_desired_date_endpoint(
 
 
 @router.patch(
+    "/technical-cards/{card_id}/planning",
+    response_model=TechnicalCardRead,
+    operation_id="update_technical_card_planning",
+)
+def update_technical_card_planning_endpoint(
+    card_id: int,
+    payload: TechnicalCardPlanningUpdate,
+    db: Session = Depends(get_db),
+    _user: PlatformUser = Depends(get_current_platform_user),
+) -> TechnicalCardRead:
+    try:
+        card = update_technical_card_planning(db, card_id, payload)
+        db.commit()
+    except (
+        TechnicalCardNotFoundError,
+        TechnicalCardValidationError,
+    ) as error:
+        db.rollback()
+        raise _http_error(error) from error
+    return _card_read(db, get_technical_card(db, card.id))
+
+
+@router.patch(
     "/technical-cards/{card_id}/model-assembly",
     response_model=TechnicalCardRead,
     operation_id="update_technical_card_model_assembly",
@@ -650,6 +677,22 @@ def update_technical_card_nomenclature_name_endpoint(
 def read_technical_card(card_id: int, db: Session = Depends(get_db)) -> TechnicalCardRead:
     try:
         return _card_read(db, get_technical_card(db, card_id))
+    except TechnicalCardNotFoundError as error:
+        raise _http_error(error) from error
+
+
+@router.get(
+    "/technical-cards/{card_id}/demand",
+    response_model=CardDemandRead,
+    operation_id="get_technical_card_demand",
+)
+def read_technical_card_demand_endpoint(
+    card_id: int,
+    routing_stage_line_id: int | None = Query(default=None, gt=0),
+    db: Session = Depends(get_db),
+) -> CardDemandRead:
+    try:
+        return read_technical_card_demand(db, card_id, routing_stage_line_id)
     except TechnicalCardNotFoundError as error:
         raise _http_error(error) from error
 
@@ -1285,6 +1328,8 @@ def update_operation_line_volume_endpoint(
                 volume=payload.volume,
                 operation_name=payload.operation_name,
                 shop_stage_code=payload.shop_stage_code,
+                cutting_method=payload.cutting_method,
+                update_cutting_method="cutting_method" in payload.model_fields_set,
             ),
         )
     except (

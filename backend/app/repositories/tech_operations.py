@@ -13,6 +13,7 @@ def list_tech_operations(
     offset: int = 0,
 ) -> list[TechOperation]:
     statement = select(TechOperation).options(
+        selectinload(TechOperation.capacity_resources),
         selectinload(TechOperation.required_materials).selectinload(
             TechOperationRequiredMaterial.nomenclature
         )
@@ -37,6 +38,7 @@ def get_tech_operation(db: Session, operation_id: int) -> TechOperation | None:
         select(TechOperation)
         .where(TechOperation.id == operation_id)
         .options(
+            selectinload(TechOperation.capacity_resources),
             selectinload(TechOperation.required_materials).selectinload(
                 TechOperationRequiredMaterial.nomenclature
             )

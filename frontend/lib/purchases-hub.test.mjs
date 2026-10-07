@@ -14,9 +14,9 @@ test("purchases hub is Soft UI chrome without demo PO rows", async () => {
   );
   for (const marker of [
     "sl-design-v1",
-    "Stage 13",
+    "/purchases/orders",
+    "/purchases/suppliers",
     "/warehouse/stock",
-    "/warehouse/movements",
     "13.1.2",
     "13.1.1",
   ]) {

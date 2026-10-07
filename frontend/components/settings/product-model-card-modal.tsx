@@ -83,6 +83,25 @@ export function ProductModelCardModal({
     };
   }, [open, modelId]);
 
+  const model = bundle?.model ?? null;
+  const dirty =
+    editing &&
+    model != null &&
+    draft != null &&
+    isProductModelRequisitesDirty(model, draft);
+
+  const requestClose = () => {
+    if (editing && dirty) {
+      if (!window.confirm("Есть несохранённые изменения. Закрыть без сохранения?")) {
+        return;
+      }
+    }
+    setEditing(false);
+    setDraft(null);
+    setError(null);
+    onClose();
+  };
+
   useEffect(() => {
     if (!open) return;
     const onKeyDown = (event: KeyboardEvent) => {
@@ -100,7 +119,6 @@ export function ProductModelCardModal({
     // eslint-disable-next-line react-hooks/exhaustive-deps -- close helpers depend on latest dirty/editing
   }, [open, editing, draft, bundle]);
 
-  const model = bundle?.model ?? null;
   const photoSrc = useMemo(() => {
     if (!bundle) return null;
     const primary =
@@ -110,11 +128,6 @@ export function ProductModelCardModal({
     }
     return productModelCoverUrl(bundle.model.cover_image_url);
   }, [bundle]);
-  const dirty =
-    editing &&
-    model != null &&
-    draft != null &&
-    isProductModelRequisitesDirty(model, draft);
 
   const folderOptions = useMemo(
     () => productModelFolderSelectOptions(bundle?.folders ?? []),
@@ -137,13 +150,7 @@ export function ProductModelCardModal({
         ? { id: typeId, name: model.product_type_name }
         : null)
     );
-  }, [
-    bundle?.productTypes,
-    draft,
-    editing,
-    model?.product_type_id,
-    model?.product_type_name,
-  ]);
+  }, [bundle?.productTypes, draft, editing, model]);
 
   const linkedFolder = useMemo(() => {
     const folderId = editing && draft ? draft.folder_id ?? null : model?.folder_id;
@@ -179,18 +186,6 @@ export function ProductModelCardModal({
     setEditing(false);
     setDraft(null);
     setError(null);
-  };
-
-  const requestClose = () => {
-    if (editing && dirty) {
-      if (!window.confirm("Есть несохранённые изменения. Закрыть без сохранения?")) {
-        return;
-      }
-    }
-    setEditing(false);
-    setDraft(null);
-    setError(null);
-    onClose();
   };
 
   const onCancelClick = () => {

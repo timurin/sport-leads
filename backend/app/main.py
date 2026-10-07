@@ -61,6 +61,7 @@ from app.api.stock import router as stock_router
 from app.api.technical_cards import router as technical_cards_router
 from app.api.tech_operations import router as tech_operations_router
 from app.api.production_stages import router as production_stages_router
+from app.api.production_calendar import router as production_calendar_router
 from app.api.production_orders import (
     batches_router as production_batches_router,
     router as production_orders_router,
@@ -186,6 +187,7 @@ app.include_router(stock_router)
 app.include_router(technical_cards_router)
 app.include_router(tech_operations_router)
 app.include_router(production_stages_router)
+app.include_router(production_calendar_router)
 app.include_router(production_orders_router)
 app.include_router(production_batches_router)
 app.include_router(specifications_router)

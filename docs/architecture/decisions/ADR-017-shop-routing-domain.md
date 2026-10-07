@@ -106,6 +106,8 @@ Settings group **«Производство»**:
 
 ## Ограничения
 
+**Amend PC-03.7A, 2026-10-06 — решение владельца:** TechOperation — источник технологической принадлежности; CapacityResource — единственный источник мощности. M:N junction `tech_operation_capacity_resources` позволяет операциям совместно использовать одну доступность/оборудование, без копирования ресурса или его исключений. `print_operator` разделяется `sublimation` и `heat_transfer`; связь не меняет маршрут, snapshot ТК или факт исполнения. Старое `production_capacity_settings` переименовано в `capacity_resources`, calendar capacity API сохранён поверх того же хранилища. [Точный контракт и миграция](../production-calendar-shared-capacity-pc-03-7a.md). Scheduler/ProductionJob отсутствуют; frontend-интеграция — отдельная PC-03.7B.
+
 - Auth/roles later (`17.1`)
 - Full work-center capacity / calendars out of MVP
 - Spec CRUD out of Stage 8

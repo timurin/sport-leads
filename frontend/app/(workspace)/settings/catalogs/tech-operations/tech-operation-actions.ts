@@ -2,6 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 
+import { sessionAuthHeaders } from "@/lib/auth/api-headers";
+import { uniqueResourceKeys } from "@/lib/tech-operation-capacity";
 import {
   validateTechOperationDraft,
   type TechOperation,
@@ -13,6 +15,7 @@ export type TechOperationActionResult =
   | { ok: false; message: string };
 
 const CATALOG_PATH = "/settings/catalogs/tech-operations";
+const CAPACITY_PATH = "/production/calendar/capacity";
 
 function apiBaseUrl(): string {
   return (process.env.SPORT_LEADS_API_URL ?? "http://127.0.0.1:8000").replace(
@@ -39,10 +42,9 @@ async function readError(response: Response): Promise<string> {
   return `Ошибка API (${response.status})`;
 }
 
-function payloadFromDraft(draft: TechOperationDraft): TechOperationDraft | null {
-  const validationError = validateTechOperationDraft(draft);
-  if (validationError) return null;
-  return {
+function payloadFromDraft(draft: TechOperationDraft): Record<string, unknown> | null {
+  if (validateTechOperationDraft(draft)) return null;
+  const body: Record<string, unknown> = {
     name: draft.name.trim(),
     code: draft.code.trim(),
     volume_unit: draft.volume_unit,
@@ -54,6 +56,26 @@ function payloadFromDraft(draft: TechOperationDraft): TechOperationDraft | null 
         typeof row.quantity === "string" ? row.quantity.trim() || "0" : row.quantity,
     })),
   };
+  if (Object.prototype.hasOwnProperty.call(draft, "capacity_resource_keys")) {
+    body.capacity_resource_keys = uniqueResourceKeys(draft.capacity_resource_keys ?? []);
+  }
+  return body;
+}
+
+function readOperation(body: unknown): TechOperation {
+  const operation = body as TechOperation;
+  return {
+    ...operation,
+    capacity_resource_keys: Array.isArray(operation.capacity_resource_keys) ? operation.capacity_resource_keys : [],
+  };
+}
+
+async function request(path: string, init: RequestInit): Promise<Response> {
+  const headers = new Headers(init.headers);
+  const session = await sessionAuthHeaders();
+  if (session.Cookie) headers.set("Cookie", session.Cookie);
+  if (init.body != null && !headers.has("Content-Type")) headers.set("Content-Type", "application/json");
+  return fetch(`${apiBaseUrl()}${path}`, { ...init, headers, cache: "no-store" });
 }
 
 export async function createTechOperation(
@@ -68,17 +90,16 @@ export async function createTechOperation(
     return { ok: false, message: "Проверьте реквизиты операции" };
   }
 
-  const response = await fetch(`${apiBaseUrl()}/tech-operations`, {
+  const response = await request("/tech-operations", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
-    cache: "no-store",
   });
   if (!response.ok) {
     return { ok: false, message: await readError(response) };
   }
-  const operation = (await response.json()) as TechOperation;
+  const operation = readOperation(await response.json());
   revalidatePath(CATALOG_PATH);
+  revalidatePath(CAPACITY_PATH);
   return { ok: true, operation };
 }
 
@@ -95,30 +116,27 @@ export async function updateTechOperation(
     return { ok: false, message: "Проверьте реквизиты операции" };
   }
 
-  const response = await fetch(`${apiBaseUrl()}/tech-operations/${operationId}`, {
+  const response = await request(`/tech-operations/${operationId}`, {
     method: "PATCH",
-    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
-    cache: "no-store",
   });
   if (!response.ok) {
     return { ok: false, message: await readError(response) };
   }
-  const operation = (await response.json()) as TechOperation;
+  const operation = readOperation(await response.json());
   revalidatePath(CATALOG_PATH);
+  revalidatePath(CAPACITY_PATH);
   return { ok: true, operation };
 }
 
 export async function deleteTechOperation(
   operationId: number,
 ): Promise<{ ok: true } | { ok: false; message: string }> {
-  const response = await fetch(`${apiBaseUrl()}/tech-operations/${operationId}`, {
-    method: "DELETE",
-    cache: "no-store",
-  });
+  const response = await request(`/tech-operations/${operationId}`, { method: "DELETE" });
   if (!response.ok && response.status !== 204) {
     return { ok: false, message: await readError(response) };
   }
   revalidatePath(CATALOG_PATH);
+  revalidatePath(CAPACITY_PATH);
   return { ok: true };
 }

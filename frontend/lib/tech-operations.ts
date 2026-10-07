@@ -17,6 +17,7 @@ export type TechOperation = {
   is_active: boolean;
   sort_order: number;
   required_materials: TechOperationRequiredMaterial[];
+  capacity_resource_keys: string[];
   created_at: string;
   updated_at: string;
 };
@@ -28,6 +29,7 @@ export type TechOperationDraft = {
   production_stage_id: number | null;
   is_active: boolean;
   required_materials: TechOperationRequiredMaterial[];
+  capacity_resource_keys?: string[];
 };
 
 export type TechOperationListParams = {
@@ -121,5 +123,9 @@ export async function getTechOperations(
       `Не удалось загрузить технологические операции (${response.status}).`,
     );
   }
-  return (await response.json()) as TechOperation[];
+  const rows = (await response.json()) as TechOperation[];
+  return rows.map((row) => ({
+    ...row,
+    capacity_resource_keys: Array.isArray(row.capacity_resource_keys) ? row.capacity_resource_keys : [],
+  }));
 }

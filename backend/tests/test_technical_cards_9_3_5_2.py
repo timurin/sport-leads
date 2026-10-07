@@ -144,3 +144,21 @@ def test_generate_keeps_route_material_visible_and_warns_when_norm_missing() -> 
         assert material_lines[0].production_stage_id == print_stage.id
         assert material_lines[0].planned_qty is None
         assert material_lines[0].notes == "Норма модели для техоперации не найдена"
+
+        # Missing route norms must not erase a saved manager estimate/shop fact.
+        line = material_lines[0]
+        line.planned_qty = Decimal("3.500")
+        line.fact_qty = Decimal("1.250")
+        line.notes = "Проверено менеджером"
+        db.commit()
+        expected_id = line.id
+        for _ in range(2):
+            refreshed = tc_service.refresh_model_and_pattern_composition(db, card.id)
+            materials = [row for row in refreshed.composition_lines
+                         if row.nomenclature_id is not None]
+            assert len(materials) == 1
+            assert materials[0].id == expected_id
+            assert materials[0].planned_qty == Decimal("3.500")
+            assert materials[0].fact_qty == Decimal("1.250")
+            assert materials[0].notes == "Проверено менеджером"
+            assert materials[0].production_stage_id == print_stage.id

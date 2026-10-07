@@ -21,6 +21,7 @@ from app.schemas.technical_card import (
     TechnicalCardOrderGroupUpdate,
     TechnicalCardStandaloneCreate,
 )
+from app.services.technical_card_planning import new_card_planning_start
 from app.services.technical_card_settings import get_technical_card_settings
 from app.services.technical_cards import (
     TechnicalCardConflictError,
@@ -164,6 +165,10 @@ def create_standalone_technical_card(
         nomenclature_name=nomenclature_name,
         nomenclature_type=nomenclature_type,
         created_by_platform_user_id=created_by_platform_user_id,
+        planning_start_date=payload.planning_start_date or new_card_planning_start(db),
+        shipping_date=payload.shipping_date,
+        priority=payload.priority,
+        plan_locked=payload.plan_locked,
         unit_lines=[],
         composition_lines=[],
         operation_lines=[],

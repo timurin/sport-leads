@@ -1,7 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
+from app.api.deps_auth import get_current_platform_user, require_permission
 from app.database.session import get_db
+from app.schemas.production_capacity import CapacityResourceDetail, CapacityResourceWrite
+from app.services.rbac import PERM_TECHNICAL_CARDS_CREATE
+from app.services.production_calendar import CalendarError
 from app.schemas.tech_operation import (
     TechOperationCreate,
     TechOperationRead,
@@ -19,6 +23,30 @@ from app.services.tech_operations import (
 )
 
 router = APIRouter(prefix="/tech-operations", tags=["Tech operations"])
+
+
+@router.get("/{operation_id}/capacity-resources", response_model=list[CapacityResourceDetail],
+            dependencies=[Depends(get_current_platform_user)], operation_id="tech_operation_capacity_resources")
+def read_operation_resources(operation_id: int, db: Session = Depends(get_db)):
+    from app.services.capacity_resources import get_resources, operation_resource_keys
+    try:
+        return get_resources(db, operation_resource_keys(db, operation_id))
+    except CalendarError as error:
+        raise HTTPException(error.status_code, str(error)) from error
+
+
+@router.put("/{operation_id}/capacity-resources/{resource_key}", response_model=CapacityResourceDetail,
+            dependencies=[Depends(require_permission(PERM_TECHNICAL_CARDS_CREATE))],
+            operation_id="tech_operation_capacity_resource_save")
+def write_operation_resource(operation_id: int, resource_key: str, payload: CapacityResourceWrite,
+                             db: Session = Depends(get_db)):
+    from app.services.capacity_resources import operation_resource_keys, save_resource
+    try:
+        if resource_key not in operation_resource_keys(db, operation_id):
+            raise CalendarError("Resource is not linked to this operation", 404)
+        return save_resource(db, resource_key, payload)
+    except CalendarError as error:
+        raise HTTPException(error.status_code, str(error)) from error
 
 
 @router.get(
@@ -52,6 +80,8 @@ def create_tech_operation_endpoint(
         return create_tech_operation(db, payload)
     except TechOperationConflictError as error:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(error)) from error
+    except TechOperationValidationError as error:
+        raise HTTPException(status_code=422, detail=str(error)) from error
 
 
 @router.get(

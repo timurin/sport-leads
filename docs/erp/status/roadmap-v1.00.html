@@ -247,9 +247,9 @@
       en: {
         brandTitle: "Roadmap v1.00",
         brandSub: "HTML twin for SL-ROADMAP-v1.00",
-        chipUpdated: "Updated: 2026-08-31",
+        chipUpdated: "Updated: 2026-10-02",
         chipCarry: "Carry: 1.4.3, 2 group, 7, 12.4–12.5, 13–16, 18.4 + Stages 0, 20–28",
-        chipActive: "Active: v1.00 — 13.1.2 stop at visual 13.1.2.6",
+        chipActive: "Active history: v1.00 — 13.1.2 closed 2026-10-02; open queue is v1.1",
         legendTitle: "Legend",
         legendDone: "`[x]` done",
         legendTodo: "`[ ]` open",
@@ -258,7 +258,7 @@
         heroText: "Includes Stage 0 (performance + LAN + order-without-lead + canonical VPS 0.5), Stage 20 Lead/Order UX, Stage 21 Users cabinet, Stage 22 Design v1.0, Stage 23 Unified Work Tasks, Stage 24 Sewing cabinet (closed), Stage 25 tech-card QR (closed), Stage 26 living owner findings (parked; owner-pull), Stage 27 1C:UNF export (27.0.1 closed; 27.1+ parked; owner-pull), Stage 28 standalone tech cards + numbering (parked; owner-pull), Stage 7 Specs (closed), Stage 12.4 inventory (closed owner visual 12.4.1.6), plus carry-over 1.4.3, Stage 2 group (closed), 12.5 (current), 13–16, 18.4. Switch EN / RU.",
         progressLabel: "Overall progress",
         transferTitle: "Owner transfer",
-        transferText: "Stage 13.1.2 purchase orders in flight — stop at owner visual 13.1.2.6. ADR-034. Stage 13.1.1 closed. Stage 27 parked. Do not auto-start 13.2 / 27.",
+        transferText: "Stage 13.1.2 closed 2026-10-02 (owner visual 13.1.2.6). Open remainder moved to roadmap-v1.1.md. Stage 27 stays owner-pull.",
         transferItems: [
           "New: Stage 0 — Performance / slow-data (0.1–0.2) + LAN (0.3) + order without Lead (0.4.1–0.4.3) + canonical VPS (0.5)",
           "New: Stage 20 — Lead / Order card UX + unified messaging (20.1–20.4)",
@@ -296,9 +296,9 @@
       ru: {
         brandTitle: "Roadmap v1.00",
         brandSub: "HTML-близнец SL-ROADMAP-v1.00",
-        chipUpdated: "Обновлено: 2026-08-31",
+        chipUpdated: "Обновлено: 2026-10-02",
         chipCarry: "Перенос: 1.4.3, группа 2, 7, 12.4–12.5, 13–16, 18.4 + Stages 0, 20–28",
-        chipActive: "Активно: v1.00 — 13.1.2 стоп на visual 13.1.2.6",
+        chipActive: "История v1.00 — 13.1.2 закрыт 2026-10-02; открытая очередь в v1.1",
         legendTitle: "Легенда",
         legendDone: "`[x]` выполнено",
         legendTodo: "`[ ]` открыто",
@@ -307,7 +307,7 @@
         heroText: "Stage 0 (производительность + LAN + заказ без лида + канонический VPS 0.5), Stage 20 UX лида/заказа, Stage 21 кабинет Пользователи, Stage 22 Design v1.0, Stage 23 Единые Задачи, Stage 24 кабинет швеи (закрыт), Stage 25 QR техкарты (закрыт), Stage 26 живой backlog находок (припаркован; owner-pull), Stage 27 выгрузка в 1С:УНФ (27.0.1 закрыт; 27.1+ припаркован; owner-pull), Stage 28 самостоятельные ТК + нумерация (припаркован; owner-pull), Stage 7 Спецификации (закрыт), Stage 12.4 инвентаризация (закрыт owner visual 12.4.1.6), плюс перенос 1.4.3, группа 2 (закрыта), 12.5 (текущий), 13–16, 18.4. Язык EN / RU.",
         progressLabel: "Общий прогресс",
         transferTitle: "Перенос владельца",
-        transferText: "Stage 13.1.2 ЗП в работе — стоп на owner visual 13.1.2.6. ADR-034. Stage 13.1.1 закрыт. Stage 27 припаркован. Не стартовать 13.2 / 27 сам.",
+        transferText: "Stage 13.1.2 закрыт 2026-10-02 (owner visual 13.1.2.6). Открытый остаток в roadmap-v1.1.md. Stage 27 остаётся owner-pull.",
         transferItems: [
           "Новое: Stage 0 — Производительность / slow-data (0.1–0.2) + LAN (0.3) + заказ без лида (0.4.1–0.4.3) + канонический VPS (0.5)",
           "Новое: Stage 20 — UX карточек лида / заказа + единая переписка (20.1–20.4)",
@@ -798,8 +798,8 @@
                   ru: "S3-совместимое хранилище медиа (приватный бакет; API на VPS; вместо диска 0.5.10)"
                 },
                 note: {
-                  en: "v1.00 parked 2026-08-26; owner-pull; do not auto-start while project is small; no s3fs; ADR-011/022",
-                  ru: "v1.00 припаркован 2026-08-26; owner-pull; не стартовать; без s3fs; ADR-011/022"
+                  en: "moved → v1.1; v1.00 parked 2026-08-26; owner-pull; do not auto-start while project is small; no s3fs; ADR-011/022",
+                  ru: "перенесено в v1.1; v1.00 припаркован 2026-08-26; owner-pull; не стартовать; без s3fs; ADR-011/022"
                 }
               }
             ]
@@ -1836,6 +1836,10 @@
               {
                 code: "12.5.2",
                 done: false,
+                note: {
+                  en: "moved → v1.1; docs/roadmap/roadmap-v1.1.md",
+                  ru: "перенесено в v1.1; docs/roadmap/roadmap-v1.1.md"
+                },
                 title: {
                   en: "Reserves (sales/production) — later",
                   ru: "Резервы (продажи/производство) — later"
@@ -1849,8 +1853,8 @@
         code: "13",
         title: { en: "Stage 13 — Procurement", ru: "Этап 13 — Закупки" },
         note: {
-          en: "Carried from v0.9.0. Soft UI hub 22.6. Stage 13.1.1 closed. Stage 13.1.2 in flight (ADR-034); stop at visual 13.1.2.6. Task v1.00-stage-13.1.2-purchase-orders.md.",
-          ru: "Перенесено из v0.9.0. Хаб Soft UI 22.6. Stage 13.1.1 закрыт. Stage 13.1.2 в работе (ADR-034); стоп на visual 13.1.2.6."
+          en: "Carried from v0.9.0. Soft UI hub 22.6. Stage 13.1.1 closed. Stage 13.1.2 closed 2026-10-02 (owner visual 13.1.2.6). Open 13.2 moved to v1.1. Task v1.00-stage-13.1.2-purchase-orders.md.",
+          ru: "Перенесено из v0.9.0. Хаб Soft UI 22.6. Stage 13.1.1 закрыт. Stage 13.1.2 закрыт 2026-10-02 (owner visual 13.1.2.6). Открытый 13.2 перенесён в v1.1."
         },
         blocks: [
           {
@@ -1990,10 +1994,14 @@
               },
               {
                 code: "13.1.2.6",
-                done: false,
+                done: true,
                 title: {
                   en: "Regression + owner visual",
                   ru: "Регрессия + визуальная проверка владельцем"
+                },
+                note: {
+                  en: "v1.00 2026-10-02; owner visual OK /purchases/orders; Stage 13.1.2 complete",
+                  ru: "v1.00 2026-10-02; owner visual OK; 13.1.2 закрыт"
                 }
               }
             ]
@@ -2004,6 +2012,10 @@
               {
                 code: "13.2.1",
                 done: false,
+                note: {
+                  en: "moved → v1.1; docs/roadmap/roadmap-v1.1.md",
+                  ru: "перенесено в v1.1; docs/roadmap/roadmap-v1.1.md"
+                },
                 title: {
                   en: "Receipts and returns",
                   ru: "Поступления и возвраты"
@@ -2012,6 +2024,10 @@
               {
                 code: "13.2.2",
                 done: false,
+                note: {
+                  en: "moved → v1.1; docs/roadmap/roadmap-v1.1.md",
+                  ru: "перенесено в v1.1; docs/roadmap/roadmap-v1.1.md"
+                },
                 title: {
                   en: "Demand planning and minimum stock linkage",
                   ru: "Планирование потребности и связь с минимальным остатком"
@@ -2038,6 +2054,10 @@
               {
                 code: "14.1.1",
                 done: false,
+                note: {
+                  en: "moved → v1.1; docs/roadmap/roadmap-v1.1.md",
+                  ru: "перенесено в v1.1; docs/roadmap/roadmap-v1.1.md"
+                },
                 title: {
                   en: "Shipping orders, packaging, delivery, and documents — on top of already shipped warehouse issue (ADR-019); do not duplicate issue",
                   ru: "Заказы на отгрузку, упаковка, доставка и документы — поверх уже shipped (складское списание ADR-019); не дублировать issue"
@@ -2051,6 +2071,10 @@
               {
                 code: "14.2.1",
                 done: false,
+                note: {
+                  en: "moved → v1.1; docs/roadmap/roadmap-v1.1.md",
+                  ru: "перенесено в v1.1; docs/roadmap/roadmap-v1.1.md"
+                },
                 title: {
                   en: "Invoices, payments, advances, and debt",
                   ru: "Счета, оплаты, авансы и задолженность"
@@ -2059,6 +2083,10 @@
               {
                 code: "14.2.2",
                 done: false,
+                note: {
+                  en: "moved → v1.1; docs/roadmap/roadmap-v1.1.md",
+                  ru: "перенесено в v1.1; docs/roadmap/roadmap-v1.1.md"
+                },
                 title: {
                   en: "Settlements by order and client",
                   ru: "Взаиморасчёты по заказу и клиенту"
@@ -2082,6 +2110,10 @@
               {
                 code: "15.1.1",
                 done: false,
+                note: {
+                  en: "moved → v1.1; docs/roadmap/roadmap-v1.1.md",
+                  ru: "перенесено в v1.1; docs/roadmap/roadmap-v1.1.md"
+                },
                 title: {
                   en: "Planned, normative, and actual costing",
                   ru: "Плановая, нормативная и фактическая себестоимость"
@@ -2090,6 +2122,10 @@
               {
                 code: "15.1.2",
                 done: false,
+                note: {
+                  en: "moved → v1.1; docs/roadmap/roadmap-v1.1.md",
+                  ru: "перенесено в v1.1; docs/roadmap/roadmap-v1.1.md"
+                },
                 title: {
                   en: "Margin and plan-fact analysis",
                   ru: "Маржа и план-факт анализ"
@@ -2115,6 +2151,10 @@
               {
                 code: "15.2.2",
                 done: false,
+                note: {
+                  en: "moved → v1.1; docs/roadmap/roadmap-v1.1.md",
+                  ru: "перенесено в v1.1; docs/roadmap/roadmap-v1.1.md"
+                },
                 title: {
                   en: "ERP analytics and management P&L",
                   ru: "ERP-аналитика и управленческий P&L"
@@ -2142,6 +2182,10 @@
               {
                 code: "16.1.1",
                 done: false,
+                note: {
+                  en: "moved → v1.1; docs/roadmap/roadmap-v1.1.md",
+                  ru: "перенесено в v1.1; docs/roadmap/roadmap-v1.1.md"
+                },
                 title: {
                   en: "Website forms, email, VK, Telegram, and telephony",
                   ru: "Формы сайта, email, VK, Telegram и телефония"
@@ -2150,6 +2194,10 @@
               {
                 code: "16.1.2",
                 done: false,
+                note: {
+                  en: "moved → v1.1; docs/roadmap/roadmap-v1.1.md",
+                  ru: "перенесено в v1.1; docs/roadmap/roadmap-v1.1.md"
+                },
                 title: {
                   en: "Google Sheets and webhooks",
                   ru: "Google Sheets и webhooks"
@@ -2172,13 +2220,17 @@
                   ru: "Inbound Excel заказов УНФ→платформа — припаркован; не MVP; канон выгрузки = Stage 27"
                 },
                 note: {
-                  en: "Parked inbound; canonical 1C export is Stage 27; prefetch 0.4",
-                  ru: "Inbound припаркован; канон выгрузки = Stage 27; prefetch 0.4"
+                  en: "moved → v1.1; Parked inbound; canonical 1C export is Stage 27; prefetch 0.4",
+                  ru: "перенесено в v1.1; Inbound припаркован; канон выгрузки = Stage 27; prefetch 0.4"
                 }
               },
               {
                 code: "16.2.2",
                 done: false,
+                note: {
+                  en: "moved → v1.1; docs/roadmap/roadmap-v1.1.md",
+                  ru: "перенесено в v1.1; docs/roadmap/roadmap-v1.1.md"
+                },
                 title: {
                   en: "Delivery and payment-system integrations",
                   ru: "Интеграции доставки и платёжных систем"
@@ -2187,6 +2239,10 @@
               {
                 code: "16.2.3",
                 done: false,
+                note: {
+                  en: "moved → v1.1; docs/roadmap/roadmap-v1.1.md",
+                  ru: "перенесено в v1.1; docs/roadmap/roadmap-v1.1.md"
+                },
                 title: {
                   en: "External API for third-party systems",
                   ru: "Внешний API для сторонних систем"
@@ -2207,6 +2263,10 @@
               {
                 code: "16.3.1",
                 done: false,
+                note: {
+                  en: "moved → v1.1; docs/roadmap/roadmap-v1.1.md",
+                  ru: "перенесено в v1.1; docs/roadmap/roadmap-v1.1.md"
+                },
                 title: {
                   en: "Contract: job runner + section adapter registry (upload → map → validate → dry-run → commit; audit hooks)",
                   ru: "Контракт: runner заданий + реестр адаптеров разделов (upload → map → validate → dry-run → commit; audit hooks)"
@@ -2215,6 +2275,10 @@
               {
                 code: "16.3.2",
                 done: false,
+                note: {
+                  en: "moved → v1.1; docs/roadmap/roadmap-v1.1.md",
+                  ru: "перенесено в v1.1; docs/roadmap/roadmap-v1.1.md"
+                },
                 title: {
                   en: "Wire nomenclature adapter from 4.5 into the job shell",
                   ru: "Подключить адаптер номенклатуры из 4.5 к оболочке заданий"
@@ -2223,6 +2287,10 @@
               {
                 code: "16.3.3",
                 done: false,
+                note: {
+                  en: "moved → v1.1; docs/roadmap/roadmap-v1.1.md",
+                  ru: "перенесено в v1.1; docs/roadmap/roadmap-v1.1.md"
+                },
                 title: {
                   en: "Administration UI: jobs list + section picker (no duplicate SoT)",
                   ru: "UI администрирования: список заданий + выбор раздела (без дубля SoT)"
@@ -2231,6 +2299,10 @@
               {
                 code: "16.3.4",
                 done: false,
+                note: {
+                  en: "moved → v1.1; docs/roadmap/roadmap-v1.1.md",
+                  ru: "перенесено в v1.1; docs/roadmap/roadmap-v1.1.md"
+                },
                 title: {
                   en: "Regression tests + documentation checkpoint",
                   ru: "Регрессионные тесты + checkpoint документации"
@@ -2260,6 +2332,10 @@
               {
                 code: "18.4.1",
                 done: false,
+                note: {
+                  en: "moved → v1.1; docs/roadmap/roadmap-v1.1.md",
+                  ru: "перенесено в v1.1; docs/roadmap/roadmap-v1.1.md"
+                },
                 title: {
                   en: "Domain contract: OperationJournal entry fields, sources (sales / production), idempotency, retention",
                   ru: "Контракт: поля записи, источники (sales / production), idempotency, retention"
@@ -2268,6 +2344,10 @@
               {
                 code: "18.4.2",
                 done: false,
+                note: {
+                  en: "moved → v1.1; docs/roadmap/roadmap-v1.1.md",
+                  ru: "перенесено в v1.1; docs/roadmap/roadmap-v1.1.md"
+                },
                 title: {
                   en: "Database model, migration, schemas for global operations journal",
                   ru: "Модель БД, миграция, schemas"
@@ -2276,6 +2356,10 @@
               {
                 code: "18.4.3",
                 done: false,
+                note: {
+                  en: "moved → v1.1; docs/roadmap/roadmap-v1.1.md",
+                  ru: "перенесено в v1.1; docs/roadmap/roadmap-v1.1.md"
+                },
                 title: {
                   en: "Service API: append / query by entity (product_model_id, …); has_operations(entity) helper",
                   ru: "Service API: append / query; helper has_operations"
@@ -2284,6 +2368,10 @@
               {
                 code: "18.4.4",
                 done: false,
+                note: {
+                  en: "moved → v1.1; docs/roadmap/roadmap-v1.1.md",
+                  ru: "перенесено в v1.1; docs/roadmap/roadmap-v1.1.md"
+                },
                 title: {
                   en: "Write path: sales order uses model → append journal row (no write if model not used)",
                   ru: "Write path: продажа с моделью → строка журнала"
@@ -2292,6 +2380,10 @@
               {
                 code: "18.4.5",
                 done: false,
+                note: {
+                  en: "moved → v1.1; docs/roadmap/roadmap-v1.1.md",
+                  ru: "перенесено в v1.1; docs/roadmap/roadmap-v1.1.md"
+                },
                 title: {
                   en: "Write path: production / ТК uses model → append journal row",
                   ru: "Write path: производство / ТК → строка журнала"
@@ -2300,6 +2392,10 @@
               {
                 code: "18.4.6",
                 done: false,
+                note: {
+                  en: "moved → v1.1; docs/roadmap/roadmap-v1.1.md",
+                  ru: "перенесено в v1.1; docs/roadmap/roadmap-v1.1.md"
+                },
                 title: {
                   en: "Wire product-model guards (revert_to_draft, size-grid change) to real has_operations (replace Stage-6 stub)",
                   ru: "Подключить guards модели к реальному has_operations (заменить stub)"
@@ -2308,6 +2404,10 @@
               {
                 code: "18.4.7",
                 done: false,
+                note: {
+                  en: "moved → v1.1; docs/roadmap/roadmap-v1.1.md",
+                  ru: "перенесено в v1.1; docs/roadmap/roadmap-v1.1.md"
+                },
                 title: {
                   en: "Administration UI: journal list/filter (PT-02) under Администрирование → Журнал операций",
                   ru: "UI администрирования: список/фильтр журнала"
@@ -2316,6 +2416,10 @@
               {
                 code: "18.4.8",
                 done: false,
+                note: {
+                  en: "moved → v1.1; docs/roadmap/roadmap-v1.1.md",
+                  ru: "перенесено в v1.1; docs/roadmap/roadmap-v1.1.md"
+                },
                 title: {
                   en: "Regression tests + documentation checkpoint",
                   ru: "Регрессия + checkpoint документации"
@@ -4424,8 +4528,8 @@
           {
             title: { en: "26.3 — Tech-card document", ru: "26.3 — Документ техкарты /production/tech-cards/[id]" },
             note: {
-              en: "26.3.5–26.3.15 closed 2026-08-27/2026-08-29. Shop ?stage= layout stays. 26.3.14/26.3.15 owner visual pending.",
-              ru: "26.3.5–26.3.15 закрыты. Цеховой ?stage= не ломаем. 26.3.14/26.3.15 owner visual pending."
+              en: "26.3.5–26.3.15 closed 2026-08-27/2026-08-29. Shop ?stage= layout stays. 26.3.14/26.3.15 owner visual OK 2026-10-02.",
+              ru: "26.3.5–26.3.15 закрыты. Цеховой ?stage= не ломаем. 26.3.14/26.3.15 owner visual OK 2026-10-02."
             },
             items: [
               {
@@ -4592,8 +4696,8 @@
                   ru: "Заказ в данные по заказу"
                 },
                 note: {
-                  en: "v1.00 2026-08-29; owner visual pending /production/tech-cards/6",
-                  ru: "v1.00 2026-08-29; owner visual pending /production/tech-cards/6"
+                  en: "v1.00 2026-08-29; owner visual OK 2026-10-02 /production/tech-cards/6",
+                  ru: "v1.00 2026-08-29; owner visual OK 2026-10-02 /production/tech-cards/6"
                 }
               },
               {
@@ -4604,8 +4708,8 @@
                   ru: "Заказ: ввод или выбор"
                 },
                 note: {
-                  en: "v1.00 2026-08-29; owner visual pending /production/tech-cards/6; PATCH order-groups order_number",
-                  ru: "v1.00 2026-08-29; owner visual pending /production/tech-cards/6; PATCH номер заказа"
+                  en: "v1.00 2026-08-29; owner visual OK 2026-10-02 /production/tech-cards/6; PATCH order-groups order_number",
+                  ru: "v1.00 2026-08-29; owner visual OK 2026-10-02 /production/tech-cards/6; PATCH номер заказа"
                 }
               }
             ]
@@ -5036,8 +5140,8 @@
           {
             title: { en: "26.11 — Tech-cards list + document tabs", ru: "26.11 — Список техкарт + табы документа" },
             note: {
-              en: "26.11.1–26.11.14 closed 2026-08-29. List/kanban, copy/delete, create modal, tabs. Owner visual OK 26.11.3/10/11. 26.11.13 owner visual pending list responsible + filter. 26.11.14 free-text nomenclature + no quantity field.",
-              ru: "26.11.1–26.11.14 закрыты. Список/канбан, копия/удаление, модалка, табы. Owner visual OK 26.11.3/10/11. 26.11.13 owner visual pending ответственный. 26.11.14 ручная номенклатура + без количества."
+              en: "26.11.1–26.11.14 closed 2026-08-29. List/kanban, copy/delete, create modal, tabs. Owner visual OK 26.11.3/10/11. 26.11.13 owner visual OK 2026-10-02 list responsible + filter. 26.11.14 free-text nomenclature + no quantity field.",
+              ru: "26.11.1–26.11.14 закрыты. Список/канбан, копия/удаление, модалка, табы. Owner visual OK 26.11.3/10/11. 26.11.13 owner visual OK 2026-10-02 ответственный. 26.11.14 ручная номенклатура + без количества."
             },
             items: [
               {
@@ -5192,8 +5296,8 @@
                   ru: "Список: ответственный и фильтр"
                 },
                 note: {
-                  en: "v1.00 2026-08-29; owner visual pending /production/tech-cards; list_card_responsible_name",
-                  ru: "v1.00 2026-08-29; owner visual pending /production/tech-cards; embed + фильтр"
+                  en: "v1.00 2026-08-29; owner visual OK 2026-10-02 /production/tech-cards; list_card_responsible_name",
+                  ru: "v1.00 2026-08-29; owner visual OK 2026-10-02 /production/tech-cards; embed + фильтр"
                 }
               },
               {
@@ -5216,8 +5320,8 @@
                   ru: "Персонализация: кол-во в строке и сумма"
                 },
                 note: {
-                  en: "v1.00 2026-08-29; aggregate UI + import_unit_lines; owner visual pending",
-                  ru: "v1.00 2026-08-29; UI + импорт; owner visual pending"
+                  en: "v1.00 2026-08-29; aggregate UI + import_unit_lines; owner visual OK 2026-10-02",
+                  ru: "v1.00 2026-08-29; UI + импорт; owner visual OK 2026-10-02"
                 }
               },
               {
@@ -5228,8 +5332,8 @@
                   ru: "Модалка карточки модели"
                 },
                 note: {
-                  en: "v1.00 2026-08-29; product-model-card-modal.tsx; owner visual pending",
-                  ru: "v1.00 2026-08-29; модалка; Edit/Save/Cancel; owner visual pending"
+                  en: "v1.00 2026-08-29; product-model-card-modal.tsx; owner visual OK 2026-10-02",
+                  ru: "v1.00 2026-08-29; модалка; Edit/Save/Cancel; owner visual OK 2026-10-02"
                 }
               }
             ]
@@ -5354,6 +5458,10 @@
               {
                 code: "27.1.1",
                 done: false,
+                note: {
+                  en: "moved → v1.1; docs/roadmap/roadmap-v1.1.md",
+                  ru: "перенесено в v1.1; docs/roadmap/roadmap-v1.1.md"
+                },
                 title: {
                   en: "Export journal + idempotency by platform document id; package carries ids for order / client / organization / nomenclature / variant / Spec version",
                   ru: "Журнал выгрузок + идемпотентность; id сущностей в пакете"
@@ -5362,6 +5470,10 @@
               {
                 code: "27.1.2",
                 done: false,
+                note: {
+                  en: "moved → v1.1; docs/roadmap/roadmap-v1.1.md",
+                  ru: "перенесено в v1.1; docs/roadmap/roadmap-v1.1.md"
+                },
                 title: {
                   en: "File transport MVP (xlsx/csv) + UI entry (not catalog toolbar 4.5; not print 18.3; not job hub 16.3 as SoT)",
                   ru: "Транспорт файла и точка UI"
@@ -5370,6 +5482,10 @@
               {
                 code: "27.1.3",
                 done: false,
+                note: {
+                  en: "moved → v1.1; docs/roadmap/roadmap-v1.1.md",
+                  ru: "перенесено в v1.1; docs/roadmap/roadmap-v1.1.md"
+                },
                 title: {
                   en: "Tests for journal/idempotency without live 1C",
                   ru: "Тесты журнала без живой 1С"
@@ -5390,6 +5506,10 @@
               {
                 code: "27.2.1",
                 done: false,
+                note: {
+                  en: "moved → v1.1; docs/roadmap/roadmap-v1.1.md",
+                  ru: "перенесено в v1.1; docs/roadmap/roadmap-v1.1.md"
+                },
                 title: {
                   en: "Field map for this document (owner + UNF load form) — first implement slice",
                   ru: "Карта полей заказа покупателя"
@@ -5398,6 +5518,10 @@
               {
                 code: "27.2.2",
                 done: false,
+                note: {
+                  en: "moved → v1.1; docs/roadmap/roadmap-v1.1.md",
+                  ru: "перенесено в v1.1; docs/roadmap/roadmap-v1.1.md"
+                },
                 title: {
                   en: "Adapter: SalesOrder export package",
                   ru: "Адаптер пакета заказа"
@@ -5406,6 +5530,10 @@
               {
                 code: "27.2.3",
                 done: false,
+                note: {
+                  en: "moved → v1.1; docs/roadmap/roadmap-v1.1.md",
+                  ru: "перенесено в v1.1; docs/roadmap/roadmap-v1.1.md"
+                },
                 title: {
                   en: "Owner visual of file / dry-run",
                   ru: "Owner visual файла"
@@ -5426,6 +5554,10 @@
               {
                 code: "27.3.1",
                 done: false,
+                note: {
+                  en: "moved → v1.1; docs/roadmap/roadmap-v1.1.md",
+                  ru: "перенесено в v1.1; docs/roadmap/roadmap-v1.1.md"
+                },
                 title: {
                   en: "Field map (approved Spec only)",
                   ru: "Карта полей спецификации"
@@ -5434,6 +5566,10 @@
               {
                 code: "27.3.2",
                 done: false,
+                note: {
+                  en: "moved → v1.1; docs/roadmap/roadmap-v1.1.md",
+                  ru: "перенесено в v1.1; docs/roadmap/roadmap-v1.1.md"
+                },
                 title: {
                   en: "Adapter: approved Specification package",
                   ru: "Адаптер пакета Spec"
@@ -5442,6 +5578,10 @@
               {
                 code: "27.3.3",
                 done: false,
+                note: {
+                  en: "moved → v1.1; docs/roadmap/roadmap-v1.1.md",
+                  ru: "перенесено в v1.1; docs/roadmap/roadmap-v1.1.md"
+                },
                 title: {
                   en: "Owner visual",
                   ru: "Owner visual"
@@ -5462,6 +5602,10 @@
               {
                 code: "27.4.1",
                 done: false,
+                note: {
+                  en: "moved → v1.1; docs/roadmap/roadmap-v1.1.md",
+                  ru: "перенесено в v1.1; docs/roadmap/roadmap-v1.1.md"
+                },
                 title: {
                   en: "SoT: new sales document on the order or assemble from order + shipped / fg_issue",
                   ru: "SoT накладной"
@@ -5470,6 +5614,10 @@
               {
                 code: "27.4.2",
                 done: false,
+                note: {
+                  en: "moved → v1.1; docs/roadmap/roadmap-v1.1.md",
+                  ru: "перенесено в v1.1; docs/roadmap/roadmap-v1.1.md"
+                },
                 title: {
                   en: "Field map",
                   ru: "Карта полей ТН/УПД"
@@ -5478,6 +5626,10 @@
               {
                 code: "27.4.3",
                 done: false,
+                note: {
+                  en: "moved → v1.1; docs/roadmap/roadmap-v1.1.md",
+                  ru: "перенесено в v1.1; docs/roadmap/roadmap-v1.1.md"
+                },
                 title: {
                   en: "Adapter: ТН/УПД package",
                   ru: "Адаптер пакета"
@@ -5486,6 +5638,10 @@
               {
                 code: "27.4.4",
                 done: false,
+                note: {
+                  en: "moved → v1.1; docs/roadmap/roadmap-v1.1.md",
+                  ru: "перенесено в v1.1; docs/roadmap/roadmap-v1.1.md"
+                },
                 title: {
                   en: "Owner visual",
                   ru: "Owner visual"
@@ -5499,6 +5655,10 @@
               {
                 code: "27.5.1",
                 done: false,
+                note: {
+                  en: "moved → v1.1; docs/roadmap/roadmap-v1.1.md",
+                  ru: "перенесено в v1.1; docs/roadmap/roadmap-v1.1.md"
+                },
                 title: {
                   en: "Regression + docs (contour D, erp-check, project-structure, 16.2.1 pointer)",
                   ru: "Регрессия + docs"
