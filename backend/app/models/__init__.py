@@ -181,6 +181,7 @@ from app.models.audit import AuditEvent
 from app.models.collaboration import (
     CollaborationMention,
     CollaborationMessage,
+    CollaborationMessageAttachment,
     CollaborationMicrotask,
     CollaborationMicrotaskStatus,
     CollaborationNotification,
@@ -343,6 +344,7 @@ __all__ = [
     "AuditEvent",
     "CollaborationThread",
     "CollaborationMessage",
+    "CollaborationMessageAttachment",
     "CollaborationMention",
     "CollaborationMicrotask",
     "CollaborationMicrotaskStatus",

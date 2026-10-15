@@ -115,6 +115,11 @@ class CollaborationMessage(Base):
         ForeignKey("technical_cards.id", ondelete="SET NULL"),
         nullable=True,
     )
+    reply_to_message_id: Mapped[int | None] = mapped_column(
+        ForeignKey("collaboration_messages.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,
@@ -130,10 +135,45 @@ class CollaborationMessage(Base):
     thread: Mapped[CollaborationThread] = relationship(back_populates="messages")
     author: Mapped[PlatformUser] = relationship("PlatformUser")
     technical_card: Mapped[TechnicalCard | None] = relationship("TechnicalCard")
-    mentions: Mapped[list[CollaborationMention]] = relationship(
+    mentions: Mapped[list["CollaborationMention"]] = relationship(
         back_populates="message",
         cascade="all, delete-orphan",
     )
+    attachments: Mapped[list["CollaborationMessageAttachment"]] = relationship(
+        back_populates="message",
+        cascade="all, delete-orphan",
+        order_by="CollaborationMessageAttachment.id",
+    )
+
+
+class CollaborationMessageAttachment(Base):
+    """Image attached to a staff collaboration message."""
+
+    __tablename__ = "collaboration_message_attachments"
+    __table_args__ = (
+        Index("ix_collaboration_message_attachments_message_id", "message_id"),
+        CheckConstraint(
+            "file_size > 0",
+            name="ck_collaboration_message_attachments_file_size",
+        ),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    message_id: Mapped[int] = mapped_column(
+        ForeignKey("collaboration_messages.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    filename: Mapped[str] = mapped_column(String(255), nullable=False)
+    storage_key: Mapped[str] = mapped_column(String(500), nullable=False, unique=True)
+    mime_type: Mapped[str] = mapped_column(String(100), nullable=False)
+    file_size: Mapped[int] = mapped_column(Integer, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+    )
+
+    message: Mapped[CollaborationMessage] = relationship(back_populates="attachments")
 
 
 class CollaborationMention(Base):

@@ -12,6 +12,20 @@ export type CollaborationMention = {
   created_at: string;
 };
 
+export type CollaborationAttachment = {
+  id: number;
+  filename: string;
+  mime_type: string;
+  file_size: number;
+  content_url: string;
+};
+
+export type CollaborationAttachmentInput = {
+  filename: string;
+  mime_type: string;
+  content_base64: string;
+};
+
 export type CollaborationMessage = {
   id: number;
   thread_id: number;
@@ -23,9 +37,11 @@ export type CollaborationMessage = {
   author_display_name: string;
   body: string;
   technical_card_id: number | null;
+  reply_to_message_id?: number | null;
   created_at: string;
   updated_at: string;
   mentions: CollaborationMention[];
+  attachments?: CollaborationAttachment[];
 };
 
 export type CollaborationMicrotask = {
@@ -101,7 +117,12 @@ export async function listOrderCollaborationMessages(
 
 export async function createOrderCollaborationMessage(
   orderId: number | string,
-  payload: { body: string; technical_card_id?: number | null },
+  payload: {
+    body: string;
+    technical_card_id?: number | null;
+    attachments?: CollaborationAttachmentInput[];
+    reply_to_message_id?: number | null;
+  },
 ): Promise<ActionResult<CollaborationMessage>> {
   const auth = await sessionAuthHeaders();
   const response = await fetch(
@@ -112,6 +133,8 @@ export async function createOrderCollaborationMessage(
       body: JSON.stringify({
         body: payload.body,
         technical_card_id: payload.technical_card_id ?? null,
+        attachments: payload.attachments ?? [],
+        reply_to_message_id: payload.reply_to_message_id ?? null,
       }),
       cache: "no-store",
     },
@@ -359,7 +382,11 @@ export async function listStandaloneTechCardCollaborationMessages(
 
 export async function createStandaloneTechCardCollaborationMessage(
   cardId: number | string,
-  payload: { body: string },
+  payload: {
+    body: string;
+    attachments?: CollaborationAttachmentInput[];
+    reply_to_message_id?: number | null;
+  },
 ): Promise<ActionResult<CollaborationMessage>> {
   const auth = await sessionAuthHeaders();
   const response = await fetch(
@@ -367,7 +394,11 @@ export async function createStandaloneTechCardCollaborationMessage(
     {
       method: "POST",
       headers: { "Content-Type": "application/json", ...auth },
-      body: JSON.stringify({ body: payload.body }),
+      body: JSON.stringify({
+        body: payload.body,
+        attachments: payload.attachments ?? [],
+        reply_to_message_id: payload.reply_to_message_id ?? null,
+      }),
       cache: "no-store",
     },
   );
@@ -382,7 +413,11 @@ export async function createStandaloneTechCardCollaborationMessage(
 
 export async function createLeadCollaborationMessage(
   leadId: number | string,
-  payload: { body: string },
+  payload: {
+    body: string;
+    attachments?: CollaborationAttachmentInput[];
+    reply_to_message_id?: number | null;
+  },
 ): Promise<ActionResult<CollaborationMessage>> {
   const auth = await sessionAuthHeaders();
   const response = await fetch(
@@ -390,7 +425,11 @@ export async function createLeadCollaborationMessage(
     {
       method: "POST",
       headers: { "Content-Type": "application/json", ...auth },
-      body: JSON.stringify({ body: payload.body }),
+      body: JSON.stringify({
+        body: payload.body,
+        attachments: payload.attachments ?? [],
+        reply_to_message_id: payload.reply_to_message_id ?? null,
+      }),
       cache: "no-store",
     },
   );

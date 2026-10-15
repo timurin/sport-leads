@@ -2,8 +2,12 @@
 
 from __future__ import annotations
 
+import base64
+import binascii
 import re
+import uuid
 from datetime import datetime, timezone
+from pathlib import Path
 
 from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session, selectinload
@@ -12,6 +16,7 @@ from app.models.auth import PlatformUser
 from app.models.collaboration import (
     CollaborationMention,
     CollaborationMessage,
+    CollaborationMessageAttachment,
     CollaborationMicrotask,
     CollaborationMicrotaskStatus,
     CollaborationNotification,
@@ -23,6 +28,7 @@ from app.models.technical_card import TechnicalCard, TechnicalCardOrderGroup
 from app.schemas.collaboration import (
     MICROTASK_TITLE_TEMPLATES,
     CollaborationMentionCandidateRead,
+    CollaborationAttachmentRead,
     CollaborationMentionRead,
     CollaborationMessageCreate,
     CollaborationMessageRead,
@@ -34,6 +40,14 @@ from app.schemas.collaboration import (
 )
 
 _MENTION_RE = re.compile(r"(?<![\w.])@([A-Za-z0-9_./-]{1,64})")
+ATTACHMENT_ROOT = Path("storage/collaboration-attachments").resolve()
+MAX_ATTACHMENT_BYTES = 8 * 1024 * 1024
+_ALLOWED_IMAGE_TYPES = {"image/jpeg", "image/png", "image/webp", "image/gif"}
+_MESSAGE_LOAD = (
+    selectinload(CollaborationMessage.author),
+    selectinload(CollaborationMessage.mentions),
+    selectinload(CollaborationMessage.attachments),
+)
 
 
 class CollaborationNotFoundError(RuntimeError):
@@ -141,6 +155,98 @@ def get_or_create_order_group_thread(
     return thread
 
 
+def _safe_attachment_filename(filename: str) -> str:
+    name = Path(filename).name.strip()
+    if not name or name in {".", ".."}:
+        raise CollaborationValidationError("Некорректное имя файла")
+    return re.sub(r"[^A-Za-z0-9._-]", "_", name)[:255]
+
+
+def _decode_attachment(content: str, mime_type: str) -> bytes:
+    if mime_type not in _ALLOWED_IMAGE_TYPES:
+        raise CollaborationValidationError("Можно приложить только изображение")
+    try:
+        data = base64.b64decode(content, validate=True)
+    except (binascii.Error, ValueError) as error:
+        raise CollaborationValidationError("Некорректное изображение") from error
+    if not data or len(data) > MAX_ATTACHMENT_BYTES:
+        raise CollaborationValidationError("Изображение должно быть от 1 байта до 8 МБ")
+    if mime_type == "image/png" and not data.startswith(b"\x89PNG"):
+        raise CollaborationValidationError("Файл не является PNG")
+    if mime_type == "image/jpeg" and not data.startswith(b"\xff\xd8"):
+        raise CollaborationValidationError("Файл не является JPEG")
+    if mime_type == "image/gif" and not data.startswith(b"GIF8"):
+        raise CollaborationValidationError("Файл не является GIF")
+    if mime_type == "image/webp" and not (data.startswith(b"RIFF") and data[8:12] == b"WEBP"):
+        raise CollaborationValidationError("Файл не является WebP")
+    return data
+
+
+def _store_attachments(db: Session, message: CollaborationMessage, payload: CollaborationMessageCreate) -> None:
+    if not payload.attachments:
+        return
+    written: list[Path] = []
+    try:
+        for item in payload.attachments:
+            data = _decode_attachment(item.content_base64, item.mime_type)
+            filename = _safe_attachment_filename(item.filename)
+            key = f"{message.id}/{uuid.uuid4().hex}-{filename}"
+            path = ATTACHMENT_ROOT / key
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(data)
+            written.append(path)
+            db.add(
+                CollaborationMessageAttachment(
+                    message_id=message.id,
+                    filename=filename,
+                    storage_key=key,
+                    mime_type=item.mime_type,
+                    file_size=len(data),
+                )
+            )
+        db.flush()
+    except Exception:
+        for path in written:
+            if path.exists():
+                path.unlink()
+        raise
+
+
+def attachment_file(db: Session, message_id: int, attachment_id: int) -> tuple[Path, str]:
+    row = db.get(CollaborationMessageAttachment, attachment_id)
+    if row is None or row.message_id != message_id:
+        raise CollaborationNotFoundError("Вложение не найдено")
+    path = (ATTACHMENT_ROOT / row.storage_key).resolve()
+    if ATTACHMENT_ROOT not in path.parents:
+        raise CollaborationValidationError("Небезопасный путь к файлу")
+    if not path.is_file():
+        raise CollaborationNotFoundError("Файл вложения не найден")
+    return path, row.mime_type
+
+
+def _attachment_read(row: CollaborationMessageAttachment) -> CollaborationAttachmentRead:
+    return CollaborationAttachmentRead(
+        id=row.id,
+        filename=row.filename,
+        mime_type=row.mime_type,
+        file_size=row.file_size,
+        content_url=f"/collaboration/messages/{row.message_id}/attachments/{row.id}/content",
+    )
+
+
+def _reply_target_id(
+    db: Session,
+    thread_id: int,
+    reply_to_message_id: int | None,
+) -> int | None:
+    if reply_to_message_id is None:
+        return None
+    target = db.get(CollaborationMessage, reply_to_message_id)
+    if target is None or target.thread_id != thread_id:
+        raise CollaborationValidationError("Нельзя ответить на сообщение из другого чата")
+    return target.id
+
+
 def _message_read(
     message: CollaborationMessage,
     *,
@@ -160,6 +266,7 @@ def _message_read(
         author_display_name=author.display_name if author is not None else "",
         body=message.body,
         technical_card_id=message.technical_card_id,
+        reply_to_message_id=message.reply_to_message_id,
         created_at=message.created_at,
         updated_at=message.updated_at,
         mentions=[
@@ -171,6 +278,7 @@ def _message_read(
             )
             for row in message.mentions
         ],
+        attachments=[_attachment_read(row) for row in message.attachments],
     )
 
 
@@ -221,8 +329,7 @@ def list_messages(
     stmt = (
         select(CollaborationMessage)
         .options(
-            selectinload(CollaborationMessage.author),
-            selectinload(CollaborationMessage.mentions),
+            *_MESSAGE_LOAD,
         )
         .where(CollaborationMessage.thread_id == thread.id)
         .order_by(CollaborationMessage.id.asc())
@@ -332,9 +439,11 @@ def create_message(
         author_platform_user_id=author.id,
         body=payload.body,
         technical_card_id=payload.technical_card_id,
+        reply_to_message_id=_reply_target_id(db, thread.id, payload.reply_to_message_id),
     )
     db.add(message)
     db.flush()
+    _store_attachments(db, message, payload)
 
     for login in parse_mention_logins(payload.body):
         user = db.scalar(
@@ -368,8 +477,7 @@ def create_message(
     message = db.scalar(
         select(CollaborationMessage)
         .options(
-            selectinload(CollaborationMessage.author),
-            selectinload(CollaborationMessage.mentions),
+            *_MESSAGE_LOAD,
         )
         .where(CollaborationMessage.id == message.id)
     )
@@ -387,8 +495,7 @@ def list_lead_messages(
     stmt = (
         select(CollaborationMessage)
         .options(
-            selectinload(CollaborationMessage.author),
-            selectinload(CollaborationMessage.mentions),
+            *_MESSAGE_LOAD,
         )
         .where(CollaborationMessage.thread_id == thread.id)
         .order_by(CollaborationMessage.id.asc())
@@ -415,9 +522,11 @@ def create_lead_message(
         author_platform_user_id=author.id,
         body=payload.body,
         technical_card_id=None,
+        reply_to_message_id=_reply_target_id(db, thread.id, payload.reply_to_message_id),
     )
     db.add(message)
     db.flush()
+    _store_attachments(db, message, payload)
 
     for login in parse_mention_logins(payload.body):
         user = db.scalar(
@@ -450,8 +559,7 @@ def create_lead_message(
     message = db.scalar(
         select(CollaborationMessage)
         .options(
-            selectinload(CollaborationMessage.author),
-            selectinload(CollaborationMessage.mentions),
+            *_MESSAGE_LOAD,
         )
         .where(CollaborationMessage.id == message.id)
     )
@@ -470,8 +578,7 @@ def list_standalone_card_messages(
     stmt = (
         select(CollaborationMessage)
         .options(
-            selectinload(CollaborationMessage.author),
-            selectinload(CollaborationMessage.mentions),
+            *_MESSAGE_LOAD,
         )
         .where(
             CollaborationMessage.thread_id == thread.id,
@@ -507,9 +614,11 @@ def create_standalone_card_message(
         author_platform_user_id=author.id,
         body=payload.body,
         technical_card_id=card.id,
+        reply_to_message_id=_reply_target_id(db, thread.id, payload.reply_to_message_id),
     )
     db.add(message)
     db.flush()
+    _store_attachments(db, message, payload)
 
     for login in parse_mention_logins(payload.body):
         user = db.scalar(
@@ -543,8 +652,7 @@ def create_standalone_card_message(
     message = db.scalar(
         select(CollaborationMessage)
         .options(
-            selectinload(CollaborationMessage.author),
-            selectinload(CollaborationMessage.mentions),
+            *_MESSAGE_LOAD,
         )
         .where(CollaborationMessage.id == message.id)
     )

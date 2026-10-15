@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 
 from app.api.deps_auth import get_current_platform_user
@@ -140,6 +141,23 @@ def create_standalone_tech_card_collaboration_message(
         return collab_svc.create_standalone_card_message(db, card_id, user, payload)
     except (collab_svc.CollaborationNotFoundError, collab_svc.CollaborationValidationError) as error:
         raise _map_error(error) from error
+
+
+@router.get(
+    "/collaboration/messages/{message_id}/attachments/{attachment_id}/content",
+    operation_id="get_collaboration_message_attachment_content",
+)
+def read_collaboration_attachment(
+    message_id: int,
+    attachment_id: int,
+    db: Session = Depends(get_db),
+    _user: PlatformUser = Depends(get_current_platform_user),
+):
+    try:
+        path, mime_type = collab_svc.attachment_file(db, message_id, attachment_id)
+    except (collab_svc.CollaborationNotFoundError, collab_svc.CollaborationValidationError) as error:
+        raise _map_error(error) from error
+    return FileResponse(path, media_type=mime_type)
 
 
 @router.get(

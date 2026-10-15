@@ -168,6 +168,72 @@ def test_collaboration_messages_mentions_and_auth() -> None:
         app.dependency_overrides.pop(get_db, None)
 
 
+def test_collaboration_message_image_attachment() -> None:
+    factory = _session_factory()
+    png = (
+        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=="
+    )
+
+    def override_get_db():
+        with factory() as db:
+            yield db
+
+    app.dependency_overrides[get_db] = override_get_db
+    try:
+        with factory() as db:
+            ensure_user_with_role(db, login="alice", role_code="admin")
+            order_id, card_id = _seed_order(db, number="SO-COLLAB-IMG")
+            db.commit()
+
+        with TestClient(app) as client:
+            login_client(client, login="alice")
+            empty = client.post(
+                f"/orders/{order_id}/collaboration/messages",
+                json={"body": "  ", "technical_card_id": card_id},
+            )
+            assert empty.status_code == 422
+
+            created = client.post(
+                f"/orders/{order_id}/collaboration/messages",
+                json={
+                    "body": "",
+                    "technical_card_id": card_id,
+                    "attachments": [
+                        {
+                            "filename": "layout.png",
+                            "mime_type": "image/png",
+                            "content_base64": png,
+                        }
+                    ],
+                },
+            )
+            assert created.status_code == 201, created.text
+            attachment = created.json()["attachments"][0]
+            assert attachment["mime_type"] == "image/png"
+            content = client.get(attachment["content_url"])
+            assert content.status_code == 200
+            assert content.content.startswith(b"\x89PNG")
+
+            reply = client.post(
+                f"/orders/{order_id}/collaboration/messages",
+                json={
+                    "body": "Поправлю",
+                    "technical_card_id": card_id,
+                    "reply_to_message_id": created.json()["id"],
+                },
+            )
+            assert reply.status_code == 201, reply.text
+            assert reply.json()["reply_to_message_id"] == created.json()["id"]
+
+            foreign = client.post(
+                f"/orders/{order_id}/collaboration/messages",
+                json={"body": "чужой", "reply_to_message_id": 999999},
+            )
+            assert foreign.status_code == 422
+    finally:
+        app.dependency_overrides.pop(get_db, None)
+
+
 def test_collaboration_microtasks_assign_complete_list() -> None:
     factory = _session_factory()
 

@@ -10,6 +10,7 @@ const ALLOWLISTED_API_MEDIA_PATTERNS: readonly RegExp[] = [
   /^\/product-models\/\d+\/media\/\d+\/content$/,
   /^\/product-models\/\d+\/cover\/content$/,
   /^\/technical-cards\/\d+\/media\/\d+\/content$/,
+  /^\/collaboration\/messages\/\d+\/attachments\/\d+\/content$/,
   /^\/design-projects\/\d+\/versions\/\d+\/assets\/\d+\/content$/,
   /^\/platform-system-settings\/logo\/content$/,
 ];
