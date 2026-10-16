@@ -15,9 +15,9 @@ Trigger: **`git push origin main`** (automatic) and **Actions → Deploy product
 | Secret | Meaning |
 |--------|---------|
 | `PROD_SSH_HOST` | VPS hostname or IP |
-| `PROD_SSH_USER` | SSH user (e.g. `deploy`) |
+| `PROD_SSH_USER` | SSH user on the live host (`root`) |
 | `PROD_SSH_KEY` | Private key (PEM) for that user |
-| `PROD_APP_PATH` | Absolute path to repo on VPS (e.g. `/home/deploy/sport-leads`) |
+| `PROD_APP_PATH` | Absolute path to repo on VPS (`/opt/sport-leads`) |
 | `PROD_SSH_PORT` | Optional; default `22` |
 
 3. On the VPS: repo cloned, `.env.production` present, Docker installed (see `production-17-2-1.md`).
@@ -27,8 +27,8 @@ Trigger: **`git push origin main`** (automatic) and **Actions → Deploy product
 
 1. SSH into the host  
 2. `git fetch` + checkout requested ref (unless skip_pull)  
-3. `docker compose -f compose.prod.yaml --env-file .env.production up -d --build`  
-4. Wait until `https://$SPORT_LEADS_DOMAIN/healthz`, `/health`, and `/health/ready` succeed (api/web are still starting immediately after recreate)
+3. `docker compose -f compose.prod.yaml --env-file .env.production up -d --build`. If `/opt/sport-leads/compose.panel.yaml` is present, the job builds `postgres`, `api`, and `web` with that override and does not start Caddy (host nginx already owns 80/443 and proxies to `127.0.0.1:3000`).
+4. Wait until the edge answers. With the panel file: `http://127.0.0.1:3000/login` and API `GET /health/ready`. Without it: `https://$SPORT_LEADS_DOMAIN/healthz`, `/health`, and `/health/ready`.
 
 Dev CI (`checks.yml` / `0.2.3`) stays separate. A successful push to `main` is the production deploy trigger; run checks before pushing when the change is product code.
 

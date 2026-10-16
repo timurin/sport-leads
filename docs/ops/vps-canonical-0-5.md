@@ -125,19 +125,19 @@ Postgres dump does not include `storage/`. Canonical files live on the VPS bind 
 Pull VPS → local (default):
 
 ```powershell
-powershell -File scripts/sync-storage-from-vps.ps1 -SshHost YOUR_VPS_IP -RemotePath /home/deploy/sport-leads
+powershell -File scripts/sync-storage-from-vps.ps1 -SshHost YOUR_VPS_IP -RemotePath /opt/sport-leads
 ```
 
 Push local → VPS only when you intend to overwrite production files (`-Push`).
 
 ## 7. Backup cron (`0.5.11`)
 
-On the VPS user `deploy` (host TZ `Europe/Moscow`):
+On the VPS as `root` (host TZ `Europe/Moscow`, checkout `/opt/sport-leads`):
 
 ```cron
 PATH=/usr/sbin:/usr/bin:/bin
 SHELL=/bin/bash
-15 2 * * * cd /home/deploy/sport-leads && /bin/bash scripts/prod-backup-db.sh >> logs/backup.log 2>&1; find backup -name 'sport_leads-prod-*.dump' -mtime +7 -delete
+15 2 * * * cd /opt/sport-leads && /bin/bash scripts/prod-backup-db.sh >> logs/backup.log 2>&1; find backup -name 'sport_leads-prod-*.dump' -mtime +7 -delete
 ```
 
 Copy dumps off-box (scp/rsync). Disk-only is not DR. First off-box copy: owner Windows `backup/vps-offbox/` (gitignored).

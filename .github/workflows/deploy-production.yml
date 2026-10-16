@@ -1,7 +1,8 @@
 name: Deploy production
 
 # Production deploy (17.2.2.1 / Stage 0.5). Requires owner-configured repository secrets.
-# Push to main syncs /home/deploy/sport-leads on the VPS (sport-lead.ru).
+# Push to main syncs /opt/sport-leads on the VPS (sport-lead.ru).
+# Host nginx (FastPanel) owns 80/443 and proxies to 127.0.0.1:3000 via compose.panel.yaml.
 # workflow_dispatch remains for a chosen ref or compose rebuild without git pull.
 
 on:
@@ -92,14 +93,27 @@ jobs:
               git status -sb
             fi
             test -f .env.production
-            docker compose -f compose.prod.yaml --env-file .env.production up -d --build
-            docker compose -f compose.prod.yaml --env-file .env.production ps
+            if [ -f compose.panel.yaml ]; then
+              echo "FastPanel override present: build api and web, leave host nginx on 80/443"
+              docker compose -f compose.prod.yaml -f compose.panel.yaml --env-file .env.production up -d --build postgres api web
+              docker compose -f compose.prod.yaml -f compose.panel.yaml --env-file .env.production ps
+            else
+              docker compose -f compose.prod.yaml --env-file .env.production up -d --build
+              docker compose -f compose.prod.yaml --env-file .env.production ps
+            fi
             DOMAIN="$(grep -E '^SPORT_LEADS_DOMAIN=' .env.production | cut -d= -f2- | tr -d '\r' | tr -d '\"')"
             if [ -n "$DOMAIN" ] && [ "$DOMAIN" != "localhost" ] && [ "$DOMAIN" != "erp.example.com" ]; then
-              echo "Waiting for https://${DOMAIN} health (api/web start after alembic)"
+              echo "Waiting for ${DOMAIN} (api/web start after alembic)"
               ok=0
               for _ in $(seq 1 90); do
-                if curl -fsS "https://${DOMAIN}/healthz" >/dev/null 2>&1 \
+                if [ -f compose.panel.yaml ]; then
+                  if curl -fsS -o /dev/null "http://127.0.0.1:3000/login" \
+                    && docker compose -f compose.prod.yaml -f compose.panel.yaml --env-file .env.production exec -T api \
+                      python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health/ready', timeout=5).read()"; then
+                    ok=1
+                    break
+                  fi
+                elif curl -fsS "https://${DOMAIN}/healthz" >/dev/null 2>&1 \
                   && curl -fsS "https://${DOMAIN}/health" >/dev/null 2>&1 \
                   && curl -fsS "https://${DOMAIN}/health/ready" >/dev/null 2>&1; then
                   ok=1
@@ -108,12 +122,17 @@ jobs:
                 sleep 2
               done
               if [ "$ok" != 1 ]; then
-                echo "Health checks failed for https://${DOMAIN}"
-                docker compose -f compose.prod.yaml --env-file .env.production ps
-                docker compose -f compose.prod.yaml --env-file .env.production logs --tail=80 api web
+                echo "Health checks failed for ${DOMAIN}"
+                if [ -f compose.panel.yaml ]; then
+                  docker compose -f compose.prod.yaml -f compose.panel.yaml --env-file .env.production ps
+                  docker compose -f compose.prod.yaml -f compose.panel.yaml --env-file .env.production logs --tail=80 api web
+                else
+                  docker compose -f compose.prod.yaml --env-file .env.production ps
+                  docker compose -f compose.prod.yaml --env-file .env.production logs --tail=80 api web
+                fi
                 exit 1
               fi
-              echo "Health checks OK for https://${DOMAIN}"
+              echo "Health checks OK for ${DOMAIN}"
             else
               echo "SPORT_LEADS_DOMAIN is placeholder/localhost — skipped remote HTTPS probes"
             fi

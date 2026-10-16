@@ -3,8 +3,8 @@
 # Default: pull VPS → local storage/. Use -Push to overwrite VPS (owner only).
 #
 # Usage:
-#   powershell -File scripts/sync-storage-from-vps.ps1 -SshHost 203.0.113.10 -RemotePath /home/deploy/sport-leads
-#   powershell -File scripts/sync-storage-from-vps.ps1 -SshHost erp.example.com -RemotePath /home/deploy/sport-leads -Push
+#   powershell -File scripts/sync-storage-from-vps.ps1 -SshHost 203.0.113.10 -RemotePath /opt/sport-leads
+#   powershell -File scripts/sync-storage-from-vps.ps1 -SshHost erp.example.com -RemotePath /opt/sport-leads -Push
 
 param(
     [Parameter(Mandatory = $true)]
