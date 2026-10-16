@@ -11,9 +11,8 @@ from sqlalchemy.orm import Session
 from app.models.product_model import AssemblyOperationLine, AssemblyVariant
 from app.models.production_capacity import CapacityResource, TechOperationCapacityResource
 from app.models.sales import SalesOrderItemAssemblyOperationSnapshot
-from app.models.shop_routing import ShopRoutingStageLine
 from app.models.tech_operation import TechOperation
-from app.models.technical_card import TechnicalCard, TechnicalCardOperationLine
+from app.models.technical_card import TechnicalCard, TechnicalCardOperationLine, TechnicalCardRouteEdge, TechnicalCardStageResult
 
 
 def _text(value: object) -> str:
@@ -73,6 +72,10 @@ class DemandStep:
     operation_volume_unit: str | None
     resources: tuple[ResourceView, ...]
     operation_code: str | None = None
+    snapshot_node_id: int | None = None
+    predecessor_ids: tuple[int, ...] = ()
+    demand_rule: str | None = None
+    demand_duration_seconds: int | None = None
 
 
 @dataclass(frozen=True)
@@ -86,6 +89,8 @@ class CardDemandSnapshot:
     applied_sewing: tuple[AppliedSewingRow, ...]
     volumes: tuple[VolumeRow, ...]
     steps: tuple[DemandStep, ...]
+    unresolved_variant_groups: tuple[str, ...] = ()
+    variant_selections: tuple[tuple[str, str], ...] = ()
 
 
 def build_sewing_sources(
@@ -104,33 +109,41 @@ def build_sewing_sources(
     return tuple(_variant_source(row) for row in sorted(variant_lines, key=lambda row: row.id)), False
 
 
-def load_card_demand_snapshot(db: Session, card_id: int) -> CardDemandSnapshot | None:
-    card = db.get(TechnicalCard, card_id)
+def load_card_demand_snapshot(db: Session, card_id: int, *, batch: dict | None = None) -> CardDemandSnapshot | None:
+    card = batch['cards'].get(card_id) if batch is not None else db.get(TechnicalCard, card_id)
     if card is None:
         return None
-    lines = list(db.scalars(
-        select(ShopRoutingStageLine)
-        .where(ShopRoutingStageLine.routing_template_id == card.routing_template_id)
-        .order_by(ShopRoutingStageLine.stage_order, ShopRoutingStageLine.id)
-    )) if card.routing_template_id is not None else []
+    stages = batch['nodes'].get(card_id, []) if batch is not None else list(db.scalars(
+        select(TechnicalCardStageResult)
+        .where(TechnicalCardStageResult.technical_card_id == card.id)
+        .order_by(TechnicalCardStageResult.stage_order, TechnicalCardStageResult.id)
+    ))
+    lines = [stage for stage in stages if stage.tech_operation_id is not None]
+    edges = batch['edges'].get(card_id, []) if batch is not None else list(db.scalars(
+        select(TechnicalCardRouteEdge).where(TechnicalCardRouteEdge.technical_card_id == card.id)
+    ))
+    from app.services.route_variants import selection_resolution
+    excluded, unresolved = selection_resolution(card)
+    lines = [line for line in lines if f"snapshot:{line.id}" not in excluded]
+    edges = [edge for edge in edges if f"snapshot:{edge.predecessor_stage_result_id}" not in excluded and f"snapshot:{edge.successor_stage_result_id}" not in excluded]
     operation_ids = {line.tech_operation_id for line in lines if line.tech_operation_id is not None}
-    operations = {
+    operations = batch['operations'] if batch is not None else {
         row.id: row for row in db.scalars(select(TechOperation).where(TechOperation.id.in_(operation_ids)))
     } if operation_ids else {}
-    links = list(db.scalars(
+    links = batch['links'] if batch is not None else list(db.scalars(
         select(TechOperationCapacityResource)
         .where(TechOperationCapacityResource.tech_operation_id.in_(operation_ids))
     )) if operation_ids else []
     keys = {link.resource_key for link in links}
-    resources = {
+    resources = batch['resources'] if batch is not None else {
         row.resource_key: row for row in db.scalars(select(CapacityResource).where(CapacityResource.resource_key.in_(keys)))
     } if keys else {}
-    operation_lines = list(db.scalars(
+    operation_lines = batch['volumes'].get(card_id, []) if batch is not None else list(db.scalars(
         select(TechnicalCardOperationLine)
         .where(TechnicalCardOperationLine.technical_card_id == card.id)
         .order_by(TechnicalCardOperationLine.id)
     ))
-    sources, unverified = _load_sewing_sources(db, card)
+    sources, unverified = _load_sewing_sources(db, card, batch=batch)
     applied = tuple(
         AppliedSewingRow(
             id=row.id,
@@ -156,7 +169,8 @@ def load_card_demand_snapshot(db: Session, card_id: int) -> CardDemandSnapshot |
         if _text(row.source_kind) == "routing"
     )
     steps = tuple(
-        _step(line, operations.get(line.tech_operation_id), links, resources)
+        _step(line, operations.get(line.tech_operation_id), links, resources, lines, edges, card.routing_template_id,
+              sequential_fallback=not bool(card.route_variant_groups))
         for line in lines
     )
     return CardDemandSnapshot(
@@ -169,12 +183,14 @@ def load_card_demand_snapshot(db: Session, card_id: int) -> CardDemandSnapshot |
         applied_sewing=applied,
         volumes=volumes,
         steps=steps,
+        unresolved_variant_groups=unresolved,
+        variant_selections=tuple((key, value["selection_status"]) for key, value in (card.route_variant_selections or {}).items()),
     )
 
 
-def _load_sewing_sources(db: Session, card: TechnicalCard) -> tuple[tuple[SewingSource, ...], bool]:
+def _load_sewing_sources(db: Session, card: TechnicalCard, *, batch: dict | None = None) -> tuple[tuple[SewingSource, ...], bool]:
     if card.sales_order_item_id is not None:
-        snapshots = list(db.scalars(
+        snapshots = batch['sewing_snapshots'].get(card.sales_order_item_id, []) if batch is not None else list(db.scalars(
             select(SalesOrderItemAssemblyOperationSnapshot)
             .where(SalesOrderItemAssemblyOperationSnapshot.order_item_id == card.sales_order_item_id)
             .order_by(SalesOrderItemAssemblyOperationSnapshot.id)
@@ -188,8 +204,8 @@ def _load_sewing_sources(db: Session, card: TechnicalCard) -> tuple[tuple[Sewing
         )
     if card.assembly_variant_id is None:
         return (), True
-    variant = db.get(AssemblyVariant, card.assembly_variant_id)
-    variant_lines = list(db.scalars(
+    variant = batch['variants'].get(card.assembly_variant_id) if batch is not None else db.get(AssemblyVariant, card.assembly_variant_id)
+    variant_lines = batch['variant_lines'].get(card.assembly_variant_id, []) if batch is not None else list(db.scalars(
         select(AssemblyOperationLine)
         .where(AssemblyOperationLine.assembly_variant_id == card.assembly_variant_id)
         .order_by(AssemblyOperationLine.id)
@@ -225,7 +241,8 @@ def _variant_source(row: AssemblyOperationLine) -> SewingSource:
     )
 
 
-def _step(line: ShopRoutingStageLine, operation: TechOperation | None, links, resources) -> DemandStep:
+def _step(line: TechnicalCardStageResult, operation: TechOperation | None, links, resources, lines, edges, template_id,
+          *, sequential_fallback: bool = True) -> DemandStep:
     own = [link.resource_key for link in links if link.tech_operation_id == line.tech_operation_id]
     views = tuple(
         ResourceView(
@@ -239,16 +256,33 @@ def _step(line: ShopRoutingStageLine, operation: TechOperation | None, links, re
         for key in sorted(own)
         if key in resources
     )
+    by_stage = {row.id: row for row in lines}
+    predecessors = tuple(
+        predecessor.source_routing_stage_line_id or predecessor.id
+        for edge in edges
+        if edge.successor_stage_result_id == line.id
+        and (predecessor := by_stage.get(edge.predecessor_stage_result_id)) is not None
+    )
+    if not edges and sequential_fallback:
+        earlier = [row for row in lines if row.stage_order < line.stage_order]
+        if earlier:
+            previous = max(earlier, key=lambda row: row.stage_order)
+            predecessors = (previous.source_routing_stage_line_id or previous.id,)
+    identity = line.source_routing_stage_line_id or line.id
     return DemandStep(
-        routing_stage_line_id=line.id,
-        routing_template_id=line.routing_template_id,
+        routing_stage_line_id=identity,
+        routing_template_id=template_id,
         stage_order=line.stage_order,
         stage_label=line.stage_label,
         production_stage_id=line.production_stage_id,
-        operation_id=None if operation is None else operation.id,
-        operation_name=None if operation is None else operation.name,
+        operation_id=line.tech_operation_id,
+        operation_name=line.operation_name if operation is None else operation.name,
         operation_stage_id=None if operation is None else operation.production_stage_id,
         operation_volume_unit=None if operation is None else _text(operation.volume_unit),
         resources=views,
-        operation_code=None if operation is None else operation.code,
+        operation_code=line.operation_code if operation is None else operation.code,
+        snapshot_node_id=line.id,
+        predecessor_ids=predecessors,
+        demand_rule=None if operation is None else operation.demand_rule,
+        demand_duration_seconds=None if operation is None else operation.demand_duration_seconds,
     )

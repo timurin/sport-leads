@@ -17,6 +17,7 @@ test("planning deep link carries ID/date and queue return carries destination we
   assert.equal(calendarWeekPath("2026-10-12"), "/production/calendar?date=2026-10-12");
   assert.equal(calendarBoardPath(assignment.planned_date), "/board?from=2026-10-05&to=2026-10-11");
   assert.equal(calendarBoardPath("2026-10-12"), "/board?from=2026-10-12&to=2026-10-18");
+  assert.equal(calendarBoardPath("2026-10-12", true), "/board?from=2026-10-12&to=2026-10-18&editable_only=true");
 });
 
 test("planning query validation rejects impossible dates, duplicate query values and invalid IDs", () => {

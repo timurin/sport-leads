@@ -19,11 +19,25 @@ class AllocationError(Exception):
 
 
 def add_allocation(db: Session, payload: CalendarAllocationCreate) -> CalendarAllocationRead:
-    if db.get(CalendarAssignment, payload.assignment_id) is None:
+    from app.repositories.production_scheduler import lock_scheduler
+    from app.services.calendar_plan_linkage import PlanLinkageConflict, assignment_issues, issue, resource_mapping_valid
+    lock_scheduler(db)
+    assignment = db.scalar(select(CalendarAssignment).where(CalendarAssignment.id == payload.assignment_id).with_for_update())
+    if assignment is None:
         raise AllocationError("Назначение не найдено", 404)
+    diagnostics = assignment_issues(db, assignment)
+    if diagnostics:
+        raise PlanLinkageConflict(diagnostics[0])
+    if assignment.stage_result_id is None:
+        raise PlanLinkageConflict(issue(db, assignment, "calendar_assignment_missing_snapshot", reason="allocation_requires_snapshot"))
     resource = db.get(CapacityResource, payload.resource_key)
     if resource is None:
         raise AllocationError("Ресурс мощности не найден", 404)
+    from app.models.technical_card import TechnicalCardStageResult
+    node = db.get(TechnicalCardStageResult, assignment.stage_result_id)
+    if not resource_mapping_valid(db, resource, assignment.production_stage_id, node.tech_operation_id):
+        raise PlanLinkageConflict(issue(db, assignment, "calendar_assignment_snapshot_mismatch", reason="allocation_resource_workshop_mismatch",
+                                       actual={"resource_key": resource.resource_key, "work_center_id": resource.work_center_id}))
     if resource.capacity_unit is None:
         raise AllocationError("Этот ресурс не принимает дневное распределение")
     if payload.capacity_unit != resource.capacity_unit:
@@ -37,6 +51,9 @@ def add_allocation(db: Session, payload: CalendarAllocationCreate) -> CalendarAl
         allocated_amount=Decimal(payload.allocated_amount),
         capacity_unit=payload.capacity_unit,
     )
+    from app.services.calendar_allocation_consistency import assert_consistency
+    previous = list(db.scalars(select(CalendarAllocation).where(CalendarAllocation.assignment_id == assignment.id)))
+    assert_consistency(db, assignment, allocations=[*previous, row])
     db.add(row)
     try:
         db.flush()

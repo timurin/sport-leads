@@ -16,9 +16,10 @@ type CreateDrawerProps = {
    * docked — right column in a workspace split (materials / EntityInspector).
    * overlay — fixed right panel + backdrop when no inspector column exists.
    * center — centered modal + backdrop (26.11 create tech card).
+   * nested — centered modal above the product-model card (30–50% width).
    * fullscreen — full-viewport modal over the current page (dense create forms).
    */
-  variant?: "docked" | "overlay" | "fullscreen" | "center";
+  variant?: "docked" | "overlay" | "fullscreen" | "center" | "nested";
 };
 
 /**
@@ -57,7 +58,7 @@ export function CreateDrawer({
   }, [open, onClose]);
 
   useEffect(() => {
-    if (!open || (variant !== "fullscreen" && variant !== "overlay" && variant !== "center")) {
+    if (!open || (variant !== "fullscreen" && variant !== "overlay" && variant !== "center" && variant !== "nested")) {
       return;
     }
     const previous = document.body.style.overflow;
@@ -105,6 +106,43 @@ export function CreateDrawer({
           </div>
         </div>
       </>,
+      document.body,
+    );
+  }
+
+  if (variant === "nested") {
+    if (!mounted) return null;
+    return createPortal(
+      <div
+        className="fixed inset-0 z-portal-modal-3 flex items-center justify-center p-portal-4"
+        data-product-model-nested-dialog
+      >
+        <button
+          type="button"
+          className="absolute inset-0 bg-[#101828]/40"
+          aria-label="Закрыть окно"
+          onClick={onClose}
+        />
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label={title}
+          className="relative flex max-h-[90vh] min-h-0 w-[clamp(30vw,40vw,50vw)] flex-col overflow-y-auto rounded-portal-lg border border-portal-border bg-portal-page shadow-portal-overlay"
+        >
+          <header className="sticky top-0 z-portal-raised flex shrink-0 items-center justify-between border-b border-portal-border bg-portal-page px-portal-6 py-portal-5">
+            <div className="min-w-0">
+              <h2 className="text-portal-page font-semibold text-portal-text">{title}</h2>
+              {description ? (
+                <p className="mt-1 text-portal-body text-portal-muted">{description}</p>
+              ) : null}
+            </div>
+            <IconButton label="Закрыть окно" variant="secondary" onClick={onClose}>
+              <X size={19} aria-hidden="true" />
+            </IconButton>
+          </header>
+          <div className="flex min-h-0 flex-1 flex-col overflow-hidden">{children}</div>
+        </div>
+      </div>,
       document.body,
     );
   }

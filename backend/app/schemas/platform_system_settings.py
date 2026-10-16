@@ -15,6 +15,7 @@ class PlatformSystemSettingsRead(BaseModel):
     default_timezone: str
     support_email: str | None = None
     ui_locale: str
+    debug_mode: bool
     notes: str | None = None
     logo_url: str | None = None
     logo_filename: str | None = None
@@ -23,6 +24,7 @@ class PlatformSystemSettingsRead(BaseModel):
 
 
 class PlatformSystemSettingsUpdate(BaseModel):
+    debug_mode: bool = Field(default=False, strict=True)
     organization_display_name: str = Field(min_length=1, max_length=255)
     default_timezone: str = Field(min_length=1, max_length=64)
     support_email: str | None = Field(default=None, max_length=255)

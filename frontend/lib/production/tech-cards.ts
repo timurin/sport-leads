@@ -1,20 +1,35 @@
 import { rasterImageMimeOrNull } from "../api-media.ts";
 import type { StatusBadgeTone } from "@/components/ui/status-badge";
 import type {
+  ApiProductionState,
   ApiTechnicalCard,
   ApiTechnicalCardListItem,
   ApiTechnicalCardOperationLine,
   ApiTechnicalCardStageResult,
   TechnicalCardStageResultStatus,
 } from "@/lib/sales/order-tech-cards-api";
-import type { TechCardUiStatus } from "@/lib/sales/order-tech-cards";
+import { techCardStatusLabel, type TechCardUiStatus } from "../sales/order-tech-cards.ts";
 
-export type TechCardListView = "list" | "kanban";
+export type TechCardListView = "list" | "kanban" | "queue";
 
 export function parseTechCardListView(
   raw: string | null | undefined,
 ): TechCardListView {
-  return raw === "kanban" ? "kanban" : "list";
+  if (raw === "kanban" || raw === "queue") return raw;
+  return "list";
+}
+
+/** List columns follow the card lifecycle and the fact workshop, not a future calendar day. */
+export function techCardListPresentation(card: {
+  status: string;
+  production_state?: ApiProductionState | null;
+  current_stage_label?: string | null;
+}): { statusLabel: string; workshopLabel: string } {
+  const status = asTechCardUiStatus(card.production_state?.lifecycle_status ?? String(card.status));
+  return {
+    statusLabel: techCardStatusLabel(status),
+    workshopLabel: (card.production_state ? card.production_state.current_workshop_name : card.current_stage_label)?.trim() || "—",
+  };
 }
 
 export type TechCardClientFilter = {
@@ -42,6 +57,7 @@ export function validateTechCardImageFile(file: File): string | null {
 }
 
 const STATUS_TONE: Record<TechCardUiStatus, StatusBadgeTone> = {
+  planned: "primary",
   missing: "neutral",
   draft: "warning",
   in_progress: "primary",
@@ -72,6 +88,7 @@ const UNIT_LINE_SIZE_TYPE_LABEL: Record<string, string> = {
 
 export function asTechCardUiStatus(status: string): TechCardUiStatus {
   if (
+    status === "planned" ||
     status === "draft" ||
     status === "in_progress" ||
     status === "completed" ||
@@ -113,10 +130,10 @@ export function filterTechCardsClient(
       const value =
         statusField === "stage"
           ? techCardShopStageStatus(card)
-          : String(card.status);
+          : card.production_state?.lifecycle_status ?? String(card.status);
       if (value !== status) return false;
     }
-    if (stage && !(card.current_stage_label ?? "").toLowerCase().includes(stage)) {
+    if (stage && !((card.production_state ? card.production_state.current_workshop_name : card.current_stage_label) ?? "").toLowerCase().includes(stage)) {
       return false;
     }
     if (
@@ -206,9 +223,12 @@ export function techCardCurrentStageResult(
 export function techCardShopStageStatus(
   card: Pick<
     ApiTechnicalCard,
-    "current_stage_order" | "current_stage_label" | "stage_results" | "status"
+    "current_stage_order" | "current_stage_label" | "stage_results" | "status" | "production_state"
   >,
 ): string {
+  if (card.production_state) {
+    return card.production_state.workshop_state === "waiting" ? "pending" : card.production_state.workshop_state;
+  }
   const stage = techCardCurrentStageResult(card);
   if (stage) return String(stage.status);
   if (card.current_stage_label || card.current_stage_order != null) return "pending";

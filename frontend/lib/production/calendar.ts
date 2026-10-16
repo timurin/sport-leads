@@ -1,15 +1,24 @@
+import type { ApiProductionState } from "../sales/order-tech-cards-api";
+
 export type CalendarStage = { id: number; name: string; code: string };
 export type CalendarSource = {
   id: number; number: string; order_number: string;
   nomenclature_name: string | null; quantity: string;
 };
 export type CalendarAssignment = {
+  snapshot_node_id?: number | null;
+  operation_name?: string | null;
+  operation_status?: "pending" | "in_progress" | "completed" | "skipped" | null;
+  production_state?: ApiProductionState | null;
+  operation_state?: "current" | "future" | "completed";
   id: number; technical_card_id: number; technical_card_number: string;
   order_number: string; nomenclature_name: string | null; quantity: string;
   production_stage_id: number; production_stage_name: string;
   planned_date: string;
   planned_start_date?: string | null;
   planned_end_date?: string | null;
+  planning_mode?: "auto" | "manual_adjusted" | "locked" | null;
+  manual_lock?: boolean;
   position: number; note: string | null;
 };
 export type CalendarBoard = { assignments: CalendarAssignment[]; stages: CalendarStage[] };
@@ -46,9 +55,11 @@ export function calendarPlanningPath(date: string, assignmentId?: number): strin
   return "/production/calendar/planning?" + query;
 }
 
-export function calendarBoardPath(date: string): string {
+export function calendarBoardPath(date: string, editableOnly = false): string {
   const days = weekDays(date);
-  return "/board?" + new URLSearchParams({ from: days[0], to: days[6] });
+  const query = new URLSearchParams({ from: days[0], to: days[6] });
+  if (editableOnly) query.set("editable_only", "true");
+  return "/board?" + query;
 }
 
 export function calendarCreateInput(technicalCardId: number, plannedDate: string, note: string): CalendarCreateInput {
@@ -233,6 +244,15 @@ export function weekStickers(assignments: CalendarAssignment[], stageId: number,
     }
   }
   return rows;
+}
+
+/** Calendar shows every saved assignment in the week; current workshop belongs to Kanban. */
+export function boardStageStickers(
+  assignments: CalendarAssignment[],
+  stageId: number,
+  days: string[],
+): WeekSticker[] {
+  return weekStickers(assignments, stageId, days);
 }
 
 export function stageStickerTone(stage: { code: string; name: string }): string {

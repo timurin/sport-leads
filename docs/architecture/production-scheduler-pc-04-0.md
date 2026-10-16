@@ -2,6 +2,8 @@
 
 Architecture freeze. This iteration does not add tables, fields, endpoints, or a scheduler run. A later implementation task must follow this document and must not invent a second route, a second capacity catalog, or a ProductionJob.
 
+**Current implementation PC-04.3A:** [Scheduler core contract](production-scheduler-core-pc-04-3a.md) documents the explicit single-card engine. It supersedes this freeze's historical horizon/partial-failure proposal: new placement searches exactly 120 dates from max(today, planning_start_date), and a failed card writes no partial plan. Existing Demand/unit/cutting prerequisites are reused. Remaining bulk/frontend/optimization scopes are not closed.
+
 The canonical roadmap item **PC-04** («Добавление существующей ТК в календарную очередь») is a different checkpoint. This document does not close it.
 
 ## Decision
@@ -136,7 +138,7 @@ For each line with demand, walk forward from `earliest_start`:
 
 A milestone or date-marker line gets `planned_start_date = planned_end_date = earliest_start` and no allocation rows.
 
-Search at most through `max(shipping_date, planning_start_date) + SCHEDULER_HORIZON_DAYS` calendar days (`120`, `backend/app/services/scheduler_horizon.py`). The number is not stored on the card. Demand still remaining is `no_available_capacity`. The partial allocations and the span reached so far are kept and shown. The run does not invent dates past the horizon. This search is not implemented.
+Historical PC-04.0 proposed search through `max(shipping_date, planning_start_date) + SCHEDULER_HORIZON_DAYS` and keeping partial placements. PC-04.3A supersedes that proposal: `planning_from=max(today, planning_start_date)`, inclusive horizon end=`planning_from+119` days (`SCHEDULER_HORIZON_DAYS=120`), independent of shipping deadline. Outstanding demand returns `no_available_capacity`; the command rolls back the whole new AUTO plan and keeps previous rows. No partial allocations are persisted.
 
 An exception that zeroes a day the line needed, while an earlier unlocked plan had used that day, is reported as `resource_exception_conflict` when a locked row is the reason the remainder cannot move. A locked row that overlaps the only feasible days and blocks the remainder is `locked_assignment_conflict`.
 

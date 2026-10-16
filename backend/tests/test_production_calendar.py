@@ -110,7 +110,11 @@ def test_queue_auth_range_and_bounded_join(calendar_client):
     try:
         board = client.get("/production-calendar/board?from=2026-10-05&to=2026-10-11").json()
         assert len(board["assignments"]) == 2
-        assert len(statements) == 2  # stage lookup + joined slim queue, independent of row count
+        batch_count = len(statements)
+        assert batch_count <= 22  # scoped ProductionState batch, independent of assignment count
+        statements.clear()
+        single = client.get("/production-calendar/board?from=2026-10-05&to=2026-10-11&stage_id=4").json()
+        assert len(statements) == batch_count
     finally:
         event.remove(engine, "before_cursor_execute", track)
     user.roles = []

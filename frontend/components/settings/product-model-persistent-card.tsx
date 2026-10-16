@@ -21,6 +21,7 @@ import { VersionedWorkspace } from "@/components/entity/versioned-workspace";
 import { AssemblyVariantsBlock } from "@/components/settings/assembly-variants-block";
 import { ProductModelMaterialsBlock } from "@/components/settings/product-model-materials-block";
 import { ProductModelRoutingsBlock } from "@/components/settings/product-model-routings-block";
+import { useProductModelLeave } from "@/components/settings/product-model-full-card-frame";
 import { ProductModelMediaCarousel } from "@/components/settings/product-model-media-carousel";
 import { ProductModelToolbarActions } from "@/components/settings/product-model-toolbar-actions";
 import { EntityHeader } from "@/components/ui/entity-header";
@@ -35,6 +36,7 @@ import {
   PRODUCT_MODEL_STATUS_LABELS,
   MODEL_OPERATIONS_WARNING,
   formatAssemblyVariantCostRange,
+  confirmProductModelClose,
   isProductModelRequisitesDirty,
   productModelFolderSelectOptions,
   productModelStatusTone,
@@ -93,6 +95,7 @@ export function ProductModelPersistentCard({
   hardwareTypeOptions = [],
   colorOptions = [],
   initialEditing = false,
+  expandRoutingTemplateId = null,
 }: {
   model: ProductModel;
   /** Reserved for PT-08 version bar; history lives in main column. */
@@ -121,8 +124,10 @@ export function ProductModelPersistentCard({
   hardwareTypeOptions?: CharacteristicOption[];
   colorOptions?: CharacteristicOption[];
   initialEditing?: boolean;
+  expandRoutingTemplateId?: number | null;
 }) {
   const router = useRouter();
+  const leave = useProductModelLeave();
   const [trackedModel, setTrackedModel] = useState(model);
   const [current, setCurrent] = useState(model);
   const [trackedMedia, setTrackedMedia] = useState(media);
@@ -266,6 +271,10 @@ export function ProductModelPersistentCard({
       ? "Записей пока нет"
       : `${history.length} ${history.length === 1 ? "запись" : history.length < 5 ? "записи" : "записей"}`;
   const costRangeLabel = formatAssemblyVariantCostRange(assemblyVariants);
+
+  useEffect(() => {
+    leave?.report({ editing, dirty });
+  }, [dirty, editing, leave]);
 
   useEffect(() => {
     if (!dirty) return;
@@ -465,7 +474,12 @@ export function ProductModelPersistentCard({
   };
 
   const onBackToList = (event: MouseEvent<HTMLAnchorElement>) => {
-    if (dirty && !window.confirm(DIRTY_LEAVE_MESSAGE)) {
+    if (leave) {
+      event.preventDefault();
+      leave.requestClose();
+      return;
+    }
+    if (!confirmProductModelClose({ editing, dirty })) {
       event.preventDefault();
     }
   };
@@ -1103,6 +1117,7 @@ export function ProductModelPersistentCard({
               <ProductModelRoutingsBlock
                 modelId={current.id}
                 defaultRoutingTemplateId={current.default_routing_template_id}
+                expandTemplateId={expandRoutingTemplateId}
                 links={routingLinks}
                 shopRoutings={shopRoutings}
                 productionStages={productionStages}

@@ -100,7 +100,7 @@ export function WorkCenterCreateDrawer({
     <CreateDrawer
       open={open}
       title="Новое оборудование"
-      description="Рабочий центр / место внутри цеха (ADR-017). Не путать с этапом производства."
+      description="Оборудование внутри цеха. Не путать с этапом производства."
       onClose={close}
       variant="overlay"
     >

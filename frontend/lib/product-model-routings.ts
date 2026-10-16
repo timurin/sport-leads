@@ -167,6 +167,68 @@ export function buildRoutingNormRows(
     });
 }
 
+/**
+ * Linear-meter operations need a stored per-item norm.
+ * Piece operations do not: the volume contract uses 1 when no norm is saved.
+ * A workshop default counts only when it is the single stage match.
+ */
+export function missingRequiredOperationNorms(input: {
+  stageLines: Array<{
+    production_stage_id: number | null;
+    tech_operation_id: number | null;
+    stage_label: string;
+  }>;
+  norms: Array<{
+    production_stage_id: number | null;
+    tech_operation_id: number | null;
+    norm_qty_per_item: string | number;
+    unit: string;
+  }>;
+  operations: Map<number, { name: string; volume_unit: string }>;
+}): string[] {
+  const names: string[] = [];
+  const seen = new Set<string>();
+  for (const line of input.stageLines) {
+    if (line.tech_operation_id == null) continue;
+    const operation = input.operations.get(line.tech_operation_id);
+    if (!operation || operation.volume_unit !== "linear_meters") continue;
+    const compatible = input.norms.filter(
+      (norm) => norm.production_stage_id == null || norm.production_stage_id === line.production_stage_id,
+    );
+    const specific = compatible.filter((norm) => norm.tech_operation_id === line.tech_operation_id);
+    const defaults = compatible.filter(
+      (norm) => norm.tech_operation_id == null && norm.production_stage_id === line.production_stage_id,
+    );
+    const matched = specific.length > 0 ? specific : defaults;
+    const usable = matched.filter((norm) => {
+      const qty = Number(String(norm.norm_qty_per_item).replace(",", "."));
+      return Number.isFinite(qty) && qty > 0 && norm.unit === operation.volume_unit;
+    });
+    if (usable.length > 0) continue;
+    const name = operation.name.trim() || line.stage_label.trim();
+    if (!name || seen.has(name)) continue;
+    seen.add(name);
+    names.push(name);
+  }
+  return names;
+}
+
+export function modelRouteNormTarget(
+  links: ProductModelRoutingLink[],
+  routingTemplateId: number | null,
+): { templateId: number | null; norms: ProductModelOperationNorm[] } {
+  if (routingTemplateId != null) {
+    const link = links.find((row) => row.shop_routing_template_id === routingTemplateId);
+    return { templateId: routingTemplateId, norms: link?.operation_norms ?? [] };
+  }
+  const active = links
+    .filter((row) => row.is_active)
+    .sort((a, b) => a.sort_order - b.sort_order || a.id - b.id);
+  const chosen = active[0];
+  if (!chosen) return { templateId: null, norms: [] };
+  return { templateId: chosen.shop_routing_template_id, norms: chosen.operation_norms };
+}
+
 export async function getProductModelRoutings(
   modelId: number,
   options: { activeOnly?: boolean } = {},

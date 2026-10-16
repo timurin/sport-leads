@@ -48,6 +48,7 @@ import {
   asTechCardUiStatus,
   filterTechCardsClient,
   parseTechCardListView,
+  techCardListPresentation,
   type TechCardListView,
   formatTechCardDateTime,
   techCardModelLabel,
@@ -55,11 +56,11 @@ import {
   techCardPositionLabel,
   techCardStatusTone,
 } from "@/lib/production/tech-cards";
-import { techCardVisibleNumber } from "@/lib/production/tech-card-display";
+import { productionQuantityLabel, techCardVisibleNumber } from "@/lib/production/tech-card-display";
 import type { ApiTechnicalCardListItem } from "@/lib/sales/order-tech-cards-api";
-import { techCardStatusLabel } from "@/lib/sales/order-tech-cards";
 
 const STATUS_FILTER_ITEMS: { value: string; label: string }[] = [
+  { value: "planned", label: "Запланирована" },
   { value: "", label: "Все статусы" },
   { value: "draft", label: "Черновик" },
   { value: "in_progress", label: "В работе" },
@@ -83,6 +84,7 @@ export function TechCardsWorkspace({
   categories = [],
   view = "list",
   kanban = null,
+  queue = null,
 }: {
   cards: ApiTechnicalCardListItem[];
   orderId?: string;
@@ -90,6 +92,7 @@ export function TechCardsWorkspace({
   categories?: NomenclatureCategory[];
   view?: TechCardListView;
   kanban?: ReactNode;
+  queue?: ReactNode;
 }) {
   const router = useRouter();
   const { push: pushToast } = useToast();
@@ -229,7 +232,7 @@ export function TechCardsWorkspace({
 
   const viewHref = (next: TechCardListView) => {
     const params = new URLSearchParams();
-    if (next === "kanban") params.set("view", "kanban");
+    if (next === "kanban" || next === "queue") params.set("view", next);
     if (orderId) params.set("orderId", orderId);
     const queryString = params.toString();
     return queryString ? `/production/tech-cards?${queryString}` : "/production/tech-cards";
@@ -321,7 +324,7 @@ export function TechCardsWorkspace({
         orderNumber: createOrderNumber.trim(),
         plannedCount,
         desiredDate: createDesiredDate.trim(),
-        quantity: 1,
+        quantity: plannedCount,
       });
       if (!result.ok || result.card == null) {
         setCreateError(result.message ?? "Ошибка создания");
@@ -549,6 +552,7 @@ export function TechCardsWorkspace({
                 items={[
                   { id: "list", label: "Техкарты" },
                   { id: "kanban", label: "Канбан" },
+                  { id: "queue", label: "Очередь" },
                 ]}
               />
             </div>
@@ -683,6 +687,8 @@ export function TechCardsWorkspace({
       <section className="min-h-0 min-w-0 flex-1 overflow-auto bg-portal-surface">
         {listView === "kanban" ? (
           kanban
+        ) : listView === "queue" ? (
+          queue
         ) : filtered.length === 0 ? (
           <EmptyState title="Нет техкарт" description={emptyDescription} />
         ) : (
@@ -706,7 +712,8 @@ export function TechCardsWorkspace({
                   </DataTableHead>
                   <DataTableBody>
                     {filtered.map((card) => {
-                      const status = asTechCardUiStatus(String(card.status));
+                      const status = asTechCardUiStatus(card.production_state?.lifecycle_status ?? String(card.status));
+                      const presentation = techCardListPresentation(card);
                       const isDraft = String(card.status) === "draft";
                       const rowBusy = rowBusyId === card.id;
                       return (
@@ -731,14 +738,14 @@ export function TechCardsWorkspace({
                           </DataTableCell>
                           <DataTableCell>
                             <StatusBadge size="compact" tone={techCardStatusTone(status)}>
-                              {techCardStatusLabel(status)}
+                              {presentation.statusLabel}
                             </StatusBadge>
                           </DataTableCell>
-                          <DataTableCell className="text-portal-muted">
-                            {card.current_stage_label ?? "—"}
+                          <DataTableCell className="text-portal-muted" data-tech-card-current-workshop>
+                            {presentation.workshopLabel}
                           </DataTableCell>
                           <DataTableCell className="tabular-nums">
-                            {card.quantity}
+                            {productionQuantityLabel(card.quantity)}
                           </DataTableCell>
                           <DataTableCell className="text-portal-muted">
                             {formatTechCardDateTime(card.updated_at)}
@@ -778,7 +785,8 @@ export function TechCardsWorkspace({
 
             <div className="flex flex-col gap-portal-3 p-portal-4 md:hidden">
               {filtered.map((card) => {
-                const status = asTechCardUiStatus(String(card.status));
+                const status = asTechCardUiStatus(card.production_state?.lifecycle_status ?? String(card.status));
+                const presentation = techCardListPresentation(card);
                 const isDraft = String(card.status) === "draft";
                 const rowBusy = rowBusyId === card.id;
                 return (
@@ -794,7 +802,7 @@ export function TechCardsWorkspace({
                         {techCardVisibleNumber(card)}
                       </Link>
                       <StatusBadge size="compact" tone={techCardStatusTone(status)}>
-                        {techCardStatusLabel(status)}
+                        {presentation.statusLabel}
                       </StatusBadge>
                     </div>
                     <dl className="mt-portal-3 grid gap-portal-2 text-portal-body">
@@ -814,7 +822,7 @@ export function TechCardsWorkspace({
                       </div>
                       <div className="flex justify-between gap-portal-3">
                         <dt className="text-portal-muted">Участок</dt>
-                        <dd className="text-right">{card.current_stage_label ?? "—"}</dd>
+                        <dd className="text-right" data-tech-card-current-workshop>{presentation.workshopLabel}</dd>
                       </div>
                       <div className="flex justify-between gap-portal-3">
                         <dt className="text-portal-muted">Обновлено</dt>

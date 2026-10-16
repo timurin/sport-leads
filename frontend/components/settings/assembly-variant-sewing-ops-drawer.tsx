@@ -229,7 +229,7 @@ export function AssemblyVariantSewingOpsDrawer({
       title={isAppend ? "Добавить операции пошива" : "Новый вариант сборки"}
       description="Вариант — группа операций пошива. Можно собрать из шаблона или отметить вручную. Итог = стоимость × количество на изделие."
       onClose={resetAndClose}
-      variant="overlay"
+      variant="nested"
     >
       <form onSubmit={submit} className="flex h-full min-h-0 flex-col">
         <div className="min-h-0 flex-1 space-y-portal-5 overflow-y-auto p-portal-6">

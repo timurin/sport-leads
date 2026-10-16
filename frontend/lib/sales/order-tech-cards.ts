@@ -6,6 +6,7 @@ import type {
 } from "@/lib/sales/order-tech-cards-api";
 
 export type TechCardUiStatus =
+  | "planned"
   | "missing"
   | "draft"
   | "in_progress"
@@ -62,6 +63,7 @@ export type OrderTechCardsSummary = {
 };
 
 const STATUS_LABEL: Record<TechCardUiStatus, string> = {
+  planned: "Запланирована",
   missing: "Нет ТК",
   draft: "Черновик",
   in_progress: "В работе",

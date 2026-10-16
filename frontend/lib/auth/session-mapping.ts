@@ -27,6 +27,7 @@ export const PERM_SEWING_CABINET_READ_OWN = "sewing_cabinet.read_own";
 export const PERM_SEWING_CABINET_READ_ANY = "sewing_cabinet.read_any";
 export const PERM_SEWING_CABINET_WRITE = "sewing_cabinet.write";
 export const PERM_LEADS_CARD_FIELDS_MANAGE = "leads.card_fields.manage";
+export const PERM_TECHNICAL_CARDS_CREATE = "technical_cards.create";
 
 export const SEWING_CABINET_OWN_HREF = "/production/sewing-cabinet";
 

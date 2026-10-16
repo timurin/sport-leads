@@ -48,6 +48,7 @@ First writers after persist (`17.1.3.2`) / surface (`17.1.3.3`):
 | `role.assign` / `role.revoke` | `platform_user` | `admin.roles.assign` |
 | `shop.stage.complete` / `shop.stage.rollback_kanban` | `technical_card` (+ stage in payload) | `shop.kanban.transition` |
 | `stage_executors.put` | `production_stage` | directory PUT (`17.1.2.8`) |
+| `production_calendar.workshop_queue_reordered` | `production_stage` | PC-05.6C explicit successful waiting reorder/apply; source=workshop_queue; old/new node order, affected cards/nodes, revision and scoped replan result; actor/time from canonical audit fields; same transaction as plans/order |
 
 Catalog is seed-extensible; new modules add codes in the implementer of `17.1.3.2`, not free-text from clients.
 
@@ -90,6 +91,16 @@ No public anonymous access.
 
 ## Evidence
 
+### Calendar plan lifecycle extension (PC-05.1B, 2026-10-11)
+
+Reuse `audit_events`; no new store or migration. Entity `calendar_plan_lifecycle`, entity_id=technical_card_id; action `calendar.assignment_created` / `assignment_replanned` / `assignment_detached` / `assignment_deleted` / `operation_started` / `operation_completed`. Payload includes technical_card_id, snapshot_node_id, tech_operation_id, nullable historical calendar_assignment_id, previous_state/new_state and a server-authored safe reason. Row carries occurred_at and authenticated actor snapshot (NULL for a system command). Sources identify scheduler/calendar_api/routing/route_snapshot/route_variant/stage_fact/unit_wip. Write with the successful mutation in its transaction; rollback removes both. IDs in JSON deliberately survive assignment/snapshot deletion. Existing audit.read API can query these events. Calendar diagnostics reads this canonical history and never invents missing legacy provenance. Contract: [DF-SCHEDULER-CALENDAR / DF-DIAGNOSTICS](../SL-DATA-FLOW-v1.md); implementation [calendar_plan_lifecycle.py](../../../backend/app/services/calendar_plan_lifecycle.py).
+
 - Roadmap: `17.1.3.1`
 - Task: `docs/tasks/v0.9.0-stage-17.1.3-universal-audit.md`
 - Related: ADR-023 §7; ADR-024 protected writes; `4.3.3` nomenclature history; `18.4` ops journal (v1.00)
+
+**IC-G02 retirement semantics, 2026-10-11:** a future snapshot/template mapping retirement emits assignment_detached (previous mapping preserved, new_state=NULL) followed by assignment_deleted, and removes owned allocations in the same transaction. Protected fact rejection writes no audit. Replacement/replan continues to keep historical IDs; there is no new audit store, fake mapping, or data repair.
+
+**IC-G04 input revision evidence, 2026-10-11:** assignment_created carries a server-authored version1 SHA256 demand_input_snapshot (canonical effective inputs and unrounded adapter Demand). It is immutable historical evidence in the existing audit transaction, not another plan/fact source. Explicit replan writes a new assignment creation stamp and retains the old lifecycle evidence. Read-only comparisons derive stale/replan_required. Legacy missing stamps have unknown old inputs/Demand; no backfill. Failed confirmed-input transactions persist neither changed inputs nor audit. No schema/migration. See [IC-G04](../../tasks/ic-g04-invalidate-stale-plan-on-demand-change-codex.md).
+
+**IC-RS01 route evidence, 2026-10-12:** reuse audit_events entity technical_card_route_manifest, action route.manifest_created, version1 payload with complete applied node identity/required/workshop/order/equipment, edges and groups. Emit in the successful canonical apply transaction with actor snapshot; identical evidence emits nothing, rollback removes evidence. Status/fact and plan remain their original stores. Read-only verification uses latest applied manifest; missing legacy evidence is never backfilled from current survivors/template. This is source evidence for completeness, not a replacement fact table or readiness cache.

@@ -70,6 +70,10 @@ def load_card_demand_snapshot(db: Session, card_id: int) -> CardDemandSnapshot |
 
 
 def calculate_demands(snapshot: CardDemandSnapshot) -> CardDemandRead:
+    if snapshot.unresolved_variant_groups:
+        return CardDemandRead(technical_card_id=snapshot.technical_card_id, status="missing_input",
+                              steps=[calculate_step_demands(snapshot, step) for step in snapshot.steps],
+                              issues=[DemandIssueRead(reason_code="variant_not_selected", technical_card_id=snapshot.technical_card_id)])
     if not snapshot.steps:
         issue = DemandIssueRead(
             reason_code="missing_route",
@@ -193,7 +197,7 @@ def _draft_for_resource(snapshot: CardDemandSnapshot, step: DemandStep, resource
     if mode == "rate" and unit in HOURLY_UNITS:
         return _hourly_rate_rejected(snapshot, step)
     if mode == "explicit_hours":
-        return _manual_hours(unit)
+        return _explicit_hours(snapshot, step, unit)
     if mode == "cutting_methods":
         return _cutting_method(snapshot, step, resource)
     if mode == "team_rate":
@@ -207,10 +211,23 @@ def _hourly_rate_rejected(snapshot: CardDemandSnapshot, step: DemandStep) -> _Dr
     return _linear_meters(step, snapshot.volumes)
 
 
-def _manual_hours(unit: str | None) -> _Draft:
-    reason = "missing_operator_norm" if unit == "labor_hour" else "missing_fixed_norm"
-    hourly = unit if unit in HOURLY_UNITS else None
-    return _Draft(None, hourly, "manual_required", "manual", _details("manual", reason, expected_unit=unit))
+def _explicit_hours(snapshot: CardDemandSnapshot, step: DemandStep, unit: str | None) -> _Draft:
+    """Admin operation norm, never capacity throughput or a manager's estimate."""
+    rule, duration = step.demand_rule, step.demand_duration_seconds
+    if rule not in {"fixed_per_order", "per_item"} or duration is None or duration <= 0:
+        return _Draft(None, unit if unit in HOURLY_UNITS else None, "manual_required", "manual",
+                      _details("explicit_hours", "missing_operator_norm", expected_unit=unit,
+                               missing_field="demand_rule" if rule not in {"fixed_per_order", "per_item"} else "demand_duration_seconds"))
+    quantity = snapshot.quantity if rule == "per_item" else Decimal(1)
+    if not quantity.is_finite() or quantity <= 0:
+        return _Draft(None, unit, "missing_input", None, _details("explicit_hours", "invalid_quantity"))
+    amount = Decimal(duration) * quantity / Decimal(3600)
+    return _Draft(amount, unit if unit in HOURLY_UNITS else "labor_hour", "ready",
+                  "fixed_per_card" if rule == "fixed_per_order" else "technical_card_quantity",
+                  _details("explicit_hours", None, expected_unit=unit, demand_rule=rule,
+                           demand_duration_seconds=str(duration), quantity=str(quantity),
+                           norm_table="tech_operations", operation_id=step.operation_id,
+                           formula_id="tech_operation_seconds_times_quantity_div_3600" if rule == "per_item" else "tech_operation_seconds_div_3600"))
 
 
 _CUTTING_RATE_KEYS = {

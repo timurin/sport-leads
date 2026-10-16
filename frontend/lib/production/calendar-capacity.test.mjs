@@ -246,13 +246,13 @@ test("capacity screen reads tech operations and keeps the list layout", () => {
   const adapter = readFileSync(join(root, "lib/production/calendar-capacity.ts"), "utf8");
   const proxy = readFileSync(join(root, "app/api/production-calendar/[...path]/route.ts"), "utf8");
   const page = readFileSync(join(root, "app/(workspace)/production/calendar/capacity/page.tsx"), "utf8");
-  assert.ok(source.includes("lg:grid-cols-[minmax(16rem,22rem)_minmax(0,1fr)]"));
-  assert.ok(source.includes("md:hidden"));
-  assert.ok(source.includes("hidden overflow-x-auto md:block"));
   assert.ok(source.includes('role="alert"'));
   assert.ok(source.includes('role="status"'));
   assert.ok(source.includes("Мощности ещё не заданы"));
-  assert.ok(source.includes("saveCapacityResource"));
+  assert.ok(source.includes("Мощности и загрузка"));
+  assert.ok(source.includes("Настроить"));
+  assert.equal(source.includes("saveCapacityResource"), false);
+  assert.equal(source.includes("base_rate"), false);
   assert.equal(source.includes("getTechOperations"), false);
   assert.ok(page.includes("getTechOperations"));
   assert.ok(fields.includes("includes(index)"));

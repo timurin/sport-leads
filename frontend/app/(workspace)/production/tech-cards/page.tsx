@@ -1,12 +1,14 @@
 import { Suspense } from "react";
 
 import { ShopStageKanbanWorkspace } from "@/components/production/shop-stage-kanban-workspace";
+import { WorkshopQueuePanel } from "@/components/production/workshop-queue-panel";
 import { TechCardsWorkspace } from "@/components/production/tech-cards-workspace";
 import { PageLayout } from "@/components/layout/page-layout";
 import { getMe } from "@/lib/auth/session";
 import {
   hasPermission,
   PERM_SHOP_KANBAN_TRANSITION,
+  PERM_TECHNICAL_CARDS_CREATE,
 } from "@/lib/auth/session-mapping";
 import { getNomenclature, getNomenclatureCategories } from "@/lib/nomenclature";
 import {
@@ -14,6 +16,8 @@ import {
   SHOP_STAGE_MODULES,
 } from "@/lib/production/shop-stage-modules";
 import { parseTechCardListView } from "@/lib/production/tech-cards";
+import { loadWorkshopQueues } from "@/lib/production/workshop-queue-api";
+import { loadPlatformDebugMode } from "@/lib/platform-brand";
 import { getProductionStages } from "@/lib/production-stages";
 import { fetchTechnicalCards } from "@/lib/sales/order-tech-cards-api";
 
@@ -64,9 +68,11 @@ export default async function ProductionTechCardsPage({
   ]);
 
   let kanban = null;
-  if (view === "kanban") {
+  let queue = null;
+  if (view === "kanban" || view === "queue") {
     const me = await getMe();
     const canTransition = hasPermission(me, PERM_SHOP_KANBAN_TRANSITION);
+    const canReorderQueue = hasPermission(me, PERM_TECHNICAL_CARDS_CREATE);
     let shopModules = SHOP_STAGE_MODULES;
     try {
       const stages = await getProductionStages({ active_only: true, limit: 200 });
@@ -74,14 +80,36 @@ export default async function ProductionTechCardsPage({
     } catch {
       shopModules = SHOP_STAGE_MODULES;
     }
-    kanban = (
-      <ShopStageKanbanWorkspace
-        cards={state.cards}
-        shopModules={shopModules}
-        canTransition={canTransition}
-        hideToolbar
-      />
-    );
+    if (view === "kanban") {
+      kanban = (
+        <ShopStageKanbanWorkspace
+          cards={state.cards}
+          shopModules={shopModules}
+          canTransition={canTransition}
+          hideToolbar
+        />
+      );
+    } else {
+      const workshopIds = shopModules.flatMap((stage) => (
+        stage.workshopId != null ? [stage.workshopId] : []
+      ));
+      const [loaded, debugMode] = await Promise.all([
+        workshopIds.length > 0
+          ? loadWorkshopQueues(workshopIds)
+          : Promise.resolve({ ok: false as const, message: "Не удалось определить участки для очереди.", stale: false, diagnostic: null }),
+        loadPlatformDebugMode(),
+      ]);
+      queue = (
+        <WorkshopQueuePanel
+          sections={loaded.ok ? loaded.sections : []}
+          cards={state.cards}
+          workshopIds={workshopIds}
+          canReorder={canReorderQueue}
+          debugMode={debugMode}
+          loadError={loaded.ok ? null : loaded.message}
+        />
+      );
+    }
   }
 
   return (
@@ -108,6 +136,7 @@ export default async function ProductionTechCardsPage({
           categories={categories}
           view={view}
           kanban={kanban}
+          queue={queue}
         />
       </Suspense>
     </PageLayout>

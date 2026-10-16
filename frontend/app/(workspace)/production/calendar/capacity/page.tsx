@@ -3,7 +3,9 @@ import { CalendarCapacitySettings } from "@/components/production/calendar-capac
 import { getCapacityResources } from "@/lib/capacity-resources";
 import { getProductionStages } from "@/lib/production-stages";
 import { getWorkCenters } from "@/lib/shop-routings";
+import { localIsoDate } from "@/lib/tech-operation-ux";
 import { getTechOperations } from "@/lib/tech-operations";
+import { readEquipmentLoads } from "@/lib/work-center-load";
 
 export default async function CalendarCapacityPage() {
   const [operations, productionStages, resources, workCenters] = await Promise.all([
@@ -12,6 +14,9 @@ export default async function CalendarCapacityPage() {
     getCapacityResources(),
     getWorkCenters({ active_only: true, limit: 500 }),
   ]);
+  const today = localIsoDate(new Date());
+  const workCenterIds = resources.map((resource) => resource.work_center_id).filter((id): id is number => id != null);
+  const initialLoads = await readEquipmentLoads(workCenterIds, [today]);
 
   return (
     <PageLayout>
@@ -20,6 +25,8 @@ export default async function CalendarCapacityPage() {
         productionStages={productionStages}
         resources={resources}
         workCenters={workCenters}
+        initialLoads={initialLoads}
+        initialDate={today}
       />
     </PageLayout>
   );

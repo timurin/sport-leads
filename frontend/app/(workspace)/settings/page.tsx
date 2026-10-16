@@ -10,6 +10,7 @@ import {
   Package,
   Ruler,
   Settings2,
+  Wrench,
   Shirt,
   SlidersHorizontal,
   Users,
@@ -137,7 +138,7 @@ const settingsGroups = [
   },
   {
     title: "Производство",
-    description: "Цеха, технологические операции и маршруты производства",
+    description: "Цеха, оборудование, технологические операции и маршруты производства",
     icon: Factory,
     items: [
       {
@@ -153,8 +154,14 @@ const settingsGroups = [
         icon: Settings2,
       },
       {
+        title: "Оборудование",
+        description: "Станки и рабочие места внутри цеха",
+        href: "/settings/catalogs/work-centers",
+        icon: Wrench,
+      },
+      {
         title: "Маршруты",
-        description: "Шаблоны маршрутов с этапами и рабочими центрами",
+        description: "Шаблоны маршрутов с этапами и оборудованием",
         href: "/settings/catalogs/routings",
         icon: Settings2,
       },

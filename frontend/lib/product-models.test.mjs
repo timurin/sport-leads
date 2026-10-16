@@ -1,4 +1,7 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import test from "node:test";
 
 import {
@@ -11,6 +14,9 @@ import {
   formatAssemblyVariantCostRange,
   isProductModelRequisitesDirty,
   parseAssemblyCostInput,
+  isProductModelOutsideActiveFolder,
+  parseActiveFolderId,
+  parseExpandedFolderIds,
   parseProductModelRouteId,
   productModelFolderSelectOptions,
   productModelLabel,
@@ -526,4 +532,66 @@ test("compareProductModelsByListSort orders by article and cost", () => {
     sorted.filter((row) => row.kind === "model").map((row) => row.id),
     [2, 1],
   );
+});
+
+test("expanded folder path keeps only positive ids", () => {
+  assert.deepEqual(parseExpandedFolderIds(null), []);
+  assert.deepEqual(parseExpandedFolderIds("nope"), []);
+  assert.deepEqual(parseExpandedFolderIds(JSON.stringify([2, "3", 0, 4.5, 8])), [2, 8]);
+});
+
+test("models outside the open folder are the ones to dim", () => {
+  assert.equal(parseActiveFolderId(null), null);
+  assert.equal(parseActiveFolderId("0"), null);
+  assert.equal(parseActiveFolderId("4"), 4);
+  assert.equal(isProductModelOutsideActiveFolder(4, null), false);
+  assert.equal(isProductModelOutsideActiveFolder(4, 4), false);
+  assert.equal(isProductModelOutsideActiveFolder(null, 4), true);
+  assert.equal(isProductModelOutsideActiveFolder(9, 4), true);
+});
+
+test("model list shows description and opens the full card dialog", () => {
+  const root = join(dirname(fileURLToPath(import.meta.url)), "..");
+  const list = readFileSync(join(root, "components/settings/product-models-workspace.tsx"), "utf8");
+  const frame = readFileSync(join(root, "components/settings/product-model-full-card-frame.tsx"), "utf8");
+  const techCard = readFileSync(join(root, "components/production/tech-card-model-route-card.tsx"), "utf8");
+  const actions = readFileSync(
+    join(root, "app/(workspace)/settings/catalogs/product-models/product-model-actions.ts"),
+    "utf8",
+  );
+  assert.ok(list.includes("Описание"));
+  assert.ok(list.includes("data-product-model-description"));
+  assert.ok(list.includes("ProductModelFullCardModal"));
+  assert.ok(!list.includes("ProductModelCardModal"));
+  assert.ok(!list.includes("product-model-card-modal"));
+  assert.ok(techCard.includes("ProductModelFullCardModal"));
+  assert.ok(!techCard.includes("ProductModelCardModal"));
+  assert.ok(!actions.includes("loadProductModelCardModal"));
+  assert.ok(!actions.includes("saveProductModelCardModalRequisites"));
+  const helpers = readFileSync(join(root, "lib/product-models.ts"), "utf8");
+  assert.ok(list.includes("updateExpandedFolderIds"));
+  assert.ok(helpers.includes("PRODUCT_MODEL_EXPANDED_FOLDERS_KEY"));
+  assert.ok(frame.includes("w-[90vw]"));
+  assert.ok(frame.includes("confirmProductModelClose"));
+  assert.ok(frame.includes("data-product-model-full-card-close"));
+  assert.ok(frame.includes("Закрыть окно"));
+  assert.ok(frame.includes("useProductModelCardReload"));
+  const modal = readFileSync(join(root, "components/settings/product-model-full-card-modal.tsx"), "utf8");
+  const assembly = readFileSync(join(root, "components/settings/assembly-variants-block.tsx"), "utf8");
+  const routings = readFileSync(join(root, "components/settings/product-model-routings-block.tsx"), "utf8");
+  assert.ok(modal.includes("onRefresh"));
+  assert.ok(assembly.includes("useProductModelCardReload"));
+  assert.ok(routings.includes("useProductModelCardReload"));
+  assert.ok(!assembly.includes("router.refresh"));
+  assert.ok(frame.includes("data-product-model-nested-dialog"));
+  const drawer = readFileSync(join(root, "components/ui/create-drawer.tsx"), "utf8");
+  const sewing = readFileSync(join(root, "components/settings/assembly-variant-sewing-ops-drawer.tsx"), "utf8");
+  const routing = readFileSync(join(root, "components/settings/product-model-routing-add-drawer.tsx"), "utf8");
+  assert.ok(drawer.includes("z-portal-modal-3"));
+  assert.ok(drawer.includes("w-[clamp(30vw,40vw,50vw)]"));
+  assert.ok(sewing.includes('variant="nested"'));
+  assert.ok(routing.includes('variant="nested"'));
+  assert.ok(list.includes("sticky right-0"));
+  assert.ok(list.includes("Удалить ${model.name}"));
+  assert.ok(actions.includes("export async function deleteProductModel"));
 });

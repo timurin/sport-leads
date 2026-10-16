@@ -24,8 +24,8 @@ VALIDATION = ROOT / "docs/tasks/production-calendar-pc-02-1-validation.md"
 OUTPUT = ROOT / "docs/roadmap/production-calendar-v0.1.html"
 TWIN = ROOT / "docs/erp/status/roadmap-v1.1.html"
 
-STATUS_LINE = re.compile(r"^- \[([ x])\] (PC-(?:UI-\d{2}|\d{2}(?:\.(?:[123]|4[AD]|5A|6A|7[AB]))?(?:-B\d+)?)) — (.+)$", re.M)
-DETAIL_LINE = re.compile(r"^\*\*(PC-\d{2}(?:\.(?:[123]|4[AD]|5A|6A|7[AB]))?(?:-B\d+)?) — ([^*]+)\*\*\s*(.*)$", re.M)
+STATUS_LINE = re.compile(r"^- \[([ x])\] (PC-(?:UI-\d{2}|\d{2}(?:\.(?:[123]|1[AB]|0[ACD]|3[AC]|4[ADFGIMOQSTU]|5A|6A|7[AB]))?(?:-B\d+|-A)?)) — (.+)$", re.M)
+DETAIL_LINE = re.compile(r"^\*\*(PC-\d{2}(?:\.(?:[123]|1[AB]|0[ACD]|3[AC]|4[ADFGIMOQSTU]|5A|6A|7[AB]))?(?:-B\d+|-A)?) — ([^*]+)\*\*\s*(.*)$", re.M)
 UI_LINE = re.compile(r"^\*\*(PC-UI-\d{2}) — ([^*]+)\*\*\s*(.*)$", re.M)
 
 DEPENDENCIES = {
@@ -44,8 +44,29 @@ DEPENDENCIES = {
     "PC-03.6A": "PC-03.5A - backend range contract; frontend PC-03.6B separate",
     "PC-03.5A": "PC-03.4D · owner-selected automatic queue entry; PC-03.5B frontend separate",
     "PC-03": "PC-02.1 · DESIGN-APPROVED · устранение P1 B1 и обязательные проверки",
+    "PC-04.4U": "PC-04.4T; owner-selected source-to-snapshot persistence/cache audit",
+    "PC-04.4T": "PC-04.4S real data blockers; owner-requested route/assembly input population",
+    "PC-04.4S": "PC-04.4Q/R; authorized local stress replacement; manual data readiness blockers",
+    "PC-04.4Q": "PC-04.4O/P; owner-selected end-to-end persistence fix",
+    "PC-04.4O": "PC-04.4M diagnostics; owner-selected explicit admin demand rule; frontend separate",
+    "PC-04.4M": "PC-04.4G/I/L; owner-selected unified readiness diagnostics; frontend separate",
+    "PC-04.4I": "PC-04.4G snapshot runtime; owner-selected backend ONE OF; UI PC-04.4J remains separate",
+    "PC-04.4G": "PC-04.4F audit; snapshot is the runtime source; editor is PC-04.4H",
+    "PC-04.4G-A": "PC-04.4G first bounded iteration under AGENTS.md",
+    "PC-04.4F": "PC-04.4D-A and owner-observed contract confusion; audit only",
+    "PC-04.4D": "PC-04.4A and VIS-STRESS dataset; backend done, UI remains",
+    "PC-04.4D-A": "PC-04.4D explicit Codex part A; audit before changes",
+    "PC-04.4A": "PC-04.3A/B/C; explicit backend queue command",
+    "PC-04.3C": "PC-04.3A engine and existing PC-04.3B UI; validation only",
+    "PC-04.3A": "Owner-selected after PC-04.0/1/2B/2C/2F prerequisites; single-card only",
     "PC-04.2": "PC-04.1 stated complete in owner task; specification only, no stage transition",
     "PC-04": "PC-02.1 · DESIGN-APPROVED",
+    "PC-05.2": "PC-05.1B; owner-selected targeted invariant audit only",
+    "PC-05.1B": "PC-05.0D/1A; owner-selected calendar lifecycle and start invariant",
+    "PC-05.1A": "PC-05.1 frontend; owner-selected existing settings persistence",
+    "PC-05.0D": "PC-05.0C; owner-selected calendar fact/plan provenance",
+    "PC-05.0C": "PC-05.0A/B; owner-selected read-only production diagnostic foundation",
+    "PC-05.0A": "Owner-selected documentation only; no stage transition",
     "PC-05": "PC-03 · PC-04",
     "PC-06": "PC-05",
     "PC-07": "PC-06",
@@ -66,14 +87,14 @@ def read_items() -> tuple[list[dict[str, str]], list[dict[str, str]]]:
     detail = DETAIL.read_text(encoding="utf-8")
     ui_task = UI_TASK.read_text(encoding="utf-8")
     statuses = {code: (mark, title) for mark, code, title in STATUS_LINE.findall(roadmap)}
-    expected = {f"PC-{i:02}" for i in range(1, 11)} | {"PC-02.1", "PC-02.1-B1", "PC-03.1", "PC-03.2", "PC-03.3", "PC-03.4A", "PC-03.4D", "PC-03.5A", "PC-03.6A", "PC-03.7A", "PC-03.7B", "PC-03.7B-B1", "PC-04.2"} | {
+    expected = {f"PC-{i:02}" for i in range(1, 11)} | {"PC-02.1", "PC-02.1-B1", "PC-03.1", "PC-03.2", "PC-03.3", "PC-03.4A", "PC-03.4D", "PC-03.5A", "PC-03.6A", "PC-03.7A", "PC-03.7B", "PC-03.7B-B1", "PC-04.2", "PC-04.3A", "PC-04.3C", "PC-04.4A", "PC-04.4D", "PC-04.4D-A", "PC-04.4F", "PC-04.4G", "PC-04.4G-A", "PC-04.4I", "PC-04.4M", "PC-04.4O", "PC-04.4Q", "PC-04.4S", "PC-04.4T", "PC-04.4U", "PC-05.0A", "PC-05.0C", "PC-05.0D", "PC-05.1A", "PC-05.1B", "PC-05.2"} | {
         f"PC-UI-{i:02}" for i in range(1, 13)
     }
     if set(statuses) != expected:
         raise ValueError(f"Roadmap codes mismatch: missing={expected-set(statuses)}, extra={set(statuses)-expected}")
     details = {code: (title, body) for code, title, body in DETAIL_LINE.findall(detail)}
     ui_details = {code: (title, body) for code, title, body in UI_LINE.findall(ui_task)}
-    if set(details) != {f"PC-{i:02}" for i in range(1, 11)} | {"PC-02.1", "PC-02.1-B1", "PC-03.1", "PC-03.2", "PC-03.3", "PC-03.4A", "PC-03.4D", "PC-03.5A", "PC-03.6A", "PC-03.7A", "PC-03.7B", "PC-03.7B-B1", "PC-04.2"}:
+    if set(details) != {f"PC-{i:02}" for i in range(1, 11)} | {"PC-02.1", "PC-02.1-B1", "PC-03.1", "PC-03.2", "PC-03.3", "PC-03.4A", "PC-03.4D", "PC-03.5A", "PC-03.6A", "PC-03.7A", "PC-03.7B", "PC-03.7B-B1", "PC-04.2", "PC-04.3A", "PC-04.3C", "PC-04.4A", "PC-04.4D", "PC-04.4D-A", "PC-04.4F", "PC-04.4G", "PC-04.4G-A", "PC-04.4I", "PC-04.4M", "PC-04.4O", "PC-04.4Q", "PC-04.4S", "PC-04.4T", "PC-04.4U", "PC-05.0A", "PC-05.0C", "PC-05.0D", "PC-05.1A", "PC-05.1B", "PC-05.2"}:
         raise ValueError("Detailed roadmap must contain PC-01…PC-10, PC-02.1 and B1")
     if set(ui_details) != {f"PC-UI-{i:02}" for i in range(1, 13)}:
         raise ValueError("UI task must contain PC-UI-01…PC-UI-12")
@@ -102,7 +123,47 @@ def card(item: dict[str, str]) -> str:
     status = item["status"]
     label = "Готово к просмотру" if code in {"PC-UI-10", "PC-UI-11"} and status == "work" else {"done": "Завершено", "work": "В работе", "planned": "Запланировано", "blocked": "Заблокировано"}[status]
     source = "../tasks/integrate-production-calendar-v0.1-roadmap.md" if code.startswith("PC-UI") else "production-calendar-v0.1.md"
-    if code == "PC-04.2":
+    if code == "PC-05.2":
+        source = "../tasks/pc-05-2-platform-invariant-coverage-audit-codex.md"
+    elif code == "PC-05.1B":
+        source = "../tasks/pc-05-1b-calendar-plan-lifecycle-audit-and-start-invariant-codex.md"
+    elif code == "PC-05.1A":
+        source = "../tasks/pc-05-1a-persist-platform-debug-mode-codex.md"
+    elif code == "PC-05.0D":
+        source = "../tasks/pc-05-0d-calendar-integrity-diagnostic-provenance-codex.md"
+    elif code == "PC-05.0C":
+        source = "../tasks/pc-05-0c-platform-diagnostics-foundation-codex.md"
+    elif code == "PC-05.0A":
+        source = "../tasks/pc-05-0a-sl-data-flow-v1-codex.md"
+    elif code == "PC-04.4U":
+        source = "../tasks/pc-04-4u-route-norms-to-techcard-persistence-cache-audit-codex.md"
+    elif code == "PC-04.4T":
+        source = "../tasks/pc-04-4t-restore-route-and-assembly-operation-demand-codex.md"
+    elif code == "PC-04.4S":
+        source = "../tasks/pc-04-4s-rebuild-30-tk-stress-dataset-and-calendar-check-codex.md"
+    elif code == "PC-04.4Q":
+        source = "../tasks/pc-04-4q-end-to-end-readiness-persistence-fix-codex.md"
+    elif code == "PC-04.4O":
+        source = "../tasks/pc-04-4o-explicit-demand-rule-codex.md"
+    elif code == "PC-04.4M":
+        source = "../tasks/pc-04-4m-unified-production-readiness-diagnostics-codex.md"
+    elif code == "PC-04.4I":
+        source = "../tasks/pc-04-4i-variant-routing-one-of-scheduler-codex.md"
+    elif code == "PC-04.4G-A":
+        source = "../tasks/pc-04-4g-a-routing-graph-contract-projections.md"
+    elif code == "PC-04.4G":
+        source = "../tasks/pc-04-4g-unified-routing-graph-kanban-calendar-codex.md"
+    elif code == "PC-04.4F":
+        source = "../tasks/pc-04-4f-demand-capacity-contract-audit-codex.md"
+    elif code in {"PC-04.4D", "PC-04.4D-A"}:
+        source = "../tasks/pc-04-4d-work-centers-as-capacity-source.md"
+    elif code == "PC-04.4A":
+        source = "../tasks/pc-04-4a-production-queue-mass-scheduler-backend-codex.md"
+    elif code == "PC-04.3C":
+        source = "../tasks/pc-04-3c-scheduler-scenario-validation-codex.md"
+    elif code == "PC-04.3A":
+        source = "../tasks/pc-04-3a-scheduler-engine-core-codex.md"
+    elif code == "PC-04.2":
         source = "../tasks/pc-04-2-demand-calculation-contract.md"
     elif code == "PC-03.7B-B1":
         source = "../tasks/pc-03-7b-b1-tech-operation-edit-modal.md"
@@ -169,7 +230,7 @@ def render() -> str:
 </style></head><body><main class="wrap">
 <header class="top"><div class="brand">SPORT UNIFORM / SL-UI-BASE-v1</div><nav class="topnav" aria-label="Разделы"><a href="#stages">Этапы</a><a href="#ui">PC-UI</a><a href="#questions">Вопросы и риски</a></nav></header>
 <div class="hero"><div><h1>Production Calendar <span style="color:var(--blue)">v0.1</span></h1><p class="intro">Автономный производственный календарь · ручное планирование. Статусы этапов и дизайна ниже синхронизированы с Markdown; PC-03.1 — рабочая очередь; PC-03.2 — навигация; PC-03.3 — ручное планирование; PC-03.4A — backend мощностей; PC-03.4D — индикация очереди; PC-03.5A — автоматический вход; остальные этапы открыты.</p></div><div class="progressbox" aria-label="Общий прогресс"><div class="progressrow"><strong>{done}/{total}</strong><span>выполнено</span></div><progress value="{done}" max="{total}"></progress><small>{round(done/total*100)}% микротасков · данные из roadmap-v1.1.md</small></div></div>
-<div class="metrics"><div class="metric"><strong>10</strong><span>этапов PC-01–PC-10</span></div><div class="metric"><strong>12</strong><span>микротасков PC-UI</span></div><div class="metric"><strong>12</strong><span>PC-02.1, P1 B1, PC-03.1…3, PC-03.4A/D, PC-03.5A/6A/7A, PC-03.7B-B1, PC-04.2 spec</span></div><div class="metric"><strong>{blocked}</strong><span>заблокировано</span></div></div>
+<div class="metrics"><div class="metric"><strong>10</strong><span>этапов PC-01–PC-10</span></div><div class="metric"><strong>12</strong><span>микротасков PC-UI</span></div><div class="metric"><strong>20</strong><span>PC-02.1, P1 B1, PC-03.1…3, PC-03.4A/D, PC-03.5A/6A/7A, PC-03.7B-B1, PC-04.2 spec, PC-04.3A/C, PC-04.4A, PC-04.4D/A, PC-04.4F audit, PC-04.4G/A</span></div><div class="metric"><strong>{blocked}</strong><span>заблокировано</span></div></div>
 <div class="toolbar"><div class="filters" role="group" aria-label="Фильтр по статусу"><button class="filter" data-filter="all" aria-pressed="true">Все</button><button class="filter" data-filter="done" aria-pressed="false">Завершено</button><button class="filter" data-filter="work" aria-pressed="false">В работе</button><button class="filter" data-filter="planned" aria-pressed="false">Запланировано</button><button class="filter" data-filter="blocked" aria-pressed="false">Заблокировано</button></div><span class="count" id="visible-count" aria-live="polite">Показано {total} из {total}</span></div>
 <section class="section" id="stages"><div class="section-head"><h2>Этапы продукта</h2><p>Разверните карточку, чтобы увидеть задачу, зависимость и критерий готовности.</p></div><div class="grid">{stage_cards}</div><p class="empty" hidden>В этом разделе задач с выбранным статусом нет.</p></section>
 <section class="section" id="ui"><div class="section-head"><h2>Проектирование интерфейсов · PC-UI</h2><p>Отдельная дизайн-фаза: спецификации восьми экранов UI-A…UI-H. Реализация приложения не начата.</p></div><div class="grid">{ui_cards}</div><p class="empty" hidden>В этом разделе задач с выбранным статусом нет.</p></section>
@@ -199,8 +260,10 @@ def main() -> None:
                     raise SystemExit(f"Missing local anchor: {target}")
             elif not (OUTPUT.parent / target).resolve().is_file():
                 raise SystemExit(f"Missing linked document: {target}")
-        if generated.count('<details class="card"') != 35:
-            raise SystemExit("Expected 35 roadmap cards")
+        items, ui_items = read_items()
+        expected_cards = len(items) + len(ui_items)
+        if generated.count('<details class="card"') != expected_cards:
+            raise SystemExit(f"Expected {expected_cards} roadmap cards")
         print(f"OK: {OUTPUT.relative_to(ROOT)} matches Markdown")
     else:
         OUTPUT.write_text(generated, encoding="utf-8", newline="\n")

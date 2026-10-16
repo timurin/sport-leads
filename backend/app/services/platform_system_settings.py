@@ -47,6 +47,7 @@ def _default_row() -> PlatformSystemSettings:
         default_timezone="Europe/Moscow",
         support_email=None,
         ui_locale="ru-RU",
+        debug_mode=False,
         notes=None,
         logo_storage_key=None,
         logo_mime_type=None,
@@ -72,6 +73,7 @@ def _to_read(row: PlatformSystemSettings) -> PlatformSystemSettingsRead:
         default_timezone=row.default_timezone,
         support_email=row.support_email,
         ui_locale=row.ui_locale,
+        debug_mode=row.debug_mode,
         notes=row.notes,
         logo_url=LOGO_CONTENT_URL if has_logo else None,
         logo_filename=row.logo_original_filename if has_logo else None,
@@ -104,6 +106,8 @@ def update_platform_system_settings(
     email = (payload.support_email or "").strip()
     row.support_email = email or None
     row.ui_locale = payload.ui_locale.strip()
+    if "debug_mode" in payload.model_fields_set:
+        row.debug_mode = payload.debug_mode
     notes = (payload.notes or "").strip()
     row.notes = notes or None
     db.add(row)

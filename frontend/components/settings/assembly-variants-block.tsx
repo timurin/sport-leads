@@ -9,7 +9,6 @@ import {
   Plus,
   Trash2,
 } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 
 import {
@@ -20,6 +19,7 @@ import {
   updateAssemblyVariant,
 } from "@/app/(workspace)/settings/catalogs/product-models/product-model-actions";
 import { AssemblyVariantSewingOpsDrawer } from "@/components/settings/assembly-variant-sewing-ops-drawer";
+import { useProductModelCardReload } from "@/components/settings/product-model-full-card-frame";
 import { Button, IconButton } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/form-controls";
@@ -58,7 +58,7 @@ export function AssemblyVariantsBlock({
   sewingFolders = [],
   sewingTemplates = [],
 }: AssemblyVariantsBlockProps) {
-  const router = useRouter();
+  const refreshCard = useProductModelCardReload();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [appendVariantId, setAppendVariantId] = useState<number | null>(null);
   const [expandedIds, setExpandedIds] = useState<Set<number>>(() => new Set());
@@ -82,12 +82,13 @@ export function AssemblyVariantsBlock({
     setBusy(true);
     setError(null);
     const result = await action();
-    setBusy(false);
     if (!result.ok) {
+      setBusy(false);
       setError(result.message);
       return false;
     }
-    router.refresh();
+    await refreshCard();
+    setBusy(false);
     return true;
   };
 
@@ -471,7 +472,9 @@ export function AssemblyVariantsBlock({
           setDrawerOpen(false);
           setAppendVariantId(null);
         }}
-        onSaved={() => router.refresh()}
+        onSaved={() => {
+          void refreshCard();
+        }}
       />
       </div>
     </SectionCard>

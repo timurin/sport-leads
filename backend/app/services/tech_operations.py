@@ -82,12 +82,15 @@ def _replace_required_materials(
         existing.quantity = quantity
 
 
-def _to_read(row: TechOperation) -> TechOperationRead:
+def _to_read(row: TechOperation, diagnostics=()) -> TechOperationRead:
     return TechOperationRead.model_validate(
         {
             "id": row.id,
+            "diagnostics": diagnostics,
             "name": row.name,
             "code": row.code,
+            "demand_rule": row.demand_rule,
+            "demand_duration_seconds": row.demand_duration_seconds,
             "volume_unit": row.volume_unit,
             "production_stage_id": row.production_stage_id,
             "is_active": row.is_active,
@@ -119,23 +122,18 @@ def list_tech_operations(
     limit: int = 100,
     offset: int = 0,
 ) -> list[TechOperationRead]:
-    return [
-        _to_read(row)
-        for row in repo.list_tech_operations(
-            db,
-            search=search,
-            active_only=active_only,
-            limit=limit,
-            offset=offset,
-        )
-    ]
+    from app.services.production_diagnostics import context_from_operations, operation_diagnostics
+    rows = repo.list_tech_operations(db, search=search, active_only=active_only, limit=limit, offset=offset)
+    context = context_from_operations(rows)
+    return [_to_read(row, operation_diagnostics(context, row.id)) for row in rows]
 
 
 def get_tech_operation(db: Session, operation_id: int) -> TechOperationRead:
     row = repo.get_tech_operation(db, operation_id)
     if row is None:
         raise TechOperationNotFoundError("Тех операция не найдена")
-    return _to_read(row)
+    from app.services.production_diagnostics import context_from_operations, operation_diagnostics
+    return _to_read(row, operation_diagnostics(context_from_operations([row]), row.id))
 
 
 def create_tech_operation(db: Session, payload: TechOperationCreate) -> TechOperationRead:
@@ -159,6 +157,8 @@ def create_tech_operation(db: Session, payload: TechOperationCreate) -> TechOper
         production_stage_id=payload.production_stage_id,
         is_active=payload.is_active,
         sort_order=payload.sort_order,
+        demand_rule=payload.demand_rule,
+        demand_duration_seconds=payload.demand_duration_seconds,
     )
     row.capacity_resources = resources
     _replace_required_materials(
@@ -170,7 +170,7 @@ def create_tech_operation(db: Session, payload: TechOperationCreate) -> TechOper
         repo.add_tech_operation(db, row)
         db.commit()
         db.refresh(row)
-        return _to_read(repo.get_tech_operation(db, row.id) or row)
+        return get_tech_operation(db, row.id)
     except IntegrityError as error:
         db.rollback()
         raise TechOperationConflictError(
@@ -183,6 +183,9 @@ def update_tech_operation(
     operation_id: int,
     payload: TechOperationUpdate,
 ) -> TechOperationRead:
+    if {"demand_rule", "demand_duration_seconds"} & payload.model_fields_set:
+        from app.repositories.production_scheduler import lock_scheduler
+        lock_scheduler(db)
     row = repo.get_tech_operation(db, operation_id)
     if row is None:
         raise TechOperationNotFoundError("Тех операция не найдена")
@@ -190,6 +193,9 @@ def update_tech_operation(
     if not changes:
         raise TechOperationValidationError("Нет полей для обновления")
     resources = _capacity_resources(db, changes["capacity_resource_keys"]) if "capacity_resource_keys" in changes else None
+    if resources is not None:
+        from app.services.calendar_allocation_consistency import protect_operation_links
+        protect_operation_links(db, operation_id, {r.resource_key for r in row.capacity_resources} - {r.resource_key for r in resources})
 
     if "name" in changes:
         existing = repo.get_tech_operation_by_name(db, changes["name"])
@@ -227,7 +233,7 @@ def update_tech_operation(
     try:
         db.commit()
         db.refresh(row)
-        return _to_read(repo.get_tech_operation(db, row.id) or row)
+        return get_tech_operation(db, row.id)
     except IntegrityError as error:
         db.rollback()
         raise TechOperationConflictError(
@@ -236,9 +242,16 @@ def update_tech_operation(
 
 
 def delete_tech_operation(db: Session, operation_id: int) -> None:
+    from app.repositories.production_scheduler import lock_scheduler
+    from app.services.operation_retention import retained_references, deletion_issue
+    from app.services.calendar_plan_linkage import PlanLinkageConflict
+    lock_scheduler(db)
     row = repo.get_tech_operation(db, operation_id)
     if row is None:
         raise TechOperationNotFoundError("Тех операция не найдена")
+    references = retained_references(db, operation_id)
+    if references:
+        raise PlanLinkageConflict(deletion_issue(operation_id, references))
     try:
         repo.delete_tech_operation(db, row)
         db.commit()

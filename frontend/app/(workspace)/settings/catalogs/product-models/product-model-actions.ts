@@ -177,6 +177,20 @@ export async function updateProductModelRequisites(
   return model;
 }
 
+export async function deleteProductModel(
+  modelId: number,
+): Promise<{ ok: true } | { ok: false; message: string }> {
+  const response = await fetch(`${apiBaseUrl()}/product-models/${modelId}`, {
+    method: "DELETE",
+    cache: "no-store",
+  });
+  if (!response.ok) {
+    return { ok: false, message: await readError(response) };
+  }
+  revalidatePath("/settings/catalogs/product-models");
+  return { ok: true };
+}
+
 export async function archiveProductModel(modelId: number): Promise<ProductModel> {
   const response = await fetch(`${apiBaseUrl()}/product-models/${modelId}/archive`, {
     method: "POST",
@@ -839,96 +853,22 @@ export async function moveProductModelsToFolder(
   return { ok: true, models };
 }
 
-export type ProductModelCardModalBundle = {
-  model: ProductModel;
-  media: ProductModelMedia[];
-  sizeGrids: Awaited<ReturnType<typeof import("@/lib/size-grids").getSizeGrids>>;
-  productTypes: Awaited<
-    ReturnType<typeof import("@/lib/product-types").getProductTypes>
-  >;
-  folders: ProductModelFolder[];
-  shopRoutings: Array<{
-    id: number;
-    name: string;
-    code: string | null;
-    is_active: boolean;
-  }>;
-};
-
-/** Load model + catalogs for the centered model-card modal (`26.12.2`). */
-export async function loadProductModelCardModal(
-  modelId: number,
-): Promise<
-  | { ok: true; bundle: ProductModelCardModalBundle }
+export async function loadProductModelFullCard(modelId: number): Promise<
+  | { ok: true; card: import("@/lib/product-model-detail-data").ProductModelDetailData }
   | { ok: false; message: string }
 > {
   if (!Number.isSafeInteger(modelId) || modelId <= 0) {
     return { ok: false, message: "Некорректный идентификатор модели" };
   }
-
-  const {
-    getProductModelById,
-    getProductModelFolders,
-    getProductModelMedia,
-  } = await import("@/lib/product-models");
-  const { getSizeGrids } = await import("@/lib/size-grids");
-  const { getProductTypes } = await import("@/lib/product-types");
-  const { getShopRoutings } = await import("@/lib/shop-routings");
-
   try {
-    const [model, media, sizeGrids, productTypes, folders, shopRoutings] =
-      await Promise.all([
-        getProductModelById(modelId),
-        getProductModelMedia(modelId),
-        getSizeGrids(),
-        getProductTypes(),
-        getProductModelFolders(),
-        getShopRoutings({ limit: 500 }),
-      ]);
-    if (!model) {
-      return { ok: false, message: "Модель не найдена" };
-    }
-    return {
-      ok: true,
-      bundle: {
-        model: normalizeProductModel(model),
-        media,
-        sizeGrids,
-        productTypes,
-        folders: folders.map(normalizeFolder),
-        shopRoutings: shopRoutings.map((row) => ({
-          id: row.id,
-          name: row.name,
-          code: row.code,
-          is_active: row.is_active,
-        })),
-      },
-    };
+    const { loadProductModelDetailData } = await import("@/lib/product-model-detail-data");
+    const card = await loadProductModelDetailData(modelId);
+    if (!card) return { ok: false, message: "Модель не найдена" };
+    return { ok: true, card };
   } catch (error) {
     return {
       ok: false,
-      message:
-        error instanceof Error
-          ? error.message
-          : "Не удалось загрузить карточку модели",
-    };
-  }
-}
-
-export async function saveProductModelCardModalRequisites(
-  modelId: number,
-  payload: ProductModelRequisitesInput,
-): Promise<ProductModelCreateResult> {
-  try {
-    const model = await updateProductModelRequisites(modelId, payload);
-    return { ok: true, model: normalizeProductModel(model) };
-  } catch (error) {
-    return {
-      ok: false,
-      message:
-        error instanceof Error
-          ? error.message
-          : "Не удалось сохранить карточку модели",
+      message: error instanceof Error ? error.message : "Не удалось открыть карточку модели",
     };
   }
 }

@@ -35,10 +35,10 @@ export type CapacityResource = {
 };
 
 export const RESOURCE_TYPE_LABEL: Record<CapacityResourceType, string> = {
-  labor: "Трудовой",
+  labor: "Персонал",
   machine: "Оборудование",
   throughput: "Производительность",
-  milestone: "Веха",
+  milestone: "Контрольная точка",
 };
 
 export const CAPACITY_UNIT_LABEL: Record<CapacityUnit, string> = {
@@ -50,13 +50,16 @@ export const CAPACITY_UNIT_LABEL: Record<CapacityUnit, string> = {
 };
 
 export const CALCULATION_MODE_LABEL: Record<CalculationMode, string> = {
-  explicit_hours: "Часы",
-  rate: "Норма",
-  sewing_norm: "Норма пошива",
-  cutting_methods: "Методы раскроя",
-  team_rate: "Норма бригады",
-  milestone: "Веха",
+  explicit_hours: "По заданной норме времени",
+  rate: "По производительности",
+  sewing_norm: "По норме пошива модели",
+  cutting_methods: "По способу раскроя",
+  team_rate: "По производительности бригады",
+  milestone: "Без расчёта мощности",
 };
+
+export const MILESTONE_CAPTION = "Контрольная точка — без расчёта мощности";
+export const MILESTONE_HINT = "Этап не резервирует производственную мощность и используется как контрольное событие процесса.";
 
 const RESOURCE_KEY = /^[A-Za-z0-9_-]{1,64}$/;
 
@@ -257,15 +260,15 @@ export function validateCapacityResource(resource: CapacityResource): string | n
   if (!resource.name.trim()) return "Укажите наименование ресурса";
   if (resource.production_stage_id == null || resource.production_stage_id <= 0) return "Укажите цех ресурса";
   const hours = resource.hours_per_day == null || resource.hours_per_day === "" ? null : Number(resource.hours_per_day);
-  if (hours != null && (!Number.isFinite(hours) || hours < 0 || hours > 24)) return "Часов в день: от 0 до 24";
+  if (hours != null && (!Number.isFinite(hours) || hours < 0 || hours > 24)) return "Рабочих часов в день: от 0 до 24";
   if (!Number.isInteger(resource.shifts_per_day) || resource.shifts_per_day < 1 || resource.shifts_per_day > 24) {
     return "Смен в день: от 1 до 24";
   }
   if (hours != null && hours * resource.shifts_per_day > 24) return "Часы и смены вместе не больше 24 часов";
   const efficiency = Number(resource.efficiency);
-  if (!Number.isFinite(efficiency) || efficiency < 0 || efficiency > 1) return "Эффективность: от 0 до 1";
+  if (!Number.isFinite(efficiency) || efficiency < 0 || efficiency > 1) return "Коэффициент эффективности: от 0% до 100%";
   if (resource.resource_type === "milestone") {
-    return resource.calculation_mode === "milestone" ? null : "Для вехи режим расчёта — milestone";
+    return resource.calculation_mode === "milestone" ? null : "Для контрольной точки режим расчёта — без мощности";
   }
   if (resource.key === "packing_team" && resource.resource_count !== 1) {
     return "Бригада упаковки — один ресурс: производительность указана для всей бригады";
@@ -274,14 +277,14 @@ export function validateCapacityResource(resource: CapacityResource): string | n
     const itemThroughput = resource.capacity_unit === "item"
       && (resource.calculation_mode === "cutting_methods" || resource.calculation_mode === "team_rate");
     if (resource.capacity_unit !== "labor_hour" && resource.capacity_unit !== "team_hour" && !itemThroughput) {
-      return "Для трудового ресурса выберите чел.-ч, бриг.-ч или шт. для раскроя и бригады";
+      return "Для персонала выберите чел.-ч, бриг.-ч или шт. для раскроя и бригады";
     }
-    if (resource.work_center_id != null) return "Трудовой ресурс не привязывают к рабочему центру";
+    if (resource.work_center_id != null) return "Персонал не привязывают к оборудованию";
     if (resource.calculation_mode === "team_rate") {
       if (resource.capacity_unit !== "team_hour" && resource.capacity_unit !== "item") {
-        return "Норма бригады требует шт. или бриг.-ч и базовую норму";
+        return "Норма бригады требует шт. или бриг.-ч и производительность";
       }
-      const teamRate = decimalError(resource.base_rate, "базовую норму", 0.0001, 9999999999);
+      const teamRate = decimalError(resource.base_rate, "производительность", 0.0001, 9999999999);
       if (teamRate) return teamRate;
     }
     if (resource.calculation_mode === "sewing_norm" && resource.capacity_unit !== "labor_hour") {
@@ -295,17 +298,17 @@ export function validateCapacityResource(resource: CapacityResource): string | n
     const natural = resource.capacity_unit === "linear_meter" || resource.capacity_unit === "item";
     if (resource.capacity_unit !== "machine_hour" && !natural) return "Для оборудования выберите маш.-ч, м.п. или шт.";
     if (natural && resource.calculation_mode !== "rate") return "Для м.п. и шт. у оборудования режим — норма";
-    if (resource.work_center_id == null || resource.work_center_id <= 0) return "Укажите рабочий центр оборудования";
+    if (resource.work_center_id == null || resource.work_center_id <= 0) return "Укажите оборудование";
   }
   if (resource.resource_type === "throughput") {
     if (resource.capacity_unit !== "item" && resource.capacity_unit !== "linear_meter") return "Для производительности выберите шт. или м.п.";
     if (resource.calculation_mode !== "rate") return "Производительность считается по норме";
-    if (resource.work_center_id != null) return "Производительность не привязывают к рабочему центру";
-    const rate = decimalError(resource.base_rate, "базовую норму", 0.0001, 9999999999);
+    if (resource.work_center_id != null) return "Производительность не привязывают к оборудованию";
+    const rate = decimalError(resource.base_rate, "производительность", 0.0001, 9999999999);
     if (rate) return rate;
   }
   if (resource.calculation_mode === "rate") {
-    const rate = decimalError(resource.base_rate, "базовую норму", 0.0001, 9999999999);
+    const rate = decimalError(resource.base_rate, "производительность", 0.0001, 9999999999);
     if (rate) return rate;
   }
   return null;
@@ -371,7 +374,7 @@ function formatQuantity(value: number): string {
 }
 
 export function formatResourceRate(resource: CapacityResource): string {
-  if (resource.resource_type === "milestone" || resource.calculation_mode === "milestone") return "Milestone";
+  if (resource.resource_type === "milestone" || resource.calculation_mode === "milestone") return "Без расчёта мощности";
   const rate = Number(resource.base_rate);
   if ((resource.capacity_unit === "linear_meter" || resource.capacity_unit === "item") && Number.isFinite(rate) && rate > 0) {
     const unit = resource.capacity_unit === "linear_meter" ? "м.п./ч" : "шт./ч";

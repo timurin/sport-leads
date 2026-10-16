@@ -3,8 +3,9 @@ import type { AppSection } from "@/lib/navigation";
 
 type AppTopbarProps = {
   sections?: AppSection[];
+  debugMode?: boolean;
 };
 
-export function AppTopbar({ sections }: AppTopbarProps) {
-  return <TopNavigation sections={sections} />;
+export function AppTopbar({ sections, debugMode = false }: AppTopbarProps) {
+  return <TopNavigation sections={sections} debugMode={debugMode} />;
 }

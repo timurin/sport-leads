@@ -1,3 +1,5 @@
+from datetime import date
+
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
@@ -29,8 +31,91 @@ from app.services.shop_routings import (
     update_work_center,
 )
 
+from app.api.deps_auth import get_current_platform_user, require_permission
+from app.schemas.production_capacity import CapacityResourceDetail, CapacityExceptionRead, CapacityExceptionUpdate
+from app.schemas.work_center_capacity import WorkCenterCapacityWrite, WorkCenterAllocationRead, WorkCenterDayLoadRead
+from app.services import work_center_capacity as equipment_capacity
+from app.services.production_calendar import CalendarError
+from app.services.rbac import PERM_TECHNICAL_CARDS_CREATE
+from app.schemas.routing_graph import RoutingGraphRead, RoutingGraph
+
+
 work_centers_router = APIRouter(prefix="/work-centers", tags=["Work centers"])
 routings_router = APIRouter(prefix="/shop-routings", tags=["Shop routings"])
+
+
+equipment_read = [Depends(get_current_platform_user)]
+equipment_write = [Depends(require_permission(PERM_TECHNICAL_CARDS_CREATE))]
+
+
+@routings_router.put("/{template_id}/graph", response_model=RoutingGraphRead, dependencies=equipment_write,
+                     operation_id="save_shop_routing_graph")
+def save_routing_graph_endpoint(template_id: int, payload: RoutingGraph, db: Session = Depends(get_db)):
+    from app.services.routing_graph_write import save_routing_graph
+    try:
+        return save_routing_graph(db, template_id, payload)
+    except ShopRoutingNotFoundError as error:
+        raise HTTPException(404, str(error)) from error
+    except ShopRoutingValidationError as error:
+        raise HTTPException(422, str(error)) from error
+
+
+@routings_router.get("/{template_id}/graph", response_model=RoutingGraphRead, dependencies=equipment_read,
+                     operation_id="shop_routing_graph_projection")
+def read_routing_graph(template_id: int, db: Session = Depends(get_db)):
+    from app.services.routing_graph import read_template_graph, RoutingGraphNotFoundError
+    try:
+        return read_template_graph(db, template_id)
+    except RoutingGraphNotFoundError as error:
+        raise HTTPException(404, str(error)) from error
+
+
+@work_centers_router.get("/{work_center_id}/capacity", response_model=CapacityResourceDetail,
+                        dependencies=equipment_read, operation_id="work_center_capacity_read")
+def read_equipment_capacity(work_center_id: int, db: Session = Depends(get_db)):
+    try:
+        return equipment_capacity.read_capacity(db, work_center_id)
+    except CalendarError as error:
+        raise HTTPException(error.status_code, str(error)) from error
+
+
+@work_centers_router.put("/{work_center_id}/capacity", response_model=CapacityResourceDetail,
+                        dependencies=equipment_write, operation_id="work_center_capacity_save")
+def save_equipment_capacity(work_center_id: int, payload: WorkCenterCapacityWrite, db: Session = Depends(get_db)):
+    try:
+        return equipment_capacity.save_capacity(db, work_center_id, payload)
+    except CalendarError as error:
+        raise HTTPException(error.status_code, str(error)) from error
+
+
+@work_centers_router.get("/{work_center_id}/allocations", response_model=list[WorkCenterAllocationRead],
+                        dependencies=equipment_read, operation_id="work_center_allocations_read")
+def read_equipment_allocations(work_center_id: int, from_date: date = Query(alias="from"),
+                               to_date: date = Query(alias="to"), db: Session = Depends(get_db)):
+    try:
+        return equipment_capacity.allocations(db, work_center_id, from_date, to_date)
+    except CalendarError as error:
+        raise HTTPException(error.status_code, str(error)) from error
+
+
+@work_centers_router.put("/{work_center_id}/capacity/exceptions/{day}", response_model=CapacityExceptionRead,
+                        dependencies=equipment_write, operation_id="work_center_capacity_exception_save")
+def save_equipment_exception(work_center_id: int, day: date, payload: CapacityExceptionUpdate, db: Session = Depends(get_db)):
+    from app.services.production_capacity import save_exception
+    try:
+        resource = equipment_capacity.read_capacity(db, work_center_id)
+        return save_exception(db, resource.key, day, payload)
+    except CalendarError as error:
+        raise HTTPException(error.status_code, str(error)) from error
+
+
+@work_centers_router.get("/{work_center_id}/capacity/load", response_model=WorkCenterDayLoadRead,
+                        dependencies=equipment_read, operation_id="work_center_capacity_load")
+def read_equipment_load(work_center_id: int, day: date = Query(alias="date"), db: Session = Depends(get_db)):
+    try:
+        return equipment_capacity.day_load(db, work_center_id, day)
+    except CalendarError as error:
+        raise HTTPException(error.status_code, str(error)) from error
 
 
 @work_centers_router.get(
@@ -124,6 +209,8 @@ def remove_work_center(
         delete_work_center(db, work_center_id)
     except WorkCenterNotFoundError as error:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(error)) from error
+    except WorkCenterConflictError as error:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(error)) from error
 
 
 @routings_router.get(

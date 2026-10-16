@@ -3,6 +3,7 @@ import test from "node:test";
 
 import {
   formatTechCardDisplayNumber,
+  productionQuantityLabel,
   techCardVisibleNumber,
 } from "./tech-card-display.ts";
 
@@ -10,6 +11,13 @@ test("formatTechCardDisplayNumber appends planned count", () => {
   assert.equal(formatTechCardDisplayNumber("1310-1", 5), "1310-1/5");
   assert.equal(formatTechCardDisplayNumber("1310-1", null), "1310-1");
   assert.equal(formatTechCardDisplayNumber("1310-1", 0), "1310-1");
+});
+
+test("productionQuantityLabel trims a canonical quantity", () => {
+  assert.equal(productionQuantityLabel("4.000"), "4");
+  assert.equal(productionQuantityLabel(4), "4");
+  assert.equal(productionQuantityLabel("1.500"), "1.5");
+  assert.equal(productionQuantityLabel(null), "—");
 });
 
 test("techCardVisibleNumber prefers API display_number", () => {

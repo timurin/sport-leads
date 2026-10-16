@@ -264,3 +264,128 @@ test("shopStageCodeByTitle accepts QC catalog alias", () => {
   assert.equal(shopStageCodeByTitle("Контроль качества"), "qc");
   assert.equal(shopStageCodeByTitle("ОТК"), "qc");
 });
+
+test("Kanban uses workshop identity despite renamed catalog and rejects DnD", () => {
+  const modules = buildShopStageModulesFromCatalog([
+    { id: 44, code: "design", name: "Дизайн макетов", sort_order: 1, is_active: true },
+    { id: 55, code: "print", name: "Печать", sort_order: 2, is_active: true },
+  ]);
+  const columns = buildShopStageKanbanColumns([
+    { id: 122, number: "MINI-STRESS-2011", status: "draft", quantity: "20",
+      current_stage_order: 1, current_stage_label: "Дизайн", current_workshop_id: 44 },
+  ], modules);
+  const cards = columns.flatMap((column) => column.cards);
+  assert.equal(cards.length, 1);
+  assert.equal(cards[0].status, "design");
+  assert.equal(cards[0].badge.label, "Ожидает");
+  assert.equal(cards[0].draggable, false);
+  assert.equal(cards[0].actionLabel, undefined);
+});
+
+test("future stage label does not move the card off the fact workshop", () => {
+  const modules = buildShopStageModulesFromCatalog([
+    { id: 44, code: "design", name: "Дизайн", sort_order: 1, is_active: true },
+    { id: 55, code: "print", name: "Печать", sort_order: 2, is_active: true },
+  ]);
+  const columns = buildShopStageKanbanColumns([
+    {
+      id: 9,
+      number: "TK-9",
+      status: "in_progress",
+      quantity: "1",
+      current_stage_order: 1,
+      current_stage_label: "Печать",
+      current_workshop_id: 44,
+      stage_results: [{ stage_order: 1, stage_label: "Дизайн", status: "in_progress" }],
+    },
+    {
+      id: 10,
+      number: "TK-10",
+      status: "draft",
+      quantity: "1",
+      current_stage_order: 2,
+      current_stage_label: "Дизайн",
+      current_workshop_id: 55,
+      stage_results: [{ stage_order: 2, stage_label: "Печать", status: "pending" }],
+    },
+  ], modules, { factActions: true });
+  const design = columns.find((column) => column.id === "design").cards;
+  const print = columns.find((column) => column.id === "print").cards;
+  assert.equal(design.length, 1);
+  assert.equal(design[0].badge.label, "В работе");
+  assert.equal(design[0].actionLabel, "Завершить");
+  assert.equal(print.length, 1);
+  assert.equal(print[0].badge.label, "Ожидает");
+  assert.equal(print[0].actionLabel, "Принять в работу");
+});
+
+test("planned current workshop uses the same status as the current calendar row", () => {
+  const modules = buildShopStageModulesFromCatalog([
+    { id: 44, code: "design", name: "Дизайн", sort_order: 1, is_active: true },
+    { id: 55, code: "print", name: "Печать", sort_order: 2, is_active: true },
+  ]);
+  const columns = buildShopStageKanbanColumns([
+    {
+      id: 3,
+      number: "TK-3",
+      status: "draft",
+      quantity: "1",
+      current_stage_label: "Печать",
+      current_workshop_id: 55,
+      production_state: {
+        lifecycle_status: "planned",
+        current_workshop_id: 44,
+        current_workshop_name: "Дизайн",
+        workshop_state: "waiting",
+        current_stage_order: 1,
+        current_stage_label: "Дизайн",
+      },
+    },
+    {
+      id: 4,
+      number: "TK-4",
+      status: "in_progress",
+      quantity: "1",
+      production_state: {
+        lifecycle_status: "in_progress",
+        current_workshop_id: 55,
+        current_workshop_name: "Печать",
+        workshop_state: "waiting",
+        current_stage_order: 2,
+        current_stage_label: "Печать",
+      },
+    },
+  ], modules);
+  const design = columns.find((column) => column.id === "design").cards;
+  const print = columns.find((column) => column.id === "print").cards;
+  assert.equal(design.length, 1);
+  assert.equal(design[0].badge.label, "Запланирована");
+  assert.equal(design[0].details.find((row) => row.label === "Участок")?.value, "Дизайн");
+  assert.equal(print.length, 1);
+  assert.equal(print[0].badge.label, "Ожидает");
+  assert.equal(print[0].details.find((row) => row.label === "Участок")?.value, "Печать");
+});
+
+test("kanban column uses the workshop name when the catalog id is missing", () => {
+  const columns = buildShopStageKanbanColumns([
+    {
+      id: 8,
+      number: "TK-8",
+      status: "draft",
+      quantity: "1",
+      production_state: {
+        lifecycle_status: "planned",
+        current_workshop_id: 3,
+        current_workshop_name: "Печать",
+        workshop_state: "waiting",
+        current_stage_order: 2,
+        current_stage_label: "Печать",
+      },
+    },
+  ]);
+  const print = columns.find((column) => column.id === "print").cards;
+  const unassigned = columns.find((column) => column.id === "unassigned").cards;
+  assert.equal(print.length, 1);
+  assert.equal(unassigned.length, 0);
+  assert.equal(print[0].details.find((row) => row.label === "Участок")?.value, "Печать");
+});

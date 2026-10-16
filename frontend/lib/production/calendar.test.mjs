@@ -6,7 +6,7 @@ import test from "node:test";
 import {
   acceptCreatedAssignment, assignmentRange, assignmentsFor, calendarAssignmentInput, calendarBoardPath, calendarCreateInput,
   calendarErrorMessage, calendarRequest, calendarSourceLabel, enqueueAssignment, readCreatedAssignment,
-  shiftWeek, sourceSearchState, stageStickerTone, stickerLabel, weekDays, weekStickers, CALENDAR_TOOLBAR,
+  boardStageStickers, shiftWeek, sourceSearchState, stageStickerTone, stickerLabel, weekDays, weekStickers, CALENDAR_TOOLBAR,
 } from "./calendar.ts";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "../..");
@@ -163,6 +163,13 @@ test("weekly stickers span a range once and clip at the week boundary", () => {
   assert.deepEqual(assignmentRange(row({ planned_start_date: "2026-10-03", planned_end_date: "2026-10-02" })), { start: "2026-10-03", end: "2026-10-03" });
   assert.equal(weekStickers([row({ planned_start_date: "2026-09-01", planned_end_date: "2026-09-02" })], 4, days).length, 0);
   assert.deepEqual(assignmentRange(row({ planned_date: "2026-10-07" })), { start: "2026-10-07", end: "2026-10-07" });
+  const currentOnly = boardStageStickers([
+    row({ id: 11, operation_state: "current", production_stage_id: 4 }),
+    row({ id: 12, operation_state: "future", production_stage_id: 4, planned_date: "2026-10-08" }),
+    row({ id: 13, operation_state: "completed", production_stage_id: 4, planned_date: "2026-10-06" }),
+    row({ id: 14, production_stage_id: 4, planned_date: "2026-10-09" }),
+  ], 4, days);
+  assert.deepEqual(currentOnly.map((item) => item.assignment.id), [13, 11, 12, 14]);
   assert.equal(stageStickerTone({ code: "print", name: "Печать" }), "print");
   assert.equal(stageStickerTone({ code: "launch_preparation", name: "Подготовка к запуску" }), "launch");
   assert.equal(stageStickerTone({ code: "sewing", name: "Пошив" }), "sewing");
@@ -171,6 +178,8 @@ test("weekly stickers span a range once and clip at the week boundary", () => {
   const view = readFileSync(join(root, "components/production/calendar-weekly-board.tsx"), "utf8");
   const load = readFileSync(join(root, "components/production/calendar-queue-load.tsx"), "utf8");
   const toolbar = readFileSync(join(root, "components/production/calendar-toolbar.tsx"), "utf8");
+  assert.ok(view.includes("boardStageStickers"));
+  assert.ok(view.includes("Остальной маршрут"));
   assert.ok(view.includes("data-sticker"));
   assert.ok(view.includes("Открыть техкарту"));
   assert.ok(view.includes('aria-label="Закрыть"'));

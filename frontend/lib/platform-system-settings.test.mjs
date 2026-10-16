@@ -28,6 +28,15 @@ test("draft mirrors settings and dirty detects edits", () => {
   assert.equal(isPlatformSystemSettingsDirty(sample, draft), true);
 });
 
+test("debug mode participates in saved draft and dirty state", () => {
+  const settings = { ...sample, debug_mode: false };
+  const draft = toPlatformSystemSettingsDraft(settings);
+  assert.equal(draft.debug_mode, false);
+  draft.debug_mode = true;
+  assert.equal(isPlatformSystemSettingsDirty(settings, draft), true);
+  assert.equal(isPlatformSystemSettingsDirty({ ...settings, debug_mode: true }, draft), false);
+});
+
 test("validation rejects empty org name and bad email", () => {
   const draft = toPlatformSystemSettingsDraft(sample);
   draft.organization_display_name = "  ";

@@ -6,7 +6,7 @@ import { ToastProvider } from "@/components/ui/toast";
 import type { PlatformUserMe } from "@/lib/auth/session-mapping";
 import { isSewingCabinetRestricted } from "@/lib/auth/session-mapping";
 import { buildAppSections, filterAppSectionsForSession } from "@/lib/navigation";
-import { loadPlatformBrand } from "@/lib/platform-brand";
+import { loadPlatformBrand, loadPlatformDebugMode } from "@/lib/platform-brand";
 import {
   buildShopStageModulesFromCatalog,
   SHOP_STAGE_MODULES,
@@ -40,9 +40,10 @@ async function loadAppSections(me: PlatformUserMe) {
 }
 
 export async function AppShell({ children, overlay = null, me }: AppShellProps) {
-  const [sections, brand] = await Promise.all([
+  const [sections, brand, debugMode] = await Promise.all([
     loadAppSections(me),
     loadPlatformBrand(),
+    loadPlatformDebugMode(),
   ]);
 
   return (
@@ -51,7 +52,7 @@ export async function AppShell({ children, overlay = null, me }: AppShellProps) 
         <AppSidebar sections={sections} brand={brand} />
 
         <div data-app-shell-content className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
-          <AppTopbar sections={sections} />
+          <AppTopbar sections={sections} debugMode={debugMode} />
 
           <main data-app-shell-main className="min-h-0 flex-1 overflow-y-auto">
             {children}

@@ -33,7 +33,8 @@ from app.services.technical_cards import (
 
 
 def delete_draft_technical_card(db: Session, card_id: int) -> None:
-    card = get_technical_card(db, card_id)
+    from app.services.technical_card_stages import _locked_technical_card
+    card = _locked_technical_card(db, card_id)
     if card.status != TechnicalCardStatus.DRAFT:
         raise TechnicalCardConflictError("Удалить можно только техкарту в статусе Черновик")
     ledger = db.scalar(
@@ -50,6 +51,14 @@ def delete_draft_technical_card(db: Session, card_id: int) -> None:
     )
     if batch_link is not None:
         raise TechnicalCardConflictError("Нельзя удалить техкарту: она в производственной партии")
+    from app.services.route_reapply import protected_nodes
+    if protected_nodes(db, card):
+        raise TechnicalCardConflictError("Нельзя удалить техкарту: есть производственный факт")
+    from app.models.calendar_assignment import CalendarAssignment
+    from app.services.calendar_plan_linkage import retire_assignments
+    assignments = list(db.scalars(select(CalendarAssignment).where(
+        CalendarAssignment.technical_card_id == card.id).with_for_update()))
+    retire_assignments(db, assignments, reason="technical_card_deleted", source="technical_card_delete")
     db.delete(card)
     db.flush()
 

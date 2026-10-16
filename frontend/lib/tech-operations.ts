@@ -1,3 +1,6 @@
+import type { ProductionDiagnostic } from "@/lib/production/readiness-stickers";
+import { demandWriteFields, isDemandRule, type DemandDurationUnit, type DemandRule } from "./tech-operation-demand.ts";
+
 export type TechOperationVolumeUnit = "linear_meters" | "pieces";
 
 export type TechOperationRequiredMaterial = {
@@ -16,8 +19,11 @@ export type TechOperation = {
   production_stage_id: number | null;
   is_active: boolean;
   sort_order: number;
+  demand_rule?: DemandRule | null;
+  demand_duration_seconds?: number | null;
   required_materials: TechOperationRequiredMaterial[];
   capacity_resource_keys: string[];
+  diagnostics?: ProductionDiagnostic[];
   created_at: string;
   updated_at: string;
 };
@@ -30,6 +36,9 @@ export type TechOperationDraft = {
   is_active: boolean;
   required_materials: TechOperationRequiredMaterial[];
   capacity_resource_keys?: string[];
+  demand_rule?: DemandRule | null;
+  demand_duration_minutes?: string;
+  demand_duration_unit?: DemandDurationUnit;
 };
 
 export type TechOperationListParams = {
@@ -52,6 +61,17 @@ function apiBaseUrl(): string {
     /\/$/,
     "",
   );
+}
+
+export function readDemandFields(row: {
+  demand_rule?: unknown;
+  demand_duration_seconds?: unknown;
+}): { demand_rule: DemandRule | null; demand_duration_seconds: number | null } {
+  const seconds = row.demand_duration_seconds;
+  return {
+    demand_rule: isDemandRule(row.demand_rule) ? row.demand_rule : null,
+    demand_duration_seconds: typeof seconds === "number" && Number.isInteger(seconds) && seconds > 0 ? seconds : null,
+  };
 }
 
 export function formatTechOperationVolumeUnit(
@@ -78,6 +98,8 @@ export function validateTechOperationDraft(
   if (draft.volume_unit !== "linear_meters" && draft.volume_unit !== "pieces") {
     return "Выберите единицу объёма";
   }
+  const demand = demandWriteFields(draft);
+  if ("error" in demand) return demand.error;
   for (const row of draft.required_materials) {
     if (!Number.isInteger(row.nomenclature_id) || row.nomenclature_id <= 0) {
       return "Выберите материал для required materials";
@@ -126,6 +148,8 @@ export async function getTechOperations(
   const rows = (await response.json()) as TechOperation[];
   return rows.map((row) => ({
     ...row,
+    ...readDemandFields(row),
     capacity_resource_keys: Array.isArray(row.capacity_resource_keys) ? row.capacity_resource_keys : [],
+    diagnostics: Array.isArray(row.diagnostics) ? row.diagnostics : [],
   }));
 }

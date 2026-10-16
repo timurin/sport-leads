@@ -6,6 +6,25 @@ Sources: [task](../tasks/pc-04-2-demand-calculation-contract.md), [scheduler arc
 
 ## Boundary and identity
 
+**PC-04.4O amendment (2026-10-09):** TechOperation owns nullable `demand_rule`
+(`fixed_per_order` / `per_item`) and positive integer `demand_duration_seconds`.
+The existing TechOperation CRUD read/write DTO exposes both fields; partial settings
+are allowed and remain blocked until complete. There is no time-norm field on the
+TechnicalCard write contract. Legacy operations remain null; no production norm is
+invented or backfilled. The admin rule applies only to linked `explicit_hours`
+resources and preserves their exact hourly units (`labor_hour`, `machine_hour`,
+`team_hour`). Capacity settings/counts are not work multipliers.
+
+Runtime reads capture the current admin rule into the immutable Demand input DTO,
+as they capture existing operation/resource settings. Card graph membership, edges
+and operation facts are not rewritten. An existing plan changes only through its
+existing explicit scheduling action; protected manual/fact plans retain their gates.
+Diagnostics identify the TechOperation and either `demand_rule` (Правило расчёта
+потребности) or `demand_duration_seconds` (Норма времени), with one identical message
+across applicable operation/template/card surfaces. Missing norms for all explicit
+hourly resources now use `missing_operator_norm`, replacing the legacy machine-only
+`missing_fixed_norm` distinction for this adapter.
+
 The future internal service contract is `calculate_step_demands(card, routing_stage_line, operation, linked_resources, verified_inputs) -> StepDemandResult`. Reads are batched before adapter execution. Adapters receive immutable input data, not a writable Session. The specification itself added no API. PC-04.2B exposes the same result as a read-only GET.
 
 `TechOperation + TechnicalCard -> ResourceDemand[]` requires **route-step context**: one operation can appear twice in the same route. Identity is `(technical_card_id, routing_stage_line_id, resource_key)`. Neither workshop nor operation name/code identifies a step. Validate that the line belongs to `card.routing_template_id`, its operation matches the requested TechOperation, and operation/line stages agree. A stale/mismatched route snapshot is a diagnostic, never matched to the first similarly named operation.
@@ -28,7 +47,7 @@ TechOperation owns technological identity; CapacityResource owns available capac
 
 The task's conceptual `calculation_source` maps to **source_type**, and `calculation_details` maps to **details**; do not publish two synonymous fields.
 
-Source categories: sewing_operation_times, technical_card_quantity, technical_card_linear_meters, fixed_per_card, fixed_per_batch, manual, milestone. The fixed/design categories describe future verified inputs, not currently available columns. A missing source may be null with an explanatory issue. An unresolved unit mismatch retains the candidate's manufacturing unit in `unit`; `details.expected_unit` records the resource unit. A manual hourly demand uses the expected hourly unit while its amount remains null.
+Source categories: sewing_operation_times, technical_card_quantity, technical_card_linear_meters, fixed_per_card, fixed_per_batch, manual, milestone. PC-04.4O supplies fixed_per_card from the TechOperation fixed_per_order norm; its per_item norm uses technical_card_quantity with the stored time factor in details. Fixed-per-batch/design inputs remain future. A missing source may be null with an explanatory issue. An unresolved unit mismatch retains the candidate's manufacturing unit in `unit`; `details.expected_unit` records the resource unit. A missing admin hourly norm uses the expected hourly unit while its amount remains null.
 
 `details` contains `adapter`, `reason_code` (null for ready), input entity/row ids, field names, used quantities/units, formula id, rule reference when available, and the resource's expected unit. For an incompatible unit it also records `candidate_amount`/`candidate_unit`; the demand itself keeps `amount=null`. Decimal values are JSON strings. Human-readable explanation can accompany the stable reason code.
 
@@ -74,11 +93,11 @@ Dispatch by **persisted calculation_mode plus typed resource/input context**, ne
 | rate + item | item_throughput | Card quantity, item, for the explicitly selected full-card item rule. |
 | rate + linear_meter | linear_meter_throughput | Verified card operation volume, linear_meter. |
 | rate + hourly unit | No implicit throughput→hours adapter | A throughput candidate cannot become ready without a separately approved, stored rule producing that exact hourly unit. capacity_unit_mismatch when the selected workload unit differs. |
-| explicit_hours | manual / explicit stored per-card input | Ready only if there is an attributable, stored estimate in the exact unit. No such input is currently provided by the audited models. |
+| explicit_hours | TechOperation admin time norm (PC-04.4O) | `demand_rule=fixed_per_order` uses `demand_duration_seconds / 3600` once per card/step; `per_item` additionally multiplies by card quantity. Integer seconds, Decimal hours; missing rule/value remains `missing_operator_norm`. No manager-entered hours. |
 | cutting_methods | cutting adapter | Ready only for TechOperation.code `manual-cut` with stored `cutting_method` `manual_single` or `manual_lay`. Amount is card quantity in item; the matching cutters rate is recorded and is not divided into hours. Empty method is manual_required/missing_cutting_mode. Laser and opt-cut are not selected by this adapter. |
 | team_rate | team_throughput | Card quantity in item; the current team_hour resource therefore fails unit equality for this candidate. No double staffing multiplier. |
 | milestone | milestone | not_applicable, amount=null, unit=null. |
-| fixed_per_card / fixed_per_batch / design rule | Future explicit adapter, pending approved persistence | Not database modes today. Missing rule/storage means manual_required; never infer it from base_rate or free text. |
+| fixed_per_card / fixed_per_batch / design rule | PC-04.4O supplies fixed-per-card provenance through explicit_hours; batch/design rules remain future | Not independent database modes. `fixed_per_order` means one TechOperation execution on one TechnicalCard, not once across a SalesOrder/group. Batch attribution/design rules are not added; never infer a norm from base_rate or free text. |
 
 Unknown/unsupported mode produces missing_input/unsupported_calculation_mode. A resource with include_in_calendar_load=false emits not_applicable/resource_excluded without inspecting manufacturing inputs. Milestone behaves the same regardless of availability. No adapter creates or changes operation/resource records to make itself supported.
 
@@ -99,6 +118,16 @@ For the explicit full-card item rule, return card.quantity once for the operatio
 For linear meters, select **one** routing snapshot row using card id, source_kind=routing, tech_operation_id, stage_order and matching production_stage_id against the requested live line. Exactly one compatible positive `volume` with volume_unit=linear_meters supplies the total meters for this card/step; map the vocabulary to linear_meter. Multiple candidates, mismatched route data or zero/missing volume yield missing_input (ambiguous_operation_volume, route_snapshot_mismatch, missing_linear_meters). Do not sum arbitrary material lines or compute meters from card.quantity/model hints; the demand adapter consumes an accepted card volume and does not certify or invent a model norm. A future volume-provenance/confirmation flag is a separate persistence decision.
 
 `pieces -> item` and `linear_meters -> linear_meter` are vocabulary normalization of the same measured quantity, not conversion to hours. Machine and operator demands remain separate. Without an operator rule, the labor resource yields manual_required/missing_operator_norm; machine hours cannot be copied into labor hours.
+
+**PC-04.4T, 2026-10-10 — owner-requested operation input population.** The producer, not the Demand adapter, fills new/empty routing rows when model/assembly/routing is bound. Piece rows use the existing whole-card quantity rule. Meter rows require one positive, unit-compatible norm on the selected active `ProductModelRoutingLink`: an exact operation/stage match takes precedence, otherwise a unique workshop default is permitted. An unrelated operation's norm, wrong unit/stage, inactive link, zero or ambiguous norm never supplies meters. The accepted total is copied into `TechnicalCardOperationLine.volume`; Demand still consumes that stored row and does not fetch live model hints.
+
+`TechnicalCardOperationLine.volume_qty_per_item` is nullable internal input provenance (migration `d0e1f2a3b456`). Newly generated routing inputs snapshot 1 for pieces or the accepted meter norm; sewing rows snapshot their source's positive multiplicity. A quantity import/unit-line replacement recomputes only marked inputs from this frozen basis, without replacing the route snapshot or rereading changed catalog norms. An explicit shop volume write clears the basis. Existing positive legacy/manual inputs and missing meter inputs are not guessed or retroactively marked by the migration. Explicit route reapplication can accept new catalog norms. Sewing Demand remains the verified, step-scoped `duration_seconds × multiplicity × card.quantity / 3600`; the projected sewing piece volume is not multiplied into that formula a second time. Zero time remains a real blocker.
+
+An explicit model change invalidates only marked routing inputs before accepting the new model's compatible norms. Missing new-model meters stay missing; unmarked legacy/shop volumes remain untouched. This is an explicit write/binding step, never a fallback in read-only Demand.
+
+**PC-04.4U, 2026-10-10 — route norm persistence/cache audit.** The canonical variant input is `ProductModelOperationNorm.norm_qty_per_item` plus `unit`, scoped by the selected active model/routing link and operation/workshop. The editor writes this field. Both meter and piece producers copy a unique compatible configured norm into `TechnicalCardOperationLine.volume_qty_per_item`; piece operations use the existing one-item default only when no applicable variant norm exists. Invalid configured norms are not replaced by that default. This internal column is the frozen source norm per item, not a productivity/time rate or a second live source of truth. The accepted `volume` is the rounded total `volume_qty_per_item × card.quantity`. A manual shop write clears the basis and preserves the manually accepted total through quantity changes. Explicit route reapplication replaces the snapshot and accepts current source norms, including replacement of previous route volumes under the existing reapply contract.
+
+New cards read current norms at binding/reapply; existing cards are never refreshed from live variant edits by GET, Demand or Scheduler. Quantity changes use the saved basis. Demand's established item/time rules remain unchanged: a configured piece input is persisted/displayed, but does not redefine a whole-card item demand or sewing time formula. PostgreSQL, fresh API requests and two frontend reloads matched for a committed temporary quantity-8 card (0.700 → 5.600 meters, 1.000 → 8.000 pieces); the temporary card and owned group were deleted. `CACHE NOT ROOT CAUSE`: 29 pre-fix CAL-STRESS cards retained zero/null inputs. Explicit same-model/assembly repair restored 329 inputs (22 meter rows), retaining routing nodes/edges, ONE OF choices and calendar assignments. The 36 remaining meter zeros have no compatible source norm; real sewing-time/unit blockers remain. No global cache policy, Capacity, WorkCenter or Scheduler change is required. Evidence: `docs/tasks/pc-04-4u-route-norms-to-techcard-persistence-cache-audit-codex.md`, ignored `logs/pc-04-4u/`.
 
 PC-04.2F stores nullable `cutting_method` (`manual_single` or `manual_lay`) on the card operation line. It is valid only for TechOperation.code `manual-cut`. A selected method returns card.quantity in item and records that method's stored cutters rate (`manual_single_items_per_person_hour` or `manual_lay_items_per_person_hour`). The rate is not used to convert the demand into hours. An empty method stays manual_required/missing_cutting_mode. Laser remains its own rate/item operation. opt-cut is not given a cutters rate. Mixed manual/laser quantities are not stored. A volume is never duplicated across methods or divided using available capacity.
 
@@ -164,7 +193,7 @@ Examples use existing key names **when linked**; ids below are illustrative, not
   "unit": "labor_hour",
   "status": "manual_required",
   "source_type": "manual",
-  "details": {"adapter": "manual", "reason_code": "missing_operator_norm"}
+  "details": {"adapter": "explicit_hours", "reason_code": "missing_operator_norm", "missing_field": "demand_rule"}
 }
 ```
 
@@ -175,7 +204,7 @@ A 300-meter print step can be ready for a linked plotter or calender whose capac
 | Sewing | Scoped applied rows only; quantity/multiplicity each multiplied once; missing duration and ambiguous snapshot fail. |
 | Item throughput | Approved full-card rule gives 1000 item for quantity=1000; zero/invalid quantity fails. |
 | Meters | Unique positive card snapshot yields its total meters once; absent/zero/ambiguous/foreign snapshot fails. |
-| Fixed work | Stored fixed-per-card norm stays constant when quantity changes; absent norm requires manual input. |
+| Fixed work | Stored fixed-per-card norm stays constant when quantity changes; absent norm requires TechOperation admin configuration, not manager manual input. |
 | Batch fixed work | Explicit scope/attribution required; no accidental per-card duplication. |
 | Milestone/excluded | not_applicable, null amount, no allocation. Empty resource links remain blocking. |
 | Multi-resource | Ready machine plus missing operator makes the entire step incomplete; known subset is not reserved. |

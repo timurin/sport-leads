@@ -98,6 +98,7 @@ from app.services.product_models import (
     activate_product_model,
     add_product_model_media,
     archive_product_model,
+    delete_product_model,
     archive_product_model_version,
     copy_product_model,
     create_product_model,
@@ -373,6 +374,20 @@ def move_one_product_model_sibling(
 def activate_one_product_model(model_id: int, db: Session = Depends(get_db)):
     try:
         return _model_read(db, activate_product_model(db, model_id))
+    except ProductModelNotFoundError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+    except ProductModelValidationError as error:
+        raise HTTPException(status_code=422, detail=str(error)) from error
+
+
+@router.delete(
+    "/{model_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    operation_id="delete_product_model",
+)
+def delete_one_product_model(model_id: int, db: Session = Depends(get_db)):
+    try:
+        delete_product_model(db, model_id)
     except ProductModelNotFoundError as error:
         raise HTTPException(status_code=404, detail=str(error)) from error
     except ProductModelValidationError as error:

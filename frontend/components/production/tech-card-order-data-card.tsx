@@ -29,6 +29,7 @@ import {
   toIsoDate,
   yearOptions,
 } from "@/lib/production/tech-card-due-date";
+import { productionQuantityLabel } from "@/lib/production/tech-card-display";
 import { formatDesiredDate } from "@/lib/production/tech-cards";
 import type { ApiTechnicalCard } from "@/lib/sales/order-tech-cards-api";
 
@@ -287,6 +288,7 @@ export function TechCardOrderDataCard({
   return (
     <>
     <SectionCard
+      id="tech-card-order-data"
       title="Данные по заказу"
       size="compact"
       collapsed={false}
@@ -641,6 +643,10 @@ export function TechCardOrderDataCard({
             <div>
               <dt className="text-portal-caption text-portal-muted">Номер техкарты</dt>
               <dd className="mt-1 text-portal-body font-medium">{documentNumber}</dd>
+            </div>
+            <div>
+              <dt className="text-portal-caption text-portal-muted">Количество</dt>
+              <dd className="mt-1 text-portal-body tabular-nums">{productionQuantityLabel(card.quantity)}</dd>
             </div>
             <div>
               <dt className="text-portal-caption text-portal-muted">Ответственный менеджер</dt>

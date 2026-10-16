@@ -8,8 +8,9 @@ Stage statuses (snapshot order on card):
   pending → in_progress → completed
   Gates: stage N cannot start until 1…N-1 are completed.
   Op-volume lines do not bypass gates.
-  Material hard-gate (`9.3.4.3`): cutting/print cannot complete while any
-  MATERIAL bound to that production_stage_id lacks fact_qty.
+  Material hard-gate (`9.3.4.3`): cutting/print cannot complete while MATERIAL
+  lines of the current operation lack fact_qty. Other operations of the same
+  workshop are not included.
 """
 
 from __future__ import annotations
@@ -17,19 +18,23 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from decimal import Decimal
 
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.models.auth import PlatformUser
 from app.models.production_stage import ProductionStage
 from app.models.shop_routing import WorkCenter
+from app.models.tech_operation import TechOperationRequiredMaterial
 from app.models.technical_card import (
     TechnicalCard,
     TechnicalCardCompositionLineKind,
+    TechnicalCardRouteEdge,
     TechnicalCardStageResult,
     TechnicalCardStageResultStatus,
     TechnicalCardStatus,
 )
 from app.services import audit as audit_service
+from app.services.calendar_plan_lifecycle import assert_saved_plan, operation_event
 from app.schemas.technical_card import (
     TechnicalCardStageCompleteRequest,
     TechnicalCardStageFactRequest,
@@ -74,12 +79,7 @@ def resolve_production_stage_code(
 
 
 def current_stage_result(card: TechnicalCard) -> TechnicalCardStageResult | None:
-    if card.current_stage_order is None:
-        return None
-    return next(
-        (row for row in card.stage_results if row.stage_order == card.current_stage_order),
-        None,
-    )
+    return projected_current_stage(card)
 
 
 def assert_shop_module_current_stage(
@@ -114,14 +114,23 @@ def _utc_now() -> datetime:
     return datetime.now(timezone.utc)
 
 
+def _locked_technical_card(db: Session, card_id: int) -> TechnicalCard:
+    from app.repositories.production_scheduler import lock_scheduler
+    lock_scheduler(db)
+    db.scalar(select(TechnicalCard).where(TechnicalCard.id == card_id).with_for_update()
+              .execution_options(populate_existing=True))
+    return get_technical_card(db, card_id)
+
+
 def _ordered_stages(card: TechnicalCard) -> list[TechnicalCardStageResult]:
-    return sorted(card.stage_results, key=lambda row: (row.stage_order, row.id))
+    from app.services.route_variants import active_stage_results
+    return sorted(active_stage_results(card), key=lambda row: (row.stage_order, row.id))
 
 
 def _stage_by_order(
     card: TechnicalCard, stage_order: int
 ) -> TechnicalCardStageResult:
-    for stage in card.stage_results:
+    for stage in _ordered_stages(card):
         if stage.stage_order == stage_order:
             return stage
     raise TechnicalCardNotFoundError(f"Stage {stage_order} not found on technical card")
@@ -132,10 +141,49 @@ def _composition_line_kind_value(line) -> str:
     return kind.value if hasattr(kind, "value") else str(kind)
 
 
+def _material_lines_for_operation(db: Session, card: TechnicalCard, stage: TechnicalCardStageResult):
+    """MATERIAL rows consumed by this snapshot operation, not the whole workshop."""
+    workshop_lines = [
+        row
+        for row in card.composition_lines
+        if _composition_line_kind_value(row) == TechnicalCardCompositionLineKind.MATERIAL.value
+        and row.production_stage_id == stage.production_stage_id
+    ]
+    if stage.tech_operation_id is None:
+        return workshop_lines
+    required_ids = set(
+        db.scalars(
+            select(TechOperationRequiredMaterial.nomenclature_id).where(
+                TechOperationRequiredMaterial.tech_operation_id == stage.tech_operation_id
+            )
+        )
+    )
+    siblings = [
+        row
+        for row in _ordered_stages(card)
+        if row.production_stage_id == stage.production_stage_id and row.tech_operation_id is not None
+    ]
+    selected = []
+    seen: set[int] = set()
+    for row in workshop_lines:
+        owned = row.tech_operation_id == stage.tech_operation_id or (
+            row.tech_operation_id is None
+            and (
+                row.nomenclature_id in required_ids
+                or len(siblings) <= 1
+            )
+        )
+        if not owned or row.id in seen:
+            continue
+        seen.add(row.id)
+        selected.append(row)
+    return selected
+
+
 def _assert_material_fact_gate(
     db: Session, card: TechnicalCard, stage: TechnicalCardStageResult
 ) -> None:
-    """Reject cutting/print complete when bound MATERIAL lines lack fact_qty."""
+    """Reject cutting/print complete when this operation's MATERIAL lines lack fact_qty."""
     if stage.production_stage_id is None:
         return
     production_stage = db.get(ProductionStage, stage.production_stage_id)
@@ -146,11 +194,7 @@ def _assert_material_fact_gate(
         return
 
     missing_names: list[str] = []
-    for row in card.composition_lines:
-        if _composition_line_kind_value(row) != TechnicalCardCompositionLineKind.MATERIAL.value:
-            continue
-        if row.production_stage_id != stage.production_stage_id:
-            continue
+    for row in _material_lines_for_operation(db, card, stage):
         if row.fact_qty is None:
             missing_names.append(row.snapshot_name or f"line#{row.id}")
 
@@ -177,52 +221,76 @@ def _assert_card_executable(card: TechnicalCard) -> None:
         )
 
 
-def _previous_stages_completed(card: TechnicalCard, stage_order: int) -> None:
-    for stage in _ordered_stages(card):
-        if stage.stage_order >= stage_order:
-            break
-        if stage.status != TechnicalCardStageResultStatus.COMPLETED:
+def _previous_stages_completed(db: Session, card: TechnicalCard, stage: TechnicalCardStageResult) -> None:
+    if card.route_variant_groups:
+        from app.services.route_variants import resolve_effective_route_snapshot
+        effective = resolve_effective_route_snapshot(db, card.id)
+        if effective.unresolved_groups:
+            raise TechnicalCardValidationError("variant_not_selected")
+        if f"snapshot:{stage.id}" in effective.excluded_alternatives:
+            raise TechnicalCardConflictError("Operation is not selected in its ONE OF group")
+        edges = effective.graph.edges
+    else:
+        from app.schemas.routing_graph import RoutingDependency
+        edges = [RoutingDependency(predecessor_node_id=f"snapshot:{edge.predecessor_stage_result_id}",
+                                   successor_node_id=f"snapshot:{edge.successor_stage_result_id}")
+                 for edge in db.scalars(select(TechnicalCardRouteEdge).where(TechnicalCardRouteEdge.technical_card_id == card.id))]
+    if not edges:
+        if card.route_variant_groups:
+            return  # Explicit independent nodes do not acquire an implicit sequential dependency.
+        for earlier in _ordered_stages(card):
+            if earlier.stage_order >= stage.stage_order:
+                break
+            if earlier.status != TechnicalCardStageResultStatus.COMPLETED:
+                raise TechnicalCardValidationError(
+                    f"Stage {earlier.stage_order} must be completed before stage {stage.stage_order}"
+                )
+        return
+    by_id = {row.id: row for row in card.stage_results}
+    for edge in edges:
+        if edge.successor_node_id != f"snapshot:{stage.id}":
+            continue
+        predecessor = by_id.get(int(edge.predecessor_node_id.split(":")[1]))
+        if predecessor is None:
+            continue
+        done = predecessor.status == TechnicalCardStageResultStatus.COMPLETED
+        optional_skipped = (not predecessor.is_required) and predecessor.status == TechnicalCardStageResultStatus.SKIPPED
+        if not done and not optional_skipped:
             raise TechnicalCardValidationError(
-                f"Stage {stage.stage_order} must be completed before stage {stage_order}"
+                f"Stage {predecessor.stage_order} must be completed before stage {stage.stage_order}"
             )
 
 
+def projected_current_stage(card: TechnicalCard) -> TechnicalCardStageResult | None:
+    from app.services.production_state import resolve_fact_state
+    state = resolve_fact_state(card)
+    return next((row for row in card.stage_results if row.stage_order == state.current_stage_order), None)
+
+
 def _sync_current_stage(card: TechnicalCard) -> None:
-    stages = _ordered_stages(card)
-    next_open = next(
-        (
-            stage
-            for stage in stages
-            if stage.status
-            in {
-                TechnicalCardStageResultStatus.PENDING,
-                TechnicalCardStageResultStatus.IN_PROGRESS,
-            }
-        ),
-        None,
-    )
-    if next_open is None:
-        card.current_stage_order = stages[-1].stage_order if stages else None
-        card.current_stage_label = stages[-1].stage_label if stages else None
-        return
-    card.current_stage_order = next_open.stage_order
-    card.current_stage_label = next_open.stage_label
+    from app.services.production_state import resolve_fact_state
+    state = resolve_fact_state(card)
+    card.current_stage_order = state.current_stage_order
+    card.current_stage_label = state.current_stage_label
 
 
-def _maybe_complete_card(card: TechnicalCard) -> None:
-    stages = _ordered_stages(card)
-    if stages and all(
-        stage.status == TechnicalCardStageResultStatus.COMPLETED for stage in stages
-    ):
+def _maybe_complete_card(card: TechnicalCard, db: Session | None = None, *, actor=None) -> None:
+    from sqlalchemy.orm import object_session
+    db = db if db is not None else object_session(card)
+    from app.services.production_state import resolve_fact_state
+    if resolve_fact_state(card).lifecycle_status == 'completed':
         card.status = TechnicalCardStatus.COMPLETED
-        last = stages[-1]
-        card.current_stage_order = last.stage_order
-        card.current_stage_label = last.stage_label
+        _sync_current_stage(card)
+        if db is not None:
+            from app.services.technical_card_fulfillment import sync_ready
+            sync_ready(db, card, actor=actor)
 
 
 def start_technical_card(db: Session, card_id: int) -> TechnicalCard:
-    """draft → in_progress; start first pending stage."""
-    card = get_technical_card(db, card_id)
+    """Release a routed card into the waiting queue without starting a workshop."""
+    card = _locked_technical_card(db, card_id)
+    from app.services.technical_card_fulfillment import assert_not_shipped
+    assert_not_shipped(card)
     if card.status == TechnicalCardStatus.CANCELLED:
         raise TechnicalCardConflictError("Cancelled technical card cannot be started")
     if card.status == TechnicalCardStatus.COMPLETED:
@@ -232,13 +300,10 @@ def start_technical_card(db: Session, card_id: int) -> TechnicalCard:
             "Technical card has no routing stages; assign a shop routing before start"
         )
 
-    if card.status == TechnicalCardStatus.DRAFT:
-        card.status = TechnicalCardStatus.IN_PROGRESS
-
+    from app.services.technical_card_readiness import assert_ready_to_launch
+    assert_ready_to_launch(db, card_id)
     first = _ordered_stages(card)[0]
-    if first.status == TechnicalCardStageResultStatus.PENDING:
-        first.status = TechnicalCardStageResultStatus.IN_PROGRESS
-        first.started_at = first.started_at or _utc_now()
+    assert_saved_plan(db, first)
     _sync_current_stage(card)
     db.commit()
     return get_technical_card(db, card_id)
@@ -250,22 +315,26 @@ def start_stage(
     stage_order: int,
     payload: TechnicalCardStageStartRequest | None = None,
 ) -> TechnicalCard:
-    card = get_technical_card(db, card_id)
+    card = _locked_technical_card(db, card_id)
+    from app.services.technical_card_fulfillment import assert_not_shipped
+    assert_not_shipped(card)
     _assert_card_executable(card)
     stage = _stage_by_order(card, stage_order)
-    _previous_stages_completed(card, stage_order)
+    _previous_stages_completed(db, card, stage)
 
     if stage.status == TechnicalCardStageResultStatus.COMPLETED:
         raise TechnicalCardConflictError(f"Stage {stage_order} is already completed")
     if stage.status == TechnicalCardStageResultStatus.SKIPPED:
         raise TechnicalCardConflictError(f"Stage {stage_order} was skipped")
 
+    assert_saved_plan(db, stage)
     if card.status == TechnicalCardStatus.DRAFT:
         card.status = TechnicalCardStatus.IN_PROGRESS
 
     if stage.status == TechnicalCardStageResultStatus.PENDING:
         stage.status = TechnicalCardStageResultStatus.IN_PROGRESS
         stage.started_at = _utc_now()
+        operation_event(db, stage, "operation_started", "pending")
 
     if payload and payload.performer_name:
         stage.performer_name = payload.performer_name
@@ -283,10 +352,16 @@ def complete_stage(
     *,
     actor: PlatformUser | None = None,
 ) -> TechnicalCard:
-    card = get_technical_card(db, card_id)
-    _assert_card_executable(card)
+    card = _locked_technical_card(db, card_id)
+    from app.services.technical_card_fulfillment import assert_not_shipped
+    assert_not_shipped(card)
     stage = _stage_by_order(card, stage_order)
-    _previous_stages_completed(card, stage_order)
+    # Explicit legacy stock adapter remains available; never used by fulfillment UI.
+    legacy_fg = stage.tech_operation_id is None and resolve_production_stage_code(
+        db, stage.production_stage_id, stage.stage_label) in {"ready_to_ship", "shipped"}
+    if not (legacy_fg and card.status == TechnicalCardStatus.COMPLETED):
+        _assert_card_executable(card)
+    _previous_stages_completed(db, card, stage)
 
     if stage.status == TechnicalCardStageResultStatus.COMPLETED:
         raise TechnicalCardConflictError(f"Stage {stage_order} is already completed")
@@ -294,6 +369,7 @@ def complete_stage(
         raise TechnicalCardConflictError(f"Stage {stage_order} was skipped")
 
     _assert_material_fact_gate(db, card, stage)
+    assert_saved_plan(db, stage)
 
     if card.status == TechnicalCardStatus.DRAFT:
         card.status = TechnicalCardStatus.IN_PROGRESS
@@ -301,9 +377,11 @@ def complete_stage(
     if stage.status == TechnicalCardStageResultStatus.PENDING:
         stage.status = TechnicalCardStageResultStatus.IN_PROGRESS
         stage.started_at = stage.started_at or _utc_now()
+        operation_event(db, stage, "operation_started", "pending", actor=actor)
 
     stage.status = TechnicalCardStageResultStatus.COMPLETED
     stage.completed_at = _utc_now()
+    operation_event(db, stage, "operation_completed", "in_progress", actor=actor)
     if payload is not None:
         if payload.performer_name is not None:
             stage.performer_name = payload.performer_name
@@ -319,21 +397,7 @@ def complete_stage(
             stage.duration_seconds = payload.duration_seconds
 
     _sync_current_stage(card)
-    _maybe_complete_card(card)
-    if card.status != TechnicalCardStatus.COMPLETED:
-        # Advance pointer to next pending/in_progress after complete.
-        _sync_current_stage(card)
-        next_pending = next(
-            (
-                row
-                for row in _ordered_stages(card)
-                if row.status == TechnicalCardStageResultStatus.PENDING
-            ),
-            None,
-        )
-        if next_pending is not None:
-            card.current_stage_order = next_pending.stage_order
-            card.current_stage_label = next_pending.stage_label
+    _maybe_complete_card(card, db, actor=actor)
 
     stage_code = resolve_production_stage_code(
         db, stage.production_stage_id, stage.stage_label
@@ -362,7 +426,9 @@ def complete_stage(
 
 def rollback_stage(db: Session, card_id: int, stage_order: int) -> TechnicalCard:
     """Controlled rollback: reopen a completed stage if no later stage has progressed."""
-    card = get_technical_card(db, card_id)
+    card = _locked_technical_card(db, card_id)
+    from app.services.technical_card_fulfillment import assert_not_shipped
+    assert_not_shipped(card)
     if card.status == TechnicalCardStatus.CANCELLED:
         raise TechnicalCardConflictError("Cancelled technical card cannot rollback stages")
     if not card.stage_results:
@@ -390,7 +456,11 @@ def rollback_stage(db: Session, card_id: int, stage_order: int) -> TechnicalCard
                 f"is {later.status}"
             )
 
+    assert_saved_plan(db, stage)
+    card.fulfillment_status = None
+    card.ready_to_ship_at = None
     stage.status = TechnicalCardStageResultStatus.IN_PROGRESS
+    operation_event(db, stage, "operation_started", "completed", reason="stage_rollback")
     stage.completed_at = None
     # Keep started_at / performer / scrap / rework for audit; clear scrap/rework on reopen.
     stage.scrap_qty = None
@@ -411,13 +481,10 @@ def rollback_stage_for_shop_kanban(
     *,
     actor: PlatformUser | None = None,
 ) -> TechnicalCard:
-    """Shop-kanban rollback for test convenience.
-
-    Unlike `rollback_stage`, this allows later stages to be `in_progress`.
-    When later stage is `in_progress`, it is reset back to `pending` so the
-    card can be safely reopened at the earlier completed stage.
-    """
-    card = get_technical_card(db, card_id)
+    """Compatibility endpoint using the existing guarded rollback semantics."""
+    card = _locked_technical_card(db, card_id)
+    from app.services.technical_card_fulfillment import assert_not_shipped
+    assert_not_shipped(card)
     if card.status == TechnicalCardStatus.CANCELLED:
         raise TechnicalCardConflictError("Cancelled technical card cannot rollback stages")
     if not card.stage_results:
@@ -436,26 +503,19 @@ def rollback_stage_for_shop_kanban(
 
     assert_fg_stage_rollback_allowed(db, card, stage_code)
 
+    assert_saved_plan(db, stage)
     for later in _ordered_stages(card):
         if later.stage_order <= stage_order:
             continue
-        if later.status == TechnicalCardStageResultStatus.SKIPPED:
+        if later.status != TechnicalCardStageResultStatus.PENDING:
             raise TechnicalCardValidationError(
-                f"Cannot rollback stage {stage_order}: later stage {later.stage_order} was skipped"
+                f"Cannot rollback stage {stage_order}: later stage {later.stage_order} is {later.status}"
             )
-        if later.status in {
-            TechnicalCardStageResultStatus.PENDING,
-            TechnicalCardStageResultStatus.IN_PROGRESS,
-            TechnicalCardStageResultStatus.COMPLETED,
-        }:
-            # For kanban/test rollback: later stages must be reopened.
-            later.status = TechnicalCardStageResultStatus.PENDING
-            later.started_at = None
-            later.completed_at = None
-            later.scrap_qty = None
-            later.rework_qty = None
 
+    card.fulfillment_status = None
+    card.ready_to_ship_at = None
     stage.status = TechnicalCardStageResultStatus.IN_PROGRESS
+    operation_event(db, stage, "operation_started", "completed", actor=actor, reason="kanban_rollback")
     stage.completed_at = None
     # Keep started_at / performer / scrap / rework for audit; clear scrap/rework on reopen.
     stage.scrap_qty = None
@@ -496,7 +556,9 @@ def update_stage_fact(
     work_done / duration only — no material gate. ОТК (`qc`) may also set
     scrap_qty / rework_qty / notes.
     """
-    card = get_technical_card(db, card_id)
+    card = _locked_technical_card(db, card_id)
+    from app.services.technical_card_fulfillment import assert_not_shipped
+    assert_not_shipped(card)
     _assert_card_executable(card)
     stage = _stage_by_order(card, stage_order)
 
@@ -533,13 +595,15 @@ def update_stage_fact(
                     f"Work center belongs to another цех (`{wc_code}`), not `{required_code}`"
                 )
 
-    _previous_stages_completed(card, stage_order)
+    _previous_stages_completed(db, card, stage)
 
+    assert_saved_plan(db, stage)
     if card.status == TechnicalCardStatus.DRAFT:
         card.status = TechnicalCardStatus.IN_PROGRESS
     if stage.status == TechnicalCardStageResultStatus.PENDING:
         stage.status = TechnicalCardStageResultStatus.IN_PROGRESS
         stage.started_at = stage.started_at or _utc_now()
+        operation_event(db, stage, "operation_started", "pending")
 
     if payload.performer_name is not None:
         stage.performer_name = payload.performer_name
@@ -568,7 +632,9 @@ def assign_planned_work_center(
     work_center_id: int | None,
 ) -> TechnicalCard:
     """Set planned equipment on a stage without shop-current bind (`11.1.2.4`)."""
-    card = get_technical_card(db, card_id)
+    card = _locked_technical_card(db, card_id)
+    from app.services.technical_card_fulfillment import assert_not_shipped
+    assert_not_shipped(card)
     _assert_card_executable(card)
     stage = _stage_by_order(card, stage_order)
 

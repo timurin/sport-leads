@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -10,6 +11,7 @@ class ShopRoutingStageLineBase(BaseModel):
     tech_operation_id: int | None = None
     work_center_id: int | None = None
     is_quality_checkpoint: bool = False
+    is_required: bool = True
 
     @field_validator("stage_label", mode="before")
     @classmethod
@@ -37,8 +39,19 @@ class ShopRoutingStageLineRead(BaseModel):
     tech_operation_id: int | None = None
     work_center_id: int | None = None
     is_quality_checkpoint: bool = False
+    is_required: bool = True
     created_at: datetime
     updated_at: datetime
+
+
+class ShopRoutingEdgeWrite(BaseModel):
+    predecessor_stage_order: int = Field(ge=1)
+    successor_stage_order: int = Field(ge=1)
+
+
+class ShopRoutingEdgeRead(BaseModel):
+    predecessor_stage_order: int
+    successor_stage_order: int
 
 
 class WorkCenterBase(BaseModel):
@@ -109,6 +122,8 @@ class ShopRoutingTemplateUpdate(BaseModel):
     is_active: bool | None = None
     notes: str | None = None
     stages: list[ShopRoutingStageLineWrite] | None = None
+    dependency_mode: Literal["sequential", "explicit"] | None = None
+    edges: list[ShopRoutingEdgeWrite] | None = None
 
     @field_validator("name", mode="before")
     @classmethod
@@ -127,6 +142,8 @@ class ShopRoutingTemplateRead(ShopRoutingTemplateBase):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
+    dependency_mode: str = "sequential"
     stage_lines: list[ShopRoutingStageLineRead] = Field(default_factory=list)
+    edges: list[ShopRoutingEdgeRead] = Field(default_factory=list)
     created_at: datetime
     updated_at: datetime

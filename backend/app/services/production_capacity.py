@@ -158,6 +158,9 @@ def _commit(db: Session) -> None:
 
 
 def save_settings(db: Session, key: str, payload: CapacitySettingsUpdate) -> CapacityResourceRead:
+    from app.repositories.production_scheduler import lock_scheduler
+    from app.services.capacity_resources import validate_equipment_identity
+    lock_scheduler(db)
     spec = _spec(key)
     if spec.kind == "milestone":
         raise CalendarError("Закупка — milestone без часовой мощности")
@@ -177,6 +180,10 @@ def save_settings(db: Session, key: str, payload: CapacitySettingsUpdate) -> Cap
     if spec.key == "packing_team" and payload.staff_count not in (None, 1):
         raise CalendarError("Бригада упаковки — один ресурс: resource_count=1, норма не умножается на численность")
     row = next((row for row in settings if row.resource_key == key), None)
+    if row is not None:
+        from app.services.calendar_allocation_consistency import protect_resource_edit
+        protect_resource_edit(db, key, payload.model_dump() | {"production_stage_id": stage.id})
+        validate_equipment_identity(db, row, payload.work_center_id, row.resource_type)
     if row is None:
         row = ProductionCapacitySettings(resource_key=key)
         for name, value in legacy_defaults(spec).items():
@@ -192,6 +199,8 @@ def save_settings(db: Session, key: str, payload: CapacitySettingsUpdate) -> Cap
 
 
 def save_exception(db: Session, key: str, day: date, payload: CapacityExceptionUpdate) -> CapacityExceptionRead:
+    from app.repositories.production_scheduler import lock_scheduler
+    lock_scheduler(db)
     spec = _spec(key, db.get(ProductionCapacitySettings, key))
     if spec.kind == "milestone":
         raise CalendarError("Milestone не имеет исключений часовой мощности")

@@ -5,10 +5,12 @@ import binascii
 import re
 import uuid
 
+from sqlalchemy import delete
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.models.product_model import (
+    NomenclatureProductModel,
     ProductModel,
     ProductModelHistoryEntry,
     ProductModelMedia,
@@ -366,6 +368,35 @@ def activate_product_model(db: Session, model_id: int) -> ProductModel:
     db.commit()
     db.refresh(row)
     return row
+
+
+def delete_product_model(db: Session, model_id: int) -> None:
+    row = get_product_model(db, model_id)
+    if product_model_has_journal_operations(db, model_id):
+        raise ProductModelValidationError(
+            "Нельзя удалить модель: по ней уже есть операции в журнале. Архивируйте её."
+        )
+    media_keys = [item.storage_key for item in repo.list_product_model_media(db, model_id)]
+    cover_key = row.cover_storage_key
+    db.execute(
+        delete(NomenclatureProductModel).where(
+            NomenclatureProductModel.product_model_id == model_id
+        )
+    )
+    db.delete(row)
+    try:
+        db.commit()
+    except IntegrityError as error:
+        db.rollback()
+        raise ProductModelValidationError(
+            "Нельзя удалить модель: она используется в других документах."
+        ) from error
+    for storage_key in media_keys:
+        try:
+            _delete_media_file(storage_key)
+        except ProductModelValidationError:
+            pass
+    _delete_cover_file(cover_key)
 
 
 def archive_product_model(db: Session, model_id: int) -> ProductModel:

@@ -1,7 +1,9 @@
 """Pydantic schemas for technical cards (ADR-016 / Stage 9.1.2–9.2.1)."""
 
+from app.schemas.persisted_plan import PersistedPlanSummary
 from datetime import date, datetime
 from decimal import Decimal
+from app.schemas.production_state import ProductionState
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
@@ -58,6 +60,7 @@ class TechnicalCardCompositionLineWrite(BaseModel):
     snapshot_name: str = Field(min_length=1, max_length=255)
     planned_qty: Decimal | None = Field(default=None, ge=0, max_digits=14, decimal_places=3)
     production_stage_id: int | None = None
+    tech_operation_id: int | None = Field(default=None, ge=1)
     unit: str | None = Field(default=None, max_length=30)
     notes: str | None = None
 
@@ -248,6 +251,9 @@ class TechnicalCardStageResultRead(TechnicalCardStageResultWrite):
 
     id: int
     technical_card_id: int
+    tech_operation_id: int | None = None
+    source_routing_stage_line_id: int | None = None
+    operation_name: str | None = None
     created_at: datetime
     updated_at: datetime
 
@@ -371,6 +377,7 @@ class TechnicalCardWrite(BaseModel):
 
 
 class TechnicalCardRead(BaseModel):
+    planning_summary: "PersistedPlanSummary | None" = None
     model_config = ConfigDict(from_attributes=True)
 
     id: int
@@ -403,7 +410,9 @@ class TechnicalCardRead(BaseModel):
 
     current_stage_order: int | None = None
     current_stage_label: str | None = None
+    current_workshop_id: int | None = None
     qr_token: str | None = None
+    production_state: ProductionState | None = None
     scan_url: str | None = None
     scan_qr_svg: str | None = None
     wip_status: str | None = None
@@ -440,6 +449,7 @@ class TechnicalCardRead(BaseModel):
 
 
 class TechnicalCardListRead(BaseModel):
+    production_state: ProductionState | None = None
     """Slim production list row (`0.2.3.3`) — scalars + stage_results only."""
 
     model_config = ConfigDict(from_attributes=True)
@@ -474,6 +484,7 @@ class TechnicalCardListRead(BaseModel):
 
     current_stage_order: int | None = None
     current_stage_label: str | None = None
+    current_workshop_id: int | None = None
 
     design_mockup_url: str | None = None
     notes: str | None = None
@@ -759,7 +770,8 @@ class TechnicalCardStandaloneCreate(BaseModel):
     """Contour B create (Stage 28.2 / 26.11.14) — no SalesOrder required.
 
     Catalog pick (`nomenclature_id`) **or** free-text snapshot (`nomenclature_name`).
-    Quantity defaults to 1 (create modal no longer collects it).
+    `quantity` is the canonical piece count. The create form sends the entered
+    plan number as this quantity; personalization does not replace it.
     """
 
     nomenclature_id: int | None = Field(default=None, ge=1)

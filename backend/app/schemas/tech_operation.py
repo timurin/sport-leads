@@ -1,6 +1,7 @@
 from datetime import datetime
 from decimal import Decimal
 from enum import Enum
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -38,6 +39,8 @@ class TechOperationBase(BaseModel):
     production_stage_id: int | None = None
     is_active: bool = True
     sort_order: int = Field(default=0, ge=0)
+    demand_rule: Literal["fixed_per_order", "per_item"] | None = None
+    demand_duration_seconds: int | None = Field(default=None, gt=0, le=2147483647, strict=True)
     required_materials: list[TechOperationRequiredMaterialWrite] = Field(default_factory=list)
     capacity_resource_keys: list[str] = Field(default_factory=list, max_length=100)
 
@@ -59,6 +62,8 @@ class TechOperationUpdate(BaseModel):
     production_stage_id: int | None = None
     is_active: bool | None = None
     sort_order: int | None = Field(default=None, ge=0)
+    demand_rule: Literal["fixed_per_order", "per_item"] | None = None
+    demand_duration_seconds: int | None = Field(default=None, gt=0, le=2147483647, strict=True)
     required_materials: list[TechOperationRequiredMaterialWrite] | None = None
     capacity_resource_keys: list[str] | None = Field(default=None, max_length=100)
 
@@ -68,10 +73,14 @@ class TechOperationUpdate(BaseModel):
         return value.strip() if isinstance(value, str) else value
 
 
+from app.schemas.production_diagnostics import ProductionDiagnostic
+
+
 class TechOperationRead(TechOperationBase):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
+    diagnostics: tuple[ProductionDiagnostic, ...] = ()
     required_materials: list[TechOperationRequiredMaterialRead] = Field(default_factory=list)
     created_at: datetime
     updated_at: datetime

@@ -199,7 +199,7 @@ def test_complete_ready_to_ship_posts_fg_receipt_minus_scrap() -> None:
                 json={},
             )
             assert response.status_code == 200, response.text
-            assert response.json()["current_stage_order"] == 4
+            assert response.json()["current_stage_order"] is None  # Production excludes legacy FG markers.
 
             balances = client.get(
                 "/stock/balances",

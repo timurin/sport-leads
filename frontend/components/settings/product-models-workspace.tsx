@@ -6,9 +6,11 @@ import {
   ArrowUp,
   ChevronDown,
   ChevronRight,
+  Archive,
+  CircleCheck,
   Copy,
   Download,
-  ExternalLink,
+  FilePen,
   Filter,
   FilterX,
   Folder,
@@ -24,11 +26,12 @@ import {
   X,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore, useTransition } from "react";
 
 import {
   copyProductModel,
   createProductModelFolder,
+  deleteProductModel,
   deleteProductModelFolder,
   downloadProductModelExport,
   moveProductModelFolderSibling,
@@ -44,7 +47,7 @@ import {
   CatalogTreeRootDropZone,
 } from "@/components/settings/catalog-folder-tree-dnd";
 import { CatalogFolderTemplateModal } from "@/components/settings/catalog-folder-template-modal";
-import { ProductModelCardModal } from "@/components/settings/product-model-card-modal";
+import { ProductModelFullCardModal } from "@/components/settings/product-model-full-card-modal";
 import {
   canNestCatalogFolder,
   catalogFolderRowSurfaceClass,
@@ -68,7 +71,6 @@ import { Checkbox, Input, Select } from "@/components/ui/form-controls";
 import { ImageLightbox } from "@/components/ui/image-lightbox";
 import { ListTotals } from "@/components/ui/list-pagination";
 import { PageToolbar } from "@/components/ui/page-header";
-import { StatusBadge } from "@/components/ui/status-badge";
 import { triggerBrowserDownload } from "@/lib/file-download";
 import {
   PRODUCT_MODEL_SIZE_TYPE_LABELS,
@@ -77,8 +79,16 @@ import {
   buildProductModelCatalogTreeRows,
   compareProductModelsByListSort,
   filterProductModels,
+  isProductModelOutsideActiveFolder,
+  parseActiveFolderId,
+  parseExpandedFolderIds,
+  readActiveFolderSnapshot,
+  readExpandedFoldersSnapshot,
+  subscribeActiveFolder,
+  subscribeExpandedFolders,
+  updateActiveFolderId,
+  updateExpandedFolderIds,
   productModelCoverUrl,
-  productModelStatusTone,
   visibleProductModelCatalogTreeRows,
   type ProductModel,
   type ProductModelFolder,
@@ -103,7 +113,7 @@ function CoverThumb({
   if (!src) {
     return (
       <span
-        className="inline-flex size-10 items-center justify-center rounded-portal-md border border-dashed border-portal-border bg-portal-surface-secondary text-portal-caption text-portal-muted"
+        className="inline-flex size-8 items-center justify-center rounded-portal-md border border-dashed border-portal-border bg-portal-surface-secondary text-portal-dense text-portal-muted"
         aria-label="Нет изображения"
       >
         —
@@ -122,8 +132,24 @@ function CoverThumb({
       aria-label={`Открыть изображение ${model.name}`}
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={src} alt={alt} className="size-10 object-cover" />
+      <img src={src} alt={alt} className="size-8 object-cover" />
     </button>
+  );
+}
+
+function ProductModelStatusIcon({ status }: { status: ProductModelStatus }) {
+  const label = PRODUCT_MODEL_STATUS_LABELS[status];
+  const Icon = status === "active" ? CircleCheck : status === "draft" ? FilePen : Archive;
+  const tone =
+    status === "active"
+      ? "text-portal-success"
+      : status === "draft"
+        ? "text-portal-warning"
+        : "text-portal-muted";
+  return (
+    <span title={label} aria-label={label} className={`inline-flex ${tone}`}>
+      <Icon className="size-4" aria-hidden="true" />
+    </span>
   );
 }
 
@@ -146,6 +172,7 @@ export function ProductModelsWorkspace({
 }) {
   const router = useRouter();
   const [created, setCreated] = useState<ProductModel[]>([]);
+  const [removedIds, setRemovedIds] = useState<Set<number>>(() => new Set());
   const [patched, setPatched] = useState<Record<number, ProductModel>>({});
   const [localFolders, setLocalFolders] = useState<ProductModelFolder[]>(folders);
   const [query, setQuery] = useState("");
@@ -166,12 +193,26 @@ export function ProductModelsWorkspace({
   const [createOpen, setCreateOpen] = useState(false);
   const [createFolderId, setCreateFolderId] = useState<number | null>(null);
   const [importOpen, setImportOpen] = useState(false);
-  const [expandedIds, setExpandedIds] = useState<Set<number>>(() => new Set());
+  const expandedRaw = useSyncExternalStore(
+    subscribeExpandedFolders,
+    readExpandedFoldersSnapshot,
+    () => "",
+  );
+  const expandedIds = useMemo(
+    () => new Set(parseExpandedFolderIds(expandedRaw || null)),
+    [expandedRaw],
+  );
+  const activeFolderRaw = useSyncExternalStore(
+    subscribeActiveFolder,
+    readActiveFolderSnapshot,
+    () => "",
+  );
+  const storedActiveFolderId = parseActiveFolderId(activeFolderRaw || null);
   const [moveModalIds, setMoveModalIds] = useState<number[] | null>(null);
   const [templateFolder, setTemplateFolder] = useState<ProductModelFolder | null>(
     null,
   );
-  const [cardModalModelId, setCardModalModelId] = useState<number | null>(null);
+  const [fullCardModelId, setFullCardModelId] = useState<number | null>(null);
   const [exportPending, startExportTransition] = useTransition();
   const [exportError, setExportError] = useState<string | null>(null);
   const [sortField, setSortField] = useState<ProductModelListSortField | null>(
@@ -195,8 +236,9 @@ export function ProductModelsWorkspace({
     for (const model of models) byId.set(model.id, model);
     for (const model of created) byId.set(model.id, model);
     for (const model of Object.values(patched)) byId.set(model.id, model);
+    for (const id of removedIds) byId.delete(id);
     return Array.from(byId.values());
-  }, [created, models, patched]);
+  }, [created, models, patched, removedIds]);
 
   const filtered = useMemo(
     () =>
@@ -259,6 +301,12 @@ export function ProductModelsWorkspace({
   );
 
   const searchActive = Boolean(query.trim()) || Boolean(statusFilter) || productTypeFilter != null;
+  const activeFolderId =
+    searchActive ||
+    storedActiveFolderId == null ||
+    !expandedIds.has(storedActiveFolderId)
+      ? null
+      : storedActiveFolderId;
 
   const visibleRows = useMemo(() => {
     if (searchActive) {
@@ -325,7 +373,7 @@ export function ProductModelsWorkspace({
           ),
         );
         if (targetParentId != null) {
-          setExpandedIds((prev) => new Set(prev).add(targetParentId));
+          updateExpandedFolderIds((prev) => new Set(prev).add(targetParentId));
         }
         router.refresh();
       } catch {
@@ -358,7 +406,7 @@ export function ProductModelsWorkspace({
           return next;
         });
         if (folderId != null) {
-          setExpandedIds((prev) => new Set(prev).add(folderId));
+          updateExpandedFolderIds((prev) => new Set(prev).add(folderId));
         }
         router.refresh();
       } catch {
@@ -397,20 +445,57 @@ export function ProductModelsWorkspace({
 
   const openLightbox = (src: string, alt: string) => setLightbox({ src, alt });
 
+  const focusFolder = (folderId: number) => {
+    updateExpandedFolderIds((prev) => new Set(prev).add(folderId));
+    updateActiveFolderId(folderId);
+  };
+
   const toggleFolder = (folderId: number) => {
-    setExpandedIds((prev) => {
+    const collapsing = expandedIds.has(folderId);
+    updateExpandedFolderIds((prev) => {
       const next = new Set(prev);
       if (next.has(folderId)) next.delete(folderId);
       else next.add(folderId);
       return next;
     });
+    if (!collapsing) {
+      updateActiveFolderId(folderId);
+      return;
+    }
+    if (storedActiveFolderId == null) return;
+    const leavingActive =
+      storedActiveFolderId === folderId ||
+      isCatalogFolderDescendant(localFolders, storedActiveFolderId, folderId);
+    if (!leavingActive) return;
+    const parentId =
+      localFolders.find((folder) => folder.id === folderId)?.parent_id ?? null;
+    updateActiveFolderId(parentId);
   };
 
   const handleCreated = (model: ProductModel) => {
     setCreated((prev) => [model, ...prev.filter((row) => row.id !== model.id)]);
     if (model.folder_id != null) {
-      setExpandedIds((prev) => new Set(prev).add(model.folder_id!));
+      updateExpandedFolderIds((prev) => new Set(prev).add(model.folder_id!));
+      updateActiveFolderId(model.folder_id);
     }
+    router.refresh();
+  };
+
+  const onDeleteModel = async (model: ProductModel) => {
+    if (!window.confirm(`Удалить модель «${model.name}»? Это действие нельзя отменить.`)) {
+      return;
+    }
+    setBusyId(model.id);
+    setRowError(null);
+    const result = await deleteProductModel(model.id);
+    setBusyId(null);
+    if (!result.ok) {
+      setRowError(result.message);
+      return;
+    }
+    setRemovedIds((prev) => new Set(prev).add(model.id));
+    setCreated((prev) => prev.filter((row) => row.id !== model.id));
+    if (fullCardModelId === model.id) setFullCardModelId(null);
     router.refresh();
   };
 
@@ -452,7 +537,7 @@ export function ProductModelsWorkspace({
       }
       setLocalFolders((prev) => [...prev, result.folder]);
       if (parentId != null) {
-        setExpandedIds((prev) => new Set(prev).add(parentId));
+        updateExpandedFolderIds((prev) => new Set(prev).add(parentId));
       }
       router.refresh();
     } catch {
@@ -567,7 +652,7 @@ export function ProductModelsWorkspace({
       setMoveSelectMode(false);
       setSelectedIds(new Set());
       if (folderId != null) {
-        setExpandedIds((prev) => new Set(prev).add(folderId));
+        updateExpandedFolderIds((prev) => new Set(prev).add(folderId));
       }
       router.refresh();
     } catch {
@@ -712,7 +797,7 @@ export function ProductModelsWorkspace({
   const rowActions = (model: ProductModel) => {
     const busy = busyId === model.id || saving;
     return (
-      <div className="flex flex-wrap items-center justify-end gap-1" role="group" aria-label="Действия">
+      <div className="flex flex-nowrap items-center justify-end gap-1" role="group" aria-label="Действия">
         <IconButton
           label={`Переместить ${model.name}`}
           variant="secondary"
@@ -730,12 +815,20 @@ export function ProductModelsWorkspace({
           <Copy className="size-4" aria-hidden="true" />
         </IconButton>
         <IconButton
-          label={`Открыть карточку ${model.name}`}
+          label={`Редактировать ${model.name}`}
           variant="secondary"
           disabled={busy}
-          onClick={() => setCardModalModelId(model.id)}
+          onClick={() => setFullCardModelId(model.id)}
         >
-          <ExternalLink className="size-4" aria-hidden="true" />
+          <Pencil className="size-4" aria-hidden="true" />
+        </IconButton>
+        <IconButton
+          label={`Удалить ${model.name}`}
+          variant="danger"
+          disabled={busy}
+          onClick={() => void onDeleteModel(model)}
+        >
+          <Trash2 className="size-4" aria-hidden="true" />
         </IconButton>
       </div>
     );
@@ -765,7 +858,7 @@ export function ProductModelsWorkspace({
         onClick={() => {
           setCreateFolderId(folder.id);
           setCreateOpen(true);
-          setExpandedIds((prev) => new Set(prev).add(folder.id));
+          updateExpandedFolderIds((prev) => new Set(prev).add(folder.id));
         }}
       >
         <Plus className="size-3.5" />
@@ -805,7 +898,7 @@ export function ProductModelsWorkspace({
     </div>
   );
 
-  const dataColSpan = selectMode ? 7 : 7;
+  const dataColSpan = 8;
 
   return (
     <div className="flex min-h-0 min-w-0 flex-1 flex-col">
@@ -834,14 +927,12 @@ export function ProductModelsWorkspace({
         onClose={() => setImportOpen(false)}
       />
 
-      <ProductModelCardModal
-        modelId={cardModalModelId}
-        open={cardModalModelId != null}
-        onClose={() => setCardModalModelId(null)}
-        onSaved={(model) => {
-          setPatched((current) => ({ ...current, [model.id]: model }));
-        }}
-      />
+      {fullCardModelId != null ? (
+        <ProductModelFullCardModal
+          modelId={fullCardModelId}
+          onClose={() => setFullCardModelId(null)}
+        />
+      ) : null}
 
       <CatalogFolderTemplateModal
         open={templateFolder != null}
@@ -1061,7 +1152,10 @@ export function ProductModelsWorkspace({
           <CatalogTreeDndProvider enabled={dndEnabled} onDrop={onCatalogDrop}>
             {dndEnabled ? <CatalogTreeRootDropZone /> : null}
           <DataTableFrame className="rounded-none border-x-0 border-b-0 shadow-none">
-            <DataTable minWidthClassName="min-w-[860px]">
+            <DataTable
+              minWidthClassName="min-w-[1040px]"
+              className="!border-separate !border-spacing-0 !text-portal-dense [&_td]:!py-portal-2 [&_td]:!text-portal-dense [&_th]:!py-portal-2"
+            >
               <DataTableHead>
                 <tr>
                   {selectMode ? (
@@ -1086,6 +1180,7 @@ export function ProductModelsWorkspace({
                     direction={sortDirection}
                     onClick={() => changeSort("name")}
                   />
+                  <DataTableHeaderCell>Описание</DataTableHeaderCell>
                   <SortableHeading
                     label="Вид изделия"
                     active={sortField === "product_type"}
@@ -1110,13 +1205,15 @@ export function ProductModelsWorkspace({
                     direction={sortDirection}
                     onClick={() => changeSort("cost")}
                   />
-                  <DataTableHeaderCell>Действие</DataTableHeaderCell>
+                  <DataTableHeaderCell className="sticky right-0 top-0 z-portal-sticky whitespace-nowrap bg-portal-surface-secondary">
+                    Действие
+                  </DataTableHeaderCell>
                 </tr>
               </DataTableHead>
               <DataTableBody>
                 {visibleRows.length === 0 ? (
                   <DataTableRow>
-                    <DataTableCell colSpan={selectMode ? 9 : 8}>
+                    <DataTableCell colSpan={selectMode ? 10 : 9}>
                       <EmptyState
                         title={
                           models.length === 0 && localFolders.length === 0
@@ -1139,7 +1236,11 @@ export function ProductModelsWorkspace({
                           folderId={row.id}
                           label={row.name}
                           disabled={!dndEnabled}
-                          className={catalogFolderRowSurfaceClass()}
+                          className={
+                            row.id === activeFolderId
+                              ? "bg-portal-primary-soft"
+                              : catalogFolderRowSurfaceClass()
+                          }
                         >
                           {({ handle }) => (
                             <>
@@ -1159,12 +1260,27 @@ export function ProductModelsWorkspace({
                                 )}
                               </IconButton>
                               {expanded ? (
-                                <FolderOpen className="size-4 shrink-0 text-portal-muted" />
+                                <FolderOpen
+                                  className={
+                                    row.id === activeFolderId
+                                      ? "size-4 shrink-0 text-portal-primary"
+                                      : "size-4 shrink-0 text-portal-muted"
+                                  }
+                                />
                               ) : (
                                 <Folder className="size-4 shrink-0 text-portal-muted" />
                               )}
                               <div className="min-w-0">
-                                <span className="font-medium">{row.name}</span>
+                                <button
+                                  type="button"
+                                  className="portal-focus-ring truncate text-left text-portal-dense font-normal"
+                                  data-product-model-active-folder={
+                                    row.id === activeFolderId ? "true" : undefined
+                                  }
+                                  onClick={() => focusFolder(row.id)}
+                                >
+                                  {row.name}
+                                </button>
                                 {row.folder.default_sewing_operation_template_name ? (
                                   <p className="truncate text-portal-caption text-portal-muted">
                                     Шаблон: {row.folder.default_sewing_operation_template_name}
@@ -1173,7 +1289,13 @@ export function ProductModelsWorkspace({
                               </div>
                             </CatalogTreeDepthCell>
                           </DataTableCell>
-                          <DataTableCell>
+                          <DataTableCell
+                            className={
+                              row.id === activeFolderId
+                                ? "sticky right-0 z-portal-raised whitespace-nowrap bg-portal-primary-soft"
+                                : "sticky right-0 z-portal-raised whitespace-nowrap bg-portal-surface"
+                            }
+                          >
                             {folderActions(row.folder)}
                           </DataTableCell>
                             </>
@@ -1185,6 +1307,10 @@ export function ProductModelsWorkspace({
                     const model = row.model;
                     const { gridLabel, productTypeLabel } = modelMeta(model);
                     const checked = selectedIds.has(model.id);
+                    const dimmed = isProductModelOutsideActiveFolder(
+                      model.folder_id,
+                      activeFolderId,
+                    );
 
                     return (
                       <CatalogTreeDraggableItem
@@ -1192,6 +1318,7 @@ export function ProductModelsWorkspace({
                         itemId={model.id}
                         label={model.name}
                         disabled={!dndEnabled}
+                        className={dimmed ? "opacity-60" : undefined}
                       >
                         {({ handle }) => (
                           <>
@@ -1210,36 +1337,55 @@ export function ProductModelsWorkspace({
                             <CoverThumb model={model} onOpen={openLightbox} />
                           </CatalogTreeDepthCell>
                         </DataTableCell>
-                        <DataTableCell className="font-medium">
+                        <DataTableCell className="max-w-[9rem]">
                           <button
                             type="button"
-                            className="portal-focus-ring font-mono text-portal-text hover:text-portal-primary hover:underline"
-                            onClick={() => setCardModalModelId(model.id)}
+                            className="portal-focus-ring block max-w-full truncate text-left text-portal-dense font-normal text-portal-text hover:text-portal-primary hover:underline"
+                            title={model.article}
+                            onClick={() => setFullCardModelId(model.id)}
                           >
                             {model.article}
                           </button>
                         </DataTableCell>
-                        <DataTableCell>
+                        <DataTableCell className="max-w-[14rem]">
                           <button
                             type="button"
-                            className="portal-focus-ring font-medium text-portal-text hover:text-portal-primary hover:underline"
-                            onClick={() => setCardModalModelId(model.id)}
+                            className="portal-focus-ring block max-w-full truncate text-left text-portal-dense font-normal text-portal-text hover:text-portal-primary hover:underline"
+                            title={model.name}
+                            data-product-model-dimmed={dimmed ? "true" : undefined}
+                            onClick={() => setFullCardModelId(model.id)}
                           >
                             {model.name}
                           </button>
                         </DataTableCell>
-                        <DataTableCell>{productTypeLabel}</DataTableCell>
-                        <DataTableCell>{gridLabel}</DataTableCell>
-                        <DataTableCell>
-                          <StatusBadge
-                            size="compact"
-                            tone={productModelStatusTone(model.status)}
+                        <DataTableCell className="max-w-[16rem]">
+                          <span
+                            className="block truncate text-portal-dense text-portal-muted"
+                            data-product-model-description
+                            title={model.description?.trim() || undefined}
                           >
-                            {PRODUCT_MODEL_STATUS_LABELS[model.status]}
-                          </StatusBadge>
+                            {model.description?.trim() || "—"}
+                          </span>
                         </DataTableCell>
-                        <DataTableCell>{costLabel(model.id)}</DataTableCell>
-                        <DataTableCell>{rowActions(model)}</DataTableCell>
+                        <DataTableCell className="max-w-[10rem]">
+                          <span className="block truncate" title={productTypeLabel}>
+                            {productTypeLabel}
+                          </span>
+                        </DataTableCell>
+                        <DataTableCell className="max-w-[12rem]">
+                          <span className="block truncate" title={gridLabel}>
+                            {gridLabel}
+                          </span>
+                        </DataTableCell>
+                        <DataTableCell className="w-10">
+                          <ProductModelStatusIcon status={model.status} />
+                        </DataTableCell>
+                        <DataTableCell className="whitespace-nowrap">
+                          {costLabel(model.id)}
+                        </DataTableCell>
+                        <DataTableCell className="sticky right-0 z-portal-raised whitespace-nowrap bg-portal-surface">
+                          {rowActions(model)}
+                        </DataTableCell>
                           </>
                         )}
                       </CatalogTreeDraggableItem>
@@ -1271,7 +1417,11 @@ export function ProductModelsWorkspace({
                   return (
                     <article
                       key={`folder-m-${row.id}`}
-                      className="min-w-0 rounded-portal-lg border border-portal-border bg-portal-surface-2/40 p-portal-3"
+                      className={
+                        row.id === activeFolderId
+                          ? "min-w-0 rounded-portal-lg border border-portal-primary bg-portal-primary-soft p-portal-3"
+                          : "min-w-0 rounded-portal-lg border border-portal-border bg-portal-surface-2/40 p-portal-3"
+                      }
                       style={{ marginLeft: `${row.depth * 0.75}rem` }}
                     >
                       <div className="flex items-center justify-between gap-2">
@@ -1291,7 +1441,7 @@ export function ProductModelsWorkspace({
                             <Folder className="size-4 shrink-0 text-portal-muted" />
                           )}
                           <div className="min-w-0">
-                          <span className="truncate font-medium">{row.name}</span>
+                          <span className="truncate text-portal-dense font-normal">{row.name}</span>
                           {row.folder.default_sewing_operation_template_name ? (
                             <p className="truncate text-portal-caption text-portal-muted">
                               Шаблон: {row.folder.default_sewing_operation_template_name}
@@ -1307,11 +1457,19 @@ export function ProductModelsWorkspace({
 
                 const model = row.model;
                 const { gridLabel, productTypeLabel } = modelMeta(model);
+                const dimmed = isProductModelOutsideActiveFolder(
+                  model.folder_id,
+                  activeFolderId,
+                );
 
                 return (
                   <article
                     key={`model-m-${model.id}`}
-                    className="min-w-0 rounded-portal-lg border border-portal-border bg-portal-surface p-portal-4 shadow-portal-sm"
+                    className={
+                      dimmed
+                        ? "min-w-0 rounded-portal-lg border border-portal-border bg-portal-surface p-portal-4 opacity-60 shadow-portal-sm"
+                        : "min-w-0 rounded-portal-lg border border-portal-border bg-portal-surface p-portal-4 shadow-portal-sm"
+                    }
                     style={{ marginLeft: `${row.depth * 0.75}rem` }}
                   >
                     <div className="flex min-w-0 items-start justify-between gap-portal-3">
@@ -1326,30 +1484,30 @@ export function ProductModelsWorkspace({
                         ) : null}
                         <CoverThumb model={model} onOpen={openLightbox} />
                         <div className="min-w-0 flex-1 space-y-portal-2">
-                          <h3 className="truncate text-portal-body font-semibold text-portal-text">
+                          <h3 className="truncate text-portal-dense font-normal text-portal-text">
                             <button
                               type="button"
                               className="portal-focus-ring max-w-full truncate text-left hover:text-portal-primary hover:underline"
-                              onClick={() => setCardModalModelId(model.id)}
+                              onClick={() => setFullCardModelId(model.id)}
                             >
                               {model.name}
                             </button>
                           </h3>
+                          <p className="truncate text-portal-dense text-portal-muted" data-product-model-description>
+                            {model.description?.trim() || "—"}
+                          </p>
                           <p className="truncate text-portal-caption text-portal-muted">
                             {model.article} · {productTypeLabel} · {gridLabel}
                           </p>
                           <p className="text-portal-caption text-portal-muted">
                             Стоимость от–до: {costLabel(model.id)}
                           </p>
-                          {rowActions(model)}
                         </div>
                       </div>
-                      <StatusBadge
-                        size="compact"
-                        tone={productModelStatusTone(model.status)}
-                      >
-                        {PRODUCT_MODEL_STATUS_LABELS[model.status]}
-                      </StatusBadge>
+                      <div className="flex shrink-0 flex-col items-end gap-2">
+                        <ProductModelStatusIcon status={model.status} />
+                        {rowActions(model)}
+                      </div>
                     </div>
                   </article>
                 );

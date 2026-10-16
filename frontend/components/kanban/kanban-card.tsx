@@ -112,6 +112,15 @@ export function KanbanCardContent({
   );
 }
 
+export function KanbanStaticCard({ card, onSelect }: KanbanCardProps) {
+  return (
+    <KanbanCardContent
+      card={card}
+      onSelect={onSelect && card.actionLabel ? () => onSelect(card.id) : undefined}
+    />
+  );
+}
+
 export function KanbanCard({ card, onSelect }: KanbanCardProps) {
   const router = useRouter();
   const wasDraggingRef = useRef(false);

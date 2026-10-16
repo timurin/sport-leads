@@ -77,7 +77,8 @@ def list_routing_templates(
     offset: int = 0,
 ) -> list[ShopRoutingTemplate]:
     statement = select(ShopRoutingTemplate).options(
-        selectinload(ShopRoutingTemplate.stage_lines)
+        selectinload(ShopRoutingTemplate.stage_lines),
+        selectinload(ShopRoutingTemplate.node_dependencies),
     )
     if active_only:
         statement = statement.where(ShopRoutingTemplate.is_active.is_(True))
@@ -100,7 +101,10 @@ def get_routing_template(
     return db.scalars(
         select(ShopRoutingTemplate)
         .where(ShopRoutingTemplate.id == template_id)
-        .options(selectinload(ShopRoutingTemplate.stage_lines))
+        .options(
+            selectinload(ShopRoutingTemplate.stage_lines),
+            selectinload(ShopRoutingTemplate.node_dependencies),
+        )
     ).first()
 
 

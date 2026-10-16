@@ -3,13 +3,15 @@ from datetime import date, datetime
 from decimal import Decimal
 
 from sqlalchemy import Boolean, CheckConstraint, Date, DateTime, ForeignKey, Integer, JSON, Numeric, String, Text, UniqueConstraint, func
-from sqlalchemy.orm import Mapped, mapped_column, synonym
+from sqlalchemy.orm import Mapped, mapped_column, synonym, relationship
 
 from app.database.base import Base
 
 
 class CapacityResource(Base):
     __tablename__ = "capacity_resources"
+    production_stage = relationship("ProductionStage")
+    work_center = relationship("WorkCenter")
     __table_args__ = (
         UniqueConstraint("work_center_id", name="uq_capacity_settings_work_center"),
         CheckConstraint("staff_count IS NULL OR (staff_count >= 0 AND staff_count <= 10000)", name="ck_capacity_settings_staff"),

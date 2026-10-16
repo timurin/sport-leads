@@ -6,9 +6,16 @@ import { getCapacityResources } from "@/lib/capacity-resources";
 import { getNomenclature } from "@/lib/nomenclature";
 import { getProductionStages } from "@/lib/production-stages";
 import { getWorkCenters } from "@/lib/shop-routings";
+import { parseOperationDeepLink } from "@/lib/tech-operation-ux";
 import { getTechOperations } from "@/lib/tech-operations";
 
-export default async function TechOperationsListPage() {
+export default async function TechOperationsListPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ operation?: string; tab?: string }>;
+}) {
+  const query = await searchParams;
+  const { operationId, tab } = parseOperationDeepLink(query.operation, query.tab);
   const [operations, productionStages, nomenclature, resources, workCenters] = await Promise.all([
     getTechOperations(),
     getProductionStages({ active_only: true, limit: 500 }),
@@ -30,11 +37,14 @@ export default async function TechOperationsListPage() {
         }
       >
         <TechOperationsWorkspace
+          key={`${operationId ?? "list"}:${tab}`}
           operations={operations}
           productionStages={productionStages}
           workCenters={workCenters}
           resources={resources}
           materialOptions={materialOptions}
+          initialOperationId={operationId}
+          initialTab={tab}
         />
       </Suspense>
     </PageLayout>

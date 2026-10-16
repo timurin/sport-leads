@@ -1,6 +1,6 @@
 "use client";
 
-import { FilterX, Pencil, Plus, Trash2 } from "lucide-react";
+import { Boxes, FilterX, Gauge, Package, Pencil, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 
@@ -9,25 +9,25 @@ import {
 } from "@/app/(workspace)/settings/catalogs/tech-operations/tech-operation-actions";
 import { TechOperationEditModal } from "@/components/settings/tech-operation-edit-modal";
 import { TechOperationCreateDrawer } from "@/components/settings/tech-operation-create-drawer";
-import { IconButton } from "@/components/ui/button";
-import {
-  DataTable,
-  DataTableBody,
-  DataTableCell,
-  DataTableFrame,
-  DataTableHead,
-  DataTableHeaderCell,
-  DataTableRow,
-} from "@/components/ui/data-table";
+import { Button, IconButton } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
-import { Input } from "@/components/ui/form-controls";
+import { Input, Select } from "@/components/ui/form-controls";
 import { ListTotals } from "@/components/ui/list-pagination";
 import { PageToolbar } from "@/components/ui/page-header";
 import { StatusBadge } from "@/components/ui/status-badge";
 import {
+  CALCULATION_MODE_LABEL,
   formatOperationCapacity,
+  type CalculationMode,
   type CapacityResource,
 } from "@/lib/tech-operation-capacity";
+import {
+  matchesCatalog,
+  operationMode,
+  operationReadiness,
+  type CatalogChip,
+  type OperationEditorTab,
+} from "@/lib/tech-operation-ux";
 import {
   filterTechOperations,
   formatTechOperationVolumeUnit,
@@ -36,6 +36,8 @@ import {
 import type { ProductionStage } from "@/lib/production-stages";
 import type { WorkCenter } from "@/lib/shop-routings";
 import { TechOperationMaterialsDrawer } from "@/components/settings/tech-operation-materials-drawer";
+import { ReadinessStickers } from "@/components/production/readiness-stickers";
+import { diagnosticEditorTarget, readDiagnostics } from "@/lib/production/readiness-stickers";
 
 /** PT-02 tech-operations catalog list (`DS-PT-02-CATALOG`, etalon sewing-operations). */
 export function TechOperationsWorkspace({
@@ -44,19 +46,28 @@ export function TechOperationsWorkspace({
   workCenters,
   resources: initialResources,
   materialOptions,
+  initialOperationId = null,
+  initialTab = "main",
 }: {
   operations: TechOperation[];
   productionStages: ProductionStage[];
   workCenters: WorkCenter[];
   resources: CapacityResource[];
   materialOptions: Array<{ id: number; name: string; unit: string; is_active: boolean }>;
+  initialOperationId?: number | null;
+  initialTab?: OperationEditorTab;
 }) {
   const router = useRouter();
   const [created, setCreated] = useState<TechOperation[]>([]);
   const [patched, setPatched] = useState<Record<number, TechOperation>>({});
   const [removedIds, setRemovedIds] = useState<Set<number>>(() => new Set());
   const [query, setQuery] = useState("");
-  const [editingOperation, setEditingOperation] = useState<TechOperation | null>(null);
+  const [chip, setChip] = useState<CatalogChip>("all");
+  const [stageId, setStageId] = useState<number | "all">("all");
+  const [mode, setMode] = useState<CalculationMode | "all">("all");
+  const [editingId, setEditingId] = useState<number | null>(initialOperationId);
+  const [editorTab, setEditorTab] = useState<OperationEditorTab>(initialTab);
+  const [focusField, setFocusField] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [rowError, setRowError] = useState<string | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
@@ -81,12 +92,29 @@ export function TechOperationsWorkspace({
       });
   }, [created, operations, patched, removedIds]);
 
-  const filtered = useMemo(
+  const searched = useMemo(
     () => filterTechOperations(rows, query),
     [query, rows],
   );
+  const filtered = useMemo(
+    () => searched.filter((row) => matchesCatalog(row, resources, chip, stageId, mode)),
+    [chip, mode, resources, searched, stageId],
+  );
+  const editingOperation = rows.find((row) => row.id === editingId) ?? null;
+  const stageChips = productionStages.filter((stage) => rows.some((row) => row.production_stage_id === stage.id));
 
-  const clearFilters = () => setQuery("");
+  const clearFilters = () => {
+    setQuery("");
+    setChip("all");
+    setStageId("all");
+    setMode("all");
+  };
+
+  function openEditor(row: TechOperation, tab: OperationEditorTab, fieldId: string | null = null) {
+    setEditorTab(tab);
+    setFocusField(fieldId);
+    setEditingId(row.id);
+  }
 
   const onDelete = async (row: TechOperation) => {
     if (!window.confirm(`Удалить тех операцию «${row.name}»?`)) return;
@@ -131,10 +159,12 @@ export function TechOperationsWorkspace({
           resources={resources}
           operations={rows}
           materialOptions={materialOptions}
-          onClose={() => setEditingOperation(null)}
+          initialTab={editorTab}
+          focusField={focusField}
+          onClose={() => setEditingId(null)}
           onSaved={(operation) => {
             setPatched((prev) => ({ ...prev, [operation.id]: operation }));
-            setEditingOperation(null);
+            setEditingId(null);
             router.refresh();
           }}
           onResourceSaved={(resource) => {
@@ -177,35 +207,50 @@ export function TechOperationsWorkspace({
         }}
       />
 
+      <header className="border-b border-portal-border px-portal-4 py-portal-4">
+        <h1 className="text-portal-title font-semibold">Технологические операции</h1>
+      </header>
       <PageToolbar
         start={
-          <Input
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder="Поиск по наименованию или коду"
-            className="min-w-0 w-full flex-1"
-            aria-label="Поиск технологических операций"
-          />
+          <div className="flex min-w-0 flex-1 flex-wrap items-center gap-portal-2">
+            <Input
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Поиск по наименованию или коду"
+              className="min-w-0 w-full flex-1"
+              aria-label="Поиск технологических операций"
+            />
+            <Select aria-label="Фильтр по цеху" value={stageId === "all" ? "" : String(stageId)} onChange={(event) => setStageId(event.target.value ? Number(event.target.value) : "all")}>
+              <option value="">Все цеха</option>
+              {stageChips.map((stage) => <option key={stage.id} value={stage.id}>{stage.name}</option>)}
+            </Select>
+            <Select aria-label="Фильтр по типу мощности" value={mode} onChange={(event) => setMode(event.target.value as CalculationMode | "all")}>
+              <option value="all">Все типы мощности</option>
+              {(Object.keys(CALCULATION_MODE_LABEL) as CalculationMode[]).map((item) => <option key={item} value={item}>{CALCULATION_MODE_LABEL[item]}</option>)}
+            </Select>
+          </div>
         }
         end={
           <div className="flex flex-wrap items-center gap-1">
-            <IconButton
-              label="Создать операцию"
-              variant="primary"
-              onClick={() => setCreateOpen(true)}
-            >
-              <Plus className="size-4" aria-hidden="true" />
-            </IconButton>
-            <IconButton
-              label="Сбросить фильтры"
-              variant="secondary"
-              onClick={clearFilters}
-            >
+            <Button type="button" variant="primary" size="compact" onClick={() => setCreateOpen(true)}>+ Добавить операцию</Button>
+            <IconButton label="Сбросить фильтры" variant="secondary" onClick={clearFilters}>
               <FilterX className="size-4" aria-hidden="true" />
             </IconButton>
           </div>
         }
       />
+      <div className="flex flex-wrap gap-portal-2 border-b border-portal-border px-portal-4 py-portal-3">
+        {([
+          ["all", "Все", rows.length],
+          ["needs_setup", "Требуют настройки", rows.filter((row) => operationReadiness(row, resources).status === "needs_setup").length],
+          ["no_capacity", "Без мощности", rows.filter((row) => matchesCatalog(row, resources, "no_capacity", "all", "all")).length],
+        ] as const).map(([id, label, count]) => (
+          <button key={id} type="button" className={`rounded-portal-full px-portal-3 py-portal-1 text-portal-caption ${chip === id ? "bg-portal-primary text-portal-primary-on" : "bg-portal-surface-secondary text-portal-text"}`} onClick={() => setChip(id)}>{label} {count}</button>
+        ))}
+        {stageChips.map((stage) => (
+          <button key={stage.id} type="button" className={`rounded-portal-full px-portal-3 py-portal-1 text-portal-caption ${stageId === stage.id ? "bg-portal-primary text-portal-primary-on" : "bg-portal-surface-secondary text-portal-text"}`} onClick={() => { setStageId(stage.id); setChip("all"); }}>{stage.name}</button>
+        ))}
+      </div>
 
       <section className="min-h-0 min-w-0 flex-1 overflow-auto bg-portal-surface">
         {rowError ? (
@@ -217,175 +262,53 @@ export function TechOperationsWorkspace({
           </p>
         ) : null}
 
-        <div className="hidden min-w-0 md:block">
-          <DataTableFrame className="rounded-none border-x-0 border-b-0 shadow-none">
-            <DataTable minWidthClassName="min-w-[1040px]">
-              <DataTableHead>
-                <tr>
-                  <DataTableHeaderCell>Наименование</DataTableHeaderCell>
-                  <DataTableHeaderCell className="w-36">Код</DataTableHeaderCell>
-                  <DataTableHeaderCell className="w-28">
-                    Ед. объёма
-                  </DataTableHeaderCell>
-                  <DataTableHeaderCell>Необходимые материалы</DataTableHeaderCell>
-                  <DataTableHeaderCell className="w-44">Цех</DataTableHeaderCell>
-                  <DataTableHeaderCell className="w-40">Мощность</DataTableHeaderCell>
-                  <DataTableHeaderCell className="w-28">Статус</DataTableHeaderCell>
-                  <DataTableHeaderCell className="w-28">
-                    Действия
-                  </DataTableHeaderCell>
-                </tr>
-              </DataTableHead>
-              <DataTableBody>
-                {filtered.map((row) => {
-                  return (
-                    <DataTableRow key={row.id}>
-                      <DataTableCell>
-                        <span className="font-medium text-portal-text">
-                            {row.name}
-                          </span>
-                      </DataTableCell>
-                      <DataTableCell>
-                        <span className="font-mono text-portal-caption text-portal-muted">
-                            {row.code}
-                          </span>
-                      </DataTableCell>
-                      <DataTableCell>
-                        {(
-                          formatTechOperationVolumeUnit(row.volume_unit)
-                        )}
-                      </DataTableCell>
-                      <DataTableCell>
-                        {row.required_materials.length > 0 ? (
-                          <div className="space-y-1 text-portal-caption">
-                            {row.required_materials.map((item) => (
-                              <div key={item.id ?? item.nomenclature_id}>
-                                {item.nomenclature_name ?? `#${item.nomenclature_id}`} —{" "}
-                                {item.quantity} {item.unit ?? ""}
-                              </div>
-                            ))}
-                          </div>
-                        ) : (
-                          <span className="text-portal-muted">—</span>
-                        )}
-                      </DataTableCell>
-                      <DataTableCell>
-                        {(
-                          productionStages.find(
-                            (stage) => stage.id === row.production_stage_id,
-                          )?.name ?? "—"
-                        )}
-                      </DataTableCell>
-                      <DataTableCell>{formatOperationCapacity(row.capacity_resource_keys ?? [], resources)}</DataTableCell>
-                      <DataTableCell>
-                        <StatusBadge
-                            size="compact"
-                            tone={row.is_active ? "success" : "neutral"}
-                          >
-                            {row.is_active ? "Активна" : "Отключена"}
-                          </StatusBadge>
-                      </DataTableCell>
-                      <DataTableCell>
-                        <div className="flex items-center gap-1">
-                          <>
-                              <IconButton
-                                label="Редактировать"
-                                disabled={saving}
-                                onClick={() => setEditingOperation(row)}
-                              >
-                                <Pencil className="size-4" aria-hidden="true" />
-                              </IconButton>
-                              <IconButton
-                                label="Материалы"
-                                disabled={saving}
-                                onClick={() => setMaterialsEditing(row)}
-                              >
-                                <Plus className="size-4" aria-hidden="true" />
-                              </IconButton>
-                              <IconButton
-                                label="Удалить"
-                                disabled={saving}
-                                onClick={() => void onDelete(row)}
-                              >
-                                <Trash2 className="size-4" aria-hidden="true" />
-                              </IconButton>
-                            </>
-                        </div>
-                      </DataTableCell>
-                    </DataTableRow>
-                  );
-                })}
-              </DataTableBody>
-            </DataTable>
-          </DataTableFrame>
-        </div>
-
-        <div className="space-y-portal-3 p-portal-4 md:hidden">
+        <div className="space-y-portal-3 p-portal-4">
           {filtered.map((row) => {
+            const readiness = operationReadiness(row, resources);
+            const modeLabel = operationMode(row.capacity_resource_keys ?? [], resources);
+            const stageName = productionStages.find((stage) => stage.id === row.production_stage_id)?.name ?? "Цех не указан";
+            const centers = (row.capacity_resource_keys ?? [])
+              .map((key) => resources.find((resource) => resource.key === key))
+              .map((resource) => workCenters.find((center) => center.id === resource?.work_center_id)?.name)
+              .filter((name): name is string => Boolean(name));
             return (
-              <article
-                key={row.id}
-                className="rounded-portal-md border border-portal-border bg-portal-surface p-portal-4"
-              >
+              <article key={row.id} className="rounded-portal-md border border-portal-border bg-portal-surface p-portal-4">
                 <div className="flex items-start justify-between gap-portal-3">
-                    <div>
+                  <div className="min-w-0">
+                    <button type="button" className="min-w-0 text-left" onClick={() => openEditor(row, "main")}>
                       <p className="font-medium text-portal-text">{row.name}</p>
-                      <p className="text-portal-caption text-portal-muted">
-                        {row.code} · {formatTechOperationVolumeUnit(row.volume_unit)} ·{" "}
-                        {productionStages.find(
-                          (stage) => stage.id === row.production_stage_id,
-                        )?.name ?? "Цех не указан"}
-                      </p>
-                      <p className="mt-1 text-portal-caption text-portal-muted">{formatOperationCapacity(row.capacity_resource_keys ?? [], resources)}</p>
-                      {row.required_materials.length > 0 ? (
-                        <p className="mt-1 text-portal-caption text-portal-muted">
-                          {row.required_materials
-                            .map(
-                              (item) =>
-                                `${item.nomenclature_name ?? `#${item.nomenclature_id}`} — ${item.quantity} ${item.unit ?? ""}`,
-                            )
-                            .join("; ")}
-                        </p>
-                      ) : null}
-                    </div>
-                    <div className="flex gap-1">
-                      <IconButton
-                        label="Редактировать"
-                        disabled={saving}
-                        onClick={() => setEditingOperation(row)}
-                      >
-                        <Pencil className="size-4" aria-hidden="true" />
-                      </IconButton>
-                      <IconButton
-                        label="Материалы"
-                        disabled={saving}
-                        onClick={() => setMaterialsEditing(row)}
-                      >
-                        <Plus className="size-4" aria-hidden="true" />
-                      </IconButton>
-                      <IconButton
-                        label="Удалить"
-                        disabled={saving}
-                        onClick={() => void onDelete(row)}
-                      >
-                        <Trash2 className="size-4" aria-hidden="true" />
-                      </IconButton>
+                      <p className="text-portal-caption text-portal-muted">{row.code} · {stageName} · {formatTechOperationVolumeUnit(row.volume_unit)}</p>
+                      <p className="mt-1 text-portal-caption text-portal-muted">{modeLabel ? CALCULATION_MODE_LABEL[modeLabel] : "Способ расчёта не задан"} · {formatOperationCapacity(row.capacity_resource_keys ?? [], resources)}</p>
+                      {centers.length > 0 ? <p className="mt-1 text-portal-caption">{centers.join(" · ")}</p> : null}
+                    </button>
+                    <div className="mt-portal-2">
+                      <ReadinessStickers
+                        diagnostics={readDiagnostics(row.diagnostics)}
+                        onSelect={(item) => {
+                          const target = diagnosticEditorTarget(item);
+                          openEditor(row, target.tab, target.fieldId);
+                        }}
+                      />
                     </div>
                   </div>
+                  <div className="flex shrink-0 flex-wrap items-center justify-end gap-1">
+                    <StatusBadge size="compact" tone={readiness.status === "ready" ? "success" : readiness.status === "no_capacity" ? "neutral" : "warning"}>{readiness.label}</StatusBadge>
+                    <IconButton label="Редактировать" disabled={saving} onClick={() => openEditor(row, "main")}><Pencil className="size-4" aria-hidden="true" /></IconButton>
+                    <IconButton label="Мощность" disabled={saving} onClick={() => openEditor(row, "capacity")}><Gauge className="size-4" aria-hidden="true" /></IconButton>
+                    <IconButton label="Ресурсы" disabled={saving} onClick={() => openEditor(row, "equipment")}><Boxes className="size-4" aria-hidden="true" /></IconButton>
+                    <IconButton label="Материалы" disabled={saving} onClick={() => setMaterialsEditing(row)}><Package className="size-4" aria-hidden="true" /></IconButton>
+                    <IconButton label="Удалить" variant="danger" disabled={saving} onClick={() => void onDelete(row)}><Trash2 className="size-4" aria-hidden="true" /></IconButton>
+                  </div>
+                </div>
               </article>
             );
           })}
         </div>
 
         {filtered.length === 0 ? (
-          <EmptyState
-            title="Операции не найдены"
-            description={emptyDescription}
-          />
+          <EmptyState title="Операции не найдены" description={emptyDescription} />
         ) : null}
       </section>
-
-
       <ListTotals primary={`Всего: ${filtered.length} операций`} />
     </div>
   );

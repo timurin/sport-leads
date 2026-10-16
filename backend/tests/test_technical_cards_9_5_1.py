@@ -124,6 +124,11 @@ def _add_lead(factory: sessionmaker[Session]) -> int:
 
 
 def _complete_card(client: TestClient, card_id: int) -> None:
+    card = client.get(f"/technical-cards/{card_id}").json()
+    # Explicit apply supplies frozen evidence required by the shared launch readiness guard.
+    applied = client.post(f"/technical-cards/{card_id}/apply-routing",
+                          json={"routing_template_id": card["routing_template_id"]})
+    assert applied.status_code == 200, applied.text
     assert client.post(f"/technical-cards/{card_id}/start").status_code == 200
     done = client.post(f"/technical-cards/{card_id}/stages/1/complete")
     assert done.status_code == 200, done.text

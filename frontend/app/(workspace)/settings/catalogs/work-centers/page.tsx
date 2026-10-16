@@ -4,8 +4,14 @@ import { WorkCentersWorkspace } from "@/components/settings/work-centers-workspa
 import { PageLayout } from "@/components/layout/page-layout";
 import { getProductionStages } from "@/lib/production-stages";
 import { getWorkCenters } from "@/lib/shop-routings";
+import { parseEquipmentCapacityId } from "@/lib/tech-operation-ux";
 
-export default async function WorkCentersListPage() {
+export default async function WorkCentersListPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ capacity?: string }>;
+}) {
+  const query = await searchParams;
   const [workCenters, productionStages] = await Promise.all([
     getWorkCenters({ limit: 500 }),
     getProductionStages({ active_only: false, limit: 500 }),
@@ -23,6 +29,7 @@ export default async function WorkCentersListPage() {
         <WorkCentersWorkspace
           workCenters={workCenters}
           productionStages={productionStages}
+          initialCapacityId={parseEquipmentCapacityId(query.capacity)}
         />
       </Suspense>
     </PageLayout>

@@ -172,11 +172,16 @@ def test_stage_gates_complete_rollback_and_card_completion() -> None:
             skip = client.post(f"/technical-cards/{card_id}/stages/2/start")
             assert skip.status_code == 422, skip.text
 
+            # Legacy generation lacks frozen route evidence; explicit apply verifies it before launch.
+            applied = client.post(f"/technical-cards/{card_id}/apply-routing",
+                                  json={"routing_template_id": ids["template"]})
+            assert applied.status_code == 200, applied.text
             started = client.post(f"/technical-cards/{card_id}/start")
             assert started.status_code == 200, started.text
             body = started.json()
-            assert body["status"] == "in_progress"
-            assert body["stage_results"][0]["status"] == "in_progress"
+            assert body["status"] == "draft"
+            assert body["stage_results"][0]["status"] == "pending"
+            assert body["stage_results"][0]["started_at"] is None
             assert body["current_stage_order"] == 1
 
             done1 = client.post(

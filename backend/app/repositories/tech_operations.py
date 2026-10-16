@@ -1,5 +1,6 @@
 from sqlalchemy import func, select
-from sqlalchemy.orm import Session, selectinload
+from sqlalchemy.orm import Session, selectinload, joinedload
+from app.models.production_capacity import CapacityResource
 
 from app.models.tech_operation import TechOperation, TechOperationRequiredMaterial
 
@@ -13,7 +14,9 @@ def list_tech_operations(
     offset: int = 0,
 ) -> list[TechOperation]:
     statement = select(TechOperation).options(
-        selectinload(TechOperation.capacity_resources),
+        joinedload(TechOperation.production_stage),
+        selectinload(TechOperation.capacity_resources).joinedload(CapacityResource.production_stage),
+        selectinload(TechOperation.capacity_resources).joinedload(CapacityResource.work_center),
         selectinload(TechOperation.required_materials).selectinload(
             TechOperationRequiredMaterial.nomenclature
         )
@@ -38,7 +41,9 @@ def get_tech_operation(db: Session, operation_id: int) -> TechOperation | None:
         select(TechOperation)
         .where(TechOperation.id == operation_id)
         .options(
-            selectinload(TechOperation.capacity_resources),
+            joinedload(TechOperation.production_stage),
+            selectinload(TechOperation.capacity_resources).joinedload(CapacityResource.production_stage),
+            selectinload(TechOperation.capacity_resources).joinedload(CapacityResource.work_center),
             selectinload(TechOperation.required_materials).selectinload(
                 TechOperationRequiredMaterial.nomenclature
             )

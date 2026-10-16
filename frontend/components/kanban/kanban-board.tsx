@@ -17,7 +17,7 @@ import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import { useId, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 
 import { KanbanCardContent } from "@/components/kanban/kanban-card";
-import { KanbanColumn } from "@/components/kanban/kanban-column";
+import { KanbanColumn, KanbanStaticColumn } from "@/components/kanban/kanban-column";
 import { canStartKanbanDrag } from "@/components/kanban/kanban-interaction";
 import {
   cloneKanbanColumns,
@@ -40,6 +40,8 @@ type KanbanBoardProps<TStatus extends string> = {
   onColumnsChange?: (columns: KanbanColumnData<TStatus>[]) => void;
   onMove?: KanbanMoveHandler<TStatus>;
   onCardSelect?: (cardId: string) => void;
+  /** Sales boards keep drag. Production fact boards pass false. */
+  dragEnabled?: boolean;
 };
 
 class KanbanPointerSensor extends PointerSensor {
@@ -66,6 +68,7 @@ export function KanbanBoard<TStatus extends string>({
   onColumnsChange,
   onMove,
   onCardSelect,
+  dragEnabled = true,
 }: KanbanBoardProps<TStatus>) {
   const [columns, setColumns] = useState(
     () => cloneKanbanColumns(initialColumns),
@@ -255,6 +258,23 @@ export function KanbanBoard<TStatus extends string>({
         title="Ничего не найдено"
         description="Измените запрос или сбросьте выбранные фильтры."
       />
+    );
+  }
+
+  if (!dragEnabled) {
+    return (
+      <div
+        data-pt03-board
+        data-kanban-drag="off"
+        className="min-w-0 overflow-x-auto overscroll-x-contain pb-portal-3 [-webkit-overflow-scrolling:touch]"
+        aria-label="Канбан-доска"
+      >
+        <div className="flex min-w-max snap-x snap-mandatory items-start gap-portal-4">
+          {visibleColumns.map((column) => (
+            <KanbanStaticColumn key={column.id} column={column} onCardSelect={onCardSelect} />
+          ))}
+        </div>
+      </div>
     );
   }
 

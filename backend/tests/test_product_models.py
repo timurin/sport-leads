@@ -808,3 +808,36 @@ def test_product_model_product_type_link_and_list_filter() -> None:
             assert cleared.json()["product_type_name"] is None
     finally:
         app.dependency_overrides.clear()
+
+
+def test_delete_product_model_removes_the_row() -> None:
+    factory = _session_factory()
+
+    def override_get_db():
+        with factory() as db:
+            yield db
+
+    app.dependency_overrides[get_db] = override_get_db
+    try:
+        with TestClient(app) as client:
+            created = client.post(
+                "/product-models",
+                json={"article": "DEL-1", "name": "К удалению", "size_type": "men"},
+            )
+            assert created.status_code == 201, created.text
+            model_id = created.json()["id"]
+
+            deleted = client.delete(f"/product-models/{model_id}")
+            assert deleted.status_code == 204, deleted.text
+
+            missing = client.get(f"/product-models/{model_id}")
+            assert missing.status_code == 404
+
+            listed = client.get("/product-models", params={"search": "DEL-1"})
+            assert listed.status_code == 200
+            assert listed.json() == []
+
+            again = client.delete(f"/product-models/{model_id}")
+            assert again.status_code == 404
+    finally:
+        app.dependency_overrides.clear()

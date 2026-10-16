@@ -40,11 +40,15 @@ class TechOperation(Base):
             "sort_order >= 0",
             name="ck_tech_operations_sort_order_nonnegative",
         ),
+        CheckConstraint("demand_rule IS NULL OR demand_rule IN ('fixed_per_order', 'per_item')", name="ck_tech_operations_demand_rule"),
+        CheckConstraint("demand_duration_seconds IS NULL OR demand_duration_seconds > 0", name="ck_tech_operations_demand_duration"),
     )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     name: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
     code: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    demand_rule: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    demand_duration_seconds: Mapped[int | None] = mapped_column(Integer, nullable=True)
     volume_unit: Mapped[TechOperationVolumeUnit] = mapped_column(
         String(20),
         nullable=False,

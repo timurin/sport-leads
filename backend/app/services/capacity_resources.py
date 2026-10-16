@@ -38,6 +38,8 @@ def get_resources(db: Session, keys: list[str] | None = None, *, include_excepti
 
 def save_resource(db: Session, key: str, payload: CapacityResourceWrite) -> CapacityResourceDetail:
     from app.services.production_capacity import RESOURCE_BY_KEY, _commit, legacy_defaults
+    from app.repositories.production_scheduler import lock_scheduler
+    lock_scheduler(db)
 
     if not key or len(key) > 64 or key.strip() != key:
         raise CalendarError("Resource key must have 1-64 characters without surrounding whitespace")
@@ -48,20 +50,29 @@ def save_resource(db: Session, key: str, payload: CapacityResourceWrite) -> Capa
         center = db.get(WorkCenter, payload.work_center_id)
         if center is None or not center.is_active or center.production_stage_id != stage.id:
             raise CalendarError("Equipment must belong to the resource stage")
+    row = db.get(CapacityResource, key)
+    from app.services.calendar_allocation_consistency import protect_resource_edit
+    protect_resource_edit(db, key, payload.model_dump())
     legacy = RESOURCE_BY_KEY.get(key)
     if legacy is None and payload.calculation_mode not in {"explicit_hours", "rate", "milestone"}:
         raise CalendarError("Special norm rules are reserved for the existing sewing/cutting/team resources")
     if legacy is not None:
         defaults = legacy_defaults(legacy)
-        if (stage.code != legacy.stage_code or payload.resource_type != defaults["resource_type"]
-                or payload.capacity_unit != defaults["capacity_unit"]
-                or payload.calculation_mode != defaults["calculation_mode"]):
+        canonical = (stage.code == legacy.stage_code and payload.resource_type == defaults["resource_type"]
+                     and payload.capacity_unit == defaults["capacity_unit"]
+                     and payload.calculation_mode == defaults["calculation_mode"])
+        stored_stage = db.get(ProductionStage, row.production_stage_id) if row is not None and row.production_stage_id else None
+        preserved = (row is not None and stored_stage is not None and stage.id == stored_stage.id
+                     and payload.resource_type == row.resource_type
+                     and payload.capacity_unit == row.capacity_unit
+                     and payload.calculation_mode == row.calculation_mode)
+        if not canonical and not preserved:
             raise CalendarError("Legacy resource kind/unit/stage/calculation rule must remain compatible")
         if key == "cutters" and payload.resource_count is not None and payload.resource_count > 2:
             raise CalendarError("This shared pool supports at most two people")
         if key == "packing_team" and payload.resource_count not in (None, 1):
             raise CalendarError("Packing is one brigade: resource_count must be 1 and is not a headcount multiplier")
-    row = db.get(CapacityResource, key)
+    validate_equipment_identity(db, row, payload.work_center_id, payload.resource_type)
     if row is None:
         row = CapacityResource(resource_key=key)
         db.add(row)
@@ -81,10 +92,22 @@ def save_resource(db: Session, key: str, payload: CapacityResourceWrite) -> Capa
     return get_resources(db, [key])[0]
 
 
+def validate_equipment_identity(db: Session, row, center_id: int | None, kind: str) -> None:
+    """A resource key with stored allocations must keep its physical identity."""
+    from app.models.calendar_allocation import CalendarAllocation
+    if row is not None and (row.work_center_id != center_id or row.resource_type != kind):
+        if db.scalar(select(CalendarAllocation.id).where(CalendarAllocation.resource_key == row.resource_key).limit(1)) is not None:
+            raise CalendarError("A resource with allocations cannot change its physical identity", 409)
+
+
 def delete_resource(db: Session, key: str) -> None:
     from app.models.production_capacity import TechOperationCapacityResource
     from app.services.production_capacity import _commit
 
+    from app.repositories.production_scheduler import lock_scheduler
+    from app.services.calendar_allocation_consistency import protect_resource_edit
+    lock_scheduler(db)
+    protect_resource_edit(db, key, {"delete": True})
     row = db.get(CapacityResource, key)
     if row is None:
         raise CalendarError("Capacity resource not found", 404)

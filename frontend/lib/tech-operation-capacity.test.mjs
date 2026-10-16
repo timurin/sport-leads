@@ -63,7 +63,7 @@ test("operation column shows one or two resources and then +N", () => {
   assert.equal(formatResourceRate(plotters), "15 м.п./ч × 4");
   assert.equal(formatResourceRate(pieces), "20 шт./ч × 2");
   assert.equal(formatResourceRate(labor), "68 чел.-ч/день");
-  assert.equal(formatResourceRate(milestone), "Milestone");
+  assert.equal(formatResourceRate(milestone), "Без расчёта мощности");
   assert.equal(formatOperationCapacity(["plotters"], [plotters]), "Плоттеры 15 м.п./ч × 4");
   assert.equal(formatOperationCapacity(["plotters", "sewers"], [plotters, labor]), "Плоттеры 15 м.п./ч × 4 · Швеи 68 чел.-ч/день");
   assert.equal(
@@ -162,17 +162,18 @@ test("catalog and capacity screen use the same resource API", () => {
   assert.ok(editor.includes("Отвязать") || fields.includes("Отвязать"));
   assert.ok(fields.includes("Общий ресурс"));
   assert.ok(drawer.includes("TechOperationResourcesPanel"));
-  assert.ok(screen.includes("saveCapacityResource"));
+  assert.equal(screen.includes("saveCapacityResource"), false);
+  assert.equal(screen.includes("CapacityResourceFields"), false);
+  assert.ok(screen.includes("Мощности и загрузка"));
+  assert.ok(screen.includes("Настроить"));
+  assert.ok(screen.includes("operationSettingsHref"));
   assert.equal(screen.includes("loadCapacitySettings"), false);
   assert.ok(fields.includes('value.resource_type === "milestone"'));
   assert.ok(fields.includes("Исключения по датам"));
   assert.ok(fields.includes("Недоступно"));
   assert.ok(fields.includes("capacityUnitChoices"));
   assert.ok(fields.includes("Производительность указана для всей бригады"));
-  assert.ok(screen.includes("CapacityResourceFields"));
   assert.equal(fields.includes('["machine_hour"] as const'), false);
-  const editorSave = screen.slice(screen.indexOf("async function save"));
-  assert.ok(editorSave.indexOf("if (!result.ok)") < editorSave.indexOf("setDraft(result.resource)"));
   const panelSave = fields.slice(fields.indexOf("async function saveDraft"));
   assert.ok(panelSave.indexOf("if (!result.ok)") < panelSave.indexOf("setDraft(result.resource)"));
 });
@@ -271,7 +272,7 @@ test("labor hours, packing brigade and milestone keep their units", () => {
   assert.equal(resourceWriteBody(packing).capacity_unit, "item");
   assert.equal(formatResourceRate(packing), "80 шт./ч");
   assert.equal(formatResourceRate(operator), "8 чел.-ч/день");
-  assert.equal(formatResourceRate(milestone), "Milestone");
+  assert.equal(formatResourceRate(milestone), "Без расчёта мощности");
   assert.equal(readCapacityResource(packing).capacity_unit, "item");
   assert.equal(readCapacityResource(operator).capacity_unit, "labor_hour");
 });

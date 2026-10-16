@@ -1,20 +1,28 @@
 "use client";
 
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
 
-import { moveShopStageKanbanCardAction } from "@/app/(workspace)/production/kanban/shop-kanban-actions";
+import {
+  completeTechnicalCardStageAction,
+  loadStageMaterialFactsAction,
+  setCompositionFactQtyAction,
+  startTechnicalCardStageAction,
+} from "@/app/(workspace)/production/tech-cards/tech-card-actions";
 import { KanbanBoard } from "@/components/kanban/kanban-board";
-import { cloneKanbanColumns } from "@/components/kanban/kanban-state";
-import type { KanbanMove } from "@/components/kanban/kanban-types";
+import { MaterialFactCompleteModal } from "@/components/production/material-fact-complete-modal";
 import { EmptyState } from "@/components/ui/empty-state";
 import { InlineAlert } from "@/components/ui/inline-alert";
 import { PageToolbar } from "@/components/ui/page-header";
 import { Input } from "@/components/ui/form-controls";
 import {
+  MATERIAL_FACT_OPERATOR_MESSAGE,
+  isMaterialFactGateError,
+  materialFactSaveError,
+  type MaterialFactDraft,
+} from "@/lib/production/material-fact-complete";
+import {
   buildShopStageKanbanColumns,
-  isAllowedShopStageKanbanMove,
-  type ShopStageKanbanStatus,
   type ShopStageModule,
 } from "@/lib/production/shop-stage-modules";
 import type { ApiTechnicalCardListItem } from "@/lib/sales/order-tech-cards-api";
@@ -31,75 +39,107 @@ export function ShopStageKanbanWorkspace({
   hideToolbar?: boolean;
 }) {
   const router = useRouter();
-  const initialColumns = useMemo(
-    () => buildShopStageKanbanColumns(cards, shopModules),
-    [cards, shopModules],
-  );
-  const [columns, setColumns] = useState(() => cloneKanbanColumns(initialColumns));
-  const [boardRevision, setBoardRevision] = useState(0);
   const [query, setQuery] = useState("");
-  const [moveError, setMoveError] = useState<string | null>(null);
-
-  useEffect(() => {
-    setColumns(cloneKanbanColumns(buildShopStageKanbanColumns(cards, shopModules)));
-    setBoardRevision((value) => value + 1);
-  }, [cards, shopModules]);
-
+  const [busyId, setBusyId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [factPrompt, setFactPrompt] = useState<{
+    cardId: number;
+    stageOrder: number;
+    lines: MaterialFactDraft[];
+  } | null>(null);
+  const columns = useMemo(
+    () => buildShopStageKanbanColumns(cards, shopModules, { factActions: canTransition }),
+    [cards, shopModules, canTransition],
+  );
   const boardColumns = useMemo(() => {
-    if (canTransition) return columns;
+    if (!busyId) return columns;
     return columns.map((column) => ({
       ...column,
-      cards: column.cards.map((card) => ({ ...card, draggable: false })),
+      cards: column.cards.map((card) => (
+        card.id === busyId ? { ...card, actionLabel: "Сохраняем..." } : card
+      )),
     }));
-  }, [canTransition, columns]);
+  }, [busyId, columns]);
 
-  const onMove = (move: KanbanMove<ShopStageKanbanStatus>) => {
-    if (!canTransition) {
-      setMoveError("Недостаточно прав: shop.kanban.transition");
+  const onFactAction = async (cardId: string) => {
+    if (busyId) return;
+    const card = columns.flatMap((column) => column.cards).find((row) => row.id === cardId);
+    if (!card?.factStageOrder || (card.factStatus !== "pending" && card.factStatus !== "in_progress")) {
       return;
     }
-
-    const previousColumns = cloneKanbanColumns(columns);
-    const sourceCard = previousColumns
-      .flatMap((column) => column.cards)
-      .find((card) => card.id === move.cardId);
-    if (!sourceCard || sourceCard.status === move.targetColumnId) {
-      return;
-    }
-
-    if (
-      !isAllowedShopStageKanbanMove(
-        sourceCard.status,
-        move.targetColumnId,
-        shopModules,
-      )
-    ) {
-      setMoveError(
-        "Перемещение разрешено только на соседний цех по маршруту (без пропуска этапов).",
-      );
-      setColumns(previousColumns);
-      setBoardRevision((value) => value + 1);
-      return;
-    }
-
-    setMoveError(null);
-    void moveShopStageKanbanCardAction({
-      cardId: Number(move.cardId),
-      fromStageCode: sourceCard.status,
-      toStageCode: move.targetColumnId,
-    }).then((result) => {
-      if (result.ok) {
-        router.refresh();
+    setBusyId(cardId);
+    setError(null);
+    const cardNumber = Number(cardId);
+    const result = card.factStatus === "in_progress"
+      ? await completeTechnicalCardStageAction(cardNumber, card.factStageOrder, {})
+      : await startTechnicalCardStageAction(cardNumber, card.factStageOrder, {});
+    setBusyId(null);
+    if (!result.ok) {
+      if (card.factStatus === "in_progress" && isMaterialFactGateError(result.message)) {
+        const loaded = await loadStageMaterialFactsAction(cardNumber, card.factStageOrder);
+        if (loaded.ok) {
+          setFactPrompt({
+            cardId: cardNumber,
+            stageOrder: card.factStageOrder,
+            lines: loaded.lines,
+          });
+          return;
+        }
+        setError(MATERIAL_FACT_OPERATOR_MESSAGE);
         return;
       }
-      setColumns(previousColumns);
-      setBoardRevision((value) => value + 1);
-      setMoveError(result.message ?? "Не удалось переместить техкарту");
-    }).catch(() => {
-      setColumns(previousColumns);
-      setBoardRevision((value) => value + 1);
-      setMoveError("Не удалось связаться с backend. Перемещение отменено.");
-    });
+      setError(result.message ?? "Не удалось записать факт");
+      return;
+    }
+    router.refresh();
+  };
+
+  const saveMaterialFacts = async (rows: MaterialFactDraft[]) => {
+    if (!factPrompt) return { ok: false, formError: MATERIAL_FACT_OPERATOR_MESSAGE };
+    for (const row of rows) {
+      const saved = await setCompositionFactQtyAction(
+        factPrompt.cardId,
+        row.lineId,
+        row.factQty.trim(),
+      );
+      if (!saved.ok) {
+        return {
+          ok: false,
+          fieldErrors: { [row.lineId]: materialFactSaveError(saved.message) },
+        };
+      }
+    }
+    return { ok: true };
+  };
+
+  const onSaveFacts = async (rows: MaterialFactDraft[]) => {
+    const saved = await saveMaterialFacts(rows);
+    if (!saved.ok) return saved;
+    setFactPrompt(null);
+    router.refresh();
+    return { ok: true };
+  };
+
+  const onSaveFactsAndComplete = async (rows: MaterialFactDraft[]) => {
+    if (!factPrompt) return { ok: false, formError: MATERIAL_FACT_OPERATOR_MESSAGE };
+    const saved = await saveMaterialFacts(rows);
+    if (!saved.ok) return saved;
+    const completed = await completeTechnicalCardStageAction(
+      factPrompt.cardId,
+      factPrompt.stageOrder,
+      {},
+    );
+    if (!completed.ok) {
+      return {
+        ok: false,
+        formError: isMaterialFactGateError(completed.message)
+          ? MATERIAL_FACT_OPERATOR_MESSAGE
+          : materialFactSaveError(completed.message),
+      };
+    }
+    setFactPrompt(null);
+    router.refresh();
+    return { ok: true };
   };
 
   return (
@@ -136,35 +176,37 @@ export function ShopStageKanbanWorkspace({
       )}
 
       <div className="min-w-0 flex-1 overflow-auto p-portal-4 lg:p-portal-6">
-        <InlineAlert
-          className="mb-portal-4"
-          tone={canTransition ? "neutral" : "warning"}
-        >
-          {canTransition
-            ? "DnD доступен с правом shop.kanban.transition. Переход только на соседний цех; complete/rollback-kanban через API."
-            : "Просмотр без DnD: нет права shop.kanban.transition. Назначение роли — /settings/users."}
+        <InlineAlert className="mb-portal-4" tone="neutral">
+          Колонка — текущий участок по факту. Плановые дни календаря карточку не переносят.
         </InlineAlert>
-        {moveError ? (
+        {error ? (
           <InlineAlert className="mb-portal-4" tone="danger">
-            {moveError}
+            {error}
           </InlineAlert>
         ) : null}
         {boardColumns.every((column) => column.cards.length === 0) ? (
           <EmptyState
             title="Нет активных техкарт"
-            description="Канбан строится из реальных ТК с текущим ProductionStage."
+            description="Канбан показывает техкарты в текущем участке."
           />
         ) : (
           <KanbanBoard
-            key={boardRevision}
             columns={boardColumns}
             query={query}
             selectedFilters={{}}
-            onColumnsChange={canTransition ? setColumns : undefined}
-            onMove={canTransition ? onMove : undefined}
+            dragEnabled={false}
+            onCardSelect={(cardId) => void onFactAction(cardId)}
           />
         )}
       </div>
+      {factPrompt ? (
+        <MaterialFactCompleteModal
+          lines={factPrompt.lines}
+          onCancel={() => setFactPrompt(null)}
+          onSave={onSaveFacts}
+          onSaveAndComplete={onSaveFactsAndComplete}
+        />
+      ) : null}
     </div>
   );
 }

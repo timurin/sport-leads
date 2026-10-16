@@ -77,6 +77,7 @@ export async function updatePlatformSystemSettings(
       default_timezone: draft.default_timezone.trim(),
       support_email: draft.support_email.trim() || null,
       ui_locale: draft.ui_locale.trim(),
+      debug_mode: draft.debug_mode,
       notes: draft.notes.trim() || null,
     }),
     cache: "no-store",

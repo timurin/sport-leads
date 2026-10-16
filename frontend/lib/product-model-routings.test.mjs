@@ -5,6 +5,8 @@ import {
   buildRoutingNormRows,
   filterAvailableShopRoutingsForWhitelist,
   formatNormQty,
+  missingRequiredOperationNorms,
+  modelRouteNormTarget,
   parseNormQtyInput,
   validateOperationNormDraft,
   whitelistedRoutingTemplateIds,
@@ -140,5 +142,70 @@ describe("product-model-routings helpers", () => {
     assert.equal(rows[0].norm_qty_per_item, "");
     assert.equal(rows[1].operation_label, "Печать · Сублимация");
     assert.equal(rows[1].norm_qty_per_item, "0.7");
+  });
+
+  it("flags only linear-meter operations with an empty norm", () => {
+    const operations = new Map([
+      [5, { name: "Сублимационная печать", volume_unit: "linear_meters" }],
+      [6, { name: "Термоперенос", volume_unit: "linear_meters" }],
+      [7, { name: "Пошив", volume_unit: "pieces" }],
+    ]);
+    const lines = [
+      { production_stage_id: 30, tech_operation_id: 5, stage_label: "Печать" },
+      { production_stage_id: 31, tech_operation_id: 6, stage_label: "Перенос" },
+      { production_stage_id: 40, tech_operation_id: 7, stage_label: "Пошив" },
+      { production_stage_id: 10, tech_operation_id: null, stage_label: "Старт" },
+    ];
+    assert.deepEqual(
+      missingRequiredOperationNorms({
+        stageLines: lines,
+        norms: [
+          {
+            production_stage_id: 30,
+            tech_operation_id: 5,
+            norm_qty_per_item: "0.7",
+            unit: "linear_meters",
+          },
+        ],
+        operations,
+      }),
+      ["Термоперенос"],
+    );
+    assert.deepEqual(
+      missingRequiredOperationNorms({
+        stageLines: lines,
+        norms: [
+          {
+            production_stage_id: 30,
+            tech_operation_id: 5,
+            norm_qty_per_item: "0.7",
+            unit: "linear_meters",
+          },
+          {
+            production_stage_id: 31,
+            tech_operation_id: 6,
+            norm_qty_per_item: "1.2",
+            unit: "linear_meters",
+          },
+        ],
+        operations,
+      }),
+      [],
+    );
+    const links = [
+      {
+        id: 2,
+        product_model_id: 41,
+        shop_routing_template_id: 8,
+        shop_routing_template_name: "Маршрут",
+        is_active: true,
+        sort_order: 1,
+        operation_norms: [],
+        created_at: "",
+        updated_at: "",
+      },
+    ];
+    assert.equal(modelRouteNormTarget(links, 8).templateId, 8);
+    assert.equal(modelRouteNormTarget(links, null).templateId, 8);
   });
 });

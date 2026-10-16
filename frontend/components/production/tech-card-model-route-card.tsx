@@ -5,15 +5,18 @@ import { useRouter } from "next/navigation";
 import { useEffect, useId, useMemo, useState } from "react";
 
 import {
+  inspectModelOperationNorms,
   listTechnicalCardAssemblyCandidates,
   listTechnicalCardModelCandidates,
   updateTechnicalCardModelAssemblyAction,
   type TechnicalCardAssemblyCandidate,
   type TechnicalCardModelCandidate,
 } from "@/app/(workspace)/production/tech-cards/tech-card-actions";
-import { ProductModelCardModal } from "@/components/settings/product-model-card-modal";
+import { MissingOperationNormsDialog } from "@/components/production/missing-operation-norms-dialog";
+import { ProductModelFullCardModal } from "@/components/settings/product-model-full-card-modal";
 import { IconButton } from "@/components/ui/button";
 import { Field, Select } from "@/components/ui/form-controls";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { InlineAlert } from "@/components/ui/inline-alert";
 import { SectionCard } from "@/components/ui/section-card";
 import { controlClassName } from "@/lib/design-system/control-styles";
@@ -31,6 +34,8 @@ type TechCardModelRouteCardProps = {
   card: ApiTechnicalCard;
   routings: RoutingOption[];
   disabled?: boolean;
+  showRoutingField?: boolean;
+  canEditModelNorms?: boolean;
   onApplyRouting: (routingTemplateId: number) => void;
 };
 
@@ -42,6 +47,8 @@ export function TechCardModelRouteCard({
   card,
   routings,
   disabled = false,
+  showRoutingField = true,
+  canEditModelNorms = false,
   onApplyRouting,
 }: TechCardModelRouteCardProps) {
   const router = useRouter();
@@ -57,6 +64,14 @@ export function TechCardModelRouteCard({
   const [assemblies, setAssemblies] = useState<TechnicalCardAssemblyCandidate[]>([]);
   const [selectedAssemblyId, setSelectedAssemblyId] = useState<number | null>(null);
   const [modelCardOpen, setModelCardOpen] = useState(false);
+  const [focusNorms, setFocusNorms] = useState(false);
+  const [normReport, setNormReport] = useState<{
+    modelId: number;
+    routingTemplateId: number | null;
+    operations: string[];
+    dismissed: boolean;
+  } | null>(null);
+  const [normCheckNonce, setNormCheckNonce] = useState(0);
 
   const defaultModelId = card.product_model_id ?? null;
   const defaultModelLabel = techCardModelLabel(card);
@@ -148,6 +163,30 @@ export function TechCardModelRouteCard({
     };
   }, [defaultAssemblyId, defaultModelId, editing, selectedModelId]);
 
+  const inspectedModelId = editing ? selectedModelId : defaultModelId;
+  const activeNormReport = normReport?.modelId === inspectedModelId ? normReport : null;
+  const normOperations = activeNormReport?.operations ?? [];
+  const normRoutingTemplateId = activeNormReport?.routingTemplateId ?? null;
+  const normOpen = Boolean(activeNormReport && !activeNormReport.dismissed && activeNormReport.operations.length > 0);
+
+  useEffect(() => {
+    if (inspectedModelId == null) return;
+    let cancelled = false;
+    void (async () => {
+      const result = await inspectModelOperationNorms(inspectedModelId, card.routing_template_id ?? null);
+      if (cancelled || !result.ok) return;
+      setNormReport({
+        modelId: inspectedModelId,
+        routingTemplateId: result.routingTemplateId,
+        operations: result.operations,
+        dismissed: false,
+      });
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [card.routing_template_id, inspectedModelId, normCheckNonce]);
+
   const beginEdit = () => {
     setSelectedModelId(defaultModelId);
     setModelQuery(defaultModelLabel === "—" ? "" : defaultModelLabel);
@@ -193,7 +232,8 @@ export function TechCardModelRouteCard({
 
   return (
     <SectionCard
-      title="Модель и маршрут"
+      id="tech-card-model"
+      title={showRoutingField ? "Модель и маршрут" : "Модель и сборка"}
       size="compact"
       collapsed={false}
       actions={
@@ -242,6 +282,11 @@ export function TechCardModelRouteCard({
         {editing ? (
           <div className="grid gap-portal-3">
             {error ? <InlineAlert tone="danger">{error}</InlineAlert> : null}
+            {normOperations.length > 0 ? (
+              <StatusBadge size="compact" tone="warning">
+                Требует настройки
+              </StatusBadge>
+            ) : null}
             <Field label="Модель" htmlFor="tech-card-product-model">
               <div className="relative">
                 <input
@@ -349,6 +394,11 @@ export function TechCardModelRouteCard({
               <dt className="text-portal-caption text-portal-muted">Модель</dt>
               <dd className="mt-1 flex flex-wrap items-center gap-portal-2 text-portal-body">
                 <span>{techCardModelLabel(card)}</span>
+                {normOperations.length > 0 ? (
+                  <StatusBadge size="compact" tone="warning">
+                    Требует настройки
+                  </StatusBadge>
+                ) : null}
                 {defaultModelId != null ? (
                   <IconButton
                     label="Открыть карточку модели"
@@ -368,6 +418,7 @@ export function TechCardModelRouteCard({
             </div>
           </dl>
         )}
+        {showRoutingField ? <>
         <Field label="Маршруты и операции" className="mt-portal-4">
           <Select
             value={routingSelectValue}
@@ -394,12 +445,31 @@ export function TechCardModelRouteCard({
             Текущий: {card.routing_template_name}
           </p>
         ) : null}
+        </> : null}
       </div>
-      {defaultModelId != null ? (
-        <ProductModelCardModal
-          modelId={defaultModelId}
-          open={modelCardOpen}
-          onClose={() => setModelCardOpen(false)}
+      {modelCardOpen && (editing ? selectedModelId : defaultModelId) != null ? (
+        <ProductModelFullCardModal
+          modelId={(editing ? selectedModelId : defaultModelId) as number}
+          focusNorms={focusNorms}
+          expandRoutingTemplateId={normRoutingTemplateId}
+          onClose={() => {
+            setModelCardOpen(false);
+            setFocusNorms(false);
+            setNormCheckNonce((current) => current + 1);
+            router.refresh();
+          }}
+        />
+      ) : null}
+      {normOpen ? (
+        <MissingOperationNormsDialog
+          operations={normOperations}
+          canEditNorms={canEditModelNorms}
+          onClose={() => setNormReport((current) => (current ? { ...current, dismissed: true } : current))}
+          onFill={() => {
+            setNormReport((current) => (current ? { ...current, dismissed: true } : current));
+            setFocusNorms(true);
+            setModelCardOpen(true);
+          }}
         />
       ) : null}
     </SectionCard>

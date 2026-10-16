@@ -1,4 +1,5 @@
 from datetime import date, datetime
+from app.schemas.production_state import ProductionState
 from decimal import Decimal
 from typing import Literal
 
@@ -44,6 +45,11 @@ class AssignmentUpdate(BaseModel):
 
 
 class AssignmentRead(AssignmentCreate):
+    snapshot_node_id: int | None = None
+    operation_name: str | None = None
+    operation_status: Literal['pending', 'in_progress', 'completed', 'skipped'] | None = None
+    production_state: ProductionState | None = None
+    operation_state: Literal['current','future','completed'] = 'future'
     planned_start_date: date
     planned_end_date: date
     id: int

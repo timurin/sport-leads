@@ -9,6 +9,10 @@
 
 ## Контекст
 
+### Current fulfillment boundary — PC-06.1A v2, 2026-10-15
+
+The owner-selected simple whole-card fulfillment flow does not use QR/unit WIP, partial shipment or warehouse documents. Those integrations remain deferred; this ADR and its compatibility implementation are retained as historical/future design. Current ready/shipped pages read `TechnicalCard.fulfillment_status`, independently of unit warehouse locations/flags. The explicit new ship action changes only fulfillment/time/audit and rejects subsequent production/QR reopen. Future warehouse/QR integration attaches through `technical_card_fulfillment.on_ready_to_ship` / `on_shipped`, without redefining production completion. See ADR-019's current boundary and DF-KANBAN-FACT.
+
 Печатная техкарта (`18.3.8`) и цеховые модули (`11.4`–`11.10`) уже есть, но исполнитель не сканирует документ: маршрут двигается с ПК, карта целиком на одном шаге, приход ГП (`12.3.2`) постит `TC.quantity − scrap`. Нужен **один QR** на лист: скан с личного телефона или цехового планшета (свой `PlatformUser`, не общая учётка цеха) **и** двигает маршрут, **и** требует факт цеха. Часть штук может уйти вперёд или вернуться назад **без** дочерних ТК. Журнал пошива Stage 24 остаётся SoT резерва швей.
 
 Нельзя: угадываемый QR = `id` карты; прыжки через цех; второй канбан-статус рядом с unit-line WIP; постинг всей карты, когда на `ready_to_ship` пришла только часть штук; child TC на цех.

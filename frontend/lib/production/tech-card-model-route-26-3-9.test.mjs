@@ -11,7 +11,7 @@ test("26.3.9 model-route edit uses catalog typeahead, assembly select, keeps rou
     join(root, "components/production/tech-card-model-route-card.tsx"),
     "utf8",
   );
-  assert.ok(card.includes('title="Модель и маршрут"'));
+  assert.ok(card.includes("Модель и маршрут"));
   assert.ok(card.includes("data-tech-card-model-route-chrome"));
   assert.ok(card.includes("data-tech-card-model-combobox"));
   assert.ok(card.includes("data-tech-card-assembly-select"));

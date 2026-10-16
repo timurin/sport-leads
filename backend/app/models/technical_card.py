@@ -21,8 +21,10 @@ from sqlalchemy import (
     Date,
     DateTime,
     ForeignKey,
+    ForeignKeyConstraint,
     Index,
     Integer,
+    JSON,
     Numeric,
     String,
     Text,
@@ -123,6 +125,12 @@ class TechnicalCard(Base):
         UniqueConstraint("qr_token", name="uq_technical_cards_qr_token"),
         CheckConstraint("card_seq >= 1", name="ck_technical_cards_card_seq"),
         CheckConstraint(
+            "COALESCE((fulfillment_status IS NULL AND ready_to_ship_at IS NULL AND shipped_at IS NULL) OR "
+            "(fulfillment_status = 'ready_to_ship' AND ready_to_ship_at IS NOT NULL AND shipped_at IS NULL) OR "
+            "(fulfillment_status = 'shipped' AND ready_to_ship_at IS NOT NULL AND shipped_at IS NOT NULL), false)",
+            name="ck_technical_cards_fulfillment",
+        ),
+        CheckConstraint(
             "status IN ('draft', 'in_progress', 'completed', 'cancelled')",
             name="ck_technical_cards_status",
         ),
@@ -184,6 +192,10 @@ class TechnicalCard(Base):
     )
     quantity: Mapped[Decimal] = mapped_column(Numeric(14, 3), nullable=False)
 
+    fulfillment_status: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    ready_to_ship_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    shipped_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
     nomenclature_id: Mapped[int | None] = mapped_column(
         ForeignKey("nomenclatures.id", ondelete="SET NULL"),
         nullable=True,
@@ -230,6 +242,9 @@ class TechnicalCard(Base):
     planning_start_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     shipping_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     priority: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    route_variant_groups: Mapped[list] = mapped_column(JSON, nullable=False, default=list, server_default="[]")
+    route_variant_selections: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict, server_default="{}")
+
     plan_locked: Mapped[bool] = mapped_column(
         Boolean, nullable=False, default=False, server_default=false()
     )
@@ -285,6 +300,9 @@ class TechnicalCard(Base):
         back_populates="technical_card",
         cascade="all, delete-orphan",
         order_by="TechnicalCardStageResult.stage_order, TechnicalCardStageResult.id",
+    )
+    route_edges: Mapped[list[TechnicalCardRouteEdge]] = relationship(
+        primaryjoin="TechnicalCard.id == foreign(TechnicalCardRouteEdge.technical_card_id)", viewonly=True,
     )
     media_items: Mapped[list["TechnicalCardMedia"]] = relationship(
         back_populates="technical_card",
@@ -343,6 +361,9 @@ class TechnicalCardCompositionLine(Base):
         nullable=True,
         index=True,
     )
+    # Soft ref to the snapshot operation that consumes this line. Null means
+    # the row is not yet bound to one operation.
+    tech_operation_id: Mapped[int | None] = mapped_column(Integer, nullable=True, index=True)
     unit: Mapped[str | None] = mapped_column(String(30), nullable=True)
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
 
@@ -439,6 +460,7 @@ class TechnicalCardOperationLine(Base):
 
     __tablename__ = "technical_card_operation_lines"
     __table_args__ = (
+        CheckConstraint("volume_qty_per_item IS NULL OR volume_qty_per_item > 0", name="ck_tc_operation_volume_basis"),
         UniqueConstraint(
             "technical_card_id",
             "sequence",
@@ -492,6 +514,8 @@ class TechnicalCardOperationLine(Base):
     volume: Mapped[Decimal] = mapped_column(
         Numeric(14, 3), nullable=False, default=Decimal("0")
     )
+    # Accepted input snapshot; NULL means legacy or explicitly edited shop volume.
+    volume_qty_per_item: Mapped[Decimal | None] = mapped_column(Numeric(14, 3), nullable=True)
     stage_order: Mapped[int | None] = mapped_column(Integer, nullable=True)
     production_stage_id: Mapped[int | None] = mapped_column(
         ForeignKey("production_stages.id", ondelete="SET NULL"),
@@ -580,6 +604,11 @@ class TechnicalCardStageResult(Base):
             "duration_seconds IS NULL OR duration_seconds >= 0",
             name="ck_technical_card_stage_results_duration_seconds",
         ),
+        UniqueConstraint(
+            "id",
+            "technical_card_id",
+            name="uq_technical_card_stage_results_id_card",
+        ),
         Index("ix_technical_card_stage_results_card_id", "technical_card_id"),
     )
 
@@ -613,6 +642,11 @@ class TechnicalCardStageResult(Base):
         nullable=True,
         index=True,
     )
+    tech_operation_id: Mapped[int | None] = mapped_column(Integer, nullable=True, index=True)
+    source_routing_stage_line_id: Mapped[int | None] = mapped_column(Integer, nullable=True, index=True)
+    is_required: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True, server_default="true")
+    operation_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    operation_code: Mapped[str | None] = mapped_column(String(64), nullable=True)
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
@@ -627,3 +661,42 @@ class TechnicalCardStageResult(Base):
     )
 
     technical_card: Mapped[TechnicalCard] = relationship(back_populates="stage_results")
+    production_stage = relationship("ProductionStage", lazy="selectin")
+
+
+class TechnicalCardRouteEdge(Base):
+    """Immutable predecessor edge copied onto a technical card."""
+
+    __tablename__ = "technical_card_route_edges"
+    __table_args__ = (
+        UniqueConstraint(
+            "predecessor_stage_result_id",
+            "successor_stage_result_id",
+            name="uq_technical_card_route_edges_pair",
+        ),
+        CheckConstraint(
+            "predecessor_stage_result_id <> successor_stage_result_id",
+            name="ck_technical_card_route_edges_distinct",
+        ),
+        ForeignKeyConstraint(
+            ["technical_card_id", "predecessor_stage_result_id"],
+            ["technical_card_stage_results.technical_card_id", "technical_card_stage_results.id"],
+            ondelete="CASCADE",
+            name="fk_technical_card_route_edge_predecessor",
+        ),
+        ForeignKeyConstraint(
+            ["technical_card_id", "successor_stage_result_id"],
+            ["technical_card_stage_results.technical_card_id", "technical_card_stage_results.id"],
+            ondelete="CASCADE",
+            name="fk_technical_card_route_edge_successor",
+        ),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    technical_card_id: Mapped[int] = mapped_column(
+        ForeignKey("technical_cards.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    predecessor_stage_result_id: Mapped[int] = mapped_column(Integer, nullable=False)
+    successor_stage_result_id: Mapped[int] = mapped_column(Integer, nullable=False)

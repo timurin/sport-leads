@@ -22,8 +22,14 @@ export type ShopRoutingStageLine = {
   tech_operation_id: number | null;
   work_center_id: number | null;
   is_quality_checkpoint: boolean;
+  is_required?: boolean;
   created_at: string;
   updated_at: string;
+};
+
+export type ShopRoutingEdge = {
+  predecessor_stage_order: number;
+  successor_stage_order: number;
 };
 
 export type ShopRoutingTemplate = {
@@ -32,7 +38,9 @@ export type ShopRoutingTemplate = {
   code: string | null;
   is_active: boolean;
   notes: string | null;
+  dependency_mode?: string;
   stage_lines: ShopRoutingStageLine[];
+  edges?: ShopRoutingEdge[];
   created_at: string;
   updated_at: string;
 };
@@ -44,6 +52,7 @@ export type ShopRoutingStageDraft = {
   tech_operation_id: number | null;
   work_center_id: number | null;
   is_quality_checkpoint: boolean;
+  is_required?: boolean;
 };
 
 export type ShopRoutingCreateDraft = {
@@ -411,7 +420,7 @@ export async function getWorkCenters(
     cache: "no-store",
   });
   if (!response.ok) {
-    throw new Error(`Не удалось загрузить рабочие центры (${response.status}).`);
+    throw new Error(`Не удалось загрузить оборудование (${response.status}).`);
   }
   return (await response.json()) as WorkCenter[];
 }

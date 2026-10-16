@@ -23,6 +23,9 @@ export type KanbanCardData<TStatus extends string = string> = {
   metricValues?: Record<string, number>;
   draggable?: boolean;
   actionLabel?: string;
+  /** Current fact stage from the card DTO. Not a calendar assignment. */
+  factStageOrder?: number;
+  factStatus?: string;
 };
 
 export type KanbanColumnData<TStatus extends string = string> = {

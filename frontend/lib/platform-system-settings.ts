@@ -10,6 +10,7 @@ export type PlatformSystemSettings = {
   default_timezone: string;
   support_email: string | null;
   ui_locale: string;
+  debug_mode: boolean;
   notes: string | null;
   logo_url: string | null;
   logo_filename: string | null;
@@ -18,6 +19,7 @@ export type PlatformSystemSettings = {
 };
 
 export type PlatformSystemSettingsDraft = {
+  debug_mode: boolean;
   organization_display_name: string;
   default_timezone: string;
   support_email: string;
@@ -73,6 +75,7 @@ export function toPlatformSystemSettingsDraft(
     default_timezone: settings.default_timezone,
     support_email: settings.support_email ?? "",
     ui_locale: settings.ui_locale,
+    debug_mode: settings.debug_mode ?? false,
     notes: settings.notes ?? "",
   };
 }
@@ -86,6 +89,7 @@ export function isPlatformSystemSettingsDirty(
     settings.default_timezone !== draft.default_timezone.trim() ||
     (settings.support_email ?? "") !== draft.support_email.trim() ||
     settings.ui_locale !== draft.ui_locale.trim() ||
+    (settings.debug_mode ?? false) !== draft.debug_mode ||
     (settings.notes ?? "") !== draft.notes.trim()
   );
 }

@@ -60,6 +60,7 @@ from app.services.technical_card_stages import (
     resolve_production_stage_code,
 )
 from app.services.technical_cards import get_technical_card
+from app.services.calendar_plan_lifecycle import assert_saved_plan, CannotStartWithoutSavedPlan
 
 WIP_STATUS_LABELS = {
     WIP_RETURN: "Возврат",
@@ -347,6 +348,11 @@ def _prepare_command(
     require_current: bool,
 ) -> tuple[TechnicalCard, list[TechnicalCardUnitLine], TechnicalCardStageResult, str | None]:
     card = _load_card_by_token(db, token)
+    from app.services.technical_card_stages import _locked_technical_card
+    card = _locked_technical_card(db, card.id)
+    from app.services.technical_card_fulfillment import assert_not_shipped
+    assert_not_shipped(card)
+    db.info["audit_actor"] = user
     units = _selected_units(card, payload.unit_line_ids)
     location = _common_location(card, units)
     chosen, relation = _resolve_chosen_stage(
@@ -370,6 +376,9 @@ def _prepare_command(
         raise TechCardScanForbiddenError("Недостаточно прав для этого цеха")
     if _restricted_sewing_only(user) and code != SEWING_CODE:
         raise TechCardScanForbiddenError("Кабинет швеи: скан только для Пошива")
+    assert_saved_plan(db, chosen)
+    from app.services.tech_card_wip import assert_unit_location_plans
+    assert_unit_location_plans(db, card)
     return card, units, chosen, code
 
 
@@ -402,6 +411,9 @@ def accept_scan(
         sync_card_from_unit_locations(db, card)
         db.commit()
         return _to_scan_read(db, get_technical_card(db, card.id), user)
+    except CannotStartWithoutSavedPlan:
+        db.rollback()
+        raise
     except (
         TechnicalCardNotFoundError,
         TechnicalCardValidationError,
@@ -423,6 +435,7 @@ def complete_transfer_scan(
         nxt = next_stage(card, stage)
         if nxt is None:
             raise TechCardScanValidationError("Дальше по маршруту передавать некуда")
+        assert_saved_plan(db, nxt)
         sewing = code == SEWING_CODE
         _require_shop_fact(payload, sewing=sewing)
         _apply_material_facts(card, payload, stage)
@@ -446,6 +459,9 @@ def complete_transfer_scan(
         post_fg_on_stage_complete(db, card, dest_code, units=units)
         db.commit()
         return _to_scan_read(db, get_technical_card(db, card.id), user)
+    except CannotStartWithoutSavedPlan:
+        db.rollback()
+        raise
     except (
         TechnicalCardNotFoundError,
         TechnicalCardValidationError,
@@ -467,6 +483,7 @@ def return_scan(
         prev = previous_stage(card, stage)
         if prev is None:
             raise TechCardScanValidationError("Возвращать некуда — это первый шаг")
+        assert_saved_plan(db, prev)
         sewing = code == SEWING_CODE
         _require_shop_fact(payload, sewing=sewing)
         if sewing:
@@ -483,6 +500,9 @@ def return_scan(
         sync_card_from_unit_locations(db, card)
         db.commit()
         return _to_scan_read(db, get_technical_card(db, card.id), user)
+    except CannotStartWithoutSavedPlan:
+        db.rollback()
+        raise
     except (
         TechnicalCardNotFoundError,
         TechnicalCardValidationError,

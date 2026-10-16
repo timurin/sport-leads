@@ -1,154 +1,132 @@
 "use client";
 
 import Link from "next/link";
-import { Plus, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
-import { updateShopRouting } from "@/app/(workspace)/settings/catalogs/routings/routing-actions";
+import { saveShopRoutingGraph, updateShopRouting, updateShopRoutingIdentity } from "@/app/(workspace)/settings/catalogs/routings/routing-actions";
+import { RoutingGraphCanvas } from "@/components/settings/routing-graph-canvas";
 import { SimpleEntityCard } from "@/components/entity/simple-entity-card";
-import { Button, IconButton } from "@/components/ui/button";
-import {
-  DataTable,
-  DataTableBody,
-  DataTableCell,
-  DataTableFrame,
-  DataTableHead,
-  DataTableHeaderCell,
-  DataTableRow,
-} from "@/components/ui/data-table";
+import { Button } from "@/components/ui/button";
 import { EntityHeader } from "@/components/ui/entity-header";
-import { Checkbox, Field, Input, Select } from "@/components/ui/form-controls";
-import { SectionCard } from "@/components/ui/section-card";
+import { Checkbox, Field, Input } from "@/components/ui/form-controls";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { useToast } from "@/components/ui/toast";
-import {
-  toShopRoutingStageDrafts,
-  validateShopRoutingStages,
-  type ShopRoutingStageDraft,
-  type ShopRoutingTemplate,
-  type WorkCenter,
-} from "@/lib/shop-routings";
+import type { CapacityResource } from "@/lib/tech-operation-capacity";
 import type { ProductionStage } from "@/lib/production-stages";
 import type { TechOperation } from "@/lib/tech-operations";
+import {
+  applyRoutingGraph,
+  draftFromTemplate,
+  draftsEqual,
+  routingGraphBody,
+  routingSaveBody,
+  validateRoutingDraft,
+  type RoutingEditorDraft,
+  type RoutingGraphSource,
+} from "@/lib/routing-graph-editor";
+import { ReadinessStickers } from "@/components/production/readiness-stickers";
+import { diagnosticEditorTarget, readDiagnostics, type ProductionDiagnostic } from "@/lib/production/readiness-stickers";
+import type { RouteNodeReadiness } from "@/lib/route-readiness";
+import type { ShopRoutingTemplate, WorkCenter } from "@/lib/shop-routings";
 
 type ShopRoutingDetailWorkspaceProps = {
   routing: ShopRoutingTemplate;
   techOperations: TechOperation[];
   workCenters: WorkCenter[];
   productionStages: ProductionStage[];
+  resources: CapacityResource[];
+  materialOptions?: Array<{ id: number; name: string; unit: string; is_active: boolean }>;
+  graph?: RoutingGraphSource | null;
+  nodeReadiness?: RouteNodeReadiness[];
+  diagnostics?: ProductionDiagnostic[];
 };
 
-function nextStageOrder(stages: ShopRoutingStageDraft[]): number {
-  if (stages.length === 0) return 1;
-  return Math.max(...stages.map((stage) => stage.stage_order)) + 1;
-}
-
-/** Shop routing detail with editable stages table. */
 export function ShopRoutingDetailWorkspace({
   routing,
   techOperations,
   workCenters,
   productionStages,
+  resources,
+  materialOptions = [],
+  graph = null,
+  nodeReadiness = [],
+  diagnostics = [],
 }: ShopRoutingDetailWorkspaceProps) {
   const router = useRouter();
   const { push: pushToast } = useToast();
+  const signature = `${routing.id}:${routing.updated_at}`;
+  const initial = useMemo(() => applyRoutingGraph(draftFromTemplate(routing), graph), [routing, graph]);
+  const [synced, setSynced] = useState(signature);
   const [name, setName] = useState(routing.name);
   const [code, setCode] = useState(routing.code ?? "");
   const [isActive, setIsActive] = useState(routing.is_active);
-  const [stages, setStages] = useState<ShopRoutingStageDraft[]>(() =>
-    toShopRoutingStageDrafts(routing),
-  );
+  const [draft, setDraft] = useState<RoutingEditorDraft>(initial);
+  if (signature !== synced) {
+    setSynced(signature);
+    setName(routing.name);
+    setCode(routing.code ?? "");
+    setIsActive(routing.is_active);
+    setDraft(initial);
+  }
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  const techOpOptions = useMemo(
-    () =>
-      [...techOperations].sort((a, b) =>
-        a.name.localeCompare(b.name, "ru"),
-      ),
-    [techOperations],
+  const [focusRequest, setFocusRequest] = useState<{ key: string; token: number } | null>(null);
+  const [diagnosticFocus, setDiagnosticFocus] = useState<{ operationId: number; fieldId: string; tab: "main" | "capacity" | "equipment" | "schedule" | "exceptions"; token: number } | null>(null);
+  const stageName = useMemo(() => new Map(productionStages.map((stage) => [stage.id, stage.name])), [productionStages]);
+  const issues = useMemo(
+    () => validateRoutingDraft(draft, techOperations),
+    [draft, techOperations],
   );
+  const dirty = name !== routing.name || code !== (routing.code ?? "") || isActive !== routing.is_active || !draftsEqual(draft, initial);
 
-  const workCenterOptions = useMemo(
-    () =>
-      [...workCenters].sort((a, b) =>
-        a.name.localeCompare(b.name, "ru"),
-      ),
-    [workCenters],
-  );
-  const productionStageOptions = useMemo(
-    () =>
-      [...productionStages]
-        .filter((stage) => stage.is_active)
-        .sort(
-          (a, b) =>
-            a.sort_order - b.sort_order ||
-            a.name.localeCompare(b.name, "ru"),
-        ),
-    [productionStages],
-  );
+  useEffect(() => {
+    const onLeave = (event: BeforeUnloadEvent) => {
+      if (!dirty) return;
+      event.preventDefault();
+    };
+    window.addEventListener("beforeunload", onLeave);
+    return () => window.removeEventListener("beforeunload", onLeave);
+  }, [dirty]);
 
-  const dirty =
-    name !== routing.name ||
-    code !== (routing.code ?? "") ||
-    isActive !== routing.is_active ||
-    JSON.stringify(stages) !== JSON.stringify(toShopRoutingStageDrafts(routing));
-
-  const updateStage = (
-    index: number,
-    patch: Partial<ShopRoutingStageDraft>,
-  ) => {
-    setStages((current) =>
-      current.map((stage, stageIndex) =>
-        stageIndex === index ? { ...stage, ...patch } : stage,
-      ),
-    );
-    setError(null);
-  };
-
-  const addStage = () => {
-    setStages((current) => [
-      ...current,
-      {
-        stage_order: nextStageOrder(current),
-        production_stage_id: null,
-        stage_label: "",
-        tech_operation_id: null,
-        work_center_id: null,
-        is_quality_checkpoint: false,
-      },
-    ]);
-  };
-
-  const removeStage = (index: number) => {
-    setStages((current) => current.filter((_, stageIndex) => stageIndex !== index));
-  };
+  function confirmLeave(): boolean {
+    if (!dirty) return true;
+    return window.confirm("Есть несохранённые изменения. Закрыть без сохранения?");
+  }
 
   const save = async () => {
-    const stagesError = validateShopRoutingStages(stages);
-    if (stagesError) {
-      setError(stagesError);
-      return;
-    }
     if (!name.trim()) {
       setError("Укажите наименование маршрута");
       return;
     }
-
+    if (issues.length > 0) {
+      setError(issues[0].message);
+      return;
+    }
+    const stages = routingSaveBody(draft, (id) => stageName.get(id) ?? "Цех");
     setSaving(true);
     setError(null);
     try {
-      const result = await updateShopRouting(routing.id, {
-        name,
-        code,
-        is_active: isActive,
-        stages,
-      });
+      const result = draft.variantGroups.length > 0
+        ? await updateShopRoutingIdentity(routing.id, { name, code, is_active: isActive })
+        : await updateShopRouting(routing.id, {
+          name,
+          code,
+          is_active: isActive,
+          ...stages,
+        });
       if (!result.ok) {
         setError(result.message);
         setSaving(false);
         return;
+      }
+      if (draft.variantGroups.length > 0) {
+        const savedGraph = await saveShopRoutingGraph(routing.id, routingGraphBody(draft));
+        if (!savedGraph.ok) {
+          setError(savedGraph.message);
+          setSaving(false);
+          return;
+        }
       }
       pushToast("Маршрут сохранён", "success");
       router.refresh();
@@ -166,245 +144,94 @@ export function ShopRoutingDetailWorkspace({
             <Link
               href="/settings/catalogs/routings"
               className="text-portal-primary hover:underline"
+              onClick={(event) => {
+                if (!confirmLeave()) event.preventDefault();
+              }}
             >
               Маршруты
             </Link>
           }
-          title={routing.name}
-          description="Шаблон маршрута производства с этапами и привязкой тех операций."
+          title={name || routing.name}
+          description="Изменения маршрута применяются только к новым техкартам или при явном повторном применении маршрута. Уже созданные техкарты сохраняют свой снимок."
           status={
-            <StatusBadge size="compact" tone={routing.is_active ? "success" : "neutral"}>
-              {routing.is_active ? "Активен" : "Отключён"}
-            </StatusBadge>
+            <div className="flex flex-wrap items-center gap-portal-2">
+              <StatusBadge size="compact" tone={isActive ? "success" : "neutral"}>
+                {isActive ? "Активен" : "Отключён"}
+              </StatusBadge>
+              {dirty ? <StatusBadge size="compact" tone="warning">Есть несохранённые изменения</StatusBadge> : null}
+              {issues.length ? (
+                <button
+                  type="button"
+                  className="rounded-portal-full"
+                  onClick={() => setFocusRequest({ key: issues[0].nodeKey ?? issues[0].visitKey ?? "routing-canvas", token: Date.now() })}
+                >
+                  <StatusBadge size="compact" tone="danger">{issues[0].message}</StatusBadge>
+                </button>
+              ) : (
+                <StatusBadge size="compact" tone="success">Граф можно сохранить</StatusBadge>
+              )}
+            </div>
           }
           actions={
-            <Link
-              href="/settings/catalogs/routings"
-              className="portal-focus-ring inline-flex h-portal-control-default items-center justify-center gap-portal-2 rounded-portal-md border border-portal-border bg-portal-surface px-portal-4 text-portal-body font-medium text-portal-text hover:bg-portal-state-hover"
-            >
-              ← К списку
-            </Link>
+            <div className="flex gap-portal-2">
+              <Button type="button" variant="primary" disabled={saving || !dirty} onClick={() => void save()}>
+                {saving ? "Сохранение…" : "Сохранить"}
+              </Button>
+              <Link
+                href="/settings/catalogs/routings"
+                className="portal-focus-ring inline-flex h-portal-control-default items-center justify-center rounded-portal-md border border-portal-border bg-portal-surface px-portal-4 text-portal-body font-medium"
+                onClick={(event) => {
+                  if (!confirmLeave()) event.preventDefault();
+                }}
+              >
+                Закрыть
+              </Link>
+            </div>
           }
         />
       }
     >
+      <div className="mb-portal-4">
+        <ReadinessStickers
+          diagnostics={readDiagnostics(diagnostics)}
+          onSelect={(row) => {
+            if (!row.operation_id) return;
+            const target = diagnosticEditorTarget(row);
+            setDiagnosticFocus({ operationId: row.operation_id, fieldId: target.fieldId, tab: target.tab, token: Date.now() });
+          }}
+        />
+      </div>
       {error ? (
-        <p
-          className="mb-portal-4 rounded-portal-md border border-portal-danger/30 bg-portal-danger-soft px-portal-4 py-portal-2 text-portal-body text-portal-danger"
-          role="alert"
-        >
+        <p className="mb-portal-4 rounded-portal-md border border-portal-danger/30 bg-portal-danger-soft px-portal-4 py-portal-2 text-portal-body text-portal-danger" role="alert">
           {error}
         </p>
       ) : null}
-
-      <SectionCard
-        title="Реквизиты"
-        description="Наименование, код и статус маршрута."
-        size="compact"
-      >
-        <div className="grid gap-portal-4 min-[900px]:grid-cols-3">
-          <Field label="Наименование" required>
-            <Input
-              value={name}
-              onChange={(event) => setName(event.target.value)}
-              disabled={saving}
-              maxLength={255}
-            />
-          </Field>
-          <Field label="Код">
-            <Input
-              value={code}
-              onChange={(event) => setCode(event.target.value)}
-              disabled={saving}
-              maxLength={64}
-            />
-          </Field>
-          <div className="flex items-end pb-1">
-            <Checkbox
-              checked={isActive}
-              onChange={(event) => setIsActive(event.target.checked)}
-              disabled={saving}
-              label="Активен"
-            />
-          </div>
+      <div className="mb-portal-4 grid gap-portal-4 min-[900px]:grid-cols-3">
+        <Field label="Наименование" required>
+          <Input value={name} onChange={(event) => setName(event.target.value)} disabled={saving} maxLength={255} />
+        </Field>
+        <Field label="Код">
+          <Input value={code} onChange={(event) => setCode(event.target.value)} disabled={saving} maxLength={64} />
+        </Field>
+        <div className="flex items-end pb-1">
+          <Checkbox checked={isActive} onChange={(event) => setIsActive(event.target.checked)} disabled={saving} label="Активен" />
         </div>
-      </SectionCard>
-
-      <SectionCard
-        title="Этапы маршрута"
-        description="Полная замена этапов при сохранении."
-        size="compact"
-        actions={
-          <Button type="button" onClick={addStage} disabled={saving}>
-            <Plus className="size-4" aria-hidden="true" />
-            Добавить этап
-          </Button>
-        }
-      >
-        <DataTableFrame>
-          <DataTable minWidthClassName="min-w-[960px]">
-            <DataTableHead>
-              <tr>
-                <DataTableHeaderCell className="w-20">№</DataTableHeaderCell>
-                <DataTableHeaderCell>Цех</DataTableHeaderCell>
-                <DataTableHeaderCell className="w-52">
-                  Тех операция
-                </DataTableHeaderCell>
-                <DataTableHeaderCell className="w-52">
-                  Оборудование
-                </DataTableHeaderCell>
-                <DataTableHeaderCell className="w-28">ОТК</DataTableHeaderCell>
-                <DataTableHeaderCell className="w-16" />
-              </tr>
-            </DataTableHead>
-            <DataTableBody>
-              {stages.map((stage, index) => (
-                <DataTableRow key={`stage-${index}`}>
-                  <DataTableCell>
-                    <Input
-                      value={String(stage.stage_order)}
-                      inputMode="numeric"
-                      onChange={(event) => {
-                        const raw = event.target.value.trim();
-                        const value = raw === "" ? 0 : Number(raw);
-                        updateStage(index, {
-                          stage_order: Number.isFinite(value) ? value : stage.stage_order,
-                        });
-                      }}
-                      disabled={saving}
-                      aria-label="Порядок этапа"
-                    />
-                  </DataTableCell>
-                  <DataTableCell>
-                    <Select
-                      value={
-                        stage.production_stage_id == null
-                          ? ""
-                          : String(stage.production_stage_id)
-                      }
-                      onChange={(event) => {
-                        const stageId = event.target.value
-                          ? Number(event.target.value)
-                          : null;
-                        const selected = productionStageOptions.find(
-                          (item) => item.id === stageId,
-                        );
-                        updateStage(index, {
-                          production_stage_id: stageId,
-                          stage_label: selected?.name ?? "",
-                        });
-                      }}
-                      disabled={saving}
-                      aria-label="Цех"
-                    >
-                      <option value="">Выберите цех</option>
-                      {productionStageOptions.map((productionStage) => (
-                        <option key={productionStage.id} value={productionStage.id}>
-                          {productionStage.name}
-                        </option>
-                      ))}
-                    </Select>
-                  </DataTableCell>
-                  <DataTableCell>
-                    <Select
-                      value={
-                        stage.tech_operation_id == null
-                          ? ""
-                          : String(stage.tech_operation_id)
-                      }
-                      onChange={(event) => {
-                        const raw = event.target.value;
-                        updateStage(index, {
-                          tech_operation_id: raw ? Number(raw) : null,
-                        });
-                      }}
-                      disabled={saving}
-                      aria-label="Тех операция"
-                    >
-                      <option value="">Не указана</option>
-                      {techOpOptions
-                        .filter(
-                          (operation) =>
-                            operation.production_stage_id == null ||
-                            operation.production_stage_id ===
-                              stage.production_stage_id,
-                        )
-                        .map((operation) => (
-                        <option key={operation.id} value={operation.id}>
-                          {operation.name}
-                        </option>
-                        ))}
-                    </Select>
-                  </DataTableCell>
-                  <DataTableCell>
-                    <Select
-                      value={
-                        stage.work_center_id == null
-                          ? ""
-                          : String(stage.work_center_id)
-                      }
-                      onChange={(event) => {
-                        const raw = event.target.value;
-                        updateStage(index, {
-                          work_center_id: raw ? Number(raw) : null,
-                        });
-                      }}
-                      disabled={saving}
-                      aria-label="Оборудование"
-                    >
-                      <option value="">Не указан</option>
-                      {workCenterOptions
-                        .filter(
-                          (center) =>
-                            center.production_stage_id == null ||
-                            center.production_stage_id ===
-                              stage.production_stage_id,
-                        )
-                        .map((center) => (
-                        <option key={center.id} value={center.id}>
-                          {center.name}
-                        </option>
-                        ))}
-                    </Select>
-                  </DataTableCell>
-                  <DataTableCell>
-                    <Checkbox
-                      checked={stage.is_quality_checkpoint}
-                      onChange={(event) =>
-                        updateStage(index, {
-                          is_quality_checkpoint: event.target.checked,
-                        })
-                      }
-                      disabled={saving}
-                      label="ОТК"
-                    />
-                  </DataTableCell>
-                  <DataTableCell>
-                    <IconButton
-                      label="Удалить этап"
-                      disabled={saving || stages.length <= 1}
-                      onClick={() => removeStage(index)}
-                    >
-                      <Trash2 className="size-4" aria-hidden="true" />
-                    </IconButton>
-                  </DataTableCell>
-                </DataTableRow>
-              ))}
-            </DataTableBody>
-          </DataTable>
-        </DataTableFrame>
-      </SectionCard>
-
-      <div className="flex justify-end">
-        <Button
-          type="button"
-          variant="primary"
-          disabled={saving || !dirty}
-          onClick={() => void save()}
-        >
-          {saving ? "Сохранение…" : "Сохранить"}
-        </Button>
       </div>
+      <RoutingGraphCanvas
+        draft={draft}
+        onChange={setDraft}
+        productionStages={productionStages}
+        techOperations={techOperations}
+        workCenters={workCenters}
+        resources={resources}
+        materialOptions={materialOptions}
+        nodeReadiness={nodeReadiness}
+        diagnosticFocus={diagnosticFocus}
+        issues={issues}
+        focusRequest={focusRequest}
+        disabled={saving}
+      />
     </SimpleEntityCard>
   );
 }
+

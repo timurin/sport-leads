@@ -3,6 +3,8 @@ import type {
   KanbanColumnData,
 } from "@/components/kanban/kanban-types";
 import type { ApiTechnicalCardListItem } from "@/lib/sales/order-tech-cards-api";
+import { productionQuantityLabel } from "./tech-card-display.ts";
+import { currentWorkshopStatusLabel } from "./production-state-label.ts";
 
 const STAGE_RESULT_BADGE_LABEL: Record<string, string> = {
   pending: "Ожидает",
@@ -11,7 +13,10 @@ const STAGE_RESULT_BADGE_LABEL: Record<string, string> = {
   skipped: "Пропущен",
 };
 
-function shopKanbanStageStatus(card: ApiTechnicalCardListItem): string {
+export function shopCurrentFactStatus(card: ApiTechnicalCardListItem): string {
+  if (card.production_state) {
+    return card.production_state.workshop_state === "waiting" ? "pending" : card.production_state.workshop_state;
+  }
   const stages = card.stage_results ?? [];
   if (card.current_stage_order != null) {
     const byOrder = stages.find((row) => row.stage_order === card.current_stage_order);
@@ -31,6 +36,7 @@ function shopKanbanStageStatus(card: ApiTechnicalCardListItem): string {
 export type ShopStageCode = string;
 
 export type ShopStageModule = {
+  workshopId?: number;
   code: ShopStageCode;
   title: string;
   href: string;
@@ -143,6 +149,7 @@ export function buildShopStageModulesFromCatalog(
     const seed = seedByCode.get(code);
     const title = stage.name.trim() || seed?.title || code;
     return {
+      workshopId: stage.id,
       code,
       title,
       href: `/production/stages/${code}`,
@@ -239,6 +246,7 @@ export function isAllowedShopStageKanbanMove(
 export function buildShopStageKanbanColumns(
   cards: ApiTechnicalCardListItem[],
   modules: ReadonlyArray<ShopStageModule> = SHOP_STAGE_MODULES,
+  options: { factActions?: boolean } = {},
 ): KanbanColumnData<ShopStageKanbanStatus>[] {
   const buckets = new Map<ShopStageKanbanStatus, KanbanCardData<ShopStageKanbanStatus>[]>();
   buckets.set("unassigned", []);
@@ -247,12 +255,28 @@ export function buildShopStageKanbanColumns(
   }
 
   for (const card of cards) {
-    if (String(card.status) === "cancelled" || String(card.status) === "completed") {
+    const lifecycle = card.production_state?.lifecycle_status ?? String(card.status);
+    if (lifecycle === "cancelled" || lifecycle === "completed") {
       continue;
     }
-    const code = shopStageCodeByTitle(card.current_stage_label, modules) ?? "unassigned";
+    const workshopId = card.production_state?.current_workshop_id ?? card.current_workshop_id;
+    const workshopName = card.production_state?.current_workshop_name ?? card.current_stage_label;
+    const byId = workshopId != null
+      ? modules.find((stage) => stage.workshopId === workshopId)?.code
+      : undefined;
+    const byName = byId ? undefined : shopStageCodeByTitle(workshopName, modules);
+    const code = (byId && buckets.has(byId) ? byId : byName && buckets.has(byName) ? byName : undefined) ?? "unassigned";
     const columnCards = buckets.get(code) ?? [];
-    const stageStatus = shopKanbanStageStatus(card);
+    const stageStatus = shopCurrentFactStatus(card);
+    const stateBadge = card.production_state
+      ? currentWorkshopStatusLabel({
+        lifecycleStatus: card.production_state.lifecycle_status,
+        workshopState: card.production_state.workshop_state,
+      })
+      : null;
+    const canAct = options.factActions === true
+      && (card.production_state?.current_stage_order ?? card.current_stage_order) != null
+      && (stageStatus === "pending" || stageStatus === "in_progress");
     columnCards.push({
       id: String(card.id),
       status: code,
@@ -264,11 +288,13 @@ export function buildShopStageKanbanColumns(
       subtitle:
         card.order_number?.trim() ||
         (card.sales_order_id != null ? `Заказ #${card.sales_order_id}` : "Без заказа"),
-      amount: String(card.quantity),
+      amount: productionQuantityLabel(card.quantity),
       badge: {
-        label: STAGE_RESULT_BADGE_LABEL[stageStatus] ?? stageStatus,
+        label: stateBadge ?? STAGE_RESULT_BADGE_LABEL[stageStatus] ?? stageStatus,
         tone:
-          stageStatus === "in_progress"
+          stateBadge === "Запланирована"
+            ? "violet"
+            : stageStatus === "in_progress"
             ? "blue"
             : stageStatus === "pending"
               ? "amber"
@@ -277,6 +303,10 @@ export function buildShopStageKanbanColumns(
                 : "slate",
       },
       details: [
+        {
+          label: "Участок",
+          value: workshopName?.trim() || "Участок ещё не определён",
+        },
         {
           label: "Позиция",
           value: card.nomenclature_name ?? `Строка #${card.sales_order_item_id}`,
@@ -295,7 +325,12 @@ export function buildShopStageKanbanColumns(
       metricValues: {
         quantity: Number(card.quantity) || 0,
       },
-      draggable: code !== "unassigned" && card.current_stage_order != null,
+      draggable: false,
+      factStageOrder: card.production_state?.current_stage_order ?? card.current_stage_order ?? undefined,
+      factStatus: stageStatus,
+      actionLabel: canAct
+        ? (stageStatus === "in_progress" ? "Завершить" : "Принять в работу")
+        : undefined,
     });
     buckets.set(code, columnCards);
   }

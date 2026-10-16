@@ -6,7 +6,23 @@ import { rasterImageMimeOrNull } from "@/lib/api-media";
 import { sessionAuthHeaders } from "@/lib/auth/api-headers";
 import { getOrderList } from "@/lib/sales/order-list-api";
 import type { TechnicalCardPrintRequest } from "@/lib/production/tech-card-print";
+import {
+  stageMaterialFactDrafts,
+  type MaterialFactDraft,
+} from "@/lib/production/material-fact-complete";
 import { shopStageCodeByTitle } from "@/lib/production/shop-stage-modules";
+import {
+  calendarPathsAfterSchedule,
+  readProductionSchedule,
+  type ProductionSchedule,
+} from "@/lib/production/tech-card-schedule";
+import type { ProductionDiagnostic } from "@/lib/production/readiness-stickers";
+import {
+  missingRequiredOperationNorms,
+  modelRouteNormTarget,
+  type ProductModelRoutingLink,
+} from "@/lib/product-model-routings";
+import { variantConflictMessage, type RouteVariantRecord } from "@/lib/route-variants";
 import {
   TECH_CARD_IMAGE_RULE,
   TECH_CARD_MEDIA_MAX,
@@ -23,6 +39,7 @@ import {
   copyTechnicalCard,
   createStandaloneTechnicalCard,
   deleteTechnicalCard,
+  fetchTechnicalCard,
   fetchOrderTechnicalCardsPreview,
   linkStandaloneTechnicalCard,
   importTechnicalCardUnitLinesFile,
@@ -34,8 +51,10 @@ import {
   rollbackTechnicalCardStageKanban,
   setTechnicalCardCompositionFactQty,
   setTechnicalCardMediaPrimary,
+  scheduleTechnicalCard,
   startTechnicalCard,
   startTechnicalCardStage,
+  updateTechnicalCardPlanning,
   updateTechnicalCardOperationLineVolume,
   updateTechnicalCardStageFact,
   uploadTechnicalCardMedia,
@@ -161,6 +180,7 @@ export async function deleteTechnicalCardAction(
     const auth = await sessionAuthHeaders();
     await deleteTechnicalCard(cardId, auth);
     revalidateTechCardPaths(cardId);
+    for (const path of calendarPathsAfterSchedule()) revalidatePath(path);
     return { ok: true, message: "Техкарта удалена" };
   } catch (error) {
     return {
@@ -232,6 +252,51 @@ export async function linkStandaloneTechnicalCardAction(
   }
 }
 
+export async function updateTechnicalCardPlanningAction(
+  cardId: number,
+  payload: {
+    planning_start_date: string | null;
+    shipping_date: string | null;
+    priority: number | null;
+    plan_locked: boolean;
+  },
+): Promise<TechCardActionResult> {
+  try {
+    const auth = await sessionAuthHeaders();
+    const card = await updateTechnicalCardPlanning(cardId, payload, auth);
+    revalidateTechCardPaths(cardId, card.sales_order_id);
+    return success(card, "Даты плана сохранены");
+  } catch (error) {
+    return failure(error instanceof Error ? error.message : "Не удалось сохранить даты плана");
+  }
+}
+
+export type TechCardScheduleActionResult = TechCardActionResult & {
+  schedule: ProductionSchedule | null;
+};
+
+export async function scheduleTechnicalCardAction(
+  cardId: number,
+): Promise<TechCardScheduleActionResult> {
+  try {
+    const auth = await sessionAuthHeaders();
+    const schedule = readProductionSchedule(await scheduleTechnicalCard(cardId, auth));
+    const card = await fetchTechnicalCard(cardId, auth);
+    revalidateTechCardPaths(cardId, card.sales_order_id);
+    if (schedule.persisted || schedule.status === "planned") {
+      for (const path of calendarPathsAfterSchedule()) revalidatePath(path);
+    }
+    return { ok: true, message: null, card, schedule };
+  } catch (error) {
+    return {
+      ok: false,
+      message: error instanceof Error ? error.message : "Планировщик не выполнил расчёт",
+      card: null,
+      schedule: null,
+    };
+  }
+}
+
 export async function startTechnicalCardAction(
   cardId: number,
   orderId?: number | null,
@@ -268,7 +333,8 @@ export async function completeTechnicalCardStageAction(
   shopStageCode?: string,
 ): Promise<TechCardActionResult> {
   try {
-    const card = await completeTechnicalCardStage(cardId, stageOrder, payload);
+    const auth = await sessionAuthHeaders();
+    const card = await completeTechnicalCardStage(cardId, stageOrder, payload, auth);
     revalidateTechCardPaths(cardId, orderId ?? card.sales_order_id, shopStageCode);
     const nextCode = shopStageCodeByTitle(card.current_stage_label);
     if (nextCode && nextCode !== shopStageCode?.trim()) {
@@ -307,7 +373,8 @@ export async function rollbackTechnicalCardStageKanbanAction(
   orderId?: number | null,
 ): Promise<TechCardActionResult> {
   try {
-    const card = await rollbackTechnicalCardStageKanban(cardId, stageOrder);
+    const auth = await sessionAuthHeaders();
+    const card = await rollbackTechnicalCardStageKanban(cardId, stageOrder, auth);
     revalidateTechCardPaths(cardId, orderId ?? card.sales_order_id);
     return success(card, "Этап возвращён в работу (kanban)");
   } catch (error) {
@@ -344,6 +411,24 @@ export async function replaceCompositionAction(
     return failure(
       error instanceof Error ? error.message : "Не удалось сохранить состав материалов",
     );
+  }
+}
+
+export async function loadStageMaterialFactsAction(
+  cardId: number,
+  stageOrder: number,
+): Promise<{ ok: true; lines: MaterialFactDraft[] } | { ok: false; lines: [] }> {
+  try {
+    const card = await fetchTechnicalCard(cardId);
+    const lines = stageMaterialFactDrafts(
+      card.stage_results ?? [],
+      card.composition_lines ?? [],
+      stageOrder,
+    );
+    if (lines.length === 0) return { ok: false, lines: [] };
+    return { ok: true, lines };
+  } catch {
+    return { ok: false, lines: [] };
   }
 }
 
@@ -1002,6 +1087,69 @@ export async function listTechnicalCardModelCandidates(
   };
 }
 
+export async function inspectModelOperationNorms(
+  modelId: number,
+  routingTemplateId: number | null,
+): Promise<
+  | { ok: true; operations: string[]; routingTemplateId: number | null }
+  | { ok: false; message: string }
+> {
+  if (!Number.isSafeInteger(modelId) || modelId <= 0) {
+    return { ok: false, message: "Модель не выбрана" };
+  }
+  try {
+    const auth = await sessionAuthHeaders();
+    const linksResponse = await fetch(`${apiBaseUrl()}/product-models/${modelId}/routings?active_only=false`, {
+      headers: { ...auth },
+      cache: "no-store",
+    });
+    if (!linksResponse.ok) {
+      return { ok: false, message: await readApiError(linksResponse, "Не удалось проверить нормы модели") };
+    }
+    const links = (await linksResponse.json()) as ProductModelRoutingLink[];
+    const target = modelRouteNormTarget(links, routingTemplateId);
+    if (target.templateId == null) return { ok: true, operations: [], routingTemplateId: null };
+    const templateResponse = await fetch(`${apiBaseUrl()}/shop-routings/${target.templateId}`, {
+      headers: { ...auth },
+      cache: "no-store",
+    });
+    if (!templateResponse.ok) {
+      return { ok: false, message: await readApiError(templateResponse, "Не удалось проверить маршрут модели") };
+    }
+    const template = (await templateResponse.json()) as {
+      stage_lines?: Array<{
+        production_stage_id: number | null;
+        tech_operation_id: number | null;
+        stage_label: string;
+      }>;
+    };
+    const operationsResponse = await fetch(`${apiBaseUrl()}/tech-operations?limit=500`, {
+      headers: { ...auth },
+      cache: "no-store",
+    });
+    if (!operationsResponse.ok) {
+      return { ok: false, message: await readApiError(operationsResponse, "Не удалось проверить операции маршрута") };
+    }
+    const operations = (await operationsResponse.json()) as Array<{
+      id: number;
+      name: string;
+      volume_unit: string;
+    }>;
+    const byId = new Map(operations.map((row) => [row.id, { name: row.name, volume_unit: row.volume_unit }]));
+    return {
+      ok: true,
+      routingTemplateId: target.templateId,
+      operations: missingRequiredOperationNorms({
+        stageLines: template.stage_lines ?? [],
+        norms: target.norms,
+        operations: byId,
+      }),
+    };
+  } catch (error) {
+    return { ok: false, message: error instanceof Error ? error.message : "Не удалось проверить нормы модели" };
+  }
+}
+
 export async function listTechnicalCardAssemblyCandidates(
   modelId: number,
 ): Promise<
@@ -1064,5 +1212,91 @@ export async function updateTechnicalCardModelAssemblyAction(
     return failure(
       error instanceof Error ? error.message : "Не удалось сохранить модель и сборку",
     );
+  }
+}
+
+export async function getTechnicalCardProductionDiagnostics(cardId: number): Promise<ProductionDiagnostic[]> {
+  const result = await loadTechnicalCardProductionDiagnostics(cardId);
+  return result.ok ? result.diagnostics : [];
+}
+
+export async function refreshTechnicalCardDiagnostics(cardId: number): Promise<{ ok: true; diagnostics: ProductionDiagnostic[] } | { ok: false; message: string }> {
+  const result = await loadTechnicalCardProductionDiagnostics(cardId);
+  if (result.ok) revalidatePath(`/production/tech-cards/${cardId}`);
+  return result;
+}
+
+async function loadTechnicalCardProductionDiagnostics(cardId: number): Promise<{ ok: true; diagnostics: ProductionDiagnostic[] } | { ok: false; message: string }> {
+  const auth = await sessionAuthHeaders();
+  const response = await fetch(`${apiBaseUrl()}/technical-cards/${cardId}/production-diagnostics`, {
+    headers: { ...auth },
+    cache: "no-store",
+  });
+  if (!response.ok) return { ok: false, message: await readApiError(response, "Не удалось обновить диагностику") };
+  const body = (await response.json()) as { diagnostics?: ProductionDiagnostic[] };
+  return { ok: true, diagnostics: Array.isArray(body.diagnostics) ? body.diagnostics : [] };
+}
+
+export async function getTechnicalCardRouteVariants(cardId: number): Promise<RouteVariantRecord[]> {
+  const auth = await sessionAuthHeaders();
+  const response = await fetch(`${apiBaseUrl()}/technical-cards/${cardId}/route-variants`, {
+    headers: { ...auth },
+    cache: "no-store",
+  });
+  if (!response.ok) return [];
+  const body = (await response.json()) as unknown;
+  return Array.isArray(body) ? body as RouteVariantRecord[] : [];
+}
+
+export async function changeTechnicalCardRouteVariant(
+  cardId: number,
+  groupId: string,
+  body: { selected_operation_snapshot_node_id: string; selection_status: "preliminary" | "confirmed" },
+): Promise<
+  | { ok: true; selection: RouteVariantRecord; requiresReplan: boolean; plan: ProductionSchedule | null; message: null }
+  | { ok: false; message: string }
+> {
+  try {
+    const auth = await sessionAuthHeaders();
+    const response = await fetch(
+      `${apiBaseUrl()}/technical-cards/${cardId}/route-variants/${encodeURIComponent(groupId)}`,
+      {
+        method: "PATCH",
+        headers: { "content-type": "application/json", ...auth },
+        body: JSON.stringify({ ...body, replan: true }),
+        cache: "no-store",
+      },
+    );
+    if (!response.ok) {
+      let detail = "";
+      try {
+        const payload = (await response.json()) as { detail?: unknown };
+        detail = typeof payload.detail === "string" ? payload.detail : "";
+      } catch {
+        detail = "";
+      }
+      return { ok: false, message: variantConflictMessage(detail) };
+    }
+    const payload = (await response.json()) as {
+      selection: RouteVariantRecord;
+      requires_replan: boolean;
+      plan?: unknown;
+    };
+    let plan: ProductionSchedule | null = null;
+    if (payload.plan) {
+      try {
+        plan = readProductionSchedule(payload.plan);
+      } catch {
+        plan = null;
+      }
+    }
+    const card = await fetchTechnicalCard(cardId, auth);
+    revalidateTechCardPaths(cardId, card.sales_order_id);
+    if (plan?.persisted || plan?.status === "planned") {
+      for (const path of calendarPathsAfterSchedule()) revalidatePath(path);
+    }
+    return { ok: true, selection: payload.selection, requiresReplan: Boolean(payload.requires_replan), plan, message: null };
+  } catch {
+    return { ok: false, message: "Не удалось изменить вариант." };
   }
 }

@@ -17,6 +17,7 @@ import { Field, Input, Select } from "@/components/ui/form-controls";
 import { ListTotals } from "@/components/ui/list-pagination";
 import { PageToolbar } from "@/components/ui/page-header";
 import { StatusBadge } from "@/components/ui/status-badge";
+import { productionQuantityLabel } from "@/lib/production/tech-card-display";
 import { shopStageCardHref, shopStageIsFinishedGoods } from "@/lib/production/shop-stage-modules";
 import {
   filterTechCardsClient,
@@ -157,7 +158,7 @@ export function ShopStageQueueWorkspace({
                               {stageResultStatusLabel(stageStatus)}
                             </StatusBadge>
                           </DataTableCell>
-                          <DataTableCell className="tabular-nums">{card.quantity}</DataTableCell>
+                          <DataTableCell className="tabular-nums">{productionQuantityLabel(card.quantity)}</DataTableCell>
                           <DataTableCell className="text-portal-muted">
                             {formatTechCardDateTime(card.updated_at)}
                           </DataTableCell>

@@ -1,4 +1,7 @@
 import { notFound } from "next/navigation";
+import { FulfillmentWorkspace } from "@/components/production/fulfillment-workspace";
+import { sessionAuthHeaders } from "@/lib/auth/api-headers";
+import { fetchFulfillmentCards } from "@/lib/sales/order-tech-cards-api";
 
 import { ShopStageQueueWorkspace } from "@/components/production/shop-stage-queue-workspace";
 import { PageLayout } from "@/components/layout/page-layout";
@@ -15,6 +18,13 @@ export default async function ProductionShopStagePage({
   params: Promise<{ stageCode: string }>;
 }) {
   const { stageCode } = await params;
+
+  if (stageCode === "ready_to_ship" || stageCode === "shipped") {
+    const cards = await fetchFulfillmentCards(stageCode, await sessionAuthHeaders());
+    return <PageLayout className="flex min-h-0 flex-1 flex-col">
+      <FulfillmentWorkspace status={stageCode} cards={cards} />
+    </PageLayout>;
+  }
 
   let shopModules = undefined;
   try {

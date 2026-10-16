@@ -208,6 +208,38 @@ def test_shop_routing_crud_and_stage_sequencing() -> None:
             assert listed.status_code == 200
             assert len(listed.json()) == 1
 
+            second = client.post("/tech-operations", json={
+                "name": "Каландр", "code": "cal", "volume_unit": "linear_meters", "production_stage_id": print_id,
+            })
+            third = client.post("/tech-operations", json={
+                "name": "Сушка", "code": "dry", "volume_unit": "linear_meters", "production_stage_id": print_id,
+            })
+            assert second.status_code == 201 and third.status_code == 201
+            parallel = client.patch(f"/shop-routings/{template_id}", json={
+                "dependency_mode": "explicit",
+                "stages": [
+                    {"stage_order": 1, "production_stage_id": print_id, "tech_operation_id": op_id},
+                    {"stage_order": 2, "production_stage_id": print_id, "tech_operation_id": second.json()["id"]},
+                    {"stage_order": 3, "production_stage_id": print_id, "tech_operation_id": third.json()["id"]},
+                ],
+                "edges": [
+                    {"predecessor_stage_order": 1, "successor_stage_order": 2},
+                    {"predecessor_stage_order": 1, "successor_stage_order": 3},
+                ],
+            })
+            assert parallel.status_code == 200, parallel.text
+            saved = parallel.json()
+            assert saved["dependency_mode"] == "explicit"
+            assert {(row["predecessor_stage_order"], row["successor_stage_order"]) for row in saved["edges"]} == {(1, 2), (1, 3)}
+            cycle = client.patch(f"/shop-routings/{template_id}", json={
+                "dependency_mode": "explicit",
+                "edges": [
+                    {"predecessor_stage_order": 1, "successor_stage_order": 2},
+                    {"predecessor_stage_order": 2, "successor_stage_order": 1},
+                ],
+            })
+            assert cycle.status_code == 422
+
             deleted = client.delete(f"/shop-routings/{template_id}")
             assert deleted.status_code == 204
     finally:

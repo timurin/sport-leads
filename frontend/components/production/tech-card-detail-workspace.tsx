@@ -45,13 +45,27 @@ import {
 import { triggerBrowserDownload } from "@/lib/file-download";
 import { TechCardMediaCarousel } from "@/components/production/tech-card-media-carousel";
 import { TechCardOrderDataCard } from "@/components/production/tech-card-order-data-card";
+import { TechCardReadinessRoadmap } from "@/components/production/tech-card-readiness-roadmap";
+import { TechCardJournal } from "@/components/production/tech-card-journal";
+import { TechCardProcess } from "@/components/production/tech-card-process";
+import { TechCardProductionPlan } from "@/components/production/tech-card-production-plan";
+import { TechCardRouteVariants } from "@/components/production/tech-card-route-variants";
 import { TechCardModelRouteCard } from "@/components/production/tech-card-model-route-card";
 import { TechCardProductNameHeader } from "@/components/production/tech-card-product-name-header";
 import { TechCardShopFloorBody } from "@/components/production/tech-card-shop-floor-body";
 import { OrderCollaborationPanel } from "@/components/sales/order-collaboration-panel";
+import { TechCardDesignerStage } from "@/components/production/tech-card-designer-stage";
+import {
+  createOrderCollaborationMessage,
+  createStandaloneTechCardCollaborationMessage,
+} from "@/app/(workspace)/sales/orders/[orderId]/collaboration-actions";
+import {
+  DESIGN_REVIEW_MESSAGE,
+  isDesignReviewSubmitted,
+  notesWithDesignReview,
+} from "@/lib/production/tech-card-designer";
 import { DocumentCard } from "@/components/entity/document-card";
 import { Button, IconButton } from "@/components/ui/button";
-import { ActivityTimeline, ActivityTimelineItem } from "@/components/ui/activity-timeline";
 import {
   DataTable,
   DataTableBody,
@@ -81,6 +95,7 @@ import {
   buildCompositionReplaceLines,
   buildTechCardHistoryEntries,
   compositionLineKindLabel,
+  formatDesiredDate,
   formatTechCardDateTime,
   formatVolumeUnit,
   groupOperationLinesBySource,
@@ -94,7 +109,14 @@ import {
   type TechCardMaterialDraftLine,
   validateTechCardImageFile,
 } from "@/lib/production/tech-cards";
-import { techCardVisibleNumber } from "@/lib/production/tech-card-display";
+import { productionQuantityLabel, techCardVisibleNumber } from "@/lib/production/tech-card-display";
+import {
+  launchBlockedNotice,
+  launchDecision,
+  showLaunchButton,
+  type FixTarget,
+  type TechnicalCardReadiness,
+} from "@/lib/production/tech-card-readiness";
 import type {
   ApiTechnicalCard,
   ApiTechnicalCardCompositionLine,
@@ -103,6 +125,8 @@ import type {
   ApiTechnicalCardStageResult,
   ApiTechnicalCardUnitLine,
 } from "@/lib/sales/order-tech-cards-api";
+import type { ProductionDiagnostic } from "@/lib/production/readiness-stickers";
+import type { RouteVariantRecord } from "@/lib/route-variants";
 import type { WorkCenter } from "@/lib/shop-routings";
 import { techCardStatusLabel } from "@/lib/sales/order-tech-cards";
 import { techCardWipStatusLabel } from "@/lib/production/tech-card-scan";
@@ -234,6 +258,11 @@ type TechCardDetailWorkspaceProps = {
   /** Active work centers for print shop (`11.6`). */
   workCenters?: WorkCenter[];
   unitSizeGrid?: SizeGrid | null;
+  routeVariants?: RouteVariantRecord[];
+  productionDiagnostics?: ProductionDiagnostic[];
+  canEditModelNorms?: boolean;
+  readiness?: TechnicalCardReadiness | null;
+  debugMode?: boolean;
 };
 
 type UnitLineDraft = {
@@ -525,6 +554,11 @@ export function TechCardDetailWorkspace({
   shopStageCode,
   workCenters = [],
   unitSizeGrid,
+  routeVariants = [],
+  productionDiagnostics = [],
+  canEditModelNorms = false,
+  readiness = null,
+  debugMode = false,
 }: TechCardDetailWorkspaceProps) {
   const router = useRouter();
   const { push: pushToast } = useToast();
@@ -553,6 +587,7 @@ export function TechCardDetailWorkspace({
   const [collapsedBlocks, setCollapsedBlocks] = useState({
     history: true,
   });
+  const [launchNotice, setLaunchNotice] = useState<string | null>(null);
   const [shopFactDrafts, setShopFactDrafts] = useState<Record<number, string>>({});
   const [shopFactPerformer, setShopFactPerformer] = useState("");
   const [shopFactWorkDone, setShopFactWorkDone] = useState("");
@@ -596,6 +631,7 @@ export function TechCardDetailWorkspace({
     : null;
 
   const status = asTechCardUiStatus(String(card.status));
+  const displayStatus = asTechCardUiStatus(card.production_state?.lifecycle_status ?? String(card.status));
   const compositionLines = card.composition_lines ?? [];
   const nonMaterialLines = compositionLines.filter(
     (line) => String(line.line_kind) !== "material",
@@ -664,6 +700,9 @@ export function TechCardDetailWorkspace({
   const unitLineCountMatches = isStandaloneCard
     ? personalizationSum >= 1
     : personalizationSum === orderLinkedExpectedQty;
+  const canonicalQuantity = Math.max(0, Math.round(Number(card.quantity) || 0));
+  const personalizationMismatch =
+    isStandaloneCard && personalizationSum > 0 && personalizationSum !== canonicalQuantity;
   const unitSizeOptions = useMemo(() => {
     const seen = new Set<string>();
     const options: string[] = [];
@@ -779,8 +818,11 @@ export function TechCardDetailWorkspace({
   const completingStage =
     stageResults.find((stage) => stage.stage_order === completingStageOrder) ?? null;
 
-  const canStartCard =
-    !isShopContext && status === "draft" && stageResults.length > 0;
+  const canStartCard = showLaunchButton({
+    storedStatus: status,
+    shopContext: isShopContext,
+    lifecycleStatus: readiness?.lifecycle_status ?? null,
+  });
 
   const stageExecutionAllowed = techCardAllowsStageExecution(status);
 
@@ -951,6 +993,7 @@ export function TechCardDetailWorkspace({
       if (!nextCard) return;
       setUnitLineDrafts(unitLinesToAggregateDrafts(nextCard.unit_lines ?? []));
       setUnitLinesEditMode(false);
+      router.refresh();
     });
   };
 
@@ -1058,8 +1101,23 @@ export function TechCardDetailWorkspace({
     });
   };
 
-  const onStartCard = () =>
-    runAction(() => startTechnicalCardAction(card.id, card.sales_order_id));
+  const onStartCard = () => {
+    if (launchDecision(readiness) !== "launch") {
+      setLaunchNotice(launchBlockedNotice(readiness));
+      document.getElementById("tech-card-readiness")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      return;
+    }
+    setLaunchNotice(null);
+    void runAction(() => startTechnicalCardAction(card.id, card.sales_order_id));
+  };
+
+  const onReadinessSection = (target: Extract<FixTarget, { kind: "section" }>) => {
+    if (target.tab) setManagerDocTab(target.tab as ManagerDocTabId);
+    window.setTimeout(() => {
+      const node = document.getElementById(target.id) ?? (target.fallbackId ? document.getElementById(target.fallbackId) : null);
+      node?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 0);
+  };
 
   const onStartStage = (stageOrder: number) => {
     if (!assertShopStageAction(stageOrder)) return;
@@ -1071,6 +1129,82 @@ export function TechCardDetailWorkspace({
         card.sales_order_id,
       ),
     );
+  };
+
+  const onMarkDesignReview = () => {
+    if (!activeStage || activeStage.status !== "in_progress") {
+      setActionError("Сначала нажмите «Принят в работу».");
+      return;
+    }
+    if (!assertShopStageAction(activeStage.stage_order)) return;
+    if (isDesignReviewSubmitted(activeStage.notes)) return;
+    void runAction(async () => {
+      const posted =
+        card.sales_order_id != null
+          ? await createOrderCollaborationMessage(card.sales_order_id, {
+              body: DESIGN_REVIEW_MESSAGE,
+              technical_card_id: card.id,
+            })
+          : card.order_group_id != null
+            ? await createStandaloneTechCardCollaborationMessage(card.id, {
+                body: DESIGN_REVIEW_MESSAGE,
+              })
+            : { ok: false as const, message: "У техкарты нет переписки с менеджером" };
+      if (!posted.ok) {
+        return { ok: false, message: posted.message, card: null };
+      }
+      const saved = await updateStageFactAction(
+        card.id,
+        activeStage.stage_order,
+        {
+          notes: notesWithDesignReview(activeStage.notes),
+          shop_stage_code: "design",
+        },
+        card.sales_order_id,
+        "design",
+      );
+      if (!saved.ok) return saved;
+      return { ok: true, message: DESIGN_REVIEW_MESSAGE, card: saved.card ?? null };
+    });
+  };
+
+  const onSendDesignToPrint = (durationSeconds: number) => {
+    if (!activeStage) return;
+    if (!assertShopStageAction(activeStage.stage_order)) return;
+    if (activeStage.status !== "in_progress") {
+      setActionError("Сначала нажмите «Принят в работу».");
+      return;
+    }
+    void (async () => {
+      const result = await runAction(
+        () =>
+          completeTechnicalCardStageAction(
+            card.id,
+            activeStage.stage_order,
+            {
+              duration_seconds: durationSeconds,
+              notes: activeStage.notes,
+            },
+            card.sales_order_id,
+            shopStage?.code,
+          ),
+        { skipRefresh: true },
+      );
+      if (!result?.ok) return;
+      const nextCard = result.card ?? null;
+      if (nextCard) {
+        if (String(nextCard.status) === "completed") {
+          router.push(`/production/tech-cards/${card.id}`);
+          return;
+        }
+        const nextCode = shopStageCodeByTitle(nextCard.current_stage_label, shopModules);
+        if (nextCode && nextCode !== shopStage?.code) {
+          router.push(shopStageCardHref(nextCode, card.id));
+          return;
+        }
+      }
+      router.refresh();
+    })();
   };
 
   const onCompleteStage = () => {
@@ -1559,6 +1693,21 @@ export function TechCardDetailWorkspace({
                 disabled={busy || status === "cancelled"}
               />
             }
+            meta={
+              <>
+                <span>
+                  Создал {card.created_by_name?.trim() || "—"}
+                  {" · "}
+                  <time dateTime={card.created_at}>{formatTechCardDateTime(card.created_at)}</time>
+                </span>
+                <span>
+                  Дата сдачи{" "}
+                  <time dateTime={card.desired_date ?? undefined}>
+                    {formatDesiredDate(card.desired_date)}
+                  </time>
+                </span>
+              </>
+            }
             status={
               <>
                 {isShopContext && activeStage ? (
@@ -1577,13 +1726,13 @@ export function TechCardDetailWorkspace({
                     {stageResultStatusLabel(String(activeStage.status))}
                   </StatusBadge>
                 ) : (
-                  <StatusBadge size="compact" tone={techCardStatusTone(status)}>
-                    {techCardStatusLabel(status)}
+                  <StatusBadge size="compact" tone={techCardStatusTone(displayStatus)}>
+                    {techCardStatusLabel(displayStatus)}
                   </StatusBadge>
                 )}
                 {showCurrentStageBadge ? (
                   <StatusBadge size="compact" tone="neutral">
-                    {card.current_stage_label}
+                    {card.production_state ? card.production_state.current_workshop_name : card.current_stage_label}
                   </StatusBadge>
                 ) : null}
                 {card.wip_status ? (
@@ -1608,15 +1757,17 @@ export function TechCardDetailWorkspace({
               <div className="flex flex-wrap items-center gap-portal-2">
                 {canStartCard ? (
                   <IconButton
+                    id="tech-card-launch"
                     label="Запустить ТК"
                     variant="primary"
                     disabled={busy}
-                    onClick={() => void onStartCard()}
+                    title={launchDecision(readiness) === "launch" ? "Запустить ТК" : launchBlockedNotice(readiness)}
+                    onClick={onStartCard}
                   >
                     <Play className="size-4" aria-hidden="true" />
                   </IconButton>
                 ) : null}
-                {canStartActiveStage && activeStage ? (
+                {shopStage?.code !== "design" && canStartActiveStage && activeStage ? (
                   <IconButton
                     label="Начать этап"
                     variant="secondary"
@@ -1626,7 +1777,7 @@ export function TechCardDetailWorkspace({
                     <CirclePlay className="size-4" aria-hidden="true" />
                   </IconButton>
                 ) : null}
-                {canCompleteActiveStage && activeStage ? (
+                {shopStage?.code !== "design" && canCompleteActiveStage && activeStage ? (
                   <IconButton
                     label="Завершить этап"
                     variant="primary"
@@ -1636,7 +1787,7 @@ export function TechCardDetailWorkspace({
                     <CheckCircle2 className="size-4" aria-hidden="true" />
                   </IconButton>
                 ) : null}
-                {canRollbackActiveStage && activeStage ? (
+                {shopStage?.code !== "design" && canRollbackActiveStage && activeStage ? (
                   <IconButton
                     label="Откатить этап"
                     variant="secondary"
@@ -1745,6 +1896,24 @@ export function TechCardDetailWorkspace({
       ) : null}
 
       {isShopContext && shopStage ? (
+        shopStage.code === "design" ? (
+        <TechCardDesignerStage
+          card={card}
+          shopStage={shopStage}
+          shopStageMatchesCurrent={shopStageMatchesCurrent}
+          mediaItems={mediaItems}
+          activeStage={activeStage}
+          busy={busy}
+          canStart={canStartActiveStage}
+          canSendToPrint={canCompleteActiveStage}
+          onAccept={() => {
+            if (activeStage) onStartStage(activeStage.stage_order);
+          }}
+          onSendForReview={onMarkDesignReview}
+          onSendToPrint={onSendDesignToPrint}
+          onExpandMedia={setPreviewSrc}
+        />
+        ) : (
         <div
           className={`tech-card-doc-layout grid min-w-0 items-start gap-4 ${
             showCollabRail ? "xl:grid-cols-[minmax(0,1fr)_minmax(18rem,22rem)]" : ""
@@ -1812,6 +1981,7 @@ export function TechCardDetailWorkspace({
         />
           </div>
         </div>
+        )
       ) : (
       <div
         className={`tech-card-doc-layout grid min-w-0 items-start gap-4 ${
@@ -1820,7 +1990,18 @@ export function TechCardDetailWorkspace({
         data-tech-card-doc-layout="manager"
       >
       <div className="tech-card-doc-row1 order-2 min-w-0 md:order-1 xl:order-none xl:col-start-1 xl:row-start-1">
-      <div className="grid grid-cols-1 gap-portal-4 xl:grid-cols-[minmax(0,3fr)_minmax(0,4fr)_minmax(0,4fr)]">
+      {launchNotice ? (
+        <p className="mb-portal-3 rounded-portal-md border border-portal-warning/40 bg-portal-warning-soft px-portal-3 py-portal-2 text-portal-caption text-portal-text" role="status">
+          {launchNotice}
+        </p>
+      ) : null}
+      <TechCardReadinessRoadmap
+        readiness={readiness}
+        debugMode={debugMode}
+        cardPath={`/production/tech-cards/${card.id}`}
+        onSection={onReadinessSection}
+      />
+      <div className="mt-portal-4 grid grid-cols-1 gap-portal-4 xl:grid-cols-[minmax(0,3fr)_minmax(0,4fr)_minmax(0,4fr)]">
         <SectionCard
           title="Макет"
           size="compact"
@@ -1847,9 +2028,35 @@ export function TechCardDetailWorkspace({
           card={card}
           routings={routings}
           disabled={busy || status === "cancelled"}
+          showRoutingField={!(card.sales_order_id == null && card.order_group_id != null)}
           onApplyRouting={onApplyRouting}
+          canEditModelNorms={canEditModelNorms}
         />
       </div>
+      {card.sales_order_id == null && card.order_group_id != null ? (
+        <>
+        <TechCardProcess
+          card={card}
+          routings={routings}
+          variants={routeVariants}
+          diagnostics={productionDiagnostics}
+          workCenters={workCenters}
+          disabled={busy || status === "cancelled"}
+          onApplyRouting={onApplyRouting}
+        >
+          <TechCardProductionPlan embedded card={card} disabled={busy || status === "cancelled"} />
+        </TechCardProcess>
+        </>
+      ) : routeVariants.length > 0 ? (
+        <div className="mt-portal-4">
+          <TechCardRouteVariants
+            card={card}
+            variants={routeVariants}
+            workCenters={workCenters}
+            disabled={busy || status === "cancelled"}
+          />
+        </div>
+      ) : null}
       </div>
       <TechCardOrderCollaboration card={card} surface="manager" />
       <div className="tech-card-doc-rest order-3 min-w-0 flex flex-col gap-portal-4 xl:order-none xl:col-start-1 xl:row-start-2">
@@ -1874,7 +2081,7 @@ export function TechCardDetailWorkspace({
           className="mt-portal-4 min-w-0"
         >
           {managerDocTab === "operations" ? (
-            <div data-tech-card-doc-row3 data-tech-card-tab="operations">
+            <div id="tech-card-norms" data-tech-card-doc-row3 data-tech-card-tab="operations">
               <SectionCard title="Операции / объёмы" size="compact" className="border-0 p-0 shadow-none">
                 {routingOps.length === 0 ? (
                   <EmptyState
@@ -1927,6 +2134,7 @@ export function TechCardDetailWorkspace({
           {managerDocTab === "assembly" ? (
             <div data-tech-card-doc-row2 data-tech-card-doc-tab="assembly">
               <SectionCard
+                id="tech-card-personalization"
                 title="Персонализация"
                 description="Размеры и персонализация по единицам."
                 size="compact"
@@ -2069,7 +2277,7 @@ export function TechCardDetailWorkspace({
                       ) : (
                         <>
                           {" "}
-                          · задаётся суммой строк персонализации
+                          · количество техкарты: {productionQuantityLabel(card.quantity)}
                         </>
                       )}
                     </p>
@@ -2140,13 +2348,24 @@ export function TechCardDetailWorkspace({
                           : `Сумма «Количество» должна совпадать с заказом (${orderLinkedExpectedQty})`}
                       </span>
                     ) : null}
+                    {personalizationMismatch ? (
+                      <span className="flex items-center text-portal-caption text-portal-danger">
+                        Сумма персонализации ({personalizationSum}) не совпадает с количеством техкарты ({productionQuantityLabel(card.quantity)}). Количество производства не меняется.
+                      </span>
+                    ) : null}
                   </div>
                 ) : (
                   <p className="mb-portal-4 text-portal-caption text-portal-muted">
                     Количество (сумма):{" "}
                     <span className="font-medium text-portal-text">
-                      {personalizationSum || String(card.quantity)}
+                      {personalizationSum || productionQuantityLabel(card.quantity)}
                     </span>
+                    {personalizationMismatch ? (
+                      <>
+                        {" "}
+                        · не совпадает с количеством техкарты ({productionQuantityLabel(card.quantity)}). Количество производства не меняется.
+                      </>
+                    ) : null}
                   </p>
                 )}
                 {unitLineDrafts.length === 0 ? (
@@ -2515,7 +2734,7 @@ export function TechCardDetailWorkspace({
           ) : null}
 
           {managerDocTab === "route" ? (
-            <div data-tech-card-doc-tab="route">
+            <div id="tech-card-route-tab" data-tech-card-doc-tab="route">
               <SectionCard
                 title="Маршрут / участки"
                 description="Ход выполнения по этапам маршрута."
@@ -2582,20 +2801,7 @@ export function TechCardDetailWorkspace({
           />
         }
       >
-        {historyEntries.length === 0 ? (
-          <EmptyState title="История пока пуста" description="События техкарты появятся здесь." />
-        ) : (
-          <ActivityTimeline label="История техкарты">
-            {historyEntries.map((entry) => (
-              <ActivityTimelineItem
-                key={entry.key}
-                title={entry.title}
-                description={entry.description}
-                meta={entry.meta}
-              />
-            ))}
-          </ActivityTimeline>
-        )}
+        <TechCardJournal cardId={card.id} entries={historyEntries} diagnostics={productionDiagnostics} />
       </SectionCard>
       </div>
       </div>

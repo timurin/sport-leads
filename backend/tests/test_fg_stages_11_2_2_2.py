@@ -122,7 +122,7 @@ def _seed(db: Session) -> tuple[TechnicalCard, ShopRoutingTemplate]:
     return card, template
 
 
-def test_apply_routing_appends_ready_to_ship_and_shipped() -> None:
+def test_simple_fulfillment_does_not_append_warehouse_nodes() -> None:
     factory = _session_factory()
     with factory() as db:
         card, template = _seed(db)
@@ -136,16 +136,14 @@ def test_apply_routing_appends_ready_to_ship_and_shipped() -> None:
         db.refresh(card)
 
         orders = sorted(card.stage_results, key=lambda row: row.stage_order)
-        assert len(orders) == 3
+        assert len(orders) == 1
         codes = []
         for row in orders:
             stage = db.get(ProductionStage, row.production_stage_id)
             assert stage is not None
             codes.append(stage.code)
-        assert codes == ["packaging", "ready_to_ship", "shipped"]
+        assert codes == ["packaging"]
         assert orders[0].stage_order == 1
-        assert orders[1].stage_order == 2
-        assert orders[2].stage_order == 3
 
 
 def test_apply_routing_does_not_duplicate_existing_fg_stages() -> None:

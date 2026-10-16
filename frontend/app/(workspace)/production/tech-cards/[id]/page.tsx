@@ -1,11 +1,17 @@
 import { notFound } from "next/navigation";
 
+import { getTechnicalCardProductionDiagnostics, getTechnicalCardRouteVariants } from "@/app/(workspace)/production/tech-cards/tech-card-actions";
+import { sessionAuthHeaders } from "@/lib/auth/api-headers";
+import { getMe } from "@/lib/auth/session";
+import { hasPermission, PERM_SIZE_GRIDS_WRITE } from "@/lib/auth/session-mapping";
 import { TechCardDetailWorkspace } from "@/components/production/tech-card-detail-workspace";
 import { getNomenclature } from "@/lib/nomenclature";
 import { getProductModelById } from "@/lib/product-models";
 import { getShopStageModule } from "@/lib/production/shop-stage-modules";
 import { getProductionStages } from "@/lib/production-stages";
-import { fetchTechnicalCard } from "@/lib/sales/order-tech-cards-api";
+import { loadPlatformDebugMode } from "@/lib/platform-brand";
+import { parseTechnicalCardReadiness } from "@/lib/production/tech-card-readiness";
+import { fetchTechnicalCard, fetchTechnicalCardReadiness } from "@/lib/sales/order-tech-cards-api";
 import { getShopRoutings, getWorkCenters } from "@/lib/shop-routings";
 import { getSizeGrid } from "@/lib/size-grids";
 
@@ -100,6 +106,20 @@ export default async function ProductionTechCardDocumentPage({
     workCenters = [];
   }
 
+  let routeVariants: Awaited<ReturnType<typeof getTechnicalCardRouteVariants>> = [];
+  try {
+    routeVariants = await getTechnicalCardRouteVariants(cardId);
+  } catch {
+    routeVariants = [];
+  }
+
+  let productionDiagnostics: Awaited<ReturnType<typeof getTechnicalCardProductionDiagnostics>> = [];
+  try {
+    productionDiagnostics = await getTechnicalCardProductionDiagnostics(cardId);
+  } catch {
+    productionDiagnostics = [];
+  }
+
   let unitSizeGrid = null;
   if (card.product_model_id != null) {
     try {
@@ -112,9 +132,22 @@ export default async function ProductionTechCardDocumentPage({
     }
   }
 
+  const me = await getMe();
+  const auth = await sessionAuthHeaders();
+  let readiness = null;
+  try {
+    readiness = parseTechnicalCardReadiness(await fetchTechnicalCardReadiness(cardId, auth));
+  } catch {
+    readiness = null;
+  }
+  const debugMode = await loadPlatformDebugMode();
+
   return (
     <TechCardDetailWorkspace
       card={card}
+      readiness={readiness}
+      debugMode={debugMode}
+      canEditModelNorms={hasPermission(me, PERM_SIZE_GRIDS_WRITE)}
       routings={routings}
       materials={materials}
       productionStages={productionStages}
@@ -122,6 +155,8 @@ export default async function ProductionTechCardDocumentPage({
       shopStageCode={shopStageCode}
       workCenters={workCenters}
       unitSizeGrid={unitSizeGrid}
+      routeVariants={routeVariants}
+      productionDiagnostics={productionDiagnostics}
     />
   );
 }

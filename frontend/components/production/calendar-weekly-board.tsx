@@ -3,12 +3,14 @@
 import Link from "next/link";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/button";
-import { CalendarToolbar } from "@/components/production/calendar-toolbar";
+import { ProductionQueueSection } from "@/components/production/production-queue-panel";
 import { QueueCellLoad, QueueLoadProvider } from "@/components/production/calendar-queue-load";
 import {
-  acceptCreatedAssignment, assignmentRange, calendarCreateInput, calendarErrorMessage, calendarRequest, calendarSourceLabel, enqueueAssignment, localDate, shiftWeek, sourceSearchState, stageStickerTone, stickerLabel, weekDays, weekStickers,
+  acceptCreatedAssignment, assignmentRange, boardStageStickers, calendarCreateInput, calendarErrorMessage, calendarRequest, calendarSourceLabel, enqueueAssignment, localDate, shiftWeek, sourceSearchState, stageStickerTone, stickerLabel, weekDays,
   type CalendarAssignment, type CalendarBoard, type CalendarSource, type CalendarStage,
 } from "@/lib/production/calendar";
+import { calendarOperationStatusLabel } from "@/lib/production/production-state-label";
+import { planningModeLabel } from "@/lib/production/production-queue";
 import { fetchTechnicalCard, type ApiTechnicalCard } from "@/lib/sales/order-tech-cards-api";
 
 const inputClass = "w-full min-w-0 rounded-portal-md border border-portal-border bg-portal-surface px-portal-3 py-portal-2 text-portal-body";
@@ -180,7 +182,7 @@ export function CalendarWeeklyBoard({ initialDate = null, saved = false }: { ini
         </div>
         <Button onClick={() => open("new")} disabled={loading || !!error}>Добавить в очередь</Button>
       </header>
-      <CalendarToolbar current="/production/calendar" />
+      <ProductionQueueSection assignments={board.assignments} onRefresh={() => setRevision((value) => value + 1)} />
       {saved && <p role="status" className="text-portal-primary">Назначение сохранено. Очередь обновлена.</p>}
       {notice ? <p role="status" className="text-portal-primary">{notice}</p> : null}
       <div className="flex flex-wrap items-end justify-between gap-3 rounded-xl border border-[#dfe5ef] bg-white p-3.5 shadow-[0_4px_14px_rgb(27_46_94_/_0.05)]">
@@ -272,7 +274,7 @@ export function CalendarWeeklyBoard({ initialDate = null, saved = false }: { ini
       <dialog ref={previewDialog} onClose={closePreview}
         className="m-auto w-[min(960px,calc(100%_-_2rem))] rounded-2xl border border-[#dfe5ef] bg-white p-0 text-[#101828] shadow-[0_24px_80px_rgb(15_23_42_/_0.25)] backdrop:bg-[rgb(16_24_40_/_0.45)]"
         aria-labelledby="calendar-card-title">
-        {preview ? <TechCardPreview assignment={preview} card={card} loading={cardLoading} error={cardError} onClose={closePreview} onMove={() => { const item = preview; closePreview(); open(item); }} /> : null}
+        {preview ? <TechCardPreview assignment={preview} card={card} route={board.assignments} loading={cardLoading} error={cardError} onClose={closePreview} onMove={() => { const item = preview; closePreview(); open(item); }} /> : null}
       </dialog>
     </section>
   );
@@ -365,7 +367,7 @@ function StageRow({ stage, days, assignments, onOpen }: {
   assignments: CalendarAssignment[];
   onOpen: (item: CalendarAssignment) => void;
 }) {
-  const stickers = weekStickers(assignments, stage.id, days);
+  const stickers = boardStageStickers(assignments, stage.id, days);
   const lanes = Math.max(1, ...stickers.map((item) => item.lane + 1));
   const tone = STICKER_CLASS[stageStickerTone(stage)] ?? STICKER_CLASS.launch;
   return (
@@ -379,17 +381,31 @@ function StageRow({ stage, days, assignments, onOpen }: {
       {stickers.map((sticker) => {
         const range = assignmentRange(sticker.assignment);
         const label = stickerLabel(sticker.assignment);
+        const mode = planningModeLabel(sticker.assignment.planning_mode, sticker.assignment.manual_lock);
+        const operation = sticker.assignment.operation_state;
+        const status = calendarOperationStatusLabel({
+          operationState: operation,
+          operationStatus: sticker.assignment.operation_status,
+          lifecycleStatus: sticker.assignment.production_state?.lifecycle_status,
+          workshopState: sticker.assignment.production_state?.workshop_state,
+        });
+        const modeClass = mode === "locked" ? "border-dashed" : mode === "manual_adjusted" ? "ring-1 ring-inset ring-[#344054]/40" : "";
+        const operationClass = operation === "current" ? "ring-2 ring-inset ring-[#1f5eff]" : "";
         return (
           <button
             key={sticker.assignment.id}
             type="button"
             data-sticker={sticker.assignment.id}
-            className={`z-10 mx-1 my-1 h-7 truncate rounded-md border px-2 text-left text-xs font-semibold ${tone} ${sticker.continuesBefore ? "rounded-l-none" : ""} ${sticker.continuesAfter ? "rounded-r-none" : ""}`}
+            data-planning-mode={mode}
+            data-operation-state={operation ?? ""}
+            data-operation-status={sticker.assignment.operation_status ?? ""}
+            data-workshop-status={status}
+            className={`z-10 mx-1 my-1 h-7 truncate rounded-md border px-2 text-left text-xs font-semibold ${tone} ${modeClass} ${operationClass} ${sticker.continuesBefore ? "rounded-l-none" : ""} ${sticker.continuesAfter ? "rounded-r-none" : ""}`}
             style={{ gridColumn: `${sticker.startIndex + 2} / ${sticker.endIndex + 3}`, gridRow: sticker.lane + 1 }}
-            title={`${label} · ${stage.name} · ${range.start} — ${range.end}`}
+            title={`${label} · ${status || "Без статуса"} · ${stage.name} · ${range.start} — ${range.end} · ${mode}`}
             onClick={() => onOpen(sticker.assignment)}
           >
-            {label}
+            {label}{status ? ` · ${status}` : ""}
           </button>
         );
       })}
@@ -397,19 +413,33 @@ function StageRow({ stage, days, assignments, onOpen }: {
   );
 }
 
-function TechCardPreview({ assignment, card, loading, error, onClose, onMove }: {
+function TechCardPreview({ assignment, card, route, loading, error, onClose, onMove }: {
   assignment: CalendarAssignment;
   card: ApiTechnicalCard | null;
+  route: CalendarAssignment[];
   loading: boolean;
   error: string;
   onClose: () => void;
   onMove: () => void;
 }) {
   const range = assignmentRange(assignment);
+  const status = calendarOperationStatusLabel({
+    operationState: assignment.operation_state,
+    operationStatus: assignment.operation_status,
+    lifecycleStatus: assignment.production_state?.lifecycle_status,
+    workshopState: assignment.production_state?.workshop_state,
+  });
+  const currentWorkshop = assignment.production_state?.current_workshop_name?.trim() || "Участок ещё не определён";
   const materials = (card?.composition_lines ?? []).filter((line) => line.line_kind === "material");
   const sizes = (card?.unit_lines ?? []).map((line) => [line.size, line.size_type].filter(Boolean).join(" ")).filter(Boolean);
   const personalization = (card?.unit_lines ?? []).map((line) => line.personalization).filter((value): value is string => Boolean(value));
   const notes = [assignment.note, card?.notes].filter((value): value is string => Boolean(value && value.trim()));
+  const routePlan = route
+    .filter((item) => item.technical_card_id === assignment.technical_card_id && item.id !== assignment.id)
+    .slice()
+    .sort((left, right) => assignmentRange(left).start.localeCompare(assignmentRange(right).start)
+      || left.production_stage_name.localeCompare(right.production_stage_name, "ru")
+      || left.id - right.id);
   return (
     <>
       <div className="flex items-start justify-between gap-3 border-b border-[#dfe5ef] px-5 py-4">
@@ -424,10 +454,29 @@ function TechCardPreview({ assignment, card, loading, error, onClose, onMove }: 
         {error ? <p role="alert" className="text-portal-danger">{error}</p> : null}
         <dl className="grid gap-2 sm:grid-cols-2">
           <div><dt className="text-xs text-[#667085]">Количество</dt><dd>{String(card?.quantity ?? assignment.quantity)}</dd></div>
-          <div><dt className="text-xs text-[#667085]">Текущая стадия</dt><dd>{assignment.production_stage_name}</dd></div>
-          <div><dt className="text-xs text-[#667085]">Операция</dt><dd>{range.start} — {range.end}</dd></div>
+          <div><dt className="text-xs text-[#667085]">Статус</dt><dd data-calendar-card-status>{status || "—"}</dd></div>
+          <div><dt className="text-xs text-[#667085]">Текущий участок</dt><dd data-calendar-current-workshop>{currentWorkshop}</dd></div>
+          <div><dt className="text-xs text-[#667085]">Дата на участке</dt><dd>{range.start} — {range.end}</dd></div>
           <div><dt className="text-xs text-[#667085]">Плановая готовность</dt><dd>{card?.desired_date || "Пока не задана"}</dd></div>
         </dl>
+        <section>
+          <h3 className="text-xs font-bold text-[#667085]">Остальной маршрут</h3>
+          {routePlan.length ? (
+            <ul className="mt-1 space-y-1" data-calendar-route-plan>
+              {routePlan.map((item) => {
+                const itemRange = assignmentRange(item);
+                const mark = item.operation_state === "completed" ? "готово" : "план";
+                return (
+                  <li key={item.id}>
+                    {item.production_stage_name} · {itemRange.start} — {itemRange.end} · {mark}
+                  </li>
+                );
+              })}
+            </ul>
+          ) : (
+            <p>Других участков в этой неделе нет</p>
+          )}
+        </section>
         <section><h3 className="text-xs font-bold text-[#667085]">Материалы</h3><p>{materials.length ? materials.map((line) => line.snapshot_name).join(", ") : "Нет строк материалов"}</p></section>
         <section><h3 className="text-xs font-bold text-[#667085]">Размеры</h3><p>{sizes.length ? sizes.join(", ") : "Нет размеров"}</p></section>
         <section><h3 className="text-xs font-bold text-[#667085]">Персонализация</h3><p>{personalization.length ? personalization.join(", ") : "Нет персонализации"}</p></section>

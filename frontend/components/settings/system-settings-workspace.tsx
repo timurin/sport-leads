@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Field, Input, Textarea } from "@/components/ui/form-controls";
 import { PageToolbar } from "@/components/ui/page-header";
 import { SectionCard } from "@/components/ui/section-card";
+import { debugModeContract } from "@/lib/platform-debug";
 import {
   isPlatformSystemSettingsDirty,
   PLATFORM_LOCALE_OPTIONS,
@@ -372,6 +373,28 @@ export function SystemSettingsWorkspace({ settings, canWrite }: Props) {
                 </select>
               </Field>
             </div>
+          </SectionCard>
+
+          <SectionCard
+            title="Режим отладки"
+            description="Глобальный Debug Center в шапке платформы."
+            size="compact"
+          >
+            <label className="flex items-center gap-portal-2 text-portal-body text-portal-text">
+              <input
+                type="checkbox"
+                checked={draft.debug_mode}
+                onChange={(event) => setDraft((current) => ({ ...current, debug_mode: event.target.checked }))}
+                disabled={saving || !canWrite}
+                data-platform-debug-mode-toggle
+              />
+              Режим отладки
+            </label>
+            {debugModeContract(currentSettings).gap ? (
+              <p className="text-portal-body text-portal-text" data-debug-mode-gap>
+                {debugModeContract(currentSettings).gap}
+              </p>
+            ) : null}
           </SectionCard>
 
           <SectionCard

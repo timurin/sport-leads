@@ -6,6 +6,7 @@ import {
   buildTechCardHistoryEntries,
   filterTechCardsClient,
   parseTechCardListView,
+  techCardListPresentation,
   findSewingHostRoutingLineIndex,
   formatVolumeUnit,
   groupOperationLinesBySource,
@@ -67,9 +68,21 @@ const sampleCards = [
 
 test("parseTechCardListView treats only kanban as board view", () => {
   assert.equal(parseTechCardListView("kanban"), "kanban");
+  assert.equal(parseTechCardListView("queue"), "queue");
   assert.equal(parseTechCardListView("list"), "list");
   assert.equal(parseTechCardListView(""), "list");
   assert.equal(parseTechCardListView(undefined), "list");
+});
+
+test("list presentation uses lifecycle status and fact workshop", () => {
+  const started = techCardListPresentation({
+    status: "in_progress",
+    current_stage_label: "Печать",
+  });
+  assert.equal(started.statusLabel, "В работе");
+  assert.equal(started.statusLabel.includes("Черновик"), false);
+  assert.equal(started.workshopLabel, "Печать");
+  assert.equal(techCardListPresentation({ status: "draft", current_stage_label: "  " }).workshopLabel, "—");
 });
 
 test("techCardStatusTone maps card statuses", () => {

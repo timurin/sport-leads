@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import date
 from decimal import Decimal
 
 from fastapi.testclient import TestClient
@@ -27,6 +28,7 @@ from app.models.tech_operation import TechOperation
 from app.models.technical_card import (
     TechnicalCard,
     TechnicalCardCompositionLine,
+    TechnicalCardOrderGroup,
     TechnicalCardCompositionLineKind,
     TechnicalCardStageResult,
     TechnicalCardStageResultStatus,
@@ -240,6 +242,13 @@ def test_material_fact_gate_reject_allow_and_qc_ungated() -> None:
         card_id = ids["card_id"]
         line_id = ids["line_id"]
 
+        # This test constructs its snapshot directly; certify that frozen fixture explicitly.
+        from app.services.route_verification import record_applied_route
+        from app.services.technical_card_stages import _sync_current_stage
+        card = db.get(TechnicalCard, card_id)
+        _sync_current_stage(card)
+        record_applied_route(db, card)
+        db.commit()
         start_technical_card(db, card_id)
 
         try:
@@ -332,3 +341,115 @@ def test_fact_qty_api_endpoint() -> None:
         assert materials[0]["production_stage_id"] == cutting_id
     finally:
         app.dependency_overrides.clear()
+
+
+def test_material_gate_follows_current_operation_not_workshop() -> None:
+    from app.models.tech_operation import TechOperationRequiredMaterial
+
+    factory = _session_factory()
+    with factory() as db:
+        design = ProductionStage(name="Дизайн", code="design", is_active=True, sort_order=1)
+        print_stage = ProductionStage(name="Печать", code="print", is_active=True, sort_order=2)
+        paper = Nomenclature(
+            name="Сублимационная бумага",
+            category="Материалы",
+            nomenclature_type=NomenclatureType.MATERIAL,
+            unit="пм",
+            base_price=Decimal("1"),
+        )
+        ink = Nomenclature(
+            name="Сублимационные чернила",
+            category="Материалы",
+            nomenclature_type=NomenclatureType.MATERIAL,
+            unit="мг",
+            base_price=Decimal("1"),
+        )
+        db.add_all([design, print_stage, paper, ink])
+        db.flush()
+        design_op = TechOperation(
+            name="Дизайн", code="design-op", volume_unit=TechOperationVolumeUnit.PIECES,
+            production_stage_id=design.id, is_active=True, sort_order=1,
+        )
+        sublimation = TechOperation(
+            name="Сублимационная печать", code="sublimation",
+            volume_unit=TechOperationVolumeUnit.LINEAR_METERS,
+            production_stage_id=print_stage.id, is_active=True, sort_order=2,
+        )
+        transfer = TechOperation(
+            name="Термоперенос", code="transfer", volume_unit=TechOperationVolumeUnit.PIECES,
+            production_stage_id=print_stage.id, is_active=True, sort_order=3,
+        )
+        db.add_all([design_op, sublimation, transfer])
+        db.flush()
+        db.add_all([
+            TechOperationRequiredMaterial(
+                tech_operation_id=sublimation.id, nomenclature_id=paper.id, quantity=Decimal("1"),
+            ),
+            TechOperationRequiredMaterial(
+                tech_operation_id=sublimation.id, nomenclature_id=ink.id, quantity=Decimal("10"),
+            ),
+        ])
+        group = TechnicalCardOrderGroup(
+            order_number="STAB-GATE", tech_cards_planned_count=1, desired_date=date(2026, 11, 14),
+        )
+        db.add(group)
+        db.flush()
+        card = TechnicalCard(
+            order_group_id=group.id,
+            number="STAB-GATE-1",
+            card_seq=1,
+            status=TechnicalCardStatus.DRAFT,
+            quantity=Decimal("4"),
+            nomenclature_name="Футболка",
+            stage_results=[
+                TechnicalCardStageResult(
+                    stage_order=1, production_stage_id=design.id, stage_label="Дизайн",
+                    tech_operation_id=design_op.id, status=TechnicalCardStageResultStatus.PENDING,
+                ),
+                TechnicalCardStageResult(
+                    stage_order=2, production_stage_id=print_stage.id, stage_label="Печать",
+                    tech_operation_id=sublimation.id, status=TechnicalCardStageResultStatus.PENDING,
+                ),
+                TechnicalCardStageResult(
+                    stage_order=3, production_stage_id=print_stage.id, stage_label="Печать",
+                    tech_operation_id=transfer.id, status=TechnicalCardStageResultStatus.PENDING,
+                ),
+            ],
+            composition_lines=[
+                TechnicalCardCompositionLine(
+                    sequence=1, line_kind=TechnicalCardCompositionLineKind.MATERIAL,
+                    nomenclature_id=paper.id, snapshot_name="Сублимационная бумага",
+                    planned_qty=Decimal("0.800"), production_stage_id=print_stage.id,
+                    tech_operation_id=sublimation.id, unit="пм",
+                ),
+                TechnicalCardCompositionLine(
+                    sequence=2, line_kind=TechnicalCardCompositionLineKind.MATERIAL,
+                    nomenclature_id=ink.id, snapshot_name="Сублимационные чернила",
+                    planned_qty=Decimal("8.000"), production_stage_id=print_stage.id,
+                    tech_operation_id=sublimation.id, unit="мг",
+                ),
+            ],
+        )
+        db.add(card)
+        db.commit()
+        card_id = card.id
+
+        def finish(order: int) -> str:
+            try:
+                complete_stage(db, card_id, order)
+            except Exception as error:
+                db.rollback()
+                return str(error)
+            return ""
+
+        assert "MATERIAL fact_qty" not in finish(1)
+        stored = db.get(TechnicalCard, card_id)
+        stored.stage_results[0].status = TechnicalCardStageResultStatus.COMPLETED
+        db.commit()
+        sublimation_error = finish(2)
+        assert "MATERIAL fact_qty required" in sublimation_error
+        assert "Сублимационная бумага" in sublimation_error
+        assert stored.stage_results[1].status == TechnicalCardStageResultStatus.PENDING
+        stored.stage_results[1].status = TechnicalCardStageResultStatus.COMPLETED
+        db.commit()
+        assert "MATERIAL fact_qty" not in finish(3)

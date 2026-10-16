@@ -1,16 +1,17 @@
 """Bounded joined reads; no composition collections or per-row queries."""
 from datetime import date
 
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
 from app.models.calendar_assignment import CalendarAssignment
 from app.models.production_stage import ProductionStage
-from app.models.technical_card import TechnicalCard, TechnicalCardOrderGroup
+from app.models.technical_card import TechnicalCard, TechnicalCardOrderGroup, TechnicalCardStageResult
 
 
 def assignment_rows(db: Session, start: date | None = None, end: date | None = None,
-                    stage_id: int | None = None, assignment_id: int | None = None):
+                    stage_id: int | None = None, assignment_id: int | None = None,
+                    *, editable_only: bool = False):
     stmt = select(CalendarAssignment, TechnicalCard.number, TechnicalCardOrderGroup.order_number,
                   TechnicalCard.nomenclature_name, TechnicalCard.quantity, ProductionStage.name).join(
         TechnicalCard, TechnicalCard.id == CalendarAssignment.technical_card_id
@@ -25,6 +26,20 @@ def assignment_rows(db: Session, start: date | None = None, end: date | None = N
         stmt = stmt.where(CalendarAssignment.production_stage_id == stage_id)
     if assignment_id is not None:
         stmt = stmt.where(CalendarAssignment.id == assignment_id)
+    if editable_only:
+        # Normal board stays historical. The dispatcher list offers only open plans
+        # of existing executable cards; a missing/foreign snapshot is not editable.
+        pending_node = select(TechnicalCardStageResult.id).where(
+            TechnicalCardStageResult.id == CalendarAssignment.stage_result_id,
+            TechnicalCardStageResult.technical_card_id == TechnicalCard.id,
+            TechnicalCardStageResult.production_stage_id == CalendarAssignment.production_stage_id,
+            TechnicalCardStageResult.status == "pending",
+            TechnicalCardStageResult.started_at.is_(None),
+            TechnicalCardStageResult.completed_at.is_(None),
+        ).exists()
+        marker = (CalendarAssignment.stage_result_id.is_(None)
+                  & CalendarAssignment.routing_stage_line_id.is_(None))
+        stmt = stmt.where(TechnicalCard.status.in_(["draft", "in_progress"]), or_(marker, pending_node))
     return db.execute(stmt.order_by(CalendarAssignment.planned_date, CalendarAssignment.production_stage_id,
                                    CalendarAssignment.position, CalendarAssignment.id)).all()
 

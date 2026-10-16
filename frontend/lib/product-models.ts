@@ -572,6 +572,94 @@ export function visibleProductModelCatalogTreeRows(
   return visible;
 }
 
+export const PRODUCT_MODEL_EXPANDED_FOLDERS_KEY =
+  "sport-lead.product-models.expanded-folders";
+
+export function parseExpandedFolderIds(raw: string | null): number[] {
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(raw) as unknown;
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter(
+      (id): id is number => typeof id === "number" && Number.isSafeInteger(id) && id > 0,
+    );
+  } catch {
+    return [];
+  }
+}
+
+const expandedFolderListeners = new Set<() => void>();
+
+export function subscribeExpandedFolders(listener: () => void): () => void {
+  expandedFolderListeners.add(listener);
+  return () => {
+    expandedFolderListeners.delete(listener);
+  };
+}
+
+export function readExpandedFoldersSnapshot(): string {
+  if (typeof window === "undefined") return "";
+  return sessionStorage.getItem(PRODUCT_MODEL_EXPANDED_FOLDERS_KEY) ?? "";
+}
+
+export function updateExpandedFolderIds(update: (current: Set<number>) => Set<number>): void {
+  const next = update(new Set(parseExpandedFolderIds(readExpandedFoldersSnapshot() || null)));
+  sessionStorage.setItem(PRODUCT_MODEL_EXPANDED_FOLDERS_KEY, JSON.stringify([...next]));
+  for (const listener of expandedFolderListeners) listener();
+}
+
+export const PRODUCT_MODEL_ACTIVE_FOLDER_KEY =
+  "sport-lead.product-models.active-folder";
+
+export function parseActiveFolderId(raw: string | null): number | null {
+  if (!raw) return null;
+  const id = Number(raw);
+  if (!Number.isSafeInteger(id) || id <= 0) return null;
+  return id;
+}
+
+/** Models outside the open folder stay visually quiet. No folder means the whole list is equal. */
+export function isProductModelOutsideActiveFolder(
+  modelFolderId: number | null,
+  activeFolderId: number | null,
+): boolean {
+  if (activeFolderId == null) return false;
+  return modelFolderId !== activeFolderId;
+}
+
+const activeFolderListeners = new Set<() => void>();
+
+export function subscribeActiveFolder(listener: () => void): () => void {
+  activeFolderListeners.add(listener);
+  return () => {
+    activeFolderListeners.delete(listener);
+  };
+}
+
+export function readActiveFolderSnapshot(): string {
+  if (typeof window === "undefined") return "";
+  return sessionStorage.getItem(PRODUCT_MODEL_ACTIVE_FOLDER_KEY) ?? "";
+}
+
+export function updateActiveFolderId(folderId: number | null): void {
+  if (folderId == null) sessionStorage.removeItem(PRODUCT_MODEL_ACTIVE_FOLDER_KEY);
+  else sessionStorage.setItem(PRODUCT_MODEL_ACTIVE_FOLDER_KEY, String(folderId));
+  for (const listener of activeFolderListeners) listener();
+}
+
+export function confirmProductModelClose(guard: {
+  editing: boolean;
+  dirty: boolean;
+}): boolean {
+  if (guard.dirty) {
+    return window.confirm("Есть несохранённые изменения. Закрыть без сохранения?");
+  }
+  if (guard.editing) {
+    return window.confirm("Закрыть окно редактирования?");
+  }
+  return true;
+}
+
 export async function getProductModelById(
   modelId: number,
 ): Promise<ProductModel | null> {

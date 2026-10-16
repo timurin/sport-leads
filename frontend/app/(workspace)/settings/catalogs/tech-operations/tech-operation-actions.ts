@@ -4,7 +4,9 @@ import { revalidatePath } from "next/cache";
 
 import { sessionAuthHeaders } from "@/lib/auth/api-headers";
 import { uniqueResourceKeys } from "@/lib/tech-operation-capacity";
+import { demandWriteFields } from "@/lib/tech-operation-demand";
 import {
+  readDemandFields,
   validateTechOperationDraft,
   type TechOperation,
   type TechOperationDraft,
@@ -59,6 +61,12 @@ function payloadFromDraft(draft: TechOperationDraft): Record<string, unknown> | 
   if (Object.prototype.hasOwnProperty.call(draft, "capacity_resource_keys")) {
     body.capacity_resource_keys = uniqueResourceKeys(draft.capacity_resource_keys ?? []);
   }
+  const demand = demandWriteFields(draft);
+  if ("error" in demand) return null;
+  if (demand.include) {
+    body.demand_rule = demand.demand_rule;
+    body.demand_duration_seconds = demand.demand_duration_seconds;
+  }
   return body;
 }
 
@@ -66,7 +74,9 @@ function readOperation(body: unknown): TechOperation {
   const operation = body as TechOperation;
   return {
     ...operation,
+    ...readDemandFields(operation),
     capacity_resource_keys: Array.isArray(operation.capacity_resource_keys) ? operation.capacity_resource_keys : [],
+    diagnostics: Array.isArray(operation.diagnostics) ? operation.diagnostics : [],
   };
 }
 
@@ -98,8 +108,7 @@ export async function createTechOperation(
     return { ok: false, message: await readError(response) };
   }
   const operation = readOperation(await response.json());
-  revalidatePath(CATALOG_PATH);
-  revalidatePath(CAPACITY_PATH);
+  revalidateOperationSurfaces();
   return { ok: true, operation };
 }
 
@@ -124,9 +133,15 @@ export async function updateTechOperation(
     return { ok: false, message: await readError(response) };
   }
   const operation = readOperation(await response.json());
+  revalidateOperationSurfaces();
+  return { ok: true, operation };
+}
+
+function revalidateOperationSurfaces() {
   revalidatePath(CATALOG_PATH);
   revalidatePath(CAPACITY_PATH);
-  return { ok: true, operation };
+  revalidatePath("/settings/catalogs/routings", "layout");
+  revalidatePath("/production/tech-cards", "layout");
 }
 
 export async function deleteTechOperation(

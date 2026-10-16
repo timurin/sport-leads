@@ -6,6 +6,7 @@
 import "server-only";
 
 import { sessionAuthHeaders } from "@/lib/auth/api-headers";
+import { debugModeContract } from "@/lib/platform-debug";
 import {
   DEFAULT_PLATFORM_BRAND,
   type PlatformBrand,
@@ -37,5 +38,19 @@ export async function loadPlatformBrand(): Promise<PlatformBrand> {
     };
   } catch {
     return DEFAULT_PLATFORM_BRAND;
+  }
+}
+
+export async function loadPlatformDebugMode(): Promise<boolean> {
+  try {
+    const auth = await sessionAuthHeaders();
+    const response = await fetch(`${apiBaseUrl()}/platform-system-settings`, {
+      headers: { ...auth },
+      cache: "no-store",
+    });
+    if (!response.ok) return false;
+    return debugModeContract(await response.json()).enabled;
+  } catch {
+    return false;
   }
 }

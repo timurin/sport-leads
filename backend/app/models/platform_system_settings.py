@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from sqlalchemy import CheckConstraint, DateTime, Integer, String, Text, func
+from sqlalchemy import Boolean, CheckConstraint, DateTime, Integer, String, Text, false, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.database.base import Base
@@ -27,6 +27,7 @@ class PlatformSystemSettings(Base):
     )
     support_email: Mapped[str | None] = mapped_column(String(255), nullable=True)
     ui_locale: Mapped[str] = mapped_column(String(16), nullable=False, default="ru-RU")
+    debug_mode: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default=false())
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
     logo_storage_key: Mapped[str | None] = mapped_column(String(512), nullable=True)
     logo_mime_type: Mapped[str | None] = mapped_column(String(128), nullable=True)

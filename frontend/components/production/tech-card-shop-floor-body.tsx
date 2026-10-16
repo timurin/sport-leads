@@ -19,6 +19,7 @@ import { Field, Input, Select, Textarea } from "@/components/ui/form-controls";
 import { InlineAlert } from "@/components/ui/inline-alert";
 import { SectionCard } from "@/components/ui/section-card";
 import { StatusBadge } from "@/components/ui/status-badge";
+import { productionQuantityLabel } from "@/lib/production/tech-card-display";
 import type { ShopStageModule } from "@/lib/production/shop-stage-modules";
 import {
   shopStageFinishedGoodsHint,
@@ -256,7 +257,7 @@ export function TechCardShopFloorBody({
               </div>
               <div>
                 <dt className="text-portal-caption text-portal-muted">Количество</dt>
-                <dd className="mt-1 text-portal-body tabular-nums">{card.quantity}</dd>
+                <dd className="mt-1 text-portal-body tabular-nums">{productionQuantityLabel(card.quantity)}</dd>
               </div>
               <div>
                 <dt className="text-portal-caption text-portal-muted">Сдача</dt>

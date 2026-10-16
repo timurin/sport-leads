@@ -62,6 +62,7 @@ from app.api.technical_cards import router as technical_cards_router
 from app.api.tech_operations import router as tech_operations_router
 from app.api.production_stages import router as production_stages_router
 from app.api.production_calendar import router as production_calendar_router
+from app.api.platform_health import router as platform_health_router
 from app.api.production_orders import (
     batches_router as production_batches_router,
     router as production_orders_router,
@@ -92,6 +93,15 @@ app = FastAPI(
     version=APP_VERSION,
 )
 app.state.session_factory = SessionLocal
+from app.services import demand_input_guard  # Register the narrow transaction-level input guard.
+
+from fastapi.responses import JSONResponse
+from app.services.calendar_plan_linkage import PlanLinkageConflict
+
+
+@app.exception_handler(PlanLinkageConflict)
+async def plan_linkage_conflict_handler(request: Request, error: PlanLinkageConflict):
+    return JSONResponse(status_code=409, content={"detail": str(error)}, headers=error.headers)
 
 if settings.cors_origins:
     app.add_middleware(
@@ -188,6 +198,7 @@ app.include_router(technical_cards_router)
 app.include_router(tech_operations_router)
 app.include_router(production_stages_router)
 app.include_router(production_calendar_router)
+app.include_router(platform_health_router)
 app.include_router(production_orders_router)
 app.include_router(production_batches_router)
 app.include_router(specifications_router)

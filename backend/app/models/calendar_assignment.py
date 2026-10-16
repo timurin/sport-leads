@@ -33,6 +33,7 @@ class CalendarAssignment(Base):
     __tablename__ = "calendar_assignments"
     __table_args__ = (
         CheckConstraint("position >= 0", name="ck_calendar_assignment_position"),
+        CheckConstraint("queue_position IS NULL OR queue_position >= 1", name="ck_calendar_assignment_queue_position"),
         CheckConstraint("planned_end_date >= planned_date", name="ck_calendar_assignment_date_range"),
         CheckConstraint(
             "planning_mode IN ('auto', 'manual_adjusted', 'locked') "
@@ -46,6 +47,14 @@ class CalendarAssignment(Base):
             unique=True,
             postgresql_where=text("routing_stage_line_id IS NOT NULL"),
             sqlite_where=text("routing_stage_line_id IS NOT NULL"),
+        ),
+        Index(
+            "uq_calendar_assignment_card_snapshot",
+            "technical_card_id",
+            "stage_result_id",
+            unique=True,
+            postgresql_where=text("stage_result_id IS NOT NULL"),
+            sqlite_where=text("stage_result_id IS NOT NULL"),
         ),
         Index(
             "uq_calendar_assignment_card_stage_unmapped",
@@ -64,8 +73,16 @@ class CalendarAssignment(Base):
     routing_stage_line_id: Mapped[int | None] = mapped_column(
         ForeignKey(
             "shop_routing_stage_lines.id",
-            ondelete="RESTRICT",
+            ondelete="SET NULL",
             name="fk_calendar_assignment_route_step",
+        ),
+        nullable=True,
+    )
+    stage_result_id: Mapped[int | None] = mapped_column(
+        ForeignKey(
+            "technical_card_stage_results.id",
+            ondelete="SET NULL",
+            name="fk_calendar_assignment_snapshot_operation",
         ),
         nullable=True,
     )
@@ -75,6 +92,8 @@ class CalendarAssignment(Base):
         Date, default=lambda context: context.get_current_parameters()["planned_date"]
     )
     position: Mapped[int] = mapped_column(Integer, default=0)
+    # Workshop waiting order is independent of the dated board position/card priority.
+    queue_position: Mapped[int | None] = mapped_column(Integer, nullable=True)
     planning_mode: Mapped[str] = mapped_column(
         String(20), nullable=False, default="auto", server_default="auto"
     )

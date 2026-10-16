@@ -4,6 +4,7 @@ import pytest
 from sqlalchemy import event, func, select
 
 from app.models.production_capacity import CapacityResource, TechOperationCapacityResource
+from app.models.production_stage import ProductionStage
 from tests.test_production_capacity import capacity_client, save, load, BASE
 
 RESOURCES = BASE + "/resources"
@@ -49,6 +50,30 @@ def test_shared_resource_links_crud_cross_editor_reload_and_single_storage(capac
         assert client.patch(f"/tech-operations/{operation['id']}", json={"capacity_resource_keys": []}).status_code == 200
     assert client.delete(RESOURCES + "/shared-print").status_code == 204
     assert client.get(RESOURCES + "/shared-print").status_code == 404
+
+
+def test_legacy_hours_keep_stored_kind_unit_stage_and_calculation(capacity_client):
+    client, _, factory, _ = capacity_client
+    save(client, "packing_team", staff_count=1)
+    with factory() as db:
+        db.add(ProductionStage(id=6, name="Контроль качества", code="qc", is_active=True))
+        stored = db.get(CapacityResource, "packing_team")
+        stored.production_stage_id = 6
+        db.commit()
+    body = client.get(RESOURCES + "/packing_team").json()
+    body.pop("key")
+    body.pop("exceptions")
+    body["hours_per_day"] = "8"
+    saved = client.put(RESOURCES + "/packing_team", json=body)
+    assert saved.status_code == 200, saved.text
+    assert Decimal(saved.json()["hours_per_day"]) == Decimal("8")
+    assert saved.json()["production_stage_id"] == 6
+    assert saved.json()["calculation_mode"] == "team_rate"
+    body["calculation_mode"] = "explicit_hours"
+    body["capacity_unit"] = "labor_hour"
+    rejected = client.put(RESOURCES + "/packing_team", json=body)
+    assert rejected.status_code == 422
+    assert rejected.json()["detail"] == "Legacy resource kind/unit/stage/calculation rule must remain compatible"
 
 
 def test_legacy_and_canonical_edits_share_availability_and_exceptions(capacity_client):

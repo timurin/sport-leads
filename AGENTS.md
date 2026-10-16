@@ -53,7 +53,25 @@ Sources of truth:
 
 HTML under `docs/erp/status/` is a visual report only — twin of Markdown, never a parallel master. Updating MD checklists without the HTML twin in the same iteration is forbidden (see § canonical sync and `.cursor/rules/canonical-docs-html-twins.mdc`). Roadmap document code ≠ app version.
 
-Before each task read: this file, project-structure, erp-check, roadmap, related ADRs, `docs/releases/latest.md` if present, latest release doc, and the current task file if any.
+Required context order: task file → `docs/architecture/SL-PROJECT-MEMORY-v1.md` → affected entities/modules → relevant DF/invariant/UI sections → targeted code. This file remains the shared operating rules. Read only the relevant status sections of project-structure, ERP-check and roadmap, related ADR sections, and release context (`docs/releases/latest.md` if present, otherwise latest release doc). Do not reread large documents or closed-task history in full by default.
+
+## Shared project memory and targeted context (`PC-05.3`)
+
+- Canonical agent memory: `docs/architecture/SL-PROJECT-MEMORY-v1.md`; frontend/UI context: `docs/architecture/SL-UI-CONTEXT-v1.md`. These are compact routing aids; detailed canonical contracts and verified current code take precedence. Neither memory file needs an HTML twin.
+- After task + project memory, identify affected entities/fields. Use the `DF-*` index in `SL-DATA-FLOW-v1`, exact invariant rows in `SL-INVARIANT-COVERAGE-v1`, and relevant `UI-*` sections in UI context. Only then search concrete symbols/files/services. Read sections, not entire maps.
+- Repo-wide discovery/re-audit is forbidden by default when canonical context already answers the question. Expand only for an explicit architecture audit, stale memory, a newly discovered dependency, or code/document contradiction. First record the conflict or dependency in the task notes/progress, then inspect the smallest relevant code area, determine current truth, repair stale memory and continue. Do not silently trust stale memory or turn an uncertainty into a new business contract.
+- Codex backend/architecture work uses affected service/entity scopes; do not scan the entire repository or reread closed IC tasks without a specific unresolved dependency.
+- Cursor frontend work reads project memory → relevant UI context first; identify page/feature and open concrete components/hooks/API clients. Do not scan all `frontend`; backend internals are read only when API/data contracts are affected. Shared Cursor routing lives solely in `.cursor/rules/project-memory.mdc` and references these same sources.
+- When canonical architecture or confirmed project state changes, update only the affected project-memory sections. Update relevant DF sections for changed data-flow semantics, invariant rows for changed guards, UI context for changed approved UI contracts, with existing canonical HTML sync where applicable. Do not mechanically rewrite memory after every task. If unchanged, report `Project memory: no changes required`.
+- Use targeted checks first; run the required full project check once at the end, after implementation stabilizes. Repeat only for a new change, failure or unresolved concern. Update roadmap/ERP-check/HTML twins once in the final synchronized pass, not after every local edit. Final reports describe the result and evidence without repeating architecture or task history.
+
+## Data-flow lookup and updates (`SL-DATA-FLOW-v1`)
+
+Canonical map: `docs/architecture/SL-DATA-FLOW-v1.md`; visual HTML twin: `docs/erp/status/SL-DATA-FLOW-v1.html`. Markdown is the source of truth; do not duplicate its chain content here.
+
+**Targeted lookup:** for tasks touching Model, Routing, Snapshot, TechnicalCard, Assembly, Demand, Capacity, WorkCenter, Scheduler, Calendar, Kanban or Diagnostics, identify affected entities/fields first. Read only the map's index, select relevant `DF-*` IDs, then read those sections. Expand to another chain only when a dependency is found. Read the full map only for an architecture audit, cross-module refactor or change to the overall data model. Do not reread unrelated chains or start a general audit without a concrete need.
+
+**Mandatory update:** if a task changes a source field, persistence/snapshot semantics, derived formula, consumer, dependency, invariant or diagnostic source, update the affected `DF-*` sections before finishing; update the index when their scope changes. Regenerate the HTML twin with `python scripts/generate_data_flow.py` and verify it with `python scripts/generate_data_flow.py --check` in the same iteration. Report `Data-flow updated: DF-...` with the affected IDs. If the data flow is unchanged, report `Data-flow: no changes required`.
 
 ## Main principle
 

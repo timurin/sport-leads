@@ -20,11 +20,15 @@ from app.services.tech_card_scan import (
     get_scan,
     return_scan,
 )
+from app.services.calendar_plan_lifecycle import CannotStartWithoutSavedPlan
 
 router = APIRouter(prefix="/tech-card-scan", tags=["Tech-card scan"])
 
 
 def _http_error(error: Exception) -> HTTPException:
+    if isinstance(error, CannotStartWithoutSavedPlan):
+        return HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(error),
+                             headers={"X-Diagnostic-Code": error.code, "X-Diagnostic-Category": error.category})
     if isinstance(error, TechCardScanNotFoundError):
         return HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(error))
     if isinstance(error, TechCardScanForbiddenError):
@@ -50,7 +54,7 @@ def get_tech_card_scan(
 ) -> TechCardScanRead:
     try:
         return get_scan(db, token, user)
-    except TechCardScanError as error:
+    except (TechCardScanError, CannotStartWithoutSavedPlan) as error:
         raise _http_error(error) from error
 
 
@@ -67,7 +71,7 @@ def accept_tech_card_scan(
 ) -> TechCardScanRead:
     try:
         return accept_scan(db, token, user, payload)
-    except TechCardScanError as error:
+    except (TechCardScanError, CannotStartWithoutSavedPlan) as error:
         raise _http_error(error) from error
 
 
@@ -84,7 +88,7 @@ def complete_transfer_tech_card_scan(
 ) -> TechCardScanRead:
     try:
         return complete_transfer_scan(db, token, user, payload)
-    except TechCardScanError as error:
+    except (TechCardScanError, CannotStartWithoutSavedPlan) as error:
         raise _http_error(error) from error
 
 
@@ -101,5 +105,5 @@ def return_tech_card_scan(
 ) -> TechCardScanRead:
     try:
         return return_scan(db, token, user, payload)
-    except TechCardScanError as error:
+    except (TechCardScanError, CannotStartWithoutSavedPlan) as error:
         raise _http_error(error) from error

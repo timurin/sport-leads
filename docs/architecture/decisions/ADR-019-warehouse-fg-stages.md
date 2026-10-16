@@ -9,6 +9,10 @@
 
 ## Контекст
 
+### Current execution boundary — PC-06.1A v2, 2026-10-15
+
+Owner decision in `docs/tasks/pc-06-1a-v2-simple-ready-to-ship-shipped-with-warehouse-hook-codex.md` defers warehouse/QR/WIP/partial shipment for the current fulfillment flow. The historical design below and existing explicit stock adapter remain preserved. Current stage list URLs project separate persisted whole-card fulfillment (`ready_to_ship` / `shipped`), not stock balances or warehouse movements. New routes do not auto-append warehouse markers; retained catalog-identified workshop-only FG nodes are historical compatibility rows outside production completion. Production operations/DAG and saved Calendar facts remain authoritative. The new fulfillment action does not invoke the stock adapter. Future integration belongs to transactional `technical_card_fulfillment.on_ready_to_ship` / `on_shipped` hooks (currently no-op), without changing production-completion semantics. See DF-KANBAN-FACT for the current contract.
+
 Нужна граница между:
 
 - цеховым исполнением на ТК (`11.3`–`11.10`, заканчивается Упаковкой);

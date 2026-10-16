@@ -1,5 +1,45 @@
 import { sameOriginApiMediaUrl } from "../api-media.ts";
 
+export type FulfillmentStatus = "ready_to_ship" | "shipped";
+export type ApiFulfillmentCard = {
+  id: number;
+  number: string;
+  order_number: string | null;
+  model: string | null;
+  quantity: string | number;
+  fulfillment_status: FulfillmentStatus;
+  ready_to_ship_at: string;
+  shipped_at: string | null;
+  shipping_date: string | null;
+};
+
+export async function fetchFulfillmentCards(
+  status: FulfillmentStatus, headers: Record<string, string> = {},
+): Promise<ApiFulfillmentCard[]> {
+  const response = await fetch(`${apiBaseUrl()}/technical-cards/fulfillment/${status}`, {
+    headers, cache: "no-store",
+  });
+  if (!response.ok) throw new Error(await readError(response, "Не удалось загрузить отгрузки"));
+  return response.json();
+}
+
+export async function markTechnicalCardShipped(id: number, headers: Record<string, string>) {
+  return postTechnicalCardAction<ApiFulfillmentCard>(`/technical-cards/${id}/mark-shipped`, undefined, headers);
+}
+
+export type ApiProductionState = {
+  lifecycle_status: "draft" | "planned" | "in_progress" | "completed" | "cancelled";
+  current_workshop_id: number | null;
+  current_workshop_name: string | null;
+  workshop_state: "waiting" | "in_progress" | "completed";
+  current_snapshot_nodes: number[];
+  ready_snapshot_nodes: number[];
+  current_stage_order: number | null;
+  current_stage_label: string | null;
+  next_workshop_id: number | null;
+  planning_state: "unplanned" | "partial" | "planned" | "stale" | "invalid" | "unknown";
+};
+
 export type TechnicalCardStatus =
   | "draft"
   | "in_progress"
@@ -26,6 +66,7 @@ export type ApiTechnicalCardCompositionLine = {
   planned_qty: string | number | null;
   fact_qty?: string | number | null;
   production_stage_id?: number | null;
+  tech_operation_id?: number | null;
   unit: string | null;
   notes: string | null;
   created_at: string;
@@ -155,11 +196,27 @@ export type ApiTechnicalCardStageResult = {
   work_done?: string | null;
   duration_seconds?: number | null;
   work_center_id?: number | null;
+  tech_operation_id?: number | null;
+  source_routing_stage_line_id?: number | null;
+  operation_name?: string | null;
   created_at: string;
   updated_at: string;
 };
 
 export type ApiTechnicalCard = {
+  planning_summary?: {
+    planning_state: "unplanned" | "partial" | "planned" | "stale" | "invalid" | "unknown";
+    persisted: boolean;
+    is_current: boolean;
+    replan_required: boolean;
+    planned_start_date: string | null;
+    planned_completion_date: string | null;
+    shipping_date: string | null;
+    on_time: boolean | null;
+    buffer_days: number | null;
+    delay_days: number | null;
+  } | null;
+  production_state?: ApiProductionState | null;
   id: number;
   sales_order_id: number | null;
   sales_order_item_id: number | null;
@@ -187,6 +244,7 @@ export type ApiTechnicalCard = {
   routing_template_name?: string | null;
   current_stage_order: number | null;
   current_stage_label: string | null;
+  current_workshop_id?: number | null;
   qr_token?: string | null;
   scan_url?: string | null;
   scan_qr_svg?: string | null;
@@ -201,6 +259,10 @@ export type ApiTechnicalCard = {
   created_by_name?: string | null;
   responsible_platform_user_id?: number | null;
   desired_date?: string | null;
+  planning_start_date?: string | null;
+  shipping_date?: string | null;
+  priority?: number | null;
+  plan_locked?: boolean;
   composition_lines?: ApiTechnicalCardCompositionLine[];
   unit_lines: ApiTechnicalCardUnitLine[];
   operation_lines?: ApiTechnicalCardOperationLine[];
@@ -212,6 +274,7 @@ export type ApiTechnicalCard = {
 };
 
 export type ApiTechnicalCardListItem = {
+  production_state?: ApiProductionState | null;
   id: number;
   sales_order_id: number | null;
   sales_order_item_id: number | null;
@@ -239,12 +302,17 @@ export type ApiTechnicalCardListItem = {
   routing_template_name?: string | null;
   current_stage_order: number | null;
   current_stage_label: string | null;
+  current_workshop_id?: number | null;
   design_mockup_url?: string | null;
   notes?: string | null;
   order_number: string | null;
   client_name?: string | null;
   responsible_name?: string | null;
   desired_date?: string | null;
+  planning_start_date?: string | null;
+  shipping_date?: string | null;
+  priority?: number | null;
+  plan_locked?: boolean;
   /** Present for kanban/shop stage status; list omits fat nested collections (`0.2.3.3`). */
   stage_results?: ApiTechnicalCardStageResult[];
   created_at: string;
@@ -462,6 +530,57 @@ export async function updateTechnicalCardOrderGroup(
   return (await response.json()) as ApiTechnicalCardOrderGroup;
 }
 
+export async function updateTechnicalCardPlanning(
+  cardId: number | string,
+  payload: {
+    planning_start_date?: string | null;
+    shipping_date?: string | null;
+    priority?: number | null;
+    plan_locked?: boolean;
+  },
+  headers: Record<string, string> = {},
+): Promise<ApiTechnicalCard> {
+  const response = await fetch(`${apiBaseUrl()}/technical-cards/${cardId}/planning`, {
+    method: "PATCH",
+    headers: { "content-type": "application/json", ...headers },
+    body: JSON.stringify(payload),
+    cache: "no-store",
+  });
+  if (!response.ok) {
+    throw new Error(await readError(response, "Update planning failed"));
+  }
+  return (await response.json()) as ApiTechnicalCard;
+}
+
+export async function scheduleProductionQueue(
+  headers: Record<string, string> = {},
+): Promise<unknown> {
+  const response = await fetch(`${apiBaseUrl()}/production-calendar/schedule`, {
+    method: "POST",
+    headers,
+    cache: "no-store",
+  });
+  if (!response.ok) {
+    throw new Error(await readError(response, "Queue schedule failed"));
+  }
+  return response.json();
+}
+
+export async function scheduleTechnicalCard(
+  cardId: number | string,
+  headers: Record<string, string> = {},
+): Promise<unknown> {
+  const response = await fetch(`${apiBaseUrl()}/technical-cards/${cardId}/schedule`, {
+    method: "POST",
+    headers,
+    cache: "no-store",
+  });
+  if (!response.ok) {
+    throw new Error(await readError(response, "Schedule failed"));
+  }
+  return response.json();
+}
+
 export async function linkStandaloneTechnicalCard(
   cardId: number | string,
   salesOrderItemId: number,
@@ -481,10 +600,26 @@ export async function linkStandaloneTechnicalCard(
   return (await response.json()) as ApiTechnicalCard;
 }
 
+export async function fetchTechnicalCardReadiness(
+  cardId: number | string,
+  headers: Record<string, string> = {},
+): Promise<unknown> {
+  const response = await fetch(`${apiBaseUrl()}/technical-cards/${cardId}/readiness`, {
+    headers,
+    cache: "no-store",
+  });
+  if (!response.ok) {
+    throw new Error(await readError(response, "Readiness failed"));
+  }
+  return response.json();
+}
+
 export async function fetchTechnicalCard(
   cardId: number | string,
+  headers: Record<string, string> = {},
 ): Promise<ApiTechnicalCard> {
   const response = await fetch(`${apiBaseUrl()}/technical-cards/${cardId}`, {
+    headers,
     cache: "no-store",
   });
   if (!response.ok) {
@@ -512,10 +647,11 @@ function buildListQuery(params: TechnicalCardsListParams): string {
 
 export async function fetchTechnicalCards(
   params: TechnicalCardsListParams = {},
+  headers: Record<string, string> = {},
 ): Promise<ApiTechnicalCardListItem[]> {
   const response = await fetch(
     `${apiBaseUrl()}/technical-cards${buildListQuery(params)}`,
-    { cache: "no-store" },
+    { headers, cache: "no-store" },
   );
   if (!response.ok) {
     throw new Error(await readError(response, "List failed"));
@@ -526,10 +662,15 @@ export async function fetchTechnicalCards(
 async function postTechnicalCardAction<T>(
   path: string,
   body?: unknown,
+  headers: Record<string, string> = {},
 ): Promise<T> {
+  const requestHeaders: Record<string, string> = { ...headers };
+  if (body !== undefined) {
+    requestHeaders["content-type"] = "application/json";
+  }
   const response = await fetch(`${apiBaseUrl()}${path}`, {
     method: "POST",
-    headers: body !== undefined ? { "content-type": "application/json" } : undefined,
+    headers: Object.keys(requestHeaders).length > 0 ? requestHeaders : undefined,
     body: body !== undefined ? JSON.stringify(body) : undefined,
     cache: "no-store",
   });
@@ -562,10 +703,12 @@ export async function completeTechnicalCardStage(
   cardId: number | string,
   stageOrder: number | string,
   payload: TechnicalCardStageCompletePayload = {},
+  headers: Record<string, string> = {},
 ): Promise<ApiTechnicalCard> {
   return postTechnicalCardAction<ApiTechnicalCard>(
     `/technical-cards/${cardId}/stages/${stageOrder}/complete`,
     payload,
+    headers,
   );
 }
 
@@ -581,9 +724,12 @@ export async function rollbackTechnicalCardStage(
 export async function rollbackTechnicalCardStageKanban(
   cardId: number | string,
   stageOrder: number | string,
+  headers: Record<string, string> = {},
 ): Promise<ApiTechnicalCard> {
   return postTechnicalCardAction<ApiTechnicalCard>(
     `/technical-cards/${cardId}/stages/${stageOrder}/rollback-kanban`,
+    undefined,
+    headers,
   );
 }
 

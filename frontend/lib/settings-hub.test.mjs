@@ -16,6 +16,8 @@ test("settings hub Soft UI keeps live catalog and users links", async () => {
     "/settings/integrations",
     "Почтовый ящик",
     "/settings/catalogs/warehouses",
+    "/settings/catalogs/work-centers",
+    "Оборудование",
     "/settings/organizations",
     "Настройки платформы",
   ]) {

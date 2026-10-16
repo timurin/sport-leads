@@ -10,6 +10,9 @@ from app.models.auth import PlatformUser
 from app.models.sales import SalesOrder
 from app.models.technical_card import TechnicalCard
 from app.services import rbac as rbac_service
+from app.schemas.production_schedule import ScheduleRead
+from app.schemas.routing_graph import RoutingGraphRead
+from app.services.production_scheduler import schedule_card
 from app.schemas.technical_card import (
     OrderManufacturingCompletenessRead,
     TechnicalCardApplyRoutingRequest,
@@ -132,10 +135,122 @@ from app.services.technical_cards import (
 )
 
 router = APIRouter(tags=["Technical cards"])
+
+from typing import Literal
+from app.schemas.technical_card_fulfillment import FulfillmentRead
+from app.services.technical_card_fulfillment import list_fulfillment, mark_shipped
+
+
+@router.get("/technical-cards/fulfillment/{fulfillment_status}", response_model=list[FulfillmentRead],
+            dependencies=[Depends(get_current_platform_user)], operation_id="list_technical_card_fulfillment")
+def list_card_fulfillment(fulfillment_status: Literal["ready_to_ship", "shipped"],
+                          limit: int = Query(500, ge=1, le=500), offset: int = Query(0, ge=0),
+                          db: Session = Depends(get_db)):
+    return list_fulfillment(db, fulfillment_status, limit=limit, offset=offset)
+
+
+@router.post("/technical-cards/{card_id}/mark-shipped", response_model=FulfillmentRead,
+             operation_id="mark_technical_card_shipped")
+def ship_card(card_id: int, db: Session = Depends(get_db),
+              actor: PlatformUser = Depends(require_permission(rbac_service.PERM_SHOP_KANBAN_TRANSITION))):
+    try:
+        card = mark_shipped(db, card_id, actor=actor)
+        return FulfillmentRead(id=card.id, number=card.number,
+            order_number=card.order.number if card.order else card.order_group.order_number,
+            model=card.product_model_name, quantity=card.quantity, fulfillment_status=card.fulfillment_status,
+            ready_to_ship_at=card.ready_to_ship_at, shipped_at=card.shipped_at, shipping_date=card.shipping_date)
+    except (TechnicalCardNotFoundError, TechnicalCardConflictError) as error:
+        db.rollback()
+        raise _http_error(error) from error
+
+from app.schemas.production_diagnostics import ProductionDiagnosticsRead
+from app.schemas.technical_card_readiness import TechnicalCardReadiness
+
+
+@router.get("/technical-cards/{card_id}/readiness", response_model=TechnicalCardReadiness,
+            dependencies=[Depends(get_current_platform_user)], operation_id="read_technical_card_readiness")
+def read_card_readiness(card_id: int, db: Session = Depends(get_db)) -> TechnicalCardReadiness:
+    from app.services.technical_card_readiness import read_readiness
+    try:
+        return read_readiness(db, card_id)
+    except TechnicalCardNotFoundError as error:
+        raise _http_error(error) from error
+
+
+@router.get("/technical-cards/{card_id}/production-diagnostics", response_model=ProductionDiagnosticsRead,
+            dependencies=[Depends(get_current_platform_user)], operation_id="read_technical_card_production_diagnostics")
+def read_card_production_diagnostics(card_id: int, db: Session = Depends(get_db)):
+    from app.services.production_diagnostics import card_diagnostics
+    try:
+        return card_diagnostics(db, card_id)
+    except TechnicalCardNotFoundError as error:
+        raise _http_error(error) from error
+
+from app.schemas.route_variants import RouteVariantRead, RouteVariantSelectionWrite, RouteVariantChangeRead
+
+
+@router.get("/technical-cards/{card_id}/route-variants", response_model=list[RouteVariantRead],
+            dependencies=[Depends(get_current_platform_user)], operation_id="read_technical_card_route_variants")
+def read_card_route_variants(card_id: int, db: Session = Depends(get_db)):
+    from app.services.route_variants import read_variant_selections
+    try:
+        return read_variant_selections(db, card_id)
+    except TechnicalCardNotFoundError as error:
+        raise _http_error(error) from error
+
+
+@router.patch("/technical-cards/{card_id}/route-variants/{group_id}", response_model=RouteVariantChangeRead,
+              operation_id="set_technical_card_route_variant")
+def patch_card_route_variant(card_id: int, group_id: str, payload: RouteVariantSelectionWrite,
+                             db: Session = Depends(get_db),
+                             actor: PlatformUser = Depends(require_permission(rbac_service.PERM_TECHNICAL_CARDS_CREATE))):
+    from app.services.route_variants import set_variant_selection
+    try:
+        return set_variant_selection(db, card_id, group_id, payload, actor=actor)
+    except (TechnicalCardNotFoundError, TechnicalCardValidationError, TechnicalCardConflictError) as error:
+        raise _http_error(error) from error
+
+
+@router.get("/technical-cards/{card_id}/route-graph", response_model=RoutingGraphRead,
+            dependencies=[Depends(get_current_platform_user)], operation_id="technical_card_route_graph_projection")
+def read_card_route_graph(card_id: int, db: Session = Depends(get_db)):
+    from app.services.routing_graph import read_card_graph, RoutingGraphNotFoundError
+    try:
+        return read_card_graph(db, card_id)
+    except RoutingGraphNotFoundError as error:
+        raise HTTPException(404, str(error)) from error
+
+
 _MAX_UNIT_LINE_IMPORT_BYTES = 5 * 1024 * 1024
 
 
+@router.post("/technical-cards/{card_id}/schedule", response_model=ScheduleRead,
+             dependencies=[Depends(require_permission(rbac_service.PERM_TECHNICAL_CARDS_CREATE))],
+             operation_id="schedule_technical_card")
+def schedule_technical_card(card_id: int, db: Session = Depends(get_db)) -> ScheduleRead:
+    try:
+        return schedule_card(db, card_id)
+    except (TechnicalCardNotFoundError, TechnicalCardConflictError) as error:
+        raise _http_error(error) from error
+
+
 def _http_error(error: Exception) -> HTTPException:
+    from app.services.calendar_plan_linkage import PlanLinkageConflict
+    if isinstance(error, PlanLinkageConflict):
+        return HTTPException(409, str(error), headers=error.headers)
+    from app.services.route_reapply import RouteReapplyConflict
+    if isinstance(error, RouteReapplyConflict):
+        import json
+        return HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(error), headers={
+            "X-Diagnostic-Code": error.code, "X-Diagnostic-Category": error.category,
+            "X-Diagnostic-Details": json.dumps([{key:d.debug_details[key] for key in
+                ("snapshot_node_id", "operation_id", "fact_status", "attempted_changes")}
+                for d in error.diagnostics[:10]], ensure_ascii=True),
+        })
+    from app.services.calendar_plan_lifecycle import CannotStartWithoutSavedPlan
+    if isinstance(error, CannotStartWithoutSavedPlan):
+        return HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(error),
+                             headers={"X-Diagnostic-Code": error.code, "X-Diagnostic-Category": error.category})
     if isinstance(error, (TechnicalCardNotFoundError, OrderManufacturingNotFoundError)):
         return HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(error))
     if isinstance(error, TechnicalCardConflictError):
@@ -931,10 +1046,7 @@ def rollback_stage_for_shop_kanban_endpoint(
         require_permission(rbac_service.PERM_SHOP_KANBAN_TRANSITION)
     ),
 ) -> TechnicalCardRead:
-    """Kanban rollback variant for shop testing.
-
-    Allows rolling back even when later stages are `in_progress`.
-    """
+    """Guarded reopen; later production facts cannot be reset by Kanban."""
     try:
         return _card_read(
             db,

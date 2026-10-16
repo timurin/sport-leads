@@ -17,6 +17,7 @@ from app.services.technical_card_stages import (
     current_stage_result,
     resolve_production_stage_code,
 )
+from app.services.calendar_plan_lifecycle import assert_saved_plan, operation_event
 
 TRANSFER_ACCEPT = "accept"
 TRANSFER_FORWARD = "forward"
@@ -31,7 +32,8 @@ SHIP_STAGE_CODES = frozenset({"ready_to_ship", "shipped"})
 
 
 def ordered_stages(card: TechnicalCard) -> list[TechnicalCardStageResult]:
-    return sorted(card.stage_results or [], key=lambda row: (row.stage_order, row.id))
+    from app.services.route_variants import active_stage_results
+    return sorted(active_stage_results(card), key=lambda row: (row.stage_order, row.id))
 
 
 def live_unit_lines(card: TechnicalCard) -> list[TechnicalCardUnitLine]:
@@ -109,7 +111,20 @@ def compute_wip_status(db: Session, card: TechnicalCard) -> str:
     return WIP_IN_WORK
 
 
+def assert_unit_location_plans(db: Session, card: TechnicalCard) -> None:
+    located = [stage for unit in live_unit_lines(card) if (stage := unit_location_stage(card, unit)) is not None]
+    if not located:
+        return
+    for stage in ordered_stages(card):
+        has_here = any(row.stage_order == stage.stage_order for row in located)
+        all_past = all(row.stage_order > stage.stage_order for row in located)
+        if has_here or (all_past and stage.status != TechnicalCardStageResultStatus.COMPLETED):
+            assert_saved_plan(db, stage)
+
+
 def sync_card_from_unit_locations(db: Session, card: TechnicalCard) -> None:
+    from app.services.technical_card_fulfillment import assert_not_shipped
+    assert_not_shipped(card)
     units = live_unit_lines(card)
     stages = ordered_stages(card)
     if not stages:
@@ -123,11 +138,9 @@ def sync_card_from_unit_locations(db: Session, card: TechnicalCard) -> None:
     if not located:
         return
 
-    orders = {stage.stage_order for _unit, stage in located}
-    lag_order = min(orders)
-    lag = next(stage for stage in stages if stage.stage_order == lag_order)
-    card.current_stage_order = lag.stage_order
-    card.current_stage_label = lag.stage_label
+    # Validate every implicit operation transition before mutating any fact.
+    assert_unit_location_plans(db, card)
+
     if card.status == TechnicalCardStatus.DRAFT:
         card.status = TechnicalCardStatus.IN_PROGRESS
 
@@ -138,13 +151,20 @@ def sync_card_from_unit_locations(db: Session, card: TechnicalCard) -> None:
             if stage.status == TechnicalCardStageResultStatus.PENDING:
                 stage.status = TechnicalCardStageResultStatus.IN_PROGRESS
                 stage.started_at = stage.started_at or now
+                operation_event(db, stage, "operation_started", "pending", reason="unit_location_sync", source="unit_wip")
             elif stage.status == TechnicalCardStageResultStatus.COMPLETED:
                 stage.status = TechnicalCardStageResultStatus.IN_PROGRESS
                 stage.completed_at = None
+                operation_event(db, stage, "operation_started", "completed", reason="unit_location_reopen", source="unit_wip")
         elif all_past:
             if stage.status != TechnicalCardStageResultStatus.COMPLETED:
+                if stage.status == TechnicalCardStageResultStatus.PENDING:
+                    stage.status = TechnicalCardStageResultStatus.IN_PROGRESS
+                    stage.started_at = stage.started_at or now
+                    operation_event(db, stage, "operation_started", "pending", reason="unit_location_sync", source="unit_wip")
                 stage.status = TechnicalCardStageResultStatus.COMPLETED
                 stage.completed_at = stage.completed_at or now
+                operation_event(db, stage, "operation_completed", "in_progress", reason="unit_location_sync", source="unit_wip")
 
     last = stages[-1]
     last_code = resolve_production_stage_code(
@@ -157,3 +177,6 @@ def sync_card_from_unit_locations(db: Session, card: TechnicalCard) -> None:
         last.completed_at = last.completed_at or now
     elif card.status == TechnicalCardStatus.COMPLETED and not all_on_last:
         card.status = TechnicalCardStatus.IN_PROGRESS
+    from app.services.technical_card_stages import _sync_current_stage, _maybe_complete_card
+    _sync_current_stage(card)
+    _maybe_complete_card(card, db)

@@ -109,6 +109,13 @@ def update_technical_card_model_assembly(
         )
 
     db.flush()
+    if card.product_model_id != previous_model_id:
+        # An explicit model choice accepts that model's route inputs. Keep
+        # unmarked legacy/shop values, but do not carry an old model's basis.
+        for line in card.operation_lines:
+            if line.source_kind == "routing" and line.volume_qty_per_item is not None:
+                line.volume = 0
+                line.volume_qty_per_item = None
     _sync_sewing_operation_lines(db, card)
     if card.product_model_id != previous_model_id:
         _sync_materials_to_composition(db, card, model_changed=True)

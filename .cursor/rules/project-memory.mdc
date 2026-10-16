@@ -1,0 +1,24 @@
+---
+description: Shared Codex and Cursor project memory, targeted context and conflict resolution.
+alwaysApply: true
+---
+
+# Shared context routing — PC-05.3
+
+Follow the repository `AGENTS.md`, especially “Shared project memory and targeted context”.
+Read the current task first, then `docs/architecture/SL-PROJECT-MEMORY-v1.md`.
+For frontend work, read relevant `UI-*` sections of `docs/architecture/SL-UI-CONTEXT-v1.md`.
+Identify the page/feature and affected entities before targeted code search.
+For API/data/guard changes, select exact `DF-*` sections in `docs/architecture/SL-DATA-FLOW-v1.md`
+and exact invariant rows in `docs/architecture/SL-INVARIANT-COVERAGE-v1.md`.
+Read concrete components/hooks/API clients; do not scan all frontend or backend.
+Do not read backend internals for presentation-only changes.
+Repo-wide rediscovery is forbidden unless the task requests an architecture audit,
+memory is stale, a new dependency is found, or code contradicts the documents.
+Record the conflict/dependency first; verify the minimal code scope, correct stale memory, continue.
+Do not reread entire maps, closed IC tasks or task history without a concrete need.
+Update only affected memory/DF/invariant/UI sections when their canonical state changes.
+Otherwise report `Project memory: no changes required`.
+Targeted checks first, required full project check once at the end; repeat only for changed evidence.
+Synchronize roadmap/ERP-check/HTML once in the final pass; do not repeat architecture in reports.
+Preserve protected shell contracts and all existing approval/commit restrictions.

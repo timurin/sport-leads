@@ -5,6 +5,7 @@ import { PageActions } from "@/components/layout/page-layout";
 type CardSize = "compact" | "default" | "spacious";
 
 export function SectionCard({
+  id,
   children,
   title,
   afterTitle,
@@ -15,6 +16,7 @@ export function SectionCard({
   className = "",
   collapsed = false,
 }: {
+  id?: string;
   children: ReactNode;
   title?: ReactNode;
   /** Rendered under the title (still in the header). */
@@ -34,6 +36,7 @@ export function SectionCard({
   }[size];
   return (
     <section
+      id={id}
       className={`min-w-0 rounded-portal-lg border border-portal-border bg-portal-surface shadow-portal-card ${className}`}
     >
       {title || description || actions ? (

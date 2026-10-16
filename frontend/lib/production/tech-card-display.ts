@@ -19,3 +19,13 @@ export function techCardVisibleNumber(card: {
   if (display) return display;
   return formatTechCardDisplayNumber(card.number, card.tech_cards_planned_count);
 }
+
+/** Canonical piece count. `4.000` and `4` are the same production quantity. */
+export function productionQuantityLabel(value: string | number | null | undefined): string {
+  if (value == null) return "—";
+  const text = String(value).trim();
+  if (!text) return "—";
+  const parsed = Number(text);
+  if (!Number.isFinite(parsed)) return text;
+  return String(parsed);
+}

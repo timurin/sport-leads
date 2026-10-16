@@ -2,6 +2,10 @@
 
 import { revalidatePath } from "next/cache";
 
+import { sessionAuthHeaders } from "@/lib/auth/api-headers";
+import { routingGraphBody, type RoutingGraphSource } from "@/lib/routing-graph-editor";
+import type { ProductionDiagnostic } from "@/lib/production/readiness-stickers";
+import type { RouteNodeReadiness } from "@/lib/route-readiness";
 import {
   validateShopRoutingCreateDraft,
   validateShopRoutingStages,
@@ -57,6 +61,7 @@ function stagesPayload(stages: ShopRoutingStageDraft[]) {
     tech_operation_id: stage.tech_operation_id,
     work_center_id: stage.work_center_id,
     is_quality_checkpoint: stage.is_quality_checkpoint,
+    is_required: stage.is_required !== false,
   }));
 }
 
@@ -92,6 +97,8 @@ export type ShopRoutingUpdatePayload = {
   code: string;
   is_active: boolean;
   stages: ShopRoutingStageDraft[];
+  dependency_mode?: "sequential" | "explicit";
+  edges?: { predecessor_stage_order: number; successor_stage_order: number }[];
 };
 
 export async function updateShopRouting(
@@ -114,6 +121,7 @@ export async function updateShopRouting(
       code: payload.code.trim() || null,
       is_active: payload.is_active,
       stages: stagesPayload(payload.stages),
+      ...(payload.dependency_mode ? { dependency_mode: payload.dependency_mode, edges: payload.edges ?? [] } : {}),
     }),
     cache: "no-store",
   });
@@ -123,6 +131,65 @@ export async function updateShopRouting(
   const routing = (await response.json()) as ShopRoutingTemplate;
   revalidateRouting(templateId);
   return { ok: true, routing };
+}
+
+export async function updateShopRoutingIdentity(
+  templateId: number,
+  payload: { name: string; code: string; is_active: boolean },
+): Promise<ShopRoutingActionResult> {
+  if (!payload.name.trim()) {
+    return { ok: false, message: "Укажите наименование маршрута" };
+  }
+  const auth = await sessionAuthHeaders();
+  const response = await fetch(`${apiBaseUrl()}/shop-routings/${templateId}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...auth },
+    body: JSON.stringify({
+      name: payload.name.trim(),
+      code: payload.code.trim() || null,
+      is_active: payload.is_active,
+    }),
+    cache: "no-store",
+  });
+  if (!response.ok) {
+    return { ok: false, message: await readError(response) };
+  }
+  const routing = (await response.json()) as ShopRoutingTemplate;
+  revalidateRouting(templateId);
+  return { ok: true, routing };
+}
+
+export async function getShopRoutingGraph(templateId: number): Promise<{
+  graph: RoutingGraphSource | null;
+  nodeReadiness: RouteNodeReadiness[];
+  diagnostics: ProductionDiagnostic[];
+}> {
+  const auth = await sessionAuthHeaders();
+  const response = await fetch(`${apiBaseUrl()}/shop-routings/${templateId}/graph`, {
+    headers: { ...auth },
+    cache: "no-store",
+  });
+  if (!response.ok) return { graph: null, nodeReadiness: [], diagnostics: [] };
+  const body = (await response.json()) as { graph?: RoutingGraphSource; node_readiness?: RouteNodeReadiness[]; diagnostics?: ProductionDiagnostic[] };
+  return { graph: body.graph ?? null, nodeReadiness: body.node_readiness ?? [], diagnostics: Array.isArray(body.diagnostics) ? body.diagnostics : [] };
+}
+
+export async function saveShopRoutingGraph(
+  templateId: number,
+  body: ReturnType<typeof routingGraphBody>,
+): Promise<{ ok: true } | { ok: false; message: string }> {
+  const auth = await sessionAuthHeaders();
+  const response = await fetch(`${apiBaseUrl()}/shop-routings/${templateId}/graph`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json", ...auth },
+    body: JSON.stringify(body),
+    cache: "no-store",
+  });
+  if (!response.ok) {
+    return { ok: false, message: await readError(response) };
+  }
+  revalidateRouting(templateId);
+  return { ok: true };
 }
 
 export async function deleteShopRouting(

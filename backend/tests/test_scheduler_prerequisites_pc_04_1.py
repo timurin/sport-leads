@@ -86,7 +86,9 @@ def planner():
                 working_days=[0, 1, 2, 3, 4],
             ),
         ])
-        db.commit()
+        db.flush()
+        from app.services.technical_cards import apply_routing_template
+        apply_routing_template(db, 1, template.id)
         template_id = template.id
     user = PlatformUser(id=1, login="planner", display_name="Planner", roles=[
         Role(code="planner", name="Planner", permissions=[Permission(code=PERM_TECHNICAL_CARDS_CREATE)])
@@ -250,9 +252,12 @@ def test_enqueue_stays_manual_and_two_route_steps_share_a_stage(planner):
         f"/production-calendar/assignments/{step_id}",
         json={"production_stage_id": 2, "planned_date": "2026-10-12", "position": 1},
     )
-    assert moved.status_code == 200, moved.text
-    assert moved.json()["routing_stage_line_id"] == 10
-    assert moved.json()["planning_mode"] == "auto"
+    # These pre-snapshot rows are deliberately legacy fixtures. IC-G02 refuses
+    # operation edits without a provable node; it never binds by order/position.
+    assert moved.status_code == 409, moved.text
+    assert moved.headers["X-Diagnostic-Code"] == "calendar_assignment_missing_snapshot"
+    with factory() as db:
+        assert db.get(CalendarAssignment, step_id).planned_date == date(2026, 10, 8)
     conflict = client.put(
         f"/production-calendar/assignments/{row['id']}",
         json={"production_stage_id": 2, "planned_date": "2026-10-12"},
@@ -271,15 +276,36 @@ def test_allocations_keep_units_days_and_resources_and_follow_the_assignment(pla
     )
     assignment_id = created.json()["id"]
     with factory() as db:
-        first = add_allocation(db, CalendarAllocationCreate(
+        # Operation allocations require a real applied node, unlike the entry
+        # marker. Keep the low-level storage/units test on a valid plan fixture.
+        from app.models.tech_operation import TechOperation
+        from app.models.technical_card import TechnicalCardStageResult
+        db.add(TechOperation(id=1, name="Print", code="print", volume_unit="pieces", production_stage_id=2))
+        node = db.scalar(select(TechnicalCardStageResult).where(TechnicalCardStageResult.technical_card_id == 1,
+            TechnicalCardStageResult.stage_order == 1))
+        node.tech_operation_id = 1
+        db.flush()
+        assignment = CalendarAssignment(technical_card_id=1, production_stage_id=2, stage_result_id=node.id,
+            routing_stage_line_id=10, planned_date=date(2026, 10, 7), planned_end_date=date(2026, 10, 8))
+        db.add(assignment)
+        db.commit()
+        assignment_id = assignment.id
+        # Deliberate legacy storage fixture; IC-G03 service writes now require
+        # verified complete Demand. Storage/FK tests do not fabricate norms.
+        def store_legacy(payload):
+            row = CalendarAllocation(**payload.model_dump())
+            db.add(row)
+            db.commit()
+            return row
+        first = store_legacy(CalendarAllocationCreate(
             assignment_id=assignment_id, resource_key="sewers", date=date(2026, 10, 7),
             allocated_amount=Decimal("1.5000"), capacity_unit="labor_hour",
         ))
-        second = add_allocation(db, CalendarAllocationCreate(
+        second = store_legacy(CalendarAllocationCreate(
             assignment_id=assignment_id, resource_key="sewers", date=date(2026, 10, 8),
             allocated_amount=Decimal("2"), capacity_unit="labor_hour",
         ))
-        third = add_allocation(db, CalendarAllocationCreate(
+        third = store_legacy(CalendarAllocationCreate(
             assignment_id=assignment_id, resource_key="plotter_1", date=date(2026, 10, 7),
             allocated_amount=Decimal("15"), capacity_unit="linear_meter",
         ))
@@ -289,7 +315,8 @@ def test_allocations_keep_units_days_and_resources_and_follow_the_assignment(pla
         assert [item.date for item in list_allocations(db, assignment_id)] == [
             date(2026, 10, 7), date(2026, 10, 7), date(2026, 10, 8),
         ]
-        with pytest.raises(AllocationError):
+        from app.services.calendar_plan_linkage import PlanLinkageConflict
+        with pytest.raises(PlanLinkageConflict):
             add_allocation(db, CalendarAllocationCreate(
                 assignment_id=assignment_id, resource_key="sewers", date=date(2026, 10, 7),
                 allocated_amount=Decimal("1"), capacity_unit="labor_hour",

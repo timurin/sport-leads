@@ -161,7 +161,7 @@ export function ProductModelRoutingAddDrawer({
       title="Добавить маршрут"
       description="Выберите пресет — операции подтянутся из справочника. Укажите норму на 1 изделие (план)."
       onClose={resetAndClose}
-      variant="overlay"
+      variant="nested"
     >
       <form onSubmit={(event) => void submit(event)} className="flex h-full min-h-0 flex-col">
         <div className="min-h-0 flex-1 space-y-portal-5 overflow-y-auto p-portal-6">

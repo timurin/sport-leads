@@ -12,7 +12,6 @@ import {
   Star,
   Trash2,
 } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
 import {
@@ -22,6 +21,7 @@ import {
   setProductModelDefaultRouting,
   updateProductModelRouting,
 } from "@/app/(workspace)/settings/catalogs/product-models/product-model-actions";
+import { useProductModelCardReload } from "@/components/settings/product-model-full-card-frame";
 import { ProductModelRoutingAddDrawer } from "@/components/settings/product-model-routing-add-drawer";
 import { Button, IconButton } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -46,6 +46,7 @@ type ProductModelRoutingsBlockProps = {
   modelId: number;
   defaultRoutingTemplateId: number | null;
   links: ProductModelRoutingLink[];
+  expandTemplateId?: number | null;
   shopRoutings: ShopRoutingTemplate[];
   /** Reserved / page wiring; operation rows come from routing preset stage lines. */
   productionStages?: ProductionStage[];
@@ -57,12 +58,14 @@ export function ProductModelRoutingsBlock({
   modelId,
   defaultRoutingTemplateId,
   links,
+  expandTemplateId = null,
   shopRoutings,
   techOperations,
 }: ProductModelRoutingsBlockProps) {
-  const router = useRouter();
+  const refreshCard = useProductModelCardReload();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [expandedIds, setExpandedIds] = useState<Set<number>>(() => new Set());
+  const [seenTemplateId, setSeenTemplateId] = useState<number | null>(expandTemplateId ?? null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -78,6 +81,21 @@ export function ProductModelRoutingsBlock({
     return map;
   }, [techOperations]);
 
+  if (expandTemplateId !== seenTemplateId) {
+    setSeenTemplateId(expandTemplateId ?? null);
+    if (expandTemplateId != null) {
+      const link = links.find((row) => row.shop_routing_template_id === expandTemplateId);
+      if (link) {
+        setExpandedIds((current) => {
+          if (current.has(link.id)) return current;
+          const next = new Set(current);
+          next.add(link.id);
+          return next;
+        });
+      }
+    }
+  }
+
   const ordered = useMemo(
     () => [...links].sort((a, b) => a.sort_order - b.sort_order || a.id - b.id),
     [links],
@@ -89,12 +107,13 @@ export function ProductModelRoutingsBlock({
     setBusy(true);
     setError(null);
     const result = await action();
-    setBusy(false);
     if (!result.ok) {
+      setBusy(false);
       setError(result.message);
       return false;
     }
-    router.refresh();
+    await refreshCard();
+    setBusy(false);
     return true;
   };
 
@@ -168,6 +187,7 @@ export function ProductModelRoutingsBlock({
   };
 
   return (
+    <div id="product-model-route-norms">
     <SectionCard
       title="Варианты маршрутов"
       description="Whitelist цеховых пресетов модели и нормы расхода на 1 изделие (план). Справочник маршрутов не дублируется."
@@ -349,10 +369,13 @@ export function ProductModelRoutingsBlock({
           links={links}
           techOperations={techOperations}
           onClose={() => setDrawerOpen(false)}
-          onSaved={() => router.refresh()}
+          onSaved={() => {
+            void refreshCard();
+          }}
         />
       </div>
     </SectionCard>
+    </div>
   );
 }
 

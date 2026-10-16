@@ -68,6 +68,7 @@ def test_platform_system_settings_read_and_update_as_admin() -> None:
             assert body["organization_display_name"] == "Sport-Lead"
             assert body["default_timezone"] == "Europe/Moscow"
             assert body["ui_locale"] == "ru-RU"
+            assert body["debug_mode"] is False
 
             put_response = client.put(
                 "/platform-system-settings",
@@ -77,6 +78,7 @@ def test_platform_system_settings_read_and_update_as_admin() -> None:
                     "support_email": "ops@example.com",
                     "ui_locale": "en-US",
                     "notes": "Demo install",
+                    "debug_mode": True,
                 },
             )
             assert put_response.status_code == 200, put_response.text
@@ -86,10 +88,16 @@ def test_platform_system_settings_read_and_update_as_admin() -> None:
             assert updated["support_email"] == "ops@example.com"
             assert updated["ui_locale"] == "en-US"
             assert updated["notes"] == "Demo install"
+            assert updated["debug_mode"] is True
 
             reload = client.get("/platform-system-settings")
             assert reload.status_code == 200
             assert reload.json()["organization_display_name"] == "Sport Lead Demo"
+            assert reload.json()["debug_mode"] is True
+            payload = {key: updated[key] for key in ("organization_display_name", "default_timezone", "support_email", "ui_locale", "notes")}
+            assert client.put("/platform-system-settings", json=payload).json()["debug_mode"] is True
+            assert client.put("/platform-system-settings", json={**payload, "debug_mode": None}).status_code == 422
+            assert client.put("/platform-system-settings", json={**payload, "debug_mode": False}).json()["debug_mode"] is False
     finally:
         app.dependency_overrides.pop(get_db, None)
 
@@ -119,6 +127,7 @@ def test_platform_system_settings_put_forbidden_without_permission() -> None:
                 "/platform-system-settings",
                 json={
                     "organization_display_name": "Blocked",
+                    "debug_mode": True,
                     "default_timezone": "UTC",
                     "support_email": None,
                     "ui_locale": "ru-RU",

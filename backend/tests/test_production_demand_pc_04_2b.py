@@ -33,6 +33,7 @@ from app.models.technical_card import (
     TechnicalCardOrderGroup,
 )
 from app.services.production_demand import calculate_demands
+from app.services.route_snapshot import copy_template_snapshot
 from app.services.production_demand_snapshot import (
     AppliedSewingRow,
     CardDemandSnapshot,
@@ -149,6 +150,7 @@ def demand_client():
                 volume=Decimal("300"), stage_order=2, production_stage_id=1, stage_label="Печать",
             ),
         ])
+        copy_template_snapshot(db, db.get(TechnicalCard, 1))
         db.commit()
         group_id = group.id
     writes: list[str] = []
@@ -297,9 +299,13 @@ def test_missing_meters_missing_link_and_endpoint_does_not_change_rows(demand_cl
         line = db.scalar(select(TechnicalCardOperationLine).where(TechnicalCardOperationLine.tech_operation_id == 1))
         line.volume = Decimal("0")
         db.add(TechOperation(id=8, name="Без ресурса", code="bare", volume_unit=TechOperationVolumeUnit.PIECES, production_stage_id=3))
-        db.add(ShopRoutingStageLine(
+        line = ShopRoutingStageLine(
             id=17, routing_template_id=1, stage_order=8, production_stage_id=3, stage_label="Пусто", tech_operation_id=8,
-        ))
+        )
+        db.add(line)
+        db.flush()
+        from app.services.route_snapshot import append_snapshot_line
+        append_snapshot_line(db, db.get(TechnicalCard, 1), line)
         db.commit()
     body = client.get("/technical-cards/1/demand").json()
     assert demand(body, 11, "meter_press")["details"]["reason_code"] == "missing_linear_meters"
@@ -323,10 +329,14 @@ def test_second_sewing_step_does_not_reuse_the_same_norm(demand_client):
             id=9, name="Пошив ещё раз", code="sew-again", volume_unit=TechOperationVolumeUnit.PIECES, production_stage_id=2,
         ))
         db.flush()
-        db.add(ShopRoutingStageLine(
+        line = ShopRoutingStageLine(
             id=18, routing_template_id=1, stage_order=9, production_stage_id=2, stage_label="Пошив 2", tech_operation_id=9,
-        ))
+        )
+        db.add(line)
+        db.flush()
         db.add(TechOperationCapacityResource(tech_operation_id=9, resource_key="sewers"))
+        from app.services.route_snapshot import append_snapshot_line
+        append_snapshot_line(db, db.get(TechnicalCard, 1), line)
         db.commit()
     body = client.get("/technical-cards/1/demand").json()
     assert demand(body, 10, "sewers")["amount"] == "200"

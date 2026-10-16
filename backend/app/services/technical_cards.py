@@ -143,6 +143,7 @@ def _card_load_options(db: Session):
         selectinload(TechnicalCard.unit_lines),
         selectinload(TechnicalCard.operation_lines),
         selectinload(TechnicalCard.stage_results),
+        selectinload(TechnicalCard.route_edges),
     ]
 
     if _technical_card_media_table_available(db):
@@ -163,7 +164,7 @@ def _card_load_options(db: Session):
 
 def _list_card_load_options():
     """Slim list load — stage_results only (`0.2.3.3`)."""
-    return (selectinload(TechnicalCard.stage_results),)
+    return (selectinload(TechnicalCard.stage_results),selectinload(TechnicalCard.route_edges))
 
 
 def tech_card_media_content_url(card_id: int, media_id: int) -> str:
@@ -171,6 +172,8 @@ def tech_card_media_content_url(card_id: int, media_id: int) -> str:
 
 
 def to_technical_card_read(db: Session, card: TechnicalCard) -> TechnicalCardRead:
+    from app.services.production_state import load_states
+    load_states(db,[card])
     order = card.order
     if order is None and card.sales_order_id is not None:
         order = db.get(SalesOrder, card.sales_order_id)
@@ -261,10 +264,14 @@ def to_technical_card_read(db: Session, card: TechnicalCard) -> TechnicalCardRea
             product_model_cover_image_url = model.cover_image_url.strip()
 
     data = {column.name: getattr(card, column.name) for column in TechnicalCard.__table__.columns}
+    from app.services.persisted_plan import read_persisted_plan
+    data["planning_summary"] = read_persisted_plan(db, card, state=card._production_state)
     data["composition_lines"] = list(card.composition_lines)
     data["unit_lines"] = list(card.unit_lines)
     data["operation_lines"] = list(card.operation_lines)
     data["stage_results"] = list(card.stage_results)
+    from app.services.technical_card_fact_projection import fact_projection
+    data.update(fact_projection(card))
     data["media_items"] = media_items
     data["assembly_sewing_operations"] = assembly_sewing_operations
     data["product_model_cover_image_url"] = product_model_cover_image_url
@@ -354,6 +361,8 @@ def to_technical_card_list_read(
         for column in TechnicalCard.__table__.columns
     }
     data["stage_results"] = list(card.stage_results)
+    from app.services.technical_card_fact_projection import fact_projection
+    data.update(fact_projection(card))
     data["order_number"] = order_number
     data["client_name"] = None
     data["responsible_name"] = responsible_name
@@ -379,7 +388,7 @@ def list_technical_cards_for_order(db: Session, order_id: int) -> list[Technical
     order = db.get(SalesOrder, order_id)
     if order is None:
         raise TechnicalCardNotFoundError("Order not found")
-    return list(
+    rows = list(
         db.scalars(
             select(TechnicalCard)
             .options(*_list_card_load_options())
@@ -387,6 +396,9 @@ def list_technical_cards_for_order(db: Session, order_id: int) -> list[Technical
             .order_by(TechnicalCard.card_seq, TechnicalCard.id)
         ).all()
     )
+    from app.services.production_state import load_states
+    load_states(db,rows)
+    return rows
 
 
 def list_technical_cards(
@@ -422,13 +434,7 @@ def list_technical_cards(
         statement = statement.where(TechnicalCard.sales_order_id == sales_order_id)
     if order_group_id is not None:
         statement = statement.where(TechnicalCard.order_group_id == order_group_id)
-    if status and status.strip():
-        statement = statement.where(TechnicalCard.status == status.strip())
-    if stage and stage.strip():
-        pattern = f"%{stage.strip().lower()}%"
-        statement = statement.where(
-            func.lower(func.coalesce(TechnicalCard.current_stage_label, "")).like(pattern)
-        )
+    state_filtered = bool((status and status.strip()) or (stage and stage.strip()))
     if search and search.strip():
         pattern = f"%{search.strip().lower()}%"
         statement = statement.where(
@@ -441,12 +447,18 @@ def list_technical_cards(
                 pattern
             )
         )
-    statement = (
-        statement.order_by(TechnicalCard.updated_at.desc(), TechnicalCard.id.desc())
-        .offset(offset)
-        .limit(limit)
-    )
+    statement = statement.order_by(TechnicalCard.updated_at.desc(), TechnicalCard.id.desc())
+    if not state_filtered:
+        statement = statement.offset(offset).limit(limit)
     rows = db.execute(statement).unique().all()
+    from app.services.production_state import load_states
+    states = load_states(db, [row[0] for row in rows])
+    if state_filtered:
+        rows = [row for row in rows
+                if (not status or states[row[0].id].lifecycle_status == status.strip())
+                and (not stage or stage.strip().lower() in
+                     (states[row[0].id].current_workshop_name or "").lower())]
+        rows = rows[offset:offset + limit]
     return [
         (card, order_number, planned_count, desired_date)
         for card, order_number, planned_count, desired_date in rows
@@ -567,12 +579,23 @@ def _operation_line_source_value(line: TechnicalCardOperationLine) -> str:
     return kind.value if isinstance(kind, TechnicalCardOperationLineSourceKind) else str(kind)
 
 
-def _apply_routing_template(db: Session, card: TechnicalCard, template) -> None:
-    """Clear routing-sourced op lines + all stage_results; rebuild from template.
+def _apply_routing_template(db: Session, card: TechnicalCard, template) -> bool:
+    """Reapply future route inputs while retaining production facts and bindings.
 
     After packaging, append FG stages `ready_to_ship` → `shipped` when missing
-    (ADR-019 / 11.2.2.2).
+    (ADR-019 / 11.2.2.2). The copied stage rows and edges are the immutable snapshot.
     """
+    from app.services.route_snapshot import bind_applied_snapshot, validate_template_graph
+    from app.services.route_verification import assert_safe_refresh, record_applied_route
+
+    assert_safe_refresh(db, card)
+    validate_template_graph(db, template)
+    from app.services.route_reapply import apply_preserving_facts
+    if apply_preserving_facts(db, card, template):
+        record_applied_route(db, card)
+        return True
+    if card.status == TechnicalCardStatus.COMPLETED:
+        raise TechnicalCardConflictError("Completed card has no provable production snapshot")
     card.routing_template_id = template.id
     card.routing_template_name = template.name
 
@@ -580,6 +603,8 @@ def _apply_routing_template(db: Session, card: TechnicalCard, template) -> None:
         if _operation_line_source_value(row) == TechnicalCardOperationLineSourceKind.ROUTING.value:
             card.operation_lines.remove(row)
             db.delete(row)
+    from app.services.calendar_plan_lifecycle import detach_for_nodes
+    detach_for_nodes(db, [row.id for row in card.stage_results], reason="snapshot_reapplied")
     for row in list(card.stage_results):
         card.stage_results.remove(row)
         db.delete(row)
@@ -626,16 +651,18 @@ def _apply_routing_template(db: Session, card: TechnicalCard, template) -> None:
         op_sequence += 1
 
     _append_finished_goods_stages(db, card)
+    db.flush()
+    bind_applied_snapshot(db, card, template)
 
-    if first_stage is not None:
-        card.current_stage_order = first_stage.stage_order
-        card.current_stage_label = first_stage.stage_label
+    from app.services.technical_card_stages import _sync_current_stage
+    _sync_current_stage(card)
     from app.services.tech_card_qr import ensure_qr_token
     from app.services.tech_card_wip import seed_unit_locations_from_first_stage
 
     seed_unit_locations_from_first_stage(card)
     ensure_qr_token(db, card)
     db.flush()
+    return False
 
 
 FG_STAGE_CODES = ("ready_to_ship", "shipped")
@@ -661,27 +688,8 @@ def _stage_codes_on_card(db: Session, card: TechnicalCard) -> set[str]:
 
 def _append_finished_goods_stages(db: Session, card: TechnicalCard) -> None:
     """Append ready_to_ship → shipped after packaging when template omits them."""
-    codes = _stage_codes_on_card(db, card)
-    if "packaging" not in codes:
-        return
-    if "ready_to_ship" in codes or "shipped" in codes:
-        return
-    if not card.stage_results:
-        return
-
-    max_order = max(row.stage_order for row in card.stage_results)
-    for offset, code in enumerate(FG_STAGE_CODES, start=1):
-        stage = db.scalar(select(ProductionStage).where(ProductionStage.code == code))
-        if stage is None or not stage.is_active:
-            continue
-        card.stage_results.append(
-            TechnicalCardStageResult(
-                stage_order=max_order + offset,
-                production_stage_id=stage.id,
-                stage_label=stage.name,
-                status=TechnicalCardStageResultStatus.PENDING,
-            )
-        )
+    # PC-06.1A v2: fulfillment is separate; retain existing snapshots only.
+    return
 
 
 def _resolve_sewing_stage_binding(
@@ -707,6 +715,61 @@ def _resolve_sewing_stage_binding(
     if sewing_stage is not None:
         return None, sewing_stage.name, sewing_stage.id
     return None, None, None
+
+
+def _fill_missing_routing_operation_volumes(db: Session, card: TechnicalCard, *, excluded_stage_orders: set[int] | None = None) -> int:
+    """Snapshot existing operation inputs; never infer meters from pieces alone.
+
+    Explicit route reapplication recreates inputs. Existing positive shop values
+    remain untouched when model/assembly binding fills still-empty rows.
+    """
+    quantity = Decimal(card.quantity)
+    if not quantity.is_finite() or quantity <= 0:
+        return 0
+    link = product_model_routings_repo.get_link_by_template(
+        db, card.product_model_id, card.routing_template_id
+    ) if card.product_model_id is not None and card.routing_template_id is not None else None
+    norms = list(link.operation_norms) if link is not None and link.is_active else []
+    filled = 0
+    for line in card.operation_lines:
+        if excluded_stage_orders and line.stage_order in excluded_stage_orders:
+            continue
+        if _operation_line_source_value(line) != TechnicalCardOperationLineSourceKind.ROUTING.value or line.volume != 0:
+            continue
+        if line.volume_unit not in (TechOperationVolumeUnit.PIECES, TechOperationVolumeUnit.LINEAR_METERS):
+            continue
+        # An operation-specific norm cannot be borrowed by another operation in
+        # the same workshop. A unique workshop default is an explicit fallback.
+        compatible = [norm for norm in norms if norm.production_stage_id in (None, line.production_stage_id)]
+        specific = [norm for norm in compatible if norm.tech_operation_id == line.tech_operation_id]
+        defaults = [norm for norm in compatible if norm.tech_operation_id is None
+                    and norm.production_stage_id == line.production_stage_id]
+        matched = specific or defaults
+        if matched:
+            if len(matched) != 1 or matched[0].unit != line.volume_unit or matched[0].norm_qty_per_item <= 0:
+                continue
+            basis = matched[0].norm_qty_per_item
+        elif line.volume_unit == TechOperationVolumeUnit.PIECES:
+            # An ordinary piece operation consumes one item when no variant
+            # norm is configured. A configured norm always takes precedence.
+            basis = Decimal("1")
+        else:
+            continue
+        line.volume = compute_planned_qty_hint(basis, quantity)
+        line.volume_qty_per_item = basis
+        filled += 1
+    return filled
+
+
+def _refresh_derived_operation_volumes(card: TechnicalCard) -> None:
+    """Rebase accepted inputs on quantity without reading live catalog norms."""
+    for line in card.operation_lines:
+        if line.volume_qty_per_item is None:
+            continue
+        volume = compute_planned_qty_hint(line.volume_qty_per_item, card.quantity)
+        if volume > Decimal("99999999999.999"):
+            raise TechnicalCardValidationError("Calculated operation volume exceeds storage precision")
+        line.volume = volume
 
 
 def _sync_sewing_operation_lines(db: Session, card: TechnicalCard) -> None:
@@ -750,7 +813,8 @@ def _sync_sewing_operation_lines(db: Session, card: TechnicalCard) -> None:
                 sewing_operation_id=snap.sewing_operation_id,
                 operation_name=snap.operation_name,
                 volume_unit=TechOperationVolumeUnit.PIECES,
-                volume=Decimal("0"),
+                volume=Decimal(card.quantity) * Decimal(snap.quantity_per_item),
+                volume_qty_per_item=Decimal(snap.quantity_per_item) if snap.quantity_per_item > 0 else None,
                 stage_order=stage_order,
                 production_stage_id=production_stage_id,
                 stage_label=stage_label,
@@ -778,6 +842,8 @@ def _sync_sewing_operation_lines(db: Session, card: TechnicalCard) -> None:
     ]
     for index, line in enumerate([*routing_lines, *sewing_lines], start=1):
         line.sequence = index
+    _fill_missing_routing_operation_volumes(db, card)
+    _refresh_derived_operation_volumes(card)
     db.flush()
 
 
@@ -833,29 +899,19 @@ def _apply_routing_snapshot_from_model(
         _sync_sewing_operation_lines(db, card)
         return
 
-    _apply_routing_template(db, card, template)
-    _sync_sewing_operation_lines(db, card)
+    preserved = _apply_routing_template(db, card, template)
+    if not preserved:
+        _sync_sewing_operation_lines(db, card)
 
 
 def apply_routing_template(
     db: Session, card_id: int, routing_template_id: int
 ) -> TechnicalCard:
-    card = get_technical_card(db, card_id)
-
-    if card.status == TechnicalCardStatus.DRAFT:
-        pass
-    elif card.status == TechnicalCardStatus.IN_PROGRESS:
-        if any(
-            row.status == TechnicalCardStageResultStatus.COMPLETED
-            for row in card.stage_results
-        ):
-            raise TechnicalCardConflictError(
-                "Cannot apply routing after a stage has been completed"
-            )
-    else:
+    from app.services.technical_card_stages import _locked_technical_card
+    card = _locked_technical_card(db, card_id)
+    if card.status == TechnicalCardStatus.CANCELLED:
         raise TechnicalCardConflictError(
-            "Routing can only be applied while the card is draft or in progress "
-            "with no completed stages"
+            "Cancelled technical card cannot reapply routing"
         )
 
     from app.repositories import shop_routings as shop_routings_repo
@@ -870,7 +926,10 @@ def apply_routing_template(
         db, card.product_model_id, routing_template_id
     )
 
-    _apply_routing_template(db, card, template)
+    preserved = _apply_routing_template(db, card, template)
+    if preserved:
+        db.commit()
+        return get_technical_card(db, card_id)
     _sync_sewing_operation_lines(db, card)
     # BOM prefill is SoT on model bind; do not rewrite manager materials when BOM exists.
     if not _model_has_material_bom(db, card.product_model_id):
@@ -1028,6 +1087,7 @@ def sync_unit_lines(db: Session, card: TechnicalCard, item: SalesOrderItem) -> T
     target = unit_line_count_from_quantity(item.quantity)
     settings = get_technical_card_settings(db)
     card.quantity = item.quantity
+    _refresh_derived_operation_volumes(card)
     lines = sorted(card.unit_lines, key=lambda row: row.unit_index)
 
     while len(lines) < target:
@@ -1303,6 +1363,7 @@ def _sync_route_required_materials_to_composition(db: Session, card: TechnicalCa
             row.nomenclature_id,
             row.production_stage_id,
             row.snapshot_name,
+            row.tech_operation_id,
         ): row
         for row in card.composition_lines
         if (
@@ -1310,6 +1371,27 @@ def _sync_route_required_materials_to_composition(db: Session, card: TechnicalCa
             == TechnicalCardCompositionLineKind.MATERIAL.value
         )
     }
+
+    live_operation_ids = {row.tech_operation_id for row in route_ops}
+    for row in list(card.composition_lines):
+        kind = row.line_kind.value if hasattr(row.line_kind, "value") else str(row.line_kind)
+        if (
+            kind == TechnicalCardCompositionLineKind.MATERIAL.value
+            and row.tech_operation_id is not None
+            and row.tech_operation_id not in live_operation_ids
+            and row.fact_qty is None
+        ):
+            existing_keys.pop(
+                (
+                    row.nomenclature_id,
+                    row.production_stage_id,
+                    row.snapshot_name,
+                    row.tech_operation_id,
+                ),
+                None,
+            )
+            card.composition_lines.remove(row)
+            db.delete(row)
 
     max_sequence = max((row.sequence for row in card.composition_lines), default=0)
     for op_line in route_ops:
@@ -1329,7 +1411,12 @@ def _sync_route_required_materials_to_composition(db: Session, card: TechnicalCa
             material_unit = getattr(material.nomenclature, "unit", None)
             if material_name is None:
                 continue
-            key = (material.nomenclature_id, op_line.production_stage_id, material_name)
+            key = (
+                material.nomenclature_id,
+                op_line.production_stage_id,
+                material_name,
+                op_line.tech_operation_id,
+            )
             target = existing_keys.get(key)
             planned_qty, norm_unit = resolve_composition_planned_qty_hint(
                 db,
@@ -1354,6 +1441,7 @@ def _sync_route_required_materials_to_composition(db: Session, card: TechnicalCa
                     nomenclature_id=material.nomenclature_id,
                     snapshot_name=material_name,
                     production_stage_id=op_line.production_stage_id,
+                    tech_operation_id=op_line.tech_operation_id,
                 )
                 card.composition_lines.append(target)
                 existing_keys[key] = target
@@ -1700,6 +1788,7 @@ def _append_composition_lines(
                 planned_qty=planned_qty,
                 fact_qty=None,
                 production_stage_id=line.production_stage_id,
+                tech_operation_id=line.tech_operation_id,
                 unit=unit,
                 notes=line.notes,
             )
@@ -1733,7 +1822,8 @@ def set_composition_line_fact_qty(
     Bind rule (`11.5.4` / `11.6.4`): when `shop_stage_code` is set, the line must
     belong to that ProductionStage and the card's current routing step must match.
     """
-    card = get_technical_card(db, card_id)
+    from app.services.technical_card_stages import _locked_technical_card
+    card = _locked_technical_card(db, card_id)
     if card.status == TechnicalCardStatus.CANCELLED:
         raise TechnicalCardValidationError(
             "Cannot set fact_qty on a cancelled technical card"
@@ -2036,23 +2126,46 @@ def bulk_update_unit_lines(
     return get_technical_card(db, card_id)
 
 
+def set_technical_card_quantity(
+    db: Session,
+    card_id: int,
+    quantity: Decimal,
+) -> TechnicalCard:
+    """Explicit piece-count change. Personalization saves do not call this."""
+    card = get_technical_card(db, card_id)
+    _assert_unit_lines_editable(card)
+    if card.sales_order_item_id is not None:
+        raise TechnicalCardValidationError("Quantity follows the sales order item")
+    try:
+        qty = Decimal(quantity)
+    except (InvalidOperation, TypeError) as error:
+        raise TechnicalCardValidationError("Invalid quantity") from error
+    if not qty.is_finite() or qty <= 0 or qty != qty.to_integral_value():
+        raise TechnicalCardValidationError(
+            "Technical card quantity must be a whole positive number"
+        )
+    card.quantity = qty
+    _refresh_derived_operation_volumes(card)
+    db.commit()
+    return get_technical_card(db, card_id)
+
+
 def replace_unit_lines(
     db: Session,
     card_id: int,
     lines: list[TechnicalCardUnitLineWrite],
 ) -> TechnicalCard:
-    """Replace characteristic fields for all unit rows; count must equal quantity."""
+    """Replace personalization rows. Standalone quantity stays canonical."""
     card = get_technical_card(db, card_id)
     _assert_unit_lines_editable(card)
     expected, order_item = _unit_line_expectation(db, card)
     if order_item is None:
-        # Contour B / no order item: personalization sum defines card.quantity.
+        # Personalization describes pieces. It does not replace TechnicalCard.quantity.
         if len(lines) < 1:
             raise TechnicalCardValidationError(
                 "Нужна хотя бы одна строка персонализации"
             )
         expected = len(lines)
-        card.quantity = Decimal(expected)
     elif len(lines) != expected:
         raise TechnicalCardValidationError(
             f"Unit line count must equal order quantity ({expected})"
@@ -2082,8 +2195,7 @@ def replace_unit_lines(
         target.notes = payload.notes
     if order_item is not None:
         card.quantity = order_item.quantity
-    else:
-        card.quantity = Decimal(expected)
+        _refresh_derived_operation_volumes(card)
     db.commit()
     return get_technical_card(db, card_id)
 
@@ -2128,9 +2240,8 @@ def import_unit_lines(
             "Сумма значений в колонке «Количество» должна быть не меньше 1"
         )
     if order_item is None:
-        # Create without qty (26.11.14): personalization import defines card.quantity.
-        card.quantity = Decimal(total)
-        db.flush()
+        # Import fills personalization rows. Canonical quantity stays on the card.
+        pass
     elif total != expected:
         raise TechnicalCardValidationError(
             f"Сумма значений в колонке «Количество» должна совпадать с количеством в заказе ({expected})"
@@ -2585,6 +2696,7 @@ def update_operation_line_volume(
             )
 
     line.volume = volume
+    line.volume_qty_per_item = None
     if update_cutting_method:
         _assert_cutting_method(
             cutting_method,

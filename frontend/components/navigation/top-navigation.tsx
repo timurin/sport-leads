@@ -1,6 +1,7 @@
 "use client";
 
 import {
+Bug,
 ChevronDown,
 Menu,
 Plus,
@@ -19,6 +20,7 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 
+import { PlatformDebugCenter } from "@/components/platform/platform-debug-center";
 import {
   appSections,
   getSectionByPathname,
@@ -170,9 +172,10 @@ function TopNavSectionMenu({
 
 type TopNavigationProps = {
   sections?: AppSection[];
+  debugMode?: boolean;
 };
 
-export function TopNavigation({ sections = appSections }: TopNavigationProps) {
+export function TopNavigation({ sections = appSections, debugMode = false }: TopNavigationProps) {
 const pathname = usePathname();
 const section = getSectionByPathname(pathname, sections);
 const contourGroups = useMemo(
@@ -187,6 +190,7 @@ useState(false);
 
 const [searchOpen, setSearchOpen] = useState(false);
 const [searchQuery, setSearchQuery] = useState("");
+const [debugOpen, setDebugOpen] = useState(false);
 
 const searchInputRef =
   useRef<HTMLInputElement | null>(null);
@@ -537,6 +541,19 @@ return ( <header data-sl-shell="v1" className="sl-shell-v1 relative z-portal-she
           <Search size={16} aria-hidden="true" />
         </button>
 
+        {debugMode ? (
+          <button
+            type="button"
+            data-platform-debug-button
+            aria-label="Debug"
+            title="Debug"
+            onClick={() => setDebugOpen(true)}
+            className="flex h-8 w-8 items-center justify-center rounded-md border border-portal-border bg-portal-surface text-portal-muted outline-none transition-colors hover:border-portal-border-strong hover:bg-portal-surface-secondary hover:text-portal-text focus-visible:ring-2 focus-visible:ring-portal-focus-ring"
+          >
+            <Bug size={16} aria-hidden="true" />
+          </button>
+        ) : null}
+
         <Link
           href="/settings"
           data-settings-topbar-link
@@ -786,6 +803,7 @@ return ( <header data-sl-shell="v1" className="sl-shell-v1 relative z-portal-she
     </div>
   )}
   </div>
+  {debugMode && debugOpen ? <PlatformDebugCenter pathname={pathname} onClose={() => setDebugOpen(false)} /> : null}
 </header>
 );
 }

@@ -55,7 +55,7 @@ function PlanningWeek({ date, assignmentId, onRetry }: { date: string; assignmen
   const [result, setResult] = useState<{ board: CalendarBoard | null; error: string }>({ board: null, error: "" });
   useEffect(() => {
     const controller = new AbortController();
-    calendarRequest<CalendarBoard>(calendarBoardPath(date), { signal: controller.signal })
+    calendarRequest<CalendarBoard>(calendarBoardPath(date, true), { signal: controller.signal })
       .then((board) => { if (!controller.signal.aborted) setResult({ board, error: "" }); })
       .catch((error: unknown) => {
         if (!controller.signal.aborted) setResult({ board: null, error: error instanceof Error ? error.message : "Не удалось загрузить назначения" });

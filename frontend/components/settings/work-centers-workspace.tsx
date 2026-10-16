@@ -7,6 +7,7 @@ import {
   FilterX,
   Folder,
   FolderOpen,
+  Gauge,
   Pencil,
   Plus,
   Trash2,
@@ -19,6 +20,7 @@ import {
   deleteWorkCenter,
   updateWorkCenter,
 } from "@/app/(workspace)/settings/catalogs/work-centers/work-center-actions";
+import { WorkCenterCapacityDrawer } from "@/components/settings/work-center-capacity-drawer";
 import { WorkCenterCreateDrawer } from "@/components/settings/work-center-create-drawer";
 import {
   CatalogTreeDepthCell,
@@ -57,9 +59,11 @@ import {
 export function WorkCentersWorkspace({
   workCenters,
   productionStages,
+  initialCapacityId = null,
 }: {
   workCenters: WorkCenter[];
   productionStages: ProductionStage[];
+  initialCapacityId?: number | null;
 }) {
   const router = useRouter();
   const [created, setCreated] = useState<WorkCenter[]>([]);
@@ -71,6 +75,7 @@ export function WorkCentersWorkspace({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
+  const [capacityId, setCapacityId] = useState<number | null>(initialCapacityId);
   const [createStageId, setCreateStageId] = useState<number | null>(null);
   const [expandedIds, setExpandedIds] = useState<Set<number>>(
     () => new Set(productionStages.map((stage) => stage.id)),
@@ -253,6 +258,10 @@ export function WorkCentersWorkspace({
 
   return (
     <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+      <WorkCenterCapacityDrawer
+        workCenter={rows.find((row) => row.id === capacityId) ?? null}
+        onClose={() => setCapacityId(null)}
+      />
       <WorkCenterCreateDrawer
         open={createOpen}
         productionStages={productionStages}
@@ -353,7 +362,7 @@ export function WorkCentersWorkspace({
                         title="Нет оборудования"
                         description={
                           rows.length === 0
-                            ? "Создайте первый рабочий центр через кнопку «+» или в папке цеха."
+                            ? "Создайте первое оборудование через кнопку «+» или в папке цеха."
                             : "Измените поисковый запрос или сбросьте фильтры."
                         }
                       />
@@ -571,6 +580,14 @@ export function WorkCentersWorkspace({
                             </div>
                           ) : (
                             <div className="flex items-center gap-1">
+                              <IconButton
+                                label="Мощность"
+                                variant="secondary"
+                                disabled={saving}
+                                onClick={() => setCapacityId(item.id)}
+                              >
+                                <Gauge className="size-4" aria-hidden="true" />
+                              </IconButton>
                               <IconButton
                                 label="Редактировать"
                                 variant="secondary"

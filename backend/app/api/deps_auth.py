@@ -23,7 +23,9 @@ def get_current_platform_user(
 ) -> PlatformUser:
     token = request.cookies.get(SESSION_COOKIE_NAME)
     try:
-        return resolve_session_user(db, token)
+        user = resolve_session_user(db, token)
+        db.info["audit_actor"] = user
+        return user
     except AuthUnauthorizedError as error:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

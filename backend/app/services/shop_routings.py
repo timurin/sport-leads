@@ -1,7 +1,13 @@
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from app.models.shop_routing import ShopRoutingStageLine, ShopRoutingTemplate, WorkCenter
+from app.models.shop_routing import (
+    ShopRoutingNodeDependency,
+    ShopRoutingStageLine,
+    ShopRoutingTemplate,
+    WorkCenter,
+)
+from app.schemas.routing_graph import RoutingDependency, RoutingGraph, RoutingOperationNode, RoutingWorkshop
 from app.repositories import production_stages as stages_repo
 from app.repositories import shop_routings as repo
 from app.repositories import tech_operations as tech_ops_repo
@@ -94,6 +100,9 @@ def create_work_center(db: Session, payload: WorkCenterCreate) -> WorkCenter:
 def update_work_center(
     db: Session, work_center_id: int, payload: WorkCenterUpdate
 ) -> WorkCenter:
+    from app.repositories.production_scheduler import lock_scheduler
+    from app.services.work_center_capacity import adapter
+    lock_scheduler(db)
     row = get_work_center(db, work_center_id)
     changes = payload.model_dump(exclude_unset=True)
     if not changes:
@@ -111,6 +120,13 @@ def update_work_center(
     if "production_stage_id" in changes and changes["production_stage_id"] is not None:
         if stages_repo.get_production_stage(db, changes["production_stage_id"]) is None:
             raise WorkCenterValidationError("Этап производства не найден")
+    _, capacity = adapter(db, work_center_id)
+    if capacity is not None and (changes.get("is_active") is False or "production_stage_id" in changes):
+        from app.services.calendar_allocation_consistency import protect_resource_edit
+        resource_changes = {"delete": True} if changes.get("is_active") is False else {"production_stage_id": changes["production_stage_id"]}
+        protect_resource_edit(db, capacity.resource_key, resource_changes)
+    if capacity is not None and "production_stage_id" in changes and changes["production_stage_id"] != capacity.production_stage_id:
+        raise WorkCenterValidationError("Unlink the capacity adapter before moving equipment to another stage")
     repo.apply_work_center_updates(row, changes)
     try:
         db.commit()
@@ -124,6 +140,15 @@ def update_work_center(
 
 
 def delete_work_center(db: Session, work_center_id: int) -> None:
+    from app.repositories.production_scheduler import lock_scheduler
+    from app.services.work_center_capacity import adapter
+    lock_scheduler(db)
+    _, capacity = adapter(db, work_center_id)
+    if capacity is not None:
+        from sqlalchemy import select
+        from app.models.calendar_allocation import CalendarAllocation
+        if db.scalar(select(CalendarAllocation.id).where(CalendarAllocation.resource_key == capacity.resource_key).limit(1)) is not None:
+            raise WorkCenterConflictError("Equipment with saved allocations cannot be deleted")
     row = get_work_center(db, work_center_id)
     repo.delete_work_center(db, row)
     db.commit()
@@ -206,9 +231,57 @@ def _validate_stages(
                 tech_operation_id=stage.tech_operation_id,
                 work_center_id=stage.work_center_id,
                 is_quality_checkpoint=stage.is_quality_checkpoint,
+                is_required=stage.is_required,
             )
         )
     return lines
+
+
+def _edge_orders(edge) -> tuple[int, int]:
+    if isinstance(edge, dict):
+        return int(edge["predecessor_stage_order"]), int(edge["successor_stage_order"])
+    return int(edge.predecessor_stage_order), int(edge.successor_stage_order)
+
+
+def _replace_template_edges(db: Session, template: ShopRoutingTemplate, lines: list[ShopRoutingStageLine], mode: str, edges) -> None:
+    template.node_dependencies.clear()
+    db.flush()
+    template.dependency_mode = "explicit" if mode == "explicit" else "sequential"
+    if template.dependency_mode != "explicit":
+        return
+    by_order = {line.stage_order: line for line in lines}
+    nodes = []
+    for line in sorted(lines, key=lambda row: row.stage_order):
+        if line.production_stage_id is None or line.tech_operation_id is None:
+            raise ShopRoutingValidationError("Явный граф требует цех и операцию на каждом шаге")
+        nodes.append(RoutingOperationNode(
+            id=str(line.stage_order),
+            workshop_id=line.production_stage_id,
+            tech_operation_id=line.tech_operation_id,
+            position=line.stage_order,
+            required=bool(line.is_required),
+            work_center_id=line.work_center_id,
+        ))
+    pairs = [_edge_orders(edge) for edge in edges or []]
+    try:
+        RoutingGraph(
+            workshops=tuple(RoutingWorkshop(workshop_id=key) for key in dict.fromkeys(node.workshop_id for node in nodes)),
+            nodes=tuple(nodes),
+            dependency_mode="explicit",
+            edges=tuple(RoutingDependency(predecessor_node_id=str(pred), successor_node_id=str(succ)) for pred, succ in pairs),
+        )
+    except ValueError as error:
+        raise ShopRoutingValidationError(str(error)) from error
+    for predecessor_order, successor_order in pairs:
+        predecessor = by_order.get(predecessor_order)
+        successor = by_order.get(successor_order)
+        if predecessor is None or successor is None:
+            raise ShopRoutingValidationError("Зависимость ссылается на отсутствующий шаг")
+        template.node_dependencies.append(ShopRoutingNodeDependency(
+            routing_template_id=template.id,
+            predecessor_line_id=predecessor.id,
+            successor_line_id=successor.id,
+        ))
 
 
 def create_routing_template(
@@ -245,10 +318,16 @@ def update_routing_template(
     template_id: int,
     payload: ShopRoutingTemplateUpdate,
 ) -> ShopRoutingTemplate:
+    from app.repositories.production_scheduler import lock_scheduler
+    lock_scheduler(db)
     row = get_routing_template(db, template_id)
     changes = payload.model_dump(exclude_unset=True)
     stages = changes.pop("stages", None)
-    if not changes and stages is None:
+    dependency_mode = changes.pop("dependency_mode", None)
+    edges = changes.pop("edges", None)
+    if row.route_variant_groups and (stages is not None or dependency_mode is not None or edges is not None):
+        raise ShopRoutingValidationError("Use graph save to edit a routing with ONE OF groups")
+    if not changes and stages is None and dependency_mode is None and edges is None:
         raise ShopRoutingValidationError("Нет полей для обновления")
 
     if "name" in changes:
@@ -262,13 +341,21 @@ def update_routing_template(
         if existing is not None and existing.id != template_id:
             raise ShopRoutingConflictError("Маршрут с таким кодом уже существует")
 
+    if stages is not None:
+        from app.services.calendar_plan_linkage import assert_route_lines_retirable
+        assert_route_lines_retirable(db, [line.id for line in row.stage_lines])
     for field_name, value in changes.items():
         setattr(row, field_name, value)
 
     if stages is not None:
         stage_payloads = [ShopRoutingStageLineWrite.model_validate(item) for item in stages]
         lines = _validate_stages(db, stage_payloads)
+        from app.services.calendar_plan_lifecycle import detach_for_route_lines
+        detach_for_route_lines(db, [line.id for line in row.stage_lines])
         repo.replace_stage_lines(db, row, lines)
+        _replace_template_edges(db, row, lines, dependency_mode or "sequential", edges or [])
+    elif dependency_mode is not None or edges is not None:
+        _replace_template_edges(db, row, list(row.stage_lines), dependency_mode or row.dependency_mode, edges or [])
 
     try:
         db.commit()
@@ -281,6 +368,10 @@ def update_routing_template(
 
 
 def delete_routing_template(db: Session, template_id: int) -> None:
+    from app.repositories.production_scheduler import lock_scheduler
+    lock_scheduler(db)
     row = get_routing_template(db, template_id)
+    from app.services.calendar_plan_lifecycle import detach_for_route_lines
+    detach_for_route_lines(db, [line.id for line in row.stage_lines])
     repo.delete_routing_template(db, row)
     db.commit()
