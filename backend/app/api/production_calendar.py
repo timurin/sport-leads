@@ -20,6 +20,46 @@ router = APIRouter(prefix="/production-calendar", tags=["Production calendar"], 
 plan_access = require_permission(PERM_TECHNICAL_CARDS_CREATE)
 router.include_router(capacity_router)
 
+from app.schemas.manual_route_replan import ManualReplanRequest, ManualReplanApply, ManualReplanPreview, ManualReplanApplied
+from app.services import manual_route_replan
+from app.schemas.planning_health import ManualPlanningCardHealth
+
+
+@router.get('/manual-planning/cards', response_model=list[ManualPlanningCardHealth],
+            operation_id='list_manual_planning_health')
+def read_manual_planning_health(limit: int = Query(100, ge=1, le=500), offset: int = Query(0, ge=0),
+                                db: Session = Depends(get_db)):
+    from app.services.planning_health import list_manual_planning_health
+    return list_manual_planning_health(db, limit=limit, offset=offset)
+
+
+def _manual_replan_error(error):
+    return HTTPException(409, {'message':str(error),'diagnostic':error.diagnostic.model_dump(mode='json')},
+        headers={'X-Diagnostic-Code':error.diagnostic.code,'X-Diagnostic-Category':error.diagnostic.category})
+
+
+@router.post('/manual-planning/preview',response_model=ManualReplanPreview,
+             dependencies=[Depends(plan_access)],operation_id='preview_manual_route_replan')
+def preview_manual_route_replan(payload: ManualReplanRequest,db: Session=Depends(get_db)):
+    try:
+        return manual_route_replan.preview_replan(db,payload)
+    except manual_route_replan.ManualReplanConflict as error:
+        raise _manual_replan_error(error) from error
+    except TechnicalCardNotFoundError as error:
+        raise HTTPException(404,str(error)) from error
+
+
+@router.post('/manual-planning/apply',response_model=ManualReplanApplied,
+             dependencies=[Depends(plan_access)],operation_id='apply_manual_route_replan')
+def apply_manual_route_replan(payload: ManualReplanApply,db: Session=Depends(get_db),
+                              actor: PlatformUser=Depends(get_current_platform_user)):
+    try:
+        return manual_route_replan.apply_replan(db,payload,actor=actor)
+    except manual_route_replan.ManualReplanConflict as error:
+        raise _manual_replan_error(error) from error
+    except TechnicalCardNotFoundError as error:
+        raise HTTPException(404,str(error)) from error
+
 
 @router.get("/workshops/{workshop_id}/queue", response_model=WorkshopQueueRead,
             operation_id="production_calendar_workshop_queue")

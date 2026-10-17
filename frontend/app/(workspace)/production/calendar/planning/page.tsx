@@ -15,7 +15,6 @@ export default async function CalendarPlanningPage({
       <CalendarManualScheduling
         key={`${date}:${query.assignment ?? "list"}`}
         date={date}
-        assignmentId={assignmentId}
         invalidAssignment={query.assignment !== undefined && assignmentId === null}
       />
     </PageLayout>

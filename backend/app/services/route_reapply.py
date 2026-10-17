@@ -53,19 +53,25 @@ class ReapplyPlan:
     diagnostics: list[ProductionDiagnostic]
 
 
-def protected_nodes(db: Session, card: TechnicalCard) -> set[int]:
+def protected_nodes(db: Session, card: TechnicalCard, *, ledger=None, has_stock=None,
+                    sewing_workshop_ids=None) -> set[int]:
+    """Shared fact guard; optional preloaded facts support bounded batch reads."""
     protected = {s.id for s in card.stage_results if s.status in {"in_progress", "completed", "skipped"}
                  or any(getattr(s, field) not in (None, "") for field in FACT_FIELDS)}
     workshops = {line.production_stage_id for line in card.composition_lines if line.fact_qty is not None}
     workshops.update(unit.production_stage_id for unit in card.unit_lines
                      if unit.last_transfer_kind or unit.fg_receipt_posted or unit.fg_issue_posted or unit.is_scrapped)
-    ledger = list(db.scalars(select(SewingWorkLedgerEntry).where(SewingWorkLedgerEntry.technical_card_id == card.id)))
+    if ledger is None:
+        ledger = list(db.scalars(select(SewingWorkLedgerEntry).where(SewingWorkLedgerEntry.technical_card_id == card.id)))
     operation_ids = {row.operation_line_id for row in ledger if row.operation_line_id is not None}
     workshops.update(line.production_stage_id for line in card.operation_lines if line.id in operation_ids)
     if any(row.operation_line_id is None for row in ledger):
         workshops.update(s.production_stage_id for s in card.stage_results if "пошив" in s.stage_label.lower())
-        workshops.update(db.scalars(select(ProductionStage.id).where(ProductionStage.code == "sewing")))
-    if None in workshops or db.scalar(select(StockLedgerLine.id).where(StockLedgerLine.technical_card_id == card.id).limit(1)) is not None:
+        workshops.update(sewing_workshop_ids if sewing_workshop_ids is not None else
+                         db.scalars(select(ProductionStage.id).where(ProductionStage.code == "sewing")))
+    if has_stock is None:
+        has_stock = db.scalar(select(StockLedgerLine.id).where(StockLedgerLine.technical_card_id == card.id).limit(1)) is not None
+    if None in workshops or has_stock:
         protected.update(s.id for s in card.stage_results)
     protected.update(s.id for s in card.stage_results if s.production_stage_id in workshops)
     return protected

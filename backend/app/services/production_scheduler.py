@@ -75,9 +75,10 @@ def _capacity(resource: CapacityResource, day: date, override: ProductionCapacit
     return hours * count
 
 
-def _protected(row: CalendarAssignment, fact_orders: set[int], step_by_id: dict, today: date) -> bool:
+def _protected(row: CalendarAssignment, fact_orders: set[int], step_by_id: dict, today: date,
+               *, allow_overdue: bool = False) -> bool:
     step = step_by_id.get(row.routing_stage_line_id)
-    return (row.manual_lock or row.planning_mode != "auto" or row.planned_date < today
+    return (row.manual_lock or row.planning_mode != "auto" or (row.planned_date < today and not allow_overdue)
             or (step is not None and step.stage_order in fact_orders))
 
 
@@ -230,7 +231,8 @@ def _build(card: TechnicalCard, snapshot, data: dict, today: date) -> tuple[Sche
                 continue  # Preserve the existing entry marker, including its note/position.
             scoped_out = (data.get("replan_node_ids") is not None
                           and row.stage_result_id not in data["replan_node_ids"])
-            if _protected(row, fact_orders, step_by_id, today) or scoped_out:
+            allow_overdue = row.stage_result_id in data.get('editable_overdue_node_ids', set())
+            if _protected(row, fact_orders, step_by_id, today, allow_overdue=allow_overdue) or scoped_out:
                 if row.routing_stage_line_id not in step_by_id:
                     _fail("locked_assignment_conflict", "protected_foreign_route_step")
                 if row.id in data.get("stale_assignment_ids", set()):
@@ -278,6 +280,9 @@ def _build(card: TechnicalCard, snapshot, data: dict, today: date) -> tuple[Sche
         for step in steps:
             predecessor_ends = [finished[item] for item in step.predecessor_ids if item in finished]
             earliest = max([start, *predecessor_ends]) if predecessor_ends else start
+            # Optional server-side manual date constraint; all placement, daily
+            # capacity and protected-anchor validation remain in this engine.
+            earliest = max(earliest, data.get('not_before_by_node', {}).get(step.snapshot_node_id, earliest))
             if (data.get("replan_node_ids") is not None and step.snapshot_node_id not in data["replan_node_ids"]
                     and step.routing_stage_line_id not in anchors):
                 _fail("locked_assignment_conflict", "queue_scope_unplanned_predecessor", step)

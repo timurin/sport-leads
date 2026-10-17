@@ -9,7 +9,12 @@ from app.services.production_state import load_states
 from app.schemas.production_state import ProductionState
 
 
-def read_persisted_plan(db: Session, card: TechnicalCard, *, state: ProductionState | None = None) -> PersistedPlanSummary:
+def planning_risk(eta, shipping_date) -> str:
+    return 'unknown' if eta is None or shipping_date is None else 'late' if eta > shipping_date else 'on_time'
+
+
+def read_persisted_plan(db: Session, card: TechnicalCard, *, state: ProductionState | None = None,
+                        assignments: list[CalendarAssignment] | None = None) -> PersistedPlanSummary:
     from app.services.route_variants import active_stage_results
     planning_state = (state or load_states(db, [card])[card.id]).planning_state
     try:
@@ -20,8 +25,9 @@ def read_persisted_plan(db: Session, card: TechnicalCard, *, state: ProductionSt
         return PersistedPlanSummary(planning_state='invalid', persisted=False,
             replan_required=True, shipping_date=card.shipping_date)
     with db.no_autoflush:
-        rows = list(db.scalars(select(CalendarAssignment).where(
-            CalendarAssignment.technical_card_id == card.id, CalendarAssignment.stage_result_id.in_(nodes))))
+        rows = ([row for row in assignments if row.technical_card_id == card.id and row.stage_result_id in nodes]
+                if assignments is not None else list(db.scalars(select(CalendarAssignment).where(
+                    CalendarAssignment.technical_card_id == card.id, CalendarAssignment.stage_result_id.in_(nodes)))))
     start = min((row.planned_date for row in rows), default=None)
     end = max((row.planned_end_date for row in rows), default=None)
     buffer = (card.shipping_date - end).days if end is not None and card.shipping_date is not None else None

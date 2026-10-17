@@ -8,8 +8,8 @@ async function proxy(request: NextRequest, context: Context) {
   const method = request.method;
   const capacityKey = "[a-z0-9_]+";
   const capacityDay = "\\d{4}-\\d{2}-\\d{2}";
-  const valid = (method === "GET" && (suffix === "board" || suffix === "sources" || suffix === "capacity/settings")) ||
-    (method === "POST" && (suffix === "assignments" || suffix === "capacity/load-state")) ||
+  const valid = (method === "GET" && (suffix === "board" || suffix === "sources" || suffix === "capacity/settings" || suffix === "manual-planning/cards")) ||
+    (method === "POST" && (suffix === "assignments" || suffix === "capacity/load-state" || suffix === "manual-planning/preview" || suffix === "manual-planning/apply")) ||
     ((method === "PUT" || method === "DELETE") && /^assignments\/\d+$/.test(suffix)) ||
     (method === "PUT" && new RegExp(`^capacity/settings/${capacityKey}$`).test(suffix)) ||
     ((method === "PUT" || method === "DELETE") && new RegExp(`^capacity/settings/${capacityKey}/exceptions/${capacityDay}$`).test(suffix));
@@ -26,9 +26,17 @@ async function proxy(request: NextRequest, context: Context) {
       body: method === "POST" || method === "PUT" ? await request.text() : undefined,
       signal: AbortSignal.timeout(15000),
     });
+    const headers = new Headers({
+      "Content-Type": upstream.headers.get("content-type") ?? "application/json",
+      "Cache-Control": "no-store",
+    });
+    const diagnosticCode = upstream.headers.get("x-diagnostic-code");
+    const diagnosticCategory = upstream.headers.get("x-diagnostic-category");
+    if (diagnosticCode) headers.set("X-Diagnostic-Code", diagnosticCode);
+    if (diagnosticCategory) headers.set("X-Diagnostic-Category", diagnosticCategory);
     return new NextResponse(upstream.status === 204 ? null : await upstream.text(), {
       status: upstream.status,
-      headers: { "Content-Type": upstream.headers.get("content-type") ?? "application/json", "Cache-Control": "no-store" },
+      headers,
     });
   } catch {
     return NextResponse.json({ detail: "Не удалось связаться с API календаря" }, { status: 502 });

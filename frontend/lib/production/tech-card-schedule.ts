@@ -132,6 +132,21 @@ export function deadlineStatusText(schedule: Pick<ProductionSchedule, "on_time" 
   return null;
 }
 
+export function scheduleBlockedMessage(schedule: Pick<ProductionSchedule, "status" | "deviations">): string | null {
+  if (schedule.status !== "blocked") return null;
+  const reasons = new Set((schedule.deviations ?? []).map((row) => row.reason));
+  if (reasons.has("calendar_plan_stale_after_demand_change")) {
+    return "Расчёт не выполнен: уже начатые операции нельзя передвинуть, а их план устарел после изменений техкарты.";
+  }
+  if (reasons.has("quantity_planning_start_shipping_required")) {
+    return "Укажите количество, дату начала и дату отгрузки. После этого план можно рассчитать.";
+  }
+  if (reasons.has("plan_locked")) {
+    return "Даты плана зафиксированы. Снимите фиксацию, чтобы рассчитать план заново.";
+  }
+  return "Планировщик не смог рассчитать план. Проверьте даты, нормы и маршрут.";
+}
+
 export function deviationText(deviation: Pick<ScheduleDeviation, "code" | "reason">): string {
   const reason = deviation.reason.trim();
   if (reason === "route_requires_review_before_planning") return "Маршрут техкарты требует проверки перед планированием производства.";

@@ -165,6 +165,17 @@ def ship_card(card_id: int, db: Session = Depends(get_db),
 
 from app.schemas.production_diagnostics import ProductionDiagnosticsRead
 from app.schemas.technical_card_readiness import TechnicalCardReadiness
+from app.schemas.planning_health import PlanningHealth
+
+
+@router.get('/technical-cards/{card_id}/planning-health', response_model=PlanningHealth,
+            dependencies=[Depends(get_current_platform_user)], operation_id='read_technical_card_planning_health')
+def read_card_planning_health(card_id: int, db: Session = Depends(get_db)) -> PlanningHealth:
+    from app.services.planning_health import read_planning_health
+    try:
+        return read_planning_health(db, card_id)
+    except TechnicalCardNotFoundError as error:
+        raise _http_error(error) from error
 
 
 @router.get("/technical-cards/{card_id}/readiness", response_model=TechnicalCardReadiness,

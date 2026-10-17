@@ -12,6 +12,7 @@ import {
   deadlineStatusText,
   deviationText,
   formatPlanSpan,
+  scheduleBlockedMessage,
   planningWriteBody,
   schedulePath,
   scheduleStepRows,
@@ -35,18 +36,20 @@ test("schedule CTA posts the card schedule endpoint and shows the loading label"
   assert.ok(view.includes("data-tech-card-schedule-cta"));
   assert.equal(dates.includes("data-tech-card-schedule-cta"), false);
   assert.equal(view.split("\n").filter((line) => line.includes("SCHEDULE_ACTION_LABEL") && !line.trim().startsWith("SCHEDULE_ACTION_LABEL")).length, 1);
-  assert.ok(view.includes("FORECAST_EMPTY"));
   assert.equal(view.includes("После пересчёта плана"), false);
   assert.equal(view.includes("TechCardRouteVariants"), false);
   assert.ok(view.includes("Маршрут производства"));
   assert.ok(view.includes("ReadinessStickers"));
   assert.equal(view.includes("managerWarningCallout"), false);
-  assert.ok(view.includes("lg:grid-cols-[minmax(0,1fr)_17.5rem]"));
-  assert.ok(view.includes("IconButton"));
-  assert.ok(view.includes("max-w-sm flex-col"));
-  assert.ok(view.includes("min-h-36"));
+  assert.ok(view.includes("data-tech-card-route-map"));
+  assert.ok(view.includes("xl:overflow-x-auto"));
+  assert.ok(view.includes("Изменить даты"));
+  assert.ok(view.includes("data-tech-card-dates-editor"));
+  assert.ok(view.includes("Сборка:"));
+  assert.equal(view.includes("lg:grid-cols-[minmax(0,1fr)_17.5rem]"), false);
+  assert.equal(view.includes("min-h-36"), false);
+  assert.equal(view.includes("max-w-sm"), false);
   assert.equal(view.includes("md:flex-nowrap"), false);
-  assert.equal(view.includes("overflow-x-auto"), false);
   assert.equal(view.includes("sm:flex-wrap"), false);
   assert.ok(dates.includes("Даты плана"));
   assert.ok(dates.includes("Сохранить даты"));
@@ -58,6 +61,24 @@ test("deadline status is the backend buffer, not a frontend date difference", ()
   assert.equal(deadlineStatusText({ on_time: true, buffer_days: 3, delay_days: 0 }), "запас 3 дней");
   assert.equal(deadlineStatusText({ on_time: false, buffer_days: -2, delay_days: 2 }), "опоздание 2 дней");
   assert.equal(deadlineStatusText({ on_time: null, buffer_days: null, delay_days: null }), null);
+});
+
+test("a blocked schedule explains the next step without repeating the button", () => {
+  assert.equal(
+    scheduleBlockedMessage({
+      status: "blocked",
+      deviations: [{ code: "locked_assignment_conflict", reason: "calendar_plan_stale_after_demand_change" }],
+    }),
+    "Расчёт не выполнен: уже начатые операции нельзя передвинуть, а их план устарел после изменений техкарты.",
+  );
+  assert.equal(
+    scheduleBlockedMessage({
+      status: "blocked",
+      deviations: [{ code: "readiness_not_complete", reason: "quantity_planning_start_shipping_required" }],
+    }),
+    "Укажите количество, дату начала и дату отгрузки. После этого план можно рассчитать.",
+  );
+  assert.equal(scheduleBlockedMessage({ status: "planned", deviations: [] }), null);
 });
 
 test("known deviation codes keep the backend reason", () => {
