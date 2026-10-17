@@ -247,7 +247,7 @@ export type TechCardProductionStageOption = {
   is_active: boolean;
 };
 
-type TechCardDetailWorkspaceProps = {
+export type TechCardDetailWorkspaceProps = {
   card: ApiTechnicalCard;
   routings: TechCardRoutingOption[];
   materials: TechCardMaterialOption[];
