@@ -283,6 +283,17 @@ export function planningProgressText(summary: Pick<PlanningHealthSummary, "compl
   return `${summary.completed_operations} из ${summary.route_total_operations}`;
 }
 
+export function planningAttentionLine(summary: PlanningHealthSummary, surface: "list" | "card" = "card"): string | null {
+  if (summary.has_overdue_operations) {
+    const name = summary.earliest_overdue_operation?.trim() || "операция";
+    const count = summary.overdue_operation_count > 1 && surface === "list" ? ` Всего ${summary.overdue_operation_count}.` : "";
+    return `Просрочена операция «${name}» на ${healthDayLabel(summary.overdue_days)}.${count}`;
+  }
+  if (summary.risk_level === "late") return "Риск срока.";
+  if (summary.replan_required) return "Требует перепланирования.";
+  return null;
+}
+
 export function earliestOverdueText(summary: PlanningHealthSummary): string | null {
   if (!summary.has_overdue_operations) return null;
   const name = summary.earliest_overdue_operation?.trim() || "—";

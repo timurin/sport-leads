@@ -9,20 +9,17 @@ import { PageContent } from "@/components/layout/page-layout";
 import { CalendarToolbar } from "@/components/production/calendar-toolbar";
 import { TechnicalCardFullCardModal } from "@/components/production/technical-card-full-card-modal";
 import { Button, IconButton } from "@/components/ui/button";
-import {
-  calendarPlanningPath, calendarWeekPath, shiftWeek, weekDays,
-} from "@/lib/production/calendar";
+import { calendarWeekPath } from "@/lib/production/calendar";
 import {
   FACT_STEP_LABEL, ManualReplanRequestError, REPLAN_DOWNSTREAM_HINT,
-  addIsoDays, canApplyReplan, formatPlanDate, planningQuantityLabel, postManualReplan, readReplanPreview,
+  canApplyReplan, formatPlanDate, planningQuantityLabel, postManualReplan, readReplanPreview,
   replanApplyBody, replanDownstreamLines, replanPreviewBody, replanRiskLabel, replanSelectedLine, replanSlackLabel,
-  routeMarker,
   type ReplanMode, type ReplanPreview,
 } from "@/lib/production/manual-planning";
 import {
-  earliestOverdueText, fetchManualPlanningCards, fetchPlanningHealth, filterPlanningHealth, operationHealthStatus,
-  operationPlanLabel, operationWarningLabel, planningHealthBadge, planningHealthCounts, planningHealthEmpty,
-  planningHealthSummaryLines, planningProgressText, planningScheduleText, planningWorkshopOptions,
+  fetchManualPlanningCards, fetchPlanningHealth, filterPlanningHealth, healthDayLabel, operationHealthStatus,
+  operationPlanLabel, operationWarningLabel, planningAttentionLine, planningHealthBadge, planningHealthCounts, planningHealthEmpty,
+  planningProgressText, planningScheduleText, planningWorkshopOptions,
   type ManualPlanningCardHealth, type OperationPlanningHealth, type PlanningHealth, type PlanningHealthBadge,
   type PlanningHealthFilters, type PlanningListIdentity,
 } from "@/lib/production/planning-health";
@@ -59,8 +56,6 @@ export function CalendarManualScheduling({ date, invalidAssignment = false }: {
   const [revision, setRevision] = useState(0);
   const [notice, setNotice] = useState("");
   const [focusCardId, setFocusCardId] = useState<number | null>(null);
-  const from = weekDays(date)[0];
-  const to = addIsoDays(from, 360);
   return (
     <PageContent size="compact" width="full">
       <div className="space-y-portal-3">
@@ -70,12 +65,7 @@ export function CalendarManualScheduling({ date, invalidAssignment = false }: {
             <h1 className="text-portal-title font-semibold">Ручное планирование</h1>
             <p className="text-portal-caption text-portal-muted">Какие техкарты требуют внимания и какую операцию можно перенести</p>
           </div>
-          <div className="flex flex-wrap items-center gap-portal-2">
-            <Link href={calendarPlanningPath(shiftWeek(date, -1))} aria-label="Предыдущая неделя" className="rounded-portal-md border border-portal-border px-portal-2 py-1 text-portal-caption">←</Link>
-            <span className="text-portal-caption text-portal-muted">{dateLabel(from)} — {dateLabel(to)}</span>
-            <Link href={calendarPlanningPath(shiftWeek(date, 1))} aria-label="Следующая неделя" className="rounded-portal-md border border-portal-border px-portal-2 py-1 text-portal-caption">→</Link>
-            <Link href={calendarWeekPath(date)} className="text-portal-caption font-medium text-portal-primary underline">Вернуться в очередь</Link>
-          </div>
+          <Link href={calendarWeekPath(date)} className="text-portal-caption font-medium text-portal-primary underline">Вернуться в очередь</Link>
         </header>
         {notice ? <p role="status" className="text-portal-primary">{notice}</p> : null}
         {invalidAssignment ? (
@@ -131,29 +121,31 @@ function PlanningDesk({ focusCardId, onRetry, onMoved }: {
   return (
     <div className="flex min-w-0 flex-col gap-portal-3">
       <div className={selected ? "max-lg:hidden" : ""}>
-        <PlanningFiltersBar workshops={workshops} filters={filters} counts={counts} onChange={setFilters} />
+        <PlanningFiltersBar workshops={workshops} filters={filters} counts={counts} total={cards.length} onChange={setFilters} />
       </div>
-      <div className="grid min-w-0 items-start gap-portal-3 lg:grid-cols-[minmax(16rem,35%)_minmax(0,1fr)] lg:items-stretch">
+      <div className="grid min-w-0 items-start gap-portal-3 lg:grid-cols-[minmax(22rem,42%)_minmax(0,1fr)] lg:items-stretch">
         <section className={`${selected ? "max-lg:hidden" : ""} min-w-0 lg:max-h-[calc(100dvh-13rem)] lg:overflow-y-auto lg:pr-1`} aria-label="Техкарты">
           {!visible.length ? <p data-planning-empty className="rounded-portal-md border border-dashed border-portal-border px-portal-3 py-portal-4 text-portal-body text-portal-muted">{planningHealthEmpty(filters.attention)}</p> : (
             <ul className="flex flex-col gap-portal-2">
               {visible.map((card) => {
                 const identity = identities.get(card.technical_card_id);
-                const earliest = earliestOverdueText(card);
+                const reason = planningAttentionLine(card, "list");
                 return (
                   <li key={card.technical_card_id}>
                     <button type="button" data-planning-card={card.technical_card_id} aria-current={card.technical_card_id === selectedId ? "true" : undefined}
                       className={`block w-full min-w-0 rounded-portal-md border px-portal-3 py-portal-3 text-left ${card.technical_card_id === selectedId ? "border-portal-primary bg-portal-primary-soft" : "border-portal-border bg-portal-surface hover:bg-portal-surface-secondary"}`}
                       onClick={() => setSelectedId(card.technical_card_id)}>
                       <span className="flex items-start justify-between gap-2">
-                        <span className="text-portal-body font-semibold">{card.number}</span>
+                        <span className="min-w-0">
+                          <span className="text-portal-body font-semibold">{card.number}</span>
+                          <span className="mt-0.5 block text-portal-caption text-portal-muted">{identity?.orderNumber?.trim() || "—"}</span>
+                        </span>
                         <HealthBadge summary={card} surface="list" />
                       </span>
-                      <span className="mt-1 block text-portal-caption text-portal-muted">{identity?.orderNumber?.trim() || "—"}</span>
                       <span className="mt-1 block text-portal-caption">{identity?.model?.trim() || "—"} · {identity?.quantity ? planningQuantityLabel(identity.quantity) : "—"}</span>
                       <span className="mt-1 block text-portal-caption text-portal-muted">{card.current_workshop_name?.trim() || "Участок не назначен"} · {planningProgressText(card)}</span>
                       <span className="mt-1 block text-portal-caption text-portal-muted">{planningScheduleText(card)}</span>
-                      {earliest ? <span className="mt-1 block text-portal-caption" data-planning-earliest>{earliest}</span> : null}
+                      {reason ? <span className="mt-1 block text-portal-caption text-portal-text" data-planning-earliest>{reason}</span> : null}
                     </button>
                   </li>
                 );
@@ -177,26 +169,34 @@ function routeStatusClass(status: string): string {
   return "text-portal-caption text-portal-text";
 }
 
-function PlanningFiltersBar({ workshops, filters, counts, onChange }: {
+function PlanningFiltersBar({ workshops, filters, counts, total, onChange }: {
   workshops: { id: number; name: string }[];
   filters: PlanningHealthFilters;
   counts: { overdue: number; risk: number; replan: number };
+  total: number;
   onChange: (next: PlanningHealthFilters) => void;
 }) {
+  const attention = [
+    ["all", "Все", total],
+    ["overdue", "Просроченные", counts.overdue],
+    ["risk", "В риске", counts.risk],
+    ["replan", "Требуют перепланирования", counts.replan],
+    ["clear", "Без проблем", null],
+  ] as const;
   return (
     <div className="sticky top-0 z-10 space-y-portal-2 bg-portal-page py-1">
-      <div className="grid grid-cols-2 gap-portal-2 lg:grid-cols-4">
+      <div data-planning-counts className="flex flex-wrap items-center gap-1" aria-label="Состояние плана">
+        {attention.map(([value, label, count]) => (
+          <button key={value} type="button" aria-pressed={filters.attention === value}
+            className={`rounded-portal-md px-2 py-1 text-portal-caption ${filters.attention === value ? "bg-portal-primary text-portal-primary-on" : "bg-portal-surface-secondary text-portal-text"}`}
+            onClick={() => onChange({ ...filters, attention: value })}>
+            {label}{count == null ? "" : ` ${count}`}
+          </button>
+        ))}
+      </div>
+      <div className="grid grid-cols-2 gap-portal-2 lg:grid-cols-3">
       <label className="min-w-0 text-portal-caption font-semibold text-portal-muted">Поиск
         <input className={inputClass} value={filters.search} onChange={(event) => onChange({ ...filters, search: event.target.value })} />
-      </label>
-      <label className="min-w-0 text-portal-caption font-semibold text-portal-muted">Состояние плана
-        <select className={inputClass} value={filters.attention} onChange={(event) => onChange({ ...filters, attention: event.target.value as PlanningHealthFilters["attention"] })}>
-          <option value="all">Все</option>
-          <option value="overdue">Просроченные</option>
-          <option value="risk">В риске</option>
-          <option value="replan">Требуют перепланирования</option>
-          <option value="clear">Без проблем</option>
-        </select>
       </label>
       <label className="min-w-0 text-portal-caption font-semibold text-portal-muted">Участок
         <select className={inputClass} value={filters.stageId ?? ""} onChange={(event) => onChange({ ...filters, stageId: event.target.value ? Number(event.target.value) : null })}>
@@ -204,14 +204,9 @@ function PlanningFiltersBar({ workshops, filters, counts, onChange }: {
           {workshops.map((stage) => <option key={stage.id} value={stage.id}>{stage.name}</option>)}
         </select>
       </label>
-      <label className="min-w-0 text-portal-caption font-semibold text-portal-muted">Дата отгрузки
+      <label className="col-span-2 min-w-0 text-portal-caption font-semibold text-portal-muted lg:col-span-1">Дата отгрузки
         <input type="date" className={inputClass} value={filters.shippingDate} onChange={(event) => onChange({ ...filters, shippingDate: event.target.value })} />
       </label>
-      </div>
-      <div data-planning-counts className="flex flex-wrap gap-2 text-portal-caption">
-        <span className="rounded-portal-md bg-portal-danger-soft px-2 py-1 font-semibold text-portal-danger">Просрочено {counts.overdue}</span>
-        <span className="rounded-portal-md bg-portal-warning-soft px-2 py-1 font-semibold text-portal-warning">В риске {counts.risk}</span>
-        <span className="rounded-portal-md border border-portal-warning px-2 py-1 font-semibold text-portal-warning">Требуют перепланирования {counts.replan}</span>
       </div>
     </div>
   );
@@ -262,42 +257,39 @@ function CardPlan({ card, identity, onBack, onMoved }: {
           </IconButton>
         </div>
       </div>
-      <div data-planning-summary className="grid gap-1 text-portal-caption text-portal-muted sm:grid-cols-2">
-        {planningHealthSummaryLines(summary).map((line) => <p key={line}>{line}</p>)}
-      </div>
+      <p data-planning-summary className="text-portal-caption text-portal-muted">{planningScheduleText(summary)} · {planningProgressText(summary)}</p>
+      {planningAttentionLine(summary, "card") ? <p className="text-portal-body">{planningAttentionLine(summary, "card")}</p> : null}
       {detailError ? <p role="alert" className="text-portal-danger">{detailError}</p> : null}
       {!health && !detailError ? <p role="status">Открываем маршрут…</p> : null}
       {route.length ? (
-        <ol data-planning-route className="flex flex-wrap items-center gap-x-1 gap-y-1 text-portal-caption">
-          {route.map((step, index) => (
-            <li key={step.snapshot_node_id} className="flex items-center gap-1">
-              {index > 0 ? <span aria-hidden="true" className="text-portal-muted">→</span> : null}
-              <span className="rounded-full border border-portal-border bg-portal-surface-secondary px-2 py-0.5">{routeMarker(step.operation_status === "completed" ? "done" : step.operation_status === "in_progress" ? "active" : step.operation_status === "skipped" ? "skipped" : "future")} {step.operation_name}</span>
-            </li>
-          ))}
-        </ol>
-      ) : null}
-      {route.length ? (
-        <ul className="divide-y divide-portal-border">
-          {route.map((step) => {
+        <ol data-planning-route className="flex flex-col gap-1">
+          {route.map((step, index) => {
             const status = operationHealthStatus(step);
             const plan = operationPlanLabel(step);
+            const done = step.operation_status === "completed" || step.operation_status === "skipped";
+            const current = step.operation_status === "in_progress";
+            const earlier = route.slice(0, index);
+            const futureStarts = !done && !current && earlier.length > 0 && earlier.every((item) => item.operation_status === "completed" || item.operation_status === "skipped" || item.operation_status === "in_progress");
+            const tone = done ? "border-portal-border bg-portal-surface-secondary text-portal-muted" : step.is_overdue ? "border-portal-danger bg-portal-danger-soft" : current ? "border-portal-primary bg-portal-primary-soft" : "border-portal-border bg-portal-surface";
             return (
-              <li key={step.snapshot_node_id} className="flex items-center justify-between gap-portal-2 py-portal-2">
-                <div className="min-w-0">
-                  <p className="break-words font-medium">{step.operation_name}{step.is_protected ? <Lock className="ml-1 inline size-3.5" aria-label="Защищена" /> : null}</p>
-                  <p className="text-portal-caption text-portal-muted">{step.workshop_name} · {plan ?? "—"}</p>
-                  <p data-route-state={step.is_overdue ? "overdue" : step.operation_status} title={step.operation_status === "completed" || step.operation_status === "in_progress" ? FACT_STEP_LABEL : operationWarningLabel(step.warning_code) ?? undefined} className={routeStatusClass(step.operation_status)}>{status}</p>
+              <li key={step.snapshot_node_id} className="min-w-0">
+                {futureStarts && index > 0 ? <p className="mb-1 mt-2 text-portal-caption text-portal-muted">Дальше</p> : null}
+                <div className={`flex items-center justify-between gap-portal-2 rounded-portal-md border px-portal-3 py-portal-2 ${tone}`}>
+                  <div className="min-w-0">
+                    <p className="break-words font-medium">{step.operation_name}{step.is_protected ? <Lock className="ml-1 inline size-3.5" aria-label="Защищена" /> : null}</p>
+                    <p className="text-portal-caption text-portal-muted">{step.workshop_name}{plan ? ` · ${plan}` : ""}</p>
+                    <p data-route-state={step.is_overdue ? "overdue" : step.operation_status} title={done || current ? FACT_STEP_LABEL : operationWarningLabel(step.warning_code) ?? undefined} className={routeStatusClass(step.operation_status)}>{status}{step.is_overdue ? ` · ${healthDayLabel(step.overdue_days)}` : ""}</p>
+                  </div>
+                  {step.can_replan ? (
+                    <IconButton label="Изменить дату готовности" variant="ghost" className="shrink-0" onClick={() => setOperationId(step.snapshot_node_id)}>
+                      <CalendarClock className="size-4" aria-hidden="true" />
+                    </IconButton>
+                  ) : null}
                 </div>
-                {step.can_replan ? (
-                  <IconButton label="Изменить дату готовности" variant="ghost" className="shrink-0" onClick={() => setOperationId(step.snapshot_node_id)}>
-                    <CalendarClock className="size-4" aria-hidden="true" />
-                  </IconButton>
-                ) : null}
               </li>
             );
           })}
-        </ul>
+        </ol>
       ) : null}
       {operation ? (
         <PlanningMoveModal onClose={() => setOperationId(null)}>
@@ -465,7 +457,7 @@ function MoveEditor({ operation, cardId, onCancel, onMoved }: {
       {error ? <p role="alert" className="break-words text-portal-danger">{error}</p> : null}
       {suggestDownstream ? <p className="text-portal-body">{REPLAN_DOWNSTREAM_HINT}</p> : null}
       <div className="flex flex-wrap gap-portal-2 max-lg:sticky max-lg:bottom-0 max-lg:z-10 max-lg:bg-portal-page max-lg:py-2">
-        <Button type="button" variant="secondary" disabled={busy != null || snapshotNodeId == null} onClick={loadPreview}>Предпросмотр</Button>
+        <Button type="button" variant="secondary" disabled={busy != null || snapshotNodeId == null} onClick={loadPreview}>{busy === "preview" ? "Проверяем…" : "Проверить перенос"}</Button>
         <Button type="submit" variant="primary" disabled={!allowed}>{busy === "apply" ? "Перенос…" : "Применить перенос"}</Button>
         <Button type="button" variant="secondary" onClick={onCancel} disabled={busy != null}>Отмена</Button>
       </div>

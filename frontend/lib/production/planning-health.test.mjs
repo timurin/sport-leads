@@ -10,6 +10,7 @@ import {
   operationPlanLabel,
   parseManualPlanningCardList,
   parsePlanningHealth,
+  planningAttentionLine,
   planningHealthBadge,
   planningHealthCounts,
   planningHealthEmpty,
@@ -96,6 +97,12 @@ test("badges follow overdue, risk, replan, then a healthy plan", () => {
   assert.equal(planningHealthBadge(healthy, "list").label, "План актуален");
   const empty = summary({ planning_state: "not_planned", replan_required: false, has_overdue_operations: false, overdue_operation_count: 0, overdue_days: 0, risk_level: "unknown", has_planning_issues: true, eta: null, slack_days: null });
   assert.equal(planningHealthBadge(empty, "card").label, "План не рассчитан");
+  assert.equal(planningAttentionLine(overdue, "card"), "Просрочена операция «Дизайн» на 3 дня.");
+  assert.equal(planningAttentionLine(overdue, "list"), "Просрочена операция «Дизайн» на 3 дня. Всего 5.");
+  assert.equal(planningAttentionLine(summary({ ...overdue, overdue_operation_count: 1 }), "list"), "Просрочена операция «Дизайн» на 3 дня.");
+  assert.equal(planningAttentionLine(late), "Риск срока.");
+  assert.equal(planningAttentionLine(replan), "Требует перепланирования.");
+  assert.equal(planningAttentionLine(healthy), null);
 });
 
 test("filters and empty states use canonical flags", () => {

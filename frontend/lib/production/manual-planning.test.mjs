@@ -246,7 +246,7 @@ test("conflict codes become manager text and stale drops the preview", () => {
 test("manual planning screen uses preview and apply and locks factual steps", () => {
   const view = readFileSync(join(root, "../../components/production/calendar-manual-scheduling.tsx"), "utf8");
   const helper = readFileSync(join(root, "manual-planning.ts"), "utf8");
-  assert.ok(view.includes("lg:grid-cols-[minmax(16rem,35%)_minmax(0,1fr)]"));
+  assert.ok(view.includes("lg:grid-cols-[minmax(22rem,42%)_minmax(0,1fr)]"));
   assert.ok(view.includes("max-lg:hidden"));
   assert.ok(view.includes("data-planning-route"));
   assert.ok(view.includes("data-planning-card"));
@@ -269,7 +269,9 @@ test("manual planning screen uses preview and apply and locks factual steps", ()
   assert.ok(view.includes("Что изменится"));
   assert.ok(view.includes("Выберите техкарту слева"));
   assert.ok(view.includes("data-planning-counts"));
+  assert.ok(view.includes("Проверить перенос"));
   assert.ok(view.includes("Применить перенос"));
+  assert.ok(view.includes("planningAttentionLine"));
   assert.ok(view.includes("Изменить дату готовности"));
   assert.ok(view.includes("data-planning-move-modal"));
   assert.ok(view.includes("TechnicalCardFullCardModal"));
