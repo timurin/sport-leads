@@ -6,25 +6,32 @@ import test from "node:test";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "../..");
 
-test("26.3.3 manager route is a horizontal wrap; shop chips stay in shop-floor body", () => {
+test("manager route is one plan block; stage fact buttons are not on the card", () => {
   const workspace = readFileSync(
     join(root, "components/production/tech-card-detail-workspace.tsx"),
     "utf8",
   );
-  const routeIdx = workspace.indexOf('title="Маршрут / участки"');
-  const historyIdx = workspace.indexOf('title="История"');
-  assert.ok(routeIdx > 0 && historyIdx > routeIdx);
-  const managerRoute = workspace.slice(routeIdx, historyIdx);
-  assert.ok(managerRoute.includes("data-tech-card-manager-route"));
-  assert.ok(managerRoute.includes("flex-wrap"));
-  assert.ok(managerRoute.includes("StageTimelineRow"));
-  assert.equal(managerRoute.includes("space-y-portal-3"), false);
-
+  const process = readFileSync(
+    join(root, "components/production/tech-card-process.tsx"),
+    "utf8",
+  );
   const shop = readFileSync(
     join(root, "components/production/tech-card-shop-floor-body.tsx"),
     "utf8",
   );
-  assert.ok(shop.includes('<ol className="flex flex-wrap gap-portal-2">'));
-  assert.equal(shop.includes("StageTimelineRow"), false);
+  assert.equal(workspace.includes("data-tech-card-manager-route"), false);
+  assert.equal(workspace.includes("StageTimelineRow"), false);
+  assert.equal(workspace.includes("Начать этап"), false);
+  assert.equal(workspace.includes("Завершить этап"), false);
+  assert.ok(workspace.includes("<TechCardProcess"));
+  assert.equal(workspace.includes("<TechCardRouteVariants"), false);
+  assert.ok(process.includes("data-tech-card-route-map"));
+  assert.ok(process.includes("data-tech-card-route-count"));
+  assert.ok(process.includes("Изменить даты"));
+  assert.ok(process.includes("flex-col"));
+  assert.ok(process.includes("md:flex-wrap"));
+  assert.ok(process.includes("xl:flex-nowrap"));
+  assert.equal(shop.includes("Начать этап"), false);
+  assert.equal(shop.includes("Завершить этап"), false);
   assert.equal(shop.includes("data-tech-card-manager-route"), false);
 });

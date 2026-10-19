@@ -12,7 +12,6 @@ import {
   type TechnicalCardAssemblyCandidate,
   type TechnicalCardModelCandidate,
 } from "@/app/(workspace)/production/tech-cards/tech-card-actions";
-import { MissingOperationNormsDialog } from "@/components/production/missing-operation-norms-dialog";
 import { ProductModelFullCardModal } from "@/components/settings/product-model-full-card-modal";
 import { IconButton } from "@/components/ui/button";
 import { Field, Select } from "@/components/ui/form-controls";
@@ -36,6 +35,9 @@ type TechCardModelRouteCardProps = {
   disabled?: boolean;
   showRoutingField?: boolean;
   canEditModelNorms?: boolean;
+  normsFocusToken?: number;
+  onNormOperations?: (operations: string[]) => void;
+  onModelConfiguration?: (operations: string[]) => void;
   onApplyRouting: (routingTemplateId: number) => void;
 };
 
@@ -48,7 +50,9 @@ export function TechCardModelRouteCard({
   routings,
   disabled = false,
   showRoutingField = true,
-  canEditModelNorms = false,
+  normsFocusToken = 0,
+  onNormOperations,
+  onModelConfiguration,
   onApplyRouting,
 }: TechCardModelRouteCardProps) {
   const router = useRouter();
@@ -167,11 +171,20 @@ export function TechCardModelRouteCard({
   const activeNormReport = normReport?.modelId === inspectedModelId ? normReport : null;
   const normOperations = activeNormReport?.operations ?? [];
   const normRoutingTemplateId = activeNormReport?.routingTemplateId ?? null;
-  const normOpen = Boolean(activeNormReport && !activeNormReport.dismissed && activeNormReport.operations.length > 0);
+  const [announceModelId, setAnnounceModelId] = useState<number | null>(null);
+  const [appliedNormsToken, setAppliedNormsToken] = useState(normsFocusToken);
+  if (normsFocusToken !== appliedNormsToken) {
+    setAppliedNormsToken(normsFocusToken);
+    if (normsFocusToken > 0) {
+      setFocusNorms(true);
+      setModelCardOpen(true);
+    }
+  }
 
   useEffect(() => {
     if (inspectedModelId == null) return;
     let cancelled = false;
+    const announce = announceModelId != null && announceModelId === inspectedModelId;
     void (async () => {
       const result = await inspectModelOperationNorms(inspectedModelId, card.routing_template_id ?? null);
       if (cancelled || !result.ok) return;
@@ -179,13 +192,17 @@ export function TechCardModelRouteCard({
         modelId: inspectedModelId,
         routingTemplateId: result.routingTemplateId,
         operations: result.operations,
-        dismissed: false,
+        dismissed: true,
       });
+      onNormOperations?.(result.operations);
+      if (!announce) return;
+      setAnnounceModelId(null);
+      if (result.operations.length > 0) onModelConfiguration?.(result.operations);
     })();
     return () => {
       cancelled = true;
     };
-  }, [card.routing_template_id, inspectedModelId, normCheckNonce]);
+  }, [announceModelId, card.routing_template_id, inspectedModelId, normCheckNonce, onModelConfiguration, onNormOperations]);
 
   const beginEdit = () => {
     setSelectedModelId(defaultModelId);
@@ -208,6 +225,7 @@ export function TechCardModelRouteCard({
     setSelectedModelId(row.id);
     setModelQuery(modelLabel(row));
     setModelOpen(false);
+    setAnnounceModelId(row.id);
     if (row.id !== selectedModelId) {
       setSelectedAssemblyId(null);
     }
@@ -457,18 +475,6 @@ export function TechCardModelRouteCard({
             setFocusNorms(false);
             setNormCheckNonce((current) => current + 1);
             router.refresh();
-          }}
-        />
-      ) : null}
-      {normOpen ? (
-        <MissingOperationNormsDialog
-          operations={normOperations}
-          canEditNorms={canEditModelNorms}
-          onClose={() => setNormReport((current) => (current ? { ...current, dismissed: true } : current))}
-          onFill={() => {
-            setNormReport((current) => (current ? { ...current, dismissed: true } : current));
-            setFocusNorms(true);
-            setModelCardOpen(true);
           }}
         />
       ) : null}

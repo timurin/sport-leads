@@ -17,11 +17,11 @@ test("26.3.4 manager Персонализация lives in Сборки tab; sho
   const tabs = workspace.indexOf("data-tech-card-doc-tabs");
   const assemblyTab = workspace.indexOf('data-tech-card-doc-tab="assembly"');
   const personalization = workspace.indexOf('title="Персонализация"');
-  const route = workspace.indexOf('title="Маршрут / участки"');
+  const history = workspace.indexOf('title="История"');
 
   assert.ok(mockup > 0 && mockup < orderData && orderData < model);
   assert.ok(model < tabs && tabs < assemblyTab);
-  assert.ok(assemblyTab < personalization && personalization < route);
+  assert.ok(assemblyTab < personalization && personalization < history);
   assert.equal(workspace.includes('title="Поштучно"'), false);
 
   const shop = readFileSync(

@@ -66,8 +66,8 @@ test("26.11 manager tabs order and labels", () => {
   const materials = block.indexOf('{ id: "materials", label: "Материалы" }');
   const operations = block.indexOf('{ id: "operations", label: "Операции" }');
   const scheme = block.indexOf('{ id: "scheme", label: "Пошив" }');
-  const route = block.indexOf('{ id: "route", label: "Маршрут" }');
   assert.ok(assembly >= 0 && assembly < materials && materials < operations);
-  assert.ok(operations < scheme && scheme < route);
+  assert.ok(operations < scheme);
+  assert.equal(block.includes('label: "Маршрут"'), false);
   assert.ok(workspace.includes('useState<ManagerDocTabId>("assembly")'));
 });

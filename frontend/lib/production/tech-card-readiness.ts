@@ -7,6 +7,8 @@ export type ReadinessDiagnostic = {
   code?: string;
   message?: string;
   category?: string;
+  field_label?: string;
+  entity_name?: string;
 };
 
 export type ReadinessIssue = {
@@ -44,10 +46,10 @@ export type FixTarget =
   | { kind: "section"; id: string; fallbackId: string | null; tab: string | null; label: string }
   | { kind: "none" };
 
-const STEP_SECTIONS: Record<string, { id: string; fallbackId: string | null; tab: string | null }> = {
+export const STEP_SECTIONS: Record<string, { id: string; fallbackId: string | null; tab: string | null }> = {
   basic: { id: "tech-card-order-data", fallbackId: null, tab: null },
   model: { id: "tech-card-model", fallbackId: null, tab: null },
-  route: { id: "tech-card-route", fallbackId: "tech-card-route-tab", tab: "route" },
+  route: { id: "tech-card-route", fallbackId: null, tab: null },
   personalization: { id: "tech-card-personalization", fallbackId: null, tab: "assembly" },
   norms: { id: "tech-card-norms", fallbackId: null, tab: "operations" },
   planning: { id: "tech-card-planning", fallbackId: null, tab: null },
@@ -99,7 +101,15 @@ export function parseTechnicalCardReadiness(value: unknown): TechnicalCardReadin
         message: String(issue.message ?? ""),
         fix_action: issue.fix_action ?? null,
         fix_url: issue.fix_url ?? null,
-        diagnostic: issue.diagnostic ?? null,
+        diagnostic: issue.diagnostic
+          ? {
+            code: issue.diagnostic.code,
+            message: issue.diagnostic.message,
+            category: issue.diagnostic.category,
+            field_label: typeof issue.diagnostic.field_label === "string" ? issue.diagnostic.field_label : undefined,
+            entity_name: typeof issue.diagnostic.entity_name === "string" ? issue.diagnostic.entity_name : undefined,
+          }
+          : null,
       })) : [],
       fix_action: step.fix_action ?? null,
       fix_url: step.fix_url ?? null,

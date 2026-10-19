@@ -16,10 +16,14 @@ export function TechCardProductionPlan({
   card,
   disabled = false,
   embedded = false,
+  showHeading = true,
+  onSaved,
 }: {
   card: ApiTechnicalCard;
   disabled?: boolean;
   embedded?: boolean;
+  showHeading?: boolean;
+  onSaved?: () => void;
 }) {
   const router = useRouter();
   const [planningStart, setPlanningStart] = useState(card.planning_start_date ?? "");
@@ -49,14 +53,15 @@ export function TechCardProductionPlan({
       setError(saved.message ?? "Не удалось сохранить даты плана");
       return;
     }
+    onSaved?.();
     router.refresh();
   }
 
   const fields = (
     <div id="tech-card-planning" data-tech-card-production-plan className={embedded ? "grid gap-portal-3" : "grid gap-3"}>
-      {embedded ? <h3 className="text-portal-body font-semibold text-portal-text">Даты плана</h3> : null}
+      {embedded && showHeading ? <h3 className="text-portal-body font-semibold text-portal-text">Даты плана</h3> : null}
       {locked ? (
-        <InlineAlert tone="warning" size="compact">План заблокирован. Пересчёт не снимает блокировку.</InlineAlert>
+        <InlineAlert tone="warning" size="compact">Даты плана зафиксированы. Снимите фиксацию, чтобы пересчёт мог сдвинуть их.</InlineAlert>
       ) : null}
       <div className={embedded ? "grid gap-portal-3" : "grid gap-3 sm:grid-cols-2 xl:grid-cols-4"}>
         <Field label="Начало плана" htmlFor={`plan-start-${card.id}`}>
@@ -68,15 +73,18 @@ export function TechCardProductionPlan({
         <Field label="Приоритет" htmlFor={`plan-priority-${card.id}`} help="Меньше — выше. Пусто допустимо.">
           <Input id={`plan-priority-${card.id}`} inputMode="numeric" value={priority} disabled={disabled || pending} onChange={(event) => setPriority(event.target.value)} />
         </Field>
-        <label className={`flex gap-2 text-sm text-portal-text ${embedded ? "items-center" : "items-end pb-2"}`}>
-          <input
-            type="checkbox"
-            className={checkboxClassName()}
-            checked={planLocked}
-            disabled={disabled || pending}
-            onChange={(event) => setPlanLocked(event.target.checked)}
-          />
-          План заблокирован
+        <label className={`grid gap-1 text-sm text-portal-text ${embedded ? "items-start" : "items-end pb-2"}`}>
+          <span className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              className={checkboxClassName()}
+              checked={planLocked}
+              disabled={disabled || pending}
+              onChange={(event) => setPlanLocked(event.target.checked)}
+            />
+            Зафиксировать даты
+          </span>
+          <span className="text-portal-caption text-portal-muted">Пока включено, пересчёт не меняет сохранённые даты.</span>
         </label>
       </div>
       {error ? <InlineAlert tone="danger" size="compact">{error}</InlineAlert> : null}

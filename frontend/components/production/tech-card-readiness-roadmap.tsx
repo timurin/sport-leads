@@ -72,7 +72,7 @@ export function TechCardReadinessRoadmap({
       className="rounded-portal-lg border border-portal-border bg-portal-surface px-portal-3 py-portal-2 shadow-portal-card"
     >
       <div className="flex min-w-0 flex-wrap items-baseline gap-x-portal-2 gap-y-0.5">
-        <h2 className="text-portal-caption font-semibold text-portal-text">Готовность техкарты</h2>
+        <h2 className="text-portal-caption font-semibold text-portal-text">Проверка заполнения техкарты</h2>
         {view ? (
           <p className="text-portal-caption text-portal-muted" data-readiness-progress={view.progress}>
             {view.progress}
@@ -80,7 +80,7 @@ export function TechCardReadinessRoadmap({
             {view.overall}
           </p>
         ) : (
-          <p className="text-portal-caption text-portal-muted">Готовность техкарты сейчас недоступна.</p>
+          <p className="text-portal-caption text-portal-muted">Проверка заполнения техкарты сейчас недоступна.</p>
         )}
       </div>
       {view ? (

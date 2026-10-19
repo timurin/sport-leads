@@ -177,7 +177,8 @@ test("debug log is a whitelisted json document without secrets", () => {
 test("missing norms dialog stays manager-facing and fill is permission gated", () => {
   const dialog = readFileSync(join(root, "components/production/missing-operation-norms-dialog.tsx"), "utf8");
   const card = readFileSync(join(root, "components/production/tech-card-model-route-card.tsx"), "utf8");
-  const page = readFileSync(join(root, "app/(workspace)/production/tech-cards/[id]/page.tsx"), "utf8");
+  const page = readFileSync(join(root, "lib/production/load-tech-card-document.ts"), "utf8");
+  const documentPage = readFileSync(join(root, "app/(workspace)/production/tech-cards/[id]/page.tsx"), "utf8");
   const modal = readFileSync(join(root, "components/settings/product-model-full-card-modal.tsx"), "utf8");
   const routings = readFileSync(join(root, "components/settings/product-model-routings-block.tsx"), "utf8");
   assert.ok(dialog.includes("Нормы операций не заполнены!"));
@@ -195,4 +196,6 @@ test("missing norms dialog stays manager-facing and fill is permission gated", (
   assert.ok(routings.includes('id="product-model-route-norms"'));
   assert.ok(page.includes("PERM_SIZE_GRIDS_WRITE"));
   assert.ok(page.includes("canEditModelNorms"));
+  assert.ok(documentPage.includes("loadTechnicalCardDocument"));
+  assert.ok(documentPage.includes("TechCardDetailWorkspace"));
 });

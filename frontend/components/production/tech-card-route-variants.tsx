@@ -46,6 +46,7 @@ export function TechCardRouteVariants({
   plain = false,
   onPlan,
   onRows,
+  beforeSchedule,
 }: {
   card: ApiTechnicalCard;
   variants: RouteVariantRecord[];
@@ -54,6 +55,7 @@ export function TechCardRouteVariants({
   plain?: boolean;
   onPlan?: (plan: ProductionSchedule | null) => void;
   onRows?: (rows: RouteVariantRecord[]) => void;
+  beforeSchedule?: () => boolean;
 }) {
   const router = useRouter();
   const stages = card.stage_results ?? [];
@@ -98,6 +100,7 @@ export function TechCardRouteVariants({
   }
 
   async function recalculate() {
+    if (beforeSchedule && !beforeSchedule()) return;
     setPending("schedule");
     setError(null);
     const result = await scheduleTechnicalCardAction(card.id);

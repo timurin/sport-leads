@@ -4,8 +4,6 @@ import Link from "next/link";
 import {
   ChevronDown,
   ChevronRight,
-  CheckCircle2,
-  CirclePlay,
   ExternalLink,
   FileDown,
   FileUp,
@@ -13,17 +11,15 @@ import {
   Play,
   Plus,
   Printer,
-  RotateCcw,
   Save,
   Trash2,
   X,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useRef, useState, useTransition, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useTransition, useSyncExternalStore } from "react";
 
 import {
   applyRoutingAction,
-  assignPlannedWorkCenterAction,
   completeTechnicalCardStageAction,
   deleteCompositionLineAction,
   deleteTechCardMediaAction,
@@ -32,8 +28,6 @@ import {
   downloadUnitLinesImportTemplateAction,
   replaceUnitLinesAction,
   replaceCompositionAction,
-  rollbackTechnicalCardStageAction,
-  rollbackTechnicalCardStageKanbanAction,
   setCompositionFactQtyAction,
   setTechCardMediaPrimaryAction,
   startTechnicalCardAction,
@@ -45,11 +39,11 @@ import {
 import { triggerBrowserDownload } from "@/lib/file-download";
 import { TechCardMediaCarousel } from "@/components/production/tech-card-media-carousel";
 import { TechCardOrderDataCard } from "@/components/production/tech-card-order-data-card";
+import { TechCardPreflightModal } from "@/components/production/tech-card-preflight-modal";
 import { TechCardReadinessRoadmap } from "@/components/production/tech-card-readiness-roadmap";
 import { TechCardJournal } from "@/components/production/tech-card-journal";
 import { TechCardProcess } from "@/components/production/tech-card-process";
 import { TechCardProductionPlan } from "@/components/production/tech-card-production-plan";
-import { TechCardRouteVariants } from "@/components/production/tech-card-route-variants";
 import { TechCardModelRouteCard } from "@/components/production/tech-card-model-route-card";
 import { TechCardProductNameHeader } from "@/components/production/tech-card-product-name-header";
 import { TechCardShopFloorBody } from "@/components/production/tech-card-shop-floor-body";
@@ -77,7 +71,7 @@ import {
 } from "@/components/ui/data-table";
 import { EmptyState } from "@/components/ui/empty-state";
 import { EntityHeader } from "@/components/ui/entity-header";
-import { Field, Input, Select, Textarea } from "@/components/ui/form-controls";
+import { Field, Input, Select } from "@/components/ui/form-controls";
 import { ImageLightbox } from "@/components/ui/image-lightbox";
 import { CompactTabs } from "@/components/ui/compact-tabs";
 import { SectionCard } from "@/components/ui/section-card";
@@ -117,12 +111,12 @@ import {
   type FixTarget,
   type TechnicalCardReadiness,
 } from "@/lib/production/tech-card-readiness";
+import { preflightBlocks, preflightItems, type PreflightContext, type PreflightItem, type PreflightTrigger } from "@/lib/production/tech-card-preflight";
 import type {
   ApiTechnicalCard,
   ApiTechnicalCardCompositionLine,
   ApiTechnicalCardMedia,
   ApiTechnicalCardOperationLine,
-  ApiTechnicalCardStageResult,
   ApiTechnicalCardUnitLine,
 } from "@/lib/sales/order-tech-cards-api";
 import type { ProductionDiagnostic } from "@/lib/production/readiness-stickers";
@@ -143,7 +137,6 @@ const MANAGER_DOC_TABS = [
   { id: "materials", label: "Материалы" },
   { id: "operations", label: "Операции" },
   { id: "scheme", label: "Пошив" },
-  { id: "route", label: "Маршрут" },
 ] as const;
 
 type ManagerDocTabId = (typeof MANAGER_DOC_TABS)[number]["id"];
@@ -288,13 +281,6 @@ function nextUnitLineDraftId(): number {
   const next = unitLineDraftTempIdSeq;
   unitLineDraftTempIdSeq -= 1;
   return next;
-}
-
-function stageTone(status: string): "neutral" | "primary" | "success" | "warning" {
-  if (status === "in_progress") return "primary";
-  if (status === "completed") return "success";
-  if (status === "skipped") return "warning";
-  return "neutral";
 }
 
 function sortMedia(items: ApiTechnicalCardMedia[]): ApiTechnicalCardMedia[] {
@@ -565,8 +551,6 @@ export function TechCardDetailWorkspace({
   const [isPrintPending, startPrintTransition] = useTransition();
   const [busy, setBusy] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
-  const [completeOpen, setCompleteOpen] = useState(false);
-  const [completingStageOrder, setCompletingStageOrder] = useState<number | null>(null);
   const [performerName, setPerformerName] = useState("");
   const [scrapQty, setScrapQty] = useState("");
   const [reworkQty, setReworkQty] = useState("");
@@ -588,6 +572,10 @@ export function TechCardDetailWorkspace({
     history: true,
   });
   const [launchNotice, setLaunchNotice] = useState<string | null>(null);
+  const [catalogNorms, setCatalogNorms] = useState<string[]>([]);
+  const [preflight, setPreflight] = useState<PreflightTrigger | null>(null);
+  const [normsFocusToken, setNormsFocusToken] = useState(0);
+  const catalogNormsRef = useRef<string[]>([]);
   const [shopFactDrafts, setShopFactDrafts] = useState<Record<number, string>>({});
   const [shopFactPerformer, setShopFactPerformer] = useState("");
   const [shopFactWorkDone, setShopFactWorkDone] = useState("");
@@ -815,9 +803,6 @@ export function TechCardDetailWorkspace({
       : "/production/tech-cards";
   const listLabel = shopStage ? `← ${shopStage.title}` : "← Техкарты";
 
-  const completingStage =
-    stageResults.find((stage) => stage.stage_order === completingStageOrder) ?? null;
-
   const canStartCard = showLaunchButton({
     storedStatus: status,
     shopContext: isShopContext,
@@ -831,12 +816,6 @@ export function TechCardDetailWorkspace({
     stageExecutionAllowed &&
     activeStage != null &&
     (activeStage.status === "in_progress" || activeStage.status === "pending");
-
-  const canRollbackActiveStage =
-    shopActionsAllowed &&
-    stageExecutionAllowed &&
-    activeStage != null &&
-    activeStage.status === "completed";
 
   const canStartActiveStage =
     shopActionsAllowed &&
@@ -871,9 +850,6 @@ export function TechCardDetailWorkspace({
           case "materials":
             count = materialDrafts.length;
             break;
-          case "route":
-            count = stageResults.length;
-            break;
         }
         return { ...tab, count };
       }),
@@ -882,7 +858,6 @@ export function TechCardDetailWorkspace({
       materialDrafts.length,
       routingOps.length,
       sewingOps.length,
-      stageResults.length,
       unitLineDrafts,
     ],
   );
@@ -997,20 +972,6 @@ export function TechCardDetailWorkspace({
     });
   };
 
-  const openCompleteForm = (stageOrder: number) => {
-    if (
-      isShopContext &&
-      (!shopStageMatchesCurrent || activeStage?.stage_order !== stageOrder)
-    ) {
-      setActionError(
-        `Действия доступны только для текущего этапа цеха «${shopStage?.title ?? ""}». Обход порядка этапов запрещён.`,
-      );
-      return;
-    }
-    setCompletingStageOrder(stageOrder);
-    setCompleteOpen(true);
-  };
-
   const assertShopStageAction = (stageOrder: number): boolean => {
     if (!isShopContext) return true;
     if (!shopStageMatchesCurrent || activeStage?.stage_order !== stageOrder) {
@@ -1040,8 +1001,6 @@ export function TechCardDetailWorkspace({
         return result;
       }
       if (result.message) pushToast(result.message, "success");
-      setCompleteOpen(false);
-      setCompletingStageOrder(null);
       setPerformerName("");
       setScrapQty("");
       setReworkQty("");
@@ -1101,8 +1060,36 @@ export function TechCardDetailWorkspace({
     });
   };
 
+  const rememberNorms = useCallback((operations: string[]) => {
+    catalogNormsRef.current = operations;
+    setCatalogNorms(operations);
+  }, []);
+
+  const preflightContext = useCallback((operations?: string[]): PreflightContext => ({
+    catalogNormOperations: operations ?? catalogNormsRef.current,
+    assemblyName: card.assembly_variant_name,
+  }), [card.assembly_variant_name]);
+
+  const allowSchedule = useCallback(() => {
+    const items = preflightItems(readiness, "schedule", preflightContext());
+    if (!preflightBlocks(items)) return true;
+    setPreflight("schedule");
+    return false;
+  }, [preflightContext, readiness]);
+
+  const onModelConfiguration = useCallback((operations: string[]) => {
+    rememberNorms(operations);
+    const items = preflightItems(readiness, "model", preflightContext(operations));
+    if (preflightBlocks(items)) setPreflight("model");
+  }, [preflightContext, readiness, rememberNorms]);
+
   const onStartCard = () => {
     if (launchDecision(readiness) !== "launch") {
+      const items = preflightItems(readiness, "launch", preflightContext());
+      if (preflightBlocks(items)) {
+        setPreflight("launch");
+        return;
+      }
       setLaunchNotice(launchBlockedNotice(readiness));
       document.getElementById("tech-card-readiness")?.scrollIntoView({ behavior: "smooth", block: "start" });
       return;
@@ -1205,108 +1192,6 @@ export function TechCardDetailWorkspace({
       }
       router.refresh();
     })();
-  };
-
-  const onCompleteStage = () => {
-    if (!completingStage) return;
-    if (!assertShopStageAction(completingStage.stage_order)) return;
-    void (async () => {
-      const result = await runAction(
-        () =>
-          completeTechnicalCardStageAction(
-            card.id,
-            completingStage.stage_order,
-            {
-              performer_name: performerName.trim() || null,
-              scrap_qty: scrapQty.trim() || null,
-              rework_qty: reworkQty.trim() || null,
-              notes: stageNotes.trim() || null,
-            },
-            card.sales_order_id,
-            shopStage?.code,
-          ),
-        { skipRefresh: true },
-      );
-      if (!result?.ok) return;
-      const nextCard = result.card ?? null;
-      if (isShopContext && nextCard) {
-        if (String(nextCard.status) === "completed") {
-          router.push(`/production/tech-cards/${card.id}`);
-          return;
-        }
-        const nextCode = shopStageCodeByTitle(
-          nextCard.current_stage_label,
-          shopModules,
-        );
-        if (nextCode && nextCode !== shopStage?.code) {
-          router.push(shopStageCardHref(nextCode, card.id));
-          return;
-        }
-      }
-      router.refresh();
-    })();
-  };
-
-  // Shop UX: clicking "Завершить этап" from the "Этап" block must not open
-  // the "Завершение этапа ..." confirmation block. For tests we complete
-  // immediately using stage-fact performer and null scrap/rework/notes.
-  const onCompleteShopStageDirect = (stageOrder: number) => {
-    if (!assertShopStageAction(stageOrder)) return;
-    void (async () => {
-      const durationRaw = shopFactDuration.trim();
-      let durationSeconds: number | null = null;
-      if (durationRaw) {
-        const parsed = Number(durationRaw);
-        if (!Number.isInteger(parsed) || parsed < 0) {
-          setActionError("Длительность должна быть целым числом секунд ≥ 0");
-          return;
-        }
-        durationSeconds = parsed;
-      }
-      const result = await runAction(
-        () =>
-          completeTechnicalCardStageAction(
-            card.id,
-            stageOrder,
-            {
-              performer_name: shopFactPerformer.trim() || null,
-              work_done: shopFactWorkDone.trim() || null,
-              duration_seconds: durationSeconds,
-              scrap_qty: scrapQty.trim() || null,
-              rework_qty: reworkQty.trim() || null,
-              notes: stageNotes.trim() || null,
-            },
-            card.sales_order_id,
-            shopStage?.code,
-          ),
-        { skipRefresh: true },
-      );
-      if (!result?.ok) return;
-      const nextCard = result.card ?? null;
-      if (isShopContext && nextCard) {
-        if (String(nextCard.status) === "completed") {
-          router.push(`/production/tech-cards/${card.id}`);
-          return;
-        }
-        const nextCode = shopStageCodeByTitle(nextCard.current_stage_label, shopModules);
-        if (nextCode && nextCode !== shopStage?.code) {
-          router.push(shopStageCardHref(nextCode, card.id));
-          return;
-        }
-      }
-      router.refresh();
-    })();
-  };
-
-  const onRollbackStage = (stageOrder: number) => {
-    if (!assertShopStageAction(stageOrder)) return;
-    void runAction(() =>
-      rollbackTechnicalCardStageKanbanAction(
-        card.id,
-        stageOrder,
-        card.sales_order_id,
-      ),
-    );
   };
 
   const onSaveShopFactQty = (lineId: number) => {
@@ -1675,7 +1560,37 @@ export function TechCardDetailWorkspace({
     });
   };
 
+  const preflightRows = preflight ? preflightItems(readiness, preflight, {
+    catalogNormOperations: catalogNorms,
+    assemblyName: card.assembly_variant_name,
+  }).map((item) => (
+    item.kind === "norms" && !canEditModelNorms ? { ...item, actionLabel: null } : item
+  )) : [];
+
+  const scheduleBridgeRef = useRef<(() => void) | null>(null);
+
+  const onPreflightOpen = (item: PreflightItem) => {
+    setPreflight(null);
+    if (item.code === "plan_review") {
+      scheduleBridgeRef.current?.();
+      return;
+    }
+    if (item.kind === "norms") {
+      if (canEditModelNorms) setNormsFocusToken((value) => value + 1);
+      return;
+    }
+    if (!item.sectionId) return;
+    onReadinessSection({
+      kind: "section",
+      id: item.sectionId,
+      fallbackId: item.fallbackId,
+      tab: item.tab,
+      label: item.actionLabel ?? item.title,
+    });
+  };
+
   return (
+    <>
     <DocumentCard
       header={
         <div className="rounded-portal-lg border border-portal-border bg-portal-surface p-portal-4 shadow-portal-card sm:p-portal-5">
@@ -1767,36 +1682,6 @@ export function TechCardDetailWorkspace({
                     <Play className="size-4" aria-hidden="true" />
                   </IconButton>
                 ) : null}
-                {shopStage?.code !== "design" && canStartActiveStage && activeStage ? (
-                  <IconButton
-                    label="Начать этап"
-                    variant="secondary"
-                    disabled={busy}
-                    onClick={() => onStartStage(activeStage.stage_order)}
-                  >
-                    <CirclePlay className="size-4" aria-hidden="true" />
-                  </IconButton>
-                ) : null}
-                {shopStage?.code !== "design" && canCompleteActiveStage && activeStage ? (
-                  <IconButton
-                    label="Завершить этап"
-                    variant="primary"
-                    disabled={busy}
-                    onClick={() => openCompleteForm(activeStage.stage_order)}
-                  >
-                    <CheckCircle2 className="size-4" aria-hidden="true" />
-                  </IconButton>
-                ) : null}
-                {shopStage?.code !== "design" && canRollbackActiveStage && activeStage ? (
-                  <IconButton
-                    label="Откатить этап"
-                    variant="secondary"
-                    disabled={busy}
-                    onClick={() => onRollbackStage(activeStage.stage_order)}
-                  >
-                    <RotateCcw className="size-4" aria-hidden="true" />
-                  </IconButton>
-                ) : null}
                 <IconButton
                   label="Печать"
                   variant="secondary"
@@ -1846,55 +1731,6 @@ export function TechCardDetailWorkspace({
         </p>
       ) : null}
 
-      {completeOpen && completingStage ? (
-        <SectionCard
-          title={`Завершение этапа ${completingStage.stage_order}: ${completingStage.stage_label}`}
-          size="compact"
-        >
-          <div className="grid gap-portal-4 min-[900px]:grid-cols-2">
-            <Field label="Исполнитель">
-              <Input
-                value={performerName}
-                onChange={(event) => setPerformerName(event.target.value)}
-                disabled={busy}
-              />
-            </Field>
-            <Field label="Брак, шт">
-              <Input
-                value={scrapQty}
-                onChange={(event) => setScrapQty(event.target.value)}
-                disabled={busy}
-                inputMode="decimal"
-              />
-            </Field>
-            <Field label="Доработка, шт">
-              <Input
-                value={reworkQty}
-                onChange={(event) => setReworkQty(event.target.value)}
-                disabled={busy}
-                inputMode="decimal"
-              />
-            </Field>
-            <Field label="Примечание" className="min-[900px]:col-span-2">
-              <Textarea
-                value={stageNotes}
-                onChange={(event) => setStageNotes(event.target.value)}
-                disabled={busy}
-                rows={3}
-              />
-            </Field>
-          </div>
-          <div className="mt-portal-4 flex flex-wrap gap-portal-2">
-            <Button type="button" variant="primary" disabled={busy} onClick={onCompleteStage}>
-              {busy ? "Сохранение…" : "Подтвердить завершение"}
-            </Button>
-            <Button type="button" disabled={busy} onClick={() => setCompleteOpen(false)}>
-              Отмена
-            </Button>
-          </div>
-        </SectionCard>
-      ) : null}
-
       {isShopContext && shopStage ? (
         shopStage.code === "design" ? (
         <TechCardDesignerStage
@@ -1926,7 +1762,7 @@ export function TechCardDetailWorkspace({
           card={card}
           shopStage={shopStage}
           shopStageMatchesCurrent={shopStageMatchesCurrent}
-          hideStageFact={completeOpen}
+          hideStageFact={false}
           mediaItems={mediaItems}
           shopMaterialLines={shopMaterialLines}
           shopMissingFactCount={shopMissingFactCount}
@@ -1935,9 +1771,6 @@ export function TechCardDetailWorkspace({
           activeStage={activeStage}
           stageResults={stageResults}
           busy={busy}
-          canStartActiveStage={canStartActiveStage}
-          canCompleteActiveStage={canCompleteActiveStage}
-          canRollbackActiveStage={canRollbackActiveStage}
           factPerformer={shopFactPerformer}
           factPerformerOptions={factPerformerOptions}
           factWorkDone={shopFactWorkDone}
@@ -1969,15 +1802,6 @@ export function TechCardDetailWorkspace({
           onSaveAllShopFactQty={onSaveAllShopFactQty}
           onDeleteShopMaterial={onDeleteShopMaterial}
           onSaveStageFact={onSaveShopStageFact}
-          onStartActiveStage={() => {
-            if (activeStage) onStartStage(activeStage.stage_order);
-          }}
-          onCompleteActiveStage={() => {
-            if (activeStage) onCompleteShopStageDirect(activeStage.stage_order);
-          }}
-          onRollbackActiveStage={() => {
-            if (activeStage) onRollbackStage(activeStage.stage_order);
-          }}
         />
           </div>
         </div>
@@ -2031,32 +1855,27 @@ export function TechCardDetailWorkspace({
           showRoutingField={!(card.sales_order_id == null && card.order_group_id != null)}
           onApplyRouting={onApplyRouting}
           canEditModelNorms={canEditModelNorms}
+          normsFocusToken={normsFocusToken}
+          onNormOperations={rememberNorms}
+          onModelConfiguration={onModelConfiguration}
         />
       </div>
-      {card.sales_order_id == null && card.order_group_id != null ? (
-        <>
-        <TechCardProcess
-          card={card}
-          routings={routings}
-          variants={routeVariants}
-          diagnostics={productionDiagnostics}
-          workCenters={workCenters}
-          disabled={busy || status === "cancelled"}
-          onApplyRouting={onApplyRouting}
-        >
+      <TechCardProcess
+        card={card}
+        routings={routings}
+        variants={routeVariants}
+        diagnostics={productionDiagnostics}
+        workCenters={workCenters}
+        disabled={busy || status === "cancelled"}
+        onApplyRouting={onApplyRouting}
+        beforeSchedule={allowSchedule}
+        scheduleBridgeRef={scheduleBridgeRef}
+        planningActions={card.sales_order_id == null && card.order_group_id != null}
+      >
+        {card.sales_order_id == null && card.order_group_id != null ? (
           <TechCardProductionPlan embedded card={card} disabled={busy || status === "cancelled"} />
-        </TechCardProcess>
-        </>
-      ) : routeVariants.length > 0 ? (
-        <div className="mt-portal-4">
-          <TechCardRouteVariants
-            card={card}
-            variants={routeVariants}
-            workCenters={workCenters}
-            disabled={busy || status === "cancelled"}
-          />
-        </div>
-      ) : null}
+        ) : null}
+      </TechCardProcess>
       </div>
       <TechCardOrderCollaboration card={card} surface="manager" />
       <div className="tech-card-doc-rest order-3 min-w-0 flex flex-col gap-portal-4 xl:order-none xl:col-start-1 xl:row-start-2">
@@ -2733,59 +2552,6 @@ export function TechCardDetailWorkspace({
             </div>
           ) : null}
 
-          {managerDocTab === "route" ? (
-            <div id="tech-card-route-tab" data-tech-card-doc-tab="route">
-              <SectionCard
-                title="Маршрут / участки"
-                description="Ход выполнения по этапам маршрута."
-                size="compact"
-                className="border-0 p-0 shadow-none"
-              >
-                {stageResults.length === 0 ? (
-                  <EmptyState
-                    title="Маршрут не назначен"
-                    description="Назначьте маршрут при формировании техкарты."
-                  />
-                ) : (
-                  <ol
-                    data-tech-card-manager-route
-                    className="flex min-w-0 flex-wrap gap-portal-3"
-                  >
-                    {stageResults.map((stage) => (
-                      <li
-                        key={stage.id}
-                        className="min-w-[13.5rem] max-w-sm flex-1"
-                      >
-                        <StageTimelineRow
-                          stage={stage}
-                          isCurrent={
-                            stageExecutionAllowed &&
-                            stage.stage_order === card.current_stage_order
-                          }
-                          busy={busy}
-                          allowActions={stageExecutionAllowed}
-                          workCenters={workCenters}
-                          onAssignWorkCenter={(workCenterId) => {
-                            void runAction(() =>
-                              assignPlannedWorkCenterAction(
-                                card.id,
-                                stage.stage_order,
-                                workCenterId,
-                                card.sales_order_id,
-                              ),
-                            );
-                          }}
-                          onStart={() => onStartStage(stage.stage_order)}
-                          onComplete={() => openCompleteForm(stage.stage_order)}
-                          onRollback={() => onRollbackStage(stage.stage_order)}
-                        />
-                      </li>
-                    ))}
-                  </ol>
-                )}
-              </SectionCard>
-            </div>
-          ) : null}
         </div>
       </div>
 
@@ -2807,6 +2573,10 @@ export function TechCardDetailWorkspace({
       </div>
       )}
     </DocumentCard>
+    {preflight && preflightBlocks(preflightRows) ? (
+      <TechCardPreflightModal items={preflightRows} onClose={() => setPreflight(null)} onOpen={onPreflightOpen} />
+    ) : null}
+    </>
   );
 }
 
@@ -2922,140 +2692,5 @@ function AssemblySchemeBlock({
       title="Схема сборки не задана"
       description="Операции появятся после выбора варианта сборки."
     />
-  );
-}
-
-function StageTimelineRow({
-  stage,
-  isCurrent,
-  busy,
-  allowActions = true,
-  workCenters = [],
-  onAssignWorkCenter,
-  onStart,
-  onComplete,
-  onRollback,
-}: {
-  stage: ApiTechnicalCardStageResult;
-  isCurrent: boolean;
-  busy: boolean;
-  allowActions?: boolean;
-  workCenters?: WorkCenter[];
-  onAssignWorkCenter?: (workCenterId: number | null) => void;
-  onStart: () => void;
-  onComplete: () => void;
-  onRollback: () => void;
-}) {
-  const status = String(stage.status);
-  const canStart = allowActions && status === "pending";
-  const canComplete = allowActions && (status === "pending" || status === "in_progress");
-  const canRollback = allowActions && status === "completed";
-  const canEditEquipment =
-    allowActions &&
-    onAssignWorkCenter != null &&
-    (status === "pending" || status === "in_progress");
-  const stageWorkCenters = workCenters.filter((row) => {
-    const matchesStage =
-      stage.production_stage_id == null ||
-      row.production_stage_id == null ||
-      row.production_stage_id === stage.production_stage_id;
-    return (
-      matchesStage &&
-      (row.is_active || row.id === stage.work_center_id)
-    );
-  });
-  const plannedName =
-    stage.work_center_id == null
-      ? null
-      : stageWorkCenters.find((row) => row.id === stage.work_center_id)?.name ??
-        workCenters.find((row) => row.id === stage.work_center_id)?.name ??
-        `#${stage.work_center_id}`;
-
-  return (
-    <article
-      className={[
-        "flex h-full min-w-0 flex-col gap-portal-2 rounded-portal-md border px-portal-3 py-portal-3",
-        isCurrent ? "border-portal-primary/40 bg-portal-primary-soft/20" : "border-portal-border",
-      ].join(" ")}
-    >
-      <div className="flex min-w-0 flex-wrap items-center gap-portal-2">
-            <span className="font-semibold text-portal-text">
-              {stage.stage_order}. {stage.stage_label}
-            </span>
-            <StatusBadge size="compact" tone={stageTone(status)}>
-              {stageResultStatusLabel(status)}
-            </StatusBadge>
-            {isCurrent ? (
-              <StatusBadge size="compact" tone="primary">
-                Текущий
-              </StatusBadge>
-            ) : null}
-      </div>
-          <dl className="grid gap-portal-1 text-portal-caption text-portal-muted">
-            <div>Исполнитель: {stage.performer_name ?? "—"}</div>
-            <div>Начало: {formatTechCardDateTime(stage.started_at)}</div>
-            <div>Завершение: {formatTechCardDateTime(stage.completed_at)}</div>
-            <div>
-              Брак / доработка: {stage.scrap_qty ?? "—"} / {stage.rework_qty ?? "—"}
-            </div>
-          </dl>
-          {canEditEquipment ? (
-            <div className="min-w-0">
-              <Field label="Оборудование (план)">
-                <Select
-                  value={
-                    stage.work_center_id == null
-                      ? ""
-                      : String(stage.work_center_id)
-                  }
-                  disabled={busy}
-                  onChange={(event) => {
-                    const raw = event.target.value;
-                    onAssignWorkCenter?.(raw ? Number(raw) : null);
-                  }}
-                  aria-label={`Оборудование этапа ${stage.stage_order}`}
-                >
-                  <option value="">Не выбрано</option>
-                  {stageWorkCenters.map((row) => (
-                    <option key={row.id} value={String(row.id)}>
-                      {row.name}
-                      {row.is_active ? "" : " (архив)"}
-                    </option>
-                  ))}
-                </Select>
-              </Field>
-            </div>
-          ) : (
-            <p className="text-portal-caption text-portal-muted">
-              Оборудование: {plannedName ?? "—"}
-            </p>
-          )}
-          {stage.notes ? (
-            <p className="text-portal-body text-portal-muted">{stage.notes}</p>
-          ) : null}
-        <div className="mt-auto flex flex-wrap gap-portal-2">
-          {canStart ? (
-            <Button type="button" size="compact" disabled={busy} onClick={onStart}>
-              Начать
-            </Button>
-          ) : null}
-          {canComplete ? (
-            <Button
-              type="button"
-              size="compact"
-              variant="primary"
-              disabled={busy}
-              onClick={onComplete}
-            >
-              Завершить
-            </Button>
-          ) : null}
-          {canRollback ? (
-            <Button type="button" size="compact" disabled={busy} onClick={onRollback}>
-              Откатить
-            </Button>
-          ) : null}
-        </div>
-    </article>
   );
 }

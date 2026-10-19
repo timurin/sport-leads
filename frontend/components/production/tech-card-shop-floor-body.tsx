@@ -62,9 +62,6 @@ type TechCardShopFloorBodyProps = {
   activeStage: ApiTechnicalCardStageResult | null;
   stageResults: ApiTechnicalCardStageResult[];
   busy: boolean;
-  canStartActiveStage: boolean;
-  canCompleteActiveStage: boolean;
-  canRollbackActiveStage: boolean;
   factPerformer: string;
   factPerformerOptions: { value: string; label: string }[];
   factPerformerSource?: "api" | "demo";
@@ -99,9 +96,6 @@ type TechCardShopFloorBodyProps = {
   onDeleteShopMaterial?: (lineId: number) => void;
   onSaveAllOpVolumes?: () => void;
   onSaveStageFact: () => void;
-  onStartActiveStage: () => void;
-  onCompleteActiveStage: () => void;
-  onRollbackActiveStage: () => void;
 };
 
 function stageTone(status: string): "neutral" | "primary" | "success" | "warning" {
@@ -125,9 +119,6 @@ export function TechCardShopFloorBody({
   activeStage,
   stageResults,
   busy,
-  canStartActiveStage,
-  canCompleteActiveStage,
-  canRollbackActiveStage,
   factPerformer,
   factPerformerOptions,
   factPerformerSource = "demo",
@@ -160,9 +151,6 @@ export function TechCardShopFloorBody({
   onDeleteShopMaterial,
   onSaveAllOpVolumes,
   onSaveStageFact,
-  onStartActiveStage,
-  onCompleteActiveStage,
-  onRollbackActiveStage,
 }: TechCardShopFloorBodyProps) {
   const documentNumber = techCardVisibleNumber(card);
   const mediaEditable = shopStage.code === "design" && shopStageMatchesCurrent;
@@ -414,37 +402,6 @@ export function TechCardShopFloorBody({
                   >
                     Сохранить факт
                   </Button>
-                  {canStartActiveStage ? (
-                    <Button
-                      type="button"
-                      size="compact"
-                      disabled={busy}
-                      onClick={onStartActiveStage}
-                    >
-                      Начать этап
-                    </Button>
-                  ) : null}
-                  {canCompleteActiveStage ? (
-                    <Button
-                      type="button"
-                      size="compact"
-                      variant="primary"
-                      disabled={busy}
-                      onClick={onCompleteActiveStage}
-                    >
-                      Завершить этап
-                    </Button>
-                  ) : null}
-                  {canRollbackActiveStage ? (
-                    <Button
-                      type="button"
-                      size="compact"
-                      disabled={busy}
-                      onClick={onRollbackActiveStage}
-                    >
-                      Откатить
-                    </Button>
-                  ) : null}
                 </div>
               </div>
             )}
