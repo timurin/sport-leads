@@ -3,12 +3,14 @@
 import Link from "next/link";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/button";
+import { CalendarStatusFilter } from "@/components/production/calendar-status-filter";
 import { ProductionQueueSection } from "@/components/production/production-queue-panel";
 import { QueueCellLoad, QueueLoadProvider } from "@/components/production/calendar-queue-load";
 import {
   acceptCreatedAssignment, assignmentRange, boardStageStickers, calendarCreateInput, calendarErrorMessage, calendarRequest, calendarSourceLabel, enqueueAssignment, localDate, shiftWeek, sourceSearchState, stageStickerTone, stickerLabel, weekDays,
   type CalendarAssignment, type CalendarBoard, type CalendarSource, type CalendarStage,
 } from "@/lib/production/calendar";
+import { calendarStatusFilterOptions, filterCalendarAssignments } from "@/lib/production/calendar-status-filter";
 import { calendarOperationStatusLabel } from "@/lib/production/production-state-label";
 import { planningModeLabel } from "@/lib/production/production-queue";
 import { fetchTechnicalCard, type ApiTechnicalCard } from "@/lib/sales/order-tech-cards-api";
@@ -19,6 +21,7 @@ const dateLabel = (date: string) => new Date(date + "T12:00:00").toLocaleDateStr
 export function CalendarWeeklyBoard({ initialDate = null, saved = false }: { initialDate?: string | null; saved?: boolean }) {
   const [anchor, setAnchor] = useState<string | null>(initialDate);
   const [stage, setStage] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string[]>([]);
   const [board, setBoard] = useState<CalendarBoard>({ assignments: [], stages: [] });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -172,6 +175,8 @@ export function CalendarWeeklyBoard({ initialDate = null, saved = false }: { ini
   }
 
   const visibleStages = board.stages.filter((item) => !stage || item.id === Number(stage));
+  const statusOptions = calendarStatusFilterOptions(board.assignments);
+  const visibleAssignments = filterCalendarAssignments(board.assignments, statusFilter);
   return (
     <section className="space-y-4 p-4 lg:p-6" aria-label="Производственный календарь">
       <p className="text-[11px] font-extrabold uppercase tracking-[0.09em] text-[#1f5eff]">Производство / планирование</p>
@@ -192,18 +197,22 @@ export function CalendarWeeklyBoard({ initialDate = null, saved = false }: { ini
           <Button variant="secondary" aria-label="Следующая неделя" onClick={() => anchor && setAnchor(shiftWeek(anchor, 1))}>›</Button>
           <Button variant="ghost" onClick={() => setAnchor(localDate(new Date()))}>Сегодня</Button>
         </div>
-        <label className="grid gap-1 text-[11px] font-bold text-[#667085]" htmlFor="calendar-stage-filter">Участок
-          <select id="calendar-stage-filter" className={inputClass} value={stage} onChange={(event) => setStage(event.target.value)}>
-            <option value="">Все участки</option>
-            {board.stages.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
-          </select>
-        </label>
+        <div className="flex w-full flex-wrap items-end gap-3 sm:w-auto">
+          <CalendarStatusFilter options={statusOptions} selected={statusFilter} onChange={setStatusFilter} />
+          <label className="grid min-w-0 w-full gap-1 text-[11px] font-bold text-[#667085] sm:w-56" htmlFor="calendar-stage-filter">Участок
+            <select id="calendar-stage-filter" className={inputClass} value={stage} onChange={(event) => setStage(event.target.value)}>
+              <option value="">Все участки</option>
+              {board.stages.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
+            </select>
+          </label>
+        </div>
       </div>
       {loading ? <p role="status">Загрузка недели…</p> : error ? (
         <div role="alert" className="text-portal-danger">{error} <Button variant="secondary" onClick={() => setRevision((v) => v + 1)}>Повторить</Button></div>
       ) : (
         <>
           {!board.assignments.length && <p className="rounded-xl border border-[#dfe5ef] bg-[#f8fafc] px-4 py-3 text-xs text-[#667085]">На этой неделе назначений нет. Добавьте работу в очередь.</p>}
+          {board.assignments.length > 0 && visibleAssignments.length === 0 && <p data-calendar-status-empty className="rounded-xl border border-[#dfe5ef] bg-[#f8fafc] px-4 py-3 text-xs text-[#667085]">Нет назначений с выбранным статусом.</p>}
           {!visibleStages.length && <p>Участки не настроены. Откройте справочник производственных этапов.</p>}
           <QueueLoadProvider board={board} days={days} stageIds={visibleStages.map((item) => item.id)}>
             <div className="overflow-x-auto rounded-xl border border-[#dfe5ef] bg-white shadow-[0_4px_14px_rgb(27_46_94_/_0.05)]">
@@ -212,7 +221,7 @@ export function CalendarWeeklyBoard({ initialDate = null, saved = false }: { ini
                 {days.map((day) => <div key={day} className="border-b border-l border-[#edf0f5] bg-[#f8fafc] px-2 py-2.5 text-center text-[11px] text-[#475467]">{dateLabel(day)}</div>)}
               </div>
               {visibleStages.map((item) => (
-                <StageRow key={item.id} stage={item} days={days} assignments={board.assignments} onOpen={setPreview} />
+                <StageRow key={item.id} stage={item} days={days} assignments={visibleAssignments} onOpen={setPreview} />
               ))}
             </div>
           </QueueLoadProvider>
