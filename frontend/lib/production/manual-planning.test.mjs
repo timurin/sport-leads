@@ -280,7 +280,16 @@ test("manual planning screen uses preview and apply and locks factual steps", ()
   assert.ok(view.includes(FACT_STEP_LABEL) || view.includes("FACT_STEP_LABEL"));
   assert.equal(view.includes('method: "PUT"'), false);
   assert.equal(view.includes("MOVE_BACKEND_GAP"), false);
+  assert.ok(view.includes("/api/technical-cards?limit=500&offset="));
+  assert.equal(view.includes("fetchTechnicalCards"), false);
+  assert.equal(view.includes("127.0.0.1:8000"), false);
+  assert.equal(view.includes("NEXT_PUBLIC_SPORT_LEADS_API_URL"), false);
   const proxy = readFileSync(join(root, "../../app/api/production-calendar/[...path]/route.ts"), "utf8");
+  const listProxy = readFileSync(join(root, "../../app/api/technical-cards/route.ts"), "utf8");
+  assert.ok(listProxy.includes("SPORT_LEADS_API_URL"));
+  assert.ok(listProxy.includes("/technical-cards?limit="));
+  assert.ok(listProxy.includes("Cookie"));
+  assert.equal(listProxy.includes("NEXT_PUBLIC"), false);
   assert.ok(helper.includes("manual-planning/"));
   assert.ok(proxy.includes("manual-planning/cards"));
   assert.ok(proxy.includes("manual-planning/preview"));

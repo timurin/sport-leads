@@ -23,7 +23,6 @@ import {
   type ManualPlanningCardHealth, type OperationPlanningHealth, type PlanningHealth, type PlanningHealthBadge,
   type PlanningHealthFilters, type PlanningListIdentity,
 } from "@/lib/production/planning-health";
-import { fetchTechnicalCards, type ApiTechnicalCardListItem } from "@/lib/sales/order-tech-cards-api";
 
 const inputClass = "w-full min-w-0 rounded-portal-md border border-portal-border bg-portal-surface px-portal-3 py-portal-2 text-portal-body";
 function dateLabel(date: string): string {
@@ -465,11 +464,26 @@ function MoveEditor({ operation, cardId, onCancel, onMoved }: {
   );
 }
 
+type PlanningCardIdentitySource = {
+  id: number;
+  order_number: string | null;
+  product_model_name?: string | null;
+  nomenclature_name?: string | null;
+  quantity?: string | number | null;
+};
+
 async function loadPlanningIdentities(ids: readonly number[], signal: AbortSignal): Promise<Map<number, PlanningListIdentity>> {
   const wanted = new Set(ids);
   const found = new Map<number, PlanningListIdentity>();
   for (let offset = 0; offset <= 4500 && found.size < wanted.size; offset += 500) {
-    const page = await fetchTechnicalCards({ limit: 500, offset });
+    const response = await fetch(`/api/technical-cards?limit=500&offset=${offset}`, {
+      cache: "no-store",
+      credentials: "include",
+      signal,
+    });
+    if (!response.ok) throw new Error("Не удалось загрузить заказы техкарт.");
+    const page = (await response.json()) as PlanningCardIdentitySource[];
+    if (!Array.isArray(page)) throw new Error("Сервер вернул неполный список техкарт.");
     if (signal.aborted) return found;
     for (const item of page) {
       if (wanted.has(item.id)) found.set(item.id, planningIdentity(item));
@@ -479,7 +493,7 @@ async function loadPlanningIdentities(ids: readonly number[], signal: AbortSigna
   return found;
 }
 
-function planningIdentity(item: ApiTechnicalCardListItem): PlanningListIdentity {
+function planningIdentity(item: PlanningCardIdentitySource): PlanningListIdentity {
   return {
     orderNumber: item.order_number,
     model: item.product_model_name?.trim() || item.nomenclature_name?.trim() || null,
