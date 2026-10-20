@@ -28,6 +28,7 @@ export type EquipmentLoad = {
   allocated: string;
   remaining: string | null;
   utilization_percent: string | null;
+  capacity_unit?: string | null;
 };
 
 export type MonitorRow = {

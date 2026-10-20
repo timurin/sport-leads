@@ -451,8 +451,29 @@ export type StandaloneTechnicalCardCreateInput = {
   order_number: string;
   tech_cards_planned_count: number;
   desired_date: string;
+  shipping_date: string;
   quantity?: number;
 };
+
+export function standaloneTechnicalCardCreateBody(input: {
+  nomenclatureId?: number | null;
+  nomenclatureName?: string | null;
+  orderNumber: string;
+  plannedCount: number;
+  desiredDate: string;
+  shippingDate: string;
+  quantity?: number;
+}): StandaloneTechnicalCardCreateInput {
+  return {
+    nomenclature_id: input.nomenclatureId ?? null,
+    nomenclature_name: input.nomenclatureName ?? null,
+    order_number: input.orderNumber,
+    tech_cards_planned_count: input.plannedCount,
+    desired_date: input.desiredDate,
+    shipping_date: input.shippingDate,
+    quantity: input.quantity ?? 1,
+  };
+}
 
 export async function createStandaloneTechnicalCard(
   input: StandaloneTechnicalCardCreateInput,

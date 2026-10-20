@@ -250,6 +250,7 @@ test("capacity screen reads tech operations and keeps the list layout", () => {
   assert.ok(source.includes('role="status"'));
   assert.ok(source.includes("Мощности ещё не заданы"));
   assert.ok(source.includes("Мощности и загрузка"));
+  assert.ok(source.includes("Сумма за неделю не считается"));
   assert.ok(source.includes("Настроить"));
   assert.equal(source.includes("saveCapacityResource"), false);
   assert.equal(source.includes("base_rate"), false);

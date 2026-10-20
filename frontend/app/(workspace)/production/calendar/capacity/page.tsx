@@ -16,7 +16,13 @@ export default async function CalendarCapacityPage() {
   ]);
   const today = localIsoDate(new Date());
   const workCenterIds = resources.map((resource) => resource.work_center_id).filter((id): id is number => id != null);
-  const initialLoads = await readEquipmentLoads(workCenterIds, [today]);
+  let initialLoads: Awaited<ReturnType<typeof readEquipmentLoads>> = [];
+  let initialLoadError = "";
+  try {
+    initialLoads = await readEquipmentLoads(workCenterIds, [today]);
+  } catch (error) {
+    initialLoadError = error instanceof Error ? error.message : "Не удалось загрузить занятость оборудования.";
+  }
 
   return (
     <PageLayout>
@@ -27,6 +33,7 @@ export default async function CalendarCapacityPage() {
         workCenters={workCenters}
         initialLoads={initialLoads}
         initialDate={today}
+        initialLoadError={initialLoadError}
       />
     </PageLayout>
   );

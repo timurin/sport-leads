@@ -136,7 +136,7 @@ test("monitor shows equipment load and leaves labor occupancy empty", () => {
   assert.deepEqual(periodDates("2026-10-07", "week"), ["2026-10-05", "2026-10-06", "2026-10-07", "2026-10-08", "2026-10-09", "2026-10-10", "2026-10-11"]);
 });
 
-test("operation editor confirms a dirty close and capacity screen does not edit", () => {
+test("operation editor confirms a dirty close and capacity screen keeps catalog settings separate", () => {
   const modal = readFileSync(join(root, "components/settings/tech-operation-edit-modal.tsx"), "utf8");
   const workspace = readFileSync(join(root, "components/settings/tech-operations-workspace.tsx"), "utf8");
   const screen = readFileSync(join(root, "components/production/calendar-capacity-settings.tsx"), "utf8");
@@ -148,8 +148,12 @@ test("operation editor confirms a dirty close and capacity screen does not edit"
   for (const label of ["Основное", "Мощность", "Оборудование", "График", "Исключения"]) assert.ok(modal.includes(label));
   assert.ok(workspace.includes("+ Добавить операцию"));
   assert.ok(workspace.includes("Требуют настройки"));
-  assert.equal(screen.includes("saveCapacityResource"), false);
-  assert.ok(screen.includes("Настроить"));
+  assert.ok(screen.includes("CalendarCapacityResourceEditor"));
+  assert.ok(screen.includes("Сохранить график") === false);
+  assert.ok(readFileSync(join(root, "components/production/calendar-capacity-resource-editor.tsx"), "utf8").includes("saveCapacityResource"));
+  assert.ok(screen.includes("UNKNOWN_CAPACITY"));
+  assert.ok(screen.includes("Повторить"));
+  assert.ok(screen.includes('type="date"'));
   assert.equal(modal.includes("Веха"), false);
   assert.equal(screen.includes("Веха"), false);
   const fields = readFileSync(join(root, "components/settings/tech-operation-capacity-fields.tsx"), "utf8");

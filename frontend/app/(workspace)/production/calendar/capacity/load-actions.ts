@@ -1,12 +1,9 @@
 "use server";
 
 import { readEquipmentLoads } from "@/lib/work-center-load";
-import { periodDates, type EquipmentLoad } from "@/lib/tech-operation-ux";
+import { capacityLoadDates } from "@/lib/production/capacity-live";
+import type { EquipmentLoad } from "@/lib/tech-operation-ux";
 
-export async function loadEquipmentPeriod(
-  workCenterIds: number[],
-  anchor: string,
-  period: "today" | "week",
-): Promise<EquipmentLoad[]> {
-  return readEquipmentLoads(workCenterIds, periodDates(anchor, period));
+export async function loadEquipmentDay(workCenterIds: number[], date: string): Promise<EquipmentLoad[]> {
+  return readEquipmentLoads(workCenterIds, capacityLoadDates(date));
 }

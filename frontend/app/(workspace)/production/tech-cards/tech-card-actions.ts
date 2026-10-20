@@ -38,6 +38,7 @@ import {
   generateOrderTechnicalCards,
   copyTechnicalCard,
   createStandaloneTechnicalCard,
+  standaloneTechnicalCardCreateBody,
   deleteTechnicalCard,
   fetchTechnicalCard,
   fetchOrderTechnicalCardsPreview,
@@ -134,19 +135,13 @@ export async function createStandaloneTechnicalCardAction(input: {
   orderNumber: string;
   plannedCount: number;
   desiredDate: string;
+  shippingDate: string;
   quantity?: number;
 }): Promise<TechCardActionResult> {
   try {
     const auth = await sessionAuthHeaders();
     const card = await createStandaloneTechnicalCard(
-      {
-        nomenclature_id: input.nomenclatureId ?? null,
-        nomenclature_name: input.nomenclatureName ?? null,
-        order_number: input.orderNumber,
-        tech_cards_planned_count: input.plannedCount,
-        desired_date: input.desiredDate,
-        quantity: input.quantity ?? 1,
-      },
+      standaloneTechnicalCardCreateBody(input),
       auth,
     );
     revalidateTechCardPaths(card.id, card.sales_order_id);

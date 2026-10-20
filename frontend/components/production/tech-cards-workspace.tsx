@@ -324,6 +324,7 @@ export function TechCardsWorkspace({
         orderNumber: createOrderNumber.trim(),
         plannedCount,
         desiredDate: createDesiredDate.trim(),
+        shippingDate: createDesiredDate.trim(),
         quantity: plannedCount,
       });
       if (!result.ok || result.card == null) {

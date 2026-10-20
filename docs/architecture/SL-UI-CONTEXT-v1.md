@@ -60,6 +60,8 @@ Backend читать только при изменении API/data contract.
 
 ## UI-TK — TechnicalCard workspace
 
+- BUG-01: standalone create sends the entered «Дата отгрузки» as `shipping_date` and keeps the same entered day as required order-group `desired_date`. The two keys stay independent; the client does not copy one from the other after submit. Card, saved plan and Planning Health keep showing backend `shipping_date`.
+
 - PC-06.1A v2 (PT-02): existing ready_to_ship/shipped stage URLs are whole-card fulfillment lists, not operation queues. One slim authenticated API request; № ТК, order, model, canonical quantity, production completion/ready date, planned shipping date; ready list has explicit Отгрузить with server errors, shipped list is read-only and adds shipped_at. Manager-card links do not open obsolete warehouse stage controls. Existing table/mobile-card primitives retained, shell unchanged. No warehouse, partial shipment or QR UI in this flow.
 
 - PC-06.0C: тот же блок — компактная строка стикеров с переносом. Клик открывает пояснение выбранного шага под строкой. Статусы и `can_launch` по-прежнему только из GET readiness.
@@ -93,6 +95,8 @@ Backend читать только при изменении API/data contract.
 - Перед panel change открыть его прямые consumers, а не весь production UI.
 
 ## UI-CALENDAR — Production Calendar
+
+- PC-06.4A: `/production/calendar/capacity` reads saved resources and one work-center day-load per bound center for the selected date. Equipment available/occupied/remaining/utilization come from that payload. Labor, team and throughput occupancy stay «Неизвестно»; the screen does not multiply hours or call load-state with an empty demand list. A milestone row is «Без расчёта». Unbound work centers are «Не настроено». Base hours, shifts, efficiency, working days and dated exceptions for a non-machine resource save through the existing resource API and reload from GET detail. Machine base settings and exceptions stay in the existing work-center capacity drawer. Norms and operation links stay in the tech-operation catalog. There is no mixed-unit total percent. «Неделя» only reveals day chips for one selected date and says the week is not summed; it does not request seven loads.
 
 - PC-06.3J: order number, model and quantity on the planning desk come from same-origin GET `/api/technical-cards`. The browser does not use `NEXT_PUBLIC_SPORT_LEADS_API_URL` or `127.0.0.1:8000` for that list. Planning Health and the move form stay on `/api/production-calendar` and `/api/technical-cards/{id}/planning-health`.
 - PC-06.3H: the same planning screen is a dispatcher desk. A list card shows number, order, model, quantity, workshop, ETA, shipping, slack, progress and one badge. Overdue adds one sentence from the server earliest operation and `overdue_days`, plus the count when it is greater than one. Filters stay Все / Просроченные / В риске / Требуют перепланирования / Без проблем and show counts from the loaded list. The open card repeats the same facts and that one reason. The route is one vertical timeline: done and current sit above «Дальше». The move form opens only for `can_replan`, then «Проверить перенос» and «Применить перенос». No client date math.

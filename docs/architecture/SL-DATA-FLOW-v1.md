@@ -239,6 +239,8 @@ WIP/QR follows `active_stage_results` like stage commands so excluded alternativ
 
 ## DF-DEMAND-CAPACITY
 
+**PC-06.4A consumer:** the capacity screen does not derive a labor/team/throughput day budget or occupancy. Saved allocations for those resources are not on a day-load DTO. `POST /capacity/load-state` remains a warning projection of the demands in that request, not CalendarAllocation. Equipment day figures stay on the work-center load DTO.
+
 **PC-05.6C consumer:** workshop queue preview reuses existing `_build`/Demand/capacity placement. Replaceable affected occupancy is excluded only from the in-memory simulation; other queues and protected allocations remain occupied. Proposed earlier queue plans consume virtual resource/date budgets for subsequent items. Decimal totals, machine alternatives, mandatory shared resources, exceptions, units and guards remain unchanged. Actual assignments/allocations are replaced only after explicit successful apply; no frontend capacity formula.
 
 **IC-RS05:** the live TechOperation identity/norm source consumed by retained applied nodes/operation lines cannot be destructively removed through the supported delete service/API. This preserves existing Demand sources and fact/plan identity without a copied operation catalog, changed formula or unit conversion. Guard covers all retained statuses, including cancelled/completed cards. Deactivation and unrelated capacity policy are unchanged; no implicit archive/deactivate action is introduced.
@@ -268,6 +270,8 @@ WIP/QR follows `active_stage_results` like stage commands so excluded alternativ
 **Files/modules involved:** [models](../../backend/app/models/production_capacity.py), [operation model](../../backend/app/models/tech_operation.py), [Demand](../../backend/app/services/production_demand.py), [resource writes](../../backend/app/services/capacity_resources.py), [legacy load](../../backend/app/services/production_capacity.py), [Scheduler](../../backend/app/services/production_scheduler.py).
 
 ## DF-WORKCENTER
+
+**PC-06.4A consumer:** `/production/calendar/capacity` shows configured capacity, allocated, remaining and utilization only from `GET /work-centers/{id}/capacity/load?date=` for the selected date. A missing adapter stays unconfigured. The page does not sum a week into another percent. Writes reuse `/work-centers/{id}/capacity` and its exception PUT.
 
 **IC-G03:** new allocation/persist checks require an enabled resource and existing active physical WorkCenter with matching workshop. Reuses Scheduler eligible_machine_keys so inactive/incompatible alternatives do not block the selected valid machine. Physical adapter identity remains unique in the existing DB constraint; no second capacity source introduced. WorkCenter deactivation/move and adapter detach/unit change with stored allocations reject409 before mutation; delete already rejects saved allocations. Nonphysical explicit M:N sharing across workshops remains supported.
 
