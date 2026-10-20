@@ -19,6 +19,7 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import { InlineAlert } from "@/components/ui/inline-alert";
 import { SectionCard } from "@/components/ui/section-card";
 import { controlClassName } from "@/lib/design-system/control-styles";
+import type { PreflightFocusRequest } from "@/lib/production/preflight-focus";
 import { techCardModelLabel } from "@/lib/production/tech-cards";
 import type { ApiTechnicalCard } from "@/lib/sales/order-tech-cards-api";
 
@@ -36,6 +37,7 @@ type TechCardModelRouteCardProps = {
   showRoutingField?: boolean;
   canEditModelNorms?: boolean;
   normsFocusToken?: number;
+  preflightFocus?: PreflightFocusRequest | null;
   onNormOperations?: (operations: string[]) => void;
   onModelConfiguration?: (operations: string[]) => void;
   onApplyRouting: (routingTemplateId: number) => void;
@@ -51,6 +53,7 @@ export function TechCardModelRouteCard({
   disabled = false,
   showRoutingField = true,
   normsFocusToken = 0,
+  preflightFocus = null,
   onNormOperations,
   onModelConfiguration,
   onApplyRouting,
@@ -178,6 +181,23 @@ export function TechCardModelRouteCard({
     if (normsFocusToken > 0) {
       setFocusNorms(true);
       setModelCardOpen(true);
+    }
+  }
+  const [appliedPreflight, setAppliedPreflight] = useState(0);
+  if (
+    preflightFocus
+    && preflightFocus.token !== appliedPreflight
+    && (preflightFocus.open === "model" || preflightFocus.open === "assembly")
+  ) {
+    setAppliedPreflight(preflightFocus.token);
+    if (!editing) {
+      setSelectedModelId(defaultModelId);
+      setModelQuery(defaultModelLabel === "—" ? "" : defaultModelLabel);
+      setSelectedAssemblyId(defaultAssemblyId);
+      setError(null);
+      setModelOpen(false);
+      setModelActiveIndex(0);
+      setEditing(true);
     }
   }
 
@@ -469,6 +489,7 @@ export function TechCardModelRouteCard({
         <ProductModelFullCardModal
           modelId={(editing ? selectedModelId : defaultModelId) as number}
           focusNorms={focusNorms}
+          focusOperationName={preflightFocus?.open === "norms" ? preflightFocus.operationName : null}
           expandRoutingTemplateId={normRoutingTemplateId}
           onClose={() => {
             setModelCardOpen(false);

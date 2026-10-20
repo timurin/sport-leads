@@ -11,11 +11,13 @@ export function ProductModelFullCardModal({
   modelId,
   onClose,
   focusNorms = false,
+  focusOperationName = null,
   expandRoutingTemplateId = null,
 }: {
   modelId: number;
   onClose: () => void;
   focusNorms?: boolean;
+  focusOperationName?: string | null;
   expandRoutingTemplateId?: number | null;
 }) {
   const [card, setCard] = useState<ProductModelDetailData | null>(null);
@@ -39,12 +41,12 @@ export function ProductModelFullCardModal({
   }, [loadCard]);
 
   useEffect(() => {
-    if (!card || !focusNorms) return;
+    if (!card || !focusNorms || focusOperationName) return;
     const frame = window.requestAnimationFrame(() => {
       document.getElementById("product-model-route-norms")?.scrollIntoView({ block: "start" });
     });
     return () => window.cancelAnimationFrame(frame);
-  }, [card, focusNorms]);
+  }, [card, focusNorms, focusOperationName]);
 
   return (
     <ProductModelFullCardFrame onClose={onClose} onRefresh={() => loadCard(false)}>

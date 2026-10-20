@@ -65,10 +65,10 @@ export function TechCardProductionPlan({
       ) : null}
       <div className={embedded ? "grid gap-portal-3" : "grid gap-3 sm:grid-cols-2 xl:grid-cols-4"}>
         <Field label="Начало плана" htmlFor={`plan-start-${card.id}`}>
-          <Input id={`plan-start-${card.id}`} type="date" value={planningStart} disabled={disabled || pending} onChange={(event) => setPlanningStart(event.target.value)} />
+          <Input id={`plan-start-${card.id}`} type="date" value={planningStart} disabled={disabled || pending} data-preflight-field="planning-start" onChange={(event) => setPlanningStart(event.target.value)} />
         </Field>
         <Field label="Дата отгрузки" htmlFor={`plan-ship-${card.id}`}>
-          <Input id={`plan-ship-${card.id}`} type="date" value={shippingDate} disabled={disabled || pending} onChange={(event) => setShippingDate(event.target.value)} />
+          <Input id={`plan-ship-${card.id}`} type="date" value={shippingDate} disabled={disabled || pending} data-preflight-field="shipping-date" onChange={(event) => setShippingDate(event.target.value)} />
         </Field>
         <Field label="Приоритет" htmlFor={`plan-priority-${card.id}`} help="Меньше — выше. Пусто допустимо.">
           <Input id={`plan-priority-${card.id}`} inputMode="numeric" value={priority} disabled={disabled || pending} onChange={(event) => setPriority(event.target.value)} />

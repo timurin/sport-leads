@@ -7,7 +7,9 @@ export type ReadinessDiagnostic = {
   code?: string;
   message?: string;
   category?: string;
+  field?: string;
   field_label?: string;
+  fix_scope?: string;
   entity_name?: string;
 };
 
@@ -106,7 +108,9 @@ export function parseTechnicalCardReadiness(value: unknown): TechnicalCardReadin
             code: issue.diagnostic.code,
             message: issue.diagnostic.message,
             category: issue.diagnostic.category,
+            field: typeof issue.diagnostic.field === "string" ? issue.diagnostic.field : undefined,
             field_label: typeof issue.diagnostic.field_label === "string" ? issue.diagnostic.field_label : undefined,
+            fix_scope: typeof issue.diagnostic.fix_scope === "string" ? issue.diagnostic.fix_scope : undefined,
             entity_name: typeof issue.diagnostic.entity_name === "string" ? issue.diagnostic.entity_name : undefined,
           }
           : null,

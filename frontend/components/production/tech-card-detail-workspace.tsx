@@ -112,6 +112,7 @@ import {
   type TechnicalCardReadiness,
 } from "@/lib/production/tech-card-readiness";
 import { preflightBlocks, preflightItems, type PreflightContext, type PreflightItem, type PreflightTrigger } from "@/lib/production/tech-card-preflight";
+import { cancelPreflightHighlight, preflightFocusTarget, revealPreflightTarget, type PreflightFocusRequest } from "@/lib/production/preflight-focus";
 import type {
   ApiTechnicalCard,
   ApiTechnicalCardCompositionLine,
@@ -575,6 +576,8 @@ export function TechCardDetailWorkspace({
   const [catalogNorms, setCatalogNorms] = useState<string[]>([]);
   const [preflight, setPreflight] = useState<PreflightTrigger | null>(null);
   const [normsFocusToken, setNormsFocusToken] = useState(0);
+  const [preflightFocus, setPreflightFocus] = useState<PreflightFocusRequest | null>(null);
+  const preflightFocusToken = useRef(0);
   const catalogNormsRef = useRef<string[]>([]);
   const [shopFactDrafts, setShopFactDrafts] = useState<Record<number, string>>({});
   const [shopFactPerformer, setShopFactPerformer] = useState("");
@@ -1570,24 +1573,24 @@ export function TechCardDetailWorkspace({
   const scheduleBridgeRef = useRef<(() => void) | null>(null);
 
   const onPreflightOpen = (item: PreflightItem) => {
+    const target = preflightFocusTarget(item);
     setPreflight(null);
-    if (item.code === "plan_review") {
-      scheduleBridgeRef.current?.();
-      return;
-    }
-    if (item.kind === "norms") {
-      if (canEditModelNorms) setNormsFocusToken((value) => value + 1);
-      return;
-    }
-    if (!item.sectionId) return;
-    onReadinessSection({
-      kind: "section",
-      id: item.sectionId,
-      fallbackId: item.fallbackId,
-      tab: item.tab,
-      label: item.actionLabel ?? item.title,
-    });
+    if (target.tab) setManagerDocTab(target.tab);
+    if (target.open === "personalization") setUnitLinesEditMode(true);
+    if (target.open === "norms" && canEditModelNorms) setNormsFocusToken((value) => value + 1);
+    preflightFocusToken.current += 1;
+    setPreflightFocus({ ...target, token: preflightFocusToken.current });
   };
+
+  useEffect(() => {
+    if (!preflightFocus) return;
+    let alive = true;
+    void revealPreflightTarget(preflightFocus, () => alive);
+    return () => {
+      alive = false;
+      cancelPreflightHighlight();
+    };
+  }, [preflightFocus]);
 
   return (
     <>
@@ -1856,6 +1859,7 @@ export function TechCardDetailWorkspace({
           onApplyRouting={onApplyRouting}
           canEditModelNorms={canEditModelNorms}
           normsFocusToken={normsFocusToken}
+          preflightFocus={preflightFocus}
           onNormOperations={rememberNorms}
           onModelConfiguration={onModelConfiguration}
         />
@@ -1871,6 +1875,7 @@ export function TechCardDetailWorkspace({
         beforeSchedule={allowSchedule}
         scheduleBridgeRef={scheduleBridgeRef}
         planningActions={card.sales_order_id == null && card.order_group_id != null}
+        preflightFocus={preflightFocus}
       >
         {card.sales_order_id == null && card.order_group_id != null ? (
           <TechCardProductionPlan embedded card={card} disabled={busy || status === "cancelled"} />
@@ -2285,6 +2290,7 @@ export function TechCardDetailWorkspace({
                                   disabled={busy}
                                   className="w-24"
                                   aria-label={`Количество строки ${line.unit_index}`}
+                                  data-preflight-field="unit-quantity"
                                 />
                               ) : (
                                 line.quantity

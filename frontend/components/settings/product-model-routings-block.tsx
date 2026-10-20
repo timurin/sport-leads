@@ -531,6 +531,7 @@ function RoutingOperationsTable({
                   setLocalError(null);
                 }}
                 aria-label={`Норма на 1 изд. · ${row.operation_label}`}
+                data-preflight-operation={row.operation_label}
               />
             </div>
             <span className="text-right text-portal-caption text-portal-muted">

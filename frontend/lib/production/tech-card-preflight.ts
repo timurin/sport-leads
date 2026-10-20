@@ -22,7 +22,13 @@ export type PreflightItem = {
   tab: string | null;
   kind: "section" | "norms";
   operations: string[];
+  /** Operation this action should land on. Presentation only; not a readiness rule. */
+  focusOperation: string | null;
   reasons: string[];
+  /** Canonical diagnostic field when the readiness payload includes one. */
+  diagnosticField: string | null;
+  /** Original codes folded into this card. Presentation only. */
+  sourceCodes: string[];
 };
 
 const NORM_CODES = new Set(["missing_operator_norm", "missing_fixed_norm", "missing_cutting_rate"]);
@@ -46,9 +52,20 @@ const MODEL_STEPS = new Set(["model", "norms"]);
 const PLAN_REASONS: Record<string, string> = {
   saved_plan_required: "План ещё не рассчитан.",
   saved_plan_requires_review: "Сохранённый план нужно проверить.",
-  quantity_planning_start_shipping_required: "Для расчёта не хватает данных плана.",
+  quantity_planning_start_shipping_required: "Для расчёта не хватает количества, даты начала или даты отгрузки.",
   calendar_plan_stale_after_demand_change: "После изменений в техкарте сохранённый план больше не актуален.",
 };
+
+/** These readiness codes are cleared by the existing calculate/recalculate action. */
+const SCHEDULE_ACTION_CODES = new Set([
+  "saved_plan_required",
+  "saved_plan_requires_review",
+  "calendar_plan_stale_after_demand_change",
+]);
+
+export function planActionResolves(item: PreflightItem): boolean {
+  return item.sourceCodes.length > 0 && item.sourceCodes.every((code) => SCHEDULE_ACTION_CODES.has(code));
+}
 
 function contextOf(value: PreflightContext | string[] | undefined): PreflightContext {
   if (Array.isArray(value)) return { catalogNormOperations: value };
@@ -164,7 +181,10 @@ function sewingItem(issue: ReadinessIssue, assemblyName: string | null): Preflig
     ...sectionOf("model"),
     kind: "section",
     operations: [],
+    focusOperation: null,
     reasons: [],
+    diagnosticField: issue.diagnostic?.field ?? null,
+    sourceCodes: ["assembly_sewing"],
   };
 }
 
@@ -192,26 +212,39 @@ function normsItem(operations: string[], sawMeter: boolean): PreflightItem {
     ...sectionOf("norms"),
     kind: "norms",
     operations: many ? operations : [],
+    focusOperation: operations[0] ?? null,
     reasons: [],
+    diagnosticField: null,
+    sourceCodes: ["operation_norms"],
   };
 }
 
 function planItem(issues: ReadinessIssue[]): PreflightItem {
   const reasons = unique(issues.map((issue) => PLAN_REASONS[issue.code] ?? issue.message));
+  const sourceCodes = unique(issues.map((issue) => issue.code));
   const onlyMissing = issues.every((issue) => issue.code === "saved_plan_required");
   const severity = issues.some((issue) => issue.severity === "error") ? "error" : "warning";
+  const scheduleResolves = sourceCodes.every((code) => SCHEDULE_ACTION_CODES.has(code));
+  const needsDates = sourceCodes.includes("quantity_planning_start_shipping_required");
   return {
     key: "plan",
     code: "plan_review",
     severity,
-    title: onlyMissing ? "Производственный план ещё не рассчитан" : "Производственный план нужно пересчитать",
+    title: scheduleResolves
+      ? (onlyMissing ? "Производственный план ещё не рассчитан" : "Производственный план нужно пересчитать")
+      : "Для расчёта плана не хватает исходных данных",
     detail: reasons.length === 1 ? reasons[0] : "Что мешает плану:",
-    why: onlyMissing ? "Рассчитайте производственный план." : "Заново рассчитайте производственный план.",
-    actionLabel: onlyMissing ? "Рассчитать план" : "Пересчитать план",
+    why: scheduleResolves
+      ? (onlyMissing ? "Рассчитайте производственный план." : "Заново рассчитайте производственный план.")
+      : "Количество задаётся при создании техкарты и на карточке не редактируется. Укажите дату начала и дату отгрузки — после этого план можно рассчитать.",
+    actionLabel: scheduleResolves ? (onlyMissing ? "Рассчитать план" : "Пересчитать план") : (needsDates ? "Указать даты" : null),
     ...sectionOf("planning"),
     kind: "section",
     operations: [],
+    focusOperation: null,
     reasons: reasons.length > 1 ? reasons : [],
+    diagnosticField: needsDates ? "planning_start_date" : null,
+    sourceCodes,
   };
 }
 
@@ -230,7 +263,10 @@ function groupedItem(step: ReadinessStep, issues: ReadinessIssue[]): PreflightIt
     ...sectionOf(step.code),
     kind: "section",
     operations: operations.length > 1 ? operations : [],
+    focusOperation: operations[0] ?? null,
     reasons: [],
+    diagnosticField: issue.diagnostic?.field ?? null,
+    sourceCodes: unique(issues.map((row) => row.code)),
   };
 }
 
@@ -278,10 +314,19 @@ function friendlyCopy(issue: ReadinessIssue, operations: string[]): { title: str
   }
   if (issue.code === "invalid_quantity") {
     return {
-      title: "Укажите количество изделий",
+      title: "Количество изделий не задано",
       detail: "Количество должно быть больше нуля.",
-      why: "Откройте данные заказа и укажите количество.",
-      action: "Указать количество",
+      why: "Количество задаётся при создании техкарты («План ТК») и на карточке только показывается. Персонализация его не меняет. Отдельного поля для правки здесь нет.",
+      action: null,
+    };
+  }
+  if (issue.code.startsWith("calendar_allocation_") || issue.diagnostic?.field?.startsWith("production_plan.assignment.")) {
+    const label = issue.diagnostic?.field_label?.trim() || "Распределение нагрузки";
+    return {
+      title: `${label} не совпадает с текущей потребностью`,
+      detail: "На техкарте нет поля, которым можно поправить сохранённое распределение.",
+      why: "Проверьте текущую потребность, даты и ресурс и явно перепланируйте будущий план. Факт и неизвестные данные автоматически не исправляются.",
+      action: "Показать план",
     };
   }
   if (issue.code === "personalization_quantity_mismatch") {

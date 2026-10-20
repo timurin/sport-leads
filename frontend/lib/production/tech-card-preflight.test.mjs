@@ -148,6 +148,8 @@ test("fix actions point at the existing card sections", () => {
   assert.equal(items.find((item) => item.code === "planning_dates_required").sectionId, "tech-card-planning");
   assert.equal(items.find((item) => item.code === "invalid_quantity").sectionId, "tech-card-order-data");
   assert.equal(items.find((item) => item.code === "variant_not_selected").actionLabel, "Выбрать вариант");
+  assert.equal(items.find((item) => item.code === "invalid_quantity").actionLabel, null);
+  assert.match(items.find((item) => item.code === "invalid_quantity").why, /План ТК/);
 });
 
 test("a removed readiness issue disappears after refresh", () => {
@@ -264,8 +266,9 @@ test("duplicate plan diagnostics become one card and dates stay separate", () =>
     ]),
   ]), "launch");
   assert.equal(items.filter((item) => item.code === "plan_review").length, 1);
-  assert.equal(items.find((item) => item.code === "plan_review").title, "Производственный план нужно пересчитать");
-  assert.equal(items.find((item) => item.code === "plan_review").actionLabel, "Пересчитать план");
+  assert.equal(items.find((item) => item.code === "plan_review").title, "Для расчёта плана не хватает исходных данных");
+  assert.equal(items.find((item) => item.code === "plan_review").actionLabel, "Указать даты");
+  assert.equal(items.find((item) => item.code === "plan_review").sourceCodes.includes("quantity_planning_start_shipping_required"), true);
   assert.equal(items.find((item) => item.code === "planning_dates_required").title, "Укажите даты производства и отгрузки");
   assert.equal(items.filter((item) => item.title === "Производственный план требует проверки или пересчёта.").length, 0);
 });

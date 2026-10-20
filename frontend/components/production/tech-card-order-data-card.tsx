@@ -646,7 +646,7 @@ export function TechCardOrderDataCard({
             </div>
             <div>
               <dt className="text-portal-caption text-portal-muted">Количество</dt>
-              <dd className="mt-1 text-portal-body tabular-nums">{productionQuantityLabel(card.quantity)}</dd>
+              <dd id="tech-card-quantity" tabIndex={-1} data-preflight-field="quantity" className="mt-1 text-portal-body tabular-nums">{productionQuantityLabel(card.quantity)}</dd>
             </div>
             <div>
               <dt className="text-portal-caption text-portal-muted">Ответственный менеджер</dt>

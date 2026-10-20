@@ -38,6 +38,7 @@ import {
   routeChoiceRecommendation,
   type RouteSchemeStep,
 } from "@/lib/production/tech-card-route-choice";
+import type { PreflightFocusRequest } from "@/lib/production/preflight-focus";
 import { VARIANT_REPLAN_HINT, variantStatusLabel, type RouteVariantRecord } from "@/lib/route-variants";
 import type { ApiTechnicalCard, ApiTechnicalCardStageResult } from "@/lib/sales/order-tech-cards-api";
 import type { WorkCenter } from "@/lib/shop-routings";
@@ -163,6 +164,7 @@ export function TechCardProcess({
   beforeSchedule,
   scheduleBridgeRef,
   planningActions = true,
+  preflightFocus = null,
   children,
 }: {
   card: ApiTechnicalCard;
@@ -175,6 +177,7 @@ export function TechCardProcess({
   beforeSchedule?: () => boolean;
   scheduleBridgeRef?: MutableRefObject<(() => void) | null>;
   planningActions?: boolean;
+  preflightFocus?: PreflightFocusRequest | null;
   children?: ReactNode;
 }) {
   const router = useRouter();
@@ -352,6 +355,11 @@ export function TechCardProcess({
     scheduleBridgeRef.current = () => { void recalculateRef.current(true); };
     return () => { scheduleBridgeRef.current = null; };
   }, [scheduleBridgeRef]);
+  const [appliedDatesFocus, setAppliedDatesFocus] = useState(0);
+  if (preflightFocus?.open === "dates" && planningActions && preflightFocus.token !== appliedDatesFocus) {
+    setAppliedDatesFocus(preflightFocus.token);
+    setDatesOpen(true);
+  }
 
   function variantStep(step: Extract<RouteSchemeStep, { kind: "variant" }>) {
     const row = liveVariants.find((item) => item.group.id === step.key);
@@ -363,7 +371,7 @@ export function TechCardProcess({
           <StatusBadge size="compact" tone={step.status === "confirmed" ? "success" : "warning"}>{variantStatusLabel(step.status)}</StatusBadge>
         </div>
         <p className="mt-1 text-portal-caption text-portal-muted">{step.caption}</p>
-        <div className="mt-portal-2 flex flex-col gap-1" role="radiogroup" aria-label={step.name}>
+        <div className="mt-portal-2 flex flex-col gap-1" role="radiogroup" aria-label={step.name} data-route-variant={step.name}>
           {step.options.map((option) => {
             const center = workCenterName(option.nodeId, stages, workCenters);
             return (
