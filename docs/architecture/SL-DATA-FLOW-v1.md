@@ -6,6 +6,7 @@
 
 | ID | Source | Persisted data | Consumers | Invariant | Section |
 |---|---|---|---|---|---|
+| DF-TK-CLIENT | CRM Client.id | SalesOrder.client_id or TechnicalCardOrderGroup.client_id | card detail/global and order lists, order DTO | one parent-owned FK, live label; explicit selection, no card-local copy | [Открыть](#df-tk-client) |
 | DF-MODEL-ROUTE | ProductModelRoutingLink + ProductModelOperationNorm | whitelist, norm_qty_per_item/unit | binding, route editor | norm scoped model + route + operation/workshop | [Открыть](#df-model-route) |
 | DF-MODEL-ASSEMBLY | AssemblyVariant + AssemblyOperationLine | order-item snapshots; TK model/assembly refs | TK sewing lines, Demand | cost/time/multiplicity принадлежат строке сборки | [Открыть](#df-model-assembly) |
 | DF-ROUTE-SNAPSHOT | ShopRoutingTemplate + stage lines/dependencies | TechnicalCardStageResult + RouteEdge; frozen manifest + detach audit | graph, Demand, Scheduler, Kanban | template edit не заменяет граф ТК; fact plan защищён, future plan retired atomically | [Открыть](#df-route-snapshot) |
@@ -34,6 +35,37 @@
 | Snapshot boundary | граф/копии объёма защищены от live template/model norm edits; explicit reapply заменяет их. Facts, ONE OF selection, quantity и manual inputs изменяемы явными командами |
 | Live boundary | TechOperation demand_rule/duration, resource links/capacity и standalone assembly times читаются текущими; полной заморозки всех норм в ТК нет |
 | Plan/fact | CalendarAssignment/Allocation — план; StageResult и shop факты — исполнение; Kanban имеет один current workshop, не несколько параллельных колонок |
+
+## DF-TK-CLIENT
+
+**Source:** existing CRM `Client.id`; working `/clients` and `/sales/clients`.
+Contractors remains a planned registry/navigation entry with no live API/page;
+Supplier and Organization are separate domains.
+
+**Persisted data:** SalesOrder.client_id for order cards, nullable
+TechnicalCardOrderGroup.client_id for standalone cards. TechnicalCard's existing
+contour XOR selects exactly one parent; there is no independent card client/name.
+Explicit PATCH card/client changes that shared parent; order cards reuse the
+locked order/client service. New standalone siblings and generated order cards
+inherit their current parent identity. No mass migration/backfill/cascade.
+
+**Consumer:** `technical_card_clients` batch join resolves ID/live company-or-contact
+label for detail and both slim card lists (one query for all list IDs). Order DTO
+uses the same display function. Client PATCH company_name/contact_name updates
+the source entity, never copied card labels. Null/blank company falls back to
+required nonblank contact. Client has no is_active field; no fabricated filter.
+
+**Invariant:** explicit positive Client ID or standalone null; missing key is not
+a clear command. Unknown client/card is 404; cancelled card binding is rejected;
+card mutation requires authentication. Selection affects siblings through the
+parent only. Saved commercial document lines and production fact/plan/audit rows
+are untouched; no reads rebind identity. Frontend must invalidate sibling/order/
+client consumers after successful explicit mutation.
+
+**Files/modules involved:** [resolver/writer](../../backend/app/services/tech_card_client.py),
+[order writer](../../backend/app/services/sales_order_client.py),
+[contract and cache handoff](technical-card-client-bug-03.md),
+[regressions](../../backend/tests/test_techcard_client_bug_03.py).
 
 ## DF-MODEL-ROUTE
 
@@ -467,4 +499,4 @@ Canonical append-only `AuditEvent` (ADR-025), entity_type `calendar_plan_lifecyc
 
 Карта не утверждает, что все реальные карточки готовы к планированию. Стрессовые ТК удалены по отдельному запросу владельца после U; исторические результаты S/T/U не являются текущим наличием dataset. Эта задача не создаёт новые карточки и не закрывает PC-04.4S или весь PC-05.
 
-Проверка twin: `python scripts/generate_data_flow.py --check`. Кодовые ссылки должны существовать; все13 ID должны присутствовать один раз как раздел; HTML использует тот же текст, без CDN, с search/navigation, раскрываемыми цепочками и flow blocks. Owner visual review остаётся отдельным действием владельца.
+Проверка twin: `python scripts/generate_data_flow.py --check`. Кодовые ссылки должны существовать; все14 ID должны присутствовать один раз как раздел; HTML использует тот же текст, без CDN, с search/navigation, раскрываемыми цепочками и flow blocks. Owner visual review остаётся отдельным действием владельца.

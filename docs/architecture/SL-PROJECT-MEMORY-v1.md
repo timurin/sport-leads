@@ -63,6 +63,13 @@ HTML twin не требуется.
 | Provenance | canonical AuditEvent | inferred historical reason |
 | Diagnostics | shared read resolver/DTO | persisted readiness cache |
 | Navigation | frontend/lib/navigation.ts | hardcoded duplicate menu links |
+| Card buyer/client | Client.id via SalesOrder.client_id or TechnicalCardOrderGroup.client_id | separate card client or copied name; planned Contractors/Supplier/Organization |
+
+BUG-03A: detail and both card lists resolve parent-owned client ID/live name through
+`tech_card_client.technical_card_clients` (one batch query for lists). Existing
+Client PATCH accepts company/contact names; selection shares the locked order
+writer. No Client.is_active exists. Contract/cache handoff:
+`technical-card-client-bug-03.md`, DF-TK-CLIENT.
 
 Подробные цепочки и формулы живут только в SL-DATA-FLOW-v1.
 

@@ -30,6 +30,12 @@ MVP registry is **code-defined** (frontend lib + backend module constant). DB ta
 | `cities` | Города | `live` in `18.2.2`/`18.2.3` | Geography for leads/orders/UI suggestions |
 | `contractors` | Контрагенты | `planned` | Hub stub only — do **not** implement here; procurement SoT = Stage `13` `Supplier` (ADR-033 / `SL-SUPPLIER-v1`); CRM buyers stay `Client` |
 
+BUG-03A runtime verification (2026-10-20): `/sales/clients` uses working `/clients`;
+`/settings/catalogs/contractors` and `/contractors` return 404 locally. The
+authenticated registry retains the planned entry above. Technical cards resolve
+Client through their order/group, not a Contractors table. See
+[Client contract and Cursor handoff](technical-card-client-bug-03.md).
+
 ## City entity contract
 
 | Field | Type | Rules |

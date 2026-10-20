@@ -20,6 +20,10 @@ type CreateDrawerProps = {
    * fullscreen — full-viewport modal over the current page (dense create forms).
    */
   variant?: "docked" | "overlay" | "fullscreen" | "center" | "nested";
+  /** Capture Escape so a parent modal stays open. */
+  isolateEscape?: boolean;
+  /** Raise an overlay above another open modal. */
+  elevated?: boolean;
 };
 
 /**
@@ -37,6 +41,8 @@ export function CreateDrawer({
   onClose,
   children,
   variant = "docked",
+  isolateEscape = false,
+  elevated = false,
 }: CreateDrawerProps) {
   const [mounted, setMounted] = useState(false);
 
@@ -49,13 +55,13 @@ export function CreateDrawer({
       return;
     }
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        onClose();
-      }
+      if (event.key !== "Escape") return;
+      if (isolateEscape) event.stopImmediatePropagation();
+      onClose();
     };
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [open, onClose]);
+    window.addEventListener("keydown", onKeyDown, isolateEscape);
+    return () => window.removeEventListener("keydown", onKeyDown, isolateEscape);
+  }, [open, onClose, isolateEscape]);
 
   useEffect(() => {
     if (!open || (variant !== "fullscreen" && variant !== "overlay" && variant !== "center" && variant !== "nested")) {
@@ -182,7 +188,7 @@ export function CreateDrawer({
       className={[
         "flex h-full min-h-[600px] w-full flex-col border-l border-portal-border bg-portal-surface",
         variant === "overlay"
-          ? "fixed inset-y-0 right-0 z-portal-modal-1 w-full max-w-[520px] shadow-portal-overlay"
+          ? `fixed inset-y-0 right-0 w-full max-w-[520px] shadow-portal-overlay ${elevated ? "z-portal-modal-3" : "z-portal-modal-1"}`
           : "",
       ].join(" ")}
       role="dialog"
@@ -211,7 +217,7 @@ export function CreateDrawer({
       <>
         <button
           type="button"
-          className="fixed inset-0 z-portal-modal bg-[#101828]/40"
+          className={`fixed inset-0 bg-[#101828]/40 ${elevated ? "z-portal-modal-2" : "z-portal-modal"}`}
           aria-label="Закрыть панель создания"
           onClick={onClose}
         />

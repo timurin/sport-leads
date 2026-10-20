@@ -307,6 +307,7 @@ export type ApiTechnicalCardListItem = {
   notes?: string | null;
   order_number: string | null;
   client_name?: string | null;
+  client_id?: number | null;
   responsible_name?: string | null;
   desired_date?: string | null;
   planning_start_date?: string | null;

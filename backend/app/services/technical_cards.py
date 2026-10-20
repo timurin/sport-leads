@@ -19,10 +19,11 @@ from sqlalchemy import func, inspect, select, text
 from sqlalchemy.orm import Session, selectinload
 
 from app.services.tech_card_display import format_tech_card_display_number
+from app.services.tech_card_client import technical_card_clients
 from app.models.nomenclature import Nomenclature, NomenclatureType
 from app.models.product_model import ProductModel, ProductModelOperationNorm
 from app.models.production_stage import ProductionStage
-from app.models.sales import Client, SalesOrder, SalesOrderItem, SalesUser
+from app.models.sales import SalesOrder, SalesOrderItem, SalesUser
 from app.models.size_grid import SizeGrid
 from app.models.tech_operation import TechOperation, TechOperationRequiredMaterial
 from app.models.technical_card import (
@@ -184,17 +185,12 @@ def to_technical_card_read(db: Session, card: TechnicalCard) -> TechnicalCardRea
     order_number = None
     desired_date = None
     planned_count = None
-    client_id: int | None = None
-    client_name: str | None = None
+    client_id, client_name = technical_card_clients(db, [card.id]).get(card.id, (None, None))
     responsible_name: str | None = None
     if order is not None:
         order_number = order.number
         desired_date = order.desired_date
         planned_count = order.tech_cards_planned_count
-        client_id = order.client_id
-        client = db.get(Client, order.client_id)
-        if client is not None:
-            client_name = client.company_name or client.contact_name
         if order.responsible_id is not None:
             responsible = db.get(SalesUser, order.responsible_id)
             if responsible is not None:
@@ -203,11 +199,6 @@ def to_technical_card_read(db: Session, card: TechnicalCard) -> TechnicalCardRea
         order_number = group.order_number
         desired_date = group.desired_date
         planned_count = group.tech_cards_planned_count
-        client_id = group.client_id
-        if group.client_id is not None:
-            client = db.get(Client, group.client_id)
-            if client is not None:
-                client_name = client.company_name or client.contact_name
 
     media_items: list[TechnicalCardMediaRead] = []
     if _technical_card_media_table_available(db):
@@ -354,6 +345,8 @@ def to_technical_card_list_read(
     planned_count: int | None = None,
     desired_date=None,
     responsible_name: str | None = None,
+    client_id: int | None = None,
+    client_name: str | None = None,
 ) -> TechnicalCardListRead:
     """Slim list mapper — no composition/unit/media/sewing, no per-row Client lookups."""
     data = {
@@ -364,7 +357,8 @@ def to_technical_card_list_read(
     from app.services.technical_card_fact_projection import fact_projection
     data.update(fact_projection(card))
     data["order_number"] = order_number
-    data["client_name"] = None
+    data["client_id"] = client_id
+    data["client_name"] = client_name
     data["responsible_name"] = responsible_name
     data["desired_date"] = desired_date
     data["product_model_cover_image_url"] = None

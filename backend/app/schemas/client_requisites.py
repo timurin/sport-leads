@@ -11,6 +11,8 @@ def _blank_to_none(value: object) -> object:
 
 
 class ClientUpdate(BaseModel):
+    contact_name: str | None = Field(default=None, min_length=1, max_length=255)
+    company_name: str | None = Field(default=None, max_length=255)
     folder_id: int | None = None
     inn: str | None = Field(default=None, max_length=12, pattern=r"^(\d{10}|\d{12})$")
     kpp: str | None = Field(default=None, max_length=9, pattern=r"^\d{9}$")
@@ -18,10 +20,17 @@ class ClientUpdate(BaseModel):
     legal_address: str | None = Field(default=None, max_length=500)
     actual_address: str | None = Field(default=None, max_length=500)
 
-    @field_validator("inn", "kpp", "ogrn", "legal_address", "actual_address", mode="before")
+    @field_validator("company_name", "inn", "kpp", "ogrn", "legal_address", "actual_address", mode="before")
     @classmethod
     def blank_to_none(cls, value: object) -> object:
         return _blank_to_none(value)
+
+    @field_validator("contact_name", mode="before")
+    @classmethod
+    def require_contact_name(cls, value: object) -> object:
+        if value is None or (isinstance(value, str) and not value.strip()):
+            raise ValueError("Contact name cannot be blank")
+        return value.strip() if isinstance(value, str) else value
 
 
 class ClientBankAccountCreate(BaseModel):

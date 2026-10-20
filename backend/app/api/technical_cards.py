@@ -71,7 +71,7 @@ from app.services.tech_card_responsible import (
     list_responsible_candidates,
     update_technical_card_responsible,
 )
-from app.services.tech_card_client import update_technical_card_client
+from app.services.tech_card_client import technical_card_clients, update_technical_card_client
 from app.services.tech_card_desired_date import update_technical_card_desired_date
 from app.schemas.production_demand import CardDemandRead
 from app.services.production_demand import read_technical_card_demand
@@ -341,12 +341,15 @@ def list_order_technical_cards(
     labels = platform_user_labels(db, user_ids)
     order_ids = {row.sales_order_id for row in rows if row.sales_order_id is not None}
     sales_labels = sales_order_responsible_labels(db, order_ids)
+    clients = technical_card_clients(db, [row.id for row in rows])
     return [
         to_technical_card_list_read(
             row,
             order_number=order_number,
             planned_count=planned_count,
             desired_date=desired_date,
+            client_id=clients.get(row.id, (None, None))[0],
+            client_name=clients.get(row.id, (None, None))[1],
             responsible_name=list_card_responsible_name(
                 row,
                 labels,
@@ -597,12 +600,15 @@ def read_technical_cards(
         if card.sales_order_id is not None
     }
     sales_labels = sales_order_responsible_labels(db, order_ids)
+    clients = technical_card_clients(db, [row[0].id for row in rows])
     return [
         to_technical_card_list_read(
             card,
             order_number=order_number,
             planned_count=planned_count,
             desired_date=desired_date,
+            client_id=clients.get(card.id, (None, None))[0],
+            client_name=clients.get(card.id, (None, None))[1],
             responsible_name=list_card_responsible_name(
                 card,
                 labels,

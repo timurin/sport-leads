@@ -41,6 +41,7 @@ import {
   standaloneTechnicalCardCreateBody,
   deleteTechnicalCard,
   fetchTechnicalCard,
+  fetchTechnicalCards,
   fetchOrderTechnicalCardsPreview,
   linkStandaloneTechnicalCard,
   importTechnicalCardUnitLinesFile,
@@ -60,6 +61,7 @@ import {
   updateTechnicalCardStageFact,
   uploadTechnicalCardMedia,
   type ApiTechnicalCard,
+  type ApiTechnicalCardListItem,
   type ApiTechnicalCardMedia,
   type ApiTechnicalCardPreview,
   type TechnicalCardCompositionLineWrite,
@@ -83,6 +85,15 @@ function success(card: ApiTechnicalCard, message: string | null = null): TechCar
 
 function failure(message: string): TechCardActionResult {
   return { ok: false, message, card: null };
+}
+
+function revalidateClientBinding(card: ApiTechnicalCard) {
+  revalidateTechCardPaths(card.id, card.sales_order_id);
+  revalidatePath("/production/tech-cards/[id]", "page");
+  revalidatePath("/sales/orders", "page");
+  revalidatePath("/sales/orders/[orderId]", "page");
+  revalidatePath("/sales/clients", "page");
+  revalidatePath("/sales/clients/[clientId]", "page");
 }
 
 function revalidateTechCardPaths(
@@ -887,8 +898,8 @@ function clientLabel(row: {
 export async function listTechnicalCardClientCandidates(
   query: string,
 ): Promise<
-  | { ok: true; candidates: TechnicalCardClientCandidate[]; message: null }
-  | { ok: false; candidates: []; message: string }
+  | { ok: true; candidates: TechnicalCardClientCandidate[]; message: null; status: number }
+  | { ok: false; candidates: []; message: string; status: number }
 > {
   const params = new URLSearchParams();
   const q = query.trim();
@@ -901,6 +912,7 @@ export async function listTechnicalCardClientCandidates(
     return {
       ok: false,
       candidates: [],
+      status: response.status,
       message: await readApiError(response, "Не удалось загрузить клиентов"),
     };
   }
@@ -911,9 +923,51 @@ export async function listTechnicalCardClientCandidates(
   }>;
   return {
     ok: true,
+    status: response.status,
     message: null,
     candidates: rows.map((row) => ({ id: row.id, label: clientLabel(row) })),
   };
+}
+
+export async function lookupTechnicalCardClientShare(input: {
+  salesOrderId?: number | null;
+  orderGroupId?: number | null;
+  orderNumber?: string | null;
+}): Promise<
+  | { ok: true; count: number; clientIds: Array<number | null> }
+  | { ok: false; message: string }
+> {
+  try {
+    const auth = await sessionAuthHeaders();
+    let rows: ApiTechnicalCardListItem[];
+    if (input.salesOrderId != null) {
+      rows = await fetchTechnicalCards(
+        { sales_order_id: input.salesOrderId, limit: 100 },
+        auth,
+      );
+    } else if (input.orderGroupId != null) {
+      rows = await fetchTechnicalCards(
+        { order_group_id: input.orderGroupId, limit: 100 },
+        auth,
+      );
+    } else if (input.orderNumber?.trim()) {
+      const needle = input.orderNumber.trim();
+      const found = await fetchTechnicalCards({ search: needle, limit: 100 }, auth);
+      rows = found.filter((row) => (row.order_number ?? "").trim() === needle);
+    } else {
+      return { ok: true, count: 0, clientIds: [] };
+    }
+    return {
+      ok: true,
+      count: rows.length,
+      clientIds: rows.map((row) => row.client_id ?? null),
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      message: error instanceof Error ? error.message : "Не удалось проверить связанные техкарты",
+    };
+  }
 }
 
 export async function updateTechnicalCardOrderNumberAction(
@@ -1024,7 +1078,7 @@ export async function updateTechnicalCardClientAction(
       return failure(await readApiError(response, "Не удалось сохранить клиента"));
     }
     const card = (await response.json()) as ApiTechnicalCard;
-    revalidateTechCardPaths(card.id, card.sales_order_id);
+    revalidateClientBinding(card);
     return success(card, "Клиент сохранён");
   } catch (error) {
     return failure(error instanceof Error ? error.message : "Не удалось сохранить клиента");

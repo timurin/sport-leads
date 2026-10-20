@@ -11,14 +11,19 @@ test("26.3.7 order-data edit uses client typeahead and create modal", () => {
     join(root, "components/production/tech-card-order-data-card.tsx"),
     "utf8",
   );
-  assert.ok(card.includes("data-tech-card-client-combobox"));
-  assert.ok(card.includes("data-tech-card-client-create"));
-  assert.ok(card.includes("listTechnicalCardClientCandidates"));
+  const field = readFileSync(
+    join(root, "components/production/tech-card-client-field.tsx"),
+    "utf8",
+  );
+  assert.ok(field.includes("data-tech-card-client-combobox"));
+  assert.ok(field.includes("data-tech-card-client-create"));
+  assert.ok(field.includes("listTechnicalCardClientCandidates"));
   assert.ok(card.includes("updateTechnicalCardClientAction"));
-  assert.ok(card.includes("ClientCreateDrawer"));
-  assert.ok(card.includes("onCreated"));
+  assert.ok(field.includes("ClientCreateDrawer"));
+  assert.ok(field.includes("onCreated"));
   assert.ok(card.includes("Дата сдачи"));
   assert.ok(card.includes("readOnly"));
+  assert.ok(card.includes("data-tech-card-client-share-confirm") || field.includes("data-tech-card-client-share-confirm"));
 
   const actions = readFileSync(
     join(root, "app/(workspace)/production/tech-cards/tech-card-actions.ts"),

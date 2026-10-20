@@ -5,17 +5,16 @@ import { useRouter } from "next/navigation";
 import { useEffect, useId, useMemo, useState } from "react";
 
 import {
-  listTechnicalCardClientCandidates,
   listTechnicalCardResponsibleCandidates,
+  lookupTechnicalCardClientShare,
   updateTechnicalCardClientAction,
   updateTechnicalCardDesiredDateAction,
   updateTechnicalCardOrderNumberAction,
   updateTechnicalCardResponsibleAction,
-  type TechnicalCardClientCandidate,
   type TechnicalCardResponsibleCandidate,
 } from "@/app/(workspace)/production/tech-cards/tech-card-actions";
 import { StandaloneTechCardLinkPanel } from "@/components/production/standalone-tech-card-link-panel";
-import { ClientCreateDrawer } from "@/components/sales/client-create-drawer";
+import { TechCardClientField } from "@/components/production/tech-card-client-field";
 import { Button, IconButton } from "@/components/ui/button";
 import { Field, Input, Select } from "@/components/ui/form-controls";
 import { InlineAlert } from "@/components/ui/inline-alert";
@@ -29,6 +28,7 @@ import {
   toIsoDate,
   yearOptions,
 } from "@/lib/production/tech-card-due-date";
+import { clientShareDecision } from "@/lib/production/tech-card-client-binding";
 import { productionQuantityLabel } from "@/lib/production/tech-card-display";
 import { formatDesiredDate } from "@/lib/production/tech-cards";
 import type { ApiTechnicalCard } from "@/lib/sales/order-tech-cards-api";
@@ -51,7 +51,6 @@ export function TechCardOrderDataCard({
 }: TechCardOrderDataCardProps) {
   const router = useRouter();
   const listboxId = useId();
-  const clientListboxId = useId();
   const [editing, setEditing] = useState(false);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -60,12 +59,12 @@ export function TechCardOrderDataCard({
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
-  const [clientCandidates, setClientCandidates] = useState<TechnicalCardClientCandidate[]>([]);
   const [selectedClientId, setSelectedClientId] = useState<number | null>(null);
   const [clientQuery, setClientQuery] = useState("");
-  const [clientOpen, setClientOpen] = useState(false);
-  const [clientActiveIndex, setClientActiveIndex] = useState(0);
-  const [createClientOpen, setCreateClientOpen] = useState(false);
+  const [shareCount, setShareCount] = useState<number | null>(null);
+  const [shareState, setShareState] = useState<"idle" | "loading" | "ready" | "error">("idle");
+  const [sharedConfirmed, setSharedConfirmed] = useState(false);
+  const [savedClientName, setSavedClientName] = useState<string | null>(null);
   const [draftOrderNumber, setDraftOrderNumber] = useState("");
   const [draftDesiredDate, setDraftDesiredDate] = useState<string | null>(null);
   const [viewYear, setViewYear] = useState(() => new Date().getFullYear());
@@ -126,20 +125,29 @@ export function TechCardOrderDataCard({
     });
   }, [options, query]);
 
-  const clientOptions = useMemo(() => {
-    const byId = new Map<number, TechnicalCardClientCandidate>();
-    if (selectedClientId != null) {
-      byId.set(selectedClientId, {
-        id: selectedClientId,
-        label: clientQuery.trim() || defaultClientLabel || `Клиент #${selectedClientId}`,
-      });
-    }
-    for (const row of clientCandidates) byId.set(row.id, row);
-    return [...byId.values()];
-  }, [clientCandidates, clientQuery, defaultClientLabel, selectedClientId]);
-
   const expanded = open && !disabled && !pending;
-  const clientExpanded = clientOpen && !disabled && !pending && !createClientOpen;
+  const sharePending = editing && shareState === "loading" && selectedClientId !== defaultClientId;
+  const clientDecision =
+    shareState === "ready" || shareState === "error"
+      ? clientShareDecision({
+          savedClientId: defaultClientId,
+          nextClientId: selectedClientId,
+          siblingCount: shareState === "ready" ? shareCount : null,
+          contour: requiresClient ? "order" : "group",
+        })
+      : {
+          changed: selectedClientId !== defaultClientId,
+          confirm: false,
+          message: sharePending
+            ? "Проверяем, сколько техкарт используют этого контрагента."
+            : null,
+        };
+
+  useEffect(() => {
+    if (savedClientName != null && card.client_name === savedClientName) {
+      setSavedClientName(null);
+    }
+  }, [card.client_name, savedClientName]);
 
   useEffect(() => {
     if (!editing) return;
@@ -160,18 +168,26 @@ export function TechCardOrderDataCard({
 
   useEffect(() => {
     if (!editing) return;
-    const handle = window.setTimeout(() => {
-      void (async () => {
-        const result = await listTechnicalCardClientCandidates(clientQuery);
-        if (!result.ok) {
-          setError(result.message);
-          return;
-        }
-        setClientCandidates(result.candidates);
-      })();
-    }, 200);
-    return () => window.clearTimeout(handle);
-  }, [clientQuery, editing]);
+    let cancelled = false;
+    setShareState("loading");
+    void (async () => {
+      const result = await lookupTechnicalCardClientShare({
+        salesOrderId: card.sales_order_id,
+        orderGroupId: card.order_group_id,
+      });
+      if (cancelled) return;
+      if (!result.ok) {
+        setShareCount(null);
+        setShareState("error");
+        return;
+      }
+      setShareCount(result.count);
+      setShareState("ready");
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [card.order_group_id, card.sales_order_id, editing]);
 
   const beginEdit = () => {
     const parsed = parseIsoDate(card.desired_date);
@@ -180,15 +196,14 @@ export function TechCardOrderDataCard({
     setQuery(defaultLabel);
     setSelectedClientId(defaultClientId);
     setClientQuery(defaultClientLabel);
+    setSharedConfirmed(false);
     setDraftOrderNumber(card.order_number?.trim() || "");
     setDraftDesiredDate(parsed ? toIsoDate(parsed.year, parsed.month, parsed.day) : null);
     setViewYear(parsed?.year ?? now.getFullYear());
     setViewMonth(parsed?.month ?? now.getMonth() + 1);
     setError(null);
     setOpen(false);
-    setClientOpen(false);
     setActiveIndex(0);
-    setClientActiveIndex(0);
     setEditing(true);
   };
 
@@ -196,9 +211,8 @@ export function TechCardOrderDataCard({
     setEditing(false);
     setError(null);
     setOpen(false);
-    setClientOpen(false);
-    setCreateClientOpen(false);
     setPending(false);
+    setSharedConfirmed(false);
   };
 
   const selectCandidate = (row: TechnicalCardResponsibleCandidate) => {
@@ -207,13 +221,15 @@ export function TechCardOrderDataCard({
     setOpen(false);
   };
 
-  const selectClient = (row: TechnicalCardClientCandidate) => {
-    setSelectedClientId(row.id);
-    setClientQuery(row.label);
-    setClientOpen(false);
-  };
-
   const onSave = async () => {
+    if (sharePending) {
+      setError("Подождите проверку связанных техкарт");
+      return;
+    }
+    if (clientDecision.confirm && !sharedConfirmed) {
+      setError("Подтвердите смену контрагента у связанных техкарт");
+      return;
+    }
     if (requiresClient && selectedClientId == null) {
       setError("Выберите клиента из каталога или создайте нового");
       return;
@@ -231,11 +247,17 @@ export function TechCardOrderDataCard({
       setError(managerResult.message ?? "Не удалось сохранить ответственного");
       return;
     }
-    const clientResult = await updateTechnicalCardClientAction(card.id, selectedClientId);
-    if (!clientResult.ok) {
-      setPending(false);
-      setError(clientResult.message ?? "Не удалось сохранить клиента");
-      return;
+    if (selectedClientId !== defaultClientId) {
+      const clientResult = await updateTechnicalCardClientAction(card.id, selectedClientId);
+      if (!clientResult.ok) {
+        setPending(false);
+        setError(clientResult.message ?? "Не удалось сохранить контрагента");
+        return;
+      }
+      setSavedClientName(clientResult.card?.client_name ?? null);
+      if (clientResult.card?.client_name) {
+        setClientQuery(clientResult.card.client_name);
+      }
     }
     if (isStandalone && card.order_group_id != null) {
       const nextOrderNumber = draftOrderNumber.trim();
@@ -434,109 +456,20 @@ export function TechCardOrderDataCard({
                 ) : null}
               </div>
             </Field>
-            <Field label="Клиент" htmlFor="tech-card-client">
-              <div className="relative">
-                <input
-                  id="tech-card-client"
-                  type="text"
-                  role="combobox"
-                  autoComplete="off"
-                  value={clientQuery}
-                  disabled={controlsDisabled}
-                  placeholder="Начните ввод — выберите или создайте"
-                  aria-autocomplete="list"
-                  aria-expanded={clientExpanded}
-                  aria-controls={clientExpanded ? clientListboxId : undefined}
-                  data-tech-card-client-combobox
-                  className={controlClassName()}
-                  onChange={(event) => {
-                    const next = event.target.value;
-                    setClientQuery(next);
-                    setClientOpen(true);
-                    setClientActiveIndex(0);
-                    if (!next.trim()) setSelectedClientId(null);
-                  }}
-                  onFocus={() => setClientOpen(true)}
-                  onBlur={() => setClientOpen(false)}
-                  onKeyDown={(event) => {
-                    if (!clientExpanded || clientOptions.length === 0) return;
-                    if (event.key === "ArrowDown") {
-                      event.preventDefault();
-                      setClientActiveIndex((index) => (index + 1) % clientOptions.length);
-                    } else if (event.key === "ArrowUp") {
-                      event.preventDefault();
-                      setClientActiveIndex(
-                        (index) => (index - 1 + clientOptions.length) % clientOptions.length,
-                      );
-                    } else if (event.key === "Enter") {
-                      event.preventDefault();
-                      const pick = clientOptions[Math.min(clientActiveIndex, clientOptions.length - 1)];
-                      if (pick) selectClient(pick);
-                    }
-                  }}
-                />
-                {clientExpanded ? (
-                  <div
-                    id={clientListboxId}
-                    role="listbox"
-                    className="absolute z-50 mt-1 max-h-56 w-full overflow-y-auto rounded-lg border border-portal-border bg-portal-surface p-1 shadow-lg"
-                  >
-                    {clientOptions.length > 0 ? (
-                      clientOptions.map((item, index) => {
-                        const active = index === Math.min(clientActiveIndex, clientOptions.length - 1);
-                        return (
-                          <button
-                            key={item.id}
-                            type="button"
-                            role="option"
-                            aria-selected={active}
-                            onMouseDown={(event) => event.preventDefault()}
-                            onMouseEnter={() => setClientActiveIndex(index)}
-                            onClick={() => selectClient(item)}
-                            className={`block w-full rounded-md px-3 py-2 text-left text-sm ${
-                              active
-                                ? "bg-portal-surface-secondary text-portal-primary"
-                                : "text-portal-text hover:bg-portal-surface-secondary"
-                            }`}
-                          >
-                            {item.label}
-                          </button>
-                        );
-                      })
-                    ) : (
-                      <div className="px-3 py-2 text-sm text-portal-muted">Совпадений нет</div>
-                    )}
-                    <button
-                      type="button"
-                      data-tech-card-client-create
-                      className="mt-1 block w-full rounded-md px-3 py-2 text-left text-sm text-portal-primary hover:bg-portal-surface-secondary"
-                      onMouseDown={(event) => event.preventDefault()}
-                      onClick={() => {
-                        setClientOpen(false);
-                        setCreateClientOpen(true);
-                      }}
-                    >
-                      Создать клиента
-                      {clientQuery.trim() ? ` «${clientQuery.trim()}»` : ""}
-                    </button>
-                  </div>
-                ) : null}
-              </div>
-              {selectedClientId == null && clientQuery.trim() ? (
-                <div className="mt-portal-2">
-                  <Button
-                    type="button"
-                    size="compact"
-                    variant="secondary"
-                    data-tech-card-client-create
-                    disabled={controlsDisabled}
-                    onClick={() => setCreateClientOpen(true)}
-                  >
-                    Создать клиента
-                  </Button>
-                </div>
-              ) : null}
-            </Field>
+            <TechCardClientField
+              clientId={selectedClientId}
+              label={clientQuery}
+              disabled={controlsDisabled}
+              scopeMessage={clientDecision.message}
+              confirmRequired={clientDecision.confirm}
+              confirmed={sharedConfirmed}
+              onConfirmedChange={setSharedConfirmed}
+              onChange={(nextId, nextLabel) => {
+                setSelectedClientId(nextId);
+                setClientQuery(nextLabel);
+                if (nextId !== selectedClientId) setSharedConfirmed(false);
+              }}
+            />
             <Field label="Дата сдачи">
               <div
                 className="grid gap-portal-2"
@@ -653,8 +586,8 @@ export function TechCardOrderDataCard({
               <dd className="mt-1 text-portal-body">{managerValue || "—"}</dd>
             </div>
             <div>
-              <dt className="text-portal-caption text-portal-muted">Клиент</dt>
-              <dd className="mt-1 text-portal-body">{card.client_name ?? "—"}</dd>
+              <dt className="text-portal-caption text-portal-muted">Контрагент</dt>
+              <dd className="mt-1 text-portal-body" data-tech-card-client-name>{savedClientName ?? card.client_name ?? "—"}</dd>
             </div>
             <div>
               <dt className="text-portal-caption text-portal-muted">Дата сдачи</dt>
@@ -664,19 +597,6 @@ export function TechCardOrderDataCard({
         )}
       </div>
     </SectionCard>
-    <ClientCreateDrawer
-      open={createClientOpen}
-      initialContactName={clientQuery}
-      onClose={() => setCreateClientOpen(false)}
-      onCreated={(created) => {
-        setSelectedClientId(created.id);
-        setClientQuery(created.label);
-        setClientCandidates((rows) => {
-          const next = rows.filter((row) => row.id !== created.id);
-          return [{ id: created.id, label: created.label }, ...next];
-        });
-      }}
-    />
     </>
   );
 }

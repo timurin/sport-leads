@@ -18,7 +18,7 @@ test("26.3.6 order-data edit uses PlatformUser responsible combobox", () => {
   assert.ok(card.includes("created_by_platform_user_id"));
   assert.ok(card.includes("responsible_platform_user_id"));
   assert.ok(card.includes("readOnly"));
-  assert.ok(card.includes("Клиент"));
+  assert.ok(card.includes("Контрагент"));
   assert.ok(card.includes("Дата сдачи"));
 
   const actions = readFileSync(

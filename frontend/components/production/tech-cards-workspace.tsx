@@ -22,7 +22,10 @@ import {
   createStandaloneTechnicalCardAction,
   deleteTechnicalCardAction,
   generateTechCardsFromOrderAction,
+  lookupTechnicalCardClientShare,
+  updateTechnicalCardClientAction,
 } from "@/app/(workspace)/production/tech-cards/tech-card-actions";
+import { TechCardClientField } from "@/components/production/tech-card-client-field";
 import { NomenclaturePickModal } from "@/components/sales/nomenclature-pick-modal";
 import { CompactTabs } from "@/components/ui/compact-tabs";
 import { Button, IconButton } from "@/components/ui/button";
@@ -57,6 +60,7 @@ import {
   techCardStatusTone,
 } from "@/lib/production/tech-cards";
 import { productionQuantityLabel, techCardVisibleNumber } from "@/lib/production/tech-card-display";
+import { clientShareDecision } from "@/lib/production/tech-card-client-binding";
 import type { ApiTechnicalCardListItem } from "@/lib/sales/order-tech-cards-api";
 
 const STATUS_FILTER_ITEMS: { value: string; label: string }[] = [
@@ -116,6 +120,13 @@ export function TechCardsWorkspace({
   const [createOrderNumber, setCreateOrderNumber] = useState("");
   const [createPlannedCount, setCreatePlannedCount] = useState("1");
   const [createDesiredDate, setCreateDesiredDate] = useState("");
+  const [createClientId, setCreateClientId] = useState<number | null>(null);
+  const [createClientLabel, setCreateClientLabel] = useState("");
+  const [createShareCount, setCreateShareCount] = useState<number | null>(0);
+  const [createGroupClientId, setCreateGroupClientId] = useState<number | null>(null);
+  const [createShareState, setCreateShareState] = useState<"idle" | "loading" | "ready" | "error">("idle");
+  const [createShareConfirmed, setCreateShareConfirmed] = useState(false);
+  const [pendingCardId, setPendingCardId] = useState<number | null>(null);
   const [rowBusyId, setRowBusyId] = useState<number | null>(null);
   const filterRef = useRef<HTMLDivElement>(null);
   const listView = parseTechCardListView(view);
@@ -142,6 +153,56 @@ export function TechCardsWorkspace({
       document.removeEventListener("keydown", onKeyDown);
     };
   }, [filterOpen]);
+
+  useEffect(() => {
+    if (!createOpen || createClientId == null || !createOrderNumber.trim()) {
+      setCreateShareState("idle");
+      setCreateShareCount(0);
+      setCreateGroupClientId(null);
+      return;
+    }
+    let cancelled = false;
+    setCreateShareState("loading");
+    const handle = window.setTimeout(() => {
+      void (async () => {
+        const result = await lookupTechnicalCardClientShare({
+          orderNumber: createOrderNumber.trim(),
+        });
+        if (cancelled) return;
+        if (!result.ok) {
+          setCreateShareCount(null);
+          setCreateGroupClientId(null);
+          setCreateShareState("error");
+          return;
+        }
+        const unique = [...new Set(result.clientIds)];
+        setCreateGroupClientId(unique.length === 1 ? unique[0] : null);
+        setCreateShareCount(result.count);
+        setCreateShareState("ready");
+      })();
+    }, 300);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(handle);
+    };
+  }, [createClientId, createOpen, createOrderNumber]);
+
+  const createClientDecision =
+    createClientId == null
+      ? { changed: false, confirm: false, message: null as string | null }
+      : clientShareDecision({
+          savedClientId: createShareState === "ready" ? createGroupClientId : null,
+          nextClientId: createClientId,
+          siblingCount:
+            createShareState === "ready"
+              ? createShareCount != null && createShareCount > 0
+                ? createShareCount + 1
+                : 0
+              : createShareState === "error"
+                ? null
+                : 0,
+          contour: "group",
+        });
 
   const filtered = useMemo(
     () =>
@@ -222,6 +283,13 @@ export function TechCardsWorkspace({
     setCreateOrderNumber("");
     setCreatePlannedCount("1");
     setCreateDesiredDate("");
+    setCreateClientId(null);
+    setCreateClientLabel("");
+    setCreateShareCount(0);
+    setCreateGroupClientId(null);
+    setCreateShareState("idle");
+    setCreateShareConfirmed(false);
+    setPendingCardId(null);
     setCreateError(null);
   };
 
@@ -309,6 +377,14 @@ export function TechCardsWorkspace({
       setCreateError("Укажите дату отгрузки");
       return;
     }
+    if (createClientId != null && createShareState === "loading") {
+      setCreateError("Подождите проверку связанных техкарт");
+      return;
+    }
+    if (createClientDecision.confirm && !createShareConfirmed) {
+      setCreateError("Подтвердите смену контрагента у связанных техкарт");
+      return;
+    }
 
     if (createNomenclatureEditing && nomenclatureName) {
       setCreateNomenclatureName(nomenclatureName);
@@ -318,23 +394,47 @@ export function TechCardsWorkspace({
     setCreating(true);
     setCreateError(null);
     try {
-      const result = await createStandaloneTechnicalCardAction({
-        nomenclatureId: hasCatalogId ? nomenclatureId : null,
-        nomenclatureName: nomenclatureName || null,
-        orderNumber: createOrderNumber.trim(),
-        plannedCount,
-        desiredDate: createDesiredDate.trim(),
-        shippingDate: createDesiredDate.trim(),
-        quantity: plannedCount,
-      });
-      if (!result.ok || result.card == null) {
-        setCreateError(result.message ?? "Ошибка создания");
-        setCreating(false);
-        return;
+      let cardId = pendingCardId;
+      if (cardId == null) {
+        const result = await createStandaloneTechnicalCardAction({
+          nomenclatureId: hasCatalogId ? nomenclatureId : null,
+          nomenclatureName: nomenclatureName || null,
+          orderNumber: createOrderNumber.trim(),
+          plannedCount,
+          desiredDate: createDesiredDate.trim(),
+          shippingDate: createDesiredDate.trim(),
+          quantity: plannedCount,
+        });
+        if (!result.ok || result.card == null) {
+          setCreateError(result.message ?? "Ошибка создания");
+          setCreating(false);
+          return;
+        }
+        cardId = result.card.id;
+        setPendingCardId(cardId);
+        if (createClientId != null && result.card.client_id === createClientId) {
+          pushToast(result.message ?? "Техкарта создана", "success");
+          setPendingCardId(null);
+          setCreateOpen(false);
+          router.push(`/production/tech-cards/${cardId}`);
+          setCreating(false);
+          return;
+        }
       }
-      pushToast(result.message ?? "Техкарта создана", "success");
+      if (createClientId != null) {
+        const bound = await updateTechnicalCardClientAction(cardId, createClientId);
+        if (!bound.ok) {
+          setCreateError(
+            `${bound.message ?? "Не удалось сохранить контрагента"} Техкарта уже создана, повторная отправка не создаст вторую.`,
+          );
+          setCreating(false);
+          return;
+        }
+      }
+      pushToast("Техкарта создана", "success");
+      setPendingCardId(null);
       setCreateOpen(false);
-      router.push(`/production/tech-cards/${result.card.id}`);
+      router.push(`/production/tech-cards/${cardId}`);
     } catch {
       setCreateError("Не удалось создать техкарту");
     }
@@ -415,9 +515,16 @@ export function TechCardsWorkspace({
       <CreateDrawer
         open={createOpen}
         title="Создать техкарту"
-        description="Без заказа продаж: номенклатура (текст или справочник), номер, план ТК и дата отгрузки."
+        description="Без заказа продаж: номенклатура (текст или справочник), номер, план ТК, дата отгрузки и контрагент."
         onClose={() => {
           if (creating) return;
+          if (pendingCardId != null) {
+            const id = pendingCardId;
+            setPendingCardId(null);
+            setCreateOpen(false);
+            router.push(`/production/tech-cards/${id}`);
+            return;
+          }
           setCreateOpen(false);
         }}
         variant="center"
@@ -502,7 +609,10 @@ export function TechCardsWorkspace({
           <Field label="Номер заказа" required>
             <Input
               value={createOrderNumber}
-              onChange={(event) => setCreateOrderNumber(event.target.value)}
+              onChange={(event) => {
+                setCreateOrderNumber(event.target.value);
+                setCreateShareConfirmed(false);
+              }}
               placeholder="Например, 1310"
               disabled={creating}
             />
@@ -525,6 +635,20 @@ export function TechCardsWorkspace({
               disabled={creating}
             />
           </Field>
+          <TechCardClientField
+            clientId={createClientId}
+            label={createClientLabel}
+            disabled={creating}
+            scopeMessage={createClientDecision.message}
+            confirmRequired={createClientDecision.confirm}
+            confirmed={createShareConfirmed}
+            onConfirmedChange={setCreateShareConfirmed}
+            onChange={(nextId, nextLabel) => {
+              setCreateClientId(nextId);
+              setCreateClientLabel(nextLabel);
+              setCreateShareConfirmed(false);
+            }}
+          />
           {createError ? (
             <p className="text-portal-body text-portal-danger" role="alert">
               {createError}

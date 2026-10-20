@@ -16,14 +16,9 @@ def update_sales_order_client(
     order = db.scalar(select(SalesOrder).where(SalesOrder.id == order_id).with_for_update())
     if order is None:
         raise SalesOrderClientError("Order not found")
-    client = db.scalar(
-        select(Client).where(
-            Client.id == client_id,
-            Client.is_active.is_(True),
-        )
-    )
+    client = db.get(Client, client_id)
     if client is None:
-        raise SalesOrderClientError("Active client not found")
+        raise SalesOrderClientError("Client not found")
     order.client_id = client_id
     db.flush()
     return order

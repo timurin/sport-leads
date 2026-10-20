@@ -12,6 +12,7 @@ ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / "docs/architecture/SL-DATA-FLOW-v1.md"
 OUTPUT = ROOT / "docs/erp/status/SL-DATA-FLOW-v1.html"
 EXPECTED = {
+    "DF-TK-CLIENT",
     "DF-MODEL-ROUTE", "DF-MODEL-ASSEMBLY", "DF-ROUTE-SNAPSHOT",
     "DF-TK-OPERATION-VOLUME", "DF-ONE-OF", "DF-SEWING-DEMAND",
     "DF-PRINT-DEMAND", "DF-CUTTING-DEMAND", "DF-DEMAND-CAPACITY",
@@ -48,7 +49,7 @@ def inline(value: str) -> str:
 def render(markdown: str) -> str:
     ids = re.findall(r"^## (DF-[A-Z-]+)$", markdown, re.M)
     if set(ids) != EXPECTED or len(ids) != len(EXPECTED):
-        raise ValueError("Expected exactly the 13 canonical flow sections")
+        raise ValueError(f"Expected exactly the {len(EXPECTED)} canonical flow sections")
     navigation = ''.join(f'<a href="#{key.lower()}">{key}</a>' for key in ids)
     blocks = []
     chain_open = False
@@ -130,7 +131,7 @@ def main() -> None:
     if args.check:
         if not OUTPUT.exists() or OUTPUT.read_text(encoding="utf-8") != generated:
             raise SystemExit("HTML twin differs from canonical Markdown; regenerate")
-        print("HTML twin synced: 13 flows, validated local source links")
+        print(f"HTML twin synced: {len(EXPECTED)} flows, validated local source links")
     else:
         OUTPUT.write_text(generated, encoding="utf-8")
         print(f"Generated {OUTPUT.relative_to(ROOT)}")

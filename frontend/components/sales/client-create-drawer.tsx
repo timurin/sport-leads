@@ -24,6 +24,8 @@ type Props = {
   open: boolean;
   onClose: () => void;
   initialContactName?: string;
+  title?: string;
+  elevated?: boolean;
   onCreated?: (client: { id: number; label: string }) => void;
 };
 
@@ -31,6 +33,8 @@ export function ClientCreateDrawer({
   open,
   onClose,
   initialContactName = "",
+  title = "Добавить клиента",
+  elevated = false,
   onCreated,
 }: Props) {
   const router = useRouter();
@@ -76,13 +80,15 @@ export function ClientCreateDrawer({
   return (
     <CreateDrawer
       open={open}
-      title="Добавить клиента"
+      title={title}
       description="Дубли по имени, телефону или ИНН показываются предупреждением — запись всё равно можно создать."
       onClose={() => {
         reset();
         onClose();
       }}
       variant="overlay"
+      elevated={elevated}
+      isolateEscape
     >
       <form
         className="flex h-full min-h-0 flex-col"

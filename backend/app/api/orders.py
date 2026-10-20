@@ -3,6 +3,7 @@ from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
 from app.database.session import get_db
+from app.services.tech_card_client import client_display_name
 from app.models.sales import Client, Lead, LeadEvent, Organization, SalesOrder, SalesOrderItem, SalesUser
 from app.schemas.sales import (
     LeadEventRead,
@@ -91,7 +92,7 @@ def serialize_order(
         **{column.name: getattr(order, column.name) for column in SalesOrder.__table__.columns},
         "items_subtotal": order_items_subtotal(order),
         "amount_net": order_amount_net(order),
-        "client_name": client.company_name or client.contact_name,
+        "client_name": client_display_name(client),
         "responsible_name": responsible.name if responsible else None,
         "organization_name": organization.name if organization else None,
         "items": [serialize_item(item) for item in order.items],
@@ -225,7 +226,7 @@ def update_order_client(
     try:
         update_sales_order_client(db, order_id, payload.client_id)
     except SalesOrderClientError as error:
-        status_code = 404 if str(error) in {"Order not found", "Active client not found"} else 400
+        status_code = 404 if str(error) in {"Order not found", "Client not found"} else 400
         raise HTTPException(status_code=status_code, detail=str(error)) from error
     db.commit()
     return get_order(order_id, db)

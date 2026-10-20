@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="source-sha256" content="92d26dc314fa97660cdf224661f592fd559aa8576bda3a078c6679a1f2a28e1c"><title>SL-DATA-FLOW-v1 — карта данных</title>
+<meta name="source-sha256" content="1b0fc6d48c704b0282ed814ffb5e5d82a5d31dcdf7616b868fe68184d40ff17f"><title>SL-DATA-FLOW-v1 — карта данных</title>
 <style>
 :root{font:16px/1.6 system-ui,sans-serif;color:#18283b;background:#f3f6fa}*{box-sizing:border-box}body{margin:0}
 header{padding:20px 24px;background:#142f4c;color:white}header p{margin:0}a{color:#185bb3}header a{color:#c2e0ff}
@@ -14,11 +14,12 @@ main{padding:20px 26px;min-width:0;background:white}h1{font-size:30px}h2{margin-
 @media(max-width:850px){.layout{grid-template-columns:1fr}aside{position:static;max-height:none}nav{display:flex;flex-wrap:wrap;gap:5px}main{padding:12px}header{padding:16px}}
 @media print{aside,header{display:none}.layout{display:block}main{padding:0}.chain{break-inside:avoid}a{color:inherit}}
 </style></head><body><header><strong>Sport-Lead · Canonical Data Flow</strong><p>Источник: <a href="../../architecture/SL-DATA-FLOW-v1.md">SL-DATA-FLOW-v1.md</a> · Offline HTML twin · PC-05.0A</p></header>
-<div class="layout"><aside><label for="search">Поиск по ID / сущности</label><input id="search" type="search" placeholder="volume, WorkCenter, DF-ONE-OF…"><p id="count" class="status" aria-live="polite"></p><button id="expand">Раскрыть все</button> <button id="collapse">Свернуть все</button><nav aria-label="Индекс цепочек"><a href="#df-model-route">DF-MODEL-ROUTE</a><a href="#df-model-assembly">DF-MODEL-ASSEMBLY</a><a href="#df-route-snapshot">DF-ROUTE-SNAPSHOT</a><a href="#df-tk-operation-volume">DF-TK-OPERATION-VOLUME</a><a href="#df-one-of">DF-ONE-OF</a><a href="#df-sewing-demand">DF-SEWING-DEMAND</a><a href="#df-print-demand">DF-PRINT-DEMAND</a><a href="#df-cutting-demand">DF-CUTTING-DEMAND</a><a href="#df-demand-capacity">DF-DEMAND-CAPACITY</a><a href="#df-workcenter">DF-WORKCENTER</a><a href="#df-scheduler-calendar">DF-SCHEDULER-CALENDAR</a><a href="#df-kanban-fact">DF-KANBAN-FACT</a><a href="#df-diagnostics">DF-DIAGNOSTICS</a></nav></aside><main><h1>SL-DATA-FLOW-v1</h1>
+<div class="layout"><aside><label for="search">Поиск по ID / сущности</label><input id="search" type="search" placeholder="volume, WorkCenter, DF-ONE-OF…"><p id="count" class="status" aria-live="polite"></p><button id="expand">Раскрыть все</button> <button id="collapse">Свернуть все</button><nav aria-label="Индекс цепочек"><a href="#df-tk-client">DF-TK-CLIENT</a><a href="#df-model-route">DF-MODEL-ROUTE</a><a href="#df-model-assembly">DF-MODEL-ASSEMBLY</a><a href="#df-route-snapshot">DF-ROUTE-SNAPSHOT</a><a href="#df-tk-operation-volume">DF-TK-OPERATION-VOLUME</a><a href="#df-one-of">DF-ONE-OF</a><a href="#df-sewing-demand">DF-SEWING-DEMAND</a><a href="#df-print-demand">DF-PRINT-DEMAND</a><a href="#df-cutting-demand">DF-CUTTING-DEMAND</a><a href="#df-demand-capacity">DF-DEMAND-CAPACITY</a><a href="#df-workcenter">DF-WORKCENTER</a><a href="#df-scheduler-calendar">DF-SCHEDULER-CALENDAR</a><a href="#df-kanban-fact">DF-KANBAN-FACT</a><a href="#df-diagnostics">DF-DIAGNOSTICS</a></nav></aside><main><h1>SL-DATA-FLOW-v1</h1>
 <p>Каноническая карта производственных данных Sport-Lead. Версия 1, проверено по текущему рабочему коду 2026-10-10, задача PC-05.0A. Markdown — источник; <a href="SL-DATA-FLOW-v1.html">HTML twin</a> генерируется командой <code>python scripts/generate_data_flow.py</code>. Это карта реализованного поведения, не новый бизнес-контракт и не подтверждение готовности всего календаря.</p>
 <h2>Индекс</h2>
 <div class="table-wrap"><table><tbody>
 <tr><th>ID</th><th>Source</th><th>Persisted data</th><th>Consumers</th><th>Invariant</th><th>Section</th></tr>
+<tr><td>DF-TK-CLIENT</td><td>CRM Client.id</td><td>SalesOrder.client_id or TechnicalCardOrderGroup.client_id</td><td>card detail/global and order lists, order DTO</td><td>one parent-owned FK, live label; explicit selection, no card-local copy</td><td><a href="#df-tk-client">Открыть</a></td></tr>
 <tr><td>DF-MODEL-ROUTE</td><td>ProductModelRoutingLink + ProductModelOperationNorm</td><td>whitelist, norm_qty_per_item/unit</td><td>binding, route editor</td><td>norm scoped model + route + operation/workshop</td><td><a href="#df-model-route">Открыть</a></td></tr>
 <tr><td>DF-MODEL-ASSEMBLY</td><td>AssemblyVariant + AssemblyOperationLine</td><td>order-item snapshots; TK model/assembly refs</td><td>TK sewing lines, Demand</td><td>cost/time/multiplicity принадлежат строке сборки</td><td><a href="#df-model-assembly">Открыть</a></td></tr>
 <tr><td>DF-ROUTE-SNAPSHOT</td><td>ShopRoutingTemplate + stage lines/dependencies</td><td>TechnicalCardStageResult + RouteEdge; frozen manifest + detach audit</td><td>graph, Demand, Scheduler, Kanban</td><td>template edit не заменяет граф ТК; fact plan защищён, future plan retired atomically</td><td><a href="#df-route-snapshot">Открыть</a></td></tr>
@@ -47,6 +48,32 @@ main{padding:20px 26px;min-width:0;background:white}h1{font-size:30px}h2{margin-
 <tr><td>Live boundary</td><td>TechOperation demand_rule/duration, resource links/capacity и standalone assembly times читаются текущими; полной заморозки всех норм в ТК нет</td></tr>
 <tr><td>Plan/fact</td><td>CalendarAssignment/Allocation — план; StageResult и shop факты — исполнение; Kanban имеет один current workshop, не несколько параллельных колонок</td></tr>
 </tbody></table></div>
+<details class="chain" id="df-tk-client" open><summary>DF-TK-CLIENT</summary><div class="content">
+<p><strong>Source:</strong> existing CRM <code>Client.id</code>; working <code>/clients</code> and <code>/sales/clients</code>.</p>
+<p>Contractors remains a planned registry/navigation entry with no live API/page;</p>
+<p>Supplier and Organization are separate domains.</p>
+<p><strong>Persisted data:</strong> SalesOrder.client_id for order cards, nullable</p>
+<p>TechnicalCardOrderGroup.client_id for standalone cards. TechnicalCard&#x27;s existing</p>
+<p>contour XOR selects exactly one parent; there is no independent card client/name.</p>
+<p>Explicit PATCH card/client changes that shared parent; order cards reuse the</p>
+<p>locked order/client service. New standalone siblings and generated order cards</p>
+<p>inherit their current parent identity. No mass migration/backfill/cascade.</p>
+<p><strong>Consumer:</strong> <code>technical_card_clients</code> batch join resolves ID/live company-or-contact</p>
+<p>label for detail and both slim card lists (one query for all list IDs). Order DTO</p>
+<p>uses the same display function. Client PATCH company_name/contact_name updates</p>
+<p>the source entity, never copied card labels. Null/blank company falls back to</p>
+<p>required nonblank contact. Client has no is_active field; no fabricated filter.</p>
+<p><strong>Invariant:</strong> explicit positive Client ID or standalone null; missing key is not</p>
+<p>a clear command. Unknown client/card is 404; cancelled card binding is rejected;</p>
+<p>card mutation requires authentication. Selection affects siblings through the</p>
+<p>parent only. Saved commercial document lines and production fact/plan/audit rows</p>
+<p>are untouched; no reads rebind identity. Frontend must invalidate sibling/order/</p>
+<p>client consumers after successful explicit mutation.</p>
+<p><strong>Files/modules involved:</strong> <a href="../../../backend/app/services/tech_card_client.py">resolver/writer</a>,</p>
+<p><a href="../../../backend/app/services/sales_order_client.py">order writer</a>,</p>
+<p><a href="../../architecture/technical-card-client-bug-03.md">contract and cache handoff</a>,</p>
+<p><a href="../../../backend/tests/test_techcard_client_bug_03.py">regressions</a>.</p>
+</div></details>
 <details class="chain" id="df-model-route" open><summary>DF-MODEL-ROUTE</summary><div class="content">
 <p><strong>Purpose:</strong> whitelist маршрутов модели и нормы объёма на изделие.</p>
 <div class="flow" aria-label="Поток данных"><div class="node">ProductModel</div><span class="arrow" aria-hidden="true">→</span><div class="node">ProductModelRoutingLink + OperationNorm</div><span class="arrow" aria-hidden="true">→</span><div class="node">TK binding/reapply</div><span class="arrow" aria-hidden="true">→</span><div class="node">frozen operation input</div></div>
@@ -276,7 +303,7 @@ main{padding:20px 26px;min-width:0;background:white}h1{font-size:30px}h2{margin-
 <p>Найдите ID по сущности в индексе, затем проверьте Source → Persisted → Consumer перед изменением producer или adapter. Не добавляйте live fallback к snapshot чтению и не переносите capacity rates в demand norms. При изменении поведения обновляйте эту карту и регенерируйте HTML в одной итерации.</p>
 <p>Связанные договорённости: <a href="../../architecture/decisions/ADR-014-pattern-base-product-models-boundary.md">ADR-014</a>, <a href="../../architecture/decisions/ADR-016-technical-card-domain.md">ADR-016</a>, <a href="../../architecture/decisions/ADR-017-shop-routing-domain.md">ADR-017</a>, <a href="../../architecture/production-demand-pc-04-2.md">Demand contract</a>, <a href="../../architecture/unified-routing-graph-pc-04-4g.md">routing graph</a>, <a href="../../architecture/variant-routing-one-of-pc-04-4i.md">ONE OF</a>, <a href="../../architecture/work-center-capacity-pc-04-4d.md">WorkCenter</a>, <a href="../../architecture/production-scheduler-core-pc-04-3a.md">Scheduler</a>.</p>
 <p>Карта не утверждает, что все реальные карточки готовы к планированию. Стрессовые ТК удалены по отдельному запросу владельца после U; исторические результаты S/T/U не являются текущим наличием dataset. Эта задача не создаёт новые карточки и не закрывает PC-04.4S или весь PC-05.</p>
-<p>Проверка twin: <code>python scripts/generate_data_flow.py --check</code>. Кодовые ссылки должны существовать; все13 ID должны присутствовать один раз как раздел; HTML использует тот же текст, без CDN, с search/navigation, раскрываемыми цепочками и flow blocks. Owner visual review остаётся отдельным действием владельца.</p></main></div>
+<p>Проверка twin: <code>python scripts/generate_data_flow.py --check</code>. Кодовые ссылки должны существовать; все14 ID должны присутствовать один раз как раздел; HTML использует тот же текст, без CDN, с search/navigation, раскрываемыми цепочками и flow blocks. Owner visual review остаётся отдельным действием владельца.</p></main></div>
 <script>
 const sections=[...document.querySelectorAll('.chain')];const search=document.querySelector('#search');const count=document.querySelector('#count');
 function filter(){const q=search.value.trim().toLocaleLowerCase('ru');let visible=0;for(const s of sections){s.hidden=!s.textContent.toLocaleLowerCase('ru').includes(q);if(!s.hidden){visible++;if(q)s.open=true;}document.querySelector('nav a[href="#'+s.id+'"]').hidden=s.hidden;}count.textContent=visible+' / '+sections.length+' цепочек';}

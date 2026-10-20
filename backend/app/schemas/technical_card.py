@@ -491,6 +491,7 @@ class TechnicalCardListRead(BaseModel):
 
     order_number: str | None = None
     client_name: str | None = None
+    client_id: int | None = None
     responsible_name: str | None = None
     desired_date: date | None = None
     planning_start_date: date | None = None
@@ -833,7 +834,7 @@ class TechnicalCardResponsibleUpdate(BaseModel):
 
 
 class TechnicalCardClientUpdate(BaseModel):
-    client_id: int | None = None
+    client_id: int | None = Field(ge=1)
 
 
 class TechnicalCardDesiredDateUpdate(BaseModel):
