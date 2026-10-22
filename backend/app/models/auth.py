@@ -29,9 +29,14 @@ class PlatformUser(Base):
     __tablename__ = "platform_users"
     __table_args__ = (
         UniqueConstraint("login", name="uq_platform_users_login"),
+        UniqueConstraint("employee_id", name="uq_platform_users_employee_id"),
     )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    employee_id: Mapped[int | None] = mapped_column(
+        ForeignKey("employees.id", name="fk_platform_users_employee_id", ondelete="RESTRICT"),
+        nullable=True,
+    )
     login: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
     password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
     display_name: Mapped[str] = mapped_column(String(255), nullable=False)

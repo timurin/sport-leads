@@ -20,6 +20,7 @@ export type PlatformUserAdmin = {
   last_activity_at: string | null;
   roles: string[];
   permissions: string[];
+  employee_id?: number | null;
 };
 
 export type RoleCatalogItem = {

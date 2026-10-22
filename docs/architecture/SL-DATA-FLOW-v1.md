@@ -6,6 +6,8 @@
 
 | ID | Source | Persisted data | Consumers | Invariant | Section |
 |---|---|---|---|---|---|
+| DF-ACCESS-GROUPS | existing Role/Permission + account M:N | role permission sets/memberships, Role.version, canonical audit | full permission/group matrix, effective access, guarded preview/apply and legacy RBAC | union only; system groups/last admin protected; revision-bound atomic writes | [Открыть](#df-access-groups) |
+| DF-EMPLOYEE-USER | verified Employee.id and PlatformUser.id | nullable UNIQUE platform_users.employee_id; canonical mapping AuditEvent | admin users list/mapping GET and explicit link/unlink | mapping never grants access or rewrites actor IDs; no automatic backfill | [Открыть](#df-employee-user) |
 | DF-TK-CLIENT | CRM Client.id | SalesOrder.client_id or TechnicalCardOrderGroup.client_id | card detail/global and order lists, order DTO | one parent-owned FK, live label; explicit selection, no card-local copy | [Открыть](#df-tk-client) |
 | DF-MODEL-ROUTE | ProductModelRoutingLink + ProductModelOperationNorm | whitelist, norm_qty_per_item/unit | binding, route editor | norm scoped model + route + operation/workshop | [Открыть](#df-model-route) |
 | DF-MODEL-ASSEMBLY | AssemblyVariant + AssemblyOperationLine | order-item snapshots; TK model/assembly refs | TK sewing lines, Demand | cost/time/multiplicity принадлежат строке сборки | [Открыть](#df-model-assembly) |
@@ -35,6 +37,72 @@
 | Snapshot boundary | граф/копии объёма защищены от live template/model norm edits; explicit reapply заменяет их. Facts, ONE OF selection, quantity и manual inputs изменяемы явными командами |
 | Live boundary | TechOperation demand_rule/duration, resource links/capacity и standalone assembly times читаются текущими; полной заморозки всех норм в ТК нет |
 | Plan/fact | CalendarAssignment/Allocation — план; StageResult и shop факты — исполнение; Kanban имеет один current workshop, не несколько параллельных колонок |
+
+## DF-ACCESS-GROUPS
+
+**Source/storage:** existing Role/Permission, role_permissions/platform_user_roles.
+Multiple groups already existed; no duplicate M:N or engine. Migration
+arch04e_20261021 adds only Role.version default1; upgrade/downgrade preserve
+system/custom groups and grants. Employee/category/auth identity unchanged.
+
+**Derived/consumers:** union permissions of every assigned Role; no deny or
+individual overrides. Full /permissions includes unassigned backend codes;
+GET /roles reads group grants/version/member_count in batches, without seed or
+per-row queries. Effective access also reports existing restricted-sewer mode.
+No grant implies bypass of separate stage/business guards.
+
+**Writes:** custom is_system=false groups only; known system codes immutable.
+Seed retains previous system policy and leaves custom groups intact. Shared
+PostgreSQL transaction advisory access lock serializes seed/legacy assignment/
+group writes/profile activity mutations. New shared/membership commands have
+read-only preview, exact body/actor/target fingerprint + global RBAC revision,
+atomic mutation/audit, stale409. Group delta and real effective overlap-aware
+delta are separate. Assigned groups cannot be deleted; no cascade loss.
+
+**Invariant:** preserve at least one active accepted-invite nonrestricted
+admin.roles.assign holder and prevent initiating manager self-lockout. New API,
+legacy role assign/revoke and profile disable share protection. Existing role
+codes, actor IDs, passwords/sessions/Employee mapping and production history are
+not rewritten. Old assignment API shapes remain; no-op is idempotent.
+
+**Files:** [service](../../backend/app/services/access_groups.py),
+[guard](../../backend/app/services/rbac_guard.py),
+[API](../../backend/app/api/access_groups.py),
+[ARCH-04F contract](access-groups-arch-04e.md),
+[regressions](../../backend/tests/test_access_groups_arch_04e.py),
+[migration/concurrency](../../backend/tests/test_access_groups_postgres_arch_04e.py).
+
+## DF-EMPLOYEE-USER
+
+**Source:** existing Employee HR identity and PlatformUser authentication identity,
+explicit owner-verified pair. Accepted ADR-036 scope ARCH-04A; categories and
+broader employment/access lifecycle remain outside this implementation.
+
+**Persisted data:** migration arch04a_20261021 adds nullable UNIQUE
+PlatformUser.employee_id → Employee.id, ON DELETE RESTRICT. Existing accounts
+remain NULL; no matching/backfill/duplicate Employee/account creation. PlatformUser
+and all existing production/ledger/task/author/recipient IDs are retained.
+
+**Writes/invariant:** admin.roles.assign-gated explicit link/unlink commands,
+account + Employee row locks, uniqueness and expected_employee_id on unlink.
+Occupied/replaced mapping is 409; missing entity 404. Same pair/already-unmapped
+retry is idempotent. Canonical AuditEvent linked/unlinked contains actor,
+before/after IDs and required reason in the same transaction; no audit on no-op.
+Failure rolls back mapping/audit together. No grants, profile synchronization,
+password/role/session/status changes, destructive merge or implicit reassignment.
+
+**Consumers:** existing authenticated admin account list embeds scalar employee_id
+without per-row SQL; dedicated mapping GET returns account/employee IDs only.
+Public Employee and auth DTOs are unchanged. Read does not link or repair anything.
+Mapping removal retains HR/account rows and historical facts. Downgrade drops
+only new FK/unique/column; production rollback must retain mapping evidence.
+
+**Files:** [model](../../backend/app/models/auth.py),
+[mapping service](../../backend/app/services/employee_user_link.py),
+[API](../../backend/app/api/platform_users_rbac.py),
+[ARCH-04B contract](employee-user-link-arch-04a.md),
+[regressions](../../backend/tests/test_employee_user_link_arch_04a.py),
+[local PostgreSQL tests](../../backend/tests/test_employee_user_link_postgres_arch_04a.py).
 
 ## DF-TK-CLIENT
 
@@ -499,4 +567,4 @@ Canonical append-only `AuditEvent` (ADR-025), entity_type `calendar_plan_lifecyc
 
 Карта не утверждает, что все реальные карточки готовы к планированию. Стрессовые ТК удалены по отдельному запросу владельца после U; исторические результаты S/T/U не являются текущим наличием dataset. Эта задача не создаёт новые карточки и не закрывает PC-04.4S или весь PC-05.
 
-Проверка twin: `python scripts/generate_data_flow.py --check`. Кодовые ссылки должны существовать; все14 ID должны присутствовать один раз как раздел; HTML использует тот же текст, без CDN, с search/navigation, раскрываемыми цепочками и flow blocks. Owner visual review остаётся отдельным действием владельца.
+Проверка twin: `python scripts/generate_data_flow.py --check`. Кодовые ссылки должны существовать; все16 ID должны присутствовать один раз как раздел; HTML использует тот же текст, без CDN, с search/navigation, раскрываемыми цепочками и flow blocks. Owner visual review остаётся отдельным действием владельца.

@@ -1,17 +1,14 @@
-import { EmployeesWorkspace } from "@/components/settings/employees-workspace";
-import { getEmployeesList } from "@/lib/settings/employees-api";
-import { getOrganizationsList } from "@/lib/settings/organizations-api";
+import { redirect } from "next/navigation";
 
-export default async function EmployeesPage() {
-  const [employees, organizations] = await Promise.all([
-    getEmployeesList(false),
-    getOrganizationsList(false),
-  ]);
-  return (
-    <EmployeesWorkspace
-      employees={employees.ok ? employees.items : []}
-      organizations={organizations.ok ? organizations.items : []}
-      loadError={employees.ok ? undefined : employees.message}
-    />
-  );
+import {
+  employeesListHref,
+  normalizeEmployeeFilters,
+} from "@/lib/settings/employee-access-routes";
+
+export default async function LegacyEmployeesPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  redirect(employeesListHref(normalizeEmployeeFilters(await searchParams)));
 }

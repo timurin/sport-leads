@@ -22,11 +22,17 @@ class RoleRead(BaseModel):
     name: str
     is_system: bool
     permissions: list[str] = Field(default_factory=list)
+    version: int = 1
+    member_count: int = 0
 
 
 class RoleListRead(BaseModel):
     items: list[RoleRead]
 
 
+class PlatformUserAdminRead(PlatformUserMeRead):
+    employee_id: int | None = None
+
+
 class PlatformUserListRead(BaseModel):
-    items: list[PlatformUserMeRead]
+    items: list[PlatformUserAdminRead]

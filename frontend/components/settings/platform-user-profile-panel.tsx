@@ -13,6 +13,7 @@ import {
   setPlatformUserPassword,
   updatePlatformUserProfile,
 } from "@/app/(workspace)/settings/users/platform-user-actions";
+import { EmployeeUserLinkPanel } from "@/components/settings/employee-user-link-panel";
 import { Button } from "@/components/ui/button";
 import { CreateDrawer } from "@/components/ui/create-drawer";
 import { Checkbox, Field, Input, Select } from "@/components/ui/form-controls";
@@ -96,6 +97,11 @@ export function PlatformUserProfilePanel({
   onToggleRole,
   onOpenAccessMatrix,
   roleBusyKey = null,
+  employees,
+  employeesError,
+  onLinkEmployee,
+  onUnlinkEmployee,
+  onRefreshMapping,
 }: {
   open: boolean;
   user: PlatformUserAdmin | null;
@@ -111,6 +117,19 @@ export function PlatformUserProfilePanel({
   ) => Promise<void>;
   onOpenAccessMatrix?: () => void;
   roleBusyKey?: string | null;
+  employees: Array<{ id: number; fullName: string; isActive: boolean }>;
+  employeesError?: string | null;
+  onLinkEmployee: (
+    accountId: number,
+    employeeId: number,
+    reason: string,
+  ) => Promise<{ ok: boolean; message?: string; conflict?: boolean }>;
+  onUnlinkEmployee: (
+    accountId: number,
+    expectedEmployeeId: number,
+    reason: string,
+  ) => Promise<{ ok: boolean; message?: string; conflict?: boolean }>;
+  onRefreshMapping: () => void;
 }) {
   const { push: pushToast } = useToast();
   const securityId = useId();
@@ -414,6 +433,47 @@ export function PlatformUserProfilePanel({
             <p className="text-portal-body text-portal-muted">
               Свободное «о себе» не входит в MVP Stage 21.
             </p>
+          </ProfileSection>
+
+          <ProfileSection
+            id="profile-employee-link"
+            title="Сотрудник"
+            description="Кадровые ФИО и контакты здесь не редактируются."
+          >
+            <EmployeeUserLinkPanel
+              key={user.id}
+              mode="account"
+              employeeId={typeof user.employee_id === "number" ? user.employee_id : null}
+              account={{
+                id: user.id,
+                login: user.login,
+                displayName: user.display_name,
+                employeeId: typeof user.employee_id === "number" ? user.employee_id : null,
+              }}
+              accounts={users.map((row) => ({
+                id: row.id,
+                login: row.login,
+                displayName: row.display_name,
+                employeeId: typeof row.employee_id === "number" ? row.employee_id : null,
+              }))}
+              employees={employees}
+              state={
+                user.employee_id === undefined
+                  ? "unavailable"
+                  : user.employee_id == null
+                    ? "unlinked"
+                    : "linked"
+              }
+              statusMessage={
+                user.employee_id === undefined
+                  ? "Список учёток не содержит связь с сотрудником. Связь не изменена."
+                  : null
+              }
+              pickerError={employeesError}
+              onLink={onLinkEmployee}
+              onUnlink={onUnlinkEmployee}
+              onRefresh={onRefreshMapping}
+            />
           </ProfileSection>
 
           <ProfileSection

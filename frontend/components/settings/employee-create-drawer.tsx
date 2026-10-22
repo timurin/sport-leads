@@ -70,7 +70,7 @@ export function EmployeeCreateDrawer({ open, onClose, organizations }: Props) {
             }
             reset();
             onClose();
-            router.push(`/settings/organizations/employees/${result.id}`);
+            router.push(`/settings/employees/${result.id}`);
             router.refresh();
           });
         }}

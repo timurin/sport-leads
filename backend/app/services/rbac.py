@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session, selectinload
 
 from app.models.auth import PlatformUser
 from app.models.rbac import Permission, Role, platform_user_roles, role_permissions
+from app.services.rbac_guard import lock_access, access_state, validate_transition, require_actor
 
 PERM_SIZE_GRIDS_WRITE = "size_grids.write"
 PERM_SHOP_KANBAN_TRANSITION = "shop.kanban.transition"
@@ -110,6 +111,7 @@ class RbacValidationError(RbacError):
 
 def ensure_rbac_seed(db: Session) -> None:
     """Idempotent MVP permission/role catalog (tests + bootstrap)."""
+    lock_access(db)
     for code, description in MVP_PERMISSIONS:
         existing = db.scalars(
             select(Permission).where(Permission.code == code)
@@ -191,24 +193,26 @@ def assign_role(
 ) -> PlatformUser:
     from app.services import audit as audit_service
 
+    lock_access(db)
     ensure_rbac_seed(db)
+    before = access_state(db)
+    if actor is not None:
+        require_actor(before, actor.id)
     user = load_user_with_rbac(db, platform_user_id)
     if user is None:
         raise RbacNotFoundError("Пользователь не найден")
     role = get_role_by_code(db, role_code)
     if role is None:
         raise RbacValidationError(f"Роль не найдена: {role_code}")
-    if role not in (user.roles or []):
-        user.roles.append(role)
-    if actor is not None:
-        audit_service.append_audit_event(
-            db,
-            actor=actor,
-            action=audit_service.ACTION_ROLE_ASSIGN,
-            entity_type="platform_user",
-            entity_id=platform_user_id,
-            payload={"role_code": role_code},
-        )
+    db.expire(user, ["roles"])
+    with db.begin_nested():
+        if role not in user.roles:
+            user.roles.append(role)
+            db.flush()
+            validate_transition(before, access_state(db), actor.id if actor is not None else None)
+            if actor is not None:
+                audit_service.append_audit_event(db, actor=actor, action=audit_service.ACTION_ROLE_ASSIGN,
+                    entity_type="platform_user", entity_id=platform_user_id, payload={"role_code": role_code})
     if commit:
         db.commit()
     else:
@@ -228,23 +232,25 @@ def revoke_role(
 ) -> PlatformUser:
     from app.services import audit as audit_service
 
+    lock_access(db)
+    before = access_state(db)
+    if actor is not None:
+        require_actor(before, actor.id)
     user = load_user_with_rbac(db, platform_user_id)
     if user is None:
         raise RbacNotFoundError("Пользователь не найден")
     role = get_role_by_code(db, role_code)
     if role is None:
         raise RbacValidationError(f"Роль не найдена: {role_code}")
-    if role in (user.roles or []):
-        user.roles.remove(role)
-    if actor is not None:
-        audit_service.append_audit_event(
-            db,
-            actor=actor,
-            action=audit_service.ACTION_ROLE_REVOKE,
-            entity_type="platform_user",
-            entity_id=platform_user_id,
-            payload={"role_code": role_code},
-        )
+    db.expire(user, ["roles"])
+    with db.begin_nested():
+        if role in user.roles:
+            user.roles.remove(role)
+            db.flush()
+            validate_transition(before, access_state(db), actor.id if actor is not None else None)
+            if actor is not None:
+                audit_service.append_audit_event(db, actor=actor, action=audit_service.ACTION_ROLE_REVOKE,
+                    entity_type="platform_user", entity_id=platform_user_id, payload={"role_code": role_code})
     if commit:
         db.commit()
     else:

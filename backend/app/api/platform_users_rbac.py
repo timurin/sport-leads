@@ -18,6 +18,7 @@ from app.schemas.auth import (
     PlatformUserSetPasswordRequest,
 )
 from app.schemas.rbac import (
+    PlatformUserAdminRead,
     PlatformUserListRead,
     RoleAssignRequest,
     RoleListRead,
@@ -26,6 +27,12 @@ from app.schemas.rbac import (
 from app.services import auth as auth_service
 from app.services import rbac as rbac_service
 from app.services.auth import to_me_read
+from app.services.access_groups import list_groups
+from app.services.rbac_guard import AccessConflictError
+from app.schemas.employee_user_link import EmployeeLinkRead, EmployeeLinkCommand, EmployeeUnlinkCommand
+from app.services.employee_user_link import (
+    EmployeeLinkNotFoundError, EmployeeLinkConflictError, read_employee_link, change_employee_link,
+)
 
 router = APIRouter(tags=["Platform users / RBAC"])
 
@@ -96,7 +103,54 @@ def list_platform_users(
     rows = db.scalars(
         stmt.order_by(PlatformUser.login.asc()).offset(offset).limit(limit)
     ).all()
-    return PlatformUserListRead(items=[to_me_read(user) for user in rows])
+    return PlatformUserListRead(items=[PlatformUserAdminRead(
+        **to_me_read(user).model_dump(), employee_id=user.employee_id,
+    ) for user in rows])
+
+
+@router.get("/platform-users/{platform_user_id}/employee-link", response_model=EmployeeLinkRead,
+            operation_id="read_platform_user_employee_link")
+def get_employee_link(
+    platform_user_id: int, db: Session = Depends(get_db),
+    actor: PlatformUser = Depends(require_permission(rbac_service.PERM_ADMIN_ROLES_ASSIGN)),
+) -> EmployeeLinkRead:
+    try:
+        user = read_employee_link(db, platform_user_id, actor=actor)
+    except EmployeeLinkNotFoundError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+    return EmployeeLinkRead(platform_user_id=user.id, employee_id=user.employee_id)
+
+
+def _change_employee_link(
+    db: Session, platform_user_id: int, employee_id: int, actor: PlatformUser,
+    reason: str, *, unlink: bool,
+) -> EmployeeLinkRead:
+    try:
+        user = change_employee_link(db, platform_user_id, employee_id, actor=actor, reason=reason, unlink=unlink)
+        db.commit()
+    except (EmployeeLinkNotFoundError, EmployeeLinkConflictError) as error:
+        db.rollback()
+        code = 404 if isinstance(error, EmployeeLinkNotFoundError) else 409
+        raise HTTPException(status_code=code, detail=str(error)) from error
+    return EmployeeLinkRead(platform_user_id=user.id, employee_id=user.employee_id)
+
+
+@router.post("/platform-users/{platform_user_id}/employee-link", response_model=EmployeeLinkRead,
+             operation_id="link_platform_user_employee")
+def link_employee(
+    platform_user_id: int, payload: EmployeeLinkCommand, db: Session = Depends(get_db),
+    actor: PlatformUser = Depends(require_permission(rbac_service.PERM_ADMIN_ROLES_ASSIGN)),
+) -> EmployeeLinkRead:
+    return _change_employee_link(db, platform_user_id, payload.employee_id, actor, payload.reason, unlink=False)
+
+
+@router.post("/platform-users/{platform_user_id}/employee-unlink", response_model=EmployeeLinkRead,
+             operation_id="unlink_platform_user_employee")
+def unlink_employee(
+    platform_user_id: int, payload: EmployeeUnlinkCommand, db: Session = Depends(get_db),
+    actor: PlatformUser = Depends(require_permission(rbac_service.PERM_ADMIN_ROLES_ASSIGN)),
+) -> EmployeeLinkRead:
+    return _change_employee_link(db, platform_user_id, payload.expected_employee_id, actor, payload.reason, unlink=True)
 
 
 @router.post(
@@ -186,7 +240,7 @@ def update_platform_user_profile(
     platform_user_id: int,
     payload: PlatformUserProfileUpdateRequest,
     db: Session = Depends(get_db),
-    _: PlatformUser = Depends(
+    actor: PlatformUser = Depends(
         require_permission(rbac_service.PERM_ADMIN_ROLES_ASSIGN)
     ),
 ) -> PlatformUserMeRead:
@@ -201,7 +255,14 @@ def update_platform_user_profile(
             db,
             platform_user_id=platform_user_id,
             fields=fields,
+            actor=actor,
         )
+    except AccessConflictError as error:
+        db.rollback()
+        raise HTTPException(status_code=409, detail=str(error)) from error
+    except rbac_service.RbacForbiddenError as error:
+        db.rollback()
+        raise HTTPException(status_code=403, detail=str(error)) from error
     except auth_service.AuthValidationError as error:
         message = str(error)
         code = (
@@ -220,28 +281,14 @@ def update_platform_user_profile(
 )
 def list_roles(
     db: Session = Depends(get_db),
-    _: PlatformUser = Depends(
+    actor: PlatformUser = Depends(
         require_permission(rbac_service.PERM_ADMIN_ROLES_ASSIGN)
     ),
 ) -> RoleListRead:
-    rbac_service.ensure_rbac_seed(db)
-    rows = db.scalars(
-        select(Role)
-        .options(selectinload(Role.permissions))
-        .order_by(Role.code)
-    ).all()
-    return RoleListRead(
-        items=[
-            RoleRead(
-                id=role.id,
-                code=role.code,
-                name=role.name,
-                is_system=role.is_system,
-                permissions=sorted(p.code for p in (role.permissions or [])),
-            )
-            for role in rows
-        ]
-    )
+    try:
+        return RoleListRead(items=list_groups(db, actor=actor))
+    except rbac_service.RbacForbiddenError as error:
+        raise HTTPException(status_code=403, detail=str(error)) from error
 
 
 @router.post(
@@ -264,6 +311,12 @@ def assign_platform_user_role(
             role_code=payload.role_code,
             actor=actor,
         )
+    except AccessConflictError as error:
+        db.rollback()
+        raise HTTPException(status_code=409, detail=str(error)) from error
+    except rbac_service.RbacForbiddenError as error:
+        db.rollback()
+        raise HTTPException(status_code=403, detail=str(error)) from error
     except rbac_service.RbacNotFoundError as error:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -297,6 +350,12 @@ def revoke_platform_user_role(
             role_code=role_code,
             actor=actor,
         )
+    except AccessConflictError as error:
+        db.rollback()
+        raise HTTPException(status_code=409, detail=str(error)) from error
+    except rbac_service.RbacForbiddenError as error:
+        db.rollback()
+        raise HTTPException(status_code=403, detail=str(error)) from error
     except rbac_service.RbacNotFoundError as error:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

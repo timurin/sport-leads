@@ -16,6 +16,7 @@ Backend читать только при изменении API/data contract.
 | Calendar/equipment | UI-CALENDAR | selected calendar page/client/component |
 | Debug Center card | UI-DEBUG | platform-diagnostic-card + platform-debug helpers |
 | Shared component change | UI-SHARED | named primitive + direct consumers |
+| Employee access link | UI-EMPLOYEE | `/settings/employees` section |
 | Visual verification | UI-RESPONSIVE | selected contract's responsive matrix |
 
 Не сканировать всё frontend; сначала route/page/feature.
@@ -148,6 +149,11 @@ Backend читать только при изменении API/data contract.
 - Presentation-only card task: открыть card и relevant helpers/types; backend не читать.
 - DTO/diagnostic meaning change: PM-DIAGNOSTICS → DF-DIAGNOSTICS → exact API/schema/resolver.
 - Добавление кнопки Debug не разрешает redesign защищённой topbar.
+
+## UI-EMPLOYEE — Employee and account link
+
+- ARCH-04B: the employee card shows whether a PlatformUser is linked. A free account is chosen explicitly and saved with POST `/platform-users/{id}/employee-link`. Unlink asks for confirmation and POST `/platform-users/{id}/employee-unlink` with the loaded `expected_employee_id`. HR fields stay on Employee; login, roles and password stay on the account. 403, 404, 409 and network errors stay on the form. Both the employee card and `/settings/users` refresh after a successful change. Invite does not create the link.
+- ARCH-04F: one section `/settings/employees` with search and account status. Card tabs are Основное and Доступ к платформе. Groups and the permission matrix use the ARCH-04E preview/apply API; the client sends the full `role_codes` set and does not union grants itself. `can_apply=false`, 403, 404, 409 and network errors keep the draft. NAV-04 (two overlay levels, history, Escape, dirty guard) is local to this section, not a global UI rule. `/settings/users` and `/settings/organizations/employees/[id]` redirect here. An unmapped account stays at `/settings/employees/accounts/[id]` and is not treated as an employee id.
 
 ## UI-SHARED — Переиспользование
 

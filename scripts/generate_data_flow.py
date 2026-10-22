@@ -12,6 +12,8 @@ ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / "docs/architecture/SL-DATA-FLOW-v1.md"
 OUTPUT = ROOT / "docs/erp/status/SL-DATA-FLOW-v1.html"
 EXPECTED = {
+    "DF-ACCESS-GROUPS",
+    "DF-EMPLOYEE-USER",
     "DF-TK-CLIENT",
     "DF-MODEL-ROUTE", "DF-MODEL-ASSEMBLY", "DF-ROUTE-SNAPSHOT",
     "DF-TK-OPERATION-VOLUME", "DF-ONE-OF", "DF-SEWING-DEMAND",

@@ -6,6 +6,7 @@ from loguru import logger
 from sqlalchemy import text
 
 from app.api.auth import router as auth_router
+from app.api.access_groups import router as access_groups_router
 from app.api.collaboration import router as collaboration_router
 from app.api.work_tasks import embeds_router as work_tasks_embeds_router
 from app.api.work_tasks import router as work_tasks_router
@@ -147,6 +148,7 @@ async def log_requests(
 
 
 app.include_router(auth_router)
+app.include_router(access_groups_router)
 app.include_router(collaboration_router)
 app.include_router(work_tasks_router)
 app.include_router(work_tasks_embeds_router)

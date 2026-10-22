@@ -30,8 +30,10 @@ async function readError(response: Response): Promise<string> {
 
 function revalidateEmployees(employeeId?: number) {
   revalidatePath("/settings/organizations/employees");
+  revalidatePath("/settings/employees");
   if (employeeId != null) {
     revalidatePath(`/settings/organizations/employees/${employeeId}`);
+    revalidatePath(`/settings/employees/${employeeId}`);
   }
 }
 

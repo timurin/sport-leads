@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="source-sha256" content="1b0fc6d48c704b0282ed814ffb5e5d82a5d31dcdf7616b868fe68184d40ff17f"><title>SL-DATA-FLOW-v1 — карта данных</title>
+<meta name="source-sha256" content="f60e25ac58e46a1ec516692a7ba7cbba1009128ada795544affebf3000554219"><title>SL-DATA-FLOW-v1 — карта данных</title>
 <style>
 :root{font:16px/1.6 system-ui,sans-serif;color:#18283b;background:#f3f6fa}*{box-sizing:border-box}body{margin:0}
 header{padding:20px 24px;background:#142f4c;color:white}header p{margin:0}a{color:#185bb3}header a{color:#c2e0ff}
@@ -14,11 +14,13 @@ main{padding:20px 26px;min-width:0;background:white}h1{font-size:30px}h2{margin-
 @media(max-width:850px){.layout{grid-template-columns:1fr}aside{position:static;max-height:none}nav{display:flex;flex-wrap:wrap;gap:5px}main{padding:12px}header{padding:16px}}
 @media print{aside,header{display:none}.layout{display:block}main{padding:0}.chain{break-inside:avoid}a{color:inherit}}
 </style></head><body><header><strong>Sport-Lead · Canonical Data Flow</strong><p>Источник: <a href="../../architecture/SL-DATA-FLOW-v1.md">SL-DATA-FLOW-v1.md</a> · Offline HTML twin · PC-05.0A</p></header>
-<div class="layout"><aside><label for="search">Поиск по ID / сущности</label><input id="search" type="search" placeholder="volume, WorkCenter, DF-ONE-OF…"><p id="count" class="status" aria-live="polite"></p><button id="expand">Раскрыть все</button> <button id="collapse">Свернуть все</button><nav aria-label="Индекс цепочек"><a href="#df-tk-client">DF-TK-CLIENT</a><a href="#df-model-route">DF-MODEL-ROUTE</a><a href="#df-model-assembly">DF-MODEL-ASSEMBLY</a><a href="#df-route-snapshot">DF-ROUTE-SNAPSHOT</a><a href="#df-tk-operation-volume">DF-TK-OPERATION-VOLUME</a><a href="#df-one-of">DF-ONE-OF</a><a href="#df-sewing-demand">DF-SEWING-DEMAND</a><a href="#df-print-demand">DF-PRINT-DEMAND</a><a href="#df-cutting-demand">DF-CUTTING-DEMAND</a><a href="#df-demand-capacity">DF-DEMAND-CAPACITY</a><a href="#df-workcenter">DF-WORKCENTER</a><a href="#df-scheduler-calendar">DF-SCHEDULER-CALENDAR</a><a href="#df-kanban-fact">DF-KANBAN-FACT</a><a href="#df-diagnostics">DF-DIAGNOSTICS</a></nav></aside><main><h1>SL-DATA-FLOW-v1</h1>
+<div class="layout"><aside><label for="search">Поиск по ID / сущности</label><input id="search" type="search" placeholder="volume, WorkCenter, DF-ONE-OF…"><p id="count" class="status" aria-live="polite"></p><button id="expand">Раскрыть все</button> <button id="collapse">Свернуть все</button><nav aria-label="Индекс цепочек"><a href="#df-access-groups">DF-ACCESS-GROUPS</a><a href="#df-employee-user">DF-EMPLOYEE-USER</a><a href="#df-tk-client">DF-TK-CLIENT</a><a href="#df-model-route">DF-MODEL-ROUTE</a><a href="#df-model-assembly">DF-MODEL-ASSEMBLY</a><a href="#df-route-snapshot">DF-ROUTE-SNAPSHOT</a><a href="#df-tk-operation-volume">DF-TK-OPERATION-VOLUME</a><a href="#df-one-of">DF-ONE-OF</a><a href="#df-sewing-demand">DF-SEWING-DEMAND</a><a href="#df-print-demand">DF-PRINT-DEMAND</a><a href="#df-cutting-demand">DF-CUTTING-DEMAND</a><a href="#df-demand-capacity">DF-DEMAND-CAPACITY</a><a href="#df-workcenter">DF-WORKCENTER</a><a href="#df-scheduler-calendar">DF-SCHEDULER-CALENDAR</a><a href="#df-kanban-fact">DF-KANBAN-FACT</a><a href="#df-diagnostics">DF-DIAGNOSTICS</a></nav></aside><main><h1>SL-DATA-FLOW-v1</h1>
 <p>Каноническая карта производственных данных Sport-Lead. Версия 1, проверено по текущему рабочему коду 2026-10-10, задача PC-05.0A. Markdown — источник; <a href="SL-DATA-FLOW-v1.html">HTML twin</a> генерируется командой <code>python scripts/generate_data_flow.py</code>. Это карта реализованного поведения, не новый бизнес-контракт и не подтверждение готовности всего календаря.</p>
 <h2>Индекс</h2>
 <div class="table-wrap"><table><tbody>
 <tr><th>ID</th><th>Source</th><th>Persisted data</th><th>Consumers</th><th>Invariant</th><th>Section</th></tr>
+<tr><td>DF-ACCESS-GROUPS</td><td>existing Role/Permission + account M:N</td><td>role permission sets/memberships, Role.version, canonical audit</td><td>full permission/group matrix, effective access, guarded preview/apply and legacy RBAC</td><td>union only; system groups/last admin protected; revision-bound atomic writes</td><td><a href="#df-access-groups">Открыть</a></td></tr>
+<tr><td>DF-EMPLOYEE-USER</td><td>verified Employee.id and PlatformUser.id</td><td>nullable UNIQUE platform_users.employee_id; canonical mapping AuditEvent</td><td>admin users list/mapping GET and explicit link/unlink</td><td>mapping never grants access or rewrites actor IDs; no automatic backfill</td><td><a href="#df-employee-user">Открыть</a></td></tr>
 <tr><td>DF-TK-CLIENT</td><td>CRM Client.id</td><td>SalesOrder.client_id or TechnicalCardOrderGroup.client_id</td><td>card detail/global and order lists, order DTO</td><td>one parent-owned FK, live label; explicit selection, no card-local copy</td><td><a href="#df-tk-client">Открыть</a></td></tr>
 <tr><td>DF-MODEL-ROUTE</td><td>ProductModelRoutingLink + ProductModelOperationNorm</td><td>whitelist, norm_qty_per_item/unit</td><td>binding, route editor</td><td>norm scoped model + route + operation/workshop</td><td><a href="#df-model-route">Открыть</a></td></tr>
 <tr><td>DF-MODEL-ASSEMBLY</td><td>AssemblyVariant + AssemblyOperationLine</td><td>order-item snapshots; TK model/assembly refs</td><td>TK sewing lines, Demand</td><td>cost/time/multiplicity принадлежат строке сборки</td><td><a href="#df-model-assembly">Открыть</a></td></tr>
@@ -48,6 +50,62 @@ main{padding:20px 26px;min-width:0;background:white}h1{font-size:30px}h2{margin-
 <tr><td>Live boundary</td><td>TechOperation demand_rule/duration, resource links/capacity и standalone assembly times читаются текущими; полной заморозки всех норм в ТК нет</td></tr>
 <tr><td>Plan/fact</td><td>CalendarAssignment/Allocation — план; StageResult и shop факты — исполнение; Kanban имеет один current workshop, не несколько параллельных колонок</td></tr>
 </tbody></table></div>
+<details class="chain" id="df-access-groups" open><summary>DF-ACCESS-GROUPS</summary><div class="content">
+<p><strong>Source/storage:</strong> existing Role/Permission, role_permissions/platform_user_roles.</p>
+<p>Multiple groups already existed; no duplicate M:N or engine. Migration</p>
+<p>arch04e_20261021 adds only Role.version default1; upgrade/downgrade preserve</p>
+<p>system/custom groups and grants. Employee/category/auth identity unchanged.</p>
+<p><strong>Derived/consumers:</strong> union permissions of every assigned Role; no deny or</p>
+<p>individual overrides. Full /permissions includes unassigned backend codes;</p>
+<p>GET /roles reads group grants/version/member_count in batches, without seed or</p>
+<p>per-row queries. Effective access also reports existing restricted-sewer mode.</p>
+<p>No grant implies bypass of separate stage/business guards.</p>
+<p><strong>Writes:</strong> custom is_system=false groups only; known system codes immutable.</p>
+<p>Seed retains previous system policy and leaves custom groups intact. Shared</p>
+<p>PostgreSQL transaction advisory access lock serializes seed/legacy assignment/</p>
+<p>group writes/profile activity mutations. New shared/membership commands have</p>
+<p>read-only preview, exact body/actor/target fingerprint + global RBAC revision,</p>
+<p>atomic mutation/audit, stale409. Group delta and real effective overlap-aware</p>
+<p>delta are separate. Assigned groups cannot be deleted; no cascade loss.</p>
+<p><strong>Invariant:</strong> preserve at least one active accepted-invite nonrestricted</p>
+<p>admin.roles.assign holder and prevent initiating manager self-lockout. New API,</p>
+<p>legacy role assign/revoke and profile disable share protection. Existing role</p>
+<p>codes, actor IDs, passwords/sessions/Employee mapping and production history are</p>
+<p>not rewritten. Old assignment API shapes remain; no-op is idempotent.</p>
+<p><strong>Files:</strong> <a href="../../../backend/app/services/access_groups.py">service</a>,</p>
+<p><a href="../../../backend/app/services/rbac_guard.py">guard</a>,</p>
+<p><a href="../../../backend/app/api/access_groups.py">API</a>,</p>
+<p><a href="../../architecture/access-groups-arch-04e.md">ARCH-04F contract</a>,</p>
+<p><a href="../../../backend/tests/test_access_groups_arch_04e.py">regressions</a>,</p>
+<p><a href="../../../backend/tests/test_access_groups_postgres_arch_04e.py">migration/concurrency</a>.</p>
+</div></details>
+<details class="chain" id="df-employee-user" open><summary>DF-EMPLOYEE-USER</summary><div class="content">
+<p><strong>Source:</strong> existing Employee HR identity and PlatformUser authentication identity,</p>
+<p>explicit owner-verified pair. Accepted ADR-036 scope ARCH-04A; categories and</p>
+<p>broader employment/access lifecycle remain outside this implementation.</p>
+<p><strong>Persisted data:</strong> migration arch04a_20261021 adds nullable UNIQUE</p>
+<p>PlatformUser.employee_id → Employee.id, ON DELETE RESTRICT. Existing accounts</p>
+<p>remain NULL; no matching/backfill/duplicate Employee/account creation. PlatformUser</p>
+<p>and all existing production/ledger/task/author/recipient IDs are retained.</p>
+<p><strong>Writes/invariant:</strong> admin.roles.assign-gated explicit link/unlink commands,</p>
+<p>account + Employee row locks, uniqueness and expected_employee_id on unlink.</p>
+<p>Occupied/replaced mapping is 409; missing entity 404. Same pair/already-unmapped</p>
+<p>retry is idempotent. Canonical AuditEvent linked/unlinked contains actor,</p>
+<p>before/after IDs and required reason in the same transaction; no audit on no-op.</p>
+<p>Failure rolls back mapping/audit together. No grants, profile synchronization,</p>
+<p>password/role/session/status changes, destructive merge or implicit reassignment.</p>
+<p><strong>Consumers:</strong> existing authenticated admin account list embeds scalar employee_id</p>
+<p>without per-row SQL; dedicated mapping GET returns account/employee IDs only.</p>
+<p>Public Employee and auth DTOs are unchanged. Read does not link or repair anything.</p>
+<p>Mapping removal retains HR/account rows and historical facts. Downgrade drops</p>
+<p>only new FK/unique/column; production rollback must retain mapping evidence.</p>
+<p><strong>Files:</strong> <a href="../../../backend/app/models/auth.py">model</a>,</p>
+<p><a href="../../../backend/app/services/employee_user_link.py">mapping service</a>,</p>
+<p><a href="../../../backend/app/api/platform_users_rbac.py">API</a>,</p>
+<p><a href="../../architecture/employee-user-link-arch-04a.md">ARCH-04B contract</a>,</p>
+<p><a href="../../../backend/tests/test_employee_user_link_arch_04a.py">regressions</a>,</p>
+<p><a href="../../../backend/tests/test_employee_user_link_postgres_arch_04a.py">local PostgreSQL tests</a>.</p>
+</div></details>
 <details class="chain" id="df-tk-client" open><summary>DF-TK-CLIENT</summary><div class="content">
 <p><strong>Source:</strong> existing CRM <code>Client.id</code>; working <code>/clients</code> and <code>/sales/clients</code>.</p>
 <p>Contractors remains a planned registry/navigation entry with no live API/page;</p>
@@ -303,7 +361,7 @@ main{padding:20px 26px;min-width:0;background:white}h1{font-size:30px}h2{margin-
 <p>Найдите ID по сущности в индексе, затем проверьте Source → Persisted → Consumer перед изменением producer или adapter. Не добавляйте live fallback к snapshot чтению и не переносите capacity rates в demand norms. При изменении поведения обновляйте эту карту и регенерируйте HTML в одной итерации.</p>
 <p>Связанные договорённости: <a href="../../architecture/decisions/ADR-014-pattern-base-product-models-boundary.md">ADR-014</a>, <a href="../../architecture/decisions/ADR-016-technical-card-domain.md">ADR-016</a>, <a href="../../architecture/decisions/ADR-017-shop-routing-domain.md">ADR-017</a>, <a href="../../architecture/production-demand-pc-04-2.md">Demand contract</a>, <a href="../../architecture/unified-routing-graph-pc-04-4g.md">routing graph</a>, <a href="../../architecture/variant-routing-one-of-pc-04-4i.md">ONE OF</a>, <a href="../../architecture/work-center-capacity-pc-04-4d.md">WorkCenter</a>, <a href="../../architecture/production-scheduler-core-pc-04-3a.md">Scheduler</a>.</p>
 <p>Карта не утверждает, что все реальные карточки готовы к планированию. Стрессовые ТК удалены по отдельному запросу владельца после U; исторические результаты S/T/U не являются текущим наличием dataset. Эта задача не создаёт новые карточки и не закрывает PC-04.4S или весь PC-05.</p>
-<p>Проверка twin: <code>python scripts/generate_data_flow.py --check</code>. Кодовые ссылки должны существовать; все14 ID должны присутствовать один раз как раздел; HTML использует тот же текст, без CDN, с search/navigation, раскрываемыми цепочками и flow blocks. Owner visual review остаётся отдельным действием владельца.</p></main></div>
+<p>Проверка twin: <code>python scripts/generate_data_flow.py --check</code>. Кодовые ссылки должны существовать; все16 ID должны присутствовать один раз как раздел; HTML использует тот же текст, без CDN, с search/navigation, раскрываемыми цепочками и flow blocks. Owner visual review остаётся отдельным действием владельца.</p></main></div>
 <script>
 const sections=[...document.querySelectorAll('.chain')];const search=document.querySelector('#search');const count=document.querySelector('#count');
 function filter(){const q=search.value.trim().toLocaleLowerCase('ru');let visible=0;for(const s of sections){s.hidden=!s.textContent.toLocaleLowerCase('ru').includes(q);if(!s.hidden){visible++;if(q)s.open=true;}document.querySelector('nav a[href="#'+s.id+'"]').hidden=s.hidden;}count.textContent=visible+' / '+sections.length+' цепочек';}

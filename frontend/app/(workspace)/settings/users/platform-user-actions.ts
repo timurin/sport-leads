@@ -67,6 +67,9 @@ function normalizeUser(raw: PlatformUserAdmin): PlatformUserAdmin {
     last_activity_at: raw.last_activity_at ?? null,
     roles: raw.roles ?? [],
     permissions: raw.permissions ?? [],
+    employee_id: Object.prototype.hasOwnProperty.call(raw, "employee_id")
+      ? (typeof raw.employee_id === "number" ? raw.employee_id : null)
+      : undefined,
   };
 }
 

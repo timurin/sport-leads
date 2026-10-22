@@ -1,7 +1,13 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
 
+import {
+  linkAccountToEmployee,
+  unlinkAccountFromEmployee,
+} from "@/app/(workspace)/settings/users/employee-link-actions";
 import {
   assignPlatformUserRole,
   revokePlatformUserRole,
@@ -52,13 +58,23 @@ export function PlatformUsersWorkspace({
   users: initialUsers,
   roles: initialRoles,
   viewerUserId,
+  employees,
+  employeesError = null,
+  initialUserId = null,
 }: {
   users: PlatformUserAdmin[];
   roles: RoleCatalogItem[];
   viewerUserId: number | null;
+  employees: Array<{ id: number; fullName: string; isActive: boolean }>;
+  employeesError?: string | null;
+  initialUserId?: number | null;
 }) {
+  const router = useRouter();
   const { push: pushToast } = useToast();
   const [users, setUsers] = useState(initialUsers);
+  useEffect(() => {
+    setUsers(initialUsers);
+  }, [initialUsers]);
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] =
     useState<PlatformUserListStatus>("all");
@@ -66,7 +82,7 @@ export function PlatformUsersWorkspace({
   const [error, setError] = useState<string | null>(null);
   const [inviteOpen, setInviteOpen] = useState(false);
   const [matrixOpen, setMatrixOpen] = useState(false);
-  const [profileUserId, setProfileUserId] = useState<number | null>(null);
+  const [profileUserId, setProfileUserId] = useState<number | null>(initialUserId);
 
   const roles = useMemo(
     () => sortRolesByCode(initialRoles),
@@ -80,6 +96,18 @@ export function PlatformUsersWorkspace({
     profileUserId == null
       ? null
       : (users.find((row) => row.id === profileUserId) ?? null);
+  const employeeName = useMemo(() => {
+    const names = new Map(employees.map((row) => [row.id, row.fullName]));
+    return (employeeId: number) => names.get(employeeId) ?? null;
+  }, [employees]);
+  const applyMapping = (platformUserId: number, employeeId: number | null) => {
+    setUsers((current) =>
+      current.map((row) =>
+        row.id === platformUserId ? { ...row, employee_id: employeeId } : row,
+      ),
+    );
+    router.refresh();
+  };
 
   const toggleRole = async (
     user: PlatformUserAdmin,
@@ -192,6 +220,7 @@ export function PlatformUsersWorkspace({
                   <DataTableHeaderCell>ID</DataTableHeaderCell>
                   <DataTableHeaderCell>Имя</DataTableHeaderCell>
                   <DataTableHeaderCell>Логин</DataTableHeaderCell>
+                  <DataTableHeaderCell>Сотрудник</DataTableHeaderCell>
                   <DataTableHeaderCell>Отдел</DataTableHeaderCell>
                   <DataTableHeaderCell>Email</DataTableHeaderCell>
                   <DataTableHeaderCell>Телефон</DataTableHeaderCell>
@@ -229,6 +258,20 @@ export function PlatformUsersWorkspace({
                     </DataTableCell>
                     <DataTableCell className="font-medium text-portal-text">
                       {user.login}
+                    </DataTableCell>
+                    <DataTableCell onClick={(event) => event.stopPropagation()}>
+                      {typeof user.employee_id === "number" ? (
+                        <Link
+                          href={`/settings/employees/${user.employee_id}?tab=access`}
+                          className="text-portal-primary hover:underline"
+                        >
+                          {employeeName(user.employee_id) ?? `#${user.employee_id}`}
+                        </Link>
+                      ) : user.employee_id === undefined ? (
+                        "—"
+                      ) : (
+                        "Нет"
+                      )}
                     </DataTableCell>
                     <DataTableCell className="text-portal-muted">
                       {user.department?.trim() || "—"}
@@ -305,7 +348,17 @@ export function PlatformUsersWorkspace({
         onClose={() => setProfileUserId(null)}
         onSaved={(saved) => {
           setUsers((current) =>
-            current.map((row) => (row.id === saved.id ? saved : row)),
+            current.map((row) =>
+              row.id === saved.id
+                ? {
+                    ...saved,
+                    employee_id:
+                      saved.employee_id === undefined
+                        ? row.employee_id
+                        : saved.employee_id,
+                  }
+                : row,
+            ),
           );
         }}
         onToggleRole={async (target, roleCode, nextChecked) => {
@@ -314,6 +367,27 @@ export function PlatformUsersWorkspace({
         onOpenAccessMatrix={() => {
           setProfileUserId(null);
           setMatrixOpen(true);
+        }}
+        employees={employees}
+        employeesError={employeesError}
+        onRefreshMapping={() => router.refresh()}
+        onLinkEmployee={async (accountId, employeeId, reason) => {
+          const result = await linkAccountToEmployee(accountId, employeeId, reason);
+          if (result.ok) applyMapping(result.platformUserId, result.employeeId);
+          return result.ok
+            ? { ok: true }
+            : { ok: false, message: result.message, conflict: result.conflict };
+        }}
+        onUnlinkEmployee={async (accountId, expectedEmployeeId, reason) => {
+          const result = await unlinkAccountFromEmployee(
+            accountId,
+            expectedEmployeeId,
+            reason,
+          );
+          if (result.ok) applyMapping(result.platformUserId, result.employeeId);
+          return result.ok
+            ? { ok: true }
+            : { ok: false, message: result.message, conflict: result.conflict };
         }}
       />
     </div>

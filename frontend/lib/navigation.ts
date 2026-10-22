@@ -425,7 +425,7 @@ export function buildAppSections(
           {
             id: "employees",
             title: "Сотрудники",
-            href: "/settings/organizations/employees",
+            href: "/settings/employees",
           },
           {
             id: "departments",

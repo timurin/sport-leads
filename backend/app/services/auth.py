@@ -192,8 +192,20 @@ def update_platform_user_profile(
     *,
     platform_user_id: int,
     fields: dict[str, object],
+    actor: PlatformUser | None = None,
 ) -> PlatformUser:
     """Apply partial profile fields; returns user with RBAC loaded."""
+    if "is_active" in fields:
+        from app.services.rbac_guard import lock_access, access_state, validate_transition, require_actor
+        lock_access(db)
+        before = access_state(db)
+        if actor is not None:
+            require_actor(before, actor.id)
+        after = dict(before)
+        if platform_user_id in after:
+            old = after[platform_user_id]
+            after[platform_user_id] = (bool(fields["is_active"]), old[1], old[2])
+        validate_transition(before, after, actor.id if actor is not None else None)
     user = rbac_service.load_user_with_rbac(db, platform_user_id)
     if user is None:
         raise AuthValidationError("Пользователь не найден")

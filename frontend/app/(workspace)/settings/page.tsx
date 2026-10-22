@@ -62,7 +62,7 @@ const settingsGroups = [
       {
         title: "Сотрудники",
         description: "Сотрудники, должности и контакты",
-        href: "/settings/organizations/employees",
+        href: "/settings/employees",
         icon: Users,
       },
       {

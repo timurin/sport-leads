@@ -63,6 +63,8 @@ HTML twin не требуется.
 | Provenance | canonical AuditEvent | inferred historical reason |
 | Diagnostics | shared read resolver/DTO | persisted readiness cache |
 | Navigation | frontend/lib/navigation.ts | hardcoded duplicate menu links |
+| Employee / access identity | Employee HR; PlatformUser auth, optional nullable UNIQUE employee_id FK | account merge, automatic name matching, category-to-role inference |
+| Access groups | existing Role/Permission and M:N memberships; union effective codes | second RBAC store, deny/user overrides, HR-category grants |
 | Card buyer/client | Client.id via SalesOrder.client_id or TechnicalCardOrderGroup.client_id | separate card client or copied name; planned Contractors/Supplier/Organization |
 
 BUG-03A: detail and both card lists resolve parent-owned client ID/live name through
@@ -72,6 +74,20 @@ writer. No Client.is_active exists. Contract/cache handoff:
 `technical-card-client-bug-03.md`, DF-TK-CLIENT.
 
 Подробные цепочки и формулы живут только в SL-DATA-FLOW-v1.
+
+ARCH-04A: accepted ADR-036, optional Employee link on existing PlatformUser;
+admin.roles.assign gates explicit audited link/unlink commands. Public HR/auth
+payloads unchanged, admin account list embeds employee_id. No backfill, name
+sync, role/access/session/fact/history changes. Migration arch04a_20261021;
+contract `employee-user-link-arch-04a.md`, DF-EMPLOYEE-USER. Categories and wider
+employment/access lifecycle remain separate owner decisions.
+
+ARCH-04E: custom Role CRUD + full /permissions and effective/membership preview/apply;
+system groups immutable, shared version/revision and transactional audit.
+Shared PostgreSQL access lock covers seed, legacy assign/revoke and new commands;
+last acting manager/self-lockout guard also covers profile is_active changes.
+Migration arch04e_20261021 adds Role.version only; no duplicate M:N or grant/backfill
+change. GET roles is read-only. Contract `access-groups-arch-04e.md`, DF-ACCESS-GROUPS.
 
 ## PM-MODEL — Model и Assembly
 

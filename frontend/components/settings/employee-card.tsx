@@ -2,9 +2,12 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 
 import { saveEmployeeRecord } from "@/app/(workspace)/settings/organizations/employees/employee-actions";
+import { EmployeeAccessSection } from "@/components/settings/employee-access-section";
+import { EmployeeNavDialog } from "@/components/settings/employee-nav-dialog";
+import { useEmployeeNav } from "@/components/settings/employee-nav-context";
 import { SimpleEntityCard } from "@/components/entity/simple-entity-card";
 import { Button } from "@/components/ui/button";
 import { EntityHeader } from "@/components/ui/entity-header";
@@ -18,18 +21,56 @@ import {
   type EmployeeView,
 } from "@/lib/settings/employees";
 import type { OrganizationView } from "@/lib/settings/organizations";
+import {
+  employeeCardHref,
+  employeesListHref,
+  type EmployeeCardTab,
+  type EmployeeListFilters,
+} from "@/lib/settings/employee-access-routes";
 
 type Props = {
   employee: EmployeeView;
   organizations: OrganizationView[];
+  tab?: EmployeeCardTab;
+  filters?: EmployeeListFilters;
+  presentation?: "page" | "dialog";
+  onDirtyChange?: (dirty: boolean) => void;
+  onPendingChange?: (pending: boolean) => void;
 };
 
 /** PT-05 employee card (`DS-PT-05`). */
-export function EmployeeCard({ employee, organizations }: Props) {
+export function EmployeeCard({
+  employee,
+  organizations,
+  tab = "main",
+  filters = {},
+  presentation = "page",
+  onDirtyChange,
+  onPendingChange,
+}: Props) {
   const router = useRouter();
+  const nav = useEmployeeNav();
+  const restored = useRef(false);
   const [draft, setDraft] = useState<EmployeeDraft>(() => toEmployeeDraft(employee));
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+  const saved = toEmployeeDraft(employee);
+  const dirty = JSON.stringify(draft) !== JSON.stringify(saved);
+
+  useEffect(() => {
+    if (restored.current) return;
+    restored.current = true;
+    const remembered = nav?.drafts[employee.id];
+    if (remembered) setDraft(remembered);
+  }, [employee.id, nav]);
+
+  useEffect(() => {
+    onDirtyChange?.(dirty);
+  }, [dirty, onDirtyChange]);
+
+  useEffect(() => {
+    onPendingChange?.(pending);
+  }, [pending, onPendingChange]);
 
   const orgOptions = organizations.some((item) => item.id === employee.organizationId)
     ? organizations
@@ -53,23 +94,25 @@ export function EmployeeCard({ employee, organizations }: Props) {
     key: K,
     value: EmployeeDraft[K],
   ) => {
-    setDraft((current) => ({ ...current, [key]: value }));
+    setDraft((current) => {
+      const next = { ...current, [key]: value };
+      nav?.setDraft(employee.id, next);
+      return next;
+    });
   };
 
-  return (
-    <SimpleEntityCard
-      header={
+  const header = (
         <EntityHeader
           eyebrow={
             <Link
-              href="/settings/organizations/employees"
+              href={employeesListHref(filters)}
               className="text-portal-primary hover:underline"
             >
               Сотрудники
             </Link>
           }
           title={employee.fullName}
-          description="Кадровый справочник организации. Логин и роли — в кабинете Пользователи."
+          description="Кадровые поля сотрудника. Логин, роли и пароль остаются у учётной записи."
           status={
             <StatusBadge
               tone={employee.isActive ? "success" : "neutral"}
@@ -79,11 +122,35 @@ export function EmployeeCard({ employee, organizations }: Props) {
             </StatusBadge>
           }
         />
-      }
-    >
+  );
+  const body = (
+    <>
+      <nav className="flex flex-wrap gap-portal-3 text-portal-caption" aria-label="Разделы карточки">
+        <Link
+          href={employeeCardHref(employee.id, "main", filters)}
+          replace
+          scroll={false}
+          data-employee-tab="main"
+          aria-current={tab === "main" ? "page" : undefined}
+          className={tab === "main" ? "font-semibold text-portal-text" : "text-portal-primary hover:underline"}
+        >
+          Основное
+        </Link>
+        <Link
+          href={employeeCardHref(employee.id, "access", filters)}
+          replace
+          scroll={false}
+          data-employee-tab="access"
+          aria-current={tab === "access" ? "page" : undefined}
+          className={tab === "access" ? "font-semibold text-portal-text" : "text-portal-primary hover:underline"}
+        >
+          Доступ к платформе
+        </Link>
+      </nav>
+      {tab === "main" ? (
       <SectionCard
         title="Карточка сотрудника"
-        description="Связь с PlatformUser отложена. Подразделение — свободный текст."
+        description="ФИО, должность и контакты хранятся только здесь. Подразделение — свободный текст."
         size="compact"
       >
         {error ? (
@@ -102,6 +169,7 @@ export function EmployeeCard({ employee, organizations }: Props) {
                 setError(result.message);
                 return;
               }
+              nav?.clearDraft(employee.id);
               router.refresh();
             });
           }}
@@ -184,6 +252,55 @@ export function EmployeeCard({ employee, organizations }: Props) {
           </div>
         </form>
       </SectionCard>
+      ) : (
+      <SectionCard
+        title="Доступ к платформе"
+        description="Связь с учётной записью не копирует кадровые поля и не заменяет группы доступа."
+        size="compact"
+      >
+        <EmployeeAccessSection employeeId={employee.id} filters={filters} />
+      </SectionCard>
+      )}
+    </>
+  );
+
+  if (presentation === "dialog") {
+    return <div data-employee-card={employee.id}>{body}</div>;
+  }
+  return (
+    <SimpleEntityCard header={header}>
+      {body}
     </SimpleEntityCard>
+  );
+}
+
+export function EmployeeCardModal({
+  inert = false,
+  ...props
+}: Props & { inert?: boolean }) {
+  const router = useRouter();
+  const nav = useEmployeeNav();
+  const [dirty, setDirty] = useState(false);
+  const [pending, setPending] = useState(false);
+  return (
+    <EmployeeNavDialog
+      title={props.employee.fullName}
+      level={1}
+      dirty={dirty}
+      pending={pending}
+      inert={inert}
+      onClose={() => router.back()}
+      onDiscard={() => {
+        nav?.clearDraft(props.employee.id);
+        router.back();
+      }}
+    >
+      <EmployeeCard
+        {...props}
+        presentation="dialog"
+        onDirtyChange={setDirty}
+        onPendingChange={setPending}
+      />
+    </EmployeeNavDialog>
   );
 }
