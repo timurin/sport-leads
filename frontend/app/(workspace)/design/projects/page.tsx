@@ -6,7 +6,7 @@ import {
   fetchDesignProjects,
   type DesignProjectListItem,
 } from "@/lib/design/design-projects";
-import { getOrderList } from "@/lib/sales/order-list-api";
+import { getOrderList } from "@/lib/sales/order-list-server";
 
 type SalesOrderOption = {
   salesOrderId: number;

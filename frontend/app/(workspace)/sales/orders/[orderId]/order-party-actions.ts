@@ -2,6 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 
+import { readApiDetail, sessionRequestHeaders } from "@/lib/auth/api-headers";
+
 import { fromApiSalesOrder, type SalesOrderDetails } from "@/lib/sales/order-details";
 
 const apiBaseUrl = () =>
@@ -25,7 +27,13 @@ async function detailMessage(response: Response) {
 }
 
 export async function listOrderPartyClients(): Promise<PartyOption[]> {
-  const response = await fetch(`${apiBaseUrl()}/clients?limit=500`, { cache: "no-store" });
+  const response = await fetch(`${apiBaseUrl()}/clients?limit=500`, {
+    cache: "no-store",
+    headers: await sessionRequestHeaders(),
+  });
+  if (response.status === 401) {
+    throw new Error(await readApiDetail(response, "Требуется вход"));
+  }
   if (!response.ok) return [];
   const rows = (await response.json()) as Array<{
     id: number;
@@ -57,7 +65,7 @@ export async function saveOrderClient(
 ): Promise<SaveOrderPartyResult> {
   const response = await fetch(`${apiBaseUrl()}/orders/${orderId}/client`, {
     method: "PATCH",
-    headers: { "Content-Type": "application/json" },
+    headers: await sessionRequestHeaders({ "Content-Type": "application/json" }),
     body: JSON.stringify({ client_id: clientId }),
     cache: "no-store",
   });
@@ -77,7 +85,7 @@ export async function saveOrderOrganization(
 ): Promise<SaveOrderPartyResult> {
   const response = await fetch(`${apiBaseUrl()}/orders/${orderId}/organization`, {
     method: "PATCH",
-    headers: { "Content-Type": "application/json" },
+    headers: await sessionRequestHeaders({ "Content-Type": "application/json" }),
     body: JSON.stringify({ organization_id: organizationId }),
     cache: "no-store",
   });

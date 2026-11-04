@@ -1,5 +1,6 @@
 import "server-only";
 
+import { readApiDetail, sessionRequestHeaders } from "@/lib/auth/api-headers";
 import {
   fromApiClientFolder,
   type ApiClientFolder,
@@ -21,12 +22,16 @@ export async function getClientFolders(): Promise<ClientFoldersLoadResult> {
   try {
     const response = await fetch(`${apiBaseUrl()}/client-folders`, {
       cache: "no-store",
+      headers: await sessionRequestHeaders(),
     });
     if (!response.ok) {
       return {
         ok: false,
         folders: [],
-        message: `Не удалось загрузить папки клиентов (${response.status}).`,
+        message: await readApiDetail(
+          response,
+          `Не удалось загрузить папки клиентов (${response.status}).`,
+        ),
       };
     }
     const body = (await response.json()) as ApiClientFolder[];

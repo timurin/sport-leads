@@ -1,3 +1,4 @@
+from tests.auth_test_helpers import attach_session
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
@@ -32,6 +33,7 @@ def test_client_folders_create_nest_move_cycle_delete() -> None:
     app.dependency_overrides[get_db] = override_get_db
     try:
         with TestClient(app) as api:
+            attach_session(api)
             root = api.post("/client-folders", json={"name": " Регионы "})
             assert root.status_code == 201, root.text
             root_id = root.json()["id"]

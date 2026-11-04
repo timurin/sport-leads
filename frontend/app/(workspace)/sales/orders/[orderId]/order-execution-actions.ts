@@ -2,6 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 
+import { sessionRequestHeaders } from "@/lib/auth/api-headers";
+
 const apiBaseUrl = () =>
   (process.env.SPORT_LEADS_API_URL ?? "http://127.0.0.1:8000").replace(/\/$/, "");
 
@@ -33,7 +35,7 @@ export async function updateOrderPayment(
 
   const response = await fetch(`${apiBaseUrl()}/orders/${orderId}/payment`, {
     method: "PATCH",
-    headers: { "content-type": "application/json" },
+    headers: await sessionRequestHeaders({ "content-type": "application/json" }),
     body: JSON.stringify(body),
     cache: "no-store",
   });
@@ -50,7 +52,7 @@ export async function updateOrderMaterialReserve(
 ) {
   const response = await fetch(`${apiBaseUrl()}/orders/${orderId}/material-reserve`, {
     method: "PATCH",
-    headers: { "content-type": "application/json" },
+    headers: await sessionRequestHeaders({ "content-type": "application/json" }),
     body: JSON.stringify({ material_reserve_status: materialReserveStatus }),
     cache: "no-store",
   });

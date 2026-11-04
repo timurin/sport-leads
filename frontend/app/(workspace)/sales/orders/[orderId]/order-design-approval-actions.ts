@@ -2,6 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 
+import { sessionRequestHeaders } from "@/lib/auth/api-headers";
+
 const apiBaseUrl = () =>
   (process.env.SPORT_LEADS_API_URL ?? "http://127.0.0.1:8000").replace(/\/$/, "");
 
@@ -20,7 +22,7 @@ export async function updateOrderDesignApproval(
     `${apiBaseUrl()}/orders/${orderId}/design-approval`,
     {
       method: "PATCH",
-      headers: { "content-type": "application/json" },
+      headers: await sessionRequestHeaders({ "content-type": "application/json" }),
       body: JSON.stringify({ design_approval_status: designApprovalStatus }),
       cache: "no-store",
     },

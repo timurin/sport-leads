@@ -2,6 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 
+import { sessionRequestHeaders } from "@/lib/auth/api-headers";
+
 import {
   validateEmployeeEmail,
   type EmployeeDraft,
@@ -63,7 +65,7 @@ export async function createEmployeeRecord(
   if (message) return { ok: false, message };
   const response = await fetch(`${apiBaseUrl()}/employees`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: await sessionRequestHeaders({ "Content-Type": "application/json" }),
     body: JSON.stringify(payloadFromDraft(draft)),
     cache: "no-store",
   });
@@ -81,7 +83,7 @@ export async function saveEmployeeRecord(
   if (message) return { ok: false, message };
   const response = await fetch(`${apiBaseUrl()}/employees/${employeeId}`, {
     method: "PATCH",
-    headers: { "Content-Type": "application/json" },
+    headers: await sessionRequestHeaders({ "Content-Type": "application/json" }),
     body: JSON.stringify(payloadFromDraft(draft)),
     cache: "no-store",
   });

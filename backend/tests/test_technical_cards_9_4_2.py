@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from tests.auth_test_helpers import attach_session
+
 from decimal import Decimal
 
 from fastapi.testclient import TestClient
@@ -73,6 +75,7 @@ def test_list_technical_cards_global_and_filters() -> None:
             lead_id = lead.id
 
         with TestClient(app) as client:
+            attach_session(client)
             order_id = client.post(
                 f"/leads/{lead_id}/convert",
                 json={"completed_by_id": 1},

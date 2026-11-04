@@ -89,70 +89,6 @@ export type OrderStatusUpdateResult =
   | { ok: true; order: ApiSalesOrder }
   | { ok: false; message: string };
 
-function apiBaseUrl() {
-  return (process.env.SPORT_LEADS_API_URL ?? "http://127.0.0.1:8000").replace(/\/$/, "");
-}
-
-export async function getOrderList(): Promise<OrderListResult> {
-  try {
-    const response = await fetch(`${apiBaseUrl()}/orders?limit=500`, { cache: "no-store" });
-    if (!response.ok) {
-      const payload = (await response.json().catch(() => null)) as
-        | { detail?: string | { msg?: string }[] }
-        | null;
-      const detail =
-        typeof payload?.detail === "string"
-          ? payload.detail
-          : Array.isArray(payload?.detail)
-            ? payload.detail.map((item) => item.msg).filter(Boolean).join("; ")
-            : null;
-      return {
-        ok: false,
-        message:
-          detail
-          || `Не удалось загрузить заказы из backend (${response.status}).`,
-      };
-    }
-    const orders = await response.json() as ApiSalesOrder[];
-    return { ok: true, orders, columns: fromApiSalesOrders(orders) };
-  } catch {
-    return {
-      ok: false,
-      message: "Не удалось связаться с backend. Список заказов не подставлен из demo.",
-    };
-  }
-}
-
-export async function updateApiOrderStatus(
-  orderId: string,
-  status: OrderStatus,
-): Promise<OrderStatusUpdateResult> {
-  const response = await fetch(`${apiBaseUrl()}/orders/${orderId}/status`, {
-    method: "PATCH",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({ status }),
-    cache: "no-store",
-  });
-
-  if (!response.ok) {
-    const payload = (await response.json().catch(() => null)) as
-      | { detail?: string | { msg?: string }[] }
-      | null;
-    const detail =
-      typeof payload?.detail === "string"
-        ? payload.detail
-        : Array.isArray(payload?.detail)
-          ? payload.detail.map((item) => item.msg).filter(Boolean).join("; ")
-          : null;
-    return {
-      ok: false,
-      message: detail || `Backend не сохранил статус заказа (${response.status}).`,
-    };
-  }
-
-  return { ok: true, order: await response.json() as ApiSalesOrder };
-}
-
 export type CreateSalesOrderPayload = {
   client_id: number;
   organization_id?: number | null;
@@ -171,32 +107,3 @@ export type CreateSalesOrderPayload = {
 export type CreateSalesOrderResult =
   | { ok: true; order: ApiSalesOrder }
   | { ok: false; message: string };
-
-export async function createApiSalesOrder(
-  payload: CreateSalesOrderPayload,
-): Promise<CreateSalesOrderResult> {
-  const response = await fetch(`${apiBaseUrl()}/orders`, {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify(payload),
-    cache: "no-store",
-  });
-
-  if (!response.ok) {
-    const body = (await response.json().catch(() => null)) as
-      | { detail?: string | { msg?: string }[] }
-      | null;
-    const detail =
-      typeof body?.detail === "string"
-        ? body.detail
-        : Array.isArray(body?.detail)
-          ? body.detail.map((item) => item.msg).filter(Boolean).join("; ")
-          : null;
-    return {
-      ok: false,
-      message: detail || `Backend не создал заказ (${response.status}).`,
-    };
-  }
-
-  return { ok: true, order: (await response.json()) as ApiSalesOrder };
-}

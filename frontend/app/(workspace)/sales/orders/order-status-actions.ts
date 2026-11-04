@@ -1,6 +1,6 @@
 "use server";
 
-import { updateApiOrderStatus } from "@/lib/sales/order-list-api";
+import { updateApiOrderStatus } from "@/lib/sales/order-list-server";
 import type { KanbanMove } from "@/components/kanban/kanban-types";
 import type { OrderStatus } from "@/types/sales";
 

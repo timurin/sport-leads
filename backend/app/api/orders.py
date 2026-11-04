@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
+from app.api.deps_auth import get_current_platform_user
 from app.database.session import get_db
 from app.services.tech_card_client import client_display_name
 from app.models.sales import Client, Lead, LeadEvent, Organization, SalesOrder, SalesOrderItem, SalesUser
@@ -79,7 +80,11 @@ from app.services.sales_commercial_documents import (
     serialize_quotation,
 )
 
-router = APIRouter(prefix="/orders", tags=["Sales orders"])
+router = APIRouter(
+    prefix="/orders",
+    tags=["Sales orders"],
+    dependencies=[Depends(get_current_platform_user)],
+)
 
 
 def serialize_order(

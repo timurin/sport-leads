@@ -2,6 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 
+import { sessionRequestHeaders } from "@/lib/auth/api-headers";
+
 import {
   fromApiSalesOrderItem,
   type ApiSalesOrderItem,
@@ -42,7 +44,9 @@ async function callItems(
 ): Promise<OrderItemMutationResult> {
   const response = await fetch(`${apiBaseUrl()}/orders/${orderId}/items${path}`, {
     method,
-    headers: body ? { "content-type": "application/json" } : undefined,
+    headers: await sessionRequestHeaders(
+      body ? { "content-type": "application/json" } : undefined,
+    ),
     body: body ? JSON.stringify(body) : undefined,
     cache: "no-store",
   });

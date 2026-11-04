@@ -1,5 +1,6 @@
 import "server-only";
 
+import { readApiDetail, sessionRequestHeaders } from "@/lib/auth/api-headers";
 import {
   fromApiClientSettlements,
   type ApiClientSettlementsSummary,
@@ -26,13 +27,16 @@ export async function getClientSettlementsSummary(
   try {
     const response = await fetch(
       `${apiBaseUrl()}/clients/${clientId}/settlements-summary`,
-      { cache: "no-store" },
+      { cache: "no-store", headers: await sessionRequestHeaders() },
     );
     if (!response.ok) {
       return {
         ok: false,
         summary: null,
-        message: `Не удалось загрузить взаиморасчёты (${response.status}).`,
+        message: await readApiDetail(
+          response,
+          `Не удалось загрузить взаиморасчёты (${response.status}).`,
+        ),
       };
     }
     const body = (await response.json()) as ApiClientSettlementsSummary;

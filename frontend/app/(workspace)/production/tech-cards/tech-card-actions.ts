@@ -3,8 +3,8 @@
 import { revalidatePath } from "next/cache";
 
 import { rasterImageMimeOrNull } from "@/lib/api-media";
-import { sessionAuthHeaders } from "@/lib/auth/api-headers";
-import { getOrderList } from "@/lib/sales/order-list-api";
+import { sessionAuthHeaders, sessionRequestHeaders } from "@/lib/auth/api-headers";
+import { getOrderList } from "@/lib/sales/order-list-server";
 import type { TechnicalCardPrintRequest } from "@/lib/production/tech-card-print";
 import {
   stageMaterialFactDrafts,
@@ -907,6 +907,7 @@ export async function listTechnicalCardClientCandidates(
   params.set("limit", "20");
   const response = await fetch(`${apiBaseUrl()}/clients?${params.toString()}`, {
     cache: "no-store",
+    headers: await sessionRequestHeaders(),
   });
   if (!response.ok) {
     return {

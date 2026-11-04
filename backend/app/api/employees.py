@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
+from app.api.deps_auth import get_current_platform_user
 from app.database.session import get_db
 from app.schemas.sales import EmployeeCreate, EmployeeRead, EmployeeUpdate
 from app.services.employees import (
@@ -13,7 +14,11 @@ from app.services.employees import (
 )
 
 
-router = APIRouter(prefix="/employees", tags=["Employees"])
+router = APIRouter(
+    prefix="/employees",
+    tags=["Employees"],
+    dependencies=[Depends(get_current_platform_user)],
+)
 
 
 @router.get("", response_model=list[EmployeeRead], operation_id="list_employees")

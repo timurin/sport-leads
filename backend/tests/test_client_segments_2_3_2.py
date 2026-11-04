@@ -1,6 +1,7 @@
 """Stage 2.3.2 — client segments and duplicate candidates."""
-
 from __future__ import annotations
+
+from tests.auth_test_helpers import attach_session
 
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
@@ -52,6 +53,7 @@ def test_segments_and_duplicate_candidates() -> None:
     app.dependency_overrides[get_db] = override_get_db
     try:
         with TestClient(app) as api:
+            attach_session(api)
             listed = api.get("/clients")
             assert listed.status_code == 200
             assert "segments" not in listed.json()[0]

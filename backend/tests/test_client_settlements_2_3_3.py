@@ -1,4 +1,5 @@
 """Stage 2.3.3 — client settlements summary from order payment markers."""
+from tests.auth_test_helpers import attach_session
 
 from decimal import Decimal
 
@@ -105,6 +106,7 @@ def test_settlements_summary_projects_order_markers_not_cancelled() -> None:
     app.dependency_overrides[get_db] = override_get_db
     try:
         with TestClient(app) as api:
+            attach_session(api)
             missing = api.get("/clients/999999/settlements-summary")
             assert missing.status_code == 404
 

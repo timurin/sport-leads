@@ -103,13 +103,19 @@ export function OrderClientNeedDetails({
     if (!editing) return;
     let cancelled = false;
     void (async () => {
-      const [nextClients, nextOrgs] = await Promise.all([
-        listOrderPartyClients(),
-        listOrderPartyOrganizations(),
-      ]);
-      if (!cancelled) {
-        setClients(nextClients);
-        setOrganizations(nextOrgs);
+      try {
+        const [nextClients, nextOrgs] = await Promise.all([
+          listOrderPartyClients(),
+          listOrderPartyOrganizations(),
+        ]);
+        if (!cancelled) {
+          setClients(nextClients);
+          setOrganizations(nextOrgs);
+        }
+      } catch (error) {
+        if (!cancelled) {
+          setError(error instanceof Error ? error.message : "Требуется вход");
+        }
       }
     })();
     return () => {

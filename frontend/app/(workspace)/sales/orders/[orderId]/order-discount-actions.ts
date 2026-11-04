@@ -2,6 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 
+import { sessionRequestHeaders } from "@/lib/auth/api-headers";
+
 import { parseOrderDiscountPercentInput } from "@/lib/sales/order-discount";
 
 export type OrderDiscountActionResult =
@@ -38,7 +40,7 @@ export async function updateOrderDiscount(
   try {
     const response = await fetch(`${apiBaseUrl()}/orders/${orderId}/discount`, {
       method: "PATCH",
-      headers: { "Content-Type": "application/json" },
+      headers: await sessionRequestHeaders({ "Content-Type": "application/json" }),
       body: JSON.stringify({ discount_percent: parsed.value }),
       cache: "no-store",
     });

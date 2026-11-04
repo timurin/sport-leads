@@ -6,8 +6,9 @@ Coverage:
 - required variant when model has active variants
 - snapshot immutability vs later catalog edits
 """
-
 from __future__ import annotations
+
+from tests.auth_test_helpers import attach_session
 
 from collections.abc import Iterator
 from contextlib import contextmanager
@@ -188,6 +189,7 @@ def _client(factory: sessionmaker[Session]) -> Iterator[TestClient]:
     app.dependency_overrides[get_db] = override_get_db
     try:
         with TestClient(app) as client:
+            attach_session(client)
             yield client
     finally:
         app.dependency_overrides.clear()

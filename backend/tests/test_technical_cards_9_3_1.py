@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from tests.auth_test_helpers import attach_session
+
 from decimal import Decimal
 
 import pytest
@@ -111,6 +113,7 @@ def test_composition_replace_apply_spec_and_refresh_model(source: str) -> None:
         lead_id = _add_lead(factory)
 
         with TestClient(app) as client:
+            attach_session(client)
             order_id = client.post(
                 f"/leads/{lead_id}/convert",
                 json={"completed_by_id": 1},
@@ -309,6 +312,7 @@ def test_apply_specification_requires_version_label() -> None:
             ids = _seed(db)
         lead_id = _add_lead(factory)
         with TestClient(app) as client:
+            attach_session(client)
             order_id = client.post(
                 f"/leads/{lead_id}/convert",
                 json={"completed_by_id": 1},

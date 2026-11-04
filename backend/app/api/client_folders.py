@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
+from app.api.deps_auth import get_current_platform_user
 from app.database.session import get_db
 from app.schemas.client_folders import (
     ClientFolderCreate,
@@ -20,7 +21,11 @@ from app.services.client_folders import (
     update_client_folder,
 )
 
-router = APIRouter(prefix="/client-folders", tags=["Clients"])
+router = APIRouter(
+    prefix="/client-folders",
+    tags=["Clients"],
+    dependencies=[Depends(get_current_platform_user)],
+)
 
 
 @router.get("", response_model=list[ClientFolderRead], operation_id="list_client_folders")

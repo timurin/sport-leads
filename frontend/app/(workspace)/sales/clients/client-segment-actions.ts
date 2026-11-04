@@ -2,6 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 
+import { sessionRequestHeaders } from "@/lib/auth/api-headers";
+
 import type { ClientDuplicateCandidate } from "@/lib/sales/client-segments";
 
 function apiBaseUrl(): string {
@@ -47,7 +49,7 @@ export async function findClientDuplicates(params: {
   }
   const response = await fetch(
     `${apiBaseUrl()}/clients/duplicate-candidates?${query.toString()}`,
-    { cache: "no-store" },
+    { cache: "no-store", headers: await sessionRequestHeaders() },
   );
   if (!response.ok) return { ok: false, message: await readError(response) };
   return {
@@ -62,7 +64,7 @@ export async function saveClientSegments(
 ): Promise<{ ok: true; tags: string[] } | { ok: false; message: string }> {
   const response = await fetch(`${apiBaseUrl()}/clients/${clientId}/segments`, {
     method: "PUT",
-    headers: { "Content-Type": "application/json" },
+    headers: await sessionRequestHeaders({ "Content-Type": "application/json" }),
     body: JSON.stringify({ tags }),
     cache: "no-store",
   });
@@ -81,7 +83,7 @@ export async function createClientRecord(payload: {
 }): Promise<{ ok: true; id: number; label: string } | { ok: false; message: string }> {
   const response = await fetch(`${apiBaseUrl()}/clients`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: await sessionRequestHeaders({ "Content-Type": "application/json" }),
     body: JSON.stringify({
       contact_name: payload.contactName,
       company_name: payload.companyName || null,

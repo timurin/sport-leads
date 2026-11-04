@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from tests.auth_test_helpers import attach_session
+
 import io
 from decimal import Decimal
 
@@ -87,6 +89,7 @@ def test_unit_lines_patch_bulk_replace_import_reset() -> None:
         lead_id = _add_lead(factory)
 
         with TestClient(app) as client:
+            attach_session(client)
             order_id = client.post(
                 f"/leads/{lead_id}/convert",
                 json={"completed_by_id": 1},
@@ -289,6 +292,7 @@ def test_unit_lines_import_from_xlsx_template() -> None:
         workbook.save(payload)
 
         with TestClient(app) as client:
+            attach_session(client)
             order_id = client.post(
                 f"/leads/{lead_id}/convert",
                 json={"completed_by_id": 1},

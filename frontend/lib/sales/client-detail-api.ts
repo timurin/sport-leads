@@ -1,5 +1,6 @@
 import "server-only";
 
+import { sessionRequestHeaders } from "@/lib/auth/api-headers";
 import {
   fromApiClientDetail,
   type ApiClientDetail,
@@ -40,7 +41,10 @@ export async function getClientDetail(clientId: string): Promise<ClientDetailLoa
     };
   }
   try {
-    const response = await fetch(`${apiBaseUrl()}/clients/${clientId}`, { cache: "no-store" });
+    const response = await fetch(`${apiBaseUrl()}/clients/${clientId}`, {
+      cache: "no-store",
+      headers: await sessionRequestHeaders(),
+    });
     if (response.status === 404) {
       return {
         ok: false,

@@ -1,5 +1,6 @@
 import "server-only";
 
+import { sessionRequestHeaders } from "@/lib/auth/api-headers";
 import { fromApiClientListItem, type ApiClientListItem } from "@/lib/sales/client-list-mapping";
 import type { Client } from "@/types/sales";
 
@@ -28,7 +29,10 @@ async function errorMessage(response: Response) {
 
 export async function getClientList(): Promise<ClientListLoadResult> {
   try {
-    const response = await fetch(`${apiBaseUrl()}/clients?limit=500`, { cache: "no-store" });
+    const response = await fetch(`${apiBaseUrl()}/clients?limit=500`, {
+      cache: "no-store",
+      headers: await sessionRequestHeaders(),
+    });
     if (!response.ok) {
       return { ok: false, clients: [], source: "api", message: await errorMessage(response) };
     }

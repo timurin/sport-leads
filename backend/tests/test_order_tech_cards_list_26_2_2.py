@@ -1,6 +1,7 @@
 """Stage 26.2.2 — order technical-cards list uses slim DTO with stage_results."""
-
 from __future__ import annotations
+
+from tests.auth_test_helpers import attach_session
 
 from decimal import Decimal
 
@@ -73,6 +74,7 @@ def test_order_technical_cards_list_embeds_stage_results_without_fat_collections
             lead_id = lead.id
 
         with TestClient(app) as client:
+            attach_session(client)
             order_id = client.post(
                 f"/leads/{lead_id}/convert",
                 json={"completed_by_id": 1},

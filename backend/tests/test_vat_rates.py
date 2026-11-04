@@ -1,3 +1,4 @@
+from tests.auth_test_helpers import attach_session
 from decimal import Decimal
 
 from fastapi.testclient import TestClient
@@ -74,6 +75,7 @@ def test_vat_rates_list_and_order_item_link() -> None:
         lead_id = _add_lead(factory)
 
         with TestClient(app) as client:
+            attach_session(client)
             listed = client.get("/vat-rates")
             assert listed.status_code == 200
             percents = sorted(Decimal(row["rate_percent"]) for row in listed.json())

@@ -8,7 +8,7 @@ import { getMe } from "@/lib/auth/session";
 import { fetchProductionOrders } from "@/lib/production/production-orders";
 import { getProductionStages } from "@/lib/production-stages";
 import { getLeadList } from "@/lib/sales/lead-list-api";
-import { getOrderList } from "@/lib/sales/order-list-api";
+import { getOrderList } from "@/lib/sales/order-list-server";
 import { parseWorkTaskListFilters } from "@/lib/work-tasks";
 
 type Props = {

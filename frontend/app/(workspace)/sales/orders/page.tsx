@@ -1,6 +1,7 @@
 import { OrdersWorkspace } from "@/components/sales/orders-workspace";
 import { getMe } from "@/lib/auth/session";
-import { getOrderList } from "@/lib/sales/order-list-api";
+import { readApiDetail, sessionRequestHeaders } from "@/lib/auth/api-headers";
+import { getOrderList } from "@/lib/sales/order-list-server";
 
 function apiBaseUrl() {
   return (process.env.SPORT_LEADS_API_URL ?? "http://127.0.0.1:8000").replace(/\/$/, "");
@@ -8,10 +9,18 @@ function apiBaseUrl() {
 
 async function loadCreateOptions(meSalesUserId: number | null) {
   const [clientsResponse, orgsResponse, usersResponse] = await Promise.all([
-    fetch(`${apiBaseUrl()}/clients?limit=500`, { cache: "no-store" }),
+    fetch(`${apiBaseUrl()}/clients?limit=500`, {
+      cache: "no-store",
+      headers: await sessionRequestHeaders(),
+    }),
     fetch(`${apiBaseUrl()}/organizations`, { cache: "no-store" }),
     fetch(`${apiBaseUrl()}/sales-users?limit=500`, { cache: "no-store" }),
   ]);
+
+  const clientsMessage =
+    clientsResponse.status === 401
+      ? await readApiDetail(clientsResponse, "Требуется вход")
+      : null;
 
   const orgNameById = new Map<number, string>();
   if (orgsResponse.ok) {
@@ -57,7 +66,7 @@ async function loadCreateOptions(meSalesUserId: number | null) {
       rows.find((row) => row.id === meSalesUserId)?.name ?? `Сотрудник #${meSalesUserId}`;
   }
 
-  return { clients, sessionResponsibleLabel };
+  return { clients, sessionResponsibleLabel, clientsMessage };
 }
 
 export default async function OrdersPage() {
@@ -95,7 +104,9 @@ export default async function OrdersPage() {
       managers={managers}
       products={products}
       statuses={statuses}
-      loadError={orderList.ok ? undefined : orderList.message}
+      loadError={
+        orderList.ok ? createOptions.clientsMessage ?? undefined : orderList.message
+      }
       clients={createOptions.clients}
       sessionResponsibleId={sessionResponsibleId}
       sessionResponsibleLabel={createOptions.sessionResponsibleLabel}

@@ -2,6 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 
+import { sessionRequestHeaders } from "@/lib/auth/api-headers";
+
 import type { ClientFolderView } from "@/lib/sales/client-folders";
 import { fromApiClientFolder, type ApiClientFolder } from "@/lib/sales/client-folders";
 
@@ -42,7 +44,7 @@ export async function createClientFolder(input: {
   if (!name) return { ok: false, message: "Укажите название папки" };
   const response = await fetch(`${apiBaseUrl()}/client-folders`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: await sessionRequestHeaders({ "Content-Type": "application/json" }),
     body: JSON.stringify({ name, parent_id: input.parent_id }),
     cache: "no-store",
   });
@@ -60,7 +62,7 @@ export async function updateClientFolder(
   if ("parent_id" in input) body.parent_id = input.parent_id ?? null;
   const response = await fetch(`${apiBaseUrl()}/client-folders/${folderId}`, {
     method: "PATCH",
-    headers: { "Content-Type": "application/json" },
+    headers: await sessionRequestHeaders({ "Content-Type": "application/json" }),
     body: JSON.stringify(body),
     cache: "no-store",
   });
@@ -74,6 +76,7 @@ export async function deleteClientFolder(
 ): Promise<{ ok: true } | { ok: false; message: string }> {
   const response = await fetch(`${apiBaseUrl()}/client-folders/${folderId}`, {
     method: "DELETE",
+    headers: await sessionRequestHeaders(),
     cache: "no-store",
   });
   if (!response.ok && response.status !== 204) {
@@ -91,7 +94,7 @@ export async function moveClientFolderSibling(
     `${apiBaseUrl()}/client-folders/${folderId}/move-sibling`,
     {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: await sessionRequestHeaders({ "Content-Type": "application/json" }),
       body: JSON.stringify({ direction }),
       cache: "no-store",
     },
@@ -107,7 +110,7 @@ export async function moveClientToFolder(
 ): Promise<{ ok: true } | { ok: false; message: string }> {
   const response = await fetch(`${apiBaseUrl()}/clients/${clientId}`, {
     method: "PATCH",
-    headers: { "Content-Type": "application/json" },
+    headers: await sessionRequestHeaders({ "Content-Type": "application/json" }),
     body: JSON.stringify({ folder_id: folderId }),
     cache: "no-store",
   });

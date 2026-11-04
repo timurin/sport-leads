@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from tests.auth_test_helpers import attach_session
+
 from decimal import Decimal
 
 from fastapi.testclient import TestClient
@@ -81,6 +83,7 @@ def test_operation_lines_replace_patch_and_soft_prefill() -> None:
         lead_id = _add_lead(factory)
 
         with TestClient(app) as client:
+            attach_session(client)
             order_id = client.post(
                 f"/leads/{lead_id}/convert",
                 json={"completed_by_id": 1},

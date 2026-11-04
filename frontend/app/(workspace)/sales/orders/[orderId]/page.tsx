@@ -14,11 +14,8 @@ import { getNomenclature, getNomenclatureCategories } from "@/lib/nomenclature";
 import { getProductionStages } from "@/lib/production-stages";
 import { getLeadDetails } from "@/lib/sales/lead-details";
 import { fromApiLeadEvent } from "@/lib/sales/lead-history";
-import {
-  getOrderDetails,
-  getOrderHistory,
-  type SalesOrderSourceLead,
-} from "@/lib/sales/order-details";
+import { getOrderDetails, getOrderHistory } from "@/lib/sales/order-details-load";
+import { type SalesOrderSourceLead } from "@/lib/sales/order-details";
 import { getVatRates } from "@/lib/vat-rates";
 
 type OrderRouteProps = {

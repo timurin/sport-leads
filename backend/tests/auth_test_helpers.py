@@ -38,6 +38,35 @@ def ensure_user_with_role(
     return user_id
 
 
+def attach_session(client: TestClient, *, login: str = "acl03.session") -> None:
+    """Log the TestClient into whatever database `get_db` currently overrides."""
+    from app.database.session import get_db
+    from app.main import app
+
+    override = app.dependency_overrides[get_db]
+    generator = override()
+    db = next(generator)
+    try:
+        login_any_session(db, login=login)
+    finally:
+        try:
+            next(generator)
+        except StopIteration:
+            pass
+    login_client(client, login=login)
+
+
+def login_any_session(db: Session, *, login: str = "acl03.session") -> None:
+    """Active platform user for routes that require a session and no extra permission."""
+    if auth_repo.get_platform_user_by_login(db, login) is None:
+        create_platform_user(
+            db,
+            login=login,
+            password="secret-pass",
+            display_name=login,
+        )
+
+
 def login_client(
     client: TestClient,
     *,

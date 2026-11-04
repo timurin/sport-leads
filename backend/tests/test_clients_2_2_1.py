@@ -1,6 +1,7 @@
 """Stage 2.2.1 — GET /clients persistent list."""
-
 from __future__ import annotations
+
+from tests.auth_test_helpers import attach_session
 
 from decimal import Decimal
 
@@ -117,6 +118,7 @@ def test_list_clients_with_order_aggregates() -> None:
     app.dependency_overrides[get_db] = override_get_db
     try:
         with TestClient(app) as client:
+            attach_session(client)
             response = client.get("/clients")
             assert response.status_code == 200
             body = response.json()

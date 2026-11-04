@@ -2,6 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 
+import { sessionRequestHeaders } from "@/lib/auth/api-headers";
+
 import type { ClientBankAccountDraft, ClientRequisitesDraft } from "@/lib/sales/client-requisites";
 
 function apiBaseUrl(): string {
@@ -36,7 +38,7 @@ export async function saveClientRequisites(
 ): Promise<{ ok: true } | { ok: false; message: string }> {
   const response = await fetch(`${apiBaseUrl()}/clients/${clientId}`, {
     method: "PATCH",
-    headers: { "Content-Type": "application/json" },
+    headers: await sessionRequestHeaders({ "Content-Type": "application/json" }),
     body: JSON.stringify({
       inn: draft.inn,
       kpp: draft.kpp,
@@ -57,7 +59,7 @@ export async function createClientBankAccount(
 ): Promise<{ ok: true } | { ok: false; message: string }> {
   const response = await fetch(`${apiBaseUrl()}/clients/${clientId}/bank-accounts`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: await sessionRequestHeaders({ "Content-Type": "application/json" }),
     body: JSON.stringify({
       bank_name: draft.bankName,
       bik: draft.bik,
@@ -78,7 +80,7 @@ export async function deleteClientBankAccount(
 ): Promise<{ ok: true } | { ok: false; message: string }> {
   const response = await fetch(
     `${apiBaseUrl()}/clients/${clientId}/bank-accounts/${accountId}`,
-    { method: "DELETE", cache: "no-store" },
+    { method: "DELETE", cache: "no-store", headers: await sessionRequestHeaders() },
   );
   if (!response.ok && response.status !== 204) {
     return { ok: false, message: await readError(response) };
@@ -95,7 +97,7 @@ export async function setPrimaryClientBankAccount(
     `${apiBaseUrl()}/clients/${clientId}/bank-accounts/${accountId}`,
     {
       method: "PATCH",
-      headers: { "Content-Type": "application/json" },
+      headers: await sessionRequestHeaders({ "Content-Type": "application/json" }),
       body: JSON.stringify({ is_primary: true }),
       cache: "no-store",
     },

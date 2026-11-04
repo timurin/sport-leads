@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
+from app.api.deps_auth import get_current_platform_user
 from app.database.session import get_db
 from app.schemas.client_history import ClientHistoryRead
 from app.schemas.client_settlements import ClientSettlementsSummary
@@ -45,7 +46,11 @@ from app.services.clients import (
 from app.services.client_segments import replace_client_segments
 
 
-router = APIRouter(prefix="/clients", tags=["Clients"])
+router = APIRouter(
+    prefix="/clients",
+    tags=["Clients"],
+    dependencies=[Depends(get_current_platform_user)],
+)
 
 
 @router.get("", response_model=list[ClientListItem])

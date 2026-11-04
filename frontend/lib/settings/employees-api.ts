@@ -1,5 +1,6 @@
 import "server-only";
 
+import { readApiDetail, sessionRequestHeaders } from "@/lib/auth/api-headers";
 import {
   fromApiEmployee,
   type ApiEmployee,
@@ -27,13 +28,13 @@ export async function getEmployeesList(
   try {
     const response = await fetch(
       `${apiBaseUrl()}/employees?active_only=${activeOnly ? "true" : "false"}`,
-      { cache: "no-store" },
+      { cache: "no-store", headers: await sessionRequestHeaders() },
     );
     if (!response.ok) {
       return {
         ok: false,
         items: [],
-        message: `Не удалось загрузить сотрудников (${response.status}).`,
+        message: await readApiDetail(response, `Не удалось загрузить сотрудников (${response.status}).`),
       };
     }
     const body = (await response.json()) as ApiEmployee[];
@@ -61,6 +62,7 @@ export async function getEmployeeDetail(
   try {
     const response = await fetch(`${apiBaseUrl()}/employees/${employeeId}`, {
       cache: "no-store",
+      headers: await sessionRequestHeaders(),
     });
     if (response.status === 404) {
       return {
@@ -74,7 +76,7 @@ export async function getEmployeeDetail(
       return {
         ok: false,
         employee: null,
-        message: `Не удалось загрузить сотрудника (${response.status}).`,
+        message: await readApiDetail(response, `Не удалось загрузить сотрудника (${response.status}).`),
       };
     }
     const body = (await response.json()) as ApiEmployee;

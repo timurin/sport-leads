@@ -1,6 +1,7 @@
 """Stage 3.4.1 — design approval status gate before production."""
-
 from __future__ import annotations
+
+from tests.auth_test_helpers import attach_session
 
 import pytest
 from fastapi.testclient import TestClient
@@ -51,6 +52,7 @@ def client(session_factory: sessionmaker[Session]) -> TestClient:
 
     app.dependency_overrides[get_db] = override_get_db
     with TestClient(app) as test_client:
+        attach_session(test_client)
         yield test_client
     app.dependency_overrides.clear()
 

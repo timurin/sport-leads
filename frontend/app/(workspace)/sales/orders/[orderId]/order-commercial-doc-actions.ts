@@ -2,6 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 
+import { readApiDetail, sessionRequestHeaders } from "@/lib/auth/api-headers";
+
 const apiBaseUrl = () =>
   (process.env.SPORT_LEADS_API_URL ?? "http://127.0.0.1:8000").replace(/\/$/, "");
 
@@ -78,7 +80,9 @@ async function callCommercial(
 ) {
   const response = await fetch(`${apiBaseUrl()}/orders/${orderId}${path}`, {
     method,
-    headers: body ? { "content-type": "application/json" } : undefined,
+    headers: await sessionRequestHeaders(
+      body ? { "content-type": "application/json" } : undefined,
+    ),
     body: body ? JSON.stringify(body) : undefined,
     cache: "no-store",
   });
@@ -98,7 +102,11 @@ async function callCommercial(
 export async function listOrderQuotations(orderId: string): Promise<SalesQuotation[]> {
   const response = await fetch(`${apiBaseUrl()}/orders/${orderId}/quotations`, {
     cache: "no-store",
+    headers: await sessionRequestHeaders(),
   });
+  if (response.status === 401) {
+    throw new Error(await readApiDetail(response, "Требуется вход"));
+  }
   if (!response.ok) return [];
   return (await response.json()) as SalesQuotation[];
 }
@@ -106,7 +114,11 @@ export async function listOrderQuotations(orderId: string): Promise<SalesQuotati
 export async function listOrderInvoices(orderId: string): Promise<SalesInvoice[]> {
   const response = await fetch(`${apiBaseUrl()}/orders/${orderId}/invoices`, {
     cache: "no-store",
+    headers: await sessionRequestHeaders(),
   });
+  if (response.status === 401) {
+    throw new Error(await readApiDetail(response, "Требуется вход"));
+  }
   if (!response.ok) return [];
   return (await response.json()) as SalesInvoice[];
 }

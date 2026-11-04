@@ -1,4 +1,5 @@
 """Stage 2.4.2 — employees CRUD vs demo catalog."""
+from tests.auth_test_helpers import attach_session
 
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
@@ -38,6 +39,7 @@ def test_employees_crud_active_only_and_org_embed() -> None:
     app.dependency_overrides[get_db] = override_get_db
     try:
         with TestClient(app) as api:
+            attach_session(api)
             missing_org = api.post(
                 "/employees",
                 json={"full_name": "Нет органа", "organization_id": 999999},

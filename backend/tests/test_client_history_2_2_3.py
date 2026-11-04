@@ -1,3 +1,4 @@
+from tests.auth_test_helpers import attach_session
 from decimal import Decimal
 
 from fastapi.testclient import TestClient
@@ -77,6 +78,7 @@ def test_client_history_mixes_orders_and_matching_leads() -> None:
     app.dependency_overrides[get_db] = override_get_db
     try:
         with TestClient(app) as api:
+            attach_session(api)
             missing = api.get("/clients/999999/history")
             assert missing.status_code == 404
 
@@ -121,6 +123,7 @@ def test_clients_list_does_not_embed_history() -> None:
     app.dependency_overrides[get_db] = override_get_db
     try:
         with TestClient(app) as api:
+            attach_session(api)
             listed = api.get("/clients")
             assert listed.status_code == 200
             assert "items" not in listed.json()[0]

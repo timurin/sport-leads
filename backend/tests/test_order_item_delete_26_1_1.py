@@ -1,6 +1,7 @@
 """26.1.1 — refuse deleting a sales-order line that still has a technical card."""
-
 from __future__ import annotations
+
+from tests.auth_test_helpers import attach_session
 
 from decimal import Decimal
 
@@ -77,6 +78,7 @@ def test_delete_order_item_blocked_when_tech_card_exists() -> None:
         lead_id = _add_lead(factory)
 
         with TestClient(app) as client:
+            attach_session(client)
             order_id = client.post(
                 f"/leads/{lead_id}/convert",
                 json={"completed_by_id": 1},
@@ -128,6 +130,7 @@ def test_delete_order_item_without_tech_card_still_succeeds() -> None:
     try:
         lead_id = _add_lead(factory)
         with TestClient(app) as client:
+            attach_session(client)
             order_id = client.post(
                 f"/leads/{lead_id}/convert",
                 json={"completed_by_id": 1},

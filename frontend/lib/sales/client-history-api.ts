@@ -1,5 +1,6 @@
 import "server-only";
 
+import { readApiDetail, sessionRequestHeaders } from "@/lib/auth/api-headers";
 import {
   fromApiClientHistoryItem,
   type ApiClientHistory,
@@ -26,14 +27,14 @@ export async function getClientHistory(
   try {
     const response = await fetch(
       `${apiBaseUrl()}/clients/${clientId}/history?limit=100`,
-      { cache: "no-store" },
+      { cache: "no-store", headers: await sessionRequestHeaders() },
     );
     if (!response.ok) {
       return {
         ok: false,
         items: [],
         total: 0,
-        message: `Не удалось загрузить историю (${response.status}).`,
+        message: await readApiDetail(response, `Не удалось загрузить историю (${response.status}).`),
       };
     }
     const body = (await response.json()) as ApiClientHistory;

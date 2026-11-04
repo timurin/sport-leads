@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from tests.auth_test_helpers import attach_session
+
 from decimal import Decimal
 
 from fastapi.testclient import TestClient
@@ -88,6 +90,7 @@ def test_generate_preview_sync_cancel_and_revive() -> None:
         lead_id = _add_lead(factory)
 
         with TestClient(app) as client:
+            attach_session(client)
             order_id = client.post(
                 f"/leads/{lead_id}/convert",
                 json={"completed_by_id": 1},
@@ -238,6 +241,7 @@ def test_generate_rejects_unknown_item_ids() -> None:
     try:
         lead_id = _add_lead(factory)
         with TestClient(app) as client:
+            attach_session(client)
             order_id = client.post(
                 f"/leads/{lead_id}/convert",
                 json={"completed_by_id": 1},
@@ -264,6 +268,7 @@ def test_one_card_per_eligible_item_persisted() -> None:
             noms = _seed_nomenclatures(db)
         lead_id = _add_lead(factory)
         with TestClient(app) as client:
+            attach_session(client)
             order_id = client.post(
                 f"/leads/{lead_id}/convert",
                 json={"completed_by_id": 1},

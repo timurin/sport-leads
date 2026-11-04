@@ -2,10 +2,9 @@
 
 import { revalidatePath } from "next/cache";
 
-import {
-  createApiSalesOrder,
-  type CreateSalesOrderPayload,
-} from "@/lib/sales/order-list-api";
+import { sessionRequestHeaders } from "@/lib/auth/api-headers";
+import { createApiSalesOrder } from "@/lib/sales/order-list-server";
+import { type CreateSalesOrderPayload } from "@/lib/sales/order-list-api";
 
 function apiBaseUrl() {
   return (process.env.SPORT_LEADS_API_URL ?? "http://127.0.0.1:8000").replace(/\/$/, "");
@@ -56,7 +55,7 @@ export async function createClientAction(
   try {
     const response = await fetch(`${apiBaseUrl()}/clients`, {
       method: "POST",
-      headers: { "content-type": "application/json" },
+      headers: await sessionRequestHeaders({ "content-type": "application/json" }),
       body: JSON.stringify(payload),
       cache: "no-store",
     });

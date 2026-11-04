@@ -1,6 +1,7 @@
 """Stage 3.3.3 — quotations and invoices from order snapshots."""
-
 from __future__ import annotations
+
+from tests.auth_test_helpers import attach_session
 
 from decimal import Decimal
 
@@ -62,6 +63,7 @@ def client(session_factory: sessionmaker[Session]) -> TestClient:
 
     app.dependency_overrides[get_db] = override_get_db
     with TestClient(app) as test_client:
+        attach_session(test_client)
         yield test_client
     app.dependency_overrides.clear()
 
